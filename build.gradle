@@ -20,7 +20,7 @@ group = 'com.graphql-java'
 
 repositories {
     mavenCentral()
-    maven { url  "http://dl.bintray.com/andimarek/graphql-java" }
+    maven { url "http://dl.bintray.com/andimarek/graphql-java" }
     mavenLocal()
 }
 
@@ -28,6 +28,13 @@ apply plugin: 'groovy'
 
 jar {
     from "LICENSE.md"
+}
+
+task extractGraphqlGrammar(type: Copy) {
+    from({ zipTree({ configurations.compile.files.find({ it.path.contains('/com.graphql-java/graphql-java/') }) }) }) {
+        include 'Graphql.g4'
+    }
+    into 'src/main/antlr'
 }
 
 dependencies {
@@ -51,6 +58,8 @@ generateGrammarSource {
     arguments += ["-visitor"]
     outputDirectory = file("${project.buildDir}/generated-src/antlr/main/graphql/nadel/parser/antlr")
 }
+
+generateGrammarSource.dependsOn( extractGraphqlGrammar )
 
 task sourcesJar(type: Jar) {
     dependsOn classes
@@ -158,4 +167,6 @@ task wrapper(type: Wrapper) {
     gradleVersion = '4.4'
     distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
+
+
 
