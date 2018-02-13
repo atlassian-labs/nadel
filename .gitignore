@@ -1,4 +1,4 @@
 .idea
 .gradle
 build
-src/main/antlr/Graphql.g4
+src/main/antlr/Graphql*.g4

@@ -1,5 +1,5 @@
 grammar StitchingDSL;
-import Graphql;
+import GraphqlSDL;
 
 @header {
     package graphql.nadel.parser.antlr;
@@ -10,9 +10,6 @@ import Graphql;
 stitchingDSL: definition+;
 
 definition:
-operationDefinition |
-fragmentDefinition |
-typeSystemDefinition |
 serviceDefinition
 ;
 
@@ -20,8 +17,21 @@ serviceDefinition:
 'service' name '{' serviceUrl typeSystemDefinition* '}' ;
 serviceUrl: 'url' ':' stringValue;
 
-operationDefinition:
-selectionSet |
-operationType  name? variableDefinitions? directives? selectionSet;
+
+fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
+
+// fixme: this allows for an empty arrow -- first shot at fixing ( target remote? | remote ) failed
+fieldTransformation : '=>' targetFieldDefinition? remoteCallDefinition?;
+
+targetFieldDefinition : name ':' type;
+
+remoteCallDefinition : '{' remoteQuery '(' remoteArgument remoteInput? ')' '}' ;
+
+remoteQuery : name ;
+
+remoteArgument : name ;
+
+remoteInput: ':' name ;
+
 
 
