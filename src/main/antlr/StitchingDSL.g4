@@ -4,9 +4,7 @@ import GraphqlSDL;
 @header {
     package graphql.nadel.parser.antlr;
 }
-// Document
 
-// todo: move some of that within service definitions
 stitchingDSL: definition+;
 
 definition:
