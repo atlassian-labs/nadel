@@ -14,9 +14,12 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
+def graphqlJavaVersion = '2018-02-17T02-50-42'
+
 def releaseVersion = System.properties.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : new SimpleDateFormat('yyyy-MM-dd\'T\'HH-mm-ss').format(new Date())
 group = 'com.graphql-java'
+
 
 repositories {
     mavenCentral()
@@ -37,8 +40,51 @@ task extractGraphqlGrammar(type: Copy) {
     into 'src/main/antlr'
 }
 
+configurations {
+    graphqlJavaSource
+}
+
+
+task generateAntrlToJavaSource {
+    doLast {
+        def unzipDir = new File('build/unzip')
+        copy {
+            from({ zipTree(configurations.graphqlJavaSource.singleFile) }) {
+                include 'graphql/parser/GraphqlAntlrToLanguage.java'
+            }
+            into unzipDir
+        }
+        copy {
+            from 'build/unzip/graphql/parser/GraphqlAntlrToLanguage.java'
+            into 'build/generated-src/antlr/main/graphql/nadel/parser'
+        }
+        def replacePatterns = [
+                'package graphql.parser': 'package graphql.nadel.parser',
+                'import graphql.parser.antlr.GraphqlParser;':'import graphql.nadel.parser.antlr.StitchingDSLParser;',
+                'import graphql.parser.antlr.GraphqlBaseVisitor;':'import graphql.nadel.parser.antlr.StitchingDSLBaseVisitor;',
+                'GraphqlBaseVisitor<Void>':'StitchingDSLBaseVisitor<Void>',
+                'GraphqlParser':'StitchingDSLParser' ]
+
+        def sourceFile = new File('build/generated-src/antlr/main/graphql/nadel/parser/GraphqlAntlrToLanguage.java')
+        def content = sourceFile.text
+        replacePatterns.each { content = content.replace(it.key, it.value)}
+        def startIndex = content.indexOf('//MARKER START')
+        def endIndex = content.indexOf('//MARKER END')
+        assert startIndex > 0
+        assert endIndex > 0
+        def endIndexLine = content.indexOf('\n', endIndex)
+        assert endIndexLine > 0
+        content = content.substring(0, startIndex) + content.substring(endIndexLine + 1)
+        sourceFile.write content
+    }
+}
+
+
 dependencies {
-    compile 'com.graphql-java:graphql-java:2018-02-13T20-39-20'
+    graphqlJavaSource('com.graphql-java:graphql-java:' + graphqlJavaVersion + ':sources') {
+        transitive = false
+    }
+    compile 'com.graphql-java:graphql-java:' + graphqlJavaVersion
     compile 'org.antlr:antlr4-runtime:4.7.1'
     compile 'org.slf4j:slf4j-api:' + slf4jVersion
     antlr "org.antlr:antlr4:4.7.1"
@@ -60,7 +106,7 @@ generateGrammarSource {
     outputDirectory = file("${project.buildDir}/generated-src/antlr/main/graphql/nadel/parser/antlr")
 }
 
-generateGrammarSource.dependsOn( extractGraphqlGrammar )
+generateGrammarSource.dependsOn(extractGraphqlGrammar, generateAntrlToJavaSource)
 
 task sourcesJar(type: Jar) {
     dependsOn classes
