@@ -1,5 +1,6 @@
 package graphql.nadel
 
+import graphql.language.ObjectTypeDefinition
 import spock.lang.Specification
 
 class ParserTest extends Specification {
@@ -15,12 +16,18 @@ class ParserTest extends Specification {
             }
         }
        """
+        def stitchingDSL
         when:
         Parser parser = new Parser()
-        parser.parseDSL(simpleDSL)
+        stitchingDSL = parser.parseDSL(simpleDSL)
 
         then:
-        noExceptionThrown()
+        stitchingDSL.getServiceDefinitions().size() == 1
+        stitchingDSL.getServiceDefinitions()[0].url == 'someUrl'
+        stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions().size() == 1
+        stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0] instanceof ObjectTypeDefinition
+        ((ObjectTypeDefinition) stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0]).name == 'Query'
+        ((ObjectTypeDefinition) stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0]).fieldDefinitions[0].name == 'hello'
 
     }
 

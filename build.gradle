@@ -14,7 +14,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
-def graphqlJavaVersion = '2018-02-17T02-50-42'
+def graphqlJavaVersion = '2018-02-18T11-15-56'
 
 def releaseVersion = System.properties.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : new SimpleDateFormat('yyyy-MM-dd\'T\'HH-mm-ss').format(new Date())
@@ -47,12 +47,11 @@ configurations {
 
 task generateAntrlToJavaSource {
     doLast {
-        def unzipDir = new File('build/unzip')
         copy {
             from({ zipTree(configurations.graphqlJavaSource.singleFile) }) {
                 include 'graphql/parser/GraphqlAntlrToLanguage.java'
             }
-            into unzipDir
+            into 'build/unzip'
         }
         copy {
             from 'build/unzip/graphql/parser/GraphqlAntlrToLanguage.java'
