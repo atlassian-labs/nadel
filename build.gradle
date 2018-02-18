@@ -48,13 +48,9 @@ configurations {
 task generateAntrlToJavaSource {
     doLast {
         copy {
-            from({ zipTree(configurations.graphqlJavaSource.singleFile) }) {
-                include 'graphql/parser/GraphqlAntlrToLanguage.java'
+            from({ zipTree(configurations.graphqlJavaSource.singleFile).files}) {
+                include 'GraphqlAntlrToLanguage.java'
             }
-            into 'build/unzip'
-        }
-        copy {
-            from 'build/unzip/graphql/parser/GraphqlAntlrToLanguage.java'
             into 'build/generated-src/antlr/main/graphql/nadel/parser'
         }
         def replacePatterns = [
