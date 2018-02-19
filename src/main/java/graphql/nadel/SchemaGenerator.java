@@ -53,6 +53,7 @@ import graphql.schema.GraphQLTypeReference;
 import graphql.schema.GraphQLUnionType;
 import graphql.schema.TypeResolver;
 import graphql.schema.idl.EnumValuesProvider;
+import graphql.schema.idl.ScalarInfo;
 import graphql.schema.idl.TypeInfo;
 import graphql.schema.idl.errors.NotAnInputTypeError;
 import graphql.schema.idl.errors.NotAnOutputTypeError;
@@ -75,6 +76,7 @@ import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
+import static graphql.Assert.assertTrue;
 import static graphql.introspection.Introspection.DirectiveLocation.ENUM;
 import static graphql.introspection.Introspection.DirectiveLocation.ENUM_VALUE;
 import static graphql.introspection.Introspection.DirectiveLocation.INPUT_FIELD_DEFINITION;
@@ -107,7 +109,7 @@ public class SchemaGenerator {
 
         @SuppressWarnings({"OptionalGetWithoutIsPresent", "ConstantConditions"})
         TypeDefinition getTypeDefinition(Type type) {
-            return typeRegistry.getType(type).get();
+            return typeRegistry.getTypeDefinitions(type).get();
         }
 
         public boolean stackContains(TypeInfo typeInfo) {
@@ -149,6 +151,10 @@ public class SchemaGenerator {
         public List<TypeDefinition> getAllTypeDefinitions() {
             return typeRegistry.getAllTypeDefinitions();
         }
+
+        public List<TypeDefinition> getTypeDefinitions(String name) {
+            return typeRegistry.getTypeDefinitions(name);
+        }
     }
 
 //    private final NadelSchemaTypeChecker typeChecker = new NadelSchemaTypeChecker();
@@ -167,15 +173,40 @@ public class SchemaGenerator {
     }
 
     private GraphQLSchema makeExecutableSchemaImpl(BuildContext buildCtx) {
-        GraphQLObjectType query;
+        GraphQLObjectType query = buildQueryType(buildCtx);
 
         GraphQLSchema.Builder schemaBuilder = GraphQLSchema.newSchema();
+        schemaBuilder.query(query);
 
         Set<GraphQLType> additionalTypes = buildAdditionalTypes(buildCtx);
-
-        //TODO: FieldVisibility
-//        schemaBuilder.fieldVisibility(buildCtx.getWiring().getFieldVisibility());
         return schemaBuilder.build(additionalTypes);
+    }
+
+    private GraphQLObjectType buildQueryType(BuildContext buildContext) {
+        List<TypeDefinition> queryDefinitions = buildContext.getTypeDefinitions("Query");
+        assertTrue(queryDefinitions.size() > 0, "At least of Query definition is required");
+        ObjectTypeDefinition firstQueryDefinition = (ObjectTypeDefinition) queryDefinitions.get(0);
+
+        GraphQLObjectType.Builder builder = GraphQLObjectType.newObject();
+        builder.definition((ObjectTypeDefinition) queryDefinitions.get(0));
+        builder.name("Query");
+        //TODO: merge all query object infos, not just the first
+        builder.description(buildDescription(firstQueryDefinition, firstQueryDefinition.getDescription()));
+
+        Map<String, GraphQLFieldDefinition> fieldDefinitions = new LinkedHashMap<>();
+        for (TypeDefinition typeDefinition : queryDefinitions) {
+            ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) typeDefinition;
+            objectTypeDefinition.getFieldDefinitions().forEach(fieldDef -> {
+                GraphQLFieldDefinition newFieldDefinition = buildField(buildContext, typeDefinition, fieldDef);
+                fieldDefinitions.put(newFieldDefinition.getName(), newFieldDefinition);
+            });
+        }
+        fieldDefinitions.values().forEach(builder::field);
+
+
+        GraphQLObjectType queryType = builder.build();
+        buildContext.put(queryType);
+        return queryType;
     }
 
     private GraphQLObjectType buildOperation(BuildContext buildCtx, OperationTypeDefinition operation) {
@@ -293,7 +324,6 @@ public class SchemaGenerator {
         );
 
         buildObjectTypeFields(buildCtx, typeDefinition, builder, typeExtensions);
-
         buildObjectTypeInterfaces(buildCtx, typeDefinition, builder, typeExtensions);
 
         return builder.build();
@@ -427,7 +457,8 @@ public class SchemaGenerator {
     }
 
     private GraphQLScalarType buildScalar(BuildContext buildCtx, ScalarTypeDefinition typeDefinition) {
-        return new GraphQLScalarType(typeDefinition.getName(), typeDefinition.getDescription().content, new Coercing() {
+        Optional<GraphQLScalarType> standardScalar = ScalarInfo.STANDARD_SCALARS.stream().filter(graphQLScalarType -> graphQLScalarType.getName().equals(typeDefinition.getName())).findFirst();
+        return standardScalar.orElseGet(() -> new GraphQLScalarType(typeDefinition.getName(), "", new Coercing() {
             @Override
             public Object serialize(Object dataFetcherResult) {
                 return null;
@@ -442,7 +473,7 @@ public class SchemaGenerator {
             public Object parseLiteral(Object input) {
                 return null;
             }
-        });
+        }));
     }
 
     private GraphQLFieldDefinition buildField(BuildContext buildCtx, TypeDefinition parentType, FieldDefinition fieldDef) {

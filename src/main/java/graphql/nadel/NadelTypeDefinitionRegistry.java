@@ -29,6 +29,7 @@ public class NadelTypeDefinitionRegistry {
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             List<TypeDefinition<?>> typeDefinitions = serviceDefinition.getTypeDefinitions();
             TypeDefinitionRegistry typeDefinitionRegistry = new TypeDefinitionRegistry();
+            typeDefinitionRegistries.put(serviceDefinition, typeDefinitionRegistry);
 
             for (TypeDefinition typeDefinition : typeDefinitions) {
                 typeDefinitionRegistry.add(typeDefinition);
@@ -36,16 +37,6 @@ public class NadelTypeDefinitionRegistry {
         }
     }
 
-    public Optional<TypeDefinition> getType(Type type) {
-        String typeName = TypeInfo.typeInfo(type).getName();
-        return getType(typeName);
-    }
-
-    public Optional<TypeDefinition> getType(String name) {
-        List<TypeDefinition> typeDefinitions = getTypeDefinitions(name);
-        assertTrue(typeDefinitions.size() <= 1, "more than one type found with name " + name);
-        return typeDefinitions.size() > 0 ? Optional.of(typeDefinitions.get(0)) : Optional.empty();
-    }
 
     public Map<String, List<TypeExtensionDefinition>> typeExtensions() {
         Map<String, List<TypeExtensionDefinition>> result = new LinkedHashMap<>();
@@ -59,6 +50,16 @@ public class NadelTypeDefinitionRegistry {
         return result;
     }
 
+    public Optional<TypeDefinition> getTypeDefinitions(Type type) {
+        String typeName = TypeInfo.typeInfo(type).getName();
+        return getTypeDefinition(typeName);
+    }
+
+    public Optional<TypeDefinition> getTypeDefinition(String name) {
+        List<TypeDefinition> typeDefinitions = getTypeDefinitions(name);
+        assertTrue(typeDefinitions.size() <= 1, "more than one type found with name " + name);
+        return typeDefinitions.size() > 0 ? Optional.of(typeDefinitions.get(0)) : Optional.empty();
+    }
 
     public List<TypeDefinition> getTypeDefinitions(String name) {
         return typeDefinitionRegistries.values().stream()
