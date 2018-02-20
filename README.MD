@@ -1,4 +1,4 @@
-# Nadel: A GraphQL Stitching DSL 
+# Nadel: A GraphQL Stitching DSL (WORK IN PROGRESS)
 
 This is a Java library to combine several graphql services together (called stitching).
 
