@@ -16,8 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static graphql.Assert.assertTrue;
-
 @Internal
 public class NadelTypeDefinitionRegistry {
 
@@ -57,7 +55,6 @@ public class NadelTypeDefinitionRegistry {
 
     public Optional<TypeDefinition> getTypeDefinition(String name) {
         List<TypeDefinition> typeDefinitions = getTypeDefinitions(name);
-        assertTrue(typeDefinitions.size() <= 1, "more than one type found with name " + name);
         return typeDefinitions.size() > 0 ? Optional.of(typeDefinitions.get(0)) : Optional.empty();
     }
 

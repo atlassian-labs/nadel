@@ -1,6 +1,7 @@
 package graphql.nadel
 
 import graphql.language.ObjectTypeDefinition
+import org.antlr.v4.runtime.misc.ParseCancellationException
 import spock.lang.Specification
 
 class ParserTest extends Specification {
@@ -31,6 +32,32 @@ class ParserTest extends Specification {
 
     }
 
+    def "two services"() {
+        given:
+        def simpleDSL = """
+         service Foo {
+            url: "url1"
+            type Query {
+                hello1: String
+            }
+        }
+        service Bar {
+            url: "url2"
+            type Query {
+                hello2: String
+            }
+        }
+       """
+        def stitchingDSL
+        when:
+        Parser parser = new Parser()
+        stitchingDSL = parser.parseDSL(simpleDSL)
+
+        then:
+        stitchingDSL.getServiceDefinitions().size() == 2
+
+    }
+
     def "parse error"() {
         given:
         def simpleDSL = """
@@ -46,4 +73,24 @@ class ParserTest extends Specification {
         thrown(Exception)
 
     }
+
+    def "not all tokens are parsed"() {
+        given:
+        def simpleDSL = """
+        service Foo {
+            url: "someUrl"
+        }
+        someFoo
+       """
+        when:
+        Parser parser = new Parser()
+        parser.parseDSL(simpleDSL)
+
+        then:
+        thrown(ParseCancellationException)
+
+
+    }
 }
+
+
