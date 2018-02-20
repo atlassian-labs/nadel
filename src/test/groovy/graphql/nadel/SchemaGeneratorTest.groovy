@@ -27,7 +27,6 @@ class SchemaGeneratorTest extends Specification {
             url: "url"
             type Query {
                 hello: String
-                }
             }
         }
         """
