@@ -45,9 +45,10 @@ service Users {
 
 ```
 
-The result is a new GraphQL API which combines the two services in one and has the following schema.
+The result is a new GraphQL API which combines the two services in one and has the following schema:
 
 ```graphql
+// Combines the queries of the underlying services
 type Query {
     posts: [Post]
     user(id: ID!): User
@@ -55,7 +56,7 @@ type Query {
 type Post {
     id: ID!
     content: String
-    author: User
+    author: User // The author is internally resolved by the user service 
 }
 type User {
     id: ID!
