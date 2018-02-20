@@ -9,7 +9,7 @@ While this library is in Java, the underlying services only need to provide a st
 GraphQL API and no Java Code is needed to stitch services together. It is all done declarative as part of the DSL.
 
 
-Example:
+## Example:
 
 Lets assume we have two Services: "Posts" and "User". One provides some kind of blog posts and the other
 is the user management service. Every Post references a User via ID.
