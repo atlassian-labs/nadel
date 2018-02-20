@@ -27,7 +27,7 @@ service Posts {
     type Post {
         id: ID!
         content: String
-        authorID: ID => author: User
+        authorID: ID => author: User // This transforms the authorId from a Post into a full User field
     }
 }
 
