@@ -1,6 +1,8 @@
 package graphql.nadel
 
 import graphql.nadel.dsl.StitchingDsl
+import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
 
@@ -36,6 +38,44 @@ class SchemaGeneratorTest extends Specification {
         schema.getQueryType().name == "Query"
         schema.getQueryType().fieldDefinitions[0].name == "hello"
 
+    }
+
+    def "service with some types"() {
+        given:
+        def dsl = """
+        service X {
+            url: "url"
+            type Query {
+                foo: Bar
+            }
+            type Bar{
+                field1: String
+                field2: SomeInterface
+            }
+            interface SomeInterface {
+                field1: Int
+            }
+            type ConcreteImpl implements SomeInterface {
+                field1: Int
+                extraField: Bar
+            }
+        }
+        
+        """
+        when:
+        def schema = createSchema(dsl)
+        then:
+        schema.getQueryType().name == "Query"
+
+        schema.getType("Bar") != null
+        schema.getType("Bar") instanceof GraphQLObjectType
+
+        schema.getType("SomeInterface") != null
+        schema.getType("SomeInterface") instanceof GraphQLInterfaceType
+
+        schema.getType("ConcreteImpl") != null
+        schema.getType("ConcreteImpl") instanceof GraphQLObjectType
+        ((GraphQLObjectType) schema.getType("ConcreteImpl")).fieldDefinitions[1].type == schema.getType("Bar")
     }
 
     def "two services"() {
