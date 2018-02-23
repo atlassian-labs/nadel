@@ -81,6 +81,89 @@ class RootQueryCreatorTest extends Specification {
 
     }
 
+
+    def "more complex query with multiple transformations"() {
+        given:
+        def dsl = """
+        service FooService {
+            url: "url1"
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                subFoo: SubFoo
+                someValue: String
+            }
+            type SubFoo{
+                barId: ID => bar: Bar
+                subSub: SubSubFoo
+            }
+            type SubSubFoo {
+                blaId: ID => bla: Bla
+            }
+            
+        }
+        service BarService {
+            url: "url2"
+            type Query {
+                bar(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+            }
+        }
+        service BlaService {
+            url: "url3"
+            type Query {
+                bla(id: ID): Bar
+            }
+            type Bla {
+               id: ID 
+            }
+        }
+        """
+        def (GraphQLSchema schema, StitchingDsl stitchingDsl) = createSchema(dsl)
+        ServiceDefinition fooService = stitchingDsl.getServiceDefinition("FooService")
+        def query = """ {
+            foo {
+                someValue
+                subFoo{
+                    bar {
+                        id
+                    }
+                    subSub {
+                        bla {
+                            id
+                        }
+                    }
+                }
+            }
+        }
+         
+        """
+        def (DataFetchingEnvironment environment, Field field) = mockDFEnvironment(query, schema)
+        def queryCreator = new RootQueryCreator(fooService, stitchingDsl)
+
+        when:
+        def document = queryCreator.createQuery(environment)
+
+        then:
+        AstPrinter.printAst(document) ==
+                """query {
+  foo {
+    someValue
+    subFoo {
+      barId
+      subSub {
+        blaId
+      }
+    }
+  }
+}
+"""
+
+    }
+
     def createSchema(String dsl) {
         Parser parser = new Parser()
         StitchingDsl stitchingDsl = parser.parseDSL(dsl)
