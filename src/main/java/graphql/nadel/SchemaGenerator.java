@@ -20,12 +20,12 @@ import graphql.language.InterfaceTypeDefinition;
 import graphql.language.Node;
 import graphql.language.NullValue;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.ObjectTypeExtensionDefinition;
 import graphql.language.ObjectValue;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.StringValue;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
-import graphql.language.TypeExtensionDefinition;
 import graphql.language.TypeName;
 import graphql.language.UnionTypeDefinition;
 import graphql.language.Value;
@@ -324,7 +324,7 @@ public class SchemaGenerator {
         builder.name(typeDefinition.getName());
         builder.description(buildDescription(typeDefinition, typeDefinition.getDescription()));
 
-        List<TypeExtensionDefinition> typeExtensions = getTypeExtensionsOf(typeDefinition, buildCtx);
+        List<ObjectTypeExtensionDefinition> typeExtensions = getTypeExtensionsOf(typeDefinition, buildCtx);
 
         List<Directive> extensionDirectives = typeExtensions.stream()
                 .map(ObjectTypeDefinition::getDirectives).filter(Objects::nonNull)
@@ -342,7 +342,7 @@ public class SchemaGenerator {
         return builder.build();
     }
 
-    private void buildObjectTypeFields(BuildContext buildCtx, ObjectTypeDefinition typeDefinition, GraphQLObjectType.Builder builder, List<TypeExtensionDefinition> typeExtensions) {
+    private void buildObjectTypeFields(BuildContext buildCtx, ObjectTypeDefinition typeDefinition, GraphQLObjectType.Builder builder, List<ObjectTypeExtensionDefinition> typeExtensions) {
         Map<String, GraphQLFieldDefinition> fieldDefinitions = new LinkedHashMap<>();
 
         typeDefinition.getFieldDefinitions().forEach(fieldDef -> {
@@ -363,7 +363,7 @@ public class SchemaGenerator {
         fieldDefinitions.values().forEach(builder::field);
     }
 
-    private void buildObjectTypeInterfaces(BuildContext buildCtx, ObjectTypeDefinition typeDefinition, GraphQLObjectType.Builder builder, List<TypeExtensionDefinition> typeExtensions) {
+    private void buildObjectTypeInterfaces(BuildContext buildCtx, ObjectTypeDefinition typeDefinition, GraphQLObjectType.Builder builder, List<ObjectTypeExtensionDefinition> typeExtensions) {
         Map<String, GraphQLInterfaceType> interfaces = new LinkedHashMap<>();
         typeDefinition.getImplements().forEach(type -> {
             GraphQLInterfaceType newInterfaceType = buildOutputType(buildCtx, type);
@@ -383,9 +383,9 @@ public class SchemaGenerator {
         interfaces.values().forEach(builder::withInterface);
     }
 
-    private List<TypeExtensionDefinition> getTypeExtensionsOf(ObjectTypeDefinition objectTypeDefinition, BuildContext buildCtx) {
-        List<TypeExtensionDefinition> typeExtensionDefinitions = buildCtx.typeRegistry.typeExtensions().get(objectTypeDefinition.getName());
-        return typeExtensionDefinitions == null ? emptyList() : typeExtensionDefinitions;
+    private List<ObjectTypeExtensionDefinition> getTypeExtensionsOf(ObjectTypeDefinition objectTypeDefinition, BuildContext buildCtx) {
+        List<ObjectTypeExtensionDefinition> ObjectTypeExtensionDefinitions = buildCtx.typeRegistry.typeExtensions().get(objectTypeDefinition.getName());
+        return ObjectTypeExtensionDefinitions == null ? emptyList() : ObjectTypeExtensionDefinitions;
     }
 
     private GraphQLInterfaceType buildInterfaceType(BuildContext buildCtx, InterfaceTypeDefinition typeDefinition) {

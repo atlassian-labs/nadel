@@ -1,9 +1,9 @@
 package graphql.nadel;
 
 import graphql.Internal;
+import graphql.language.ObjectTypeExtensionDefinition;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
-import graphql.language.TypeExtensionDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -37,11 +37,11 @@ public class NadelTypeDefinitionRegistry {
     }
 
 
-    public Map<String, List<TypeExtensionDefinition>> typeExtensions() {
-        Map<String, List<TypeExtensionDefinition>> result = new LinkedHashMap<>();
+    public Map<String, List<ObjectTypeExtensionDefinition>> typeExtensions() {
+        Map<String, List<ObjectTypeExtensionDefinition>> result = new LinkedHashMap<>();
         for (TypeDefinitionRegistry typeDefinitionRegistry : typeDefinitionRegistries.values()) {
-            Map<String, List<TypeExtensionDefinition>> typeExtensions = typeDefinitionRegistry.typeExtensions();
-            for (Map.Entry<String, List<TypeExtensionDefinition>> extensionEntry : typeExtensions.entrySet()) {
+            Map<String, List<ObjectTypeExtensionDefinition>> typeExtensions = typeDefinitionRegistry.typeExtensions();
+            for (Map.Entry<String, List<ObjectTypeExtensionDefinition>> extensionEntry : typeExtensions.entrySet()) {
                 result.putIfAbsent(extensionEntry.getKey(), new ArrayList<>());
                 result.get(extensionEntry.getKey()).addAll(extensionEntry.getValue());
             }
