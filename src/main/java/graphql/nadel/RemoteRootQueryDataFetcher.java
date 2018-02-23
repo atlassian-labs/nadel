@@ -7,6 +7,8 @@ import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 
+import static graphql.Assert.assertNotNull;
+
 @PublicApi
 public class RemoteRootQueryDataFetcher implements DataFetcher {
 
@@ -15,9 +17,9 @@ public class RemoteRootQueryDataFetcher implements DataFetcher {
     private ServiceDefinition serviceDefinition;
 
     public RemoteRootQueryDataFetcher(ServiceDefinition serviceDefinition, GraphqlCaller graphqlCaller) {
-        this.serviceDefinition = serviceDefinition;
+        this.serviceDefinition = assertNotNull(serviceDefinition);
         this.queryCreator = new RootQueryCreator();
-        this.graphqlCaller = graphqlCaller;
+        this.graphqlCaller = assertNotNull(graphqlCaller);
     }
 
     @Override
@@ -25,6 +27,7 @@ public class RemoteRootQueryDataFetcher implements DataFetcher {
         String fieldName = environment.getFields().get(0).getName();
         Document query = queryCreator.createQuery(environment);
         GraphqlCallResult callResult = graphqlCaller.call(query);
+        assertNotNull(callResult, "call result can't be null");
         return callResult.getData().get(fieldName);
     }
 

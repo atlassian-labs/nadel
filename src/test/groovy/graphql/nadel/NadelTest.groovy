@@ -36,18 +36,26 @@ class NadelTest extends Specification {
         """
         def graphqlCallerService1 = Mock(GraphqlCaller)
         def graphqlCallerService2 = Mock(GraphqlCaller)
-        graphqlCallerService2.call(_) >> new GraphqlCallResult([hello2: 'world'])
         def callerFactory = mockCallerFactory([Service1: graphqlCallerService1, Service2: graphqlCallerService2])
 
-        String query = "{hello}"
+        String query1 = "{hello}"
+        String query2 = "{hello2}"
         Nadel nadel = new Nadel(dsl, callerFactory)
-        ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(query).build()
+        def executionResult
+
         when:
-        def executionResult = nadel.executeAsync(executionInput).get()
+        executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query1).build()).get()
 
         then:
         executionResult.data == [hello: 'world']
         1 * graphqlCallerService1.call(_) >> new GraphqlCallResult([hello: 'world'])
+
+        when:
+        executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query2).build()).get()
+
+        then:
+        executionResult.data == [hello2: 'world']
+        1 * graphqlCallerService2.call(_) >> new GraphqlCallResult([hello2: 'world'])
     }
 
 }
