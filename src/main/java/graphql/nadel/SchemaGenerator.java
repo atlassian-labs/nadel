@@ -30,6 +30,7 @@ import graphql.language.TypeExtensionDefinition;
 import graphql.language.TypeName;
 import graphql.language.UnionTypeDefinition;
 import graphql.language.Value;
+import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.Coercing;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetcherFactory;
@@ -98,13 +99,15 @@ public class SchemaGenerator {
      */
     class BuildContext {
         private final NadelTypeDefinitionRegistry typeRegistry;
+        private GraphqlCallerFactory graphqlCallerFactory;
         private final Stack<String> definitionStack = new Stack<>();
 
         private final Map<String, GraphQLOutputType> outputGTypes = new HashMap<>();
         private final Map<String, GraphQLInputType> inputGTypes = new HashMap<>();
 
-        BuildContext(NadelTypeDefinitionRegistry typeRegistry) {
+        BuildContext(NadelTypeDefinitionRegistry typeRegistry, GraphqlCallerFactory graphqlCallerFactory) {
             this.typeRegistry = typeRegistry;
+            this.graphqlCallerFactory = graphqlCallerFactory;
         }
 
         @SuppressWarnings({"OptionalGetWithoutIsPresent", "ConstantConditions"})
@@ -155,6 +158,14 @@ public class SchemaGenerator {
         public List<TypeDefinition> getTypeDefinitions(String name) {
             return typeRegistry.getTypeDefinitions(name);
         }
+
+        public ServiceDefinition getServiceForField(FieldDefinition fieldDefinition) {
+            return typeRegistry.getStitchingDsl().getServiceByField().get(fieldDefinition);
+        }
+
+        public GraphqlCaller createCaller(ServiceDefinition serviceDefinition) {
+            return graphqlCallerFactory.createGraphqlCaller(serviceDefinition);
+        }
     }
 
 //    private final NadelSchemaTypeChecker typeChecker = new NadelSchemaTypeChecker();
@@ -162,12 +173,10 @@ public class SchemaGenerator {
     public SchemaGenerator() {
     }
 
-    public GraphQLSchema makeExecutableSchema(NadelTypeDefinitionRegistry typeRegistry) throws SchemaProblem {
+    public GraphQLSchema makeExecutableSchema(NadelTypeDefinitionRegistry typeRegistry, GraphqlCallerFactory graphqlCallerFactory) throws SchemaProblem {
 //        List<GraphQLError> errors = typeChecker.checkTypeRegistry(typeRegistry);
 
-//            throw new SchemaProblem(errors);
-//        }
-        BuildContext buildCtx = new BuildContext(typeRegistry);
+        BuildContext buildCtx = new BuildContext(typeRegistry, graphqlCallerFactory);
 
         return makeExecutableSchemaImpl(buildCtx);
     }
@@ -197,8 +206,13 @@ public class SchemaGenerator {
         for (TypeDefinition typeDefinition : queryDefinitions) {
             ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) typeDefinition;
             objectTypeDefinition.getFieldDefinitions().forEach(fieldDef -> {
-                GraphQLFieldDefinition newFieldDefinition = buildField(buildContext, typeDefinition, fieldDef);
+
+                ServiceDefinition serviceDefinition = buildContext.getServiceForField(fieldDef);
+                GraphqlCaller caller = buildContext.createCaller(serviceDefinition);
+                RemoteRootQueryDataFetcher remoteRootQueryDataFetcher = new RemoteRootQueryDataFetcher(serviceDefinition, caller);
+                GraphQLFieldDefinition newFieldDefinition = buildField(buildContext, typeDefinition, fieldDef, remoteRootQueryDataFetcher);
                 fieldDefinitions.put(newFieldDefinition.getName(), newFieldDefinition);
+
             });
         }
         fieldDefinitions.values().forEach(builder::field);
@@ -477,6 +491,10 @@ public class SchemaGenerator {
     }
 
     private GraphQLFieldDefinition buildField(BuildContext buildCtx, TypeDefinition parentType, FieldDefinition fieldDef) {
+        return buildField(buildCtx, parentType, fieldDef);
+    }
+
+    private GraphQLFieldDefinition buildField(BuildContext buildCtx, TypeDefinition parentType, FieldDefinition fieldDef, DataFetcher dataFetcher) {
         GraphQLFieldDefinition.Builder builder = GraphQLFieldDefinition.newFieldDefinition();
         builder.definition(fieldDef);
         builder.name(fieldDef.getName());
@@ -495,7 +513,11 @@ public class SchemaGenerator {
         GraphQLOutputType fieldType = buildOutputType(buildCtx, fieldDef.getType());
         builder.type(fieldType);
 
-        builder.dataFetcherFactory(buildDataFetcherFactory(buildCtx, parentType, fieldDef, fieldType, Arrays.asList(directives)));
+        if (dataFetcher != null) {
+            builder.dataFetcher(dataFetcher);
+        } else {
+            builder.dataFetcherFactory(buildDataFetcherFactory(buildCtx, parentType, fieldDef, fieldType, Arrays.asList(directives)));
+        }
 
 
         return builder.build();

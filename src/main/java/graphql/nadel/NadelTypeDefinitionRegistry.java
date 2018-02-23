@@ -20,9 +20,10 @@ import java.util.stream.Collectors;
 public class NadelTypeDefinitionRegistry {
 
     private Map<ServiceDefinition, TypeDefinitionRegistry> typeDefinitionRegistries = new LinkedHashMap<>();
-
+    private StitchingDsl stitchingDsl;
 
     public NadelTypeDefinitionRegistry(StitchingDsl stitchingDsl) {
+        this.stitchingDsl = stitchingDsl;
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             List<TypeDefinition<?>> typeDefinitions = serviceDefinition.getTypeDefinitions();
@@ -72,4 +73,7 @@ public class NadelTypeDefinitionRegistry {
                 .collect(Collectors.toList());
     }
 
+    public StitchingDsl getStitchingDsl() {
+        return stitchingDsl;
+    }
 }

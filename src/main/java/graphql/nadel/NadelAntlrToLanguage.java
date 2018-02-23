@@ -1,12 +1,14 @@
 package graphql.nadel;
 
 import graphql.language.Document;
+import graphql.language.FieldDefinition;
 import graphql.language.TypeDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.RuleNode;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -48,7 +50,6 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     private void startRecording() {
         recording = true;
         contextEntriesRecorder.clear();
-        ;
     }
 
     private void stopRecording() {
@@ -58,7 +59,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     @Override
     protected void addContextProperty(ContextProperty contextProperty, Object value) {
         super.addContextProperty(contextProperty, value);
-        contextEntriesRecorder.add(getContextStack().getFirst());
+        if (recording) {
+            contextEntriesRecorder.add(getContextStack().getFirst());
+        }
     }
 
     protected void addContextProperty(NadelContextProperty contextProperty, Object value) {
@@ -119,5 +122,25 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         ServiceDefinition serviceDefinition = (ServiceDefinition) getFromContextStack(NadelContextProperty.ServiceDefinition);
         serviceDefinition.getTypeDefinitions().add(typeDefinition);
         return null;
+    }
+
+//    @Override
+//    public Void visitFieldDefinition(StitchingDSLParser.FieldDefinitionContext ctx) {
+////        startRecording();
+////        super.visitFieldDefinition(ctx);
+////        stopRecording();
+////        FieldDefinition fieldDefinition = (FieldDefinition) contextEntriesRecorder.get(0).value;
+////        ServiceDefinition serviceDefinition = (ServiceDefinition) getFromContextStack(NadelContextProperty.ServiceDefinition);
+////        this.stitchingDsl.getServiceByField().put(fieldDefinition, serviceDefinition);
+////        return null;
+//    }
+
+    @Override
+    public Void visitChildren(RuleNode node) {
+        if (getContextStack().size() > 0 && getContextStack().getFirst().contextProperty == ContextProperty.FieldDefinition) {
+            ServiceDefinition serviceDefinition = (ServiceDefinition) getFromContextStack(NadelContextProperty.ServiceDefinition);
+            this.stitchingDsl.getServiceByField().put((FieldDefinition) getContextStack().getFirst().value, serviceDefinition);
+        }
+        return super.visitChildren(node);
     }
 }

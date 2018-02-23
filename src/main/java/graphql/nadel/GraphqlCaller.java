@@ -2,22 +2,8 @@ package graphql.nadel;
 
 import graphql.language.Document;
 
-import java.util.List;
-import java.util.Map;
+public interface GraphqlCaller {
 
-public class GraphqlCaller {
-
-
-    public static class GraphqlCallResult {
-        Map<String, Object> data;
-        List<String> errors;
-
-    }
-
-
-    public GraphqlCallResult call(Document query) {
-        return new GraphqlCallResult();
-    }
-
+    GraphqlCallResult call(Document query);
 
 }

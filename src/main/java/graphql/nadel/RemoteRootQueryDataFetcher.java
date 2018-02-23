@@ -14,17 +14,18 @@ public class RemoteRootQueryDataFetcher implements DataFetcher {
     private RootQueryCreator queryCreator;
     private ServiceDefinition serviceDefinition;
 
-    public RemoteRootQueryDataFetcher(ServiceDefinition serviceDefinition) {
+    public RemoteRootQueryDataFetcher(ServiceDefinition serviceDefinition, GraphqlCaller graphqlCaller) {
         this.serviceDefinition = serviceDefinition;
         this.queryCreator = new RootQueryCreator();
+        this.graphqlCaller = graphqlCaller;
     }
 
     @Override
     public Object get(DataFetchingEnvironment environment) {
         String fieldName = environment.getFields().get(0).getName();
         Document query = queryCreator.createQuery(environment);
-        GraphqlCaller.GraphqlCallResult callResult = graphqlCaller.call(query);
-        return callResult.data.get(fieldName);
+        GraphqlCallResult callResult = graphqlCaller.call(query);
+        return callResult.getData().get(fieldName);
     }
 
 }
