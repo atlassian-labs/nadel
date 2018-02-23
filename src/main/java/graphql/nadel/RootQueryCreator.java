@@ -1,17 +1,29 @@
 package graphql.nadel;
 
 import graphql.language.Document;
+import graphql.language.FieldDefinition;
 import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
+import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
+import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.DataFetchingEnvironment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class RootQueryCreator {
 
     private ServiceDefinition serviceDefinition;
+    private StitchingDsl stitchingDsl;
+
+
+    public RootQueryCreator(ServiceDefinition serviceDefinition, StitchingDsl stitchingDsl) {
+       this.serviceDefinition = serviceDefinition;
+        this.stitchingDsl = stitchingDsl;
+    }
 
     public Document createQuery(DataFetchingEnvironment environment) {
         Document result = new Document();

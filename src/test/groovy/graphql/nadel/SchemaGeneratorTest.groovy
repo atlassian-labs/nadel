@@ -104,4 +104,37 @@ class SchemaGeneratorTest extends Specification {
         schema.getQueryType().fieldDefinitions[0].name == "hello1"
         schema.getQueryType().fieldDefinitions[1].name == "hello2"
     }
+
+    def "schema with field transformation"() {
+        def dsl = """
+        service FooService {
+            url: "url1"
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                barId: ID => bar: Bar
+            }
+        }
+        service BarService {
+            url: "url2"
+            type Query {
+                bar(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+            }
+        }
+        """
+        when:
+        def schema = createSchema(dsl)
+        then:
+        schema.getQueryType().name == "Query"
+        GraphQLObjectType fooType = (GraphQLObjectType) schema.getType("Foo")
+        fooType.fieldDefinitions[0].name == "bar"
+        def barField = fooType.fieldDefinitions[0]
+        barField.name == "bar"
+        barField.type instanceof GraphQLObjectType
+        ((GraphQLObjectType) barField.type).name == "Bar"
+    }
 }

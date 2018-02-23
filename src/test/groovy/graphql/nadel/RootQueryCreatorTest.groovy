@@ -2,6 +2,8 @@ package graphql.nadel
 
 import graphql.language.AstPrinter
 import graphql.language.Field
+import graphql.nadel.dsl.ServiceDefinition
+import graphql.nadel.dsl.StitchingDsl
 import graphql.schema.DataFetchingEnvironment
 import spock.lang.Specification
 
@@ -10,7 +12,9 @@ class RootQueryCreatorTest extends Specification {
 
     def "create query"() {
         given:
-        def queryCreator = new RootQueryCreator()
+        ServiceDefinition serviceDefinition = new ServiceDefinition("name", "url", null)
+        StitchingDsl stitchingDsl = new StitchingDsl()
+        def queryCreator = new RootQueryCreator(serviceDefinition, stitchingDsl)
         def environment = Mock(DataFetchingEnvironment)
         Field field = new Field("hello")
         environment.getFields() >> [field]
@@ -24,5 +28,9 @@ class RootQueryCreatorTest extends Specification {
   hello
 }
 """
+    }
+
+    def "create query respecting the field transformation"() {
+
     }
 }

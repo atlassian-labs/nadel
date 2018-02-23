@@ -2,3 +2,4 @@
 .gradle
 build
 src/main/antlr/Graphql*.g4
+out/

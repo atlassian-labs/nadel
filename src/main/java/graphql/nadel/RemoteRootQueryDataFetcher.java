@@ -4,6 +4,7 @@ package graphql.nadel;
 import graphql.PublicApi;
 import graphql.language.Document;
 import graphql.nadel.dsl.ServiceDefinition;
+import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 
@@ -16,9 +17,9 @@ public class RemoteRootQueryDataFetcher implements DataFetcher {
     private RootQueryCreator queryCreator;
     private ServiceDefinition serviceDefinition;
 
-    public RemoteRootQueryDataFetcher(ServiceDefinition serviceDefinition, GraphqlCaller graphqlCaller) {
+    public RemoteRootQueryDataFetcher(ServiceDefinition serviceDefinition, GraphqlCaller graphqlCaller, StitchingDsl stitchingDsl) {
         this.serviceDefinition = assertNotNull(serviceDefinition);
-        this.queryCreator = new RootQueryCreator();
+        this.queryCreator = new RootQueryCreator(serviceDefinition, stitchingDsl);
         this.graphqlCaller = assertNotNull(graphqlCaller);
     }
 
