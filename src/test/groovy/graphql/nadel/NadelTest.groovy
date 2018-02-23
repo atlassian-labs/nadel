@@ -48,7 +48,6 @@ class NadelTest extends Specification {
         then:
         executionResult.data == [hello: 'world']
         1 * graphqlCallerService1.call(_) >> new GraphqlCallResult([hello: 'world'])
-
     }
 
 }

@@ -19,7 +19,8 @@ class SchemaGeneratorTest extends Specification {
     GraphQLSchema createSchema(String dsl) {
         def typeRegistry = createTypeRegistry(dsl)
         SchemaGenerator schemaGenerator = new SchemaGenerator()
-        schemaGenerator.makeExecutableSchema(typeRegistry, graphqlCallerFactory)
+        def callerFactory = Mock(GraphqlCallerFactory)
+        schemaGenerator.makeExecutableSchema(typeRegistry, callerFactory)
     }
 
     def "simple service"() {

@@ -491,7 +491,7 @@ public class SchemaGenerator {
     }
 
     private GraphQLFieldDefinition buildField(BuildContext buildCtx, TypeDefinition parentType, FieldDefinition fieldDef) {
-        return buildField(buildCtx, parentType, fieldDef);
+        return buildField(buildCtx, parentType, fieldDef, null);
     }
 
     private GraphQLFieldDefinition buildField(BuildContext buildCtx, TypeDefinition parentType, FieldDefinition fieldDef, DataFetcher dataFetcher) {
