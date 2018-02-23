@@ -21,6 +21,10 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
         return serviceDefinitions;
     }
 
+    public ServiceDefinition getServiceDefinition(String name) {
+        return serviceDefinitions.stream().filter(serviceDefinition -> serviceDefinition.getName().equals(name)).findFirst().get();
+    }
+
     @Override
     public List<Node> getChildren() {
         return new ArrayList<>(serviceDefinitions);
