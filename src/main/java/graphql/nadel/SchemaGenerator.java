@@ -168,7 +168,7 @@ public class SchemaGenerator {
         }
 
         public FieldTransformation getFieldTransformation(FieldDefinition fieldDefinition) {
-            return typeRegistry.getStitchingDsl().getTransformationsByField().get(fieldDefinition);
+            return typeRegistry.getStitchingDsl().getTransformationsByFieldDefinition().get(fieldDefinition);
         }
     }
 

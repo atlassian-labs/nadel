@@ -37,7 +37,7 @@ public class RootQueryCreator {
         Map<Field, FieldDefinition> fieldsToBeReplaced = new LinkedHashMap<>();
         queryTraversal.visitPreOrder(queryVisitorEnvironment -> {
             FieldDefinition definition = queryVisitorEnvironment.getFieldDefinition().getDefinition();
-            FieldTransformation fieldTransformation = this.stitchingDsl.getTransformationsByField().get(definition);
+            FieldTransformation fieldTransformation = this.stitchingDsl.getTransformationsByFieldDefinition().get(definition);
             if (fieldTransformation != null) {
                 fieldsToBeReplaced.put(queryVisitorEnvironment.getField(), definition);
             }

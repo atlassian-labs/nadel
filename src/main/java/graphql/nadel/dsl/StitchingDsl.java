@@ -14,7 +14,7 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
     private List<ServiceDefinition> serviceDefinitions = new ArrayList<>();
     private Map<FieldDefinition, ServiceDefinition> serviceByField = new LinkedHashMap<>();
-    private Map<FieldDefinition, FieldTransformation> transformationsByField = new LinkedHashMap<>();
+    private Map<FieldDefinition, FieldTransformation> transformationsByFieldDefinition = new LinkedHashMap<>();
 
 
     public List<ServiceDefinition> getServiceDefinitions() {
@@ -35,8 +35,8 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     }
 
 
-    public Map<FieldDefinition, FieldTransformation> getTransformationsByField() {
-        return transformationsByField;
+    public Map<FieldDefinition, FieldTransformation> getTransformationsByFieldDefinition() {
+        return transformationsByFieldDefinition;
     }
 
     @Override

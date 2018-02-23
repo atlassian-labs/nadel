@@ -125,7 +125,7 @@ class ParserTest extends Specification {
         ObjectTypeDefinition fooType = stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[1]
         fooType.name == "Foo"
         def fieldDefinition = fooType.fieldDefinitions[0]
-        FieldTransformation fieldTransformation = stitchingDSL.getTransformationsByField().get(fieldDefinition)
+        FieldTransformation fieldTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(fieldDefinition)
         fieldTransformation != null
         fieldTransformation.targetName == "bar"
         fieldTransformation.targetType instanceof TypeName
