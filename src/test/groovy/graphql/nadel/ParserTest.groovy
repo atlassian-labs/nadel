@@ -1,6 +1,8 @@
 package graphql.nadel
 
 import graphql.language.ObjectTypeDefinition
+import graphql.language.TypeName
+import graphql.nadel.dsl.FieldTransformation
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import spock.lang.Specification
 
@@ -88,6 +90,46 @@ class ParserTest extends Specification {
 
         then:
         thrown(ParseCancellationException)
+    }
+
+    def "parse transformation"() {
+        given:
+        def dsl = """
+        service FooService {
+            url: "url1"
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                barId: ID => bar: Bar
+            }
+        }
+        service BarService {
+            url: "url2"
+            type Query {
+                bar(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+            }
+        }
+        """
+        when:
+        Parser parser = new Parser()
+        then:
+        def stitchingDSL = parser.parseDSL(dsl)
+
+        then:
+        stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions().size() == 2
+
+        ObjectTypeDefinition fooType = stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[1]
+        fooType.name == "Foo"
+        def fieldDefinition = fooType.fieldDefinitions[0]
+        FieldTransformation fieldTransformation = stitchingDSL.getTransformationsByField().get(fieldDefinition)
+        fieldTransformation != null
+        fieldTransformation.targetName == "bar"
+        fieldTransformation.targetType instanceof TypeName
+        ((TypeName) fieldTransformation.targetType).name == "Bar"
 
 
     }

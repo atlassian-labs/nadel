@@ -14,6 +14,7 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
     private List<ServiceDefinition> serviceDefinitions = new ArrayList<>();
     private Map<FieldDefinition, ServiceDefinition> serviceByField = new LinkedHashMap<>();
+    private Map<FieldDefinition, FieldTransformation> transformationsByField = new LinkedHashMap<>();
 
 
     public List<ServiceDefinition> getServiceDefinitions() {
@@ -30,6 +31,9 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     }
 
 
+    public Map<FieldDefinition, FieldTransformation> getTransformationsByField() {
+        return transformationsByField;
+    }
 
     @Override
     public boolean isEqualTo(Node node) {

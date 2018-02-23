@@ -1,8 +1,14 @@
 package graphql.nadel;
 
+import graphql.Assert;
 import graphql.language.Document;
 import graphql.language.FieldDefinition;
+import graphql.language.ListType;
+import graphql.language.NonNullType;
+import graphql.language.Type;
 import graphql.language.TypeDefinition;
+import graphql.language.TypeName;
+import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
@@ -124,16 +130,39 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         return null;
     }
 
-//    @Override
-//    public Void visitFieldDefinition(StitchingDSLParser.FieldDefinitionContext ctx) {
-////        startRecording();
-////        super.visitFieldDefinition(ctx);
-////        stopRecording();
-////        FieldDefinition fieldDefinition = (FieldDefinition) contextEntriesRecorder.get(0).value;
-////        ServiceDefinition serviceDefinition = (ServiceDefinition) getFromContextStack(NadelContextProperty.ServiceDefinition);
-////        this.stitchingDsl.getServiceByField().put(fieldDefinition, serviceDefinition);
-////        return null;
-//    }
+
+    @Override
+    public Void visitFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
+        FieldDefinition fieldDefinition = (FieldDefinition) getFromContextStack(ContextProperty.FieldDefinition);
+        FieldTransformation fieldTransformation = new FieldTransformation();
+        if (ctx.targetFieldDefinition() != null) {
+            fieldTransformation.setTargetName(ctx.targetFieldDefinition().name().getText());
+            fieldTransformation.setTargetType(createType(ctx.targetFieldDefinition().type()));
+            this.stitchingDsl.getTransformationsByField().put(fieldDefinition, fieldTransformation);
+        }
+        return null;
+    }
+
+
+    private Type createType(StitchingDSLParser.TypeContext typeContext) {
+
+        if (typeContext.typeName() != null) {
+            return new TypeName(typeContext.typeName().name().getText());
+        } else if (typeContext.listType() != null) {
+            return new ListType(createType(typeContext.listType().type()));
+        } else if (typeContext.nonNullType() != null) {
+            StitchingDSLParser.NonNullTypeContext nonNullTypeContext = typeContext.nonNullType();
+            Type subType;
+            if (nonNullTypeContext.typeName() != null) {
+                subType = new TypeName(nonNullTypeContext.typeName().name().getText());
+            } else {
+                subType = new ListType(createType(typeContext.listType().type()));
+            }
+            return new NonNullType(subType);
+        }
+        return Assert.assertShouldNeverHappen();
+    }
+
 
     @Override
     public Void visitChildren(RuleNode node) {
