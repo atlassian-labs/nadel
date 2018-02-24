@@ -1,5 +1,6 @@
 package graphql.nadel;
 
+import graphql.execution.DataFetcherResult;
 import graphql.language.Document;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.StitchingDsl;
@@ -27,6 +28,6 @@ public class TransformedFieldDataFetcher implements DataFetcher {
         Document query = transformedFieldQueryCreator.createQuery(environment);
         GraphqlCallResult callResult = graphqlCaller.call(query);
         assertNotNull(callResult, "callResult can't be null");
-        return callResult.getData().get(environment.getField().getName());
+        return new DataFetcherResult<>(callResult.getData().get(environment.getField().getName()), callResult.getErrors());
     }
 }

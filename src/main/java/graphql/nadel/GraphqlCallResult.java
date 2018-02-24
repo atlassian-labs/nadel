@@ -1,11 +1,14 @@
 package graphql.nadel;
 
+import graphql.GraphQLError;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class GraphqlCallResult {
     private Map<String, Object> data;
-    private List<String> errors;
+    private List<GraphQLError> errors = new ArrayList<>();
 
     public GraphqlCallResult(Map<String, Object> data) {
         this.data = data;
@@ -19,11 +22,11 @@ public class GraphqlCallResult {
         this.data = data;
     }
 
-    public List<String> getErrors() {
+    public List<GraphQLError> getErrors() {
         return errors;
     }
 
-    public void setErrors(List<String> errors) {
+    public void setErrors(List<GraphQLError> errors) {
         this.errors = errors;
     }
 }

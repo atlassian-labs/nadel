@@ -2,6 +2,7 @@ package graphql.nadel;
 
 
 import graphql.PublicApi;
+import graphql.execution.DataFetcherResult;
 import graphql.language.Document;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
@@ -29,7 +30,7 @@ public class RemoteRootQueryDataFetcher implements DataFetcher {
         Document query = queryCreator.createQuery(environment);
         GraphqlCallResult callResult = graphqlCaller.call(query);
         assertNotNull(callResult, "call result can't be null");
-        return callResult.getData().get(fieldName);
+        return new DataFetcherResult<>(callResult.getData().get(fieldName), callResult.getErrors());
     }
 
 }
