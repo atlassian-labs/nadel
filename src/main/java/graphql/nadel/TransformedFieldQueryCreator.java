@@ -36,11 +36,11 @@ public class TransformedFieldQueryCreator {
         GraphQLObjectType targetType = (GraphQLObjectType) dataFetchingEnvironment.getGraphQLSchema().getType(targetTypeName.getName());
 
         FieldDefinition foreignKeyField = getForeignKeyField(targetType);
-        String foreignKeyName = foreignKeyField.getName();
-        Object foreignKeyValue = getForeignKeyValue(dataFetchingEnvironment, foreignKeyName);
+        Object foreignKeyValue = getForeignKeyValue(dataFetchingEnvironment, fieldDefinition.getName());
 
+        String foreignKeyName = foreignKeyField.getName();
         Field rootField = createRootFieldForQuery(targetType, foreignKeyName, foreignKeyValue);
-        rootField.setSelectionSet(dataFetchingEnvironment.getField().getSelectionSet());
+        rootField.setSelectionSet(dataFetchingEnvironment.getField().getSelectionSet().deepCopy());
         addAdditionalFieldsToQuery(rootField.getSelectionSet(), foreignKeyName);
 
         Document document = createDocumentWithQueryOperation(rootField);

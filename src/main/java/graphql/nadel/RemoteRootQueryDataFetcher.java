@@ -25,7 +25,7 @@ public class RemoteRootQueryDataFetcher implements DataFetcher {
 
     @Override
     public Object get(DataFetchingEnvironment environment) {
-        String fieldName = environment.getFields().get(0).getName();
+        String fieldName = environment.getField().getName();
         Document query = queryCreator.createQuery(environment);
         GraphqlCallResult callResult = graphqlCaller.call(query);
         assertNotNull(callResult, "call result can't be null");
