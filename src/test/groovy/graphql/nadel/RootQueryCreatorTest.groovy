@@ -32,10 +32,7 @@ class RootQueryCreatorTest extends Specification {
         def document = queryCreator.createQuery(environment)
 
         then:
-        AstPrinter.printAst(document) == """query {
-  hello
-}
-"""
+        TestUtil.printAstCompact(document) == """query { hello }"""
     }
 
 
@@ -71,13 +68,7 @@ class RootQueryCreatorTest extends Specification {
         def document = queryCreator.createQuery(environment)
 
         then:
-        AstPrinter.printAst(document) ==
-                """query {
-  foo {
-    barId
-  }
-}
-"""
+        TestUtil.printAstCompact(document) == """query { foo { barId } }"""
 
     }
 
