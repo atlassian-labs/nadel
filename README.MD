@@ -69,12 +69,12 @@ type User {
 You create a `Nadel` instance and execute queries on it:
 
 ```java
-        // A GraphqlCaller actually executes a request against a service
-        GraphqlCallerFactory graphqlCallFactory = ....  
-        String dsl = "<Nadel stitching DSL>";
-        Nadel nadel = new Nadel(dsl, callerFactory);
-        String query = "<some query on the stitched schema>"
-        ExecutionResult executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+// A GraphqlCaller actually executes a request against a service
+GraphqlCallerFactory graphqlCallFactory = ....  
+String dsl = "<Nadel stitching DSL>";
+Nadel nadel = new Nadel(dsl, callerFactory);
+String query = "<some query on the stitched schema>"
+ExecutionResult executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 ```
 
 ## Library Boundaries
