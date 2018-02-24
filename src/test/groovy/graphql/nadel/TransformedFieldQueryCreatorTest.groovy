@@ -41,7 +41,7 @@ class TransformedFieldQueryCreatorTest extends Specification {
 
         def overallQuery = """ {foo{bar{name}}} """
         def (DataFetchingEnvironment dataFetchingEnvrionment) = mockDFEnvironment(overallQuery, schema)
-        dataFetchingEnvrionment.getSource() >> [id: "someBarId"]
+        dataFetchingEnvrionment.getSource() >> [barId: "someBarId"]
         when:
         def createdQuery = transformedFieldQueryCreator.createQuery(dataFetchingEnvrionment)
 
