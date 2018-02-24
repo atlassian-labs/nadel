@@ -136,5 +136,6 @@ class SchemaGeneratorTest extends Specification {
         barField.name == "bar"
         barField.type instanceof GraphQLObjectType
         ((GraphQLObjectType) barField.type).name == "Bar"
+        barField.dataFetcher instanceof TransformedFieldDataFetcher
     }
 }

@@ -33,8 +33,6 @@ import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.Coercing;
 import graphql.schema.DataFetcher;
-import graphql.schema.DataFetcherFactory;
-import graphql.schema.DataFetcherFactoryEnvironment;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLEnumType;
@@ -52,6 +50,7 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
 import graphql.schema.GraphQLUnionType;
+import graphql.schema.PropertyDataFetcher;
 import graphql.schema.TypeResolver;
 import graphql.schema.idl.EnumValuesProvider;
 import graphql.schema.idl.ScalarInfo;
@@ -521,53 +520,21 @@ public class SchemaGenerator {
         if (dataFetcher != null) {
             builder.dataFetcher(dataFetcher);
         } else {
-            builder.dataFetcherFactory(buildDataFetcherFactory(buildCtx, parentType, fieldDef, fieldType, Arrays.asList(directives)));
+            builder.dataFetcher(buildDataFetcher(buildCtx, parentType, fieldDef, fieldType, Arrays.asList(directives)));
         }
 
 
         return builder.build();
     }
 
-    private DataFetcherFactory buildDataFetcherFactory(BuildContext buildCtx, TypeDefinition parentType, FieldDefinition fieldDef, GraphQLOutputType fieldType, List<GraphQLDirective> directives) {
-        return new DataFetcherFactory() {
-            @Override
-            public DataFetcher get(DataFetcherFactoryEnvironment environment) {
-                return null;
-            }
-        };
-//        String fieldName = fieldDef.getName();
-//        String parentTypeName = parentType.getName();
-//        TypeDefinitionRegistry typeRegistry = buildCtx.getTypeRegistry();
-//        RuntimeWiring runtimeWiring = buildCtx.getWiring();
-//        WiringFactory wiringFactory = runtimeWiring.getWiringFactory();
-//
-//        FieldWiringEnvironment wiringEnvironment = new FieldWiringEnvironment(typeRegistry, parentType, fieldDef, fieldType, directives);
-//
-//        DataFetcherFactory<?> dataFetcherFactory;
-//        if (wiringFactory.providesDataFetcherFactory(wiringEnvironment)) {
-//            dataFetcherFactory = wiringFactory.getDataFetcherFactory(wiringEnvironment);
-//            assertNotNull(dataFetcherFactory, "The WiringFactory indicated it provides a data fetcher factory but then returned null");
-//        } else {
-//            //
-//            // ok they provide a data fetcher directly
-//            DataFetcher<?> dataFetcher;
-//            if (wiringFactory.providesDataFetcher(wiringEnvironment)) {
-//                dataFetcher = wiringFactory.getDataFetcher(wiringEnvironment);
-//                assertNotNull(dataFetcher, "The WiringFactory indicated it provides a data fetcher but then returned null");
-//            } else {
-//                dataFetcher = runtimeWiring.getDataFetcherForType(parentTypeName).get(fieldName);
-//                if (dataFetcher == null) {
-//                    dataFetcher = runtimeWiring.getDefaultDataFetcherForType(parentTypeName);
-//                    if (dataFetcher == null) {
-//                        dataFetcher = wiringFactory.getDefaultDataFetcher(wiringEnvironment);
-//                        assertNotNull(dataFetcher, "The WiringFactory indicated MUST provide a default data fetcher as part of its contract");
-//                    }
-//                }
-//            }
-//            dataFetcherFactory = DataFetcherFactories.useDataFetcher(dataFetcher);
-//        }
-//
-//        return dataFetcherFactory;
+    private DataFetcher buildDataFetcher(BuildContext buildCtx, TypeDefinition parentType, FieldDefinition fieldDef, GraphQLOutputType fieldType, List<GraphQLDirective> directives) {
+        FieldTransformation fieldTransformation = buildCtx.getFieldTransformation(fieldDef);
+        if (fieldTransformation == null) {
+            return new PropertyDataFetcher(fieldDef.getName());
+        }
+        ServiceDefinition serviceDefinition = buildCtx.getServiceForField(fieldDef);
+        GraphqlCaller graphqlCaller = buildCtx.createCaller(serviceDefinition);
+        return new TransformedFieldDataFetcher(graphqlCaller, buildCtx.typeRegistry.getStitchingDsl());
     }
 
     private GraphQLInputObjectType buildInputObjectType(BuildContext buildCtx, InputObjectTypeDefinition typeDefinition) {
