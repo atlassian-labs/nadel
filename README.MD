@@ -63,3 +63,84 @@ type User {
     name: String
 }
 ``` 
+
+## Usage
+
+You create a `Nadel` instance and execute queries on it:
+
+```java
+        // A GraphqlCaller actually executes a request against a service
+        GraphqlCallerFactory graphqlCallFactory = ....  
+        String dsl = "<Nadel stitching DSL>";
+        Nadel nadel = new Nadel(dsl, callerFactory);
+        String query = "<some query on the stitched schema>"
+        ExecutionResult executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+```
+
+## Library Boundaries
+
+This library doesn't deal with JSON parsing or any form of (HTTP) connections.
+
+## DSL design 
+
+The main element of the DSL is a service definition:
+
+```service MyService {
+    url: "http://example.com/graphql"
+    type Query {
+        ....
+    } 
+}
+```
+The url should point to the graphql endpoint of the service.
+The rest of service must be valid GraphQL SDL elements: object type definitions, interfaces etc
+
+### Query fields are merged 
+Every service has to define a `Query` object type, which describes the top level type of the service.
+All fields of all `Query` types get merged together in the `Query` of the stitched schema.
+
+### Type Ownership and type extension (TODO)
+Every type is owned by specifically one service. Other services can extend the types.
+
+```
+service UserService {
+    ...
+    type User {
+        id: String
+        name: String
+    }
+}
+
+service OtherService {
+
+    extend type User {
+        otherUserField => {}
+    }
+    
+}
+
+```
+
+## Field Transformations
+It is possible to combine two services together through a specific field and a "field transformation":
+
+```
+service Posts {
+    ...
+    type Post {
+        ...
+        authorID: ID => author: User 
+    }
+}
+
+service Users {
+    ...
+    type User {
+        id: ID!
+        ...
+    }
+}
+
+```
+
+
