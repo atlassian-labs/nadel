@@ -60,7 +60,7 @@ task generateAntrlToJavaSource {
                 'GraphqlBaseVisitor<Void>':'StitchingDSLBaseVisitor<Void>',
                 'GraphqlParser':'StitchingDSLParser' ]
 
-        def sourceFile = new File('nadel/build/generated-src/antlr/main/graphql/nadel/parser/GraphqlAntlrToLanguage.java')
+        def sourceFile = new File('nadel-dsl/build/generated-src/antlr/main/graphql/nadel/parser/GraphqlAntlrToLanguage.java')
         def content = sourceFile.text
         replacePatterns.each { content = content.replace(it.key, it.value)}
         def startIndex = content.indexOf('//MARKER START')
