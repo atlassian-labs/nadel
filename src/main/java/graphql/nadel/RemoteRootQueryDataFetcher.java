@@ -9,6 +9,8 @@ import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 
+import java.util.concurrent.CompletableFuture;
+
 import static graphql.Assert.assertNotNull;
 
 @PublicApi
@@ -25,12 +27,12 @@ public class RemoteRootQueryDataFetcher implements DataFetcher {
     }
 
     @Override
-    public Object get(DataFetchingEnvironment environment) {
+    public CompletableFuture<DataFetcherResult> get(DataFetchingEnvironment environment) {
         String fieldName = environment.getField().getName();
         Document query = queryCreator.createQuery(environment);
-        GraphqlCallResult callResult = graphqlCaller.call(query);
-        assertNotNull(callResult, "call result can't be null");
-        return new DataFetcherResult<>(callResult.getData().get(fieldName), callResult.getErrors());
+        CompletableFuture<GraphqlCallResult> callResultFuture = graphqlCaller.call(query);
+        assertNotNull(callResultFuture, "call result can't be null");
+        return callResultFuture.thenApply(callResult -> new DataFetcherResult<>(callResult.getData().get(fieldName), callResult.getErrors()));
     }
 
 }

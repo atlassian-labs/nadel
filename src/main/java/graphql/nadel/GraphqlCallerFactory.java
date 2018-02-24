@@ -8,7 +8,6 @@ public interface GraphqlCallerFactory {
 //
 //    }
 
-
     GraphqlCaller createGraphqlCaller(ServiceDefinition serviceDefinition);
 
 }

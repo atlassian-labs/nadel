@@ -7,6 +7,8 @@ import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 
+import java.util.concurrent.CompletableFuture;
+
 import static graphql.Assert.assertNotNull;
 
 public class TransformedFieldDataFetcher implements DataFetcher {
@@ -21,13 +23,13 @@ public class TransformedFieldDataFetcher implements DataFetcher {
 
 
     @Override
-    public Object get(DataFetchingEnvironment environment) {
+    public CompletableFuture<DataFetcherResult> get(DataFetchingEnvironment environment) {
         FieldTransformation fieldTransformation = this.stitchingDsl.getTransformationsByFieldDefinition().get(environment.getFieldDefinition().getDefinition());
         assertNotNull(fieldTransformation, "expect field transformation");
         TransformedFieldQueryCreator transformedFieldQueryCreator = new TransformedFieldQueryCreator(environment.getFieldDefinition().getDefinition(), fieldTransformation);
         Document query = transformedFieldQueryCreator.createQuery(environment);
-        GraphqlCallResult callResult = graphqlCaller.call(query);
-        assertNotNull(callResult, "callResult can't be null");
-        return new DataFetcherResult<>(callResult.getData().get(environment.getField().getName()), callResult.getErrors());
+        CompletableFuture<GraphqlCallResult> callResultFuture = graphqlCaller.call(query);
+        assertNotNull(callResultFuture, "callResult can't be null");
+        return callResultFuture.thenApply(callResult -> new DataFetcherResult<>(callResult.getData().get(environment.getField().getName()), callResult.getErrors()));
     }
 }

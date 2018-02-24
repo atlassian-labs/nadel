@@ -4,6 +4,8 @@ import graphql.ExecutionInput
 import graphql.nadel.dsl.ServiceDefinition
 import spock.lang.Specification
 
+import static java.util.concurrent.CompletableFuture.completedFuture
+
 class NadelTest extends Specification {
 
 
@@ -47,14 +49,14 @@ class NadelTest extends Specification {
 
         then:
         executionResult.data == [hello: 'world']
-        1 * graphqlCallerService1.call(_) >> new GraphqlCallResult([hello: 'world'])
+        1 * graphqlCallerService1.call(_) >> completedFuture(new GraphqlCallResult([hello: 'world']))
 
         when:
         executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query2).build()).get()
 
         then:
         executionResult.data == [hello2: 'world']
-        1 * graphqlCallerService2.call(_) >> new GraphqlCallResult([hello2: 'world'])
+        1 * graphqlCallerService2.call(_) >> completedFuture(new GraphqlCallResult([hello2: 'world']))
     }
 
 
@@ -91,8 +93,8 @@ class NadelTest extends Specification {
 
         then:
         executionResult.data == [foo: [bar: [name: 'barName']]]
-        1 * graphqlCallerService1.call(_) >> new GraphqlCallResult([foo: [barId: 'someBarId']])
-        1 * graphqlCallerService1.call(_) >> new GraphqlCallResult([bar: [id: 'someBarId', name: 'barName']])
+        1 * graphqlCallerService1.call(_) >> completedFuture(new GraphqlCallResult([foo: [barId: 'someBarId']]))
+        1 * graphqlCallerService1.call(_) >> completedFuture(new GraphqlCallResult([bar: [id: 'someBarId', name: 'barName']]))
     }
 
 }
