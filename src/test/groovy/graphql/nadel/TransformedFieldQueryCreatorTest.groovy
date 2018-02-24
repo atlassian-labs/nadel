@@ -1,6 +1,5 @@
 package graphql.nadel
 
-import graphql.language.AstPrinter
 import graphql.language.Field
 import graphql.language.OperationDefinition
 import graphql.nadel.dsl.StitchingDsl
@@ -47,15 +46,7 @@ class TransformedFieldQueryCreatorTest extends Specification {
         def createdQuery = transformedFieldQueryCreator.createQuery(dataFetchingEnvrionment)
 
         then:
-        AstPrinter.printAst(createdQuery) ==
-                """query {
-  bar(id: "someBarId") {
-    id
-    name
-  }
-}
-"""
-
+        TestUtil.printAstCompact(createdQuery) == """query { bar(id: "someBarId") { id name } }"""
 
     }
 
