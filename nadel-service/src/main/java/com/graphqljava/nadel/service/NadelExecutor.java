@@ -29,7 +29,7 @@ public class NadelExecutor {
 
     @PostConstruct
     public void init() {
-        File dslFile = new File("./nadel-service/nadel-dsl.txt");
+        File dslFile = new File("./nadel-dsl.txt");
         String dsl = readDsl(dslFile);
         nadel = new Nadel(dsl, graphqlCallerFactory);
         logger.info("successfully initialized nadel");
