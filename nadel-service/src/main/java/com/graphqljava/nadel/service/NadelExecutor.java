@@ -31,6 +31,7 @@ public class NadelExecutor {
     public void init() {
         File dslFile = new File("./nadel-dsl.txt");
         String dsl = readDsl(dslFile);
+        logger.info("Nadel dsl: {}", dsl);
         nadel = new Nadel(dsl, graphqlCallerFactory);
         logger.info("successfully initialized nadel");
     }

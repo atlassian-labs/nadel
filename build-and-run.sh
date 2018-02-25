@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-set -e
-./gradlew build
-cd nadel-service
-java -jar build/libs/nadel-service-0.0.1-SNAPSHOT.jar
+imageID=$(docker build . -q)
+docker run -p 8080:8080 -v $(pwd)/nadel-service/nadel-dsl.txt:/nadel-dsl.txt ${imageID}
 

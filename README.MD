@@ -9,7 +9,7 @@ This repo consists of two projects:
 
 ## Quickstart to run the service:
 
-1. Java 9 is required
+1. Docker is required
 
 2. Build and run the service with an [example DSL](nadel-service/nadel-dsl.txt):
 
