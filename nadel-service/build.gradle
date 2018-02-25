@@ -23,6 +23,7 @@ sourceCompatibility = 1.9
 
 repositories {
     mavenCentral()
+    maven { url "http://dl.bintray.com/andimarek/graphql-java" }
     maven { url "https://repo.spring.io/snapshot" }
     maven { url "https://repo.spring.io/milestone" }
 }
