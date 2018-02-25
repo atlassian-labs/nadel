@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -37,30 +36,20 @@ public class GraphqlCallerFactory implements graphql.nadel.GraphqlCallerFactory 
                     .uri(serviceDefinition.getUrl())
                     .body(BodyInserters.fromObject(body))
                     .exchange();
+
             CompletableFuture<GraphqlCallResult> result = new CompletableFuture<>();
-//            clientResponseMono.flatMapMany( clientResponse -> result.complete(toGraphqlCallResult(clientResponse)));
-//            clientResponseMono.doOnNext((clientResponse) -> {
-            ClientResponse clientResponse = clientResponseMono.block();
-            logger.info("received response {} {}", clientResponse);
-//                if (clientResponse != null) {
-            result.complete(toGraphqlCallResult(clientResponse));
-//                } else {
-//                    result.completeExceptionally(throwable);
-//                }
-//            });
+            clientResponseMono.subscribe(clientResponse -> {
+                logger.info("received response {}", clientResponse);
+                clientResponse.toEntity(Map.class).subscribe(mapResponseEntity -> {
+                    logger.info("response body {}", mapResponseEntity);
+                    Map responseBody = mapResponseEntity.getBody();
+                    Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+                    result.complete(new GraphqlCallResult(data));
+                });
+            });
 
             return result;
         };
     }
-
-    private GraphqlCallResult toGraphqlCallResult(ClientResponse clientResponse) {
-        ResponseEntity<Map> responseBody = clientResponse.toEntity(Map.class).block();
-        logger.info("response body {}", responseBody);
-        Map body = responseBody.getBody();
-        Map<String, Object> data = (Map<String, Object>) body.get("data");
-        logger.info("response data {}", data);
-        return new GraphqlCallResult(data);
-    }
-
 
 }
