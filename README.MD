@@ -6,8 +6,15 @@ This repo consists of two projects:
 
 [Nadel-Service](nadel-service): Service using the Nadel-DSL.
 
+## Run the latest version of the service via docker:
 
-## Quickstart to run the service:
+```bash
+docker run -p 8080:8080 -v <absolute-path-to-your-nadel-dsl-file>:/nadel-dsl.txt andimarek/nadel-service
+```
+A working DSL example can be found [here](nadel-service/nadel-dsl.txt).
+
+
+## Build and run the service locally:
 
 1. Docker is required
 
