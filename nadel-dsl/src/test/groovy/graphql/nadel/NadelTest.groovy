@@ -68,7 +68,7 @@ class NadelTest extends Specification {
                 foo: Foo
             }
             type Foo {
-                barId: ID => bar: Bar
+                barId: ID => realBarValue: Bar
             }
         }
         service BarService {
@@ -86,15 +86,15 @@ class NadelTest extends Specification {
         def graphqlCallerService2 = Mock(GraphqlCaller)
         def callerFactory = mockCallerFactory([FooService: graphqlCallerService1, BarService: graphqlCallerService2])
 
-        String query = "{foo{bar{name}}}"
+        String query = "{foo{realBarValue{name}}}"
         Nadel nadel = new Nadel(dsl, callerFactory)
         when:
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 
         then:
-        executionResult.data == [foo: [bar: [name: 'barName']]]
+        executionResult.data == [foo: [realBarValue: [name: 'barName']]]
         1 * graphqlCallerService1.call(_) >> completedFuture(new GraphqlCallResult([foo: [barId: 'someBarId']]))
-        1 * graphqlCallerService1.call(_) >> completedFuture(new GraphqlCallResult([bar: [id: 'someBarId', name: 'barName']]))
+        1 * graphqlCallerService2.call(_) >> completedFuture(new GraphqlCallResult([bar: [id: 'someBarId', name: 'barName']]))
     }
 
 }

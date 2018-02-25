@@ -37,7 +37,7 @@ class TransformedFieldQueryCreatorTest extends Specification {
         def fieldDefinition = (schema.getType("Foo") as GraphQLObjectType).fieldDefinitions[0].getDefinition()
         def transformedField = stitchingDsl.getTransformationsByFieldDefinition().get(fieldDefinition)
 
-        TransformedFieldQueryCreator transformedFieldQueryCreator = new TransformedFieldQueryCreator(fieldDefinition, transformedField)
+        TransformedFieldQueryCreator transformedFieldQueryCreator = new TransformedFieldQueryCreator(fieldDefinition, transformedField, stitchingDsl)
 
         def overallQuery = """ {foo{bar{name}}} """
         def (DataFetchingEnvironment dataFetchingEnvrionment) = mockDFEnvironment(overallQuery, schema)
@@ -46,7 +46,7 @@ class TransformedFieldQueryCreatorTest extends Specification {
         def createdQuery = transformedFieldQueryCreator.createQuery(dataFetchingEnvrionment)
 
         then:
-        TestUtil.printAstCompact(createdQuery) == """query { bar(id: "someBarId") { id name } }"""
+        TestUtil.printAstCompact(createdQuery.query) == """query { bar(id: "someBarId") { id name } }"""
 
     }
 

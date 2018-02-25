@@ -9,6 +9,8 @@ import graphql.language.SelectionSet;
 import graphql.language.StringValue;
 import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldTransformation;
+import graphql.nadel.dsl.ServiceDefinition;
+import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
@@ -21,21 +23,35 @@ import static graphql.Assert.assertNotNull;
 
 public class TransformedFieldQueryCreator {
 
+    private StitchingDsl stitchingDsl;
     private FieldDefinition fieldDefinition;
     private FieldTransformation fieldTransformation;
     private ValidationUtil validationUtil = new ValidationUtil();
 
+    public static class QueryForTransformedField {
+        public ServiceDefinition targetService;
+        public Document query;
+        public String rootFieldName;
 
-    public TransformedFieldQueryCreator(FieldDefinition fieldDefinition, FieldTransformation fieldTransformation) {
-        this.fieldDefinition = fieldDefinition;
-        this.fieldTransformation = fieldTransformation;
+        public QueryForTransformedField(ServiceDefinition targetService, Document query, String rootFieldName) {
+            this.targetService = targetService;
+            this.query = query;
+            this.rootFieldName = rootFieldName;
+        }
     }
 
-    public Document createQuery(DataFetchingEnvironment dataFetchingEnvironment) {
+    public TransformedFieldQueryCreator(FieldDefinition fieldDefinition, FieldTransformation fieldTransformation, StitchingDsl stitchingDsl) {
+        this.fieldDefinition = fieldDefinition;
+        this.fieldTransformation = fieldTransformation;
+        this.stitchingDsl = stitchingDsl;
+    }
+
+    public QueryForTransformedField createQuery(DataFetchingEnvironment dataFetchingEnvironment) {
         TypeName targetTypeName = validationUtil.getUnmodifiedType(fieldTransformation.getTargetType());
         GraphQLObjectType targetType = (GraphQLObjectType) dataFetchingEnvironment.getGraphQLSchema().getType(targetTypeName.getName());
 
         FieldDefinition foreignKeyField = getForeignKeyField(targetType);
+        ServiceDefinition targetService = stitchingDsl.getServiceByField().get(foreignKeyField);
         Object foreignKeyValue = getForeignKeyValue(dataFetchingEnvironment, fieldDefinition.getName());
 
         String foreignKeyName = foreignKeyField.getName();
@@ -44,7 +60,8 @@ public class TransformedFieldQueryCreator {
         addAdditionalFieldsToQuery(rootField.getSelectionSet(), foreignKeyName);
 
         Document document = createDocumentWithQueryOperation(rootField);
-        return document;
+
+        return new QueryForTransformedField(targetService, document, rootField.getName());
     }
 
     private void addAdditionalFieldsToQuery(SelectionSet selectionSet, String foreignKeyName) {

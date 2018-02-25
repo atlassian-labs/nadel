@@ -532,9 +532,7 @@ public class SchemaGenerator {
         if (fieldTransformation == null) {
             return new PropertyDataFetcher(fieldDef.getName());
         }
-        ServiceDefinition serviceDefinition = buildCtx.getServiceForField(fieldDef);
-        GraphqlCaller graphqlCaller = buildCtx.createCaller(serviceDefinition);
-        return new TransformedFieldDataFetcher(graphqlCaller, buildCtx.typeRegistry.getStitchingDsl());
+        return new TransformedFieldDataFetcher(buildCtx.graphqlCallerFactory, buildCtx.typeRegistry.getStitchingDsl());
     }
 
     private GraphQLInputObjectType buildInputObjectType(BuildContext buildCtx, InputObjectTypeDefinition typeDefinition) {
