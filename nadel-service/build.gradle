@@ -19,11 +19,13 @@ apply plugin: 'io.spring.dependency-management'
 
 group = 'com.graphql-java.nadel'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = 1.9
+sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven { url "http://dl.bintray.com/andimarek/graphql-java" }
+    maven { url "http://packages.atlassian.com/maven/public" }
     maven { url "https://repo.spring.io/snapshot" }
     maven { url "https://repo.spring.io/milestone" }
 }

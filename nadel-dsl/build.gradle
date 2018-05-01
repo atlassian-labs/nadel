@@ -10,11 +10,11 @@ apply plugin: 'maven-publish'
 apply plugin: 'antlr'
 apply plugin: 'osgi'
 
-sourceCompatibility = 1.9
-targetCompatibility = 1.9
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
-def graphqlJavaVersion = '2018-02-23T10-11-23'
+def graphqlJavaVersion = '8.0'
 
 def releaseVersion = System.properties.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : new SimpleDateFormat('yyyy-MM-dd\'T\'HH-mm-ss').format(new Date())
@@ -22,8 +22,9 @@ group = 'com.graphql-java'
 
 
 repositories {
+    maven { url "http://packages.atlassian.com/maven/public" }
     mavenCentral()
-    maven { url "http://dl.bintray.com/andimarek/graphql-java" }
+//    maven { url "http://dl.bintray.com/andimarek/graphql-java" }
     mavenLocal()
 }
 
@@ -48,21 +49,21 @@ configurations {
 task generateAntrlToJavaSource {
     doLast {
         copy {
-            from({ zipTree(configurations.graphqlJavaSource.singleFile).files}) {
+            from({ zipTree(configurations.graphqlJavaSource.singleFile).files }) {
                 include 'GraphqlAntlrToLanguage.java'
             }
             into 'build/generated-src/antlr/main/graphql/nadel/parser'
         }
         def replacePatterns = [
-                'package graphql.parser': 'package graphql.nadel.parser',
-                'import graphql.parser.antlr.GraphqlParser;':'import graphql.nadel.parser.antlr.StitchingDSLParser;',
-                'import graphql.parser.antlr.GraphqlBaseVisitor;':'import graphql.nadel.parser.antlr.StitchingDSLBaseVisitor;',
-                'GraphqlBaseVisitor<Void>':'StitchingDSLBaseVisitor<Void>',
-                'GraphqlParser':'StitchingDSLParser' ]
+                'package graphql.parser'                         : 'package graphql.nadel.parser',
+                'import graphql.parser.antlr.GraphqlParser;'     : 'import graphql.nadel.parser.antlr.StitchingDSLParser;',
+                'import graphql.parser.antlr.GraphqlBaseVisitor;': 'import graphql.nadel.parser.antlr.StitchingDSLBaseVisitor;',
+                'GraphqlBaseVisitor<Void>'                       : 'StitchingDSLBaseVisitor<Void>',
+                'GraphqlParser'                                  : 'StitchingDSLParser']
 
         def sourceFile = new File('nadel-dsl/build/generated-src/antlr/main/graphql/nadel/parser/GraphqlAntlrToLanguage.java')
         def content = sourceFile.text
-        replacePatterns.each { content = content.replace(it.key, it.value)}
+        replacePatterns.each { content = content.replace(it.key, it.value) }
         def startIndex = content.indexOf('//MARKER START')
         def endIndex = content.indexOf('//MARKER END')
         assert startIndex > 0
@@ -79,6 +80,7 @@ dependencies {
     graphqlJavaSource('com.graphql-java:graphql-java:' + graphqlJavaVersion + ':sources') {
         transitive = false
     }
+    compile 'com.atlassian.braid:graphql-braid:0.10.4-SNAPSHOT'
     compile 'com.graphql-java:graphql-java:' + graphqlJavaVersion
     compile 'org.antlr:antlr4-runtime:4.7.1'
     compile 'org.slf4j:slf4j-api:' + slf4jVersion

@@ -1,4 +1,4 @@
-package com.graphqljava.nadel.service;
+package graphql.nadel.service;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
@@ -22,7 +22,7 @@ public class NadelExecutor {
     private static final Logger logger = LoggerFactory.getLogger(NadelExecutor.class);
 
     @Autowired
-    GraphqlCallerFactory graphqlCallerFactory;
+    GraphQLRemoteRetrieverFactory graphQLRemoteRetrieverFactory;
 
 
     Nadel nadel;
@@ -32,7 +32,7 @@ public class NadelExecutor {
         File dslFile = new File("./nadel-dsl.txt");
         String dsl = readDsl(dslFile);
         logger.info("Nadel dsl: {}", dsl);
-        nadel = new Nadel(dsl, graphqlCallerFactory);
+        nadel = new Nadel(dsl, graphQLRemoteRetrieverFactory);
         logger.info("successfully initialized nadel");
     }
 

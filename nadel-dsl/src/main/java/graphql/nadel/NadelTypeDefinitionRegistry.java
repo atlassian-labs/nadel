@@ -40,7 +40,7 @@ public class NadelTypeDefinitionRegistry {
     public Map<String, List<ObjectTypeExtensionDefinition>> typeExtensions() {
         Map<String, List<ObjectTypeExtensionDefinition>> result = new LinkedHashMap<>();
         for (TypeDefinitionRegistry typeDefinitionRegistry : typeDefinitionRegistries.values()) {
-            Map<String, List<ObjectTypeExtensionDefinition>> typeExtensions = typeDefinitionRegistry.typeExtensions();
+            Map<String, List<ObjectTypeExtensionDefinition>> typeExtensions = typeDefinitionRegistry.objectTypeExtensions();
             for (Map.Entry<String, List<ObjectTypeExtensionDefinition>> extensionEntry : typeExtensions.entrySet()) {
                 result.putIfAbsent(extensionEntry.getKey(), new ArrayList<>());
                 result.get(extensionEntry.getKey()).addAll(extensionEntry.getValue());

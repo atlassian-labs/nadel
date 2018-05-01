@@ -3,7 +3,10 @@ package graphql.nadel.dsl;
 import graphql.language.AbstractNode;
 import graphql.language.Directive;
 import graphql.language.Node;
+import graphql.language.NodeVisitor;
 import graphql.language.TypeDefinition;
+import graphql.util.TraversalControl;
+import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +41,11 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
 
     @Override
     public ServiceDefinition deepCopy() {
+        return null;
+    }
+
+    @Override
+    public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
     }
 

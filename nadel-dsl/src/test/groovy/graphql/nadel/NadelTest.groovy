@@ -1,5 +1,6 @@
 package graphql.nadel
 
+import com.atlassian.braid.source.GraphQLRemoteRetriever
 import graphql.ExecutionInput
 import graphql.nadel.dsl.ServiceDefinition
 import spock.lang.Specification
@@ -9,18 +10,17 @@ import static java.util.concurrent.CompletableFuture.completedFuture
 class NadelTest extends Specification {
 
 
-    GraphqlCallerFactory mockCallerFactory(Map callerMocks) {
-        return new GraphqlCallerFactory() {
+    GraphQLRemoteRetrieverFactory mockCallerFactory(Map callerMocks) {
+        return new GraphQLRemoteRetrieverFactory() {
             @Override
-            GraphqlCaller createGraphqlCaller(ServiceDefinition serviceDefinition) {
+            GraphQLRemoteRetriever createRemoteRetriever(ServiceDefinition serviceDefinition) {
                 assert callerMocks[serviceDefinition.name] != null
                 return callerMocks[serviceDefinition.name]
             }
         }
-
     }
 
-    def "simple stitching"() {
+    def "simple stitching: just two services merged at top level"() {
         given:
         def dsl = """
         service Service1 {
@@ -36,9 +36,9 @@ class NadelTest extends Specification {
             }
         }
         """
-        def graphqlCallerService1 = Mock(GraphqlCaller)
-        def graphqlCallerService2 = Mock(GraphqlCaller)
-        def callerFactory = mockCallerFactory([Service1: graphqlCallerService1, Service2: graphqlCallerService2])
+        def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
+        def graphqlRemoteRetriever2 = Mock(GraphQLRemoteRetriever)
+        def callerFactory = mockCallerFactory([Service1: graphqlRemoteRetriever1, Service2: graphqlRemoteRetriever2])
 
         String query1 = "{hello}"
         String query2 = "{hello2}"
@@ -49,14 +49,18 @@ class NadelTest extends Specification {
 
         then:
         executionResult.data == [hello: 'world']
-        1 * graphqlCallerService1.call(_) >> completedFuture(new GraphqlCallResult([hello: 'world']))
+        1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> completedFuture([data: [hello100: 'world']])
+        0 * graphqlRemoteRetriever2.queryGraphQL(*_) >> completedFuture([data: []])
+
 
         when:
         executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query2).build()).get()
 
+
         then:
         executionResult.data == [hello2: 'world']
-        1 * graphqlCallerService2.call(_) >> completedFuture(new GraphqlCallResult([hello2: 'world']))
+        1 * graphqlRemoteRetriever2.queryGraphQL(*_) >> completedFuture([data: [hello2100: 'world']])
+        0 * graphqlRemoteRetriever1.queryGraphQL(*_) >> completedFuture([data: []])
     }
 
 
@@ -82,9 +86,9 @@ class NadelTest extends Specification {
             }
         }
         """
-        def graphqlCallerService1 = Mock(GraphqlCaller)
-        def graphqlCallerService2 = Mock(GraphqlCaller)
-        def callerFactory = mockCallerFactory([FooService: graphqlCallerService1, BarService: graphqlCallerService2])
+        def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
+        def graphqlRemoteRetriever2 = Mock(GraphQLRemoteRetriever)
+        def callerFactory = mockCallerFactory([Service1: graphqlRemoteRetriever1, Service2: graphqlRemoteRetriever2])
 
         String query = "{foo{realBarValue{name}}}"
         Nadel nadel = new Nadel(dsl, callerFactory)
@@ -93,8 +97,8 @@ class NadelTest extends Specification {
 
         then:
         executionResult.data == [foo: [realBarValue: [name: 'barName']]]
-        1 * graphqlCallerService1.call(_) >> completedFuture(new GraphqlCallResult([foo: [barId: 'someBarId']]))
-        1 * graphqlCallerService2.call(_) >> completedFuture(new GraphqlCallResult([bar: [id: 'someBarId', name: 'barName']]))
+        1 * graphqlCallerService1.call(_) >> completedFuture([data: [foo: [barId: 'someBarId']]])
+        1 * graphqlCallerService2.call(_) >> completedFuture([data: [bar: [id: 'someBarId', name: 'barName']]])
     }
 
 }

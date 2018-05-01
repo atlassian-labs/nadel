@@ -1,4 +1,4 @@
-package com.graphqljava.nadel.service;
+package graphql.nadel.service;
 
 import graphql.ExecutionResult;
 import org.springframework.beans.factory.annotation.Autowired;

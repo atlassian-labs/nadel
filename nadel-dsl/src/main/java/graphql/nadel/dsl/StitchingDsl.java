@@ -4,6 +4,9 @@ package graphql.nadel.dsl;
 import graphql.language.AbstractNode;
 import graphql.language.FieldDefinition;
 import graphql.language.Node;
+import graphql.language.NodeVisitor;
+import graphql.util.TraversalControl;
+import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -46,6 +49,11 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
     @Override
     public StitchingDsl deepCopy() {
+        return null;
+    }
+
+    @Override
+    public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
     }
 }
