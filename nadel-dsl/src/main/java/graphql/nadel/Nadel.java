@@ -116,6 +116,7 @@ public class Nadel {
             Link link = Link
                     .from(schemaNamespace, parentType, newFieldName, originalFieldName)
                     .to(targetNamespace, targetType, queryField, "id")
+                    .replaceFromField()
                     .build();
             result.get(schemaNamespace).add(link);
         });
@@ -139,8 +140,6 @@ public class Nadel {
 
     public CompletableFuture<ExecutionResult> executeAsync(ExecutionInput executionInput) {
         return this.braid.newGraphQL().execute(executionInput);
-//        return this.graphql.executeAsync(executionInput);
-//        return null;
     }
 
 }
