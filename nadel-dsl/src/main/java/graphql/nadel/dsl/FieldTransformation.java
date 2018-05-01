@@ -3,6 +3,7 @@ package graphql.nadel.dsl;
 import graphql.language.AbstractNode;
 import graphql.language.Node;
 import graphql.language.NodeVisitor;
+import graphql.language.ObjectTypeDefinition;
 import graphql.language.Type;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -14,6 +15,15 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     private String targetName;
     private Type targetType;
 
+    private ObjectTypeDefinition parentDefinition;
+
+    public ObjectTypeDefinition getParentDefinition() {
+        return parentDefinition;
+    }
+
+    public void setParentDefinition(ObjectTypeDefinition parentDefinition) {
+        this.parentDefinition = parentDefinition;
+    }
 
     public String getTargetName() {
         return targetName;

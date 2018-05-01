@@ -1,10 +1,12 @@
 package graphql.nadel.dsl;
 
 
+import com.atlassian.braid.SchemaNamespace;
 import graphql.language.AbstractNode;
 import graphql.language.FieldDefinition;
 import graphql.language.Node;
 import graphql.language.NodeVisitor;
+import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
@@ -18,6 +20,8 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     private List<ServiceDefinition> serviceDefinitions = new ArrayList<>();
     private Map<FieldDefinition, ServiceDefinition> serviceByField = new LinkedHashMap<>();
     private Map<FieldDefinition, FieldTransformation> transformationsByFieldDefinition = new LinkedHashMap<>();
+    private Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
+    private Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
 
 
     public List<ServiceDefinition> getServiceDefinitions() {
@@ -40,6 +44,14 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
     public Map<FieldDefinition, FieldTransformation> getTransformationsByFieldDefinition() {
         return transformationsByFieldDefinition;
+    }
+
+    public Map<String, SchemaNamespace> getNamespaceByService() {
+        return namespaceByService;
+    }
+
+    public Map<String, TypeDefinitionRegistry> getTypesByService() {
+        return typesByService;
     }
 
     @Override

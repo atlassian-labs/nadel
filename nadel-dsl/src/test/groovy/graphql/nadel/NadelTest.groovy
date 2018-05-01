@@ -88,7 +88,7 @@ class NadelTest extends Specification {
         """
         def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
         def graphqlRemoteRetriever2 = Mock(GraphQLRemoteRetriever)
-        def callerFactory = mockCallerFactory([Service1: graphqlRemoteRetriever1, Service2: graphqlRemoteRetriever2])
+        def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1, BarService: graphqlRemoteRetriever2])
 
         String query = "{foo{realBarValue{name}}}"
         Nadel nadel = new Nadel(dsl, callerFactory)
@@ -97,8 +97,12 @@ class NadelTest extends Specification {
 
         then:
         executionResult.data == [foo: [realBarValue: [name: 'barName']]]
-        1 * graphqlCallerService1.call(_) >> completedFuture([data: [foo: [barId: 'someBarId']]])
-        1 * graphqlCallerService2.call(_) >> completedFuture([data: [bar: [id: 'someBarId', name: 'barName']]])
+        1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> { it ->
+            completedFuture([data: [foo100: [barId: 'someBarId']]])
+        }
+        1 * graphqlRemoteRetriever2.queryGraphQL(*_) >> { it ->
+            completedFuture([data: [realBarValue100: [id: 'someBarId', name: 'barName']]])
+        }
     }
 
 }

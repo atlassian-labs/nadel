@@ -5,6 +5,7 @@ import graphql.language.Document;
 import graphql.language.FieldDefinition;
 import graphql.language.ListType;
 import graphql.language.NonNullType;
+import graphql.language.ObjectTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
@@ -134,10 +135,12 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     @Override
     public Void visitFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
         FieldDefinition fieldDefinition = (FieldDefinition) getFromContextStack(ContextProperty.FieldDefinition);
+        ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
         FieldTransformation fieldTransformation = new FieldTransformation();
         if (ctx.targetFieldDefinition() != null) {
             fieldTransformation.setTargetName(ctx.targetFieldDefinition().name().getText());
             fieldTransformation.setTargetType(createType(ctx.targetFieldDefinition().type()));
+            fieldTransformation.setParentDefinition(objectTypeDefinition);
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
         return null;
