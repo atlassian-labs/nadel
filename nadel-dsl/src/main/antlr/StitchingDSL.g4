@@ -15,6 +15,15 @@ serviceDefinition:
 'service' name '{' serviceUrl typeSystemDefinition* '}' ;
 serviceUrl: 'url' ':' stringValue;
 
+fieldsDefinition : '{' (fieldDefinition|linkedField)+ '}';
+
+linkedField: '_=>' linkDefinition;
+
+linkDefinition: 'from' topLevelField 'with' variableName 'as' fieldName;
+
+topLevelField: name;
+variableName: name;
+fieldName: name;
 
 fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
 

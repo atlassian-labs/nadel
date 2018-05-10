@@ -14,6 +14,7 @@ import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.execution.AsyncExecutionStrategy;
 import graphql.language.FieldDefinition;
+import graphql.language.ObjectTypeDefinition;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldTransformation;
@@ -27,6 +28,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -65,11 +68,13 @@ public class Nadel {
             SchemaSource schemaSource = createSchemaSource(typeDefinitionRegistry, namespace, remoteRetriever, links);
             schemaSources.add(schemaSource);
         }
-
+        // Stitching DSL
         AsyncExecutionStrategy asyncExecutionStrategy = new AsyncExecutionStrategy();
         this.braid = Braid.builder()
                 .executionStrategy(asyncExecutionStrategy)
                 .schemaSources(schemaSources)
+                .withRuntimeWiring(runtimeWiring -> {
+                })
                 .build();
     }
 
@@ -120,7 +125,53 @@ public class Nadel {
                     .build();
             result.get(schemaNamespace).add(link);
         });
+        this.stitchingDsl.getServiceDefinitions().forEach(serviceDefinition -> {
+            serviceDefinition.getLinks().forEach(linkedField -> {
+                TypeDefinitionRegistry typeDefinitionRegistry = this.stitchingDsl.getTypesByService().get(serviceDefinition.getName());
+                String parentType = linkedField.getParentType();
+                ObjectTypeDefinition parentTypeDefinition = (ObjectTypeDefinition) typeDefinitionRegistry.getType(parentType).get();
+                FieldDefinition newFieldDefintion = new FieldDefinition(linkedField.getFieldName());
+                parentTypeDefinition.getFieldDefinitions().add(newFieldDefintion);
+                String topLevelQueryField = linkedField.getTopLevelQueryField();
+                TopLevelFieldInfo topLevelFieldInfo = findServiceByTopLevelField(topLevelQueryField);
+                TypeInfo targetTypeInfo = TypeInfo.typeInfo(topLevelFieldInfo.fieldDefinition.getType());
+
+                newFieldDefintion.setType(targetTypeInfo.getRawType());
+//                newFieldDefintion.
+
+//                Link link = Link
+//                        .from(schemaNamespace, parentType, linkedField.getFieldName(), "id")
+//                        .to(targetNamespace, targetTypeInfo.getName(), linkedField.getTopLevelQueryField(), linkedField.getVariableName())
+//                        .build();
+
+//                result.putIfAbsent(schemaNamespace, new ArrayList<>());
+//                result.get(schemaNamespace).add(link);
+            });
+        });
+
         return result;
+    }
+
+    static class TopLevelFieldInfo {
+        public TopLevelFieldInfo(String serviceName, FieldDefinition fieldDefinition) {
+            this.serviceName = serviceName;
+            this.fieldDefinition = fieldDefinition;
+        }
+
+        String serviceName;
+        FieldDefinition fieldDefinition;
+    }
+
+    private TopLevelFieldInfo findServiceByTopLevelField(String topLevelField) {
+        Set<Map.Entry<String, TypeDefinitionRegistry>> entries = this.stitchingDsl.getTypesByService().entrySet();
+        for (Map.Entry<String, TypeDefinitionRegistry> entry : entries) {
+            ObjectTypeDefinition query = (ObjectTypeDefinition) entry.getValue().getType("Query").get();
+            Optional<FieldDefinition> fieldDef = query.getFieldDefinitions().stream().filter(fieldDefinition -> fieldDefinition.getName().equals(topLevelField)).findFirst();
+            if (fieldDef.isPresent()) {
+                return new TopLevelFieldInfo(entry.getKey(), fieldDef.get());
+            }
+        }
+        return Assert.assertShouldNeverHappen();
     }
 
     private SchemaNamespace findNameSpace(String type) {

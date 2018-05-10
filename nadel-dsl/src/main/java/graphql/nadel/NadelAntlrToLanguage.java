@@ -10,6 +10,7 @@ import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldTransformation;
+import graphql.nadel.dsl.LinkedField;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
@@ -174,5 +175,22 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             this.stitchingDsl.getServiceByField().put((FieldDefinition) getContextStack().getFirst().value, serviceDefinition);
         }
         return super.visitChildren(node);
+    }
+
+    @Override
+    public Void visitLinkDefinition(StitchingDSLParser.LinkDefinitionContext ctx) {
+        String topLevelField = ctx.topLevelField().name().getText();
+        String variableName = ctx.variableName().name().getText();
+        String fieldName = ctx.fieldName().name().getText();
+        ServiceDefinition serviceDefinition = (ServiceDefinition) getFromContextStack(NadelContextProperty.ServiceDefinition);
+        ObjectTypeDefinition parentType = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
+        LinkedField linkedField = new LinkedField();
+        linkedField.setFieldName(fieldName);
+        linkedField.setVariableName(variableName);
+        linkedField.setTopLevelQueryField(topLevelField);
+        linkedField.setParentType(parentType.getName());
+        System.out.println(linkedField);
+        serviceDefinition.getLinks().add(linkedField);
+        return super.visitLinkDefinition(ctx);
     }
 }

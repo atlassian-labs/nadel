@@ -1,20 +1,36 @@
-service User {
-    url: "https://r9km4x894n.lp.gql.zone/graphql"
+
+service Confluence {
+    url: "http://confluence-burrito.ngrok.io/graphql"
+
+    type Page {
+       id: ID!
+       authorId: String
+       title: String
+    }
+
     type User {
-       id: ID
-       name: String
+       id: ID!
+       authoredPages: [Page]
+       _=> from reportedIssues with id as reportedIssues
     }
+
     type Query {
-       user(id:ID): User
+        page(id:ID!): Page
+        user(id:ID!): User
+        authoredPages(userId: ID!): [Page]
     }
 }
-service Posts {
-    url: "https://p0rm35pkm0.lp.gql.zone/graphql"
-    type Post {
-       id: ID
-       authorId: ID => author: User
+
+service Jira {
+    url: "https://spring-graphql-proxy.ap-southeast-2.dev.atl-paas.net/graphql"
+
+    type Issue {
+       id: ID!
     }
+
     type Query {
-       posts: [Post]
+      issue(id: ID!): Issue
+      reportedIssues(userId: ID!): [Issue]
     }
 }
+

@@ -16,13 +16,13 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
     private final String url;
     private final List<Directive> directives;
 
-    private List<TypeDefinition<?>> typeDefinitions;
+    private List<TypeDefinition<?>> typeDefinitions = new ArrayList<>();
+    private List<LinkedField> links = new ArrayList<>();
 
     public ServiceDefinition(String name, String url, List<Directive> directives) {
         this.name = name;
         this.url = url;
         this.directives = directives;
-        this.typeDefinitions = new ArrayList<>();
     }
 
     public ServiceDefinition(String name, String url) {
@@ -60,5 +60,9 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
 
     public List<TypeDefinition<?>> getTypeDefinitions() {
         return typeDefinitions;
+    }
+
+    public List<LinkedField> getLinks() {
+        return links;
     }
 }
