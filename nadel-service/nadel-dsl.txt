@@ -1,6 +1,6 @@
 
 service Confluence {
-    url: "http://confluence-burrito.ngrok.io/graphql"
+    url: "http://localhost:3000/graphql"
 
     type Page {
        id: ID!
@@ -10,14 +10,15 @@ service Confluence {
 
     type User {
        id: ID!
-       userName: String => from authoredPages(userName) with input userName as authoredPages added
-#       _=> from reportedIssues(userName) with input userName as reportedIssues
+       userName: String
+       _=> from authoredPages(userName) with input userName as authoredPages
+       _=> from reportedIssues(userName) with input userName as reportedIssues
     }
 
     type Query {
         page(id:ID!): Page
         user(id: ID, userName: String): User
-        authoredPages(userName: ID!): [Page]
+        authoredPages(userName: String): [Page]
     }
 }
 
@@ -26,11 +27,12 @@ service Jira {
 
     type Issue {
        id: ID!
+       assigneeName: String => from user(userName) with input assigneeName as assignee
     }
 
     type Query {
       issue(id: ID!): Issue
-      reportedIssues(username: ID!): [Issue]
+      reportedIssues(userName: String): [Issue]
     }
 }
 

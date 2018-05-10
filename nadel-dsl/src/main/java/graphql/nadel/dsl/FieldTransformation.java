@@ -16,6 +16,7 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     private String argumentName;
 
     private ObjectTypeDefinition parentDefinition;
+    private String fromFieldName;
     private boolean added;
 
     public ObjectTypeDefinition getParentDefinition() {
@@ -77,5 +78,13 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     public void setArgumentName(String argumentName) {
         this.argumentName = argumentName;
+    }
+
+    public void setFromFieldName(String fromFieldName) {
+        this.fromFieldName = fromFieldName;
+    }
+
+    public String getFromFieldName() {
+        return fromFieldName;
     }
 }

@@ -17,7 +17,7 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
     private final List<Directive> directives;
 
     private List<TypeDefinition<?>> typeDefinitions = new ArrayList<>();
-    private List<LinkedField> links = new ArrayList<>();
+//    private List<LinkedField> links = new ArrayList<>();
 
     public ServiceDefinition(String name, String url, List<Directive> directives) {
         this.name = name;
@@ -62,7 +62,7 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
         return typeDefinitions;
     }
 
-    public List<LinkedField> getLinks() {
-        return links;
-    }
+//    public List<LinkedField> getLinks() {
+//        return links;
+//    }
 }

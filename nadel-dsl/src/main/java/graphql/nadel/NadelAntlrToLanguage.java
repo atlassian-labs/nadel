@@ -10,7 +10,6 @@ import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldTransformation;
-import graphql.nadel.dsl.LinkedField;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
@@ -182,18 +181,32 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     @Override
     public Void visitLinkDefinition(StitchingDSLParser.LinkDefinitionContext ctx) {
-        String topLevelField = ctx.topLevelField().name().getText();
-        String variableName = ctx.variableName().name().getText();
-        String fieldName = ctx.fieldName().name().getText();
         ServiceDefinition serviceDefinition = (ServiceDefinition) getFromContextStack(NadelContextProperty.ServiceDefinition);
-        ObjectTypeDefinition parentType = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
-        LinkedField linkedField = new LinkedField();
-        linkedField.setArgumentName(ctx.argumentName().name().getText());
-        linkedField.setFieldName(fieldName);
-        linkedField.setVariableName(variableName);
-        linkedField.setTopLevelQueryField(topLevelField);
-        linkedField.setParentType(parentType.getName());
-        serviceDefinition.getLinks().add(linkedField);
-        return super.visitLinkDefinition(ctx);
+        ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
+        FieldTransformation fieldTransformation = new FieldTransformation();
+        fieldTransformation.setTargetName(ctx.fieldName().getText());
+        fieldTransformation.setParentDefinition(objectTypeDefinition);
+        fieldTransformation.setArgumentName(ctx.argumentName().name().getText());
+        fieldTransformation.setTopLevelField(ctx.topLevelField().name().getText());
+        fieldTransformation.setAdded(ctx.added() != null);
+        String variableName = ctx.variableName().name().getText();
+        fieldTransformation.setFromFieldName(variableName);
+        this.stitchingDsl.getStandaloneTransformationsByService().putIfAbsent(serviceDefinition.getName(), new ArrayList<>());
+        this.stitchingDsl.getStandaloneTransformationsByService().get(serviceDefinition.getName()).add(fieldTransformation);
+
+//        this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
+//        String topLevelField = ctx.topLevelField().name().getText();
+//        String variableName = ctx.variableName().name().getText();
+//        String fieldName = ctx.fieldName().name().getText();
+//        ObjectTypeDefinition parentType = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
+//        LinkedField linkedField = new LinkedField();
+//        linkedField.setArgumentName(ctx.argumentName().name().getText());
+//        linkedField.setFieldName(fieldName);
+//        linkedField.setVariableName(variableName);
+//        linkedField.setTopLevelQueryField(topLevelField);
+//        linkedField.setParentType(parentType.getName());
+//        serviceDefinition.getLinks().add(linkedField);
+//        return super.visitLinkDefinition(ctx);
+        return null;
     }
 }

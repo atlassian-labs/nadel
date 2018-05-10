@@ -16,25 +16,17 @@ import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.execution.AsyncExecutionStrategy;
 import graphql.execution.DataFetcherResult;
-import graphql.language.Argument;
-import graphql.language.AstPrinter;
 import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
-import graphql.language.StringValue;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldTransformation;
-import graphql.nadel.dsl.LinkedField;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
-import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
-import graphql.schema.PropertyDataFetcher;
-import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.TypeInfo;
 import graphql.schema.idl.errors.SchemaProblem;
@@ -52,6 +44,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
+
+//import graphql.nadel.dsl.LinkedField;
 
 @PublicApi
 public class Nadel {
@@ -91,45 +85,45 @@ public class Nadel {
         this.braid = Braid.builder()
                 .executionStrategy(asyncExecutionStrategy)
                 .schemaSources(schemaSources)
-                .withRuntimeWiring(this::addDataFetchersForLinks)
+//                .withRuntimeWiring(this::addDataFetchersForLinks)
                 .build();
     }
 
-    private void addDataFetchersForLinks(RuntimeWiring.Builder runtimeWiring) {
-        this.stitchingDsl.getServiceDefinitions().forEach(serviceDefinition -> {
-            serviceDefinition.getLinks().forEach(linkedField -> {
-                String parentType = linkedField.getParentType();
-
-                String topLevelQueryField = linkedField.getTopLevelQueryField();
-                TopLevelFieldInfo topLevelFieldInfo = findServiceByTopLevelField(topLevelQueryField);
-                ServiceDefinition targetServiceDefinition = stitchingDsl.getServiceDefinition(topLevelFieldInfo.serviceName);
-                GraphQLRemoteRetriever remoteRetriever = graphQLRemoteRetrieverFactory.createRemoteRetriever(targetServiceDefinition);
-
-
-                runtimeWiring.type(parentType, builder -> builder.dataFetcher(linkedField.getFieldName(), dataFetcherForLink(linkedField, remoteRetriever)));
-            });
-        });
-    }
-
-    private DataFetcher dataFetcherForLink(LinkedField linkedField, GraphQLRemoteRetriever remoteRetriever) {
-        return new DataFetcher() {
-            @Override
-            public CompletableFuture<DataFetcherResult> get(DataFetchingEnvironment environment) {
-                Field field = new Field(linkedField.getTopLevelQueryField());
-                PropertyDataFetcher propertyDataFetcher = new PropertyDataFetcher(linkedField.getVariableName());
-                Object value = propertyDataFetcher.get(environment);
-                Argument argument = new Argument(linkedField.getArgumentName(), new StringValue(value.toString()));
-                field.setArguments(Arrays.asList(argument));
-                field.setSelectionSet(environment.getField().getSelectionSet());
-                Document document = createDocument(field);
-                ExecutionInput executionInput = ExecutionInput.newExecutionInput()
-                        .query(AstPrinter.printAst(document))
-                        .build();
-                CompletableFuture<Map<String, Object>> completableFuture = remoteRetriever.queryGraphQL(executionInput, null);
-                return completableFuture.thenApply(result -> handleResponse(result, field.getName()));
-            }
-        };
-    }
+//    private void addDataFetchersForLinks(RuntimeWiring.Builder runtimeWiring) {
+//        this.stitchingDsl.getServiceDefinitions().forEach(serviceDefinition -> {
+//            serviceDefinition.getLinks().forEach(linkedField -> {
+//                String parentType = linkedField.getParentType();
+//
+//                String topLevelQueryField = linkedField.getTopLevelQueryField();
+//                TopLevelFieldInfo topLevelFieldInfo = findServiceByTopLevelField(topLevelQueryField);
+//                ServiceDefinition targetServiceDefinition = stitchingDsl.getServiceDefinition(topLevelFieldInfo.serviceName);
+//                GraphQLRemoteRetriever remoteRetriever = graphQLRemoteRetrieverFactory.createRemoteRetriever(targetServiceDefinition);
+//
+//
+//                runtimeWiring.type(parentType, builder -> builder.dataFetcher(linkedField.getFieldName(), dataFetcherForLink(linkedField, remoteRetriever)));
+//            });
+//        });
+//    }
+//
+//    private DataFetcher dataFetcherForLink(LinkedField linkedField, GraphQLRemoteRetriever remoteRetriever) {
+//        return new DataFetcher() {
+//            @Override
+//            public CompletableFuture<DataFetcherResult> get(DataFetchingEnvironment environment) {
+//                Field field = new Field(linkedField.getTopLevelQueryField());
+//                PropertyDataFetcher propertyDataFetcher = new PropertyDataFetcher(linkedField.getVariableName());
+//                Object value = propertyDataFetcher.get(environment);
+//                Argument argument = new Argument(linkedField.getArgumentName(), new StringValue(value.toString()));
+//                field.setArguments(Arrays.asList(argument));
+//                field.setSelectionSet(environment.getField().getSelectionSet());
+//                Document document = createDocument(field);
+//                ExecutionInput executionInput = ExecutionInput.newExecutionInput()
+//                        .query(AstPrinter.printAst(document))
+//                        .build();
+//                CompletableFuture<Map<String, Object>> completableFuture = remoteRetriever.queryGraphQL(executionInput, null);
+//                return completableFuture.thenApply(result -> handleResponse(result, field.getName()));
+//            }
+//        };
+//    }
 
     private DataFetcherResult<Object> handleResponse(Map<String, Object> response, String fieldName) {
         Map<String, Object> data = Optional.ofNullable(response.get("data"))
@@ -201,37 +195,61 @@ public class Nadel {
             SchemaNamespace targetNamespace = findNameSpace(targetType);
             Link.LinkBuilder link = Link
                     .from(schemaNamespace, parentType, newFieldName, originalFieldName)
-                    .to(targetNamespace, targetType, fieldTransformation.getTopLevelField(), fieldTransformation.getArgumentName());
-            if (!fieldTransformation.isAdded()) {
-                link.replaceFromField();
-            }
+                    .to(targetNamespace, targetType, fieldTransformation.getTopLevelField())
+                    .argument(fieldTransformation.getArgumentName());
+//            if (fieldTransformation.isAdded()) {
+//                link.replaceFromField();
+//            }
             result.get(schemaNamespace).add(link.build());
         });
         this.stitchingDsl.getServiceDefinitions().forEach(serviceDefinition -> {
-            serviceDefinition.getLinks().forEach(linkedField -> {
-                TypeDefinitionRegistry typeDefinitionRegistry = this.stitchingDsl.getTypesByService().get(serviceDefinition.getName());
-                String parentType = linkedField.getParentType();
-                ObjectTypeDefinition parentTypeDefinition = (ObjectTypeDefinition) typeDefinitionRegistry.getType(parentType).get();
-
-                FieldDefinition newFieldDefinition = new FieldDefinition(linkedField.getFieldName());
-                parentTypeDefinition.getFieldDefinitions().add(newFieldDefinition);
-                String topLevelQueryField = linkedField.getTopLevelQueryField();
-                TopLevelFieldInfo topLevelFieldInfo = findServiceByTopLevelField(topLevelQueryField);
-                TypeInfo targetTypeInfo = TypeInfo.typeInfo(topLevelFieldInfo.fieldDefinition.getType());
-                SchemaNamespace targetNamespace = this.stitchingDsl.getNamespaceByService().get(topLevelFieldInfo.serviceName);
-                SchemaNamespace schemaNamespace = this.stitchingDsl.getNamespaceByService().get(serviceDefinition.getName());
-
-                newFieldDefinition.setType(targetTypeInfo.getRawType());
-
-                Link link = Link
-                        .from(schemaNamespace, parentType, linkedField.getFieldName(), "id")
-                        .to(targetNamespace, targetTypeInfo.getName(), linkedField.getTopLevelQueryField(), linkedField.getVariableName())
-                        .build();
-
+            if (!this.stitchingDsl.getStandaloneTransformationsByService().containsKey(serviceDefinition.getName())) {
+                return;
+            }
+            this.stitchingDsl.getStandaloneTransformationsByService().get(serviceDefinition.getName()).forEach(fieldTransformation -> {
+//                ServiceDefinition serviceDefinition = this.stitchingDsl.getServiceByField().get(fieldDefinition);
+                SchemaNamespace schemaNamespace = assertNotNull(this.stitchingDsl.getNamespaceByService().get(serviceDefinition.getName()));
                 result.putIfAbsent(schemaNamespace, new ArrayList<>());
-                result.get(schemaNamespace).add(link);
+
+                String parentType = fieldTransformation.getParentDefinition().getName();
+                String originalFieldName = fieldTransformation.getFromFieldName();
+                TopLevelFieldInfo topLevelFieldInfo = findServiceByTopLevelField(fieldTransformation.getTopLevelField());
+                String targetType = TypeInfo.typeInfo(topLevelFieldInfo.fieldDefinition.getType()).getName();
+                String newFieldName = fieldTransformation.getTargetName();
+                SchemaNamespace targetNamespace = findNameSpace(targetType);
+                Link.LinkBuilder link = Link
+                        .from(schemaNamespace, parentType, newFieldName, originalFieldName)
+                        .to(targetNamespace, targetType, fieldTransformation.getTopLevelField())
+                        .argument(fieldTransformation.getArgumentName());
+                result.get(schemaNamespace).add(link.build());
+
             });
         });
+//        this.stitchingDsl.getServiceDefinitions().forEach(serviceDefinition -> {
+//            serviceDefinition.getLinks().forEach(linkedField -> {
+//                TypeDefinitionRegistry typeDefinitionRegistry = this.stitchingDsl.getTypesByService().get(serviceDefinition.getName());
+//                String parentType = linkedField.getParentType();
+//                ObjectTypeDefinition parentTypeDefinition = (ObjectTypeDefinition) typeDefinitionRegistry.getType(parentType).get();
+//
+//                FieldDefinition newFieldDefinition = new FieldDefinition(linkedField.getFieldName());
+//                parentTypeDefinition.getFieldDefinitions().add(newFieldDefinition);
+//                String topLevelQueryField = linkedField.getTopLevelQueryField();
+//                TopLevelFieldInfo topLevelFieldInfo = findServiceByTopLevelField(topLevelQueryField);
+//                TypeInfo targetTypeInfo = TypeInfo.typeInfo(topLevelFieldInfo.fieldDefinition.getType());
+//                SchemaNamespace targetNamespace = this.stitchingDsl.getNamespaceByService().get(topLevelFieldInfo.serviceName);
+//                SchemaNamespace schemaNamespace = this.stitchingDsl.getNamespaceByService().get(serviceDefinition.getName());
+//
+//                newFieldDefinition.setType(targetTypeInfo.getRawType());
+//
+//                Link link = Link
+//                        .from(schemaNamespace, parentType, linkedField.getFieldName(), "id")
+//                        .to(targetNamespace, targetTypeInfo.getName(), linkedField.getTopLevelQueryField(), linkedField.getVariableName())
+//                        .build();
+//
+//                result.putIfAbsent(schemaNamespace, new ArrayList<>());
+//                result.get(schemaNamespace).add(link);
+//            });
+//        });
 
         return result;
     }

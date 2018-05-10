@@ -31,7 +31,8 @@ public class GraphQLRemoteRetrieverFactory implements graphql.nadel.GraphQLRemot
                     .build();
             Map<String, Object> body = new LinkedHashMap<>();
             body.put("query", executionInput.getQuery());
-            logger.info("request to {} with body {}", serviceDefinition.getUrl(), body);
+            body.put("variables", executionInput.getVariables());
+            logger.info("request to {} with body {} and variables {}", serviceDefinition.getUrl(), body, executionInput.getVariables());
             Mono<ClientResponse> clientResponseMono = webClient.post()
                     .uri(serviceDefinition.getUrl())
                     .body(BodyInserters.fromObject(body))
