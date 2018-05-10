@@ -80,7 +80,7 @@ dependencies {
     graphqlJavaSource('com.graphql-java:graphql-java:' + graphqlJavaVersion + ':sources') {
         transitive = false
     }
-    compile 'com.atlassian.braid:graphql-braid:0.10.6'
+    compile 'com.atlassian.braid:graphql-braid:0.10.7-SNAPSHOT'
     compile 'com.graphql-java:graphql-java:' + graphqlJavaVersion
     compile 'org.antlr:antlr4-runtime:4.7.1'
     compile 'org.slf4j:slf4j-api:' + slf4jVersion
