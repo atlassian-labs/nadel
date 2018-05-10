@@ -197,9 +197,7 @@ public class Nadel {
                     .from(schemaNamespace, parentType, newFieldName, originalFieldName)
                     .to(targetNamespace, targetType, fieldTransformation.getTopLevelField())
                     .argument(fieldTransformation.getArgumentName());
-//            if (fieldTransformation.isAdded()) {
-//                link.replaceFromField();
-//            }
+            link.replaceFromField();
             result.get(schemaNamespace).add(link.build());
         });
         this.stitchingDsl.getServiceDefinitions().forEach(serviceDefinition -> {

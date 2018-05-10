@@ -1,6 +1,6 @@
 
 service Confluence {
-    url: "http://localhost:3000/graphql"
+    url: "http://confluence-burrito.ngrok.io/graphql""
 
     type Page {
        id: ID!
@@ -13,6 +13,7 @@ service Confluence {
        userName: String
        _=> from authoredPages(userName) with input userName as authoredPages
        _=> from reportedIssues(userName) with input userName as reportedIssues
+       _=> from ownedRepositories(userName) with input userName as ownedRepositories
     }
 
     type Query {
@@ -36,3 +37,19 @@ service Jira {
     }
 }
 
+
+service Bitbucket {
+    url: "http://bb-burrito.ngrok.io/graphql""
+
+	type Query {
+		repository(userName:String!, repositoryId: ID!): Repository
+		ownedRepositories(userName: String!): [Repository]
+	}
+
+	type Repository {
+		id: ID!
+		name: String
+		ownerName: String =>from user(userName) with input ownerName as owner
+	}
+
+}
