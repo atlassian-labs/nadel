@@ -118,7 +118,7 @@ public class Nadel {
                 Field field = new Field(linkedField.getTopLevelQueryField());
                 PropertyDataFetcher propertyDataFetcher = new PropertyDataFetcher(linkedField.getVariableName());
                 Object value = propertyDataFetcher.get(environment);
-                Argument argument = new Argument("username", new StringValue(value.toString()));
+                Argument argument = new Argument(linkedField.getArgumentName(), new StringValue(value.toString()));
                 field.setArguments(Arrays.asList(argument));
                 field.setSelectionSet(environment.getField().getSelectionSet());
                 Document document = createDocument(field);
@@ -195,16 +195,17 @@ public class Nadel {
 
             String parentType = fieldTransformation.getParentDefinition().getName();
             String originalFieldName = fieldDefinition.getName();
-            String targetType = TypeInfo.typeInfo(fieldTransformation.getTargetType()).getTypeName().getName();
+            TopLevelFieldInfo topLevelFieldInfo = findServiceByTopLevelField(fieldTransformation.getTopLevelField());
+            String targetType = TypeInfo.typeInfo(topLevelFieldInfo.fieldDefinition.getType()).getName();
             String newFieldName = fieldTransformation.getTargetName();
-            String queryField = targetType.toLowerCase();
             SchemaNamespace targetNamespace = findNameSpace(targetType);
-            Link link = Link
+            Link.LinkBuilder link = Link
                     .from(schemaNamespace, parentType, newFieldName, originalFieldName)
-                    .to(targetNamespace, targetType, queryField, "id")
-                    .replaceFromField()
-                    .build();
-            result.get(schemaNamespace).add(link);
+                    .to(targetNamespace, targetType, fieldTransformation.getTopLevelField(), fieldTransformation.getArgumentName());
+            if (!fieldTransformation.isAdded()) {
+                link.replaceFromField();
+            }
+            result.get(schemaNamespace).add(link.build());
         });
         this.stitchingDsl.getServiceDefinitions().forEach(serviceDefinition -> {
             serviceDefinition.getLinks().forEach(linkedField -> {

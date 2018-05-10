@@ -19,20 +19,22 @@ fieldsDefinition : '{' (fieldDefinition|linkedField)+ '}';
 
 linkedField: '_=>' linkDefinition;
 
-linkDefinition: 'from' topLevelField 'with' variableName 'as' fieldName;
+linkDefinition: 'from' topLevelField '(' argumentName ')' 'with input' variableName 'as' fieldName added?;
 
+added: 'added';
 topLevelField: name;
+argumentName: name;
 variableName: name;
 fieldName: name;
 
 fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
 
 // fixme: this allows for an empty arrow -- first shot at fixing ( target remote? | remote ) failed
-fieldTransformation : '=>' targetFieldDefinition? remoteCallDefinition?;
+fieldTransformation : '=>' linkDefinition;
 
-targetFieldDefinition : name ':' type;
-
-remoteCallDefinition : '{' remoteQuery '(' remoteArgument remoteInput? ')' '}' ;
+//targetFieldDefinition : name ':' type;
+//
+//remoteCallDefinition : '{' remoteQuery '(' remoteArgument remoteInput? ')' '}' ;
 
 remoteQuery : name ;
 

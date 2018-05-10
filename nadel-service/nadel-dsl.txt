@@ -4,21 +4,20 @@ service Confluence {
 
     type Page {
        id: ID!
-       authorId: String
+       authorName: String => from user(userName) with input authorName as author
        title: String
     }
 
     type User {
        id: ID!
-       username: String
-       authoredPages: [Page]
-       _=> from reportedIssues with username as reportedIssues
+       userName: String => from authoredPages(userName) with input userName as authoredPages added
+#       _=> from reportedIssues(userName) with input userName as reportedIssues
     }
 
     type Query {
         page(id:ID!): Page
         user(id: ID, userName: String): User
-        authoredPages(userId: ID!): [Page]
+        authoredPages(userName: ID!): [Page]
     }
 }
 

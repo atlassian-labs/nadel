@@ -4,7 +4,6 @@ import graphql.language.AbstractNode;
 import graphql.language.Node;
 import graphql.language.NodeVisitor;
 import graphql.language.ObjectTypeDefinition;
-import graphql.language.Type;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
@@ -13,9 +12,11 @@ import java.util.List;
 public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     private String targetName;
-    private Type targetType;
+    private String topLevelField;
+    private String argumentName;
 
     private ObjectTypeDefinition parentDefinition;
+    private boolean added;
 
     public ObjectTypeDefinition getParentDefinition() {
         return parentDefinition;
@@ -34,12 +35,12 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     }
 
 
-    public Type getTargetType() {
-        return targetType;
+    public boolean isAdded() {
+        return added;
     }
 
-    public void setTargetType(Type targetType) {
-        this.targetType = targetType;
+    public void setAdded(boolean added) {
+        this.added = added;
     }
 
     @Override
@@ -60,5 +61,21 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     @Override
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
+    }
+
+    public String getTopLevelField() {
+        return topLevelField;
+    }
+
+    public void setTopLevelField(String topLevelField) {
+        this.topLevelField = topLevelField;
+    }
+
+    public String getArgumentName() {
+        return argumentName;
+    }
+
+    public void setArgumentName(String argumentName) {
+        this.argumentName = argumentName;
     }
 }

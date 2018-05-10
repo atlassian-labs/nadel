@@ -6,6 +6,7 @@ public class LinkedField {
     private String topLevelQueryField;
     private String variableName;
     private String parentType;
+    private String argumentName;
 
     public String getFieldName() {
         return fieldName;
@@ -39,12 +40,23 @@ public class LinkedField {
         this.parentType = parentType;
     }
 
+    public String getArgumentName() {
+        return argumentName;
+    }
+
+    public void setArgumentName(String argumentName) {
+        this.argumentName = argumentName;
+    }
+
     @Override
     public String toString() {
         return "LinkedField{" +
                 "fieldName='" + fieldName + '\'' +
                 ", topLevelQueryField='" + topLevelQueryField + '\'' +
                 ", variableName='" + variableName + '\'' +
+                ", parentType='" + parentType + '\'' +
+                ", argumentName='" + argumentName + '\'' +
                 '}';
     }
 }
+

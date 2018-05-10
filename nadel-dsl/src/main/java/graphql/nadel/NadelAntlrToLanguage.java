@@ -133,15 +133,18 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     }
 
 
-    @Override
+    //    @Override
     public Void visitFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
         FieldDefinition fieldDefinition = (FieldDefinition) getFromContextStack(ContextProperty.FieldDefinition);
         ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
         FieldTransformation fieldTransformation = new FieldTransformation();
-        if (ctx.targetFieldDefinition() != null) {
-            fieldTransformation.setTargetName(ctx.targetFieldDefinition().name().getText());
-            fieldTransformation.setTargetType(createType(ctx.targetFieldDefinition().type()));
+        if (ctx.linkDefinition() != null) {
+            StitchingDSLParser.LinkDefinitionContext link = ctx.linkDefinition();
+            fieldTransformation.setTargetName(link.fieldName().getText());
             fieldTransformation.setParentDefinition(objectTypeDefinition);
+            fieldTransformation.setArgumentName(link.argumentName().name().getText());
+            fieldTransformation.setTopLevelField(link.topLevelField().name().getText());
+            fieldTransformation.setAdded(link.added() != null);
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
         return null;
@@ -185,11 +188,11 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         ServiceDefinition serviceDefinition = (ServiceDefinition) getFromContextStack(NadelContextProperty.ServiceDefinition);
         ObjectTypeDefinition parentType = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
         LinkedField linkedField = new LinkedField();
+        linkedField.setArgumentName(ctx.argumentName().name().getText());
         linkedField.setFieldName(fieldName);
         linkedField.setVariableName(variableName);
         linkedField.setTopLevelQueryField(topLevelField);
         linkedField.setParentType(parentType.getName());
-        System.out.println(linkedField);
         serviceDefinition.getLinks().add(linkedField);
         return super.visitLinkDefinition(ctx);
     }
