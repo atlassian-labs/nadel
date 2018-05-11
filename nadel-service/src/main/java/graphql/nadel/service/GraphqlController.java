@@ -1,14 +1,15 @@
 package graphql.nadel.service;
 
 import graphql.ExecutionResult;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,10 +19,12 @@ import java.util.Map;
 public class GraphqlController {
 
 
+
     @Autowired
     NadelExecutor nadelExecutor;
 
     @RequestMapping(name = "graphql", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @CrossOrigin(origins = "*")
     public Object graphql(@RequestBody() Map<String, Object> body) {
         String query = (String) body.get("query");
         Map<String, Object> variables = (Map<String, Object>) body.get("variables");

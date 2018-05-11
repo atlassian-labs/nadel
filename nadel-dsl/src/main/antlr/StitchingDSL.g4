@@ -13,7 +13,7 @@ serviceDefinition
 
 serviceDefinition:
 'service' name '{' serviceUrl typeSystemDefinition* '}' ;
-serviceUrl: 'url' ':' stringValue;
+serviceUrl: 'serviceUrl' ':' stringValue;
 
 fieldsDefinition : '{' (fieldDefinition|linkedField)+ '}';
 
