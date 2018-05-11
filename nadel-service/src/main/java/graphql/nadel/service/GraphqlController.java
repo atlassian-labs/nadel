@@ -6,8 +6,12 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.apache.commons.io.IOUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 
 @RestController
@@ -28,4 +32,13 @@ public class GraphqlController {
                 .thenApply(ExecutionResult::toSpecification);
 
     }
+
+    @RequestMapping(path = "/graphiql", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+    @ResponseBody
+    public String app() throws IOException {
+        try (InputStream resource = getClass().getClassLoader().getResourceAsStream("graphiql.html")) {
+            return IOUtils.toString(resource, "UTF-8");
+        }
+    }
+
 }

@@ -36,5 +36,7 @@ dependencies {
     compile 'com.google.guava:guava:24.0-jre'
     compile('org.springframework.boot:spring-boot-starter-web')
     compile('org.springframework.boot:spring-boot-starter-webflux')
+    compile group: 'commons-io', name: 'commons-io', version: '2.5'
+
     testCompile('org.springframework.boot:spring-boot-starter-test')
 }
