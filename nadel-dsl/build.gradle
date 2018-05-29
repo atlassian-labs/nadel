@@ -19,7 +19,7 @@ ext {
 
 
 version = gitVersion()
-group = 'com.graphql-java'
+group = 'com.atlassian.graphql-java'
 
 
 repositories {
