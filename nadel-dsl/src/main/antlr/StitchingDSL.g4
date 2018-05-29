@@ -32,15 +32,6 @@ fieldDefinition : description? name argumentsDefinition? ':' type fieldTransform
 // fixme: this allows for an empty arrow -- first shot at fixing ( target remote? | remote ) failed
 fieldTransformation : '=>' linkDefinition;
 
-//targetFieldDefinition : name ':' type;
-//
-//remoteCallDefinition : '{' remoteQuery '(' remoteArgument remoteInput? ')' '}' ;
-
-remoteQuery : name ;
-
-remoteArgument : name ;
-
-remoteInput: ':' name ;
 
 
 

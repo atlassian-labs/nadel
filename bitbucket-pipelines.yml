@@ -1,0 +1,18 @@
+# You can use a Docker image from Docker Hub or your own container
+# registry for your build environment.
+image: java:openjdk-8
+
+pipelines:
+  default:
+    - step:
+        script:
+          - echo Building a non-release branch - NOT releasing
+          - ./gradlew -I ./ci/init.gradle --no-daemon -Pmaven_user=$maven_user -Pmaven_password=$maven_password clean build test
+          - ./gradlew -I ./ci/init.gradle --no-daemon -Pmaven_user=$maven_user -Pmaven_password=$maven_password printVersion
+  branches: # Container for all branch-specific pipelines.
+    master:
+      - step:
+          script:
+            - echo Building master - releasing
+            - ./gradlew -I ./ci/init.gradle --no-daemon -Pmaven_user=$maven_user -Pmaven_password=$maven_password clean build test :nadel-dsl:uploadArchives
+            - ./gradlew -I ./ci/init.gradle --no-daemon -Pmaven_user=$maven_user -Pmaven_password=$maven_password printVersion

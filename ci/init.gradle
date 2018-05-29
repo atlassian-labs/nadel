@@ -1,0 +1,42 @@
+allprojects {
+  project.ext.mavenUser = maven_user
+  project.ext.mavenPassword = maven_password
+
+  apply plugin: 'maven'
+
+  buildscript {
+    repositories {
+      mavenLocal()
+      maven {
+        name 'maven-atlassian-com'
+        url 'https://packages.atlassian.com/maven/repository/internal'
+        credentials {
+          username mavenUser
+          password mavenPassword
+        }
+      }
+    }
+  }
+
+  repositories {
+    mavenLocal()
+    maven {
+      name 'maven-atlassian-com'
+      url 'https://packages.atlassian.com/maven/repository/internal'
+      credentials {
+        username mavenUser
+        password mavenPassword
+      }
+    }
+  }
+
+  uploadArchives {
+    repositories {
+      mavenDeployer {
+        repository(url:'https://packages.atlassian.com/maven/private') {
+          authentication(userName: mavenUser, password: mavenPassword)
+        }
+      }
+    }
+  }
+}
