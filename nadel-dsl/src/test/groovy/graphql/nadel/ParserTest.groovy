@@ -59,6 +59,27 @@ class ParserTest extends Specification {
 
     }
 
+    def "extend services"() {
+        given:
+        def simpleDSL = """
+        extend service Foo {
+            serviceUrl: "url1"
+            extend type Query {
+                hello1: String
+            }
+        }
+        
+       """
+        def stitchingDSL
+        when:
+        Parser parser = new Parser()
+        stitchingDSL = parser.parseDSL(simpleDSL)
+
+        then:
+        stitchingDSL.getServiceDefinitions().size() == 1
+
+    }
+
     def "parse error"() {
         given:
         def simpleDSL = """

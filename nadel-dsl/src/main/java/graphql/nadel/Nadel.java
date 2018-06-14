@@ -4,24 +4,15 @@ import com.atlassian.braid.Braid;
 import com.atlassian.braid.Link;
 import com.atlassian.braid.SchemaNamespace;
 import com.atlassian.braid.SchemaSource;
-import com.atlassian.braid.document.DocumentMappers;
-import com.atlassian.braid.java.util.BraidObjects;
 import com.atlassian.braid.source.GraphQLRemoteRetriever;
-import com.atlassian.braid.source.GraphQLRemoteSchemaSource;
-import com.atlassian.braid.source.MapGraphQLError;
 import graphql.Assert;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.execution.AsyncExecutionStrategy;
-import graphql.execution.DataFetcherResult;
-import graphql.language.Document;
-import graphql.language.Field;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
-import graphql.language.OperationDefinition;
-import graphql.language.SelectionSet;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldTransformation;
@@ -32,8 +23,6 @@ import graphql.schema.idl.TypeInfo;
 import graphql.schema.idl.errors.SchemaProblem;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +30,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 
@@ -53,12 +41,16 @@ public class Nadel {
     private final String dsl;
     private StitchingDsl stitchingDsl;
     private Parser parser = new Parser();
-    private GraphQLRemoteRetrieverFactory graphQLRemoteRetrieverFactory;
+    private SchemaSourceFactory schemaSourceFactory;
     private Braid braid;
 
     public Nadel(String dsl, GraphQLRemoteRetrieverFactory graphQLRemoteRetrieverFactory) {
+        this(dsl, new GraphQLRemoteSchemaSourceFactory(graphQLRemoteRetrieverFactory));
+    }
+
+    public Nadel(String dsl, SchemaSourceFactory schemaSourceFactory) {
         this.dsl = dsl;
-        this.graphQLRemoteRetrieverFactory = graphQLRemoteRetrieverFactory;
+        this.schemaSourceFactory = schemaSourceFactory;
         this.stitchingDsl = this.parser.parseDSL(dsl);
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
 
@@ -75,9 +67,9 @@ public class Nadel {
 
             SchemaNamespace namespace = this.stitchingDsl.getNamespaceByService().get(serviceDefinition.getName());
             TypeDefinitionRegistry typeDefinitionRegistry = this.stitchingDsl.getTypesByService().get(serviceDefinition.getName());
-            GraphQLRemoteRetriever remoteRetriever = this.graphQLRemoteRetrieverFactory.createRemoteRetriever(serviceDefinition);
             List<Link> links = linksByNamespace.getOrDefault(namespace, new ArrayList<>());
-            SchemaSource schemaSource = createSchemaSource(typeDefinitionRegistry, namespace, remoteRetriever, links);
+            SchemaSource schemaSource = schemaSourceFactory.createSchemaSource(serviceDefinition, namespace,
+                    typeDefinitionRegistry, links);
             schemaSources.add(schemaSource);
         }
         // Stitching DSL
@@ -85,7 +77,7 @@ public class Nadel {
         this.braid = Braid.builder()
                 .executionStrategy(asyncExecutionStrategy)
                 .schemaSources(schemaSources)
-//                .withRuntimeWiring(this::addDataFetchersForLinks)
+                // .withRuntimeWiring(this::addDataFetchersForLinks)
                 .build();
     }
 
@@ -124,46 +116,6 @@ public class Nadel {
 //            }
 //        };
 //    }
-
-    private DataFetcherResult<Object> handleResponse(Map<String, Object> response, String fieldName) {
-        Map<String, Object> data = Optional.ofNullable(response.get("data"))
-                .map(BraidObjects::<Map<String, Object>>cast)
-                .orElse(Collections.emptyMap());
-        Object dataForField = data.get(fieldName);
-        final List<Map> errorsMap = Optional.ofNullable(response.get("errors"))
-                .map(BraidObjects::<List<Map>>cast)
-                .orElse(Collections.emptyList());
-
-        List<GraphQLError> errors = errorsMap.stream()
-                .map(val -> Optional.ofNullable(val)
-                        .map(BraidObjects::<Map<String, Object>>cast)
-                        .orElseThrow(IllegalArgumentException::new))
-                .map(MapGraphQLError::new)
-                .collect(Collectors.toList());
-        return new DataFetcherResult<>(dataForField, errors);
-    }
-
-    private Document createDocument(Field field) {
-        SelectionSet selectionSet = new SelectionSet(Arrays.asList(field));
-        OperationDefinition operationDefinition = new OperationDefinition();
-        operationDefinition.setOperation(OperationDefinition.Operation.QUERY);
-        operationDefinition.setSelectionSet(selectionSet);
-        Document document = new Document();
-        document.setDefinitions(Arrays.asList(operationDefinition));
-        return document;
-    }
-
-    private SchemaSource createSchemaSource(TypeDefinitionRegistry typeDefinitionRegistry,
-                                            SchemaNamespace schemaNamespace,
-                                            GraphQLRemoteRetriever<Object> remoteRetriever,
-                                            List<Link> links) {
-        return new GraphQLRemoteSchemaSource<>(schemaNamespace,
-                typeDefinitionRegistry,
-                typeDefinitionRegistry,
-                remoteRetriever,
-                links,
-                DocumentMappers.identity());
-    }
 
     public TypeDefinitionRegistry buildRegistry(ServiceDefinition serviceDefinition) {
         List<GraphQLError> errors = new ArrayList<>();
@@ -223,31 +175,6 @@ public class Nadel {
 
             });
         });
-//        this.stitchingDsl.getServiceDefinitions().forEach(serviceDefinition -> {
-//            serviceDefinition.getLinks().forEach(linkedField -> {
-//                TypeDefinitionRegistry typeDefinitionRegistry = this.stitchingDsl.getTypesByService().get(serviceDefinition.getName());
-//                String parentType = linkedField.getParentType();
-//                ObjectTypeDefinition parentTypeDefinition = (ObjectTypeDefinition) typeDefinitionRegistry.getType(parentType).get();
-//
-//                FieldDefinition newFieldDefinition = new FieldDefinition(linkedField.getFieldName());
-//                parentTypeDefinition.getFieldDefinitions().add(newFieldDefinition);
-//                String topLevelQueryField = linkedField.getTopLevelQueryField();
-//                TopLevelFieldInfo topLevelFieldInfo = findServiceByTopLevelField(topLevelQueryField);
-//                TypeInfo targetTypeInfo = TypeInfo.typeInfo(topLevelFieldInfo.fieldDefinition.getType());
-//                SchemaNamespace targetNamespace = this.stitchingDsl.getNamespaceByService().get(topLevelFieldInfo.serviceName);
-//                SchemaNamespace schemaNamespace = this.stitchingDsl.getNamespaceByService().get(serviceDefinition.getName());
-//
-//                newFieldDefinition.setType(targetTypeInfo.getRawType());
-//
-//                Link link = Link
-//                        .from(schemaNamespace, parentType, linkedField.getFieldName(), "id")
-//                        .to(targetNamespace, targetTypeInfo.getName(), linkedField.getTopLevelQueryField(), linkedField.getVariableName())
-//                        .build();
-//
-//                result.putIfAbsent(schemaNamespace, new ArrayList<>());
-//                result.get(schemaNamespace).add(link);
-//            });
-//        });
 
         return result;
     }

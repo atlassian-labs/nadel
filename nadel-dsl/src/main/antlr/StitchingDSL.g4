@@ -8,11 +8,15 @@ import GraphqlSDL;
 stitchingDSL: definition+;
 
 definition:
-serviceDefinition
+serviceDefinition|extendServiceDefinition
 ;
 
 serviceDefinition:
 'service' name '{' serviceUrl typeSystemDefinition* '}' ;
+
+extendServiceDefinition:
+'extend' 'service' name '{' serviceUrl objectTypeExtensionDefinition* '}' ;
+
 serviceUrl: 'serviceUrl' ':' stringValue;
 
 fieldsDefinition : '{' (fieldDefinition|linkedField)+ '}';
