@@ -76,8 +76,7 @@ class ParserTest extends Specification {
         stitchingDSL = parser.parseDSL(simpleDSL)
 
         then:
-        stitchingDSL.getServiceDefinitions().size() == 1
-
+        stitchingDSL.getServiceDefinitions().size() == 0
     }
 
     def "parse error"() {
