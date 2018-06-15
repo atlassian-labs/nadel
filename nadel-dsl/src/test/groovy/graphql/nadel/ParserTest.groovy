@@ -10,142 +10,163 @@ class ParserTest extends Specification {
 
     def "simple service definition"() {
         given:
-        def simpledsl = """
-        service foo {
-            serviceurl: "someurl"
-            type query {
-                hello: string
+        def simpleDSL = """
+        service Foo {
+            serviceUrl: "someUrl"
+            type Query {
+                hello: String
             }
         }
        """
-        def stitchingdsl
+        def stitchingDSL
         when:
-        parser parser = new parser()
-        stitchingdsl = parser.parsedsl(simpledsl)
+        Parser parser = new Parser()
+        stitchingDSL = parser.parseDSL(simpleDSL)
 
         then:
-        stitchingdsl.getservicedefinitions().size() == 1
-        stitchingdsl.getservicedefinitions()[0].url == 'someurl'
-        stitchingdsl.getservicedefinitions()[0].gettypedefinitions().size() == 1
-        stitchingdsl.getservicedefinitions()[0].gettypedefinitions()[0] instanceof objecttypedefinition
-        ((objecttypedefinition) stitchingdsl.getservicedefinitions()[0].gettypedefinitions()[0]).name == 'query'
-        ((objecttypedefinition) stitchingdsl.getservicedefinitions()[0].gettypedefinitions()[0]).fielddefinitions[0].name == 'hello'
+        stitchingDSL.getServiceDefinitions().size() == 1
+        stitchingDSL.getServiceDefinitions()[0].url == 'someUrl'
+        stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions().size() == 1
+        stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0] instanceof ObjectTypeDefinition
+        ((ObjectTypeDefinition) stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0]).name == 'Query'
+        ((ObjectTypeDefinition) stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0]).fieldDefinitions[0].name == 'hello'
 
     }
 
     def "two services"() {
         given:
-        def simpledsl = """
-         service foo {
-            serviceurl: "url1"
-            type query {
-                hello1: string
+        def simpleDSL = """
+         service Foo {
+            serviceUrl: "url1"
+            type Query {
+                hello1: String
             }
         }
-        service bar {
-            serviceurl: "url2"
-            type query {
-                hello2: string
+        service Bar {
+            serviceUrl: "url2"
+            type Query {
+                hello2: String
             }
         }
        """
-        def stitchingdsl
+        def stitchingDSL
         when:
-        parser parser = new parser()
-        stitchingdsl = parser.parsedsl(simpledsl)
+        Parser parser = new Parser()
+        stitchingDSL = parser.parseDSL(simpleDSL)
 
         then:
-        stitchingdsl.getservicedefinitions().size() == 2
+        stitchingDSL.getServiceDefinitions().size() == 2
+
+    }
+
+    def "extend services"() {
+        given:
+        def simpleDSL = """
+        extend service Foo {
+            serviceUrl: "url1"
+            extend type Query {
+                hello1: String
+            }
+        }
+        
+       """
+        def stitchingDSL
+        when:
+        Parser parser = new Parser()
+        stitchingDSL = parser.parseDSL(simpleDSL)
+
+        then:
+        stitchingDSL.getServiceDefinitions().size() == 1
 
     }
 
     def "parse error"() {
         given:
-        def simpledsl = """
-        service foo {
-            urlx: "someurl"
+        def simpleDSL = """
+        service Foo {
+            urlX: "someUrl"
         }
        """
         when:
-        parser parser = new parser()
-        parser.parsedsl(simpledsl)
+        Parser parser = new Parser()
+        parser.parseDSL(simpleDSL)
 
         then:
-        thrown(exception)
+        thrown(Exception)
 
     }
 
     def "not all tokens are parsed"() {
         given:
-        def simpledsl = """
-        service foo {
-            url: "someurl"
+        def simpleDSL = """
+        service Foo {
+            url: "someUrl"
         }
-        somefoo
+        someFoo
        """
         when:
-        parser parser = new parser()
-        parser.parsedsl(simpledsl)
+        Parser parser = new Parser()
+        parser.parseDSL(simpleDSL)
 
         then:
-        thrown(parsecancellationexception)
+        thrown(ParseCancellationException)
     }
 
     def "parse transformation"() {
         given:
         def dsl = """
-        service fooservice {
-            serviceurl: "url1"
-            type query {
-                foo: foo
+        service FooService {
+            serviceUrl: "url1"
+            type Query {
+                foo: Foo
             }
-            type foo {
-                barid: id => from bar(id) with input barid as bar
+            type Foo {
+                barId: ID => from bar(id) with input barId as bar
             }
         }
-        service barservice {
-            serviceurl: "url2"
-            type query {
-                bar(id: id): bar
+        service BarService {
+            serviceUrl: "url2"
+            type Query {
+                bar(id: ID): Bar
             }
-            type bar {
-                id: id
+            type Bar {
+                id: ID
             }
         }
         """
         when:
-        parser parser = new parser()
+        Parser parser = new Parser()
         then:
-        def stitchingdsl = parser.parsedsl(dsl)
+        def stitchingDSL = parser.parseDSL(dsl)
 
         then:
-        stitchingdsl.getservicedefinitions()[0].gettypedefinitions().size() == 2
+        stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions().size() == 2
 
-        objecttypedefinition footype = stitchingdsl.getservicedefinitions()[0].gettypedefinitions()[1]
-        footype.name == "foo"
-        def fielddefinition = footype.fielddefinitions[0]
-        fieldtransformation fieldtransformation = stitchingdsl.gettransformationsbyfielddefinition().get(fielddefinition)
-        fieldtransformation != null
-        fieldtransformation.targetname == "bar"
+        ObjectTypeDefinition fooType = stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[1]
+        fooType.name == "Foo"
+        def fieldDefinition = fooType.fieldDefinitions[0]
+        FieldTransformation fieldTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(fieldDefinition)
+        fieldTransformation != null
+        fieldTransformation.targetName == "bar"
     }
 
     def "empty arrow fails"() {
         def dsl = """
-        service fooservice {
-            serviceurl: "url1"
+        service FooService {
+            serviceUrl: "url1"
 
-            type foo {
-                barid: id => 
+            type Foo {
+                barId: ID => 
             }
         }
         """
 
         when:
-        new parser().parsedsl(dsl)
+        new Parser().parseDSL(dsl)
 
         then:
-        parsecancellationexception ex = thrown()
-        // alternative syntax: def ex = thrown(invaliddeviceexception)
+        ParseCancellationException ex = thrown()
+        // Alternative syntax: def ex = thrown(InvalidDeviceException)
         ex.message.contains("expecting 'from'")
 
     }
