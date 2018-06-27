@@ -1,2 +1,1 @@
-include 'nadel-dsl'
-include 'nadel-service'
+rootProject.name = 'nadel'
