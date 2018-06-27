@@ -10,21 +10,34 @@ apply plugin: 'maven-publish'
 apply plugin: 'antlr'
 apply plugin: 'osgi'
 
+def getDevelopmentVersion() {
+    def output = new StringBuilder()
+    def error = new StringBuilder()
+    def gitShortHash = 'git rev-parse --short HEAD'.execute()
+    gitShortHash.waitForProcessOutput(output, error)
+    def gitHash = output.toString().trim()
+    if (gitHash.isEmpty()) {
+        println "git hash is empty: error: ${error.toString()}"
+        throw new IllegalStateException("git hash could not be determined")
+    }
+    new SimpleDateFormat('yyyy-MM-dd\'T\'HH-mm-ss').format(new Date()) + "-" + gitHash
+}
+
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
 def graphqlJavaVersion = '8.0'
+def braidVersion = '0.10.12-SNAPSHOT'
 
-def releaseVersion = System.properties.RELEASE_VERSION
-version = releaseVersion ? releaseVersion : new SimpleDateFormat('yyyy-MM-dd\'T\'HH-mm-ss').format(new Date())
+def releaseVersion = System.env.RELEASE_VERSION
+version = releaseVersion ? releaseVersion : getDevelopmentVersion()
 group = 'com.graphql-java'
 
 
 repositories {
     maven { url "http://packages.atlassian.com/maven/public" }
     mavenCentral()
-//    maven { url "http://dl.bintray.com/andimarek/graphql-java" }
     mavenLocal()
 }
 
@@ -80,7 +93,7 @@ dependencies {
     graphqlJavaSource('com.graphql-java:graphql-java:' + graphqlJavaVersion + ':sources') {
         transitive = false
     }
-    compile 'com.atlassian.braid:graphql-braid:0.10.4-SNAPSHOT'
+    compile 'com.atlassian.braid:graphql-braid:' + braidVersion
     compile 'com.graphql-java:graphql-java:' + graphqlJavaVersion
     compile 'org.antlr:antlr4-runtime:4.7.1'
     compile 'org.slf4j:slf4j-api:' + slf4jVersion
@@ -137,7 +150,7 @@ publishing {
 
     publications {
 
-        nadel(MavenPublication) {
+        graphqlJava(MavenPublication) {
             version version
             from components.java
 
@@ -159,18 +172,18 @@ publishing {
                 }
                 pomNode.children().last() + {
                     resolveStrategy = Closure.DELEGATE_FIRST
-                    name 'graphql-java'
-                    description 'GraphqL Stitching DSL'
-                    url "https://github.com/andimarek/nadel"
+                    name 'nadel'
+                    description 'GraphqL Java'
+                    url "https://github.com/graphql-java/nadel"
                     scm {
-                        url "https://github.com/andimarek/nadel"
-                        connection "https://github.com/andimarek/nadel"
-                        developerConnection "https://github.com/andimarek/nadel"
+                        url "https://github.com/graphql-java/nadel"
+                        connection "https://github.com/graphql-java/nadel"
+                        developerConnection "https://github.com/graphql-java/nadel"
                     }
                     licenses {
                         license {
                             name 'MIT'
-                            url 'https://github.com/andimarek/nadel/blob/master/LICENSE.md'
+                            url 'https://github.com/graphql-java/nadel/blob/master/LICENSE.md'
                             distribution 'repo'
                         }
                     }
@@ -190,14 +203,30 @@ publishing {
 bintray {
     user = System.env.BINTRAY_USER ?: project["bintray.user"]
     key = System.env.BINTRAY_API_KEY ?: project["bintray.key"]
-    publications = ['nadel']
+    publications = ['graphqlJava']
     publish = true
     pkg {
         repo = 'nadel'
         name = 'nadel'
-        desc = 'GraphQL stitching dsl'
+        desc = 'GraphQL stitching DSL'
         licenses = ['MIT']
-        vcsUrl = 'https://github.com/andimarek/nadel'
+        vcsUrl = 'https://github.com/graphql-java/nadel'
+
+        version {
+            name = project.version
+            desc = project.description
+            released = new Date()
+            vcsTag = 'v' + project.version
+            gpg {
+                sign = true
+            }
+            mavenCentralSync {
+                sync = true
+                user = System.env.MAVEN_CENTRAL_USER
+                password = System.env.MAVEN_CENTRAL_PASSWORD
+                close = '1'
+            }
+        }
     }
 }
 
