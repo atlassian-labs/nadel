@@ -14,6 +14,7 @@ import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.execution.AsyncExecutionStrategy;
 import graphql.language.FieldDefinition;
+import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldTransformation;
@@ -108,14 +109,17 @@ public class Nadel {
 
 
             String parentType = fieldTransformation.getParentDefinition().getName();
+
             String originalFieldName = fieldDefinition.getName();
-            String targetType = TypeInfo.typeInfo(fieldTransformation.getTargetType()).getTypeName().getName();
+            Type targetType = assertNotNull(fieldTransformation.getTargetType());
+            String targetTypeName = TypeInfo.typeInfo(targetType).getTypeName().getName();
             String newFieldName = fieldTransformation.getTargetName();
-            String queryField = targetType.toLowerCase();
-            SchemaNamespace targetNamespace = findNameSpace(targetType);
+
+            String queryField = targetTypeName.toLowerCase();
+            SchemaNamespace targetNamespace = findNameSpace(targetTypeName);
             Link link = Link
                     .from(schemaNamespace, parentType, newFieldName, originalFieldName)
-                    .to(targetNamespace, targetType, queryField, "id")
+                    .to(targetNamespace, targetTypeName, queryField, "id")
                     .replaceFromField()
                     .build();
             result.get(schemaNamespace).add(link);

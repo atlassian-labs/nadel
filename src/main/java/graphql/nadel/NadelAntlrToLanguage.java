@@ -9,18 +9,24 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
-import graphql.nadel.dsl.*;
+import graphql.nadel.dsl.FieldReference;
+import graphql.nadel.dsl.FieldTransformation;
+import graphql.nadel.dsl.ServiceDefinition;
+import graphql.nadel.dsl.StitchingDsl;
+import graphql.nadel.dsl.TypeTransformation;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.RuleNode;
 
-import java.security.cert.CollectionCertStoreParameters;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
-import static graphql.parser.StringValueParsing.parseSingleQuotedString;
 
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
@@ -141,6 +147,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         FieldDefinition fieldDefinition = (FieldDefinition) getFromContextStack(ContextProperty.FieldDefinition);
         ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
         FieldTransformation fieldTransformation = new FieldTransformation();
+        fieldTransformation.setParentDefinition(objectTypeDefinition);
+        fieldTransformation.setTargetName(fieldDefinition.getName());
+        fieldTransformation.setTargetType(fieldDefinition.getType());
         if (ctx.inputMappingDefinition() != null) {
             fieldTransformation.setTargetName(ctx.inputMappingDefinition().name().getText());
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
