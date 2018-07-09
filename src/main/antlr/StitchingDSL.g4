@@ -5,31 +5,35 @@ import GraphqlSDL;
     package graphql.nadel.parser.antlr;
 }
 
-stitchingDSL: definition+;
-
-definition:
-serviceDefinition
-;
+stitchingDSL: serviceDefinition+;
 
 serviceDefinition:
-'service' name '{' serviceUrl typeSystemDefinition* '}' ;
-serviceUrl: 'url' ':' stringValue;
+'service' name '{' typeSystemDefinition* '}' ;
 
+objectTypeDefinition : description? TYPE name implementsInterfaces? typeTransformation? directives? fieldsDefinition? ;
 
 fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
 
 // fixme: this allows for an empty arrow -- first shot at fixing ( target remote? | remote ) failed
-fieldTransformation : '=>' targetFieldDefinition? remoteCallDefinition?;
+fieldTransformation : '<=' inputMappingDefinition? innerServiceTransformation? ;
 
-targetFieldDefinition : name ':' type;
+typeTransformation : '<=' innerTypeTransformation ;
 
-remoteCallDefinition : '{' remoteQuery '(' remoteArgument remoteInput? ')' '}' ;
+inputMappingDefinition : '$source' '.' name ;
 
-remoteQuery : name ;
+innerTypeTransformation: '$innerTypes' '.' name;
 
-remoteArgument : name ;
+innerServiceTransformation: '$innerQueries' '.' serviceName '.' fieldName remoteCallDefinition?;
 
-remoteInput: ':' name ;
+serviceName: NAME;
+
+fieldName: NAME;
+
+remoteCallDefinition : '(' remoteArgumentList ')' ;
+
+remoteArgumentList : remoteArgumentPair ( ',' remoteArgumentPair )* ;
+
+remoteArgumentPair : name ':' inputMappingDefinition ;
 
 
 

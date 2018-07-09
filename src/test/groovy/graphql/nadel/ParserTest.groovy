@@ -3,6 +3,7 @@ package graphql.nadel
 import graphql.language.ObjectTypeDefinition
 import graphql.language.TypeName
 import graphql.nadel.dsl.FieldTransformation
+import graphql.nadel.dsl.ServiceDefinition
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import spock.lang.Specification
 
@@ -13,7 +14,6 @@ class ParserTest extends Specification {
         given:
         def simpleDSL = """
         service Foo {
-            url: "someUrl"
             type Query {
                 hello: String
             }
@@ -26,7 +26,6 @@ class ParserTest extends Specification {
 
         then:
         stitchingDSL.getServiceDefinitions().size() == 1
-        stitchingDSL.getServiceDefinitions()[0].url == 'someUrl'
         stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions().size() == 1
         stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0] instanceof ObjectTypeDefinition
         ((ObjectTypeDefinition) stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0]).name == 'Query'
@@ -38,13 +37,11 @@ class ParserTest extends Specification {
         given:
         def simpleDSL = """
          service Foo {
-            url: "url1"
             type Query {
                 hello1: String
             }
         }
         service Bar {
-            url: "url2"
             type Query {
                 hello2: String
             }
@@ -80,7 +77,6 @@ class ParserTest extends Specification {
         given:
         def simpleDSL = """
         service Foo {
-            url: "someUrl"
         }
         someFoo
        """
@@ -96,20 +92,23 @@ class ParserTest extends Specification {
         given:
         def dsl = """
         service FooService {
-            url: "url1"
             type Query {
                 foo: Foo
             }
+
             type Foo {
-                barId: ID => bar: Bar
+                id: ID <= \$source.fooId
+                title : String <= \$source.name
+                category : String <= \$innerQueries.foo.category(id: \$source.fooId, secondId: \$source.barId)
             }
         }
+        
         service BarService {
-            url: "url2"
             type Query {
                 bar(id: ID): Bar
             }
-            type Bar {
+
+            type Bar <= \$innerTypes.FooBar {
                 id: ID
             }
         }
@@ -124,14 +123,29 @@ class ParserTest extends Specification {
 
         ObjectTypeDefinition fooType = stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[1]
         fooType.name == "Foo"
-        def fieldDefinition = fooType.fieldDefinitions[0]
-        FieldTransformation fieldTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(fieldDefinition)
-        fieldTransformation != null
-        fieldTransformation.targetName == "bar"
-        fieldTransformation.targetType instanceof TypeName
-        ((TypeName) fieldTransformation.targetType).name == "Bar"
+        def barIdDefinition = fooType.fieldDefinitions[0]
+        FieldTransformation barTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(barIdDefinition)
+        barTransformation != null
+        barTransformation.targetName == "fooId"
+
+        def titleDefinition = fooType.fieldDefinitions[1]
+        def titleTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(titleDefinition)
+        titleTransformation != null
+        titleTransformation.targetName == "name"
+
+        def categoryDefinition = fooType.fieldDefinitions[2]
+        def categoryTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(categoryDefinition)
+        categoryTransformation != null
+        categoryTransformation.targetName == "category"
+        categoryTransformation.serviceName == "foo"
+        categoryTransformation.arguments.id.fieldName == "fooId"
+        categoryTransformation.arguments.secondId.fieldName == "barId"
 
 
+        ObjectTypeDefinition barType = stitchingDSL.getServiceDefinitions()[1].getTypeDefinitions()[1]
+        barType.name == "Bar"
+        def barTypeTransformation = stitchingDSL.getTransformationsByTypeDefinition().get(barType)
+        barTypeTransformation != null
     }
 }
 

@@ -9,18 +9,15 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
-import graphql.nadel.dsl.FieldTransformation;
-import graphql.nadel.dsl.ServiceDefinition;
-import graphql.nadel.dsl.StitchingDsl;
+import graphql.nadel.dsl.*;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.RuleNode;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.security.cert.CollectionCertStoreParameters;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.parser.StringValueParsing.parseSingleQuotedString;
@@ -109,9 +106,8 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     @Override
     public Void visitServiceDefinition(StitchingDSLParser.ServiceDefinitionContext ctx) {
-        String url = parseSingleQuotedString(ctx.serviceUrl().stringValue().getText());
         String name = ctx.name().getText();
-        ServiceDefinition def = new ServiceDefinition(name, url);
+        ServiceDefinition def = new ServiceDefinition(name);
         addContextProperty(NadelContextProperty.ServiceDefinition, def);
         super.visitChildren(ctx);
         popNadelContext();
@@ -131,16 +127,40 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         return null;
     }
 
+    @Override
+    public Void visitTypeTransformation(StitchingDSLParser.TypeTransformationContext ctx) {
+        ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
+        TypeTransformation typeTransformation = new TypeTransformation();
+        typeTransformation.setTargetName(ctx.innerTypeTransformation().name().getText());
+        this.stitchingDsl.getTransformationsByTypeDefinition().put(objectTypeDefinition, typeTransformation);
+        return null;
+    }
 
     @Override
     public Void visitFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
         FieldDefinition fieldDefinition = (FieldDefinition) getFromContextStack(ContextProperty.FieldDefinition);
         ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
         FieldTransformation fieldTransformation = new FieldTransformation();
-        if (ctx.targetFieldDefinition() != null) {
-            fieldTransformation.setTargetName(ctx.targetFieldDefinition().name().getText());
-            fieldTransformation.setTargetType(createType(ctx.targetFieldDefinition().type()));
-            fieldTransformation.setParentDefinition(objectTypeDefinition);
+        if (ctx.inputMappingDefinition() != null) {
+            fieldTransformation.setTargetName(ctx.inputMappingDefinition().name().getText());
+            this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
+        }
+        if (ctx.innerServiceTransformation() != null) {
+            StitchingDSLParser.InnerServiceTransformationContext transContext = ctx.innerServiceTransformation();
+            fieldTransformation.setTargetName(transContext.fieldName().getText());
+            fieldTransformation.setServiceName(transContext.serviceName().getText());
+            if (transContext.remoteCallDefinition() != null) {
+                Map<String, FieldReference> m = transContext
+                        .remoteCallDefinition()
+                        .remoteArgumentList()
+                        .remoteArgumentPair()
+                        .stream()
+                        .collect(
+                                Collectors.toMap(p -> p.name().getText(), p -> new FieldReference(p.inputMappingDefinition().name().getText()))
+                        );
+                fieldTransformation.setArguments(m);
+            }
+
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
         return null;

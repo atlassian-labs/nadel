@@ -25,6 +25,10 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
         this.typeDefinitions = new ArrayList<>();
     }
 
+    public ServiceDefinition(String name) {
+        this(name, null);
+    }
+
     public ServiceDefinition(String name, String url) {
         this(name, url, new ArrayList<>());
     }
