@@ -19,7 +19,7 @@ fieldTransformation : '<=' inputMappingDefinition? innerServiceTransformation? ;
 
 typeTransformation : '<=' innerTypeTransformation ;
 
-inputMappingDefinition : '$input.' name ;
+inputMappingDefinition : '$source.' name ;
 
 innerTypeTransformation: '$innerTypes.' name;
 

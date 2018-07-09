@@ -97,9 +97,9 @@ class ParserTest extends Specification {
             }
 
             type Foo {
-                id: ID <= \$input.fooId
-                title : String <= \$input.name
-                category : String <= \$innerQuery.category(id: \$input.fooId)
+                id: ID <= \$source.fooId
+                title : String <= \$source.name
+                category : String <= \$innerQuery.category(id: \$source.fooId)
             }
         }
         service BarService {
@@ -112,7 +112,7 @@ class ParserTest extends Specification {
             }
 
             #extend type Foo {
-            #    foobar: Bar <= bar(id: \$input.barId)
+            #    foobar: Bar <= bar(id: \$source.barId)
             #}
         }
         """
