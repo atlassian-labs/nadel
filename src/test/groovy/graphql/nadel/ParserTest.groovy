@@ -101,7 +101,7 @@ class ParserTest extends Specification {
                 foo: Foo
             }
             type Foo {
-                barId: ID => bar: Bar
+                barId: ID <= bar: Bar
             }
         }
         service BarService {

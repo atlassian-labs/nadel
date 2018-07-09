@@ -19,7 +19,7 @@ serviceUrl: 'url' ':' stringValue;
 fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
 
 // fixme: this allows for an empty arrow -- first shot at fixing ( target remote? | remote ) failed
-fieldTransformation : '=>' targetFieldDefinition? remoteCallDefinition?;
+fieldTransformation : '<=' targetFieldDefinition? remoteCallDefinition?;
 
 targetFieldDefinition : name ':' type;
 

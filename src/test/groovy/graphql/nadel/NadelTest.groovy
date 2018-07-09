@@ -72,7 +72,7 @@ class NadelTest extends Specification {
                 foo: Foo
             }
             type Foo {
-                barId: ID => realBarValue: Bar
+                barId: ID <= realBarValue: Bar
             }
         }
         service BarService {
