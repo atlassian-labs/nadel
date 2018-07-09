@@ -24,13 +24,11 @@ class NadelTest extends Specification {
         given:
         def dsl = """
         service Service1 {
-            url: "url1"
             type Query {
                 hello: String
             }
         }
         service Service2 {
-            url: "url2"
             type Query {
                 hello2: String
             }
@@ -67,7 +65,6 @@ class NadelTest extends Specification {
     def "stitching with transformation"() {
         def dsl = """
         service FooService {
-            url: "url1"
             type Query {
                 foo: Foo
             }
@@ -76,7 +73,6 @@ class NadelTest extends Specification {
             }
         }
         service BarService {
-            url: "url2"
             type Query {
                 bar(id: ID): Bar
             }

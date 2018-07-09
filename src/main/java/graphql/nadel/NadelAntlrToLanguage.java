@@ -109,9 +109,8 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     @Override
     public Void visitServiceDefinition(StitchingDSLParser.ServiceDefinitionContext ctx) {
-        String url = parseSingleQuotedString(ctx.serviceUrl().stringValue().getText());
         String name = ctx.name().getText();
-        ServiceDefinition def = new ServiceDefinition(name, url);
+        ServiceDefinition def = new ServiceDefinition(name);
         addContextProperty(NadelContextProperty.ServiceDefinition, def);
         super.visitChildren(ctx);
         popNadelContext();

@@ -13,7 +13,6 @@ class ParserTest extends Specification {
         given:
         def simpleDSL = """
         service Foo {
-            url: "someUrl"
             type Query {
                 hello: String
             }
@@ -26,7 +25,6 @@ class ParserTest extends Specification {
 
         then:
         stitchingDSL.getServiceDefinitions().size() == 1
-        stitchingDSL.getServiceDefinitions()[0].url == 'someUrl'
         stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions().size() == 1
         stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0] instanceof ObjectTypeDefinition
         ((ObjectTypeDefinition) stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0]).name == 'Query'
@@ -38,13 +36,11 @@ class ParserTest extends Specification {
         given:
         def simpleDSL = """
          service Foo {
-            url: "url1"
             type Query {
                 hello1: String
             }
         }
         service Bar {
-            url: "url2"
             type Query {
                 hello2: String
             }
@@ -80,7 +76,6 @@ class ParserTest extends Specification {
         given:
         def simpleDSL = """
         service Foo {
-            url: "someUrl"
         }
         someFoo
        """
@@ -96,7 +91,6 @@ class ParserTest extends Specification {
         given:
         def dsl = """
         service FooService {
-            url: "url1"
             type Query {
                 foo: Foo
             }
@@ -105,7 +99,6 @@ class ParserTest extends Specification {
             }
         }
         service BarService {
-            url: "url2"
             type Query {
                 bar(id: ID): Bar
             }

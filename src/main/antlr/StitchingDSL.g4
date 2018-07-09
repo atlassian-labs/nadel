@@ -12,8 +12,7 @@ serviceDefinition
 ;
 
 serviceDefinition:
-'service' name '{' serviceUrl typeSystemDefinition* '}' ;
-serviceUrl: 'url' ':' stringValue;
+'service' name '{' typeSystemDefinition* '}' ;
 
 
 fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
