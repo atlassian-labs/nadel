@@ -9,19 +9,15 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
-import graphql.nadel.dsl.FieldTransformation;
-import graphql.nadel.dsl.ServiceDefinition;
-import graphql.nadel.dsl.StitchingDsl;
-import graphql.nadel.dsl.TypeTransformation;
+import graphql.nadel.dsl.*;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.RuleNode;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.security.cert.CollectionCertStoreParameters;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.parser.StringValueParsing.parseSingleQuotedString;
@@ -150,8 +146,21 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
         if (ctx.innerServiceTransformation() != null) {
-            fieldTransformation.setTargetName(ctx.innerServiceTransformation().fieldName().getText());
-            fieldTransformation.setServiceName(ctx.innerServiceTransformation().serviceName().getText());
+            StitchingDSLParser.InnerServiceTransformationContext transContext = ctx.innerServiceTransformation();
+            fieldTransformation.setTargetName(transContext.fieldName().getText());
+            fieldTransformation.setServiceName(transContext.serviceName().getText());
+            if (transContext.remoteCallDefinition() != null) {
+                Map<String, FieldReference> m = transContext
+                        .remoteCallDefinition()
+                        .remoteArgumentList()
+                        .remoteArgumentPair()
+                        .stream()
+                        .collect(
+                                Collectors.toMap(p -> p.name().getText(), p -> new FieldReference(p.inputMappingDefinition().name().getText()))
+                        );
+                fieldTransformation.setArguments(m);
+            }
+
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
         return null;

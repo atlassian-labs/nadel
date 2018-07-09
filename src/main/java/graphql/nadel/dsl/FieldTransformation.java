@@ -19,7 +19,7 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     private String serviceName;
 
     //fixme: we probably also need a distinction between inner*, source and constant types
-    private Map<String, FieldTransformation> arguments = new LinkedHashMap<>();
+    private Map<String, FieldReference> arguments = new LinkedHashMap<>();
 
     private ObjectTypeDefinition parentDefinition;
 
@@ -73,5 +73,13 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     public void setServiceName(String serviceName) {
         this.serviceName = serviceName;
+    }
+
+    public Map<String, FieldReference> getArguments() {
+        return arguments;
+    }
+
+    public void setArguments(Map<String, FieldReference> arguments) {
+        this.arguments = arguments;
     }
 }

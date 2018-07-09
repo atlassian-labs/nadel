@@ -33,9 +33,7 @@ remoteCallDefinition : '(' remoteArgumentList ')' ;
 
 remoteArgumentList : remoteArgumentPair ( ',' remoteArgumentPair )* ;
 
-remoteArgumentPair : name remoteArgumentInput? ;
-
-remoteArgumentInput : ':' inputMappingDefinition ;
+remoteArgumentPair : name ':' inputMappingDefinition ;
 
 
 

@@ -99,7 +99,7 @@ class ParserTest extends Specification {
             type Foo {
                 id: ID <= \$source.fooId
                 title : String <= \$source.name
-                category : String <= \$innerQueries.foo.category(id: \$source.fooId)
+                category : String <= \$innerQueries.foo.category(id: \$source.fooId, secondId: \$source.barId)
             }
         }
         
@@ -138,6 +138,8 @@ class ParserTest extends Specification {
         categoryTransformation != null
         categoryTransformation.targetName == "category"
         categoryTransformation.serviceName == "foo"
+        categoryTransformation.arguments.id.fieldName == "fooId"
+        categoryTransformation.arguments.secondId.fieldName == "barId"
 
 
         ObjectTypeDefinition barType = stitchingDSL.getServiceDefinitions()[1].getTypeDefinitions()[1]
