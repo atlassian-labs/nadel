@@ -3,6 +3,7 @@ package graphql.nadel
 import graphql.language.ObjectTypeDefinition
 import graphql.language.TypeName
 import graphql.nadel.dsl.FieldTransformation
+import graphql.nadel.dsl.ServiceDefinition
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import spock.lang.Specification
 
@@ -95,8 +96,8 @@ class ParserTest extends Specification {
                 foo: Foo
             }
             type Foo {
-                barId: ID <= bar: Bar
-                title : String <= \$input.name    
+                barId: ID <= \$inner.bar
+                title : String <= \$input.name
             }
         }
         service BarService {
@@ -123,12 +124,15 @@ class ParserTest extends Specification {
         FieldTransformation barTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(barIdDefinition)
         barTransformation != null
         barTransformation.targetName == "bar"
-        barTransformation.targetType instanceof TypeName
-        ((TypeName) barTransformation.targetType).name == "Bar"
         def titleDefinition = fooType.fieldDefinitions[1]
         def titleTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(titleDefinition)
         titleTransformation != null
         titleTransformation.targetName == "name"
+
+        ObjectTypeDefinition barType = stitchingDSL.getServiceDefinitions()[1].getTypeDefinitions()[1]
+        barType.name == "Bar"
+        def barTypeTransformation = stitchingDSL.getTransformationsByTypeDefinition().get(barType)
+        barTypeTransformation != null
     }
 }
 

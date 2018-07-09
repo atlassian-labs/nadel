@@ -12,6 +12,7 @@ import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
+import graphql.nadel.dsl.TypeTransformation;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -130,22 +131,26 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         return null;
     }
 
+    @Override
+    public Void visitTypeTransformation(StitchingDSLParser.TypeTransformationContext ctx) {
+        ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
+        TypeTransformation typeTransformation = new TypeTransformation();
+        typeTransformation.setTargetName(ctx.innerTypeTransformation().name().getText());
+        this.stitchingDsl.getTransformationsByTypeDefinition().put(objectTypeDefinition, typeTransformation);
+        return null;
+    }
 
     @Override
     public Void visitFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
         FieldDefinition fieldDefinition = (FieldDefinition) getFromContextStack(ContextProperty.FieldDefinition);
         ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
         FieldTransformation fieldTransformation = new FieldTransformation();
-        // fixme: remove this ASAP
-        if (ctx.targetFieldDefinition() != null) {
-            fieldTransformation.setTargetName(ctx.targetFieldDefinition().name().getText());
-            fieldTransformation.setTargetType(createType(ctx.targetFieldDefinition().type()));
-            fieldTransformation.setParentDefinition(objectTypeDefinition);
+        if (ctx.inputMappingDefinition() != null) {
+            fieldTransformation.setTargetName(ctx.inputMappingDefinition().name().getText());
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
-        StitchingDSLParser.InputMappingDefinitionContext def = ctx.inputMappingDefinition();
-        if (def != null) {
-            fieldTransformation.setTargetName(def.name().getText());
+        if (ctx.innerServiceTransformation() != null) {
+            fieldTransformation.setTargetName(ctx.innerServiceTransformation().name().getText());
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
         return null;

@@ -15,13 +15,15 @@ objectTypeDefinition : description? TYPE name implementsInterfaces? typeTransfor
 fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
 
 // fixme: this allows for an empty arrow -- first shot at fixing ( target remote? | remote ) failed
-fieldTransformation : '<=' targetFieldDefinition? remoteCallDefinition? inputMappingDefinition? innerMappingDefinition? ;
+fieldTransformation : '<=' remoteCallDefinition? inputMappingDefinition? innerServiceTransformation? ;
 
-typeTransformation : '<=' innerMappingDefinition ;
+typeTransformation : '<=' innerTypeTransformation ;
 
 inputMappingDefinition : '$input.' name ;
 
-innerMappingDefinition: '$inner.' name;
+innerTypeTransformation: '$inner.' name;
+
+innerServiceTransformation: '$inner.' name;
 
 targetFieldDefinition : name ':' type;
 
