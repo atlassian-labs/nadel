@@ -21,9 +21,9 @@ typeTransformation : '<=' innerTypeTransformation ;
 
 inputMappingDefinition : '$input.' name ;
 
-innerTypeTransformation: '$inner.' name;
+innerTypeTransformation: '$innerTypes.' name;
 
-innerServiceTransformation: '$inner.' name remoteCallDefinition?;
+innerServiceTransformation: '$innerQuery.' name remoteCallDefinition?;
 
 remoteCallDefinition : '(' remoteArgumentList ')' ;
 

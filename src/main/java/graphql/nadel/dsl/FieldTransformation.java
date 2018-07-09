@@ -14,6 +14,8 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     private String targetName;
     private Type targetType;
+    //fixme: we probably also need a distinction between inner, input and constant types
+    //private Map<String, FieldTransformation>
 
     private ObjectTypeDefinition parentDefinition;
 
@@ -32,7 +34,6 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     public void setTargetName(String targetName) {
         this.targetName = targetName;
     }
-
 
     public Type getTargetType() {
         return targetType;
