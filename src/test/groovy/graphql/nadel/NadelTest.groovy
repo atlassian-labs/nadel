@@ -3,7 +3,6 @@ package graphql.nadel
 import com.atlassian.braid.source.GraphQLRemoteRetriever
 import graphql.ExecutionInput
 import graphql.nadel.dsl.ServiceDefinition
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import static java.util.concurrent.CompletableFuture.completedFuture
@@ -63,7 +62,6 @@ class NadelTest extends Specification {
     }
 
     //fime: get this up and running again once DSL refactoring is over
-    @Ignore
     def "stitching with transformation"() {
         def dsl = """
         service FooService {
@@ -72,9 +70,9 @@ class NadelTest extends Specification {
             }
 
             type Foo {
-                id: ID <= \\$source.fooId
-                title : String <= \\$source.name
-                category : String <= \\$innerQuery.category(id: \\$source.fooId)
+                id: ID <= \$source.fooId
+                title : String <= \$source.name
+                category : String <= \$innerQueries.FooService.category(id: \$source.fooId)
             }
         }
         service BarService {
@@ -82,7 +80,7 @@ class NadelTest extends Specification {
                 bar(id: ID): Bar
             }
 
-            type Bar <= \\$innerTypes.FooBar {
+            type Bar <= \$innerTypes.FooBar {
                 id: ID
             }
         }
