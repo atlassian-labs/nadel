@@ -70,4 +70,13 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
     }
+
+    public StitchingDsl(Iterable<ServiceDefinition> serviceDefinitions) {
+        // fixme: check against nulls
+        // fixme: isn't there a more elegant solution to this?
+        serviceDefinitions.forEach(this.serviceDefinitions::add);
+    }
+
+    // fixme: remove this later on, when the code becomes immutable
+    public StitchingDsl() {}
 }

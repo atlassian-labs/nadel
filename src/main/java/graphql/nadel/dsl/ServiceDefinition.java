@@ -25,6 +25,22 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
         this.typeDefinitions = new ArrayList<>();
     }
 
+    public ServiceDefinition(String name, Iterable<Directive> directives, Iterable<TypeDefinition> typeDefinitions) {
+        this.name = name;
+        // fixme: remove Lists once the code is side effect free
+        this.directives = new ArrayList<>();
+
+        if (directives != null)
+            directives.forEach(this.directives::add);
+
+        this.typeDefinitions = new ArrayList<>();
+        if (typeDefinitions != null)
+            typeDefinitions.forEach(this.typeDefinitions::add);
+
+        // fixme: remove url from here
+        this.url = null;
+    }
+
     public ServiceDefinition(String name) {
         this(name, null);
     }
