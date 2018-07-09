@@ -99,9 +99,10 @@ class ParserTest extends Specification {
             type Foo {
                 id: ID <= \$source.fooId
                 title : String <= \$source.name
-                category : String <= \$innerQuery.category(id: \$source.fooId)
+                category : String <= \$innerQueries.foo.category(id: \$source.fooId)
             }
         }
+        
         service BarService {
             type Query {
                 bar(id: ID): Bar
@@ -110,10 +111,6 @@ class ParserTest extends Specification {
             type Bar <= \$innerTypes.FooBar {
                 id: ID
             }
-
-            #extend type Foo {
-            #    foobar: Bar <= bar(id: \$source.barId)
-            #}
         }
         """
         when:
@@ -140,6 +137,7 @@ class ParserTest extends Specification {
         def categoryTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(categoryDefinition)
         categoryTransformation != null
         categoryTransformation.targetName == "category"
+        categoryTransformation.serviceName == "foo"
 
 
         ObjectTypeDefinition barType = stitchingDSL.getServiceDefinitions()[1].getTypeDefinitions()[1]

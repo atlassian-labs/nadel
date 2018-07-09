@@ -150,7 +150,8 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
         if (ctx.innerServiceTransformation() != null) {
-            fieldTransformation.setTargetName(ctx.innerServiceTransformation().name().getText());
+            fieldTransformation.setTargetName(ctx.innerServiceTransformation().fieldName().getText());
+            fieldTransformation.setServiceName(ctx.innerServiceTransformation().serviceName().getText());
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
         return null;

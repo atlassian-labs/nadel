@@ -8,14 +8,18 @@ import graphql.language.Type;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     private String targetName;
     private Type targetType;
-    //fixme: we probably also need a distinction between inner, input and constant types
-    //private Map<String, FieldTransformation>
+    private String serviceName;
+
+    //fixme: we probably also need a distinction between inner*, source and constant types
+    private Map<String, FieldTransformation> arguments = new LinkedHashMap<>();
 
     private ObjectTypeDefinition parentDefinition;
 
@@ -61,5 +65,13 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     @Override
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
     }
 }

@@ -70,18 +70,20 @@ class NadelTest extends Specification {
             type Query {
                 foo: Foo
             }
+
             type Foo {
-                id: ID
-                thingie : String <= $inner.thingie 
+                id: ID <= \\$source.fooId
+                title : String <= \\$source.name
+                category : String <= \\$innerQuery.category(id: \\$source.fooId)
             }
         }
         service BarService {
             type Query {
                 bar(id: ID): Bar
             }
-            type Bar {
+
+            type Bar <= \\$innerTypes.FooBar {
                 id: ID
-                name: String
             }
         }
         """

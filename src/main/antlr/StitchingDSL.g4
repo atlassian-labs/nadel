@@ -19,11 +19,15 @@ fieldTransformation : '<=' inputMappingDefinition? innerServiceTransformation? ;
 
 typeTransformation : '<=' innerTypeTransformation ;
 
-inputMappingDefinition : '$source.' name ;
+inputMappingDefinition : '$source' '.' name ;
 
-innerTypeTransformation: '$innerTypes.' name;
+innerTypeTransformation: '$innerTypes' '.' name;
 
-innerServiceTransformation: '$innerQuery.' name remoteCallDefinition?;
+innerServiceTransformation: '$innerQueries' '.' serviceName '.' fieldName remoteCallDefinition?;
+
+serviceName: NAME;
+
+fieldName: NAME;
 
 remoteCallDefinition : '(' remoteArgumentList ')' ;
 
