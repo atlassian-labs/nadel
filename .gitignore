@@ -13,3 +13,4 @@ docs/_build/
 \.classpath
 \.project
 \.settings/
+src/main/antlr/Graphql*.g4
