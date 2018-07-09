@@ -10,12 +10,14 @@ stitchingDSL: serviceDefinition+;
 serviceDefinition:
 'service' name '{' typeSystemDefinition* '}' ;
 
-objectTypeDefinition : description? TYPE name implementsInterfaces? fieldTransformation? directives? fieldsDefinition?;
+objectTypeDefinition : description? TYPE name implementsInterfaces? typeTransformation? directives? fieldsDefinition? ;
 
 fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
 
 // fixme: this allows for an empty arrow -- first shot at fixing ( target remote? | remote ) failed
 fieldTransformation : '<=' targetFieldDefinition? remoteCallDefinition? inputMappingDefinition? innerMappingDefinition? ;
+
+typeTransformation : '<=' innerMappingDefinition ;
 
 inputMappingDefinition : '$input.' name ;
 
