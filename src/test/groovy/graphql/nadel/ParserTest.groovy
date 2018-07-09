@@ -96,14 +96,15 @@ class ParserTest extends Specification {
             }
             type Foo {
                 barId: ID <= bar: Bar
-                title : String <= \$input.name                
+                title : String <= \$input.name    
             }
         }
         service BarService {
             type Query {
                 bar(id: ID): Bar
             }
-            type Bar {
+            
+            type Bar <= \$inner.FooBar {
                 id: ID
             }
         }
