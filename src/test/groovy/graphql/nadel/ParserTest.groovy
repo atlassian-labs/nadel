@@ -96,6 +96,7 @@ class ParserTest extends Specification {
             }
             type Foo {
                 barId: ID <= bar: Bar
+                title : String <= \$input.name                
             }
         }
         service BarService {
@@ -117,14 +118,16 @@ class ParserTest extends Specification {
 
         ObjectTypeDefinition fooType = stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[1]
         fooType.name == "Foo"
-        def fieldDefinition = fooType.fieldDefinitions[0]
-        FieldTransformation fieldTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(fieldDefinition)
-        fieldTransformation != null
-        fieldTransformation.targetName == "bar"
-        fieldTransformation.targetType instanceof TypeName
-        ((TypeName) fieldTransformation.targetType).name == "Bar"
-
-
+        def barIdDefinition = fooType.fieldDefinitions[0]
+        FieldTransformation barTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(barIdDefinition)
+        barTransformation != null
+        barTransformation.targetName == "bar"
+        barTransformation.targetType instanceof TypeName
+        ((TypeName) barTransformation.targetType).name == "Bar"
+        def titleDefinition = fooType.fieldDefinitions[1]
+        def titleTransformation = stitchingDSL.getTransformationsByFieldDefinition().get(titleDefinition)
+        titleTransformation != null
+        titleTransformation.targetName == "name"
     }
 }
 

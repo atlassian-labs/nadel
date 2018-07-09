@@ -136,10 +136,16 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         FieldDefinition fieldDefinition = (FieldDefinition) getFromContextStack(ContextProperty.FieldDefinition);
         ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
         FieldTransformation fieldTransformation = new FieldTransformation();
+        // fixme: remove this ASAP
         if (ctx.targetFieldDefinition() != null) {
             fieldTransformation.setTargetName(ctx.targetFieldDefinition().name().getText());
             fieldTransformation.setTargetType(createType(ctx.targetFieldDefinition().type()));
             fieldTransformation.setParentDefinition(objectTypeDefinition);
+            this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
+        }
+        StitchingDSLParser.InputMappingDefinitionContext def = ctx.inputMappingDefinition();
+        if (def != null) {
+            fieldTransformation.setTargetName(def.name().getText());
             this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
         }
         return null;
