@@ -28,7 +28,7 @@ public class Parser {
         StitchingDSLParser.StitchingDSLContext stitchingDSL = parser.stitchingDSL();
 
         NadelAntlrToLanguage antlrToLanguage = new NadelAntlrToLanguage(tokens);
-        antlrToLanguage.visitStitchingDSL(stitchingDSL);
+        StitchingDsl stitchingDsl = antlrToLanguage.createStitchingDsl(stitchingDSL);
 
         Token stop = stitchingDSL.getStop();
         List<Token> allTokens = tokens.getTokens();
@@ -45,7 +45,7 @@ public class Parser {
             }
         }
 
-        return antlrToLanguage.getStitchingDsl();
+        return stitchingDsl;
     }
 
 }

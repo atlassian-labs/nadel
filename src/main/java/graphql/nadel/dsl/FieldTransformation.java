@@ -1,9 +1,11 @@
 package graphql.nadel.dsl;
 
 import graphql.language.AbstractNode;
+import graphql.language.Comment;
 import graphql.language.Node;
 import graphql.language.NodeVisitor;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.SourceLocation;
 import graphql.language.Type;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -22,6 +24,10 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     private Map<String, FieldReference> arguments = new LinkedHashMap<>();
 
     private ObjectTypeDefinition parentDefinition;
+
+    public FieldTransformation(SourceLocation sourceLocation, List<Comment> comments) {
+        super(sourceLocation, comments);
+    }
 
     public ObjectTypeDefinition getParentDefinition() {
         return parentDefinition;
@@ -82,4 +88,5 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     public void setArguments(Map<String, FieldReference> arguments) {
         this.arguments = arguments;
     }
+
 }
