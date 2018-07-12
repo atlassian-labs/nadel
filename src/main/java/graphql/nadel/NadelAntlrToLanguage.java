@@ -2,12 +2,16 @@ package graphql.nadel;
 
 import graphql.language.Definition;
 import graphql.language.FieldDefinition;
+import graphql.nadel.dsl.FieldDefinitionWithTransformation;
+import graphql.nadel.dsl.FieldTransformation;
+import graphql.nadel.dsl.InputMappingDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.CommonTokenStream;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,8 +44,24 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     @Override
     protected FieldDefinition createFieldDefinition(StitchingDSLParser.FieldDefinitionContext ctx) {
+        FieldDefinition fieldDefinition = super.createFieldDefinition(ctx);
+        if (ctx.fieldTransformation() == null) {
+            return fieldDefinition;
+        }
+        FieldDefinitionWithTransformation.Builder builder = FieldDefinitionWithTransformation.newFieldDefinitionWithTransformation(fieldDefinition);
+        builder.fieldTransformation(createFieldTransformation(ctx.fieldTransformation()));
+        return builder.build();
+    }
 
-        return super.createFieldDefinition(ctx);
+    private FieldTransformation createFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
+        if (ctx.inputMappingDefinition() != null) {
+            return new FieldTransformation(createInputMappingDefinition(ctx.inputMappingDefinition()), null, new ArrayList<>());
+        }
+        return null;
+    }
+
+    private InputMappingDefinition createInputMappingDefinition(StitchingDSLParser.InputMappingDefinitionContext ctx) {
+        return new InputMappingDefinition(ctx.name().getText(), null, new ArrayList<>());
     }
 
     //

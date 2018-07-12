@@ -11,17 +11,17 @@ import graphql.util.TraverserContext;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FieldTransformation extends AbstractNode<FieldTransformation> {
+public class InputMappingDefinition extends AbstractNode<InputMappingDefinition> {
 
-    private final InputMappingDefinition inputMappingDefinition;
+    private final String inputName;
 
-    public FieldTransformation(InputMappingDefinition inputMappingDefinition, SourceLocation sourceLocation, List<Comment> comments) {
+    public InputMappingDefinition(String inputName, SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments);
-        this.inputMappingDefinition = inputMappingDefinition;
+        this.inputName = inputName;
     }
 
-    public InputMappingDefinition getInputMappingDefinition() {
-        return inputMappingDefinition;
+    public String getInputName() {
+        return inputName;
     }
 
     @Override
@@ -35,7 +35,7 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     }
 
     @Override
-    public FieldTransformation deepCopy() {
+    public InputMappingDefinition deepCopy() {
         return null;
     }
 
