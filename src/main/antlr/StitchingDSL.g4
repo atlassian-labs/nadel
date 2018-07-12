@@ -15,7 +15,7 @@ objectTypeDefinition : description? TYPE name implementsInterfaces? typeTransfor
 fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
 
 // fixme: this allows for an empty arrow -- first shot at fixing ( target remote? | remote ) failed
-fieldTransformation : '<=' inputMappingDefinition? innerServiceTransformation? ;
+fieldTransformation : '<=' (inputMappingDefinition | innerServiceTransformation);
 
 typeTransformation : '<=' innerTypeTransformation ;
 
