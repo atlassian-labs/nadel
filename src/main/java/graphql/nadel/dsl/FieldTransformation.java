@@ -1,55 +1,44 @@
 package graphql.nadel.dsl;
 
 import graphql.language.AbstractNode;
+import graphql.language.Comment;
 import graphql.language.Node;
 import graphql.language.NodeVisitor;
-import graphql.language.ObjectTypeDefinition;
-import graphql.language.Type;
+import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
-    private String targetName;
-    private Type targetType;
-    private String serviceName;
+    private final InputMappingDefinition inputMappingDefinition;
+    private final InnerServiceTransformation innerServiceTransformation;
 
-    //fixme: we probably also need a distinction between inner*, source and constant types
-    private Map<String, FieldReference> arguments = new LinkedHashMap<>();
-
-    private ObjectTypeDefinition parentDefinition;
-
-    public ObjectTypeDefinition getParentDefinition() {
-        return parentDefinition;
+    public FieldTransformation(InputMappingDefinition inputMappingDefinition, SourceLocation sourceLocation, List<Comment> comments) {
+        super(sourceLocation, comments);
+        this.inputMappingDefinition = inputMappingDefinition;
+        this.innerServiceTransformation = null;
     }
 
-    public void setParentDefinition(ObjectTypeDefinition parentDefinition) {
-        this.parentDefinition = parentDefinition;
+    public FieldTransformation(InnerServiceTransformation innerServiceTransformation, SourceLocation sourceLocation, List<Comment> comments) {
+        super(sourceLocation, comments);
+        this.inputMappingDefinition = null;
+        this.innerServiceTransformation = innerServiceTransformation;
     }
 
-    public String getTargetName() {
-        return targetName;
+    public InputMappingDefinition getInputMappingDefinition() {
+        return inputMappingDefinition;
     }
 
-    public void setTargetName(String targetName) {
-        this.targetName = targetName;
-    }
-
-    public Type getTargetType() {
-        return targetType;
-    }
-
-    public void setTargetType(Type targetType) {
-        this.targetType = targetType;
+    public InnerServiceTransformation getInnerServiceTransformation() {
+        return innerServiceTransformation;
     }
 
     @Override
     public List<Node> getChildren() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -65,21 +54,5 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     @Override
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
-    }
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
-    }
-
-    public Map<String, FieldReference> getArguments() {
-        return arguments;
-    }
-
-    public void setArguments(Map<String, FieldReference> arguments) {
-        this.arguments = arguments;
     }
 }
