@@ -3,7 +3,6 @@ package graphql.nadel
 import graphql.language.ObjectTypeDefinition
 import graphql.nadel.dsl.FieldDefinitionWithTransformation
 import org.antlr.v4.runtime.misc.ParseCancellationException
-import org.junit.Ignore
 import spock.lang.Specification
 
 class ParserTest extends Specification {
@@ -145,37 +144,36 @@ class ParserTest extends Specification {
 
     }
 
-
-    @Ignore
-    def "parse transformation"() {
-        given:
-        def dsl = """
-        service FooService {
-            type Query {
-                foo: Foo
-            }
-
-            type Foo {
-                id: ID <= \$source.fooId
-                title : String <= \$source.name
-                category : String <= \$innerQueries.foo.category(id: \$source.fooId, secondId: \$source.barId)
-            }
-        }
-        
-        service BarService {
-            type Query {
-                bar(id: ID): Bar
-            }
-
-            type Bar <= \$innerTypes.FooBar {
-                id: ID
-            }
-        }
-        """
-        then:
-        true
-        // TODO: check the resulting AST here
-    }
+//    @Ignore
+//    def "parse transformation"() {
+//        given:
+//        def dsl = """
+//        service FooService {
+//            type Query {
+//                foo: Foo
+//            }
+//
+//            type Foo {
+//                id: ID <= \$source.fooId
+//                title : String <= \$source.name
+//                category : String <= \$innerQueries.foo.category(id: \$source.fooId, secondId: \$source.barId)
+//            }
+//        }
+//
+//        service BarService {
+//            type Query {
+//                bar(id: ID): Bar
+//            }
+//
+//            type Bar <= \$innerTypes.FooBar {
+//                id: ID
+//            }
+//        }
+//        """
+//        then:
+//        true
+//        // TODO: check the resulting AST here
+//    }
 }
 
 
