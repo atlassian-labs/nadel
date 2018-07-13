@@ -14,14 +14,26 @@ import java.util.List;
 public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     private final InputMappingDefinition inputMappingDefinition;
+    private final InnerServiceTransformation innerServiceTransformation;
 
     public FieldTransformation(InputMappingDefinition inputMappingDefinition, SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments);
         this.inputMappingDefinition = inputMappingDefinition;
+        this.innerServiceTransformation = null;
+    }
+
+    public FieldTransformation(InnerServiceTransformation innerServiceTransformation, SourceLocation sourceLocation, List<Comment> comments) {
+        super(sourceLocation, comments);
+        this.inputMappingDefinition = null;
+        this.innerServiceTransformation = innerServiceTransformation;
     }
 
     public InputMappingDefinition getInputMappingDefinition() {
         return inputMappingDefinition;
+    }
+
+    public InnerServiceTransformation getInnerServiceTransformation() {
+        return innerServiceTransformation;
     }
 
     @Override

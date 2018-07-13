@@ -1,9 +1,11 @@
 package graphql.nadel;
 
+import graphql.Assert;
 import graphql.language.Definition;
 import graphql.language.FieldDefinition;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldTransformation;
+import graphql.nadel.dsl.InnerServiceTransformation;
 import graphql.nadel.dsl.InputMappingDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
@@ -12,7 +14,9 @@ import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
@@ -56,75 +60,27 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     private FieldTransformation createFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
         if (ctx.inputMappingDefinition() != null) {
             return new FieldTransformation(createInputMappingDefinition(ctx.inputMappingDefinition()), null, new ArrayList<>());
+        } else if (ctx.innerServiceTransformation() != null) {
+            return new FieldTransformation(createInnerServiceTransformation(ctx.innerServiceTransformation()), null, new ArrayList<>());
+        } else {
+            return Assert.assertShouldNeverHappen();
         }
-        return null;
     }
 
     private InputMappingDefinition createInputMappingDefinition(StitchingDSLParser.InputMappingDefinitionContext ctx) {
         return new InputMappingDefinition(ctx.name().getText(), null, new ArrayList<>());
     }
 
-    //
-//    @Override
-//    public Void visitFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
-//        FieldDefinition fieldDefinition = (FieldDefinition) getFromContextStack(ContextProperty.FieldDefinition);
-//        ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) getFromContextStack(ContextProperty.ObjectTypeDefinition);
-//        FieldTransformation fieldTransformation = new FieldTransformation();
-//        fieldTransformation.setParentDefinition(objectTypeDefinition);
-//        fieldTransformation.setTargetName(fieldDefinition.getName());
-//        fieldTransformation.setTargetType(fieldDefinition.getType());
-//        if (ctx.inputMappingDefinition() != null) {
-//            fieldTransformation.setTargetName(ctx.inputMappingDefinition().name().getText());
-//            this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
-//        }
-//        if (ctx.innerServiceTransformation() != null) {
-//            StitchingDSLParser.InnerServiceTransformationContext transContext = ctx.innerServiceTransformation();
-//            fieldTransformation.setTargetName(transContext.fieldName().getText());
-//            fieldTransformation.setServiceName(transContext.serviceName().getText());
-//            if (transContext.remoteCallDefinition() != null) {
-//                Map<String, FieldReference> m = transContext
-//                        .remoteCallDefinition()
-//                        .remoteArgumentList()
-//                        .remoteArgumentPair()
-//                        .stream()
-//                        .collect(
-//                                Collectors.toMap(p -> p.name().getText(), p -> new FieldReference(p.inputMappingDefinition().name().getText()))
-//                        );
-//                fieldTransformation.setArguments(m);
-//            }
-//
-//            this.stitchingDsl.getTransformationsByFieldDefinition().put(fieldDefinition, fieldTransformation);
-//        }
-//        return null;
-//    }
-//
-//
-//    private Type createType(StitchingDSLParser.TypeContext typeContext) {
-//
-//        if (typeContext.typeName() != null) {
-//            return new TypeName(typeContext.typeName().name().getText());
-//        } else if (typeContext.listType() != null) {
-//            return new ListType(createType(typeContext.listType().type()));
-//        } else if (typeContext.nonNullType() != null) {
-//            StitchingDSLParser.NonNullTypeContext nonNullTypeContext = typeContext.nonNullType();
-//            Type subType;
-//            if (nonNullTypeContext.typeName() != null) {
-//                subType = new TypeName(nonNullTypeContext.typeName().name().getText());
-//            } else {
-//                subType = new ListType(createType(typeContext.listType().type()));
-//            }
-//            return new NonNullType(subType);
-//        }
-//        return Assert.assertShouldNeverHappen();
-//    }
-//
-//
-//    @Override
-//    public Void visitChildren(RuleNode node) {
-//        if (getContextStack().size() > 0 && getContextStack().getFirst().contextProperty == ContextProperty.FieldDefinition) {
-//            ServiceDefinition serviceDefinition = (ServiceDefinition) getFromContextStack(NadelContextProperty.ServiceDefinition);
-//            this.stitchingDsl.getServiceByField().put((FieldDefinition) getContextStack().getFirst().value, serviceDefinition);
-//        }
-//        return super.visitChildren(node);
-//    }
+    private InnerServiceTransformation createInnerServiceTransformation(StitchingDSLParser.InnerServiceTransformationContext ctx) {
+        String serviceName = ctx.serviceName().getText();
+        String topLevelField = ctx.topLevelField().getText();
+
+        Map<String, InputMappingDefinition> inputMappingDefinitionMap = new LinkedHashMap<>();
+        List<StitchingDSLParser.RemoteArgumentPairContext> remoteArgumentPairContexts = ctx.remoteCallDefinition().remoteArgumentList().remoteArgumentPair();
+        for (StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext : remoteArgumentPairContexts) {
+            inputMappingDefinitionMap.put(remoteArgumentPairContext.name().getText(), createInputMappingDefinition(remoteArgumentPairContext.inputMappingDefinition()));
+        }
+        return new InnerServiceTransformation(null, new ArrayList<>(), serviceName, topLevelField, inputMappingDefinitionMap);
+    }
+
 }
