@@ -1,0 +1,16 @@
+service Blogging {
+    type Query {
+        hello: String
+    }
+
+    type Blog {
+        id: ID!
+        title: String!
+    }
+
+    type BlogPost {
+        id: ID!
+        title: String!
+        blog: Blog
+    }
+}
