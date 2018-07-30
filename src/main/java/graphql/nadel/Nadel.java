@@ -13,6 +13,7 @@ import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.execution.AsyncExecutionStrategy;
 import graphql.language.Definition;
+import graphql.language.SDLDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -85,7 +86,9 @@ public class Nadel {
         List<GraphQLError> errors = new ArrayList<>();
         TypeDefinitionRegistry typeRegistry = new TypeDefinitionRegistry();
         for (Definition definition : serviceDefinition.getTypeDefinitions()) {
-            typeRegistry.add(definition).ifPresent(errors::add);
+            if (definition instanceof SDLDefinition) {
+                typeRegistry.add((SDLDefinition) definition).ifPresent(errors::add);
+            }
         }
         if (errors.size() > 0) {
             throw new SchemaProblem(errors);

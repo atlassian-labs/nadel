@@ -27,7 +27,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
-def graphqlJavaVersion = '2018-07-12T11-44-24-8d02fc7'
+def graphqlJavaVersion = '2018-07-30T00-23-12-bfee885'
 def braidVersion = '0.11.3-graphqljava10-SNAPSHOT'
 
 def releaseVersion = System.env.RELEASE_VERSION
@@ -117,6 +117,7 @@ generateGrammarSource {
     arguments += ["-visitor"]
     outputDirectory = file("${project.buildDir}/generated-src/antlr/main/graphql/nadel/parser/antlr")
 }
+
 
 generateGrammarSource.dependsOn(extractGraphqlGrammar, generateAntrlToJavaSource)
 
