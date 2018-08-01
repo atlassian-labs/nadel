@@ -1,12 +1,13 @@
 package graphql.nadel;
 
 import graphql.Assert;
+import graphql.Internal;
 import graphql.language.Definition;
 import graphql.language.FieldDefinition;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
+import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
-import graphql.nadel.dsl.InnerServiceTransformation;
-import graphql.nadel.dsl.InputMappingDefinition;
+import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
 
@@ -58,29 +60,29 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     }
 
     private FieldTransformation createFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
-        if (ctx.inputMappingDefinition() != null) {
-            return new FieldTransformation(createInputMappingDefinition(ctx.inputMappingDefinition()), null, new ArrayList<>());
-        } else if (ctx.innerServiceTransformation() != null) {
-            return new FieldTransformation(createInnerServiceTransformation(ctx.innerServiceTransformation()), null, new ArrayList<>());
+        if (ctx.fieldMappingDefinition() != null) {
+            return new FieldTransformation(createFieldMappingDefinition(ctx.fieldMappingDefinition()), null, new ArrayList<>());
+        } else if (ctx.innerServiceHydration() != null) {
+            return new FieldTransformation(createInnerServiceHydration(ctx.innerServiceHydration()), null, new ArrayList<>());
         } else {
             return Assert.assertShouldNeverHappen();
         }
     }
 
-    private InputMappingDefinition createInputMappingDefinition(StitchingDSLParser.InputMappingDefinitionContext ctx) {
-        return new InputMappingDefinition(ctx.name().getText(), null, new ArrayList<>());
+    private FieldMappingDefinition createFieldMappingDefinition(StitchingDSLParser.FieldMappingDefinitionContext ctx) {
+        return new FieldMappingDefinition(ctx.name().getText(), null, new ArrayList<>());
     }
 
-    private InnerServiceTransformation createInnerServiceTransformation(StitchingDSLParser.InnerServiceTransformationContext ctx) {
+    private InnerServiceHydration createInnerServiceHydration(StitchingDSLParser.InnerServiceHydrationContext ctx) {
         String serviceName = ctx.serviceName().getText();
         String topLevelField = ctx.topLevelField().getText();
 
-        Map<String, InputMappingDefinition> inputMappingDefinitionMap = new LinkedHashMap<>();
+        Map<String, FieldMappingDefinition> inputMappingDefinitionMap = new LinkedHashMap<>();
         List<StitchingDSLParser.RemoteArgumentPairContext> remoteArgumentPairContexts = ctx.remoteCallDefinition().remoteArgumentList().remoteArgumentPair();
         for (StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext : remoteArgumentPairContexts) {
-            inputMappingDefinitionMap.put(remoteArgumentPairContext.name().getText(), createInputMappingDefinition(remoteArgumentPairContext.inputMappingDefinition()));
+            inputMappingDefinitionMap.put(remoteArgumentPairContext.name().getText(), createFieldMappingDefinition(remoteArgumentPairContext.fieldMappingDefinition()));
         }
-        return new InnerServiceTransformation(null, new ArrayList<>(), serviceName, topLevelField, inputMappingDefinitionMap);
+        return new InnerServiceHydration(null, new ArrayList<>(), serviceName, topLevelField, inputMappingDefinitionMap);
     }
 
 }

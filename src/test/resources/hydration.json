@@ -1,0 +1,42 @@
+{
+  "serviceDefinitions": [
+    {
+      "name": "FooService",
+      "typeDefinitions": [
+        {
+          "name": "Query",
+          "fieldDefinitions": [
+            {
+              "name": "foo",
+              "type": {
+                "name": "Foo"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Foo",
+          "fieldDefinitions": [
+            {
+              "name": "id",
+              "type": {
+                "name": "ID"
+              },
+              "fieldTransformation": {
+                "innerServiceHydration": {
+                  "serviceName": "OtherService",
+                  "topLevelField": "resolveId",
+                  "arguments": {
+                    "otherId": {
+                      "inputName": "id"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

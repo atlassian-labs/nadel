@@ -1,0 +1,36 @@
+{
+  "serviceDefinitions": [
+    {
+      "name": "Foo",
+      "typeDefinitions": [
+        {
+          "name": "Query",
+          "fieldDefinitions": [
+            {
+              "name": "hello1",
+              "type": {
+                "name": "String"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bar",
+      "typeDefinitions": [
+        {
+          "name": "Query",
+          "fieldDefinitions": [
+            {
+              "name": "hello2",
+              "type": {
+                "name": "String"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

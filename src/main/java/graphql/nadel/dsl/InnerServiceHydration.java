@@ -12,17 +12,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InnerServiceTransformation extends AbstractNode<InnerServiceTransformation> {
+public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
 
     private final String serviceName;
     private final String topLevelField;
-    private final Map<String, InputMappingDefinition> arguments;
+    private final Map<String, FieldMappingDefinition> arguments;
 
-    public InnerServiceTransformation(SourceLocation sourceLocation,
-                                      List<Comment> comments,
-                                      String serviceName,
-                                      String topLevelField,
-                                      Map<String, InputMappingDefinition> arguments) {
+    public InnerServiceHydration(SourceLocation sourceLocation,
+                                 List<Comment> comments,
+                                 String serviceName,
+                                 String topLevelField,
+                                 Map<String, FieldMappingDefinition> arguments) {
         super(sourceLocation, comments);
         this.serviceName = serviceName;
         this.topLevelField = topLevelField;
@@ -37,7 +37,7 @@ public class InnerServiceTransformation extends AbstractNode<InnerServiceTransfo
         return topLevelField;
     }
 
-    public Map<String, InputMappingDefinition> getArguments() {
+    public Map<String, FieldMappingDefinition> getArguments() {
         return new LinkedHashMap<>(arguments);
     }
 
@@ -52,7 +52,7 @@ public class InnerServiceTransformation extends AbstractNode<InnerServiceTransfo
     }
 
     @Override
-    public InnerServiceTransformation deepCopy() {
+    public InnerServiceHydration deepCopy() {
         return null;
     }
 

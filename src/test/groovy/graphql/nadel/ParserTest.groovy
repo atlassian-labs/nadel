@@ -1,9 +1,10 @@
 package graphql.nadel
 
-import graphql.language.ObjectTypeDefinition
-import graphql.nadel.dsl.FieldDefinitionWithTransformation
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import spock.lang.Specification
+
+import static graphql.nadel.TestUtil.astAsMap
+import static graphql.nadel.TestUtil.getExpectedData
 
 class ParserTest extends Specification {
 
@@ -17,17 +18,12 @@ class ParserTest extends Specification {
             }
         }
        """
-        def stitchingDSL
-        when:
         Parser parser = new Parser()
-        stitchingDSL = parser.parseDSL(simpleDSL)
+        when:
+        def stitchingDSL = parser.parseDSL(simpleDSL)
 
         then:
-        stitchingDSL.getServiceDefinitions().size() == 1
-        stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions().size() == 1
-        stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0] instanceof ObjectTypeDefinition
-        ((ObjectTypeDefinition) stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0]).name == 'Query'
-        ((ObjectTypeDefinition) stitchingDSL.getServiceDefinitions()[0].getTypeDefinitions()[0]).fieldDefinitions[0].name == 'hello'
+        astAsMap(stitchingDSL) == getExpectedData("service-definition")
 
     }
 
@@ -45,13 +41,12 @@ class ParserTest extends Specification {
             }
         }
        """
-        def stitchingDSL
-        when:
         Parser parser = new Parser()
-        stitchingDSL = parser.parseDSL(simpleDSL)
+        when:
+        def stitchingDSL = parser.parseDSL(simpleDSL)
 
         then:
-        stitchingDSL.getServiceDefinitions().size() == 2
+        astAsMap(stitchingDSL) == getExpectedData("two-services")
 
     }
 
@@ -86,7 +81,7 @@ class ParserTest extends Specification {
         thrown(ParseCancellationException)
     }
 
-    def "parse input mapping"() {
+    def "parse field mapping"() {
         given:
         def dsl = """
         service FooService {
@@ -105,16 +100,14 @@ class ParserTest extends Specification {
         def stitchingDSL = parser.parseDSL(dsl)
 
         then:
-        def fooTypDefinition = stitchingDSL.serviceDefinitions[0].typeDefinitions[1]
-        fooTypDefinition instanceof ObjectTypeDefinition
-        def fieldDefinition = (fooTypDefinition as ObjectTypeDefinition).fieldDefinitions[0]
-        fieldDefinition instanceof FieldDefinitionWithTransformation
-        (fieldDefinition as FieldDefinitionWithTransformation).fieldTransformation.inputMappingDefinition.inputName == "fooId"
+        astAsMap(stitchingDSL) == getExpectedData("field-mapping")
 
     }
 
-    def "parse inner service transformation"() {
+
+    def "parse hydration"() {
         given:
+
         def dsl = """
         service FooService {
             type Query {
@@ -128,20 +121,9 @@ class ParserTest extends Specification {
         """
         when:
         Parser parser = new Parser()
-        then:
         def stitchingDSL = parser.parseDSL(dsl)
-
         then:
-        def fooTypDefinition = stitchingDSL.serviceDefinitions[0].typeDefinitions[1]
-        fooTypDefinition instanceof ObjectTypeDefinition
-        def fieldDefinition = (fooTypDefinition as ObjectTypeDefinition).fieldDefinitions[0]
-        fieldDefinition instanceof FieldDefinitionWithTransformation
-        def innerServiceTransformation = (fieldDefinition as FieldDefinitionWithTransformation).fieldTransformation.innerServiceTransformation
-        innerServiceTransformation.serviceName == "OtherService"
-        innerServiceTransformation.topLevelField == "resolveId"
-        innerServiceTransformation.arguments.containsKey("otherId")
-        innerServiceTransformation.arguments["otherId"].inputName == "id"
-
+        astAsMap(stitchingDSL) == getExpectedData("hydration")
     }
 
 //    @Ignore
