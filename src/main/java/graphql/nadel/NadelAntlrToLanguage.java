@@ -4,12 +4,15 @@ import graphql.Assert;
 import graphql.Internal;
 import graphql.language.Definition;
 import graphql.language.FieldDefinition;
+import graphql.language.ObjectTypeDefinition;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
+import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
+import graphql.nadel.dsl.TypeTransformation;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -85,4 +88,17 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         return new InnerServiceHydration(null, new ArrayList<>(), serviceName, topLevelField, inputMappingDefinitionMap);
     }
 
+    @Override
+    protected ObjectTypeDefinition createObjectTypeDefinition(StitchingDSLParser.ObjectTypeDefinitionContext ctx) {
+        ObjectTypeDefinition objectTypeDefinition = super.createObjectTypeDefinition(ctx);
+        if (ctx.typeTransformation() == null) {
+            return objectTypeDefinition;
+        }
+        TypeTransformation typeTransformation = new TypeTransformation(null, new ArrayList<>());
+        typeTransformation.setOriginalName(ctx.typeTransformation().name().getText());
+        ObjectTypeDefinitionWithTransformation objectTypeDefinitionWithTransformation = ObjectTypeDefinitionWithTransformation.newObjectTypeDefinitionWithTransformation(objectTypeDefinition)
+                .typeTransformation(typeTransformation)
+                .build();
+        return objectTypeDefinitionWithTransformation;
+    }
 }

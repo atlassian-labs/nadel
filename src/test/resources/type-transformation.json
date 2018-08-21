@@ -1,0 +1,34 @@
+{
+  "serviceDefinitions": [
+    {
+      "name": "FooService",
+      "typeDefinitions": [
+        {
+          "name": "Query",
+          "fieldDefinitions": [
+            {
+              "name": "foo",
+              "type": {
+                "name": "Foo"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Foo",
+          "fieldDefinitions": [
+            {
+              "name": "id",
+              "type": {
+                "name": "ID"
+              }
+            }
+          ],
+          "typeTransformation": {
+            "originalName": "OriginalFooName"
+          }
+        }
+      ]
+    }
+  ]
+}
