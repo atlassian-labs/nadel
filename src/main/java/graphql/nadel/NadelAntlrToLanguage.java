@@ -61,16 +61,18 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     private FieldTransformation createFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
         if (ctx.fieldMappingDefinition() != null) {
-            return new FieldTransformation(createFieldMappingDefinition(ctx.fieldMappingDefinition()), null, new ArrayList<>());
+            return new FieldTransformation(createFieldMappingDefinition(ctx.fieldMappingDefinition()),
+                    getSourceLocation(ctx), new ArrayList<>());
         } else if (ctx.innerServiceHydration() != null) {
-            return new FieldTransformation(createInnerServiceHydration(ctx.innerServiceHydration()), null, new ArrayList<>());
+            return new FieldTransformation(createInnerServiceHydration(ctx.innerServiceHydration()),
+                    getSourceLocation(ctx), new ArrayList<>());
         } else {
             return Assert.assertShouldNeverHappen();
         }
     }
 
     private FieldMappingDefinition createFieldMappingDefinition(StitchingDSLParser.FieldMappingDefinitionContext ctx) {
-        return new FieldMappingDefinition(ctx.name().getText(), null, new ArrayList<>());
+        return new FieldMappingDefinition(ctx.name().getText(), getSourceLocation(ctx), new ArrayList<>());
     }
 
     private InnerServiceHydration createInnerServiceHydration(StitchingDSLParser.InnerServiceHydrationContext ctx) {
@@ -82,7 +84,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         for (StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext : remoteArgumentPairContexts) {
             inputMappingDefinitionMap.put(remoteArgumentPairContext.name().getText(), createFieldMappingDefinition(remoteArgumentPairContext.fieldMappingDefinition()));
         }
-        return new InnerServiceHydration(null, new ArrayList<>(), serviceName, topLevelField, inputMappingDefinitionMap);
+        return new InnerServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField, inputMappingDefinitionMap);
     }
 
 }

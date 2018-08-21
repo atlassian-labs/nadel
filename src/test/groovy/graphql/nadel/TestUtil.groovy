@@ -39,8 +39,8 @@ class TestUtil {
     }
 
     static Map getExpectedData(String name) {
-        String json = getClass().getResourceAsStream("/" + name + ".json").text
-        return new JsonSlurper().parseText(json)
+        def stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(name + ".json")
+        return new JsonSlurper().parseText(stream.text)
     }
 
 }
