@@ -126,36 +126,27 @@ class ParserTest extends Specification {
         astAsMap(stitchingDSL) == getExpectedData("hydration")
     }
 
-//    @Ignore
-//    def "parse transformation"() {
-//        given:
-//        def dsl = """
-//        service FooService {
-//            type Query {
-//                foo: Foo
-//            }
-//
-//            type Foo {
-//                id: ID <= \$source.fooId
-//                title : String <= \$source.name
-//                category : String <= \$innerQueries.foo.category(id: \$source.fooId, secondId: \$source.barId)
-//            }
-//        }
-//
-//        service BarService {
-//            type Query {
-//                bar(id: ID): Bar
-//            }
-//
-//            type Bar <= \$innerTypes.FooBar {
-//                id: ID
-//            }
-//        }
-//        """
-//        then:
-//        true
-//        // TODO: check the resulting AST here
-//    }
+
+    def "parse type transformation"() {
+        given:
+
+        def dsl = """
+            service FooService {
+                type Query {
+                    foo: Foo
+                }
+
+                type Foo <= \$innerTypes.OriginalFooName {
+                    id: ID
+                }
+            }
+        """
+        when:
+        Parser parser = new Parser()
+        def stitchingDSL = parser.parseDSL(dsl)
+        then:
+        astAsMap(stitchingDSL) == getExpectedData("type-transformation")
+    }
 }
 
 
