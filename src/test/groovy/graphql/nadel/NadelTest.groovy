@@ -61,7 +61,7 @@ class NadelTest extends Specification {
         0 * graphqlRemoteRetriever1.queryGraphQL(*_) >> completedFuture([data: []])
     }
 
-    def "stitching with transformation"() {
+    def "stitching with service hydration"() {
         def dsl = """
         service FooService {
             type Query {
