@@ -5,6 +5,7 @@ import com.atlassian.braid.SchemaNamespace;
 import com.atlassian.braid.SchemaSource;
 import com.atlassian.braid.document.DocumentMappers;
 import com.atlassian.braid.source.GraphQLRemoteSchemaSource;
+import graphql.Internal;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
@@ -15,10 +16,11 @@ import java.util.List;
  *
  * @param <C> type of passed graphql context.
  */
-public class GraphQLRemoteSchemaSourceFactory<C> implements SchemaSourceFactory {
+@Internal
+class GraphQLRemoteSchemaSourceFactory<C> implements SchemaSourceFactory {
     private final GraphQLRemoteRetrieverFactory<C> retrieverFactory;
 
-    public GraphQLRemoteSchemaSourceFactory(GraphQLRemoteRetrieverFactory<C> retrieverFactory) {
+    GraphQLRemoteSchemaSourceFactory(GraphQLRemoteRetrieverFactory<C> retrieverFactory) {
         this.retrieverFactory = retrieverFactory;
     }
 

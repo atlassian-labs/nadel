@@ -1,5 +1,6 @@
 package graphql.nadel;
 
+import graphql.Internal;
 import graphql.language.FieldDefinition;
 import graphql.language.InputValueDefinition;
 import graphql.language.Node;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
+@Internal
 public final class TransformationUtils {
     private TransformationUtils() {
     }
