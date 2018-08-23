@@ -3,7 +3,6 @@ package graphql.nadel
 import com.atlassian.braid.source.GraphQLRemoteRetriever
 import graphql.ExecutionInput
 import graphql.nadel.dsl.ServiceDefinition
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import static java.util.concurrent.CompletableFuture.completedFuture
@@ -21,7 +20,6 @@ class NadelTest extends Specification {
         }
     }
 
-    @Ignore
     def "simple stitching: just two services merged at top level"() {
         given:
         def dsl = """
@@ -63,9 +61,7 @@ class NadelTest extends Specification {
         0 * graphqlRemoteRetriever1.queryGraphQL(*_) >> completedFuture([data: []])
     }
 
-    //fime: get this up and running again once DSL refactoring is over
-    @Ignore
-    def "stitching with transformation"() {
+    def "stitching with service hydration"() {
         def dsl = """
         service FooService {
             type Query {
@@ -73,37 +69,41 @@ class NadelTest extends Specification {
             }
 
             type Foo {
-                id: ID <= \$source.fooId
-                title : String <= \$source.name
-                category : String <= \$innerQueries.FooService.category(id: \$source.fooId)
+                id: ID 
+                title : String 
+                barId: ID
+                bar : String <= \$innerQueries.BarService.bar(id: \$source.barId)
             }
         }
+        
         service BarService {
             type Query {
                 bar(id: ID): Bar
             }
 
-            type Bar <= \$innerTypes.FooBar {
+            type Bar {
                 id: ID
+                name: String
             }
         }
         """
+
         def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
         def graphqlRemoteRetriever2 = Mock(GraphQLRemoteRetriever)
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1, BarService: graphqlRemoteRetriever2])
 
-        String query = "{foo{realBarValue{name}}}"
+        String query = "{foo { id bar { id name }}}"
         Nadel nadel = new Nadel(dsl, callerFactory)
         when:
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 
         then:
-        executionResult.data == [foo: [realBarValue: [name: 'barName']]]
+        executionResult.data == [foo: [id: 'foo1', bar: [id: 'someBarId', name: 'barName']]]
         1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> { it ->
-            completedFuture([data: [foo100: [barId: 'someBarId']]])
+            completedFuture([data: [foo100: [id: 'foo1', barId: 'someBarId']]])
         }
         1 * graphqlRemoteRetriever2.queryGraphQL(*_) >> { it ->
-            completedFuture([data: [realBarValue100: [id: 'someBarId', name: 'barName']]])
+            completedFuture([data: [bar100: [id: 'someBarId', name: 'barName']]])
         }
     }
 

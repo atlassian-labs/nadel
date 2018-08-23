@@ -26,9 +26,7 @@ serviceName: NAME;
 
 topLevelField: NAME;
 
-remoteCallDefinition : '(' remoteArgumentList ')' ;
-
-remoteArgumentList : remoteArgumentPair ( ',' remoteArgumentPair )* ;
+remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 
 remoteArgumentPair : name ':' fieldMappingDefinition ;
 

@@ -8,13 +8,12 @@ import static graphql.nadel.TestUtil.getExpectedData
 
 class ParserTest extends Specification {
 
-
     def "simple service definition"() {
         given:
         def simpleDSL = """
         service Foo {
             type Query {
-                hello: String
+                hello(arg1: String, arg2: Integer): String
             }
         }
        """

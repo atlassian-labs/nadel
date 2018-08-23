@@ -4,19 +4,22 @@ import com.atlassian.braid.Braid;
 import com.atlassian.braid.Link;
 import com.atlassian.braid.SchemaNamespace;
 import com.atlassian.braid.SchemaSource;
-import com.atlassian.braid.document.DocumentMappers;
-import com.atlassian.braid.source.GraphQLRemoteRetriever;
-import com.atlassian.braid.source.GraphQLRemoteSchemaSource;
+import com.atlassian.braid.TypeUtils;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.execution.AsyncExecutionStrategy;
 import graphql.language.Definition;
+import graphql.language.FieldDefinition;
 import graphql.language.SDLDefinition;
+import graphql.nadel.TransformationUtils.FieldDefinitionWithParentType;
+import graphql.nadel.dsl.FieldTransformation;
+import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import graphql.schema.idl.TypeInfo;
 import graphql.schema.idl.errors.SchemaProblem;
 
 import java.util.ArrayList;
@@ -25,21 +28,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import static graphql.Assert.assertNotNull;
+import static graphql.nadel.TransformationUtils.collectFieldTransformations;
+
 @PublicApi
 public class Nadel {
-
-    private final String dsl;
     private StitchingDsl stitchingDsl;
     private Parser parser = new Parser();
-    private GraphQLRemoteRetrieverFactory graphQLRemoteRetrieverFactory;
     private Braid braid;
 
     private final Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
     private final Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
 
-    public Nadel(String dsl, GraphQLRemoteRetrieverFactory graphQLRemoteRetrieverFactory) {
-        this.dsl = dsl;
-        this.graphQLRemoteRetrieverFactory = graphQLRemoteRetrieverFactory;
+    public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
+        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory));
+    }
+
+    public Nadel(String dsl, SchemaSourceFactory schemaSourceFactory) {
         this.stitchingDsl = this.parser.parseDSL(dsl);
 
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
@@ -51,15 +56,13 @@ public class Nadel {
             namespaceByService.put(serviceDefinition.getName(), schemaNamespace);
 
         }
-        Map<SchemaNamespace, List<Link>> linksByNamespace = createLinks();
         List<SchemaSource> schemaSources = new ArrayList<>();
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
-
             SchemaNamespace namespace = namespaceByService.get(serviceDefinition.getName());
             TypeDefinitionRegistry typeDefinitionRegistry = typesByService.get(serviceDefinition.getName());
-            GraphQLRemoteRetriever remoteRetriever = this.graphQLRemoteRetrieverFactory.createRemoteRetriever(serviceDefinition);
-            List<Link> links = linksByNamespace.getOrDefault(namespace, new ArrayList<>());
-            SchemaSource schemaSource = createSchemaSource(typeDefinitionRegistry, namespace, remoteRetriever, links);
+            List<Link> links = createLinks(serviceDefinition);
+            SchemaSource schemaSource = schemaSourceFactory.createSchemaSource(serviceDefinition, namespace,
+                    typeDefinitionRegistry, links);
             schemaSources.add(schemaSource);
         }
 
@@ -68,18 +71,6 @@ public class Nadel {
                 .executionStrategy(asyncExecutionStrategy)
                 .schemaSources(schemaSources)
                 .build();
-    }
-
-    private SchemaSource createSchemaSource(TypeDefinitionRegistry typeDefinitionRegistry,
-                                            SchemaNamespace schemaNamespace,
-                                            GraphQLRemoteRetriever<Object> remoteRetriever,
-                                            List<Link> links) {
-        return new GraphQLRemoteSchemaSource<>(schemaNamespace,
-                typeDefinitionRegistry,
-                typeDefinitionRegistry,
-                remoteRetriever,
-                links,
-                DocumentMappers.identity());
     }
 
     public TypeDefinitionRegistry buildRegistry(ServiceDefinition serviceDefinition) {
@@ -97,47 +88,67 @@ public class Nadel {
         }
     }
 
-    private Map<SchemaNamespace, List<Link>> createLinks() {
-        Map<SchemaNamespace, List<Link>> result = new LinkedHashMap<>();
-//        Map<FieldDefinition, FieldTransformation> transformationsByFieldDefinition = this.stitchingDsl.getTransformationsByFieldDefinition();
-//        transformationsByFieldDefinition.forEach((fieldDefinition, fieldTransformation) -> {
-//            ServiceDefinition serviceDefinition = this.stitchingDsl.getServiceByField().get(fieldDefinition);
-//            SchemaNamespace schemaNamespace = assertNotNull(this.stitchingDsl.getNamespaceByService().get(serviceDefinition.getName()));
-//            result.putIfAbsent(schemaNamespace, new ArrayList<>());
-//
-//
-//            String parentType = fieldTransformation.getParentDefinition().getName();
-//
-//            String originalFieldName = fieldDefinition.getName();
-//            Type targetType = assertNotNull(fieldTransformation.getTargetType());
-//            String targetTypeName = TypeInfo.typeInfo(targetType).getTypeName().getName();
-//            String newFieldName = fieldTransformation.getTargetName();
-//
-//            String queryField = targetTypeName.toLowerCase();
-//            SchemaNamespace targetNamespace = findNameSpace(targetTypeName);
-//            Link link = Link
-//                    .from(schemaNamespace, parentType, newFieldName, originalFieldName)
-//                    .to(targetNamespace, targetTypeName, queryField, "id")
-//                    .replaceFromField()
-//                    .build();
-//            result.get(schemaNamespace).add(link);
-//        });
-        return result;
+
+    private List<Link> createLinks(ServiceDefinition serviceDefinition) {
+        List<Link> links = new ArrayList<>();
+
+        SchemaNamespace schemaNamespace = assertNotNull(this.namespaceByService.get(serviceDefinition.getName()));
+
+        final List<FieldDefinitionWithParentType> defs = collectFieldTransformations(serviceDefinition);
+
+        for (FieldDefinitionWithParentType definition : defs) {
+            final FieldTransformation transformation = definition.field().getFieldTransformation();
+            if (transformation.getInnerServiceHydration() != null) {
+                final InnerServiceHydration hydration = transformation.getInnerServiceHydration();
+                final Link link = createHydrationLink(schemaNamespace, definition, hydration);
+                links.add(link);
+            } else if (transformation.getFieldMappingDefinition() != null) {
+                throw new InvalidDslException("Field mapping not implemented yet.", transformation.getSourceLocation());
+            }
+        }
+        return links;
     }
 
-//    private SchemaNamespace findNameSpace(String type) {
-//        Map<String, TypeDefinitionRegistry> typesByService = this.stitchingDsl.getTypesByService();
-//        AtomicReference<String> serviceName = new AtomicReference<>();
-//        typesByService.forEach((service, typeDefinitionRegistry) -> {
-//            if (typeDefinitionRegistry.hasType(new TypeName(type))) {
-//                serviceName.set(service);
-//            }
-//        });
-//        if (serviceName.get() != null) {
-//            return assertNotNull(this.stitchingDsl.getNamespaceByService().get(serviceName.get()));
-//        }
-//        return Assert.assertShouldNeverHappen();
-//    }
+    private Link createHydrationLink(SchemaNamespace schemaNamespace, FieldDefinitionWithParentType definition,
+                                     InnerServiceHydration hydration) {
+        SchemaNamespace targetService = assertNotNull(this.namespaceByService.get(hydration.getServiceName()));
+        final FieldDefinition targetField = findTargetFieldForHydration(hydration);
+        //TODO: will not work for lists or non nullable types. does braid support this at all?
+        String targetTypeName = TypeInfo.typeInfo(targetField.getType()).getName();
+
+        //TODO: braid does not support multiple arguments, so we just take first
+        final String fromField = hydration.getArguments().entrySet().stream()
+                .map(e -> e.getValue().getInputName())
+                .findFirst()
+                .orElse(definition.field().getName());
+
+        return Link.from(schemaNamespace, definition.parentType(), definition.field().getName(), fromField)
+                //TODO: we need to add something to DSL to support 'queryVariableArgument' parameter of .to
+                // by default it is targetField name which is not always correct.
+                .to(targetService, targetTypeName, targetField.getName())
+                .replaceFromField()
+                .build();
+    }
+
+
+    private FieldDefinition findTargetFieldForHydration(InnerServiceHydration hydration) {
+        final TypeDefinitionRegistry types = typesByService.get(hydration.getServiceName());
+        if (types == null) {
+            throw hydrationError(hydration, "Service '%s' is not defined.", hydration.getServiceName());
+        }
+
+        return TypeUtils.findQueryFieldDefinitions(types)
+                .flatMap(queryFields -> queryFields.stream()
+                        .filter(field -> hydration.getTopLevelField().equals(field.getName()))
+                        .findFirst())
+                .orElseThrow(() -> hydrationError(hydration, "Service '%s' does not contain query field '%s'",
+                        hydration.getServiceName(), hydration.getTopLevelField()));
+    }
+
+    private InvalidDslException hydrationError(InnerServiceHydration hydration, String format, Object... args) {
+        return new InvalidDslException(String.format("Error in field hydration definition: " + format, args),
+                hydration.getSourceLocation());
+    }
 
 
     public CompletableFuture<ExecutionResult> executeAsync(ExecutionInput executionInput) {

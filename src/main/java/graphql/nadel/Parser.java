@@ -5,8 +5,11 @@ import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.parser.antlr.StitchingDSLLexer;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.DefaultErrorStrategy;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
@@ -22,8 +25,9 @@ public class Parser {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         StitchingDSLParser parser = new StitchingDSLParser(tokens);
         parser.removeErrorListeners();
+        parser.addErrorListener(ThrowingErrorListener.INSTANCE);
         parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
-        parser.setErrorHandler(new BailErrorStrategy());
+        parser.setErrorHandler(new DefaultErrorStrategy());
 
         StitchingDSLParser.StitchingDSLContext stitchingDSL = parser.stitchingDSL();
 
@@ -48,4 +52,20 @@ public class Parser {
         return stitchingDsl;
     }
 
+    private static class ThrowingErrorListener extends BaseErrorListener {
+        private static ThrowingErrorListener INSTANCE = new ThrowingErrorListener();
+
+        @Override
+        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
+                                int line, int charPositionInLine,
+                                String msg, RecognitionException e) {
+
+            String sourceName = recognizer.getInputStream().getSourceName();
+            if (!sourceName.isEmpty()) {
+                sourceName = String.format("%s:%d:%d: ", sourceName, line, charPositionInLine);
+            }
+
+            throw new ParseCancellationException(sourceName + "line " + line + ":" + charPositionInLine + " " + msg);
+        }
+    }
 }

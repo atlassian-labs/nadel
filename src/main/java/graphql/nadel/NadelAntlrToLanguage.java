@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static graphql.nadel.dsl.FieldDefinitionWithTransformation.newFieldDefinitionWithTransformation;
+
 @Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
@@ -33,7 +35,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     public StitchingDsl createStitchingDsl(StitchingDSLParser.StitchingDSLContext ctx) {
         StitchingDsl.Builder stitchingDsl = StitchingDsl.newStitchingDSL();
-        List<ServiceDefinition> serviceDefintions = ctx.serviceDefinition().stream().map(this::createServiceDefinition).collect(Collectors.toList());
+        List<ServiceDefinition> serviceDefintions = ctx.serviceDefinition().stream()
+                .map(this::createServiceDefinition)
+                .collect(Collectors.toList());
         stitchingDsl.serviceDefinitions(serviceDefintions);
         return stitchingDsl.build();
     }
@@ -57,23 +61,25 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         if (ctx.fieldTransformation() == null) {
             return fieldDefinition;
         }
-        FieldDefinitionWithTransformation.Builder builder = FieldDefinitionWithTransformation.newFieldDefinitionWithTransformation(fieldDefinition);
+        FieldDefinitionWithTransformation.Builder builder = newFieldDefinitionWithTransformation(fieldDefinition);
         builder.fieldTransformation(createFieldTransformation(ctx.fieldTransformation()));
         return builder.build();
     }
 
     private FieldTransformation createFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
         if (ctx.fieldMappingDefinition() != null) {
-            return new FieldTransformation(createFieldMappingDefinition(ctx.fieldMappingDefinition()), null, new ArrayList<>());
+            return new FieldTransformation(createFieldMappingDefinition(ctx.fieldMappingDefinition()),
+                    getSourceLocation(ctx), new ArrayList<>());
         } else if (ctx.innerServiceHydration() != null) {
-            return new FieldTransformation(createInnerServiceHydration(ctx.innerServiceHydration()), null, new ArrayList<>());
+            return new FieldTransformation(createInnerServiceHydration(ctx.innerServiceHydration()),
+                    getSourceLocation(ctx), new ArrayList<>());
         } else {
             return Assert.assertShouldNeverHappen();
         }
     }
 
     private FieldMappingDefinition createFieldMappingDefinition(StitchingDSLParser.FieldMappingDefinitionContext ctx) {
-        return new FieldMappingDefinition(ctx.name().getText(), null, new ArrayList<>());
+        return new FieldMappingDefinition(ctx.name().getText(), getSourceLocation(ctx), new ArrayList<>());
     }
 
     private InnerServiceHydration createInnerServiceHydration(StitchingDSLParser.InnerServiceHydrationContext ctx) {
@@ -81,11 +87,14 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         String topLevelField = ctx.topLevelField().getText();
 
         Map<String, FieldMappingDefinition> inputMappingDefinitionMap = new LinkedHashMap<>();
-        List<StitchingDSLParser.RemoteArgumentPairContext> remoteArgumentPairContexts = ctx.remoteCallDefinition().remoteArgumentList().remoteArgumentPair();
+        List<StitchingDSLParser.RemoteArgumentPairContext> remoteArgumentPairContexts = ctx.remoteCallDefinition()
+                .remoteArgumentPair();
         for (StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext : remoteArgumentPairContexts) {
-            inputMappingDefinitionMap.put(remoteArgumentPairContext.name().getText(), createFieldMappingDefinition(remoteArgumentPairContext.fieldMappingDefinition()));
+            inputMappingDefinitionMap.put(remoteArgumentPairContext.name().getText(),
+                    createFieldMappingDefinition(remoteArgumentPairContext.fieldMappingDefinition()));
         }
-        return new InnerServiceHydration(null, new ArrayList<>(), serviceName, topLevelField, inputMappingDefinitionMap);
+        return new InnerServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField,
+                inputMappingDefinitionMap);
     }
 
     @Override
