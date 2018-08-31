@@ -72,13 +72,13 @@ class NadelTest extends Specification {
                 id: ID 
                 title : String 
                 barId: ID
-                bar : String <= \$innerQueries.BarService.bar(id: \$source.barId)
+                bar : String <= \$innerQueries.BarService.bar(barId: \$source.barId)
             }
         }
         
         service BarService {
             type Query {
-                bar(id: ID): Bar
+                bar(barId: ID): Bar
             }
 
             type Bar {

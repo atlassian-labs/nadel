@@ -11,6 +11,8 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 
 import java.util.List;
 
+import static java.util.Collections.emptyList;
+
 /**
  * Schema source factory that uses remote graphql endpoint.
  *
@@ -32,6 +34,9 @@ class GraphQLRemoteSchemaSourceFactory<C> implements SchemaSourceFactory {
                 typeDefinitionRegistry,
                 retrieverFactory.createRemoteRetriever(definition),
                 links,
-                DocumentMappers.identity());
+                DocumentMappers.identity(),
+                emptyList(),
+                emptyList(),
+                emptyList());
     }
 }

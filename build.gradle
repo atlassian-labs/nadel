@@ -28,7 +28,7 @@ targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
 def graphqlJavaVersion = '2018-07-30T00-23-12-bfee885'
-def braidVersion = '0.11.3-graphqljava10-SNAPSHOT'
+def braidVersion = '0.12.2-graphqljava10-SNAPSHOT'
 
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
@@ -50,7 +50,7 @@ jar {
 }
 
 task extractGraphqlGrammar(type: Copy) {
-    from({ zipTree({ configurations.compile.files.find({ it.path.contains('/com.graphql-java/graphql-java/') }) }) }) {
+    from({ zipTree({ configurations.compile.files.find({ it.path.contains('com.graphql-java/graphql-java/') }) }()) }) {
         include '*.g4'
     }
     into 'src/main/antlr'
