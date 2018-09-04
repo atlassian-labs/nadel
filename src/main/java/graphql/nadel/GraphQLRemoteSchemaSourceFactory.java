@@ -3,12 +3,15 @@ package graphql.nadel;
 import com.atlassian.braid.Link;
 import com.atlassian.braid.SchemaNamespace;
 import com.atlassian.braid.SchemaSource;
+import com.atlassian.braid.document.DocumentMapperFactory;
 import com.atlassian.braid.document.DocumentMappers;
+import com.atlassian.braid.document.TypeMapper;
 import com.atlassian.braid.source.GraphQLRemoteSchemaSource;
 import graphql.Internal;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,12 +29,20 @@ class GraphQLRemoteSchemaSourceFactory<C> implements SchemaSourceFactory {
 
     @Override
     public SchemaSource createSchemaSource(ServiceDefinition definition, SchemaNamespace namespace,
-                                           TypeDefinitionRegistry typeDefinitionRegistry, List<Link> links) {
+                                           TypeDefinitionRegistry typeDefinitionRegistry, List<Link> links,
+                                           List<TypeMapper> mappers) {
+        DocumentMapperFactory factory = DocumentMappers.identity();
+        for (TypeMapper mapper : mappers){
+            factory = factory.mapType(mapper);
+        }
         return new GraphQLRemoteSchemaSource<>(namespace,
                 typeDefinitionRegistry,
                 typeDefinitionRegistry,
                 retrieverFactory.createRemoteRetriever(definition),
                 links,
-                DocumentMappers.identity());
+                factory,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList());
     }
 }

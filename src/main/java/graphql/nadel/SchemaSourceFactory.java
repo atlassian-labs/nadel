@@ -4,6 +4,7 @@ package graphql.nadel;
 import com.atlassian.braid.Link;
 import com.atlassian.braid.SchemaNamespace;
 import com.atlassian.braid.SchemaSource;
+import com.atlassian.braid.document.TypeMapper;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
@@ -14,5 +15,6 @@ import java.util.List;
  */
 public interface SchemaSourceFactory {
     SchemaSource createSchemaSource(ServiceDefinition definition, SchemaNamespace namespace,
-                                    TypeDefinitionRegistry typeDefinitionRegistry, List<Link> links);
+                                    TypeDefinitionRegistry typeDefinitionRegistry, List<Link> links,
+                                    List<TypeMapper> mappers);
 }

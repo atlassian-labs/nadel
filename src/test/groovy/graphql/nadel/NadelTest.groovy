@@ -64,19 +64,25 @@ class NadelTest extends Specification {
     def "stitching with service hydration"() {
         def dsl = """
         service FooService {
+            schema {
+               query: Query
+            }
             type Query {
-                foo: Foo
+               foo: Foo
             }
 
             type Foo {
-                id: ID 
-                title : String 
-                barId: ID
-                bar : String <= \$innerQueries.BarService.bar(id: \$source.barId)
+               id: ID 
+               title : String 
+               barId: ID
+               bar : Bar <= \$innerQueries.BarService.bar(id: \$source.barId)
             }
         }
         
         service BarService {
+            schema {
+                    query: Query
+            }
             type Query {
                 bar(id: ID): Bar
             }
@@ -107,4 +113,38 @@ class NadelTest extends Specification {
         }
     }
 
+    def "stitching with simple field rename"() {
+        def dsl = """
+            service FooService {
+                schema {
+                    query: Query
+                }
+                type Query {
+                    foo: [Foo!]
+                }
+    
+                type Foo {
+                    newName: ID <= \$source.id
+                    barId: ID
+                    newTitle : String <=\$source.title
+                }
+            }
+        """
+
+        def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
+        def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1])
+
+        String query = "{foo { newName newTitle barId }}"
+        Nadel nadel = new Nadel(dsl, callerFactory)
+        when:
+        def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+
+        then:
+        executionResult.data == [foo: [[newName: 'foo1', barId: 'someBarId', newTitle: 'title'],
+                                       [newName: 'foo2', barId: 'someBarId2', newTitle: 'title2']]]
+        1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> { it ->
+            completedFuture([data: [foo100: [[id: 'foo1', barId: 'someBarId', title: 'title'],
+                                             [id: 'foo2', barId: 'someBarId2', title: 'title2']]]])
+        }
+    }
 }
