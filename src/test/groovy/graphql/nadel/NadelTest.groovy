@@ -2,8 +2,16 @@ package graphql.nadel
 
 import com.atlassian.braid.source.GraphQLRemoteRetriever
 import graphql.ExecutionInput
+import graphql.language.FieldDefinition
+import graphql.language.ObjectTypeDefinition
+import graphql.language.TypeName
 import graphql.nadel.dsl.ServiceDefinition
+import graphql.schema.idl.RuntimeWiring
+import graphql.schema.idl.TypeDefinitionRegistry
+import graphql.schema.idl.TypeRuntimeWiring
 import spock.lang.Specification
+
+import java.util.function.Consumer
 
 import static java.util.concurrent.CompletableFuture.completedFuture
 
@@ -104,6 +112,56 @@ class NadelTest extends Specification {
         }
         1 * graphqlRemoteRetriever2.queryGraphQL(*_) >> { it ->
             completedFuture([data: [bar100: [id: 'someBarId', name: 'barName']]])
+        }
+    }
+
+
+    def "register special DataFetcher"() {
+        def dsl = """
+        service FooService {
+            type Query {
+                foo: Foo
+            }
+
+            type Foo {
+                specialField: String
+            }
+        }
+        """
+
+        def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
+        def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1])
+
+        TypeDefinitionRegistry typeDefinitionRegistry = new TypeDefinitionRegistry();
+
+
+        def fieldDefinition = FieldDefinition
+                .newFieldDefinition()
+                .name("specialField")
+                .type(new TypeName("String"))
+                .build()
+        ObjectTypeDefinition objectTypeDefinition = ObjectTypeDefinition.newObjectTypeDefinition()
+                .name("Foo")
+                .fieldDefinition(fieldDefinition)
+                .build()
+        typeDefinitionRegistry.add(objectTypeDefinition)
+
+        Consumer<RuntimeWiring.Builder> runtimeWiring = {
+            builder ->
+                builder.type(TypeRuntimeWiring
+                        .newTypeWiring("Foo")
+                        .dataFetcher("specialField", { env -> "my special Value" }))
+        }
+
+        String query = "{foo { specialField }}"
+        Nadel nadel = new Nadel(dsl, callerFactory, typeDefinitionRegistry, runtimeWiring)
+        when:
+        def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+
+        then:
+        executionResult.data == [foo: [specialField: 'my special value']]
+        1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> { it ->
+            completedFuture([data: [foo100: [specialField: 'my special value',]]])
         }
     }
 

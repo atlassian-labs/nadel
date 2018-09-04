@@ -18,6 +18,7 @@ import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
+import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.TypeInfo;
 import graphql.schema.idl.errors.SchemaProblem;
@@ -27,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.TransformationUtils.collectFieldTransformations;
@@ -40,11 +42,22 @@ public class Nadel {
     private final Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
     private final Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
 
+    public Nadel(String dsl,
+                 GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory,
+                 TypeDefinitionRegistry typeDefinitionRegistry,
+                 Consumer<RuntimeWiring.Builder> runtimeWiringConsumer) {
+        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory), typeDefinitionRegistry, runtimeWiringConsumer);
+    }
+
     public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
         this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory));
     }
 
     public Nadel(String dsl, SchemaSourceFactory schemaSourceFactory) {
+        this(dsl, schemaSourceFactory, null, null);
+    }
+
+    public Nadel(String dsl, SchemaSourceFactory schemaSourceFactory, TypeDefinitionRegistry baseTypeDefinitionRegistry, Consumer<RuntimeWiring.Builder> runtimeWiringConsumer) {
         this.stitchingDsl = this.parser.parseDSL(dsl);
 
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
@@ -67,7 +80,14 @@ public class Nadel {
         }
 
         AsyncExecutionStrategy asyncExecutionStrategy = new AsyncExecutionStrategy();
-        this.braid = Braid.builder()
+        Braid.BraidBuilder braidBuilder = Braid.builder();
+        if (baseTypeDefinitionRegistry != null) {
+            braidBuilder.typeDefinitionRegistry(baseTypeDefinitionRegistry);
+        }
+        if (runtimeWiringConsumer != null) {
+            braidBuilder.withRuntimeWiring(runtimeWiringConsumer);
+        }
+        this.braid = braidBuilder
                 .executionStrategy(asyncExecutionStrategy)
                 .schemaSources(schemaSources)
                 .build();
