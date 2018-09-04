@@ -9,6 +9,7 @@ import graphql.Internal;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,6 +33,9 @@ class GraphQLRemoteSchemaSourceFactory<C> implements SchemaSourceFactory {
                 typeDefinitionRegistry,
                 retrieverFactory.createRemoteRetriever(definition),
                 links,
-                DocumentMappers.identity());
+                DocumentMappers.identity(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList());
     }
 }
