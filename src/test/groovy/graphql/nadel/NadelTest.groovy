@@ -159,7 +159,7 @@ class NadelTest extends Specification {
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 
         then:
-        executionResult.data == [foo: [specialField: 'mys special value']]
+        executionResult.data == [foo: [specialField: 'my special value']]
         1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> { it ->
             completedFuture([data: [foo100: [specialField: 'my special value',]]])
         }

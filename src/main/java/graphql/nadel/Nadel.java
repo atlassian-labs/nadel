@@ -80,9 +80,14 @@ public class Nadel {
         }
 
         AsyncExecutionStrategy asyncExecutionStrategy = new AsyncExecutionStrategy();
-        this.braid = Braid.builder()
-                .typeDefinitionRegistry(baseTypeDefinitionRegistry)
-                .withRuntimeWiring(runtimeWiringConsumer)
+        Braid.BraidBuilder braidBuilder = Braid.builder();
+        if (baseTypeDefinitionRegistry != null) {
+            braidBuilder.typeDefinitionRegistry(baseTypeDefinitionRegistry);
+        }
+        if (runtimeWiringConsumer != null) {
+            braidBuilder.withRuntimeWiring(runtimeWiringConsumer);
+        }
+        this.braid = braidBuilder
                 .executionStrategy(asyncExecutionStrategy)
                 .schemaSources(schemaSources)
                 .build();
