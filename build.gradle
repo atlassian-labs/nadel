@@ -50,7 +50,7 @@ jar {
 }
 
 task extractGraphqlGrammar(type: Copy) {
-    from({ zipTree({ configurations.compile.files.find({ it.path.contains('/com.graphql-java/graphql-java/') }) }) }) {
+    from({ zipTree({ configurations.compile.files.find({ it.path.contains('com.graphql-java/graphql-java/') }) }()) }) {
         include '*.g4'
     }
     into 'src/main/antlr'

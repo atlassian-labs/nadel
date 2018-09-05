@@ -18,6 +18,7 @@ import graphql.language.SDLDefinition;
 import graphql.nadel.TransformationUtils.FieldDefinitionWithParentType;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
+import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -132,16 +133,18 @@ public class Nadel {
         String targetTypeName = TypeInfo.typeInfo(targetField.getType()).getName();
 
         //TODO: braid does not support multiple arguments, so we just take first
-        final String fromField = hydration.getArguments().entrySet().stream()
-                .map(e -> e.getValue().getInputName())
+        final RemoteArgumentDefinition argument = hydration.getArguments().stream()
                 .findFirst()
-                .orElse(definition.field().getName());
+                // braid does not allow links to 0 argument queries. It must be exactly one
+                .orElseThrow(() -> new InvalidDslException("Remote argument is required.",
+                        hydration.getSourceLocation()));
 
-        return Link.from(schemaNamespace, definition.parentType(), definition.field().getName(), fromField)
+        return Link.from(schemaNamespace, definition.parentType(), definition.field().getName(),
+                argument.getFieldMappingDefinition().getInputName())
                 //TODO: we need to add something to DSL to support 'queryVariableArgument' parameter of .to
                 // by default it is targetField name which is not always correct.
                 .to(targetService, targetTypeName, targetField.getName())
-                .replaceFromField()
+                .argument(argument.getName())
                 .build();
     }
 
@@ -164,7 +167,6 @@ public class Nadel {
         return new InvalidDslException(String.format("Error in field hydration definition: " + format, args),
                 hydration.getSourceLocation());
     }
-
 
     public CompletableFuture<ExecutionResult> executeAsync(ExecutionInput executionInput) {
         return this.braid.newGraphQL().execute(executionInput);
