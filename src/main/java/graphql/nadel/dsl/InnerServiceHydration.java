@@ -8,21 +8,20 @@ import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
 
     private final String serviceName;
     private final String topLevelField;
-    private final Map<String, FieldMappingDefinition> arguments;
+    private final List<RemoteArgumentDefinition> arguments;
 
     public InnerServiceHydration(SourceLocation sourceLocation,
                                  List<Comment> comments,
                                  String serviceName,
                                  String topLevelField,
-                                 Map<String, FieldMappingDefinition> arguments) {
+                                 List<RemoteArgumentDefinition> arguments) {
         super(sourceLocation, comments);
         this.serviceName = serviceName;
         this.topLevelField = topLevelField;
@@ -37,8 +36,8 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
         return topLevelField;
     }
 
-    public Map<String, FieldMappingDefinition> getArguments() {
-        return new LinkedHashMap<>(arguments);
+    public List<RemoteArgumentDefinition> getArguments() {
+        return new ArrayList<>(arguments);
     }
 
     @Override
