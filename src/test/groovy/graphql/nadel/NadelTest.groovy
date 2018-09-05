@@ -4,6 +4,7 @@ import com.atlassian.braid.source.GraphQLRemoteRetriever
 import graphql.ExecutionInput
 import graphql.nadel.dsl.ServiceDefinition
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static java.util.concurrent.CompletableFuture.completedFuture
 
@@ -146,5 +147,46 @@ class NadelTest extends Specification {
             completedFuture([data: [foo100: [[id: 'foo1', barId: 'someBarId', title: 'title'],
                                              [id: 'foo2', barId: 'someBarId2', title: 'title2']]]])
         }
+    }
+
+    @Unroll
+    def "stitching with #fragment fragment field rename"(String fragment, String query) {
+        def dsl = """
+            service FooService {
+                schema {
+                    query: Query
+                }
+                
+                type Query {
+                    foo: [Foo!]
+                }
+    
+                type Foo {
+                    newName: ID <= \$source.id
+                    barId: ID
+                    newTitle : String <=\$source.title
+                    name: String 
+                }
+            }
+        """
+
+        def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
+        def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1])
+
+        Nadel nadel = new Nadel(dsl, callerFactory)
+        when:
+        def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+
+        then:
+        executionResult.data == [foo: [[newName: 'foo1', barId: 'someBarId', newTitle: 'title'],
+                                       [newName: 'foo2', barId: 'someBarId2', newTitle: 'title2']]]
+        1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> { it ->
+            completedFuture([data: [foo100: [[id: 'foo1', barId: 'someBarId', title: 'title', name:'name'],
+                                             [id: 'foo2', barId: 'someBarId2', title: 'title2', name:'name2']]]])
+        }
+        where:
+        fragment | query | _
+        "inline" |"{foo {... on Foo { newName  barId newTitle} }} " | _
+        "named"  |"fragment cf on Foo { newName  barId newTitle} {foo { ... cf}} " | _
     }
 }
