@@ -5,6 +5,7 @@ import graphql.Internal;
 import graphql.language.Definition;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
+import graphql.nadel.dsl.FieldDataFetcher;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
@@ -46,6 +47,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         builder.name(serviceDefinitionContext.name().getText());
         List<Definition> definitions = createTypeSystemDefinitions(serviceDefinitionContext.typeSystemDefinition());
         builder.definitions(definitions);
+        builder.sourceLocation(getSourceLocation(serviceDefinitionContext));
         return builder.build();
     }
 
@@ -72,6 +74,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         } else if (ctx.innerServiceHydration() != null) {
             return new FieldTransformation(createInnerServiceHydration(ctx.innerServiceHydration()),
                     getSourceLocation(ctx), new ArrayList<>());
+        } else if (ctx.fieldDataFetcher() != null) {
+            return new FieldTransformation(createDataFetcher(ctx.fieldDataFetcher()),
+                    getSourceLocation(ctx), new ArrayList<>());
         } else {
             return Assert.assertShouldNeverHappen();
         }
@@ -79,6 +84,10 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     private FieldMappingDefinition createFieldMappingDefinition(StitchingDSLParser.FieldMappingDefinitionContext ctx) {
         return new FieldMappingDefinition(ctx.name().getText(), getSourceLocation(ctx), new ArrayList<>());
+    }
+
+    private FieldDataFetcher createDataFetcher(StitchingDSLParser.FieldDataFetcherContext ctx) {
+        return new FieldDataFetcher(ctx.name().getText(), getSourceLocation(ctx), new ArrayList<>());
     }
 
     private InnerServiceHydration createInnerServiceHydration(StitchingDSLParser.InnerServiceHydrationContext ctx) {

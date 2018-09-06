@@ -15,17 +15,28 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     private final FieldMappingDefinition fieldMappingDefinition;
     private final InnerServiceHydration innerServiceHydration;
+    private final FieldDataFetcher fieldDataFetcher;
+
 
     public FieldTransformation(FieldMappingDefinition fieldMappingDefinition, SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments);
         this.fieldMappingDefinition = fieldMappingDefinition;
         this.innerServiceHydration = null;
+        this.fieldDataFetcher = null;
     }
 
     public FieldTransformation(InnerServiceHydration innerServiceHydration, SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments);
         this.fieldMappingDefinition = null;
         this.innerServiceHydration = innerServiceHydration;
+        this.fieldDataFetcher = null;
+    }
+
+    public FieldTransformation(FieldDataFetcher fieldDataFetcher, SourceLocation sourceLocation, List<Comment> comments) {
+        super(sourceLocation, comments);
+        this.fieldMappingDefinition = null;
+        this.innerServiceHydration = null;
+        this.fieldDataFetcher = fieldDataFetcher;
     }
 
     public FieldMappingDefinition getFieldMappingDefinition() {
@@ -34,6 +45,10 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     public InnerServiceHydration getInnerServiceHydration() {
         return innerServiceHydration;
+    }
+
+    public FieldDataFetcher getFieldDataFetcher() {
+        return fieldDataFetcher;
     }
 
     @Override

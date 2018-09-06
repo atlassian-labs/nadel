@@ -13,6 +13,8 @@ import java.util.List;
  * Factory for schema source.
  */
 public interface SchemaSourceFactory {
+    SchemaSourceFactory DEFAULT = (definition, namespace, typeDefinitionRegistry, links) -> null;
+
     SchemaSource createSchemaSource(ServiceDefinition definition, SchemaNamespace namespace,
                                     TypeDefinitionRegistry typeDefinitionRegistry, List<Link> links);
 }

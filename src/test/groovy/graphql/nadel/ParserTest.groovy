@@ -146,6 +146,30 @@ class ParserTest extends Specification {
         then:
         astAsMap(stitchingDSL) == getExpectedData("type-transformation")
     }
+
+    def "parse field fetcher"() {
+        given:
+        def dsl = """
+        service FooService {
+            type Query {
+                foo: Foo
+            }
+
+            type Foo {
+                id: ID <= \$dataFetcher.specialField
+            }
+        }
+        """
+        when:
+        Parser parser = new Parser()
+        then:
+        def stitchingDSL = parser.parseDSL(dsl)
+
+        then:
+        astAsMap(stitchingDSL) == getExpectedData("field-fetcher")
+
+    }
+
 }
 
 
