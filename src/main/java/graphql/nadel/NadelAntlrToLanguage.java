@@ -11,6 +11,7 @@ import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
+import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.dsl.TypeTransformation;
@@ -19,9 +20,7 @@ import graphql.nadel.parser.antlr.StitchingDSLParser;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import static graphql.nadel.dsl.FieldDefinitionWithTransformation.newFieldDefinitionWithTransformation;
@@ -95,15 +94,14 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         String serviceName = ctx.serviceName().getText();
         String topLevelField = ctx.topLevelField().getText();
 
-        Map<String, FieldMappingDefinition> inputMappingDefinitionMap = new LinkedHashMap<>();
+        List<RemoteArgumentDefinition> remoteArguments = new ArrayList<>();
         List<StitchingDSLParser.RemoteArgumentPairContext> remoteArgumentPairContexts = ctx.remoteCallDefinition()
                 .remoteArgumentPair();
         for (StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext : remoteArgumentPairContexts) {
-            inputMappingDefinitionMap.put(remoteArgumentPairContext.name().getText(),
-                    createFieldMappingDefinition(remoteArgumentPairContext.fieldMappingDefinition()));
+            remoteArguments.add(createRemoteArgumentDefinition(remoteArgumentPairContext));
         }
         return new InnerServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField,
-                inputMappingDefinitionMap);
+                remoteArguments);
     }
 
     @Override
@@ -118,5 +116,12 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
                 .typeTransformation(typeTransformation)
                 .build();
         return objectTypeDefinitionWithTransformation;
+    }
+
+    private RemoteArgumentDefinition createRemoteArgumentDefinition(StitchingDSLParser.RemoteArgumentPairContext
+                                                                            remoteArgumentPairContext) {
+        return new RemoteArgumentDefinition(remoteArgumentPairContext.name().getText(),
+                createFieldMappingDefinition(remoteArgumentPairContext.fieldMappingDefinition()),
+                getSourceLocation(remoteArgumentPairContext));
     }
 }

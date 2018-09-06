@@ -26,11 +26,14 @@
                 "innerServiceHydration": {
                   "serviceName": "OtherService",
                   "topLevelField": "resolveId",
-                  "arguments": {
-                    "otherId": {
-                      "inputName": "id"
+                  "arguments": [
+                    {
+                      "name": "otherId",
+                      "fieldMappingDefinition": {
+                        "inputName": "id"
+                      }
                     }
-                  }
+                  ]
                 }
               }
             }
