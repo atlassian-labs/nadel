@@ -18,9 +18,10 @@ import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
-import graphql.schema.idl.RuntimeWiring;
+import graphql.schema.DataFetcher;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.TypeInfo;
+import graphql.schema.idl.TypeRuntimeWiring;
 import graphql.schema.idl.errors.SchemaProblem;
 
 import java.util.ArrayList;
@@ -28,13 +29,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.TransformationUtils.collectFieldTransformations;
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 
 @PublicApi
 public class Nadel {
+    private static final String BASE_SERVICE_NAME = "base";
+
     private StitchingDsl stitchingDsl;
     private Parser parser = new Parser();
     private Braid braid;
@@ -42,22 +46,10 @@ public class Nadel {
     private final Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
     private final Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
 
-    public Nadel(String dsl,
-                 GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory,
-                 TypeDefinitionRegistry typeDefinitionRegistry,
-                 Consumer<RuntimeWiring.Builder> runtimeWiringConsumer) {
-        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory), typeDefinitionRegistry, runtimeWiringConsumer);
-    }
-
-    public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
-        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory));
-    }
-
-    public Nadel(String dsl, SchemaSourceFactory schemaSourceFactory) {
-        this(dsl, schemaSourceFactory, null, null);
-    }
-
-    public Nadel(String dsl, SchemaSourceFactory schemaSourceFactory, TypeDefinitionRegistry baseTypeDefinitionRegistry, Consumer<RuntimeWiring.Builder> runtimeWiringConsumer) {
+    private Nadel(String dsl, SchemaSourceFactory schemaSourceFactory, DataFetcherFactory fetcherFactory) {
+        assertNotNull(dsl, "dsl");
+        assertNotNull(schemaSourceFactory, "schemaSourceFactory");
+        assertNotNull(fetcherFactory, "fetcherFactory");
         this.stitchingDsl = this.parser.parseDSL(dsl);
 
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
@@ -69,28 +61,44 @@ public class Nadel {
             namespaceByService.put(serviceDefinition.getName(), schemaNamespace);
 
         }
+        Braid.BraidBuilder braidBuilder = Braid.builder();
+
+
         List<SchemaSource> schemaSources = new ArrayList<>();
+        List<TypeRuntimeWiring> wirings = new ArrayList<>();
+
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             SchemaNamespace namespace = namespaceByService.get(serviceDefinition.getName());
             TypeDefinitionRegistry typeDefinitionRegistry = typesByService.get(serviceDefinition.getName());
-            List<Link> links = createLinks(serviceDefinition);
-            SchemaSource schemaSource = schemaSourceFactory.createSchemaSource(serviceDefinition, namespace,
-                    typeDefinitionRegistry, links);
-            schemaSources.add(schemaSource);
+            boolean isBaseService = serviceDefinition.getName().equals(BASE_SERVICE_NAME);
+
+            List<Link> links = new ArrayList<>();
+            processTransformations(serviceDefinition, fetcherFactory, links, wirings);
+
+            if (isBaseService) {
+                braidBuilder.typeDefinitionRegistry(typeDefinitionRegistry);
+            } else {
+                SchemaSource schemaSource = schemaSourceFactory.createSchemaSource(serviceDefinition, namespace,
+                        typeDefinitionRegistry, links);
+                if (schemaSource == null) {
+                    throw new InvalidDslException("No schema source for service " + serviceDefinition.getName(),
+                            serviceDefinition.getSourceLocation());
+                }
+                schemaSources.add(schemaSource);
+            }
         }
+        braidBuilder.withRuntimeWiring(builder -> wirings.forEach(builder::type));
 
         AsyncExecutionStrategy asyncExecutionStrategy = new AsyncExecutionStrategy();
-        Braid.BraidBuilder braidBuilder = Braid.builder();
-        if (baseTypeDefinitionRegistry != null) {
-            braidBuilder.typeDefinitionRegistry(baseTypeDefinitionRegistry);
-        }
-        if (runtimeWiringConsumer != null) {
-            braidBuilder.withRuntimeWiring(runtimeWiringConsumer);
-        }
+
         this.braid = braidBuilder
                 .executionStrategy(asyncExecutionStrategy)
                 .schemaSources(schemaSources)
                 .build();
+    }
+
+    public static Builder newBuilder() {
+        return new Builder();
     }
 
     public TypeDefinitionRegistry buildRegistry(ServiceDefinition serviceDefinition) {
@@ -109,8 +117,10 @@ public class Nadel {
     }
 
 
-    private List<Link> createLinks(ServiceDefinition serviceDefinition) {
-        List<Link> links = new ArrayList<>();
+    private void processTransformations(ServiceDefinition serviceDefinition,
+                                        DataFetcherFactory fetcherFactory,
+                                        List<Link> links,
+                                        List<TypeRuntimeWiring> wirings) {
 
         SchemaNamespace schemaNamespace = assertNotNull(this.namespaceByService.get(serviceDefinition.getName()));
 
@@ -124,9 +134,22 @@ public class Nadel {
                 links.add(link);
             } else if (transformation.getFieldMappingDefinition() != null) {
                 throw new InvalidDslException("Field mapping not implemented yet.", transformation.getSourceLocation());
+            } else if (transformation.getFieldDataFetcher() != null) {
+                final String fetcherName = transformation.getFieldDataFetcher().getDataFetcherName();
+                final DataFetcher<Object> dataFetcher = fetcherFactory.createDataFetcher(fetcherName);
+                final String fieldName = definition.field().getName();
+                if (dataFetcher == null) {
+                    throw new InvalidDslException(
+                            format("Data fetcher '%s' for field '%s' does not exist", fetcherName, fieldName),
+                            definition.field().getSourceLocation());
+                }
+                wirings.add(
+                        TypeRuntimeWiring.newTypeWiring(definition.parentType())
+                                .dataFetcher(fieldName, dataFetcher)
+                                .build()
+                );
             }
         }
-        return links;
     }
 
     private Link createHydrationLink(SchemaNamespace schemaNamespace, FieldDefinitionWithParentType definition,
@@ -166,13 +189,46 @@ public class Nadel {
     }
 
     private InvalidDslException hydrationError(InnerServiceHydration hydration, String format, Object... args) {
-        return new InvalidDslException(String.format("Error in field hydration definition: " + format, args),
+        return new InvalidDslException(format("Error in field hydration definition: " + format, args),
                 hydration.getSourceLocation());
     }
 
 
     public CompletableFuture<ExecutionResult> executeAsync(ExecutionInput executionInput) {
         return this.braid.newGraphQL().execute(executionInput);
+    }
+
+    public static class Builder {
+        private String dsl;
+        private SchemaSourceFactory schemaSourceFactory = SchemaSourceFactory.DEFAULT;
+        private DataFetcherFactory dataFetcherFactory = DataFetcherFactory.DEFAULT;
+
+        public Builder withDsl(String dsl) {
+            this.dsl = dsl;
+            return this;
+        }
+
+        public Builder withGraphQLRemoteRetrieverFactory(GraphQLRemoteRetrieverFactory<?> remoteFactory) {
+            this.schemaSourceFactory = new GraphQLRemoteSchemaSourceFactory<>(
+                    requireNonNull(remoteFactory, "remoteFactory")
+            );
+            return this;
+        }
+
+        public Builder withSchemaSourceFactory(SchemaSourceFactory schemaSourceFactory) {
+            this.schemaSourceFactory = requireNonNull(schemaSourceFactory, "schemaSourceFactory");
+            return this;
+        }
+
+        public Builder withDataFetcherFactory(DataFetcherFactory dataFetcherFactory) {
+            this.dataFetcherFactory = requireNonNull(dataFetcherFactory, "dataFetcherFactory");
+            return this;
+        }
+
+        public Nadel build() {
+            return new Nadel(dsl, schemaSourceFactory, dataFetcherFactory);
+
+        }
     }
 
 }

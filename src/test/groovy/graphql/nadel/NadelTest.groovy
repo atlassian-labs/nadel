@@ -2,16 +2,9 @@ package graphql.nadel
 
 import com.atlassian.braid.source.GraphQLRemoteRetriever
 import graphql.ExecutionInput
-import graphql.language.FieldDefinition
-import graphql.language.ObjectTypeDefinition
-import graphql.language.TypeName
 import graphql.nadel.dsl.ServiceDefinition
-import graphql.schema.idl.RuntimeWiring
-import graphql.schema.idl.TypeDefinitionRegistry
-import graphql.schema.idl.TypeRuntimeWiring
+import graphql.schema.DataFetcher
 import spock.lang.Specification
-
-import java.util.function.Consumer
 
 import static java.util.concurrent.CompletableFuture.completedFuture
 
@@ -48,7 +41,10 @@ class NadelTest extends Specification {
 
         String query1 = "{hello}"
         String query2 = "{hello2}"
-        Nadel nadel = new Nadel(dsl, callerFactory)
+        Nadel nadel = Nadel.newBuilder()
+                .withDsl(dsl)
+                .withGraphQLRemoteRetrieverFactory(callerFactory)
+                .build()
 
         when:
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query1).build()).get()
@@ -101,7 +97,10 @@ class NadelTest extends Specification {
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1, BarService: graphqlRemoteRetriever2])
 
         String query = "{foo { id bar { id name }}}"
-        Nadel nadel = new Nadel(dsl, callerFactory)
+        Nadel nadel = Nadel.newBuilder()
+                .withDsl(dsl)
+                .withGraphQLRemoteRetrieverFactory(callerFactory)
+                .build()
         when:
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 
@@ -118,51 +117,73 @@ class NadelTest extends Specification {
 
     def "register special DataFetcher"() {
         def dsl = """
-        service FooService {
+        service base {
+            type Query {
+                example(id: ID!): Example <= \$dataFetcher.exampleFetcher
+            }
+            
+            type Example {
+                id: ID!
+                specialField: String <= \$dataFetcher.specialField
+            }
+        }
+        
+        service Foo {
             type Query {
                 foo: Foo
             }
 
             type Foo {
-                specialField: String
+                id: ID 
+                value: Int <= \$dataFetcher.timesTwo
             }
         }
         """
 
+        Map<String, DataFetcher<Object>> fetchers = [
+                "exampleFetcher": (DataFetcher) { env ->
+                    return ["id": env.getArgument("id")]
+                },
+                "specialField"  : (DataFetcher) { env ->
+                    return "special value from fetcher"
+                },
+                "timesTwo"  : (DataFetcher) { env ->
+                    return "special value from fetcher"
+                }
+        ]
+
         def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
-        def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1])
+        def callerFactory = mockCallerFactory([Foo: graphqlRemoteRetriever1])
 
-        TypeDefinitionRegistry typeDefinitionRegistry = new TypeDefinitionRegistry();
-
-
-        def fieldDefinition = FieldDefinition
-                .newFieldDefinition()
-                .name("specialField")
-                .type(new TypeName("String"))
+        Nadel nadel = Nadel.newBuilder()
+                .withDsl(dsl)
+                .withGraphQLRemoteRetrieverFactory(callerFactory)
+                .withDataFetcherFactory(DataFetcherFactory.fromMap(fetchers))
                 .build()
-        ObjectTypeDefinition objectTypeDefinition = ObjectTypeDefinition.newObjectTypeDefinition()
-                .name("Foo")
-                .fieldDefinition(fieldDefinition)
-                .build()
-        typeDefinitionRegistry.add(objectTypeDefinition)
 
-        Consumer<RuntimeWiring.Builder> runtimeWiring = {
-            builder ->
-                builder.type(TypeRuntimeWiring
-                        .newTypeWiring("Foo")
-                        .dataFetcher("specialField", { env -> "my special Value" }))
-        }
-
-        String query = "{foo { specialField }}"
-        Nadel nadel = new Nadel(dsl, callerFactory, typeDefinitionRegistry, runtimeWiring)
         when:
+        String query = """
+        {
+          example(id: "id2") { 
+                id
+                specialField 
+          }
+          
+          foo {
+               id
+               value
+          }
+        }
+        """
+
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 
         then:
-        executionResult.data == [foo: [specialField: 'my special value']]
+        executionResult.data == [
+                'example': ['id': 'id2', 'specialField': 'special value from fetcher']
+        ]
         1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> { it ->
-            completedFuture([data: [foo100: [specialField: 'my special value',]]])
+            completedFuture([data: [foo100: [id: 'foo1', 'value': 5]]])
         }
     }
-
 }

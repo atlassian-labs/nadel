@@ -14,11 +14,13 @@ objectTypeDefinition : description? TYPE name implementsInterfaces? typeTransfor
 
 fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
 
-fieldTransformation : '<=' (fieldMappingDefinition | innerServiceHydration);
+fieldTransformation : '<=' (fieldMappingDefinition | innerServiceHydration | fieldDataFetcher);
 
 typeTransformation : '<=' '$innerTypes' '.' name;
 
 fieldMappingDefinition : '$source' '.' name ;
+
+fieldDataFetcher : '$dataFetcher' '.' name ;
 
 innerServiceHydration: '$innerQueries' '.' serviceName '.' topLevelField remoteCallDefinition?;
 
