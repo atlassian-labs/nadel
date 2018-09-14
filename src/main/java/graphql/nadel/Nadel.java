@@ -26,7 +26,6 @@ import graphql.schema.idl.TypeInfo;
 import graphql.schema.idl.errors.SchemaProblem;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +110,7 @@ public class Nadel {
     }
 
     private List<TypeMapper> createMappers(List<FieldDefinitionWithParentType> defs) {
-        Map<String, TypeMapper> typeMapperMap = new HashMap<>();
+        Map<String, TypeMapper> typeMapperMap = new LinkedHashMap<>();
         for (FieldDefinitionWithParentType definition : defs) {
             final FieldTransformation transformation = definition.field().getFieldTransformation();
             if (transformation.getFieldMappingDefinition() != null) {
