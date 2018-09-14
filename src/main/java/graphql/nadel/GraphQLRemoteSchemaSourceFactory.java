@@ -42,6 +42,7 @@ class GraphQLRemoteSchemaSourceFactory<C> implements SchemaSourceFactory {
                 typeDefinitionRegistry,
                 retrieverFactory.createRemoteRetriever(definition),
                 links,
+                emptyList(),
                 factory,
                 emptyList(),
                 emptyList(),
