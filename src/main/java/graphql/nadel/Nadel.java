@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotNull;
@@ -42,10 +43,27 @@ public class Nadel {
     private final Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
 
     public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
-        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory));
+        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
+                TypeDefinitionRegistryFactory.DEFAULT);
     }
 
-    public Nadel(String dsl, SchemaSourceFactory schemaSourceFactory) {
+    /**
+     * Parses provided DSL and creates a stitched schema based on it.
+     *
+     * @param dsl                 string containing Nadel DSL.
+     * @param schemaSourceFactory schema source factory that provide {@link SchemaSource} for each service defined in
+     *                            DSL.
+     * @param registryFactory     provides additional type definitions that will be added to the stitched schema. If no
+     *                            additional types are needed {@link TypeDefinitionRegistryFactory#DEFAULT} can be used.
+     *
+     * @throws InvalidDslException in case there is an issue with DSL.
+     */
+    public Nadel(String dsl,
+                 SchemaSourceFactory schemaSourceFactory,
+                 TypeDefinitionRegistryFactory registryFactory) {
+        Objects.requireNonNull(dsl, "dsl");
+        Objects.requireNonNull(schemaSourceFactory, "schemaSourceFactory");
+        Objects.requireNonNull(registryFactory, "registryFactory");
         this.stitchingDsl = this.parser.parseDSL(dsl);
 
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
@@ -70,6 +88,7 @@ public class Nadel {
         AsyncExecutionStrategy asyncExecutionStrategy = new AsyncExecutionStrategy();
         this.braid = Braid.builder()
                 .executionStrategy(asyncExecutionStrategy)
+                .typeDefinitionRegistry(registryFactory.create(this.typesByService))
                 .schemaSources(schemaSources)
                 .build();
     }
