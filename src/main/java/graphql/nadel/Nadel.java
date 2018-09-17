@@ -86,9 +86,11 @@ public class Nadel {
         }
 
         AsyncExecutionStrategy asyncExecutionStrategy = new AsyncExecutionStrategy();
+        final TypeDefinitionsWithRuntimeWiring typesWithWiring = registryFactory.create(this.typesByService);
         this.braid = Braid.builder()
                 .executionStrategy(asyncExecutionStrategy)
-                .typeDefinitionRegistry(registryFactory.create(this.typesByService))
+                .typeDefinitionRegistry(typesWithWiring.typeDefinitionRegistry())
+                .withRuntimeWiring(builder -> typesWithWiring.typeRuntimeWirings().forEach(builder::type))
                 .schemaSources(schemaSources)
                 .build();
     }

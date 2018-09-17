@@ -3,16 +3,22 @@ package graphql.nadel
 import com.atlassian.braid.source.GraphQLRemoteRetriever
 import graphql.ExecutionInput
 import graphql.GraphQL
+import graphql.language.TypeName
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.schema.DataFetcher
 import graphql.schema.GraphQLSchema
+import graphql.schema.StaticDataFetcher
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 
+import static graphql.language.FieldDefinition.newFieldDefinition
+import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition
+import static graphql.nadel.TypeDefinitionsWithRuntimeWiring.newTypeDefinitionWithRuntimeWiring
 import static graphql.schema.idl.RuntimeWiring.newRuntimeWiring
+import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelTest extends Specification {
@@ -98,7 +104,7 @@ class NadelTest extends Specification {
         def barService = barService([new Bar("b1", "bar1"), new Bar("b2", "bar2")])
         def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
         GraphQLRemoteRetriever graphqlRemoteRetriever2 = { input, ctx ->
-            return completedFuture([data: (Map<String, Object>)barService.execute(input).getData()])
+            return completedFuture([data: (Map<String, Object>) barService.execute(input).getData()])
         }
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1, BarService: graphqlRemoteRetriever2])
 
@@ -113,6 +119,51 @@ class NadelTest extends Specification {
             completedFuture([data: [foo100: [id: 'foo1', barId: 'b2']]])
         }
 
+    }
+
+    def "additional types and runtime wiring provided programmatically"() {
+        given:
+        def dsl = """
+        service Service1 {
+            type Query {
+                hello: String
+            }
+        }
+        """
+        def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
+        def callerFactory = mockCallerFactory([Service1: graphqlRemoteRetriever1])
+
+        // Add type Query { additionalField: String }
+        def queryObjectDefinition = newObjectTypeDefinition()
+                .name("Query")
+                .fieldDefinition(
+                newFieldDefinition()
+                        .name("additionalField")
+                        .type(new TypeName("String"))
+                        .build())
+                .build()
+
+        def fieldWiring = newTypeWiring("Query")
+                .dataFetcher("additionalField", new StaticDataFetcher("myValue"))
+                .build()
+
+        TypeDefinitionRegistry registry = new TypeDefinitionRegistry()
+        registry.add(queryObjectDefinition)
+
+        Nadel nadel = new Nadel(dsl, new GraphQLRemoteSchemaSourceFactory<>(callerFactory), { it ->
+            newTypeDefinitionWithRuntimeWiring()
+                    .withTypeDefinitionRegistry(registry)
+                    .withTypeRuntimeWiring(fieldWiring)
+                    .build()
+        })
+
+        when:
+        def query = " { hello additionalField }"
+        def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+
+        then:
+        executionResult.data == [hello: 'world', additionalField: 'myValue']
+        1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> completedFuture([data: [hello100: 'world']])
     }
 
     /**
