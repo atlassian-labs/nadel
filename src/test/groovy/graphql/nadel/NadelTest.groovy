@@ -11,12 +11,12 @@ import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelTest extends Specification {
-
 
     GraphQLRemoteRetrieverFactory mockCallerFactory(Map callerMocks) {
         return new GraphQLRemoteRetrieverFactory() {
@@ -72,8 +72,11 @@ class NadelTest extends Specification {
     def "stitching with service hydration"() {
         def dsl = """
         service FooService {
+            schema {
+               query: Query
+            }
             type Query {
-                foo: Foo
+               foo: Foo
             }
 
             type Foo {
@@ -85,6 +88,9 @@ class NadelTest extends Specification {
         }
         
         service BarService {
+            schema {
+                    query: Query
+            }
             type Query {
                 bar(barId: ID, id: ID): Bar
             }
@@ -113,6 +119,49 @@ class NadelTest extends Specification {
             completedFuture([data: [foo100: [id: 'foo1', barId: 'b2']]])
         }
 
+    }
+
+    @Unroll
+    def "stitching with #fragment field rename"(String fragment, String query) {
+        def dsl = """
+            service FooService {
+                schema {
+                    query: Query
+                }
+                
+                type Query {
+                    foo: [Foo!]
+                }
+    
+                type Foo {
+                    newName: ID <= \$source.id
+                    barId: ID
+                    newTitle : String <=\$source.title
+                    name: String 
+                }
+            }
+        """
+
+        def fooService = fooService([new Foo("foo1", "name1","title1", "someBarId1" ),
+                                     new Foo("foo2", "name2", "title2", "someBarId2")])
+        GraphQLRemoteRetriever graphqlRemoteRetrieverFoo = { input, ctx ->
+            return completedFuture([data: (Map<String, Object>)fooService.execute(input).getData()])
+        }
+        def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetrieverFoo])
+
+        Nadel nadel = new Nadel(dsl, callerFactory)
+        when:
+        def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+
+        then:
+        executionResult.data == [foo: [[newName: 'foo1', barId: 'someBarId1', newTitle: 'title1'],
+                                       [newName: 'foo2', barId: 'someBarId2', newTitle: 'title2']]]
+
+        where:
+        fragment | query | _
+        "simple" | "{foo { newName newTitle barId }}" | _
+        "inline fragment" |"{foo {... on Foo { newName  barId newTitle} }} " | _
+        "named fragment"  |"fragment cf on Foo { newName  barId newTitle} {foo { ... cf}} " | _
     }
 
     /**
@@ -149,6 +198,37 @@ class NadelTest extends Specification {
     }
 
 
+    /**
+     * Creates foo service that returns values from provided foos
+     */
+    GraphQL fooService(List<Foo> foos) {
+        def schema = """
+        type Query {
+            foo:[Foo!]
+        }
+
+        type Foo {
+              id: ID
+              barId: ID
+              title : String
+              name: String 
+        }
+        """
+
+        TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(schema)
+        DataFetcher<Bar> fetcher = {
+            return foos
+        }
+
+        RuntimeWiring runtimeWiring = newRuntimeWiring()
+                .type("Query", { it.dataFetcher("foo", fetcher) })
+                .build()
+
+        GraphQLSchema graphQLSchema = new SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
+
+        return GraphQL.newGraphQL(graphQLSchema).build()
+    }
+
     static class Bar {
         private String id
         private String name
@@ -166,5 +246,33 @@ class NadelTest extends Specification {
             return name
         }
     }
+    static class Foo {
+        private String id
+        private String name
+        private String title
+        private String barId
 
+        Foo(String id, String name, String title, barId) {
+            this.id = id
+            this.name = name
+            this.title = title
+            this.barId = barId
+        }
+
+        String getId() {
+            return id
+        }
+
+        String getName() {
+            return name
+        }
+
+        String getTitle() {
+            return title
+        }
+
+        String getBarId() {
+            return barId
+        }
+    }
 }

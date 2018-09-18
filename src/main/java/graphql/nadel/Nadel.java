@@ -5,6 +5,8 @@ import com.atlassian.braid.Link;
 import com.atlassian.braid.SchemaNamespace;
 import com.atlassian.braid.SchemaSource;
 import com.atlassian.braid.TypeUtils;
+import com.atlassian.braid.document.TypeMapper;
+import com.atlassian.braid.document.TypeMappers;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQLError;
@@ -29,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.TransformationUtils.collectFieldTransformations;
@@ -79,9 +82,13 @@ public class Nadel {
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             SchemaNamespace namespace = namespaceByService.get(serviceDefinition.getName());
             TypeDefinitionRegistry typeDefinitionRegistry = typesByService.get(serviceDefinition.getName());
-            List<Link> links = createLinks(serviceDefinition);
+
+            final List<FieldDefinitionWithParentType> defs = collectFieldTransformations(serviceDefinition);
+
+            List<Link> links = createLinks(namespace, defs);
+            List<TypeMapper> mappers = createMappers(defs);
             SchemaSource schemaSource = schemaSourceFactory.createSchemaSource(serviceDefinition, namespace,
-                    typeDefinitionRegistry, links);
+                    typeDefinitionRegistry, links, mappers);
             schemaSources.add(schemaSource);
         }
 
@@ -108,26 +115,33 @@ public class Nadel {
         }
     }
 
-
-    private List<Link> createLinks(ServiceDefinition serviceDefinition) {
+    private List<Link> createLinks(SchemaNamespace schemaNamespace, List<FieldDefinitionWithParentType> defs) {
         List<Link> links = new ArrayList<>();
-
-        SchemaNamespace schemaNamespace = assertNotNull(this.namespaceByService.get(serviceDefinition.getName()));
-
-        final List<FieldDefinitionWithParentType> defs = collectFieldTransformations(serviceDefinition);
-
         for (FieldDefinitionWithParentType definition : defs) {
             final FieldTransformation transformation = definition.field().getFieldTransformation();
             if (transformation.getInnerServiceHydration() != null) {
                 final InnerServiceHydration hydration = transformation.getInnerServiceHydration();
                 final Link link = createHydrationLink(schemaNamespace, definition, hydration);
                 links.add(link);
-            } else if (transformation.getFieldMappingDefinition() != null) {
-                throw new InvalidDslException("Field mapping not implemented yet.", transformation.getSourceLocation());
             }
         }
         return links;
     }
+
+    private List<TypeMapper> createMappers(List<FieldDefinitionWithParentType> defs) {
+        Map<String, TypeMapper> typeMapperMap = new LinkedHashMap<>();
+        for (FieldDefinitionWithParentType definition : defs) {
+            final FieldTransformation transformation = definition.field().getFieldTransformation();
+            if (transformation.getFieldMappingDefinition() != null) {
+                typeMapperMap.compute(definition.parentType(), (k, v) ->
+                        ((v == null) ? TypeMappers.typeNamed(definition.parentType()) : v)
+                                .copy(definition.field().getName(),
+                                        transformation.getFieldMappingDefinition().getInputName()));
+            }
+        }
+        return typeMapperMap.values().stream().map(TypeMapper::copyRemaining).collect(Collectors.toList());
+    }
+
 
     private Link createHydrationLink(SchemaNamespace schemaNamespace, FieldDefinitionWithParentType definition,
                                      InnerServiceHydration hydration) {
