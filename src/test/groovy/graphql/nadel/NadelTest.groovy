@@ -152,8 +152,8 @@ class NadelTest extends Specification {
 
         Nadel nadel = new Nadel(dsl, new GraphQLRemoteSchemaSourceFactory<>(callerFactory), { it ->
             newTypeDefinitionWithRuntimeWiring()
-                    .withTypeDefinitionRegistry(registry)
-                    .withTypeRuntimeWiring(fieldWiring)
+                    .typeDefinitionRegistry(registry)
+                    .typeRuntimeWiring(fieldWiring)
                     .build()
         })
 

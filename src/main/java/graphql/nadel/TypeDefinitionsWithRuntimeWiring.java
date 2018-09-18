@@ -1,5 +1,6 @@
 package graphql.nadel;
 
+import graphql.PublicApi;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.TypeRuntimeWiring;
 
@@ -10,6 +11,7 @@ import java.util.Objects;
 /**
  * Stores {@link TypeDefinitionRegistry} and collection of {@link TypeRuntimeWiring}s.
  */
+@PublicApi
 public class TypeDefinitionsWithRuntimeWiring {
     private final TypeDefinitionRegistry typeDefinitionRegistry;
     private final List<TypeRuntimeWiring> typeRuntimeWirings;
@@ -39,12 +41,12 @@ public class TypeDefinitionsWithRuntimeWiring {
         private Builder() {
         }
 
-        public Builder withTypeDefinitionRegistry(TypeDefinitionRegistry registry) {
+        public Builder typeDefinitionRegistry(TypeDefinitionRegistry registry) {
             this.typeDefinitionRegistry = Objects.requireNonNull(registry, "registry");
             return this;
         }
 
-        public Builder withTypeRuntimeWiring(TypeRuntimeWiring wiring) {
+        public Builder typeRuntimeWiring(TypeRuntimeWiring wiring) {
             this.typeRuntimeWirings.add(Objects.requireNonNull(wiring, "wiring"));
             return this;
         }

@@ -1,5 +1,6 @@
 package graphql.nadel;
 
+import graphql.PublicSpi;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
 import java.util.Map;
@@ -9,6 +10,7 @@ import static graphql.nadel.TypeDefinitionsWithRuntimeWiring.newTypeDefinitionWi
 /**
  * Factory that provides {@link TypeDefinitionsWithRuntimeWiring} to be added to a stitched schema.
  */
+@PublicSpi
 public interface TypeDefinitionRegistryFactory {
     TypeDefinitionRegistryFactory DEFAULT = (Map<String, TypeDefinitionRegistry> serviceTypeDefinitions) ->
             newTypeDefinitionWithRuntimeWiring().build();
