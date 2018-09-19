@@ -1,12 +1,12 @@
 package graphql.nadel;
 
 import graphql.PublicApi;
+import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.TypeRuntimeWiring;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Stores {@link TypeDefinitionRegistry} and collection of {@link TypeRuntimeWiring}s.
@@ -14,12 +14,12 @@ import java.util.Objects;
 @PublicApi
 public class TypeDefinitionsWithRuntimeWiring {
     private final TypeDefinitionRegistry typeDefinitionRegistry;
-    private final List<TypeRuntimeWiring> typeRuntimeWirings;
+    private final Consumer<RuntimeWiring.Builder> runtimeWiringConsumer;
 
     private TypeDefinitionsWithRuntimeWiring(TypeDefinitionRegistry typeDefinitionRegistry,
-                                             List<TypeRuntimeWiring> typeRuntimeWirings) {
+                                             Consumer<RuntimeWiring.Builder> runtimeWiringConsumer) {
         this.typeDefinitionRegistry = typeDefinitionRegistry;
-        this.typeRuntimeWirings = typeRuntimeWirings;
+        this.runtimeWiringConsumer = runtimeWiringConsumer;
     }
 
     public static Builder newTypeDefinitionWithRuntimeWiring() {
@@ -30,13 +30,14 @@ public class TypeDefinitionsWithRuntimeWiring {
         return typeDefinitionRegistry;
     }
 
-    public List<TypeRuntimeWiring> typeRuntimeWirings() {
-        return typeRuntimeWirings;
+    public Consumer<RuntimeWiring.Builder> runtimeWiringConsumer() {
+        return runtimeWiringConsumer;
     }
 
     public static class Builder {
         private TypeDefinitionRegistry typeDefinitionRegistry = new TypeDefinitionRegistry();
-        private List<TypeRuntimeWiring> typeRuntimeWirings = new ArrayList<>();
+        private Consumer<RuntimeWiring.Builder> runtimeWiringConsumer = builder -> {
+        };
 
         private Builder() {
         }
@@ -46,13 +47,13 @@ public class TypeDefinitionsWithRuntimeWiring {
             return this;
         }
 
-        public Builder typeRuntimeWiring(TypeRuntimeWiring wiring) {
-            this.typeRuntimeWirings.add(Objects.requireNonNull(wiring, "wiring"));
+        public Builder runtimeWiringConsumer(Consumer<RuntimeWiring.Builder> runtimeWiringConsumer) {
+            this.runtimeWiringConsumer = Objects.requireNonNull(runtimeWiringConsumer, "runtimeWiringConsumer");
             return this;
         }
 
         public TypeDefinitionsWithRuntimeWiring build() {
-            return new TypeDefinitionsWithRuntimeWiring(this.typeDefinitionRegistry, this.typeRuntimeWirings);
+            return new TypeDefinitionsWithRuntimeWiring(this.typeDefinitionRegistry, this.runtimeWiringConsumer);
         }
     }
 }

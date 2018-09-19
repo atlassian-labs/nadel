@@ -90,7 +90,7 @@ public class Nadel {
         this.braid = Braid.builder()
                 .executionStrategy(asyncExecutionStrategy)
                 .typeDefinitionRegistry(typesWithWiring.typeDefinitionRegistry())
-                .withRuntimeWiring(builder -> typesWithWiring.typeRuntimeWirings().forEach(builder::type))
+                .withRuntimeWiring(typesWithWiring.runtimeWiringConsumer())
                 .schemaSources(schemaSources)
                 .build();
     }
