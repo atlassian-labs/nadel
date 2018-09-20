@@ -148,10 +148,10 @@ class NadelTest extends Specification {
             }
         """
 
-        def fooService = fooService([new Foo("foo1", "name1","title1", "someBarId1" ),
+        def fooService = fooService([new Foo("foo1", "name1", "title1", "someBarId1"),
                                      new Foo("foo2", "name2", "title2", "someBarId2")])
         GraphQLRemoteRetriever graphqlRemoteRetrieverFoo = { input, ctx ->
-            return completedFuture([data: (Map<String, Object>)fooService.execute(input).getData()])
+            return completedFuture([data: (Map<String, Object>) fooService.execute(input).getData()])
         }
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetrieverFoo])
 
@@ -164,10 +164,10 @@ class NadelTest extends Specification {
                                        [newName: 'foo2', barId: 'someBarId2', newTitle: 'title2']]]
 
         where:
-        fragment | query | _
-        "simple" | "{foo { newName newTitle barId }}" | _
-        "inline fragment" |"{foo {... on Foo { newName  barId newTitle} }} " | _
-        "named fragment"  |"fragment cf on Foo { newName  barId newTitle} {foo { ... cf}} " | _
+        fragment          | query                                                            | _
+        "simple"          | "{foo { newName newTitle barId }}"                               | _
+        "inline fragment" | "{foo {... on Foo { newName  barId newTitle} }} "                | _
+        "named fragment"  | "fragment cf on Foo { newName  barId newTitle} {foo { ... cf}} " | _
     }
 
     def "additional types and runtime wiring provided programmatically"() {
@@ -202,7 +202,7 @@ class NadelTest extends Specification {
         Nadel nadel = new Nadel(dsl, new GraphQLRemoteSchemaSourceFactory<>(callerFactory), { it ->
             newTypeDefinitionWithRuntimeWiring()
                     .typeDefinitionRegistry(registry)
-                    .typeRuntimeWiring(fieldWiring)
+                    .runtimeWiringConsumer({ it.type(fieldWiring) })
                     .build()
         })
 
@@ -214,7 +214,6 @@ class NadelTest extends Specification {
         executionResult.data == [hello: 'world', additionalField: 'myValue']
         1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> completedFuture([data: [hello100: 'world']])
     }
-
 
     /**
      * Creates bar service that returns values from provided bars
@@ -248,7 +247,6 @@ class NadelTest extends Specification {
 
         return GraphQL.newGraphQL(graphQLSchema).build()
     }
-
 
     /**
      * Creates foo service that returns values from provided foos
@@ -298,6 +296,7 @@ class NadelTest extends Specification {
             return name
         }
     }
+
     static class Foo {
         private String id
         private String name
