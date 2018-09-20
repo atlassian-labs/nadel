@@ -15,6 +15,8 @@ import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.function.Function
+
 import static graphql.language.FieldDefinition.newFieldDefinition
 import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition
 import static graphql.nadel.TypeDefinitionsWithRuntimeWiring.newTypeDefinitionWithRuntimeWiring
@@ -33,6 +35,7 @@ class NadelTest extends Specification {
             }
         }
     }
+
 
     def "simple stitching: just two services merged at top level"() {
         given:
@@ -168,6 +171,55 @@ class NadelTest extends Specification {
         "simple"          | "{foo { newName newTitle barId }}"                               | _
         "inline fragment" | "{foo {... on Foo { newName  barId newTitle} }} "                | _
         "named fragment"  | "fragment cf on Foo { newName  barId newTitle} {foo { ... cf}} " | _
+    }
+
+    //TODO: Add context into this function
+    Function<?,?> generateAri = new Function<Object, Object>() {
+        @Override
+        Object apply(Object o) {
+            return "cloudId:"+o
+        }
+    }
+    @Unroll
+    def "stitching with #fragment field rename with custom transform"(String fragment, String query) {
+        def dsl = """
+            service FooService {
+                schema {
+                    query: Query
+                }
+                directive @generateAri on FIELD_DEFINITION
+                type Query {
+                    foo: [Foo!]
+                }
+    
+                type Foo {
+                    ari: ID <= \$source.id  @generateAri
+                    newTitle : String <=\$source.title
+                    name: String 
+                }
+            }
+        """
+
+        def fooService = fooService([new Foo("foo1", "name1", "title1", "someBarId1"),
+                                     new Foo("foo2", "name2", "title2", "someBarId2")])
+        GraphQLRemoteRetriever graphqlRemoteRetrieverFoo = { input, ctx ->
+            return completedFuture([data: (Map<String, Object>) fooService.execute(input).getData()])
+        }
+        def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetrieverFoo])
+
+        Map<String, Function<?,?>> directiveProcessFunctions = new HashMap<>()
+        directiveProcessFunctions.put("generateAri" , generateAri )
+        Nadel nadel = new Nadel(dsl, callerFactory, directiveProcessFunctions)
+        when:
+        def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+
+        then:
+        executionResult.data == [foo: [[ari: 'cloudId:foo1', newTitle: 'title1'],
+                                       [ari: 'cloudId:foo2', newTitle: 'title2']]]
+
+        where:
+        fragment          | query                                                            | _
+        "simple"          | "{foo { ari newTitle}}"                               | _
     }
 
     def "additional types and runtime wiring provided programmatically"() {

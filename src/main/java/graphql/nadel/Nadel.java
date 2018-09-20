@@ -26,11 +26,14 @@ import graphql.schema.idl.TypeInfo;
 import graphql.schema.idl.errors.SchemaProblem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
@@ -44,10 +47,17 @@ public class Nadel {
 
     private final Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
     private final Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
+    private final Map<String, Function<?,?>> directivesProcessFunc;
 
     public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
         this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
-                TypeDefinitionRegistryFactory.DEFAULT);
+                TypeDefinitionRegistryFactory.DEFAULT, Collections.EMPTY_MAP);
+    }
+
+    public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory,
+                 Map<String, Function<?,?>> directivesProcessFunc) {
+        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
+                TypeDefinitionRegistryFactory.DEFAULT, directivesProcessFunc);
     }
 
     /**
@@ -63,11 +73,13 @@ public class Nadel {
      */
     public Nadel(String dsl,
                  SchemaSourceFactory schemaSourceFactory,
-                 TypeDefinitionRegistryFactory registryFactory) {
+                 TypeDefinitionRegistryFactory registryFactory,
+                 Map<String, Function<?,?>> directivesProcessFunc) {
         Objects.requireNonNull(dsl, "dsl");
         Objects.requireNonNull(schemaSourceFactory, "schemaSourceFactory");
         Objects.requireNonNull(registryFactory, "registryFactory");
         this.stitchingDsl = this.parser.parseDSL(dsl);
+        this.directivesProcessFunc = directivesProcessFunc;
 
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
 
@@ -138,10 +150,21 @@ public class Nadel {
                 typeMapperMap.compute(definition.parentType(), (k, v) ->
                         ((v == null) ? TypeMappers.typeNamed(definition.parentType()) : v)
                                 .copy(definition.field().getName(),
-                                        transformation.getFieldMappingDefinition().getInputName()));
+                                        transformation.getFieldMappingDefinition().getInputName(),
+                                     getDirectiveFunction(definition)));
             }
         }
         return typeMapperMap.values().stream().map(TypeMapper::copyRemaining).collect(Collectors.toList());
+    }
+
+    private Optional<Function<?,?>> getDirectiveFunction(FieldDefinitionWithParentType definition){
+        //TODO: Support multiple directives
+        String key= directivesProcessFunc.keySet()
+                .stream()
+                .filter(k->definition.field().getDirective(k) != null)
+                .findFirst()
+                .orElse("");
+        return Optional.ofNullable(directivesProcessFunc.get(key));
     }
 
 
