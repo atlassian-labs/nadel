@@ -1,12 +1,14 @@
 package graphql.nadel;
 
 import com.atlassian.braid.Braid;
+import com.atlassian.braid.BraidContext;
 import com.atlassian.braid.Link;
 import com.atlassian.braid.SchemaNamespace;
 import com.atlassian.braid.SchemaSource;
 import com.atlassian.braid.TypeUtils;
 import com.atlassian.braid.document.TypeMapper;
 import com.atlassian.braid.document.TypeMappers;
+import com.atlassian.braid.source.QueryPartitionFunction;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQLError;
@@ -33,7 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
@@ -47,17 +49,17 @@ public class Nadel {
 
     private final Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
     private final Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
-    private final Map<String, Function<?,?>> directivesProcessFunc;
+    private final Map<String, BiFunction<BraidContext, ?, ?>> directivesProcessFunc;
 
     public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
         this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
-                TypeDefinitionRegistryFactory.DEFAULT, Collections.EMPTY_MAP);
+                TypeDefinitionRegistryFactory.DEFAULT, Collections.EMPTY_MAP, null);
     }
 
     public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory,
-                 Map<String, Function<?,?>> directivesProcessFunc) {
+                 Map<String, BiFunction<BraidContext, ?, ?>> directivesProcessFunc, QueryPartitionFunction queryPartitionFunction) {
         this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
-                TypeDefinitionRegistryFactory.DEFAULT, directivesProcessFunc);
+                TypeDefinitionRegistryFactory.DEFAULT, directivesProcessFunc, queryPartitionFunction);
     }
 
     /**
@@ -68,13 +70,13 @@ public class Nadel {
      *                            DSL.
      * @param registryFactory     provides additional type definitions that will be added to the stitched schema. If no
      *                            additional types are needed {@link TypeDefinitionRegistryFactory#DEFAULT} can be used.
-     *
      * @throws InvalidDslException in case there is an issue with DSL.
      */
     public Nadel(String dsl,
                  SchemaSourceFactory schemaSourceFactory,
                  TypeDefinitionRegistryFactory registryFactory,
-                 Map<String, Function<?,?>> directivesProcessFunc) {
+                 Map<String, BiFunction<BraidContext, ?, ?>> directivesProcessFunc,
+                 QueryPartitionFunction queryPartitionFunction) {
         Objects.requireNonNull(dsl, "dsl");
         Objects.requireNonNull(schemaSourceFactory, "schemaSourceFactory");
         Objects.requireNonNull(registryFactory, "registryFactory");
@@ -110,6 +112,7 @@ public class Nadel {
                 .executionStrategy(asyncExecutionStrategy)
                 .typeDefinitionRegistry(typesWithWiring.typeDefinitionRegistry())
                 .withRuntimeWiring(typesWithWiring.runtimeWiringConsumer())
+                .queryPartitionFunction(new CloudIdPartitionQueryLoaderFunc())
                 .schemaSources(schemaSources)
                 .build();
     }
@@ -151,17 +154,18 @@ public class Nadel {
                         ((v == null) ? TypeMappers.typeNamed(definition.parentType()) : v)
                                 .copy(definition.field().getName(),
                                         transformation.getFieldMappingDefinition().getInputName(),
-                                     getDirectiveFunction(definition)));
+                                        null,
+                                        getDirectiveFunction(definition)));
             }
         }
         return typeMapperMap.values().stream().map(TypeMapper::copyRemaining).collect(Collectors.toList());
     }
 
-    private Optional<Function<?,?>> getDirectiveFunction(FieldDefinitionWithParentType definition){
+    private Optional<BiFunction<BraidContext, ?, ?>> getDirectiveFunction(FieldDefinitionWithParentType definition) {
         //TODO: Support multiple directives
-        String key= directivesProcessFunc.keySet()
+        String key = directivesProcessFunc.keySet()
                 .stream()
-                .filter(k->definition.field().getDirective(k) != null)
+                .filter(k -> definition.field().getDirective(k) != null)
                 .findFirst()
                 .orElse("");
         return Optional.ofNullable(directivesProcessFunc.get(key));

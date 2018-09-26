@@ -1,5 +1,6 @@
 package graphql.nadel
 
+import com.atlassian.braid.BraidContext
 import com.atlassian.braid.source.GraphQLRemoteRetriever
 import graphql.ExecutionInput
 import graphql.GraphQL
@@ -15,6 +16,7 @@ import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.util.function.BiFunction
 import java.util.function.Function
 
 import static graphql.language.FieldDefinition.newFieldDefinition
@@ -174,10 +176,15 @@ class NadelTest extends Specification {
     }
 
     //TODO: Add context into this function
-    Function<?,?> generateAri = new Function<Object, Object>() {
+    BiFunction<BraidContext, ?,?> generateAri = new BiFunction<BraidContext, Object, Object>() {
+
         @Override
-        Object apply(Object o) {
-            return "cloudId:"+o
+        Object apply(BraidContext braidContext, Object o) {
+            return braidContext!=null ? getCloudId(braidContext) + ":"+o :  "missing-"+o;
+        }
+
+        String getCloudId(BraidContext braidContext){
+            return ((BraidContext)braidContext).headers.get("ATL-CLOUD-ID")
         }
     }
     @Unroll
@@ -188,8 +195,11 @@ class NadelTest extends Specification {
                     query: Query
                 }
                 directive @generateAri on FIELD_DEFINITION
+                directive @cloudId on ARGUMENT_DEFINITION
+                
                 type Query {
                     foo: [Foo!]
+                    foo1(iid:ID @cloudId):Foo
                 }
     
                 type Foo {
@@ -209,17 +219,19 @@ class NadelTest extends Specification {
 
         Map<String, Function<?,?>> directiveProcessFunctions = new HashMap<>()
         directiveProcessFunctions.put("generateAri" , generateAri )
-        Nadel nadel = new Nadel(dsl, callerFactory, directiveProcessFunctions)
+        Nadel nadel = new Nadel(dsl, callerFactory, directiveProcessFunctions, null)
         when:
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 
         then:
-        executionResult.data == [foo: [[ari: 'cloudId:foo1', newTitle: 'title1'],
-                                       [ari: 'cloudId:foo2', newTitle: 'title2']]]
+        executionResult.data == [foo: [[ari: 'cloudId1:foo1', newTitle: 'title1'],
+                                       [ari: 'cloudId2:foo2', newTitle: 'title2']],
+                                 f1:[ari:'cloudId1:foo1', newTitle:'title1'],
+                                 f2:[ari:'cloudId2:foo2', newTitle:'title2']]
 
         where:
-        fragment          | query                                                            | _
-        "simple"          | "{foo { ari newTitle}}"                               | _
+        fragment   | query                                                            | _
+        "simple"   | ' {f1:foo1(iid:"cloudId1:foo1"){ari newTitle}  f2:foo1(iid:"cloudId2:foo2"){ari newTitle}  foo{ari newTitle}} '  | _
     }
 
     def "additional types and runtime wiring provided programmatically"() {
@@ -256,7 +268,7 @@ class NadelTest extends Specification {
                     .typeDefinitionRegistry(registry)
                     .runtimeWiringConsumer({ it.type(fieldWiring) })
                     .build()
-        })
+        }, [:], null)
 
         when:
         def query = " { hello additionalField }"
@@ -307,6 +319,7 @@ class NadelTest extends Specification {
         def schema = """
         type Query {
             foo:[Foo!]
+            foo1(iid:ID):Foo
         }
 
         type Foo {
@@ -318,12 +331,18 @@ class NadelTest extends Specification {
         """
 
         TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(schema)
-        DataFetcher<Bar> fetcher = {
+        DataFetcher<Foo> fetcher = {
             return foos
         }
 
+        DataFetcher<Foo> fetcherById = {
+            def fooId =  it.arguments["iid"]
+            def value = foos.find {it.id == fooId}
+            return value
+        }
+
         RuntimeWiring runtimeWiring = newRuntimeWiring()
-                .type("Query", { it.dataFetcher("foo", fetcher) })
+                .type("Query", { it.dataFetchers(["foo":fetcher,"foo1":fetcherById]) })
                 .build()
 
         GraphQLSchema graphQLSchema = new SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
