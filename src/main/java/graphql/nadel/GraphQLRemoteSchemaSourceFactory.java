@@ -6,12 +6,11 @@ import com.atlassian.braid.SchemaSource;
 import com.atlassian.braid.document.DocumentMapperFactory;
 import com.atlassian.braid.document.DocumentMappers;
 import com.atlassian.braid.document.TypeMapper;
-import com.atlassian.braid.source.GraphQLRemoteSchemaSource;
+import com.atlassian.braid.source.QueryExecutorSchemaSource;
 import graphql.Internal;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
-import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -34,10 +33,10 @@ class GraphQLRemoteSchemaSourceFactory<C> implements SchemaSourceFactory {
                                            TypeDefinitionRegistry typeDefinitionRegistry, List<Link> links,
                                            List<TypeMapper> mappers) {
         DocumentMapperFactory factory = DocumentMappers.identity();
-        for (TypeMapper mapper : mappers){
+        for (TypeMapper mapper : mappers) {
             factory = factory.mapType(mapper);
         }
-        return new GraphQLRemoteSchemaSource<>(namespace,
+        return new QueryExecutorSchemaSource<>(namespace,
                 typeDefinitionRegistry,
                 typeDefinitionRegistry,
                 retrieverFactory.createRemoteRetriever(definition),

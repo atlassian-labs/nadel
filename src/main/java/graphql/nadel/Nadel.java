@@ -7,6 +7,7 @@ import com.atlassian.braid.SchemaSource;
 import com.atlassian.braid.TypeUtils;
 import com.atlassian.braid.document.TypeMapper;
 import com.atlassian.braid.document.TypeMappers;
+import com.atlassian.braid.transformation.SchemaTransformation;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQLError;
@@ -47,7 +48,7 @@ public class Nadel {
 
     public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
         this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
-                TypeDefinitionRegistryFactory.DEFAULT);
+                SchemaTransformationsFactory.DEFAULT);
     }
 
     /**
@@ -56,17 +57,17 @@ public class Nadel {
      * @param dsl                 string containing Nadel DSL.
      * @param schemaSourceFactory schema source factory that provide {@link SchemaSource} for each service defined in
      *                            DSL.
-     * @param registryFactory     provides additional type definitions that will be added to the stitched schema. If no
-     *                            additional types are needed {@link TypeDefinitionRegistryFactory#DEFAULT} can be used.
+     * @param transformationsFactory     provides additional type definitions that will be added to the stitched schema. If no
+     *                            additional types are needed {@link SchemaTransformationsFactory#DEFAULT} can be used.
      *
      * @throws InvalidDslException in case there is an issue with DSL.
      */
     public Nadel(String dsl,
                  SchemaSourceFactory schemaSourceFactory,
-                 TypeDefinitionRegistryFactory registryFactory) {
+                 SchemaTransformationsFactory transformationsFactory) {
         Objects.requireNonNull(dsl, "dsl");
         Objects.requireNonNull(schemaSourceFactory, "schemaSourceFactory");
-        Objects.requireNonNull(registryFactory, "registryFactory");
+        Objects.requireNonNull(transformationsFactory, "transformationsFactory");
         this.stitchingDsl = this.parser.parseDSL(dsl);
 
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
@@ -93,11 +94,10 @@ public class Nadel {
         }
 
         AsyncExecutionStrategy asyncExecutionStrategy = new AsyncExecutionStrategy();
-        final TypeDefinitionsWithRuntimeWiring typesWithWiring = registryFactory.create(this.typesByService);
+        final List<SchemaTransformation> schemaTransformations = transformationsFactory.create(this.typesByService);
         this.braid = Braid.builder()
                 .executionStrategy(asyncExecutionStrategy)
-                .typeDefinitionRegistry(typesWithWiring.typeDefinitionRegistry())
-                .withRuntimeWiring(typesWithWiring.runtimeWiringConsumer())
+                .customSchemaTransformations(schemaTransformations)
                 .schemaSources(schemaSources)
                 .build();
     }
