@@ -1,6 +1,7 @@
 package graphql.nadel
 
 import com.atlassian.braid.source.GraphQLRemoteRetriever
+import com.atlassian.braid.transformation.SchemaTransformation
 import graphql.ExecutionInput
 import graphql.GraphQL
 import graphql.language.TypeName
@@ -17,7 +18,6 @@ import spock.lang.Unroll
 
 import static graphql.language.FieldDefinition.newFieldDefinition
 import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition
-import static graphql.nadel.TypeDefinitionsWithRuntimeWiring.newTypeDefinitionWithRuntimeWiring
 import static graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring
 import static java.util.concurrent.CompletableFuture.completedFuture
@@ -170,40 +170,30 @@ class NadelTest extends Specification {
         "named fragment"  | "fragment cf on Foo { newName  barId newTitle} {foo { ... cf}} " | _
     }
 
-    def "additional types and runtime wiring provided programmatically"() {
+    def "additional runtime wiring provided programmatically"() {
         given:
         def dsl = """
         service Service1 {
             type Query {
                 hello: String
+                additionalField: String
             }
         }
         """
         def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
         def callerFactory = mockCallerFactory([Service1: graphqlRemoteRetriever1])
 
-        // Add type Query { additionalField: String }
-        def queryObjectDefinition = newObjectTypeDefinition()
-                .name("Query")
-                .fieldDefinition(
-                newFieldDefinition()
-                        .name("additionalField")
-                        .type(new TypeName("String"))
-                        .build())
-                .build()
-
         def fieldWiring = newTypeWiring("Query")
                 .dataFetcher("additionalField", new StaticDataFetcher("myValue"))
                 .build()
 
-        TypeDefinitionRegistry registry = new TypeDefinitionRegistry()
-        registry.add(queryObjectDefinition)
 
+        SchemaTransformation transformation = { ctx ->
+            ctx.runtimeWiringBuilder.type(fieldWiring)
+            return [:]
+        }
         Nadel nadel = new Nadel(dsl, new GraphQLRemoteSchemaSourceFactory<>(callerFactory), { it ->
-            newTypeDefinitionWithRuntimeWiring()
-                    .typeDefinitionRegistry(registry)
-                    .runtimeWiringConsumer({ it.type(fieldWiring) })
-                    .build()
+            [transformation]
         })
 
         when:
