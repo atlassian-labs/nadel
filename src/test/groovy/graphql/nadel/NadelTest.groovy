@@ -128,8 +128,6 @@ class NadelTest extends Specification {
     def "stitching with #fragment field rename"(String fragment, String query) {
         def dsl = """
             service FooService {
-               directive @generateAri(ro:String, rt: String) on FIELD_DEFINITION
-
                 schema {
                     query: Query
                 }
@@ -139,7 +137,7 @@ class NadelTest extends Specification {
                 }
     
                 type Foo {
-                    newName : ID @generateAri(ro:"confluence", rt:"foo") <= \$source.id
+                    newName : ID <= \$source.id
                     barId: ID
                     newTitle : String <=\$source.title
                     name: String 
