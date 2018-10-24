@@ -4,7 +4,6 @@ import com.atlassian.braid.source.GraphQLRemoteRetriever
 import com.atlassian.braid.transformation.SchemaTransformation
 import graphql.ExecutionInput
 import graphql.GraphQL
-import graphql.language.TypeName
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.schema.DataFetcher
 import graphql.schema.GraphQLSchema
@@ -16,8 +15,6 @@ import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static graphql.language.FieldDefinition.newFieldDefinition
-import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition
 import static graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring
 import static java.util.concurrent.CompletableFuture.completedFuture
@@ -140,7 +137,7 @@ class NadelTest extends Specification {
                 }
     
                 type Foo {
-                    newName: ID <= \$source.id
+                    newName : ID <= \$source.id
                     barId: ID
                     newTitle : String <=\$source.title
                     name: String 
