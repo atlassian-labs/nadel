@@ -6,8 +6,10 @@ import graphql.language.InputValueDefinition;
 import graphql.language.Node;
 import graphql.language.NodeTraverser;
 import graphql.language.NodeVisitorStub;
+import graphql.language.ObjectTypeDefinition;
 import graphql.language.TypeDefinition;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
+import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -21,24 +23,34 @@ public final class TransformationUtils {
     private TransformationUtils() {
     }
 
-    public static List<FieldDefinitionWithParentType> collectFieldTransformations(ServiceDefinition serviceDefinition) {
+    public static List<TransformationWithParentType<ObjectTypeDefinitionWithTransformation>>
+    collectObjectTypeDefinitionWithTransformations(ServiceDefinition serviceDefinition) {
         NodeTraverser traverser = new NodeTraverser();
 
         FieldTransformationVisitor visitor = new FieldTransformationVisitor();
         traverser.depthFirst(visitor, serviceDefinition.getChildren());
-        return visitor.definitions();
+        return visitor.objectTypeDefinitions();
     }
 
-    public static class FieldDefinitionWithParentType {
-        private final FieldDefinitionWithTransformation field;
+    public static List<TransformationWithParentType<FieldDefinitionWithTransformation>>
+    collectFieldTransformations(ServiceDefinition serviceDefinition) {
+        NodeTraverser traverser = new NodeTraverser();
+
+        FieldTransformationVisitor visitor = new FieldTransformationVisitor();
+        traverser.depthFirst(visitor, serviceDefinition.getChildren());
+        return visitor.fieldTransformDefinitions();
+    }
+
+    public static class TransformationWithParentType<T> {
+        private final T field;
         private final String parentType;
 
-        private FieldDefinitionWithParentType(FieldDefinitionWithTransformation field, String parentType) {
+        private TransformationWithParentType(T field, String parentType) {
             this.field = field;
             this.parentType = parentType;
         }
 
-        public FieldDefinitionWithTransformation field() {
+        public T field() {
             return field;
         }
 
@@ -49,16 +61,30 @@ public final class TransformationUtils {
 
     private static class FieldTransformationVisitor extends NodeVisitorStub {
         private final Stack<String> typeStack = new Stack<>();
-        private List<FieldDefinitionWithParentType> definitions = new ArrayList<>();
+        private List<TransformationWithParentType<FieldDefinitionWithTransformation>> fieldTransformDefinitions
+                = new ArrayList<>();
+        private List<TransformationWithParentType<ObjectTypeDefinitionWithTransformation>> objTypeTransformDefinitions
+                = new ArrayList<>();
+
 
         @Override
         public TraversalControl visitFieldDefinition(FieldDefinition node, TraverserContext<Node> context) {
             if (context.getVar(NodeTraverser.LeaveOrEnter.class) != NodeTraverser.LeaveOrEnter.ENTER) {
                 if (node instanceof FieldDefinitionWithTransformation) {
-                    definitions.add(new FieldDefinitionWithParentType((FieldDefinitionWithTransformation) node, typeStack.peek()));
+                    fieldTransformDefinitions.add(new TransformationWithParentType(node, typeStack.peek()));
                 }
             }
             return super.visitFieldDefinition(node, context);
+        }
+
+        @Override
+        public TraversalControl visitObjectTypeDefinition(ObjectTypeDefinition node, TraverserContext<Node> context) {
+            if (context.getVar(NodeTraverser.LeaveOrEnter.class) != NodeTraverser.LeaveOrEnter.ENTER) {
+                if (node instanceof ObjectTypeDefinitionWithTransformation) {
+                    objTypeTransformDefinitions.add(new TransformationWithParentType(node, typeStack.peek()));
+                }
+            }
+            return super.visitObjectTypeDefinition(node, context);
         }
 
         @Override
@@ -81,9 +107,12 @@ public final class TransformationUtils {
             return super.visitTypeDefinition(node, context);
         }
 
-        public List<FieldDefinitionWithParentType> definitions() {
-            return definitions;
+        public List<TransformationWithParentType<FieldDefinitionWithTransformation>> fieldTransformDefinitions() {
+            return fieldTransformDefinitions;
+        }
+
+        public List<TransformationWithParentType<ObjectTypeDefinitionWithTransformation>> objectTypeDefinitions() {
+            return objTypeTransformDefinitions;
         }
     }
-
 }

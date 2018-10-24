@@ -4,6 +4,7 @@ import com.atlassian.braid.Braid;
 import com.atlassian.braid.Link;
 import com.atlassian.braid.SchemaNamespace;
 import com.atlassian.braid.SchemaSource;
+import com.atlassian.braid.TypeRename;
 import com.atlassian.braid.TypeUtils;
 import com.atlassian.braid.document.TypeMapper;
 import com.atlassian.braid.document.TypeMappers;
@@ -16,9 +17,11 @@ import graphql.execution.AsyncExecutionStrategy;
 import graphql.language.Definition;
 import graphql.language.FieldDefinition;
 import graphql.language.SDLDefinition;
-import graphql.nadel.TransformationUtils.FieldDefinitionWithParentType;
+import graphql.nadel.TransformationUtils.TransformationWithParentType;
+import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
+import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
@@ -32,10 +35,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.TransformationUtils.collectFieldTransformations;
+import static graphql.nadel.TransformationUtils.collectObjectTypeDefinitionWithTransformations;
+import static java.util.stream.Collectors.toList;
 
 @PublicApi
 public class Nadel {
@@ -54,12 +58,11 @@ public class Nadel {
     /**
      * Parses provided DSL and creates a stitched schema based on it.
      *
-     * @param dsl                 string containing Nadel DSL.
-     * @param schemaSourceFactory schema source factory that provide {@link SchemaSource} for each service defined in
-     *                            DSL.
-     * @param transformationsFactory     provides additional type definitions that will be added to the stitched schema. If no
-     *                            additional types are needed {@link SchemaTransformationsFactory#DEFAULT} can be used.
-     *
+     * @param dsl                    string containing Nadel DSL.
+     * @param schemaSourceFactory    schema source factory that provide {@link SchemaSource} for each service defined in
+     *                               DSL.
+     * @param transformationsFactory provides additional type definitions that will be added to the stitched schema. If no
+     *                               additional types are needed {@link SchemaTransformationsFactory#DEFAULT} can be used.
      * @throws InvalidDslException in case there is an issue with DSL.
      */
     public Nadel(String dsl,
@@ -84,12 +87,14 @@ public class Nadel {
             SchemaNamespace namespace = namespaceByService.get(serviceDefinition.getName());
             TypeDefinitionRegistry typeDefinitionRegistry = typesByService.get(serviceDefinition.getName());
 
-            final List<FieldDefinitionWithParentType> defs = collectFieldTransformations(serviceDefinition);
+            final List<TransformationWithParentType<FieldDefinitionWithTransformation>> defs = collectFieldTransformations(serviceDefinition);
 
             List<Link> links = createLinks(namespace, defs);
             List<TypeMapper> mappers = createMappers(defs);
+            List<TypeRename> typeRenames = buildTypeRenames(collectObjectTypeDefinitionWithTransformations(serviceDefinition));
             SchemaSource schemaSource = schemaSourceFactory.createSchemaSource(serviceDefinition, namespace,
-                    typeDefinitionRegistry, links, mappers);
+                    typeDefinitionRegistry, links, mappers, typeRenames);
+
             schemaSources.add(schemaSource);
         }
 
@@ -117,9 +122,9 @@ public class Nadel {
         }
     }
 
-    private List<Link> createLinks(SchemaNamespace schemaNamespace, List<FieldDefinitionWithParentType> defs) {
+    private List<Link> createLinks(SchemaNamespace schemaNamespace, List<TransformationWithParentType<FieldDefinitionWithTransformation>> defs) {
         List<Link> links = new ArrayList<>();
-        for (FieldDefinitionWithParentType definition : defs) {
+        for (TransformationWithParentType<FieldDefinitionWithTransformation> definition : defs) {
             final FieldTransformation transformation = definition.field().getFieldTransformation();
             if (transformation.getInnerServiceHydration() != null) {
                 final InnerServiceHydration hydration = transformation.getInnerServiceHydration();
@@ -130,9 +135,18 @@ public class Nadel {
         return links;
     }
 
-    private List<TypeMapper> createMappers(List<FieldDefinitionWithParentType> defs) {
+    private List<TypeRename> buildTypeRenames(
+            List<TransformationWithParentType<ObjectTypeDefinitionWithTransformation>> defs
+    ) {
+        return defs.stream().filter(t -> t.field() != null && t.field().getTypeTransformation() != null)
+                .map(d -> TypeRename.from(d.field().getTypeTransformation().getOriginalName(), d.field().getName()))
+                .collect(toList());
+    }
+
+    private List<TypeMapper> createMappers(
+            List<TransformationWithParentType<FieldDefinitionWithTransformation>> defs) {
         Map<String, TypeMapper> typeMapperMap = new LinkedHashMap<>();
-        for (FieldDefinitionWithParentType definition : defs) {
+        for (TransformationWithParentType<FieldDefinitionWithTransformation> definition : defs) {
             final FieldTransformation transformation = definition.field().getFieldTransformation();
             if (transformation.getFieldMappingDefinition() != null) {
                 typeMapperMap.compute(definition.parentType(), (k, v) ->
@@ -141,11 +155,12 @@ public class Nadel {
                                         transformation.getFieldMappingDefinition().getInputName()));
             }
         }
-        return typeMapperMap.values().stream().map(TypeMapper::copyRemaining).collect(Collectors.toList());
+        return typeMapperMap.values().stream().map(TypeMapper::copyRemaining).collect(toList());
     }
 
 
-    private Link createHydrationLink(SchemaNamespace schemaNamespace, FieldDefinitionWithParentType definition,
+    private Link createHydrationLink(SchemaNamespace schemaNamespace,
+                                     TransformationWithParentType<FieldDefinitionWithTransformation> definition,
                                      InnerServiceHydration hydration) {
         SchemaNamespace targetService = assertNotNull(this.namespaceByService.get(hydration.getServiceName()));
         final FieldDefinition targetField = findTargetFieldForHydration(hydration);
