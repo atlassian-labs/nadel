@@ -12,7 +12,7 @@ serviceDefinition:
 
 objectTypeDefinition : description? TYPE name implementsInterfaces? typeTransformation? directives? fieldsDefinition? ;
 
-fieldDefinition : description? name argumentsDefinition? ':' type fieldTransformation? directives?;
+fieldDefinition : description? name argumentsDefinition? ':' type directives? fieldTransformation?;
 
 fieldTransformation : '<=' (fieldMappingDefinition | innerServiceHydration);
 

@@ -137,7 +137,7 @@ class NadelTest extends Specification {
                 }
     
                 type Foo {
-                    newName: ID <= \$source.id
+                    newName : ID <= \$source.id
                     barId: ID
                     newTitle : String <=\$source.title
                     name: String 

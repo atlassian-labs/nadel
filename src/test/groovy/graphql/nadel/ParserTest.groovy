@@ -146,6 +146,52 @@ class ParserTest extends Specification {
         then:
         astAsMap(stitchingDSL) == getExpectedData("type-transformation")
     }
+
+    def "parse directives to wrong place for field transformation"() {
+        given:
+
+        def dsl = """
+            service FooService {
+                directive @testdirective on FIELD_DEFINITION
+                type Query {
+                    foo: Foo
+                }
+
+                type Foo {
+                    newId: ID <= \$source.id @testdirective 
+                }
+            }
+        """
+        when:
+        Parser parser = new Parser()
+        def stitchingDSL = parser.parseDSL(dsl)
+        then:
+        thrown(Exception)
+    }
+
+    def "parse directives for field transformation should not break"() {
+        given:
+
+        def dsl = """
+            service FooService {
+                directive @testdirective on FIELD_DEFINITION
+                type Query {
+                    foo: Foo
+                }
+
+                type Foo {
+                    newId: ID @testdirective  <= \$source.id 
+                }
+            }
+        """
+
+        when:
+        Parser parser = new Parser()
+        def stitchingDSL = parser.parseDSL(dsl)
+
+        then:
+        astAsMap(stitchingDSL).size() > 0
+    }
 }
 
 
