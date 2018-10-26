@@ -1,5 +1,6 @@
 package graphql.nadel;
 
+import com.atlassian.braid.BatchLoaderEnvironment;
 import com.atlassian.braid.Braid;
 import com.atlassian.braid.Link;
 import com.atlassian.braid.SchemaNamespace;
@@ -48,7 +49,19 @@ public class Nadel {
 
     public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
         this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
-                SchemaTransformationsFactory.DEFAULT);
+                SchemaTransformationsFactory.DEFAULT, null);
+    }
+
+    public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory,
+                 BatchLoaderEnvironment batchLoaderEnvironment) {
+        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
+                SchemaTransformationsFactory.DEFAULT, batchLoaderEnvironment);
+    }
+
+    public Nadel(String dsl,
+                 SchemaSourceFactory schemaSourceFactory,
+                 SchemaTransformationsFactory transformationsFactory) {
+        this(dsl, schemaSourceFactory, transformationsFactory, null);
     }
 
     /**
@@ -59,12 +72,14 @@ public class Nadel {
      *                            DSL.
      * @param transformationsFactory     provides additional type definitions that will be added to the stitched schema. If no
      *                            additional types are needed {@link SchemaTransformationsFactory#DEFAULT} can be used.
+     * @Param batchLoaderEnvironment provides functions that will be used by braid batch loader. 
      *
      * @throws InvalidDslException in case there is an issue with DSL.
      */
     public Nadel(String dsl,
                  SchemaSourceFactory schemaSourceFactory,
-                 SchemaTransformationsFactory transformationsFactory) {
+                 SchemaTransformationsFactory transformationsFactory,
+                 BatchLoaderEnvironment batchLoaderEnvironment) {
         Objects.requireNonNull(dsl, "dsl");
         Objects.requireNonNull(schemaSourceFactory, "schemaSourceFactory");
         Objects.requireNonNull(transformationsFactory, "transformationsFactory");
@@ -99,6 +114,7 @@ public class Nadel {
                 .executionStrategy(asyncExecutionStrategy)
                 .customSchemaTransformations(schemaTransformations)
                 .schemaSources(schemaSources)
+                .batchLoaderEnvironment(batchLoaderEnvironment)
                 .build();
     }
 
