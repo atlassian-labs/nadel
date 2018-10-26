@@ -167,6 +167,48 @@ class NadelTest extends Specification {
         "named fragment"  | "fragment cf on Foo { newName  barId newTitle} {foo { ... cf}} " | _
     }
 
+    @Unroll
+    def "stitching with #fragment type rename"(String fragment, String query) {
+        def dsl = """
+            service FooService {
+                schema {
+                    query: Query
+                }
+                type Query {
+                    foo: [Foo2!]
+                }
+    
+                type Foo2 <= \$innerTypes.Foo {
+                    newName: ID <= \$source.id
+                    barId: ID
+                    newTitle : String <=\$source.title
+                    name: String   
+                }
+            }
+        """
+
+        def fooService = fooService([new Foo("foo1", "name1", "title1", "someBarId1"),
+                                     new Foo("foo2", "name2", "title2", "someBarId2")])
+        GraphQLRemoteRetriever graphqlRemoteRetrieverFoo = { input, ctx ->
+            return completedFuture([data: (Map<String, Object>) fooService.execute(input).getData()])
+        }
+        def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetrieverFoo])
+
+        Nadel nadel = new Nadel(dsl, callerFactory)
+        when:
+        def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+
+        then:
+        executionResult.data == [foo: [[newName: 'foo1', barId: 'someBarId1', newTitle: 'title1'],
+                                       [newName: 'foo2', barId: 'someBarId2', newTitle: 'title2']]]
+
+        where:
+        fragment          | query                                                             | _
+        "simple"          | "{foo { newName newTitle barId }}"                                | _
+//      "inline fragment" | " {f1: foo {... on Foo2 { newName  barId newTitle} } } "         | _
+        "named fragment"  | "fragment cf on Foo2 { newName  barId newTitle} {foo { ... cf}} " | _
+    }
+
     def "additional runtime wiring provided programmatically"() {
         given:
         def dsl = """
