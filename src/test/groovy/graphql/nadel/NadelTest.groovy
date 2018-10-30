@@ -3,8 +3,11 @@ package graphql.nadel
 import com.atlassian.braid.source.GraphQLRemoteRetriever
 import com.atlassian.braid.transformation.SchemaTransformation
 import graphql.ExecutionInput
+import graphql.ExecutionResult
 import graphql.GraphQL
-import graphql.nadel.dsl.ServiceDefinition
+import graphql.execution.instrumentation.InstrumentationContext
+import graphql.execution.instrumentation.SimpleInstrumentation
+import graphql.execution.instrumentation.parameters.InstrumentationExecutionParameters
 import graphql.schema.DataFetcher
 import graphql.schema.GraphQLSchema
 import graphql.schema.StaticDataFetcher
@@ -15,25 +18,14 @@ import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static graphql.nadel.TestUtil.mockCallerFactory
 import static graphql.schema.idl.RuntimeWiring.newRuntimeWiring
 import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelTest extends Specification {
 
-    GraphQLRemoteRetrieverFactory mockCallerFactory(Map callerMocks) {
-        return new GraphQLRemoteRetrieverFactory() {
-            @Override
-            GraphQLRemoteRetriever createRemoteRetriever(ServiceDefinition serviceDefinition) {
-                assert callerMocks[serviceDefinition.name] != null
-                return callerMocks[serviceDefinition.name]
-            }
-        }
-    }
-
-    def "simple stitching: just two services merged at top level"() {
-        given:
-        def dsl = """
+    def twoSimpleServices = """
         service Service1 {
             type Query {
                 hello: String
@@ -45,13 +37,43 @@ class NadelTest extends Specification {
             }
         }
         """
+
+    def "builder works as expected with instrumentation"() {
+
+        def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
+        def graphqlRemoteRetriever2 = Mock(GraphQLRemoteRetriever)
+        def callerFactory = mockCallerFactory([Service1: graphqlRemoteRetriever1, Service2: graphqlRemoteRetriever2])
+
+        def instrumentationCalled = false
+        def instrumentation = new SimpleInstrumentation() {
+            @Override
+            InstrumentationContext<ExecutionResult> beginExecution(InstrumentationExecutionParameters parameters) {
+                instrumentationCalled = true
+                return super.beginExecution(parameters)
+            }
+        }
+
+        Nadel nadel = Nadel.newNadel().dsl(twoSimpleServices).remoteRetrieverFactory(callerFactory).useInstrumentation(instrumentation).build()
+
+        when:
+        String query1 = "{hello}"
+        nadel.executeAsync(ExecutionInput.newExecutionInput().query(query1).build()).get()
+
+        then:
+        instrumentationCalled
+
+    }
+
+    def "simple stitching: just two services merged at top level"() {
+        given:
+
         def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
         def graphqlRemoteRetriever2 = Mock(GraphQLRemoteRetriever)
         def callerFactory = mockCallerFactory([Service1: graphqlRemoteRetriever1, Service2: graphqlRemoteRetriever2])
 
         String query1 = "{hello}"
         String query2 = "{hello2}"
-        Nadel nadel = new Nadel(dsl, callerFactory)
+        Nadel nadel = Nadel.newNadel().dsl(twoSimpleServices).remoteRetrieverFactory(callerFactory).build()
 
         when:
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query1).build()).get()
@@ -112,7 +134,7 @@ class NadelTest extends Specification {
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1, BarService: graphqlRemoteRetriever2])
 
         String query = "{foo { id bar { id name }}}"
-        Nadel nadel = new Nadel(dsl, callerFactory)
+        Nadel nadel = Nadel.newNadel().dsl(dsl).remoteRetrieverFactory(callerFactory).build()
         when:
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 
@@ -152,7 +174,7 @@ class NadelTest extends Specification {
         }
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetrieverFoo])
 
-        Nadel nadel = new Nadel(dsl, callerFactory)
+        Nadel nadel = Nadel.newNadel().dsl(dsl).remoteRetrieverFactory(callerFactory).build()
         when:
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 
@@ -194,7 +216,7 @@ class NadelTest extends Specification {
         }
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetrieverFoo])
 
-        Nadel nadel = new Nadel(dsl, callerFactory)
+        Nadel nadel = Nadel.newNadel().dsl(dsl).remoteRetrieverFactory(callerFactory).build()
         when:
         def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 
@@ -231,9 +253,10 @@ class NadelTest extends Specification {
             ctx.runtimeWiringBuilder.type(fieldWiring)
             return [:]
         }
-        Nadel nadel = new Nadel(dsl, new GraphQLRemoteSchemaSourceFactory<>(callerFactory), { it ->
+
+        Nadel nadel = Nadel.newNadel().dsl(dsl).schemaSourceFactory(new GraphQLRemoteSchemaSourceFactory<>(callerFactory)).transformationsFactory({ it ->
             [transformation]
-        })
+        }).build()
 
         when:
         def query = " { hello additionalField }"
