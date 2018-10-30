@@ -45,9 +45,9 @@ import static java.util.stream.Collectors.toList;
 
 @PublicApi
 public class Nadel {
-    private StitchingDsl stitchingDsl;
-    private Parser parser = new Parser();
-    private Braid braid;
+    private final StitchingDsl stitchingDsl;
+    private final Parser parser = new Parser();
+    private final Braid braid;
 
     private final Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
     private final Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
@@ -220,12 +220,11 @@ public class Nadel {
     }
 
     public static class Builder {
-        String dsl;
-        SchemaSourceFactory schemaSourceFactory;
-        SchemaTransformationsFactory transformationsFactory = SchemaTransformationsFactory.DEFAULT;
-        BatchLoaderEnvironment batchLoaderEnvironment;
-        List<Instrumentation> instrumentations = new ArrayList<>();
-
+        private String dsl;
+        private SchemaSourceFactory schemaSourceFactory;
+        private SchemaTransformationsFactory transformationsFactory = SchemaTransformationsFactory.DEFAULT;
+        private BatchLoaderEnvironment batchLoaderEnvironment;
+        private List<Instrumentation> instrumentations = new ArrayList<>();
 
         public Builder dsl(String dsl) {
             this.dsl = requireNonNull(dsl);
