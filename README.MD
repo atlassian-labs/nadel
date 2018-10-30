@@ -72,7 +72,7 @@ You create a `Nadel` instance and execute queries on it:
 // A GraphqlCaller actually executes a request against a service
 GraphqlCallerFactory graphqlCallFactory = ....  
 String dsl = "<Nadel stitching DSL>";
-Nadel nadel = Nadel nadel = Nadel.newNadel().dsl(dsl).remoteRetrieverFactory(callerFactory).build()
+Nadel nadel = Nadel.newNadel().dsl(dsl).remoteRetrieverFactory(callerFactory).build()
 String query = "<some query on the stitched schema>"
 ExecutionResult executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
 ```
