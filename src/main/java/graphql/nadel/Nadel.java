@@ -15,6 +15,7 @@ import graphql.ExecutionResult;
 import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.execution.AsyncExecutionStrategy;
+import graphql.execution.instrumentation.Instrumentation;
 import graphql.language.Definition;
 import graphql.language.FieldDefinition;
 import graphql.language.SDLDefinition;
@@ -34,12 +35,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.TransformationUtils.collectFieldTransformations;
 import static graphql.nadel.TransformationUtils.collectObjectTypeDefinitionWithTransformations;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 @PublicApi
@@ -51,23 +52,6 @@ public class Nadel {
     private final Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
     private final Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
 
-    public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
-        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
-                SchemaTransformationsFactory.DEFAULT, null);
-    }
-
-    public Nadel(String dsl, GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory,
-                 BatchLoaderEnvironment batchLoaderEnvironment) {
-        this(dsl, new GraphQLRemoteSchemaSourceFactory<>(graphQLRemoteRetrieverFactory),
-                SchemaTransformationsFactory.DEFAULT, batchLoaderEnvironment);
-    }
-
-    public Nadel(String dsl,
-                 SchemaSourceFactory schemaSourceFactory,
-                 SchemaTransformationsFactory transformationsFactory) {
-        this(dsl, schemaSourceFactory, transformationsFactory, null);
-    }
-
     /**
      * Parses provided DSL and creates a stitched schema based on it.
      *
@@ -77,16 +61,18 @@ public class Nadel {
      * @param transformationsFactory provides additional type definitions that will be added to the stitched schema. If no
      *                               additional types are needed {@link SchemaTransformationsFactory#DEFAULT} can be used.
      * @param batchLoaderEnvironment provides functions that will be used by braid batch loader.
+     * @param instrumentations       the graphql instrumentations to use
      *
      * @throws InvalidDslException in case there is an issue with DSL.
      */
-    public Nadel(String dsl,
-                 SchemaSourceFactory schemaSourceFactory,
-                 SchemaTransformationsFactory transformationsFactory,
-                 BatchLoaderEnvironment batchLoaderEnvironment) {
-        Objects.requireNonNull(dsl, "dsl");
-        Objects.requireNonNull(schemaSourceFactory, "schemaSourceFactory");
-        Objects.requireNonNull(transformationsFactory, "transformationsFactory");
+    private Nadel(String dsl,
+                  SchemaSourceFactory schemaSourceFactory,
+                  SchemaTransformationsFactory transformationsFactory,
+                  BatchLoaderEnvironment batchLoaderEnvironment,
+                  List<Instrumentation> instrumentations) {
+        requireNonNull(dsl, "dsl");
+        requireNonNull(schemaSourceFactory, "schemaSourceFactory");
+        requireNonNull(transformationsFactory, "transformationsFactory");
         this.stitchingDsl = this.parser.parseDSL(dsl);
 
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
@@ -116,11 +102,13 @@ public class Nadel {
 
         AsyncExecutionStrategy asyncExecutionStrategy = new AsyncExecutionStrategy();
         final List<SchemaTransformation> schemaTransformations = transformationsFactory.create(this.typesByService);
-        this.braid = Braid.builder()
+        Braid.BraidBuilder braidBuilder = Braid.builder()
                 .executionStrategy(asyncExecutionStrategy)
                 .customSchemaTransformations(schemaTransformations)
                 .schemaSources(schemaSources)
-                .batchLoaderEnvironment(batchLoaderEnvironment)
+                .batchLoaderEnvironment(batchLoaderEnvironment);
+        instrumentations.forEach(braidBuilder::instrumentation);
+        this.braid = braidBuilder
                 .build();
     }
 
@@ -224,4 +212,54 @@ public class Nadel {
         return this.braid.newGraphQL().execute(executionInput);
     }
 
+    /**
+     * @return a builder of Nadel objects
+     */
+    public static Builder newNadel() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        String dsl;
+        SchemaSourceFactory schemaSourceFactory;
+        SchemaTransformationsFactory transformationsFactory = SchemaTransformationsFactory.DEFAULT;
+        BatchLoaderEnvironment batchLoaderEnvironment;
+        List<Instrumentation> instrumentations = new ArrayList<>();
+
+
+        public Builder dsl(String dsl) {
+            this.dsl = requireNonNull(dsl);
+            return this;
+        }
+
+        public Builder remoteRetrieverFactory(GraphQLRemoteRetrieverFactory<?> graphQLRemoteRetrieverFactory) {
+            this.schemaSourceFactory = new GraphQLRemoteSchemaSourceFactory<>(requireNonNull(graphQLRemoteRetrieverFactory));
+            return this;
+        }
+
+        public Builder schemaSourceFactory(SchemaSourceFactory schemaSourceFactory) {
+            this.schemaSourceFactory = requireNonNull(schemaSourceFactory);
+            return this;
+        }
+
+        public Builder transformationsFactory(SchemaTransformationsFactory transformationsFactory) {
+            this.transformationsFactory = requireNonNull(transformationsFactory);
+            return this;
+
+        }
+
+        public Builder batchLoaderEnvironment(BatchLoaderEnvironment batchLoaderEnvironment) {
+            this.batchLoaderEnvironment = requireNonNull(batchLoaderEnvironment);
+            return this;
+        }
+
+        public Builder useInstrumentation(Instrumentation instrumentation) {
+            this.instrumentations.add(instrumentation);
+            return this;
+        }
+
+        public Nadel build() {
+            return new Nadel(dsl, schemaSourceFactory, transformationsFactory, batchLoaderEnvironment, instrumentations);
+        }
+    }
 }

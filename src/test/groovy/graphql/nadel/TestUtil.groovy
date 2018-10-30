@@ -1,5 +1,6 @@
 package graphql.nadel
 
+import com.atlassian.braid.source.GraphQLRemoteRetriever
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider
 import graphql.language.AstPrinter
 import graphql.language.Document
 import graphql.language.Node
+import graphql.nadel.dsl.ServiceDefinition
 import groovy.json.JsonSlurper
 
 
@@ -42,5 +44,17 @@ class TestUtil {
         def stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(name + ".json")
         return new JsonSlurper().parseText(stream.text)
     }
+
+
+    static GraphQLRemoteRetrieverFactory mockCallerFactory(Map callerMocks) {
+        return new GraphQLRemoteRetrieverFactory() {
+            @Override
+            GraphQLRemoteRetriever createRemoteRetriever(ServiceDefinition serviceDefinition) {
+                assert callerMocks[serviceDefinition.name] != null
+                return callerMocks[serviceDefinition.name]
+            }
+        }
+    }
+
 
 }
