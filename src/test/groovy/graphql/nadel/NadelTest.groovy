@@ -128,8 +128,9 @@ class NadelTest extends Specification {
         """
         def barService = barService([new Bar("b1", "bar1"), new Bar("b2", "bar2")])
         def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
-        GraphQLRemoteRetriever graphqlRemoteRetriever2 = { input, ctx ->
-            return completedFuture([data: (Map<String, Object>) barService.execute(input).getData()])
+        GraphQLRemoteRetriever graphqlRemoteRetriever2 = { braidQuery, ctx ->
+            def executionInput = braidQuery.asExecutionInput()
+            return completedFuture([data: (Map<String, Object>) barService.execute(executionInput).getData()])
         }
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1, BarService: graphqlRemoteRetriever2])
 
@@ -169,8 +170,8 @@ class NadelTest extends Specification {
 
         def fooService = fooService([new Foo("foo1", "name1", "title1", "someBarId1"),
                                      new Foo("foo2", "name2", "title2", "someBarId2")])
-        GraphQLRemoteRetriever graphqlRemoteRetrieverFoo = { input, ctx ->
-            return completedFuture([data: (Map<String, Object>) fooService.execute(input).getData()])
+        GraphQLRemoteRetriever graphqlRemoteRetrieverFoo = { braidQuery, ctx ->
+            return completedFuture([data: (Map<String, Object>) fooService.execute(braidQuery.asExecutionInput()).getData()])
         }
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetrieverFoo])
 
@@ -211,8 +212,8 @@ class NadelTest extends Specification {
 
         def fooService = fooService([new Foo("foo1", "name1", "title1", "someBarId1"),
                                      new Foo("foo2", "name2", "title2", "someBarId2")])
-        GraphQLRemoteRetriever graphqlRemoteRetrieverFoo = { input, ctx ->
-            return completedFuture([data: (Map<String, Object>) fooService.execute(input).getData()])
+        GraphQLRemoteRetriever graphqlRemoteRetrieverFoo = { braidQuery, ctx ->
+            return completedFuture([data: (Map<String, Object>) fooService.execute(braidQuery.asExecutionInput()).getData()])
         }
         def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetrieverFoo])
 
