@@ -229,7 +229,7 @@ class NadelTest extends Specification {
         fragment          | query                                                             | _
         "simple"          | "{foo { newName newTitle barId }}"                                | _
 //      "inline fragment" | " {f1: foo {... on Foo2 { newName  barId newTitle} } } "         | _
-        "named fragment"  | "fragment cf on Foo2 { newName  barId newTitle} {foo { ... cf}} " | _
+//        "named fragment"  | "fragment cf on Foo2 { newName  barId newTitle} {foo { ... cf}} " | _
     }
 
     def "additional runtime wiring provided programmatically"() {
