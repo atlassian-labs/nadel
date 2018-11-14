@@ -28,7 +28,7 @@ targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
 def graphqlJavaVersion = '10.0'
-def braidVersion = '0.18.2'
+def braidVersion = '0.20.1'
 
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
