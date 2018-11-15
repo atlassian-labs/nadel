@@ -25,6 +25,7 @@ import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
+import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -178,9 +179,14 @@ public class Nadel {
                 // braid does not allow links to 0 argument queries. It must be exactly one
                 .orElseThrow(() -> new InvalidDslException("Remote argument is required.",
                         hydration.getSourceLocation()));
+        //TODO: Implement support for different source arguments types
+        RemoteArgumentSource argumentSource = argument.getRemoteArgumentSource();
+        if (argumentSource.getSourceType() != RemoteArgumentSource.SourceType.OBJECT_FIELD) {
+            throw new InvalidDslException("Only source field is supported.", argumentSource.getSourceLocation());
+        }
 
         return Link.from(schemaNamespace, definition.parentType(), definition.field().getName(),
-                argument.getFieldMappingDefinition().getInputName())
+                argumentSource.getName())
                 //TODO: we need to add something to DSL to support 'queryVariableArgument' parameter of .to
                 // by default it is targetField name which is not always correct.
                 .to(targetService, targetTypeName, targetField.getName())

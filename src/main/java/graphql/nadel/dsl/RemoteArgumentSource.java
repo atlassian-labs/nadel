@@ -8,31 +8,29 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinition> {
-
+public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
     private final String name;
-    private final RemoteArgumentSource remoteArgumentSource;
+    private final SourceType sourceType;
 
-    public RemoteArgumentDefinition(String name, RemoteArgumentSource remoteArgumentSource,
-                                    SourceLocation sourceLocation) {
+    public RemoteArgumentSource(String name, SourceType sourceType, SourceLocation sourceLocation) {
         super(sourceLocation, emptyList());
         this.name = name;
-        this.remoteArgumentSource = remoteArgumentSource;
+        this.sourceType = sourceType;
     }
 
     public String getName() {
         return name;
     }
 
-    public RemoteArgumentSource getRemoteArgumentSource() {
-        return remoteArgumentSource;
+    public SourceType getSourceType() {
+        return sourceType;
     }
 
-    @Override
     public List<Node> getChildren() {
         return new ArrayList<>();
     }
@@ -43,7 +41,7 @@ public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinit
     }
 
     @Override
-    public RemoteArgumentDefinition deepCopy() {
+    public RemoteArgumentSource deepCopy() {
         return null;
     }
 
@@ -51,4 +49,6 @@ public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinit
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
     }
+
+    public enum SourceType {OBJECT_FIELD, FIELD_ARGUMENT, CONTEXT}
 }
