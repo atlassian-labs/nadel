@@ -61,7 +61,7 @@ class NadelTest extends Specification {
 
         then:
         instrumentationCalled
-
+        1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> completedFuture([data: [hello100: 'world']])
     }
 
     def "simple stitching: just two services merged at top level"() {
