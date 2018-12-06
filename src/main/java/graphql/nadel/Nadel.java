@@ -1,8 +1,11 @@
 package graphql.nadel;
 
+import com.atlassian.braid.ArgumentValueProvider;
 import com.atlassian.braid.BatchLoaderEnvironment;
 import com.atlassian.braid.Braid;
+import com.atlassian.braid.DefaultArgumentValueProvider;
 import com.atlassian.braid.Link;
+import com.atlassian.braid.LinkArgument;
 import com.atlassian.braid.SchemaNamespace;
 import com.atlassian.braid.SchemaSource;
 import com.atlassian.braid.TypeRename;
@@ -24,8 +27,6 @@ import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
-import graphql.nadel.dsl.RemoteArgumentDefinition;
-import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -37,12 +38,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.TransformationUtils.collectFieldTransformations;
 import static graphql.nadel.TransformationUtils.collectObjectTypeDefinitionWithTransformations;
+import static graphql.schema.idl.TypeInfo.typeInfo;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 @PublicApi
 public class Nadel {
@@ -52,6 +56,8 @@ public class Nadel {
 
     private final Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
     private final Map<String, SchemaNamespace> namespaceByService = new LinkedHashMap<>();
+    private final ArgumentValueProvider argumentValueProvider;
+    private final PrivateSchemaProvider privateSchemaProvider;
 
     /**
      * Parses provided DSL and creates a stitched schema based on it.
@@ -63,18 +69,24 @@ public class Nadel {
      *                               additional types are needed {@link SchemaTransformationsFactory#DEFAULT} can be used.
      * @param batchLoaderEnvironment provides functions that will be used by braid batch loader.
      * @param instrumentations       the graphql instrumentations to use
-     *
+     * @param argumentValueProvider  for providing  argument values to links.
      * @throws InvalidDslException in case there is an issue with DSL.
      */
     private Nadel(String dsl,
                   SchemaSourceFactory schemaSourceFactory,
                   SchemaTransformationsFactory transformationsFactory,
                   BatchLoaderEnvironment batchLoaderEnvironment,
-                  List<Instrumentation> instrumentations) {
+                  List<Instrumentation> instrumentations,
+                  ArgumentValueProvider argumentValueProvider,
+                  PrivateSchemaProvider privateSchemaProvider) {
         requireNonNull(dsl, "dsl");
         requireNonNull(schemaSourceFactory, "schemaSourceFactory");
         requireNonNull(transformationsFactory, "transformationsFactory");
+        requireNonNull(transformationsFactory, "transformationsFactory");
+        requireNonNull(privateSchemaProvider, "privateSchemaProvider");
+        this.argumentValueProvider = requireNonNull(argumentValueProvider, "argumentValueProvider");
         this.stitchingDsl = this.parser.parseDSL(dsl);
+        this.privateSchemaProvider = privateSchemaProvider;
 
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
 
@@ -92,12 +104,11 @@ public class Nadel {
 
             final List<TransformationWithParentType<FieldDefinitionWithTransformation>> defs = collectFieldTransformations(serviceDefinition);
 
-            List<Link> links = createLinks(namespace, defs);
             List<TypeMapper> mappers = createMappers(defs);
             List<TypeRename> typeRenames = buildTypeRenames(collectObjectTypeDefinitionWithTransformations(serviceDefinition));
+            List<Link> links = createLinks(namespace, defs);
             SchemaSource schemaSource = schemaSourceFactory.createSchemaSource(serviceDefinition, namespace,
                     typeDefinitionRegistry, links, mappers, typeRenames);
-
             schemaSources.add(schemaSource);
         }
 
@@ -128,8 +139,10 @@ public class Nadel {
         }
     }
 
-    private List<Link> createLinks(SchemaNamespace schemaNamespace, List<TransformationWithParentType<FieldDefinitionWithTransformation>> defs) {
+    private List<Link> createLinks(SchemaNamespace schemaNamespace,
+                                   List<TransformationWithParentType<FieldDefinitionWithTransformation>> defs) {
         List<Link> links = new ArrayList<>();
+
         for (TransformationWithParentType<FieldDefinitionWithTransformation> definition : defs) {
             final FieldTransformation transformation = definition.field().getFieldTransformation();
             if (transformation.getInnerServiceHydration() != null) {
@@ -169,34 +182,36 @@ public class Nadel {
                                      TransformationWithParentType<FieldDefinitionWithTransformation> definition,
                                      InnerServiceHydration hydration) {
         SchemaNamespace targetService = assertNotNull(this.namespaceByService.get(hydration.getServiceName()));
-        final FieldDefinition targetField = findTargetFieldForHydration(hydration);
-        //TODO: will not work for lists or non nullable types. does braid support this at all?
-        String targetTypeName = TypeInfo.typeInfo(targetField.getType()).getName();
+        final FieldDefinition targetField = findTargetFieldForHydration(hydration, targetService);
 
-        //TODO: braid does not support multiple arguments, so we just take first
-        final RemoteArgumentDefinition argument = hydration.getArguments().stream()
-                .findFirst()
-                // braid does not allow links to 0 argument queries. It must be exactly one
-                .orElseThrow(() -> new InvalidDslException("Remote argument is required.",
-                        hydration.getSourceLocation()));
-        //TODO: Implement support for different source arguments types
-        RemoteArgumentSource argumentSource = argument.getRemoteArgumentSource();
-        if (argumentSource.getSourceType() != RemoteArgumentSource.SourceType.OBJECT_FIELD) {
-            throw new InvalidDslException("Only source field is supported.", argumentSource.getSourceLocation());
-        }
-
-        return Link.from(schemaNamespace, definition.parentType(), definition.field().getName(),
-                argumentSource.getName())
-                //TODO: we need to add something to DSL to support 'queryVariableArgument' parameter of .to
-                // by default it is targetField name which is not always correct.
-                .to(targetService, targetTypeName, targetField.getName())
-                .argument(argument.getName())
+        List<LinkArgument> linkArguments = hydration.getArguments().stream()
+                .map(argDef -> LinkArgument.newLinkArgument()
+                        .sourceName(argDef.getRemoteArgumentSource().getName())
+                        .argumentSource(LinkArgument.ArgumentSource.valueOf(argDef.getRemoteArgumentSource().getSourceType().toString()))
+                        .queryArgumentName(argDef.getName())
+                        .removeInputField(false)
+                        .nullable(true)
+                        .build())
+                .collect(Collectors.toList());
+        String sourceType = definition.parentType();
+        String targetType = typeInfo(definition.field().getType()).getName();
+        return Link.newComplexLink()
+                .sourceType(sourceType)
+                .newFieldName(definition.field().getName())
+                .sourceNamespace(schemaNamespace)
+                .targetNamespace(targetService)
+                .targetType(targetType)
+                .topLevelQueryField(targetField.getName())
+                .noSchemaChangeNeeded(true)
+                .linkArguments(linkArguments)
+                .argumentValueProvider(argumentValueProvider)
                 .build();
     }
 
 
-    private FieldDefinition findTargetFieldForHydration(InnerServiceHydration hydration) {
-        final TypeDefinitionRegistry types = typesByService.get(hydration.getServiceName());
+    private FieldDefinition findTargetFieldForHydration(InnerServiceHydration hydration, SchemaNamespace targetService) {
+        final TypeDefinitionRegistry types = privateSchemaProvider.schemaFor(targetService)
+                .orElseGet(() -> typesByService.get(targetService.getValue()));
         if (types == null) {
             throw hydrationError(hydration, "Service '%s' is not defined.", hydration.getServiceName());
         }
@@ -231,6 +246,8 @@ public class Nadel {
         private SchemaTransformationsFactory transformationsFactory = SchemaTransformationsFactory.DEFAULT;
         private BatchLoaderEnvironment batchLoaderEnvironment;
         private List<Instrumentation> instrumentations = new ArrayList<>();
+        private ArgumentValueProvider argumentValueProvider = DefaultArgumentValueProvider.INSTANCE;
+        private PrivateSchemaProvider privateSchemaProvider = PrivateSchemaProvider.DEFAULT;
 
         public Builder dsl(String dsl) {
             this.dsl = requireNonNull(dsl);
@@ -263,8 +280,19 @@ public class Nadel {
             return this;
         }
 
+        public Builder argumentValueProvider(ArgumentValueProvider argumentValueProvider) {
+            this.argumentValueProvider = requireNonNull(argumentValueProvider);
+            return this;
+        }
+
+        public Builder privateSchemaProvider(PrivateSchemaProvider privateSchemaProvider) {
+            this.privateSchemaProvider = requireNonNull(privateSchemaProvider);
+            return this;
+        }
+
         public Nadel build() {
-            return new Nadel(dsl, schemaSourceFactory, transformationsFactory, batchLoaderEnvironment, instrumentations);
+            return new Nadel(dsl, schemaSourceFactory, transformationsFactory, batchLoaderEnvironment, instrumentations,
+                    argumentValueProvider, privateSchemaProvider);
         }
     }
 }

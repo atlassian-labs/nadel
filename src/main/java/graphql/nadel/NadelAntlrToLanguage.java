@@ -124,14 +124,14 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         RemoteArgumentSource.SourceType argumentType = null;
         String argumentName = null;
 
-        if (ctx.sourceFieldArgument() != null) {
-            argumentName = ctx.sourceFieldArgument().name().getText();
+        if (ctx.fieldArgumentReference() != null) {
+            argumentName = ctx.fieldArgumentReference().name().getText();
             argumentType = FIELD_ARGUMENT;
-        } else if (ctx.contextArgument() != null) {
-            argumentName = ctx.contextArgument().name().getText();
+        } else if (ctx.contextArgumentReference() != null) {
+            argumentName = ctx.contextArgumentReference().name().getText();
             argumentType = CONTEXT;
-        } else if (ctx.sourceObjectField() != null) {
-            argumentName = ctx.sourceObjectField().name().getText();
+        } else if (ctx.sourceObjectReference() != null) {
+            argumentName = ctx.sourceObjectReference().name().getText();
             argumentType = OBJECT_FIELD;
         } else {
             assertShouldNeverHappen();

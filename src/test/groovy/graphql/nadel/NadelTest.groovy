@@ -1,5 +1,7 @@
 package graphql.nadel
 
+import com.atlassian.braid.DefaultArgumentValueProvider
+import com.atlassian.braid.LinkArgument
 import com.atlassian.braid.source.GraphQLRemoteRetriever
 import com.atlassian.braid.transformation.SchemaTransformation
 import graphql.ExecutionInput
@@ -9,6 +11,7 @@ import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.SimpleInstrumentation
 import graphql.execution.instrumentation.parameters.InstrumentationExecutionParameters
 import graphql.schema.DataFetcher
+import graphql.schema.DataFetchingEnvironment
 import graphql.schema.GraphQLSchema
 import graphql.schema.StaticDataFetcher
 import graphql.schema.idl.RuntimeWiring
@@ -17,6 +20,8 @@ import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import java.util.concurrent.CompletableFuture
 
 import static graphql.nadel.TestUtil.mockCallerFactory
 import static graphql.schema.idl.RuntimeWiring.newRuntimeWiring
@@ -108,7 +113,7 @@ class NadelTest extends Specification {
                 id: ID 
                 title : String 
                 barId: ID
-                bar : String <= \$innerQueries.BarService.bar(barId: \$source.barId)
+                bar : Bar <= \$innerQueries.BarService.bar(barId: \$source.barId)
             }
         }
         
@@ -141,8 +146,71 @@ class NadelTest extends Specification {
 
         then:
         executionResult.data == [foo: [id: 'foo1', bar: [id: 'b2', name: 'bar2']]]
+        then:
         1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> { it ->
             completedFuture([data: [foo100: [id: 'foo1', barId: 'b2']]])
+        }
+
+    }
+
+    def "hydration with multiple arguments"() {
+        def dsl = '''
+        service FooService {
+            schema {
+               query: Query
+            }
+            type Query {
+               foo: Foo
+            }
+
+            type Foo {
+                id: ID 
+                title : String 
+                barId: ID
+                baz(bazId: ID!) : Baz <= $innerQueries.BazService.baz(barId: $source.barId, 
+                                                                      id: $argument.bazId, 
+                                                                       userId: $context.userId)
+            }
+        }
+        
+        service BazService {
+            schema {
+                    query: Query
+            }
+            type Query {
+                baz(id: ID!, userId: ID!, barId: ID): Baz
+            }
+    
+            type Baz {
+                id: ID!
+                userId: ID!
+                barId: ID
+            }
+        }
+        '''
+        def bazService = bazService()
+        def graphqlRemoteRetriever1 = Mock(GraphQLRemoteRetriever)
+        GraphQLRemoteRetriever graphqlRemoteRetriever2 = { braidQuery, ctx ->
+            def executionInput = braidQuery.asExecutionInput()
+            return completedFuture([data: (Map<String, Object>) bazService.execute(executionInput).getData()])
+        }
+        def callerFactory = mockCallerFactory([FooService: graphqlRemoteRetriever1, BazService: graphqlRemoteRetriever2])
+
+        String query = '{foo { id baz(bazId: "baz1") { id userId barId }}}'
+
+        Nadel nadel = Nadel.newNadel()
+                .dsl(dsl)
+                .remoteRetrieverFactory(callerFactory)
+                .argumentValueProvider(new ArgumentProviderWithContext(["userId": "brad"]))
+                .build()
+        when:
+        def executionResult = nadel.executeAsync(ExecutionInput.newExecutionInput().query(query).build()).get()
+
+        then:
+        executionResult.data == [foo: [id: 'foo1', baz: [id: 'baz1', userId: 'brad', barId: 'someBar']]]
+        then:
+        1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> { it ->
+            completedFuture([data: [foo100: [id: 'foo1', barId: 'someBar']]])
         }
 
     }
@@ -204,7 +272,7 @@ class NadelTest extends Specification {
                 type Foo2 <= $innerTypes.Foo {
                     newName: ID <= $source.id
                     barId: ID
-                    newTitle : String <=$source.title
+                    newTitle : String <= $source.title
                     name: String   
                 }
             }
@@ -268,6 +336,21 @@ class NadelTest extends Specification {
         1 * graphqlRemoteRetriever1.queryGraphQL(*_) >> completedFuture([data: [hello100: 'world']])
     }
 
+    class ArgumentProviderWithContext extends DefaultArgumentValueProvider {
+        Map<String, Object> context
+
+        ArgumentProviderWithContext(Map<String, Object> context) {
+            this.context = context
+        }
+
+        @Override
+        CompletableFuture<Object> fetchValueForArgument(LinkArgument linkArgument, DataFetchingEnvironment environment) {
+            if (linkArgument.argumentSource == LinkArgument.ArgumentSource.CONTEXT) {
+                return completedFuture(context.get(linkArgument.sourceName))
+            }
+            return super.fetchValueForArgument(linkArgument, environment)
+        }
+    }
     /**
      * Creates bar service that returns values from provided bars
      */
@@ -294,6 +377,36 @@ class NadelTest extends Specification {
 
         RuntimeWiring runtimeWiring = newRuntimeWiring()
                 .type("Query", { it.dataFetcher("bar", fetcher) })
+                .build()
+
+        GraphQLSchema graphQLSchema = new SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
+
+        return GraphQL.newGraphQL(graphQLSchema).build()
+    }
+
+    /**
+     * Creates baz service with query that  returns Baz object with provided arguments
+     */
+    GraphQL bazService() {
+        def schema = """
+        type Query {
+            baz(id: ID!, userId: ID!, barId: ID,): Baz
+        }
+
+        type Baz {
+            id: ID!
+            userId: ID!
+            barId: ID
+        }
+        """
+
+        TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(schema)
+        DataFetcher<Baz> fetcher = {
+            return new Baz(id: it.arguments["id"], barId: it.arguments["barId"], userId: it.arguments["userId"])
+        }
+
+        RuntimeWiring runtimeWiring = newRuntimeWiring()
+                .type("Query", { it.dataFetcher("baz", fetcher) })
                 .build()
 
         GraphQLSchema graphQLSchema = new SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
@@ -330,6 +443,12 @@ class NadelTest extends Specification {
         GraphQLSchema graphQLSchema = new SchemaGenerator().makeExecutableSchema(typeDefinitionRegistry, runtimeWiring)
 
         return GraphQL.newGraphQL(graphQLSchema).build()
+    }
+
+    static class Baz {
+        String id
+        String barId
+        String userId
     }
 
     static class Bar {
