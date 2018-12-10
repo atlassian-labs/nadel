@@ -69,7 +69,8 @@ public class Nadel {
      *                               additional types are needed {@link SchemaTransformationsFactory#DEFAULT} can be used.
      * @param batchLoaderEnvironment provides functions that will be used by braid batch loader.
      * @param instrumentations       the graphql instrumentations to use
-     * @param argumentValueProvider  for providing  argument values to links.
+     * @param argumentValueProvider  provides argument values to links.
+     * @param privateSchemaProvider  provides private schemas.
      * @throws InvalidDslException in case there is an issue with DSL.
      */
     private Nadel(String dsl,
@@ -82,11 +83,9 @@ public class Nadel {
         requireNonNull(dsl, "dsl");
         requireNonNull(schemaSourceFactory, "schemaSourceFactory");
         requireNonNull(transformationsFactory, "transformationsFactory");
-        requireNonNull(transformationsFactory, "transformationsFactory");
-        requireNonNull(privateSchemaProvider, "privateSchemaProvider");
         this.argumentValueProvider = requireNonNull(argumentValueProvider, "argumentValueProvider");
+        this.privateSchemaProvider = requireNonNull(privateSchemaProvider, "privateSchemaProvider");
         this.stitchingDsl = this.parser.parseDSL(dsl);
-        this.privateSchemaProvider = privateSchemaProvider;
 
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
 

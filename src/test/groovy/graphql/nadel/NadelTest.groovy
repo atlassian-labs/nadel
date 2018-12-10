@@ -388,7 +388,7 @@ class NadelTest extends Specification {
      * Creates baz service with query that  returns Baz object with provided arguments
      */
     GraphQL bazService() {
-        def schema = """
+        def schema = '''
         type Query {
             baz(id: ID!, userId: ID!, barId: ID,): Baz
         }
@@ -398,7 +398,7 @@ class NadelTest extends Specification {
             userId: ID!
             barId: ID
         }
-        """
+        '''
 
         TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(schema)
         DataFetcher<Baz> fetcher = {
