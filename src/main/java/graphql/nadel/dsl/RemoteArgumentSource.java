@@ -12,27 +12,27 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinition> {
-
+public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
+    public enum SourceType {OBJECT_FIELD, FIELD_ARGUMENT, CONTEXT}
+    
     private final String name;
-    private final RemoteArgumentSource remoteArgumentSource;
 
-    public RemoteArgumentDefinition(String name, RemoteArgumentSource remoteArgumentSource,
-                                    SourceLocation sourceLocation) {
+    private final SourceType sourceType;
+
+    public RemoteArgumentSource(String name, SourceType sourceType, SourceLocation sourceLocation) {
         super(sourceLocation, emptyList());
         this.name = name;
-        this.remoteArgumentSource = remoteArgumentSource;
+        this.sourceType = sourceType;
     }
 
     public String getName() {
         return name;
     }
 
-    public RemoteArgumentSource getRemoteArgumentSource() {
-        return remoteArgumentSource;
+    public SourceType getSourceType() {
+        return sourceType;
     }
 
-    @Override
     public List<Node> getChildren() {
         return new ArrayList<>();
     }
@@ -43,7 +43,7 @@ public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinit
     }
 
     @Override
-    public RemoteArgumentDefinition deepCopy() {
+    public RemoteArgumentSource deepCopy() {
         return null;
     }
 

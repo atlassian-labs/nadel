@@ -22,6 +22,16 @@
               "type": {
                 "name": "ID"
               },
+              "inputValueDefinitions": [
+                {
+                  "name": "inputArg",
+                  "type": {
+                    "type": {
+                      "name": "ID"
+                    }
+                  }
+                }
+              ],
               "fieldTransformation": {
                 "innerServiceHydration": {
                   "serviceName": "OtherService",
@@ -29,8 +39,23 @@
                   "arguments": [
                     {
                       "name": "otherId",
-                      "fieldMappingDefinition": {
-                        "inputName": "id"
+                      "remoteArgumentSource": {
+                        "name": "id",
+                        "sourceType": "OBJECT_FIELD"
+                      }
+                    },
+                    {
+                      "name": "arg1",
+                      "remoteArgumentSource": {
+                        "name": "ctxParam",
+                        "sourceType": "CONTEXT"
+                      }
+                    },
+                    {
+                      "name": "arg2",
+                      "remoteArgumentSource": {
+                        "name": "inputArg",
+                        "sourceType": "FIELD_ARGUMENT"
                       }
                     }
                   ]

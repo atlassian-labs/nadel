@@ -1,6 +1,5 @@
 package graphql.nadel;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.language.Definition;
 import graphql.language.FieldDefinition;
@@ -11,6 +10,7 @@ import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
+import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.dsl.TypeTransformation;
@@ -22,7 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.nadel.dsl.FieldDefinitionWithTransformation.newFieldDefinitionWithTransformation;
+import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.CONTEXT;
+import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
+import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
 
 @Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
@@ -73,7 +77,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             return new FieldTransformation(createInnerServiceHydration(ctx.innerServiceHydration()),
                     getSourceLocation(ctx), new ArrayList<>());
         } else {
-            return Assert.assertShouldNeverHappen();
+            return assertShouldNeverHappen();
         }
     }
 
@@ -112,7 +116,27 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     private RemoteArgumentDefinition createRemoteArgumentDefinition(StitchingDSLParser.RemoteArgumentPairContext
                                                                             remoteArgumentPairContext) {
         return new RemoteArgumentDefinition(remoteArgumentPairContext.name().getText(),
-                createFieldMappingDefinition(remoteArgumentPairContext.fieldMappingDefinition()),
+                createRemoteArgumentSource(remoteArgumentPairContext.remoteArgumentSource()),
                 getSourceLocation(remoteArgumentPairContext));
+    }
+
+    private RemoteArgumentSource createRemoteArgumentSource(StitchingDSLParser.RemoteArgumentSourceContext ctx) {
+        RemoteArgumentSource.SourceType argumentType = null;
+        String argumentName = null;
+
+        if (ctx.fieldArgumentReference() != null) {
+            argumentName = ctx.fieldArgumentReference().name().getText();
+            argumentType = FIELD_ARGUMENT;
+        } else if (ctx.contextArgumentReference() != null) {
+            argumentName = ctx.contextArgumentReference().name().getText();
+            argumentType = CONTEXT;
+        } else if (ctx.sourceObjectReference() != null) {
+            argumentName = ctx.sourceObjectReference().name().getText();
+            argumentType = OBJECT_FIELD;
+        } else {
+            assertShouldNeverHappen();
+        }
+
+        return new RemoteArgumentSource(argumentName, argumentType, getSourceLocation(ctx));
     }
 }

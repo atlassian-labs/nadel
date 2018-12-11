@@ -26,9 +26,17 @@ serviceName: NAME;
 
 topLevelField: NAME;
 
+sourceObjectReference : '$source' '.' name ;
+
+fieldArgumentReference : '$argument' '.' name ;
+
+contextArgumentReference : '$context' '.' name ;
+
+remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference  ;
+
 remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 
-remoteArgumentPair : name ':' fieldMappingDefinition ;
+remoteArgumentPair : name ':' remoteArgumentSource ;
 
 
 

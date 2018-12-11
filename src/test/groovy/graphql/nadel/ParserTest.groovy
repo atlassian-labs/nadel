@@ -107,17 +107,18 @@ class ParserTest extends Specification {
     def "parse hydration"() {
         given:
 
-        def dsl = """
+        def dsl = '''
         service FooService {
             type Query {
                 foo: Foo
             }
 
             type Foo {
-                id: ID <= \$innerQueries.OtherService.resolveId(otherId: \$source.id)
+                id(inputArg: ID!): ID <= $innerQueries.OtherService.resolveId(otherId: $source.id, 
+                arg1: $context.ctxParam, arg2: $argument.inputArg)
             }
         }
-        """
+        '''
         when:
         Parser parser = new Parser()
         def stitchingDSL = parser.parseDSL(dsl)
