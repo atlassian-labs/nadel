@@ -40,6 +40,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static com.atlassian.braid.LinkArgument.ArgumentSource.*;
+import static com.atlassian.braid.LinkArgument.ArgumentSource.valueOf;
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.TransformationUtils.collectFieldTransformations;
 import static graphql.nadel.TransformationUtils.collectObjectTypeDefinitionWithTransformations;
@@ -186,7 +188,7 @@ public class Nadel {
         List<LinkArgument> linkArguments = hydration.getArguments().stream()
                 .map(argDef -> LinkArgument.newLinkArgument()
                         .sourceName(argDef.getRemoteArgumentSource().getName())
-                        .argumentSource(LinkArgument.ArgumentSource.valueOf(argDef.getRemoteArgumentSource().getSourceType().toString()))
+                        .argumentSource(valueOf(argDef.getRemoteArgumentSource().getSourceType().toString()))
                         .queryArgumentName(argDef.getName())
                         .removeInputField(false)
                         .nullable(true)

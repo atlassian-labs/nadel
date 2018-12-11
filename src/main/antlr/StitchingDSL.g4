@@ -32,7 +32,7 @@ fieldArgumentReference : '$argument' '.' name ;
 
 contextArgumentReference : '$context' '.' name ;
 
-remoteArgumentSource : ( sourceObjectReference | fieldArgumentReference | contextArgumentReference ) ;
+remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference  ;
 
 remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 

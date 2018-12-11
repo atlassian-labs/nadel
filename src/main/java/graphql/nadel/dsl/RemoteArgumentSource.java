@@ -13,7 +13,10 @@ import java.util.List;
 import static java.util.Collections.emptyList;
 
 public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
+    public enum SourceType {OBJECT_FIELD, FIELD_ARGUMENT, CONTEXT}
+    
     private final String name;
+
     private final SourceType sourceType;
 
     public RemoteArgumentSource(String name, SourceType sourceType, SourceLocation sourceLocation) {
@@ -48,6 +51,4 @@ public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
     }
-
-    public enum SourceType {OBJECT_FIELD, FIELD_ARGUMENT, CONTEXT}
 }
