@@ -2,7 +2,9 @@ package graphql.nadel.dsl;
 
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
+import graphql.language.IgnoredChars;
 import graphql.language.Node;
+import graphql.language.NodeChildrenContainer;
 import graphql.language.NodeVisitor;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
@@ -17,13 +19,13 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     private final InnerServiceHydration innerServiceHydration;
 
     public FieldTransformation(FieldMappingDefinition fieldMappingDefinition, SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments);
+        super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.fieldMappingDefinition = fieldMappingDefinition;
         this.innerServiceHydration = null;
     }
 
     public FieldTransformation(InnerServiceHydration innerServiceHydration, SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments);
+        super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.fieldMappingDefinition = null;
         this.innerServiceHydration = innerServiceHydration;
     }
@@ -39,6 +41,16 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
     @Override
     public List<Node> getChildren() {
         return new ArrayList<>();
+    }
+
+    @Override
+    public NodeChildrenContainer getNamedChildren() {
+        return null;
+    }
+
+    @Override
+    public FieldTransformation withNewChildren(NodeChildrenContainer newChildren) {
+        return null;
     }
 
     @Override

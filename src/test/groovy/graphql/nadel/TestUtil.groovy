@@ -1,6 +1,6 @@
 package graphql.nadel
 
-import com.atlassian.braid.source.GraphQLRemoteRetriever
+
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -10,9 +10,7 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider
 import graphql.language.AstPrinter
 import graphql.language.Document
 import graphql.language.Node
-import graphql.nadel.dsl.ServiceDefinition
 import groovy.json.JsonSlurper
-
 
 class TestUtil {
 
@@ -22,7 +20,7 @@ class TestUtil {
 
     private static String printAstAsJson(Node node) {
         SimpleBeanPropertyFilter theFilter = SimpleBeanPropertyFilter
-                .serializeAllExcept("sourceLocation", "children") as SimpleBeanPropertyFilter
+                .serializeAllExcept("sourceLocation", "children", "ignoredChars", "namedChildren") as SimpleBeanPropertyFilter
         FilterProvider filters = new SimpleFilterProvider()
         filters.addFilter("myFilter" as String, theFilter as SimpleBeanPropertyFilter)
 
@@ -45,16 +43,6 @@ class TestUtil {
         return new JsonSlurper().parseText(stream.text)
     }
 
-
-    static GraphQLRemoteRetrieverFactory mockCallerFactory(Map callerMocks) {
-        return new GraphQLRemoteRetrieverFactory() {
-            @Override
-            GraphQLRemoteRetriever createRemoteRetriever(ServiceDefinition serviceDefinition) {
-                assert callerMocks[serviceDefinition.name] != null
-                return callerMocks[serviceDefinition.name]
-            }
-        }
-    }
 
 
 }
