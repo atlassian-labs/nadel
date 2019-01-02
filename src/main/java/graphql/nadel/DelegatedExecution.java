@@ -3,8 +3,10 @@ package graphql.nadel;
 
 import graphql.PublicApi;
 
+import java.util.concurrent.CompletableFuture;
+
 @PublicApi
 public interface DelegatedExecution {
 
-    DelegatedExecutionResult delegate(DelegatedExecutionParameters delegatedExecutionParameters);
+    CompletableFuture<DelegatedExecutionResult> delegate(DelegatedExecutionParameters delegatedExecutionParameters);
 }

@@ -27,7 +27,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
-def graphqlJavaVersion = '2018-12-21T21-00-05-9a6abf2'
+def graphqlJavaVersion = '2019-01-02T07-00-24-b2bcb40'
 
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
@@ -35,8 +35,6 @@ group = 'com.graphql-java'
 
 
 repositories {
-    maven { url "http://packages.atlassian.com/maven/public" }
-    maven { url "http://packages.atlassian.com/maven/public-snapshot" }
     maven { url "http://dl.bintray.com/andimarek/graphql-java" }
     mavenCentral()
     mavenLocal()
