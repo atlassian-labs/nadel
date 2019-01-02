@@ -32,9 +32,9 @@ public class DelegatedResultToResultNode {
     ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
     ExecutionStrategyUtil util = new ExecutionStrategyUtil();
 
-    public ExecutionResultNode resultToResultNode(ExecutionContext executionContext,
-                                                  DelegatedExecutionResult delegatedExecutionResult,
-                                                  FieldSubSelection fieldSubSelection) {
+    public ObjectExecutionResultNode.RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
+                                                                                DelegatedExecutionResult delegatedExecutionResult,
+                                                                                FieldSubSelection fieldSubSelection) {
         FieldSubSelection fieldSubSelectionWithData = new FieldSubSelection();
         fieldSubSelectionWithData.setExecutionStepInfo(fieldSubSelection.getExecutionStepInfo());
         fieldSubSelectionWithData.setSource(delegatedExecutionResult.getData());
