@@ -17,8 +17,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import java.util.List;
 
 @Internal
-public class Parser {
-
+public class NSDLParser {
 
     public StitchingDsl parseDSL(String input) {
         StitchingDSLLexer lexer = new StitchingDSLLexer(new ANTLRInputStream(input));

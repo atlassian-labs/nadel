@@ -7,37 +7,71 @@ import graphql.language.Definition;
 import graphql.language.SDLDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
+import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.RuntimeWiring;
+import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.errors.SchemaProblem;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static java.util.Objects.requireNonNull;
 
 @PublicApi
 public class Nadel {
+
+    private final String nsdl;
     private final StitchingDsl stitchingDsl;
-    private final Parser parser = new Parser();
+    private final ServiceDataFactory serviceDataFactory;
+    private final NSDLParser NSDLParser = new NSDLParser();
 
-    private final Map<String, TypeDefinitionRegistry> typesByService = new LinkedHashMap<>();
+    private Execution execution;
+    private List<Service> services;
+    private GraphQLSchema overallSchema;
 
-    private Nadel(String nsdl) {
-        this.stitchingDsl = this.parser.parseDSL(nsdl);
 
-        List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
-
-        for (ServiceDefinition serviceDefinition : serviceDefinitions) {
-            TypeDefinitionRegistry typeDefinitionRegistry = buildRegistry(serviceDefinition);
-            this.typesByService.put(serviceDefinition.getName(), typeDefinitionRegistry);
-
-        }
+    private Nadel(String nsdl, ServiceDataFactory serviceDataFactory) {
+        this.nsdl = nsdl;
+        this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
+        this.serviceDataFactory = serviceDataFactory;
+        this.init();
     }
 
-    public TypeDefinitionRegistry buildRegistry(ServiceDefinition serviceDefinition) {
+    private void init() {
+        List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
+
+        List<Service> services = new ArrayList<>();
+
+        TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
+
+        for (ServiceDefinition serviceDefinition : serviceDefinitions) {
+            String serviceName = serviceDefinition.getName();
+            DelegatedExecution delegatedExecution = serviceDataFactory.getDelegatedExecution(serviceName);
+            GraphQLSchema privateSchema = serviceDataFactory.getPrivateSchema(serviceName);
+
+            Service service = new Service(serviceName, privateSchema, delegatedExecution);
+            services.add(service);
+            TypeDefinitionRegistry typeDefinitionRegistry = buildRegistry(serviceDefinition);
+            overallRegistry.merge(typeDefinitionRegistry);
+        }
+        this.services = services;
+        this.overallSchema = buildSchema(overallRegistry);
+
+        this.execution = new Execution(services, overallSchema);
+
+    }
+
+    private GraphQLSchema buildSchema(TypeDefinitionRegistry typeDefinitionRegistry) {
+        // This will not work for Unions and interfaces as they require TypeResolver
+        // need to loose this requirement or add dummy versions
+        SchemaGenerator schemaGenerator = new SchemaGenerator();
+        RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring().build();
+        return schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
+    }
+
+    private TypeDefinitionRegistry buildRegistry(ServiceDefinition serviceDefinition) {
         List<GraphQLError> errors = new ArrayList<>();
         TypeDefinitionRegistry typeRegistry = new TypeDefinitionRegistry();
         for (Definition definition : serviceDefinition.getTypeDefinitions()) {
@@ -53,7 +87,8 @@ public class Nadel {
     }
 
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
-        return null;
+        // we need to actually validate the query with the normal graphql-java validation here
+        return execution.execute(nadelExecutionInput);
     }
 
     /**
@@ -65,15 +100,21 @@ public class Nadel {
 
     public static class Builder {
         private String nsdl;
+        private ServiceDataFactory serviceDataFactory;
 
         public Builder dsl(String nsdl) {
             this.nsdl = requireNonNull(nsdl);
             return this;
         }
 
+        public Builder serviceDataFactory(ServiceDataFactory serviceDataFactory) {
+            this.serviceDataFactory = serviceDataFactory;
+            return this;
+        }
+
 
         public Nadel build() {
-            return new Nadel(nsdl);
+            return new Nadel(nsdl, serviceDataFactory);
         }
     }
 }

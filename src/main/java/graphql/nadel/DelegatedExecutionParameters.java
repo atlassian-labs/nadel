@@ -1,16 +1,20 @@
 package graphql.nadel;
 
 import graphql.PublicApi;
-import graphql.language.Node;
+import graphql.language.Document;
 
 
 @PublicApi
 public class DelegatedExecutionParameters {
 
-    private final Node query;
+    private final Document query;
 
-    public DelegatedExecutionParameters(Node query) {
+    private DelegatedExecutionParameters(Document query) {
         this.query = query;
+    }
+
+    public Document getQuery() {
+        return query;
     }
 
     public static Builder newDelegatedExecutionParameters() {
@@ -18,13 +22,19 @@ public class DelegatedExecutionParameters {
     }
 
     public static class Builder {
+        private Document query;
+
         private Builder() {
 
         }
 
+        public Builder query(Document query) {
+            this.query = query;
+            return this;
+        }
+
         public DelegatedExecutionParameters build() {
-//           return new DelegatedExecutionParameters();
-            return null;
+            return new DelegatedExecutionParameters(query);
         }
 
     }
