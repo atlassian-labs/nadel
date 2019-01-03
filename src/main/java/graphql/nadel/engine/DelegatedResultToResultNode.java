@@ -7,7 +7,6 @@ import graphql.execution.MergedField;
 import graphql.execution.nextgen.ExecutionStrategyUtil;
 import graphql.execution.nextgen.FetchedValue;
 import graphql.execution.nextgen.FetchedValueAnalysis;
-import graphql.execution.nextgen.FetchedValueAnalyzer;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.ResultNodesCreator;
 import graphql.execution.nextgen.result.ExecutionResultMultiZipper;
@@ -28,13 +27,16 @@ import static graphql.util.FpKit.map;
 public class DelegatedResultToResultNode {
 
     ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
-    FetchedValueAnalyzer fetchedValueAnalyzer = new FetchedValueAnalyzer();
+    DelegatedResultAnalyzser fetchedValueAnalyzer = new DelegatedResultAnalyzser();
     ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
     ExecutionStrategyUtil util = new ExecutionStrategyUtil();
 
     public ObjectExecutionResultNode.RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
                                                                                 DelegatedExecutionResult delegatedExecutionResult,
                                                                                 FieldSubSelection fieldSubSelection) {
+
+        //TODO: the ExecutionContext and the FieldSubSelection (the ExecutionStepInfo in it) are referencing the overall schema, not the private schema
+
         FieldSubSelection fieldSubSelectionWithData = new FieldSubSelection();
         fieldSubSelectionWithData.setExecutionStepInfo(fieldSubSelection.getExecutionStepInfo());
         fieldSubSelectionWithData.setSource(delegatedExecutionResult.getData());
