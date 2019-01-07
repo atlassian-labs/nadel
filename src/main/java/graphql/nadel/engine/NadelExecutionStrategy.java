@@ -1,15 +1,28 @@
 package graphql.nadel.engine;
 
 import graphql.Internal;
+import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
+import graphql.execution.ExecutionStepInfo;
+import graphql.execution.ExecutionStepInfoFactory;
+import graphql.execution.MergedField;
 import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.FieldSubSelection;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
+import graphql.execution.nextgen.result.ExecutionResultNode;
+import graphql.execution.nextgen.result.ObjectExecutionResultNode.RootExecutionResultNode;
+import graphql.language.Document;
 import graphql.nadel.DelegatedExecution;
 import graphql.nadel.DelegatedExecutionParameters;
+import graphql.nadel.FieldInfo;
+import graphql.nadel.FieldInfos;
 import graphql.nadel.Service;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.util.FpKit;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
@@ -19,32 +32,63 @@ import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionPa
 public class NadelExecutionStrategy implements ExecutionStrategy {
 
     DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
+    MergedFieldsToDocument mergedFieldsToDocument = new MergedFieldsToDocument();
+    ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
 
     private final List<Service> services;
+    private FieldInfos fieldInfos;
 
-    public NadelExecutionStrategy(List<Service> services) {
+    public NadelExecutionStrategy(List<Service> services, FieldInfos fieldInfos) {
         assertNotEmpty(services);
         this.services = services;
+        this.fieldInfos = fieldInfos;
     }
 
     @Override
-    public CompletableFuture<ObjectExecutionResultNode.RootExecutionResultNode> execute(ExecutionContext context, FieldSubSelection fieldSubSelection) {
-        // we assume here that we have only have one service wth no mapping/hydration or anything else
-        DelegatedExecution delegatedExecution = services.get(0).getDelegatedExecution();
-        return delegate(context, fieldSubSelection, delegatedExecution);
+    public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext context, FieldSubSelection fieldSubSelection) {
+        Map<DelegatedExecution, List<MergedField>> delegatedExecutionForTopLevel = getDelegatedExecutionForTopLevel(context, fieldSubSelection);
+
+        List<CompletableFuture<RootExecutionResultNode>> resultNodes = FpKit.mapEntries(delegatedExecutionForTopLevel,
+                (delegatedExecution, mergedFields) -> delegate(context, mergedFields, delegatedExecution, fieldSubSelection.getExecutionStepInfo()));
+
+        return Async.each(resultNodes).thenApply(rootNodes -> {
+            Map<String, ExecutionResultNode> mergedChildren = new LinkedHashMap<>();
+            rootNodes.forEach(rootNode -> mergedChildren.putAll(rootNode.getChildrenMap()));
+            return new RootExecutionResultNode(mergedChildren);
+        });
+
+    }
+
+    private Map<DelegatedExecution, List<MergedField>> getDelegatedExecutionForTopLevel(ExecutionContext context, FieldSubSelection fieldSubSelection) {
+
+        Map<DelegatedExecution, List<MergedField>> result = new LinkedHashMap<>();
+
+        ExecutionStepInfo executionStepInfo = fieldSubSelection.getExecutionStepInfo();
+        for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
+            ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, executionStepInfo);
+            DelegatedExecution delegate = getDelegatedExecutionForFieldDefinition(newExecutionStepInfo.getFieldDefinition());
+            result.computeIfAbsent(delegate, key -> new ArrayList<>());
+            result.get(delegate).add(mergedField);
+        }
+        return result;
+    }
+
+    private DelegatedExecution getDelegatedExecutionForFieldDefinition(GraphQLFieldDefinition fieldDefinition) {
+        FieldInfo info = fieldInfos.getInfo(fieldDefinition);
+        return info.getService().getDelegatedExecution();
     }
 
 
-    private CompletableFuture<ObjectExecutionResultNode.RootExecutionResultNode> delegate(ExecutionContext context,
-                                                                                          FieldSubSelection fieldSubSelection,
-                                                                                          DelegatedExecution delegatedExecution) {
-        //in the future we need to do more work here: creating a document from MergedField/MergedSelectionSet
+    private CompletableFuture<RootExecutionResultNode> delegate(ExecutionContext context,
+                                                                List<MergedField> mergedFields,
+                                                                DelegatedExecution delegatedExecution,
+                                                                ExecutionStepInfo executionStepInfo) {
+        Document query = mergedFieldsToDocument.mergedSelectionSetToDocument(mergedFields);
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
-                .query(context.getDocument())
+                .query(query)
                 .build();
         return delegatedExecution.delegate(delegatedExecutionParameters)
-                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, fieldSubSelection));
+                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, executionStepInfo, mergedFields));
     }
-
 
 }

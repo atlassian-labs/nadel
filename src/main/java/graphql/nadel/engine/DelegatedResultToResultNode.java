@@ -4,6 +4,7 @@ import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
+import graphql.execution.MergedSelectionSet;
 import graphql.execution.nextgen.ExecutionStrategyUtil;
 import graphql.execution.nextgen.FetchedValue;
 import graphql.execution.nextgen.FetchedValueAnalysis;
@@ -33,14 +34,20 @@ public class DelegatedResultToResultNode {
 
     public ObjectExecutionResultNode.RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
                                                                                 DelegatedExecutionResult delegatedExecutionResult,
-                                                                                FieldSubSelection fieldSubSelection) {
+                                                                                ExecutionStepInfo executionStepInfo,
+                                                                                List<MergedField> mergedFields) {
 
         //TODO: the ExecutionContext and the FieldSubSelection (the ExecutionStepInfo in it) are referencing the overall schema, not the private schema
 
         FieldSubSelection fieldSubSelectionWithData = new FieldSubSelection();
-        fieldSubSelectionWithData.setExecutionStepInfo(fieldSubSelection.getExecutionStepInfo());
+        fieldSubSelectionWithData.setExecutionStepInfo(executionStepInfo);
         fieldSubSelectionWithData.setSource(delegatedExecutionResult.getData());
-        fieldSubSelectionWithData.setMergedSelectionSet(fieldSubSelection.getMergedSelectionSet());
+
+        Map<String, MergedField> subFields = FpKit.getByName(mergedFields, MergedField::getResultKey);
+        MergedSelectionSet mergedSelectionSet = MergedSelectionSet.newMergedSelectionSet()
+                .subFields(subFields).build();
+
+        fieldSubSelectionWithData.setMergedSelectionSet(mergedSelectionSet);
 
         List<NamedResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelectionWithData);
         return new ObjectExecutionResultNode.RootExecutionResultNode(namedResultNodes);

@@ -1,5 +1,7 @@
 package graphql.nadel.engine
 
+import graphql.execution.ExecutionContext
+import graphql.execution.nextgen.FieldSubSelection
 import graphql.execution.nextgen.result.ResultNodesUtil
 import graphql.nadel.DelegatedExecutionResult
 import graphql.nadel.TestUtil
@@ -13,14 +15,15 @@ class DelegatedResultToResultNodeTest extends Specification {
         def data = ["hello": "world"]
         def schema = TestUtil.schema("type Query{ hello: String }")
         def query = TestUtil.parseQuery("{hello}")
-
-        def (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        FieldSubSelection fieldSubSelection
+        ExecutionContext executionContext
+        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         DelegatedResultToResultNode resultToNodes = new DelegatedResultToResultNode()
         DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
 
         when:
-        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection)
+        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection.getExecutionStepInfo(), fieldSubSelection.getMergedSelectionSet().getSubFieldsList())
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -34,13 +37,15 @@ class DelegatedResultToResultNodeTest extends Specification {
         def schema = TestUtil.schema("type Query{ hello: String }")
         def query = TestUtil.parseQuery("{myAlias: hello}")
 
-        def (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        FieldSubSelection fieldSubSelection
+        ExecutionContext executionContext
+        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         DelegatedResultToResultNode resultToNodes = new DelegatedResultToResultNode()
         DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
 
         when:
-        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection)
+        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection.getExecutionStepInfo(), fieldSubSelection.getMergedSelectionSet().getSubFieldsList())
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -78,13 +83,15 @@ class DelegatedResultToResultNodeTest extends Specification {
             }
         }}
         """)
-        def (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        FieldSubSelection fieldSubSelection
+        ExecutionContext executionContext
+        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         DelegatedResultToResultNode resultToNodes = new DelegatedResultToResultNode()
         DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
 
         when:
-        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection)
+        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection.getExecutionStepInfo(), fieldSubSelection.getMergedSelectionSet().getSubFieldsList())
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -97,13 +104,15 @@ class DelegatedResultToResultNodeTest extends Specification {
         def schema = TestUtil.schema("type Query{ hello: String }")
         def query = TestUtil.parseQuery("{hello}")
 
-        def (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        FieldSubSelection fieldSubSelection
+        ExecutionContext executionContext
+        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         DelegatedResultToResultNode resultToNodes = new DelegatedResultToResultNode()
         DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
 
         when:
-        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection)
+        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection.getExecutionStepInfo(), fieldSubSelection.getMergedSelectionSet().getSubFieldsList())
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -115,13 +124,16 @@ class DelegatedResultToResultNodeTest extends Specification {
         def schema = TestUtil.schema("type Query{ hello: Int }")
         def query = TestUtil.parseQuery("{hello}")
 
-        def (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        FieldSubSelection fieldSubSelection
+        ExecutionContext executionContext
+        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+
 
         DelegatedResultToResultNode resultToNodes = new DelegatedResultToResultNode()
         DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
 
         when:
-        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection)
+        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection.getExecutionStepInfo(), fieldSubSelection.getMergedSelectionSet().getSubFieldsList())
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -134,13 +146,15 @@ class DelegatedResultToResultNodeTest extends Specification {
         def schema = TestUtil.schema("type Query{ hello: String }")
         def query = TestUtil.parseQuery("{hello}")
 
-        def (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        FieldSubSelection fieldSubSelection
+        ExecutionContext executionContext
+        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         DelegatedResultToResultNode resultToNodes = new DelegatedResultToResultNode()
         DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
 
         when:
-        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection)
+        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection.getExecutionStepInfo(), fieldSubSelection.getMergedSelectionSet().getSubFieldsList())
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -153,14 +167,15 @@ class DelegatedResultToResultNodeTest extends Specification {
         def data = ["hello": "world1"]
         def schema = TestUtil.schema("type Query{ hello: [String] }")
         def query = TestUtil.parseQuery("{hello}")
-
-        def (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        FieldSubSelection fieldSubSelection
+        ExecutionContext executionContext
+        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         DelegatedResultToResultNode resultToNodes = new DelegatedResultToResultNode()
         DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
 
         when:
-        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection)
+        def node = resultToNodes.resultToResultNode(executionContext, delegatedResult, fieldSubSelection.getExecutionStepInfo(), fieldSubSelection.getMergedSelectionSet().getSubFieldsList())
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:

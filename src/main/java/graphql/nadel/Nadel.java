@@ -4,6 +4,8 @@ import graphql.ExecutionResult;
 import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.language.Definition;
+import graphql.language.FieldDefinition;
+import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
@@ -45,26 +47,40 @@ public class Nadel {
         List<Service> services = new ArrayList<>();
 
         TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
+        overallRegistry.add(new ObjectTypeDefinition("Query"));
 
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             String serviceName = serviceDefinition.getName();
             DelegatedExecution delegatedExecution = serviceDataFactory.getDelegatedExecution(serviceName);
             GraphQLSchema privateSchema = serviceDataFactory.getPrivateSchema(serviceName);
-
-            Service service = new Service(serviceName, privateSchema, delegatedExecution);
-            services.add(service);
             TypeDefinitionRegistry typeDefinitionRegistry = buildRegistry(serviceDefinition);
-            overallRegistry.merge(typeDefinitionRegistry);
+
+            Service service = new Service(serviceName, privateSchema, delegatedExecution, serviceDefinition, typeDefinitionRegistry);
+            services.add(service);
+            mergeRegistries(overallRegistry, typeDefinitionRegistry);
         }
         this.services = services;
         this.overallSchema = buildSchema(overallRegistry);
-
         this.execution = new Execution(services, overallSchema);
 
     }
 
+    private void mergeRegistries(TypeDefinitionRegistry target, TypeDefinitionRegistry source) {
+        ObjectTypeDefinition currentQueryType = Util.getQueryType(target);
+        ObjectTypeDefinition sourceQueryType = Util.getQueryType(source);
+        for (FieldDefinition addField : sourceQueryType.getFieldDefinitions()) {
+            currentQueryType = currentQueryType.transform(builder -> builder.fieldDefinition(addField));
+        }
+        //TODO: this is just ugly that we remove sourceQueryType and then add it again
+        source.remove(sourceQueryType);
+        target.remove(currentQueryType);
+        target.add(currentQueryType);
+        target.merge(source);
+        source.add(sourceQueryType);
+    }
+
     private GraphQLSchema buildSchema(TypeDefinitionRegistry typeDefinitionRegistry) {
-        // This will not work for Unions and interfaces as they require TypeResolver
+        //TODO: This will not work for Unions and interfaces as they require TypeResolver
         // need to loose this requirement or add dummy versions
         SchemaGenerator schemaGenerator = new SchemaGenerator();
         RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring().build();

@@ -9,11 +9,16 @@ import graphql.execution.nextgen.ExecutionHelper;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResultNodesUtil;
 import graphql.language.Document;
+import graphql.language.FieldDefinition;
+import graphql.language.ObjectTypeDefinition;
 import graphql.nadel.engine.NadelExecutionStrategy;
 import graphql.parser.Parser;
+import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Internal
@@ -21,6 +26,7 @@ public class Execution {
 
     private final List<Service> services;
     private final GraphQLSchema graphQLSchema;
+    private final FieldInfos fieldInfos;
 
     @VisibleForTesting
     ExecutionHelper executionHelper = new ExecutionHelper();
@@ -32,7 +38,8 @@ public class Execution {
     public Execution(List<Service> services, GraphQLSchema graphQLSchema) {
         this.services = services;
         this.graphQLSchema = graphQLSchema;
-        this.nadelExecutionStrategy = new NadelExecutionStrategy(services);
+        this.fieldInfos = createFieldsInfos();
+        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, this.fieldInfos);
     }
 
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
@@ -50,4 +57,24 @@ public class Execution {
     private Document parseQuery(String query) {
         return queryParser.parseDocument(query);
     }
+
+
+    private FieldInfos createFieldsInfos() {
+        Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition = new LinkedHashMap<>();
+
+        for (Service service : services) {
+            ObjectTypeDefinition queryType = Util.getQueryType(service.getTypeDefinitionRegistry());
+            for (FieldDefinition fieldDefinition : queryType.getFieldDefinitions()) {
+                GraphQLFieldDefinition graphQLFieldDefinition = getGraphQLFieldDefinition(fieldDefinition);
+                FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
+                fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+            }
+        }
+        return new FieldInfos(fieldInfoByDefinition);
+    }
+
+    private GraphQLFieldDefinition getGraphQLFieldDefinition(FieldDefinition fieldDefinition) {
+        return graphQLSchema.getQueryType().getFieldDefinition(fieldDefinition.getName());
+    }
+
 }
