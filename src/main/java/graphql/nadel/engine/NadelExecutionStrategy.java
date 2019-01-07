@@ -51,18 +51,20 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = FpKit.mapEntries(delegatedExecutionForTopLevel,
                 (delegatedExecution, mergedFields) -> delegate(context, mergedFields, delegatedExecution, fieldSubSelection.getExecutionStepInfo()));
 
+        return mergeTrees(resultNodes);
+    }
+
+    private CompletableFuture<RootExecutionResultNode> mergeTrees(List<CompletableFuture<RootExecutionResultNode>> resultNodes) {
         return Async.each(resultNodes).thenApply(rootNodes -> {
             Map<String, ExecutionResultNode> mergedChildren = new LinkedHashMap<>();
             rootNodes.forEach(rootNode -> mergedChildren.putAll(rootNode.getChildrenMap()));
             return new RootExecutionResultNode(mergedChildren);
         });
-
     }
 
     private Map<DelegatedExecution, List<MergedField>> getDelegatedExecutionForTopLevel(ExecutionContext context, FieldSubSelection fieldSubSelection) {
-
+        //TODO: consider dynamic delegation targets in the future
         Map<DelegatedExecution, List<MergedField>> result = new LinkedHashMap<>();
-
         ExecutionStepInfo executionStepInfo = fieldSubSelection.getExecutionStepInfo();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, executionStepInfo);
@@ -77,7 +79,6 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         FieldInfo info = fieldInfos.getInfo(fieldDefinition);
         return info.getService().getDelegatedExecution();
     }
-
 
     private CompletableFuture<RootExecutionResultNode> delegate(ExecutionContext context,
                                                                 List<MergedField> mergedFields,
