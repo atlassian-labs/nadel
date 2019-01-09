@@ -8,6 +8,7 @@ import graphql.language.Node;
 import graphql.language.NodeBuilder;
 import graphql.language.NodeChildrenContainer;
 import graphql.language.NodeVisitor;
+import graphql.language.SDLDefinition;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -19,9 +20,9 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
 
     private final String name;
 
-    private List<Definition> typeDefinitions;
+    private List<SDLDefinition> typeDefinitions;
 
-    private ServiceDefinition(String name, List<Definition> definitions, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
+    private ServiceDefinition(String name, List<SDLDefinition> definitions, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
         super(sourceLocation, comments, ignoredChars);
         this.name = name;
         this.typeDefinitions = new ArrayList<>();
@@ -75,7 +76,7 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
         private List<Comment> comments = new ArrayList<>();
         private SourceLocation sourceLocation;
         private String name;
-        private List<Definition> definitions = new ArrayList<>();
+        private List<SDLDefinition> definitions = new ArrayList<>();
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
 
         private Builder() {
@@ -103,7 +104,7 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
             return this;
         }
 
-        public Builder definitions(List<Definition> definitions) {
+        public Builder definitions(List<SDLDefinition> definitions) {
             this.definitions = definitions;
             return this;
         }

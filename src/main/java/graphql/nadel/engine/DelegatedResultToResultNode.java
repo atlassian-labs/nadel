@@ -28,7 +28,7 @@ import static graphql.util.FpKit.map;
 public class DelegatedResultToResultNode {
 
     ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
-    DelegatedResultAnalyzser fetchedValueAnalyzer = new DelegatedResultAnalyzser();
+    DelegatedResultAnalyzer fetchedValueAnalyzer = new DelegatedResultAnalyzer();
     ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
     ExecutionStrategyUtil util = new ExecutionStrategyUtil();
 
