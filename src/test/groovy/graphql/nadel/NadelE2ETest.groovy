@@ -1,5 +1,6 @@
 package graphql.nadel
 
+import graphql.language.AstPrinter
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
 
@@ -50,9 +51,60 @@ class NadelE2ETest extends Specification {
         def result = nadel.execute(nadelExecutionInput)
 
         then:
-        1 * delegatedExecution.delegate(_) >> completedFuture(delegatedExecutionResult)
+        1 * delegatedExecution.delegate(_) >> { args ->
+            DelegatedExecutionParameters params = args[0]
+            assert AstPrinter.printAstCompact(params.query) == "query {hello {name}}"
+            completedFuture(delegatedExecutionResult)
+        }
         result.get().data == data
+    }
 
+    def "query with rename and alias"() {
+
+        DelegatedExecution delegatedExecution = Mock(DelegatedExecution)
+        ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
+            @Override
+            DelegatedExecution getDelegatedExecution(String serviceName) {
+                return delegatedExecution
+            }
+
+            @Override
+            GraphQLSchema getPrivateSchema(String serviceName) {
+            }
+        }
+        def nsdl = '''
+         service MyService {
+            type Query{
+                hello: World   
+            } 
+            type World {
+                name: String <= $source.name2
+            }
+         }
+        '''
+        def query = """
+        { hello {title: name}}
+        """
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceDataFactory(serviceDataFactory)
+                .build()
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+        def data = [hello: [title: "earth"]]
+        DelegatedExecutionResult delegatedExecutionResult = new DelegatedExecutionResult(data)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * delegatedExecution.delegate(_) >> { args ->
+            DelegatedExecutionParameters params = args[0]
+            assert AstPrinter.printAstCompact(params.query) == "query {hello {title:name2}}"
+            completedFuture(delegatedExecutionResult)
+        }
+        result.get().data == data
     }
 
     def "query to two services"() {
@@ -110,6 +162,5 @@ class NadelE2ETest extends Specification {
         1 * delegatedExecution1.delegate(_) >> completedFuture(delegatedExecutionResult1)
         1 * delegatedExecution2.delegate(_) >> completedFuture(delegatedExecutionResult2)
         result.get().data == data1 + data2
-
     }
 }

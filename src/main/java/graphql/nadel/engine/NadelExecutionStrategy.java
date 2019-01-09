@@ -31,16 +31,13 @@ import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionPa
 @Internal
 public class NadelExecutionStrategy implements ExecutionStrategy {
 
-    DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
-    MergedFieldsToDocument mergedFieldsToDocument = new MergedFieldsToDocument();
-    ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
+    private DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
+    private ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
 
-    private final List<Service> services;
     private FieldInfos fieldInfos;
 
     public NadelExecutionStrategy(List<Service> services, FieldInfos fieldInfos) {
         assertNotEmpty(services);
-        this.services = services;
         this.fieldInfos = fieldInfos;
     }
 
@@ -84,7 +81,8 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                                                                 List<MergedField> mergedFields,
                                                                 DelegatedExecution delegatedExecution,
                                                                 ExecutionStepInfo executionStepInfo) {
-        Document query = mergedFieldsToDocument.mergedSelectionSetToDocument(mergedFields);
+        Document query = SourceQueryTransformer.transform(mergedFields, context, executionStepInfo);
+
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
                 .query(query)
                 .build();
