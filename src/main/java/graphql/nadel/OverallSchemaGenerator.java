@@ -26,7 +26,7 @@ public class OverallSchemaGenerator {
     }
 
     private TypeDefinitionRegistry createTypeRegistry(List<Service> services) {
-        //TODO: this is not completely correct
+        //TODO: this merging not completely correct for example schema definition nodes are not handled correctly
         List<FieldDefinition> queryFields = new ArrayList<>();
         TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
         List<SDLDefinition> allDefinitions = new ArrayList<>();
