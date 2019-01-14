@@ -63,7 +63,7 @@ public class Execution {
         Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition = new LinkedHashMap<>();
 
         for (Service service : services) {
-            ObjectTypeDefinition queryType = Util.getQueryType(service.getTypeDefinitionRegistry());
+            ObjectTypeDefinition queryType = service.getDefinitionRegistry().getQueryType();
             for (FieldDefinition fieldDefinition : queryType.getFieldDefinitions()) {
                 GraphQLFieldDefinition graphQLFieldDefinition = getGraphQLFieldDefinition(fieldDefinition);
                 FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);

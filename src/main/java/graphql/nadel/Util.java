@@ -22,4 +22,9 @@ public class Util {
             return (ObjectTypeDefinition) typeDefinitionRegistry.getType("Query").get();
         }
     }
+
+    public static String getNameFromTypeDefinition(OperationTypeDefinition operationTypeDefinition) {
+        TypeName typeName = (TypeName) operationTypeDefinition.getType();
+        return typeName.getName();
+    }
 }

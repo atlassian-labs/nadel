@@ -1,15 +1,14 @@
 package graphql.nadel.engine;
 
 import graphql.Scalars;
-import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.FetchedValueAnalyzer;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
 
-public class DelegatedResultAnalyzser extends FetchedValueAnalyzer {
+public class DelegatedResultAnalyzer extends FetchedValueAnalyzer {
 
     @Override
-    protected Object serializeScalarValue(Object toAnalyze, GraphQLScalarType scalarType, ExecutionStepInfo executionStepInfo) throws CoercingSerializeException {
+    protected Object serializeScalarValue(Object toAnalyze, GraphQLScalarType scalarType) throws CoercingSerializeException {
         if (scalarType == Scalars.GraphQLString) {
             if (toAnalyze instanceof String) {
                 return toAnalyze;
@@ -17,6 +16,6 @@ public class DelegatedResultAnalyzser extends FetchedValueAnalyzer {
                 throw new CoercingSerializeException("Unexpected value '" + toAnalyze + "'. String expected");
             }
         }
-        return super.serializeScalarValue(toAnalyze, scalarType, executionStepInfo);
+        return super.serializeScalarValue(toAnalyze, scalarType);
     }
 }
