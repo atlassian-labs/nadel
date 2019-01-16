@@ -9,7 +9,7 @@ import graphql.execution.MergedField;
 import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode.RootExecutionResultNode;
+import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Document;
 import graphql.nadel.DelegatedExecution;
 import graphql.nadel.DelegatedExecutionParameters;

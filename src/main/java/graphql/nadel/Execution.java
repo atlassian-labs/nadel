@@ -6,8 +6,8 @@ import graphql.Internal;
 import graphql.VisibleForTesting;
 import graphql.execution.ExecutionId;
 import graphql.execution.nextgen.ExecutionHelper;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResultNodesUtil;
+import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Document;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
@@ -50,7 +50,7 @@ public class Execution {
                 .build();
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, graphQLSchema, ExecutionId.generate(), executionInput);
 
-        CompletableFuture<ObjectExecutionResultNode.RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection);
+        CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection);
         return resultNodes.thenApply(ResultNodesUtil::toExecutionResult);
     }
 
@@ -63,7 +63,7 @@ public class Execution {
         Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition = new LinkedHashMap<>();
 
         for (Service service : services) {
-            ObjectTypeDefinition queryType = Util.getQueryType(service.getTypeDefinitionRegistry());
+            ObjectTypeDefinition queryType = service.getDefinitionRegistry().getQueryType();
             for (FieldDefinition fieldDefinition : queryType.getFieldDefinitions()) {
                 GraphQLFieldDefinition graphQLFieldDefinition = getGraphQLFieldDefinition(fieldDefinition);
                 FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);

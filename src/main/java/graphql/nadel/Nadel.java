@@ -1,19 +1,12 @@
 package graphql.nadel;
 
 import graphql.ExecutionResult;
-import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.language.Definition;
-import graphql.language.FieldDefinition;
-import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.GraphQLSchema;
-import graphql.schema.idl.RuntimeWiring;
-import graphql.schema.idl.SchemaGenerator;
-import graphql.schema.idl.TypeDefinitionRegistry;
-import graphql.schema.idl.errors.SchemaProblem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +26,7 @@ public class Nadel {
     private List<Service> services;
     private GraphQLSchema overallSchema;
 
+    private OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
 
     private Nadel(String nsdl, ServiceDataFactory serviceDataFactory) {
         this.nsdl = nsdl;
@@ -46,60 +40,28 @@ public class Nadel {
 
         List<Service> services = new ArrayList<>();
 
-        TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
-        overallRegistry.add(new ObjectTypeDefinition("Query"));
 
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             String serviceName = serviceDefinition.getName();
             DelegatedExecution delegatedExecution = serviceDataFactory.getDelegatedExecution(serviceName);
             GraphQLSchema privateSchema = serviceDataFactory.getPrivateSchema(serviceName);
-            TypeDefinitionRegistry typeDefinitionRegistry = buildRegistry(serviceDefinition);
+            DefinitionRegistry definitionRegistry = buildServiceRegistry(serviceDefinition);
 
-            Service service = new Service(serviceName, privateSchema, delegatedExecution, serviceDefinition, typeDefinitionRegistry);
+            Service service = new Service(serviceName, privateSchema, delegatedExecution, serviceDefinition, definitionRegistry);
             services.add(service);
-            mergeRegistries(overallRegistry, typeDefinitionRegistry);
         }
         this.services = services;
-        this.overallSchema = buildSchema(overallRegistry);
+        this.overallSchema = overallSchemaGenerator.buildOverallSchema(services);
         this.execution = new Execution(services, overallSchema);
 
     }
 
-    private void mergeRegistries(TypeDefinitionRegistry target, TypeDefinitionRegistry source) {
-        ObjectTypeDefinition currentQueryType = Util.getQueryType(target);
-        ObjectTypeDefinition sourceQueryType = Util.getQueryType(source);
-        for (FieldDefinition addField : sourceQueryType.getFieldDefinitions()) {
-            currentQueryType = currentQueryType.transform(builder -> builder.fieldDefinition(addField));
-        }
-        //TODO: this is just ugly that we remove sourceQueryType and then add it again
-        source.remove(sourceQueryType);
-        target.remove(currentQueryType);
-        target.add(currentQueryType);
-        target.merge(source);
-        source.add(sourceQueryType);
-    }
-
-    private GraphQLSchema buildSchema(TypeDefinitionRegistry typeDefinitionRegistry) {
-        //TODO: This will not work for Unions and interfaces as they require TypeResolver
-        // need to loose this requirement or add dummy versions
-        SchemaGenerator schemaGenerator = new SchemaGenerator();
-        RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring().build();
-        return schemaGenerator.makeExecutableSchema(typeDefinitionRegistry, runtimeWiring);
-    }
-
-    private TypeDefinitionRegistry buildRegistry(ServiceDefinition serviceDefinition) {
-        List<GraphQLError> errors = new ArrayList<>();
-        TypeDefinitionRegistry typeRegistry = new TypeDefinitionRegistry();
+    private DefinitionRegistry buildServiceRegistry(ServiceDefinition serviceDefinition) {
+        DefinitionRegistry definitionRegistry = new DefinitionRegistry();
         for (Definition definition : serviceDefinition.getTypeDefinitions()) {
-            if (definition instanceof SDLDefinition) {
-                typeRegistry.add((SDLDefinition) definition).ifPresent(errors::add);
-            }
+            definitionRegistry.add((SDLDefinition) definition);
         }
-        if (errors.size() > 0) {
-            throw new SchemaProblem(errors);
-        } else {
-            return typeRegistry;
-        }
+        return definitionRegistry;
     }
 
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
