@@ -16,15 +16,11 @@ public class Util {
         if (typeDefinitionRegistry.schemaDefinition().isPresent()) {
             List<OperationTypeDefinition> operationTypeDefinitions = typeDefinitionRegistry.schemaDefinition().get().getOperationTypeDefinitions();
             OperationTypeDefinition queryOp = operationTypeDefinitions.stream().filter(op -> "query".equals(op.getName())).findFirst().get();
-            TypeName typeName = (TypeName) queryOp.getType();
+            TypeName typeName = queryOp.getTypeName();
             return (ObjectTypeDefinition) typeDefinitionRegistry.getType(typeName).get();
         } else {
             return (ObjectTypeDefinition) typeDefinitionRegistry.getType("Query").get();
         }
     }
 
-    public static String getNameFromTypeDefinition(OperationTypeDefinition operationTypeDefinition) {
-        TypeName typeName = (TypeName) operationTypeDefinition.getType();
-        return typeName.getName();
-    }
 }

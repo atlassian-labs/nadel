@@ -49,7 +49,7 @@ public class DefinitionRegistry {
             if (!queryOp.isPresent()) {
                 return null;
             }
-            String queryName = Util.getNameFromTypeDefinition(queryOp.get());
+            String queryName = queryOp.get().getTypeName().getName();
             return getDefinition(queryName, ObjectTypeDefinition.class);
         }
         return getDefinition("Query", ObjectTypeDefinition.class);

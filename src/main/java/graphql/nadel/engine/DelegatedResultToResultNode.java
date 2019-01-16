@@ -3,21 +3,22 @@ package graphql.nadel.engine;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
+import graphql.execution.FetchedValue;
 import graphql.execution.MergedField;
 import graphql.execution.MergedSelectionSet;
 import graphql.execution.nextgen.ExecutionStrategyUtil;
-import graphql.execution.nextgen.FetchedValue;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.ResultNodesCreator;
-import graphql.execution.nextgen.result.ExecutionResultMultiZipper;
 import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.ExecutionResultZipper;
 import graphql.execution.nextgen.result.NamedResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResultNodesUtil;
+import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.DelegatedExecutionResult;
 import graphql.util.FpKit;
+import graphql.util.NodeMultiZipper;
+import graphql.util.NodeZipper;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,25 +33,26 @@ public class DelegatedResultToResultNode {
     ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
     ExecutionStrategyUtil util = new ExecutionStrategyUtil();
 
-    public ObjectExecutionResultNode.RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
-                                                                                DelegatedExecutionResult delegatedExecutionResult,
-                                                                                ExecutionStepInfo executionStepInfo,
-                                                                                List<MergedField> mergedFields) {
+    public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
+                                                      DelegatedExecutionResult delegatedExecutionResult,
+                                                      ExecutionStepInfo executionStepInfo,
+                                                      List<MergedField> mergedFields) {
 
         //TODO: the ExecutionContext and the FieldSubSelection (the ExecutionStepInfo in it) are referencing the overall schema, not the private schema
 
-        FieldSubSelection fieldSubSelectionWithData = new FieldSubSelection();
-        fieldSubSelectionWithData.setExecutionStepInfo(executionStepInfo);
-        fieldSubSelectionWithData.setSource(delegatedExecutionResult.getData());
 
         Map<String, MergedField> subFields = FpKit.getByName(mergedFields, MergedField::getResultKey);
         MergedSelectionSet mergedSelectionSet = MergedSelectionSet.newMergedSelectionSet()
                 .subFields(subFields).build();
 
-        fieldSubSelectionWithData.setMergedSelectionSet(mergedSelectionSet);
+        FieldSubSelection fieldSubSelectionWithData = FieldSubSelection.newFieldSubSelection().
+                executionInfo(executionStepInfo)
+                .source(delegatedExecutionResult.getData())
+                .mergedSelectionSet(mergedSelectionSet)
+                .build();
 
         List<NamedResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelectionWithData);
-        return new ObjectExecutionResultNode.RootExecutionResultNode(namedResultNodes);
+        return new RootExecutionResultNode(namedResultNodes);
     }
 
     private List<NamedResultNode> resolveSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
@@ -58,22 +60,22 @@ public class DelegatedResultToResultNode {
     }
 
     private NamedResultNode resolveAllChildNodes(ExecutionContext context, NamedResultNode namedResultNode) {
-        ExecutionResultMultiZipper unresolvedNodes = ResultNodesUtil.getUnresolvedNodes(namedResultNode.getNode());
-        List<ExecutionResultZipper> resolvedNodes = map(unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
+        NodeMultiZipper<ExecutionResultNode> unresolvedNodes = ResultNodesUtil.getUnresolvedNodes(namedResultNode.getNode());
+        List<NodeZipper<ExecutionResultNode>> resolvedNodes = map(unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
         return resolvedNodesToResultNode(namedResultNode, unresolvedNodes, resolvedNodes);
     }
 
-    private ExecutionResultZipper resolveNode(ExecutionContext executionContext, ExecutionResultZipper unresolvedNode) {
+    private NodeZipper<ExecutionResultNode> resolveNode(ExecutionContext executionContext, NodeZipper<ExecutionResultNode> unresolvedNode) {
         FetchedValueAnalysis fetchedValueAnalysis = unresolvedNode.getCurNode().getFetchedValueAnalysis();
         FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, fetchedValueAnalysis);
         List<NamedResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelection);
-        return unresolvedNode.withNode(new ObjectExecutionResultNode(fetchedValueAnalysis, namedResultNodes));
+        return unresolvedNode.withNewNode(new ObjectExecutionResultNode(fetchedValueAnalysis, namedResultNodes));
     }
 
     private NamedResultNode resolvedNodesToResultNode(NamedResultNode namedResultNode,
-                                                      ExecutionResultMultiZipper unresolvedNodes,
-                                                      List<ExecutionResultZipper> resolvedNodes) {
-        ExecutionResultNode rootNode = unresolvedNodes.withZippers(resolvedNodes).toRootNode();
+                                                      NodeMultiZipper<ExecutionResultNode> unresolvedNodes,
+                                                      List<NodeZipper<ExecutionResultNode>> resolvedNodes) {
+        ExecutionResultNode rootNode = unresolvedNodes.withReplacedZippers(resolvedNodes).toRootNode();
         return namedResultNode.withNode(rootNode);
     }
 
@@ -97,7 +99,11 @@ public class DelegatedResultToResultNode {
     private FetchedValue fetchValue(ExecutionContext context, Object source, MergedField mergedField, ExecutionStepInfo newExecutionStepInfo) {
         Map<String, Object> map = (Map<String, Object>) source;
         Object fetchedValue = map.get(mergedField.getResultKey());
-        return new FetchedValue(fetchedValue, fetchedValue, Collections.emptyList());
+        return FetchedValue.newFetchedValue()
+                .fetchedValue(fetchedValue)
+                .rawFetchedValue(fetchedValue)
+                .errors(Collections.emptyList())
+                .build();
     }
 
     private FetchedValueAnalysis analyseValue(ExecutionContext executionContext, FetchedValue fetchedValue, ExecutionStepInfo executionInfo) {
