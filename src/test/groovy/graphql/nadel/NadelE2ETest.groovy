@@ -12,17 +12,6 @@ class NadelE2ETest extends Specification {
 
     def "query to one service"() {
 
-        DelegatedExecution delegatedExecution = Mock(DelegatedExecution)
-        ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
-            @Override
-            DelegatedExecution getDelegatedExecution(String serviceName) {
-                return delegatedExecution
-            }
-
-            @Override
-            GraphQLSchema getPrivateSchema(String serviceName) {
-            }
-        }
         def nsdl = """
          service MyService {
             type Query{
@@ -36,6 +25,26 @@ class NadelE2ETest extends Specification {
         def query = """
         { hello {name}}
         """
+        def privateSchema = TestUtil.schema("""
+            type Query{
+                hello: World  
+            } 
+            type World {
+                name: String
+            }
+        """)
+        DelegatedExecution delegatedExecution = Mock(DelegatedExecution)
+        ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
+            @Override
+            DelegatedExecution getDelegatedExecution(String serviceName) {
+                return delegatedExecution
+            }
+
+            @Override
+            GraphQLSchema getPrivateSchema(String serviceName) {
+                privateSchema
+            }
+        }
         given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
@@ -57,18 +66,6 @@ class NadelE2ETest extends Specification {
 
     def "query to two services"() {
 
-        DelegatedExecution delegatedExecution1 = Mock(DelegatedExecution)
-        DelegatedExecution delegatedExecution2 = Mock(DelegatedExecution)
-        ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
-            @Override
-            DelegatedExecution getDelegatedExecution(String serviceName) {
-                return serviceName == "Foo" ? delegatedExecution1 : delegatedExecution2
-            }
-
-            @Override
-            GraphQLSchema getPrivateSchema(String serviceName) {
-            }
-        }
         def nsdl = """
          service Foo {
             type Query{
@@ -91,6 +88,36 @@ class NadelE2ETest extends Specification {
         def query = """
         { foo {name} bar{name}}
         """
+        def privateSchema1 = TestUtil.schema("""
+            type Query{
+                foo: Foo  
+                
+            } 
+            type Foo {
+                name: String
+            }
+        """)
+        def privateSchema2 = TestUtil.schema("""
+            type Query{
+                bar: Bar
+            } 
+            type Bar {
+                name: String
+            }
+        """)
+        DelegatedExecution delegatedExecution1 = Mock(DelegatedExecution)
+        DelegatedExecution delegatedExecution2 = Mock(DelegatedExecution)
+        ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
+            @Override
+            DelegatedExecution getDelegatedExecution(String serviceName) {
+                return serviceName == "Foo" ? delegatedExecution1 : delegatedExecution2
+            }
+
+            @Override
+            GraphQLSchema getPrivateSchema(String serviceName) {
+                return serviceName == "Foo" ? privateSchema1 : privateSchema2
+            }
+        }
         given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)

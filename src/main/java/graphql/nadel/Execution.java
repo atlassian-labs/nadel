@@ -25,7 +25,7 @@ import java.util.concurrent.CompletableFuture;
 public class Execution {
 
     private final List<Service> services;
-    private final GraphQLSchema graphQLSchema;
+    private final GraphQLSchema overallSchema;
     private final FieldInfos fieldInfos;
 
     @VisibleForTesting
@@ -35,11 +35,11 @@ public class Execution {
 
     NadelExecutionStrategy nadelExecutionStrategy;
 
-    public Execution(List<Service> services, GraphQLSchema graphQLSchema) {
+    public Execution(List<Service> services, GraphQLSchema overallSchema) {
         this.services = services;
-        this.graphQLSchema = graphQLSchema;
+        this.overallSchema = overallSchema;
         this.fieldInfos = createFieldsInfos();
-        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, this.fieldInfos);
+        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, this.fieldInfos, overallSchema);
     }
 
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
@@ -48,7 +48,7 @@ public class Execution {
                 .operationName(nadelExecutionInput.getOperationName())
                 .variables(nadelExecutionInput.getVariables())
                 .build();
-        ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, graphQLSchema, ExecutionId.generate(), executionInput);
+        ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput);
 
         CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection);
         return resultNodes.thenApply(ResultNodesUtil::toExecutionResult);
@@ -74,7 +74,7 @@ public class Execution {
     }
 
     private GraphQLFieldDefinition getGraphQLFieldDefinition(FieldDefinition fieldDefinition) {
-        return graphQLSchema.getQueryType().getFieldDefinition(fieldDefinition.getName());
+        return overallSchema.getQueryType().getFieldDefinition(fieldDefinition.getName());
     }
 
 }
