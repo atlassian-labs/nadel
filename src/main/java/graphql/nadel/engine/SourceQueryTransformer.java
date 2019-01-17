@@ -10,15 +10,22 @@ import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.FieldDefinition;
 import graphql.language.FragmentDefinition;
+import graphql.language.InlineFragment;
 import graphql.language.Node;
+import graphql.language.ObjectTypeDefinition;
 import graphql.language.OperationDefinition;
+import graphql.language.TypeName;
 import graphql.language.VariableReference;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
+import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
+import graphql.nadel.dsl.TypeTransformation;
 import graphql.nadel.engine.transformation.CopyFieldTransformation;
 import graphql.nadel.engine.transformation.FieldMappingTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
+import graphql.util.TreeTransformerUtil;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,8 +37,10 @@ import java.util.stream.Collectors;
 import static graphql.Assert.assertFalse;
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
+import static graphql.Assert.assertTrue;
 import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
+import static graphql.language.TypeName.newTypeName;
 import static java.util.function.Function.identity;
 
 public class SourceQueryTransformer {
@@ -88,7 +97,6 @@ public class SourceQueryTransformer {
 
     private FragmentDefinition transformNamedFragment(FragmentDefinition fragmentDefinition) {
         QueryTraversal traversal = QueryTraversal.newQueryTraversal()
-                //Fragments by name are not used in transformation since we are not traversing fragments
                 .fragmentsByName(executionContext.getFragmentsByName())
                 .variables(executionContext.getVariables())
                 .root(fragmentDefinition)
@@ -101,7 +109,6 @@ public class SourceQueryTransformer {
 
     private Node transformTopLevelField(Field topLevelField, OperationDefinition.Operation operation) {
         QueryTraversal traversal = QueryTraversal.newQueryTraversal()
-                //Fragments by name are not used in transformation since we are not traversing fragments
                 .fragmentsByName(executionContext.getFragmentsByName())
                 .variables(executionContext.getVariables())
                 .root(topLevelField)
@@ -141,7 +148,16 @@ public class SourceQueryTransformer {
 
         @Override
         public void visitInlineFragment(QueryVisitorInlineFragmentEnvironment environment) {
-            throw new UnsupportedOperationException("Inline fragments are not supported");
+            InlineFragment fragment = environment.getInlineFragment();
+            TypeName typeName = fragment.getTypeCondition();
+            TypeTransformation typeTransformation = typeTransformationForFragment(typeName);
+            if(typeTransformation != null) {
+                InlineFragment changedFragment = fragment.transform(f -> {
+                    TypeName newTypeName = newTypeName(typeTransformation.getOriginalName()).build();
+                    f.typeCondition(newTypeName);
+                });
+                TreeTransformerUtil.changeNode(environment.getTraverserContext(), changedFragment);
+            }
             //TODO: what if all fields inside inline fragment get deleted? we should recheck it on LEAVING the node
             //(after transformations are applied); So we can see what happened. Alternative would be  to do second pass
         }
@@ -150,6 +166,16 @@ public class SourceQueryTransformer {
         public void visitFragmentSpread(QueryVisitorFragmentSpreadEnvironment environment) {
             referencedFragmentNames.add(environment.getFragmentSpread().getName());
         }
+    }
+
+    private TypeTransformation typeTransformationForFragment(TypeName typeName) {
+        GraphQLType type = executionContext.getGraphQLSchema().getType(typeName.getName());
+        assertTrue(type instanceof GraphQLObjectType, "Expected type '%s' to be an object type", typeName);
+        ObjectTypeDefinition typeDefinition = ((GraphQLObjectType)type).getDefinition();
+        if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
+            return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeTransformation();
+        }
+        return null;
     }
 
     private graphql.nadel.dsl.FieldTransformation transformationDefinitionForField(FieldDefinition definition) {

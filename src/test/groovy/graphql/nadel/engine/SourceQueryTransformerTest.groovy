@@ -18,12 +18,17 @@ class SourceQueryTransformerTest extends Specification {
             type Query { 
                 hello: String <= $source.helloWorld 
                 foo(id: ID!): Foo
+                bar(id: ID!): Bar
             }
             
             type Foo {
                 id: ID!
                 barId: String <= $source.bazId
                 qux: String!
+            }
+            
+            type Bar <= $innerTypes.Baz {
+                id: ID!
             }
         }
          ''')
@@ -109,6 +114,27 @@ class SourceQueryTransformerTest extends Specification {
         AstPrinter.printAstCompact(delegateQuery) ==
                 'query {foo(id:"1") {...frag1}} fragment frag2 on Foo {bazId ...frag3} fragment frag3 on Foo {qux} ' +
                 'fragment frag1 on Foo {id ...frag2}'
+    }
+
+    def "inline fragments are transformed and types are renamed"() {
+
+        def query = TestUtil.parseQuery(
+                '''
+            {
+             b1: bar(id: "1") {
+                ... on Bar {
+                    barId: id
+                }
+             }
+            }
+            ''')
+        //TODO: test case without type condition, currently getting NPE due to AstPrinter bug
+        when:
+
+        def delegateQuery = doTransform(schema, query)
+        then:
+        AstPrinter.printAstCompact(delegateQuery) ==
+                'query {b1:bar(id:"1") {... on Baz {barId:id}}}'
     }
 
 
