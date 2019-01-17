@@ -21,6 +21,7 @@ import static graphql.Assert.assertShouldNeverHappen;
 public class ResultNodesToOverallResult {
 
 
+    //TODO: the return type is not really ready to return hydration results, which can be used as input for new queries
     public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema) {
         ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
