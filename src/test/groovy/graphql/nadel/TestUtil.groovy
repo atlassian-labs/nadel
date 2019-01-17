@@ -14,26 +14,9 @@ import graphql.execution.MergedField
 import graphql.execution.MergedSelectionSet
 import graphql.execution.nextgen.ExecutionHelper
 import graphql.introspection.Introspection
-import graphql.language.AstPrinter
-import graphql.language.Document
-import graphql.language.Field
-import graphql.language.Node
-import graphql.language.ScalarTypeDefinition
-import graphql.schema.Coercing
-import graphql.schema.DataFetcher
-import graphql.schema.GraphQLArgument
-import graphql.schema.GraphQLDirective
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLInputType
-import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLScalarType
-import graphql.schema.GraphQLSchema
-import graphql.schema.TypeResolver
-import graphql.schema.idl.RuntimeWiring
-import graphql.schema.idl.SchemaGenerator
-import graphql.schema.idl.SchemaParser
-import graphql.schema.idl.TypeRuntimeWiring
-import graphql.schema.idl.WiringFactory
+import graphql.language.*
+import graphql.schema.*
+import graphql.schema.idl.*
 import graphql.schema.idl.errors.SchemaProblem
 import groovy.json.JsonSlurper
 
@@ -122,6 +105,7 @@ class TestUtil {
         schema(spec, runtimeWiring.build())
     }
 
+
     static GraphQLSchema schema(String spec) {
         schema(spec, mockRuntimeWiring)
     }
@@ -157,6 +141,12 @@ class TestUtil {
             assert false: "The schema could not be compiled : ${e}"
             return null
         }
+    }
+
+    static GraphQLSchema schemaFromNdsl(String ndsl) {
+        def stitchingDsl = new NSDLParser().parseDSL(ndsl)
+        def defRegistries = stitchingDsl.serviceDefinitions.collect({ Nadel.buildServiceRegistry(it) })
+        return new OverallSchemaGenerator().buildOverallSchema(defRegistries)
     }
 
     static GraphQL.Builder graphQL(String spec) {

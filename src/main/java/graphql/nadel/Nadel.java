@@ -11,6 +11,7 @@ import graphql.schema.GraphQLSchema;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
 
@@ -51,12 +52,15 @@ public class Nadel {
             services.add(service);
         }
         this.services = services;
-        this.overallSchema = overallSchemaGenerator.buildOverallSchema(services);
+        List<DefinitionRegistry> registries = services.stream()
+                .map(Service::getDefinitionRegistry)
+                .collect(Collectors.toList());
+        this.overallSchema = overallSchemaGenerator.buildOverallSchema(registries);
         this.execution = new Execution(services, overallSchema);
 
     }
 
-    private DefinitionRegistry buildServiceRegistry(ServiceDefinition serviceDefinition) {
+    static DefinitionRegistry buildServiceRegistry(ServiceDefinition serviceDefinition) {
         DefinitionRegistry definitionRegistry = new DefinitionRegistry();
         for (Definition definition : serviceDefinition.getTypeDefinitions()) {
             definitionRegistry.add((SDLDefinition) definition);
@@ -67,6 +71,10 @@ public class Nadel {
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
         // we need to actually validate the query with the normal graphql-java validation here
         return execution.execute(nadelExecutionInput);
+    }
+
+    public GraphQLSchema getOverallSchema() {
+        return overallSchema;
     }
 
     /**

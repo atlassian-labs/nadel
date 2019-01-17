@@ -106,6 +106,54 @@ class NadelE2ETest extends Specification {
         result.get().data == data
     }
 
+    def "query with named fragments"() {
+
+        DelegatedExecution delegatedExecution = Mock(DelegatedExecution)
+        ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
+            @Override
+            DelegatedExecution getDelegatedExecution(String serviceName) {
+                return delegatedExecution
+            }
+
+            @Override
+            GraphQLSchema getPrivateSchema(String serviceName) {
+            }
+        }
+        def nsdl = '''
+         service MyService {
+            type Query{
+                hello: World   
+            } 
+            type World {
+                name: String <= $source.name2
+            }
+         }
+        '''
+        def query = """
+        { hello {title: name}}
+        """
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceDataFactory(serviceDataFactory)
+                .build()
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+        def data = [hello: [title: "earth"]]
+        DelegatedExecutionResult delegatedExecutionResult = new DelegatedExecutionResult(data)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * delegatedExecution.delegate(_) >> { args ->
+            DelegatedExecutionParameters params = args[0]
+            assert AstPrinter.printAstCompact(params.query) == "query {hello {title:name2}}"
+            completedFuture(delegatedExecutionResult)
+        }
+        result.get().data == data
+    }
+
     def "query to two services"() {
 
         DelegatedExecution delegatedExecution1 = Mock(DelegatedExecution)

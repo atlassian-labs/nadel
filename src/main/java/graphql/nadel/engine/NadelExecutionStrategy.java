@@ -34,9 +34,8 @@ import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionPa
 @Internal
 public class NadelExecutionStrategy implements ExecutionStrategy {
 
-    DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
-    MergedFieldsToDocument mergedFieldsToDocument = new MergedFieldsToDocument();
-    ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
+    private final DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
+    private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
 
     private final List<Service> services;
     private FieldInfos fieldInfos;
