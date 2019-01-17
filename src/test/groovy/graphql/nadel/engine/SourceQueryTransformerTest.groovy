@@ -34,7 +34,6 @@ class SourceQueryTransformerTest extends Specification {
          ''')
 
     def "transforms query to delegate with field rename"() {
-
         def query = TestUtil.parseQuery(
                 '''
             {
@@ -46,15 +45,14 @@ class SourceQueryTransformerTest extends Specification {
             }
             ''')
 
-
         when:
         def delegateQuery = doTransform(schema, query)
+
         then:
         AstPrinter.printAstCompact(delegateQuery) == "query {hAlias:helloWorld foo(id:\"1\") {fooId:id bazId}}"
     }
 
     def "referenced named fragments are transformed and included"() {
-
         def query = TestUtil.parseQuery(
                 '''
             {
@@ -78,15 +76,14 @@ class SourceQueryTransformerTest extends Specification {
             ''')
 
         when:
-
         def delegateQuery = doTransform(schema, query)
+
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
                 'query {f1:foo(id:"1") {...frag1} f2:foo(id:"2") {...frag2}} fragment frag2 on Foo {id bazId} fragment frag1 on Foo {id}'
     }
 
     def "nested fragments are transformed and included"() {
-
         def query = TestUtil.parseQuery(
                 '''
             {
@@ -108,8 +105,8 @@ class SourceQueryTransformerTest extends Specification {
             ''')
 
         when:
-
         def delegateQuery = doTransform(schema, query)
+
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
                 'query {foo(id:"1") {...frag1}} fragment frag2 on Foo {bazId ...frag3} fragment frag3 on Foo {qux} ' +
@@ -117,7 +114,6 @@ class SourceQueryTransformerTest extends Specification {
     }
 
     def "inline fragments are transformed and types are renamed"() {
-
         def query = TestUtil.parseQuery(
                 '''
             {
@@ -128,10 +124,11 @@ class SourceQueryTransformerTest extends Specification {
              }
             }
             ''')
-        //TODO: test case without type condition, currently getting NPE due to AstPrinter bug
-        when:
+        //TODO: add test case without type condition, currently getting NPE due to AstPrinter bug
 
+        when:
         def delegateQuery = doTransform(schema, query)
+
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
                 'query {b1:bar(id:"1") {... on Baz {barId:id}}}'
