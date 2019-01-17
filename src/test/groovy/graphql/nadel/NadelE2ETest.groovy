@@ -25,7 +25,7 @@ class NadelE2ETest extends Specification {
         def query = """
         { hello {name}}
         """
-        def privateSchema = TestUtil.schema("""
+        def underlyingSchema = TestUtil.schema("""
             type Query{
                 hello: World  
             } 
@@ -41,8 +41,8 @@ class NadelE2ETest extends Specification {
             }
 
             @Override
-            GraphQLSchema getPrivateSchema(String serviceName) {
-                privateSchema
+            GraphQLSchema getUnderlyingSchema(String serviceName) {
+                underlyingSchema
             }
         }
         given:
@@ -88,7 +88,7 @@ class NadelE2ETest extends Specification {
         def query = """
         { foo {name} bar{name}}
         """
-        def privateSchema1 = TestUtil.schema("""
+        def underlyingSchema1 = TestUtil.schema("""
             type Query{
                 foo: Foo  
                 
@@ -97,7 +97,7 @@ class NadelE2ETest extends Specification {
                 name: String
             }
         """)
-        def privateSchema2 = TestUtil.schema("""
+        def underlyingSchema2 = TestUtil.schema("""
             type Query{
                 bar: Bar
             } 
@@ -114,8 +114,8 @@ class NadelE2ETest extends Specification {
             }
 
             @Override
-            GraphQLSchema getPrivateSchema(String serviceName) {
-                return serviceName == "Foo" ? privateSchema1 : privateSchema2
+            GraphQLSchema getUnderlyingSchema(String serviceName) {
+                return serviceName == "Foo" ? underlyingSchema1 : underlyingSchema2
             }
         }
         given:
