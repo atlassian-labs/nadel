@@ -43,6 +43,7 @@ public class SourceQueryTransformer {
     public SourceQueryTransformer(ExecutionContext executionContext) {
         this.executionContext = executionContext;
         //Field transformation may remove fragment reference all together if fragment is reduced to empty selection set
+        //so it must be done first
         this.transformedFragments = transformFragments(executionContext.getFragmentsByName());
     }
 

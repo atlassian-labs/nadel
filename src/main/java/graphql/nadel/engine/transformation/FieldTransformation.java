@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transformation;
 
-import com.sun.istack.internal.Nullable;
 import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.nextgen.result.NamedResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
@@ -17,10 +16,11 @@ public interface FieldTransformation {
      * Unapply should know which fields to fetch and return.
      * E.g. (this is query mixed with pseudo nadel for brevity)
      * Client query:
+     * <pre>
      * query {
-     *     fieldA <= $source.originalName {
+     *     fieldA &lt;= $source.originalName {
      *          alias: fieldB
-     *          hydration <= uses fieldC as a parameter
+     *          hydration &lt;= uses fieldC as a parameter
      *     }
      * }
      * Delegate query:
@@ -42,11 +42,12 @@ public interface FieldTransformation {
      * unapply should be called postOrder (for each field in delegate query there is field transformation function that has
      * some state):
      * like so:
-     * /orginalName/fieldC => unapply(resultNodeFor(originalName), null) = NamedResultNode(hydration: UnresolvedHydrationField(params))
-     * /orginalName/alias => unapply(resultNodeFor(originalName), null) = NamedResultNode(alias: LeafNode("valueB"))
-     * /orginalName => unapply(resultNodeFor(RootExecutionNode), (two children from above)) = NamedResultNode(fieldA: ObjectExecutionResultNode(children))
+     * /orginalName/fieldC: unapply(resultNodeFor(originalName), null) = NamedResultNode(hydration: UnresolvedHydrationField(params))
+     * /orginalName/alias: unapply(resultNodeFor(originalName), null) = NamedResultNode(alias: LeafNode("valueB"))
+     * /orginalName: unapply(resultNodeFor(RootExecutionNode), (two children from above)) = NamedResultNode(fieldA: ObjectExecutionResultNode(children))
+     * </pre>
      */
-    default List<NamedResultNode> unapply(ObjectExecutionResultNode resultNode, @Nullable List<NamedResultNode> children) {
+    default List<NamedResultNode> unapply(ObjectExecutionResultNode resultNode, List<NamedResultNode> children) {
         //This will be an abstract function
         throw new UnsupportedOperationException("not ready yet.");
     }
