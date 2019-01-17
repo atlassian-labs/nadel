@@ -41,6 +41,7 @@ import static graphql.Assert.assertTrue;
 import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.language.TypeName.newTypeName;
+import static graphql.util.TreeTransformerUtil.changeNode;
 import static java.util.function.Function.identity;
 
 public class SourceQueryTransformer {
@@ -156,7 +157,7 @@ public class SourceQueryTransformer {
                     TypeName newTypeName = newTypeName(typeTransformation.getOriginalName()).build();
                     f.typeCondition(newTypeName);
                 });
-                TreeTransformerUtil.changeNode(environment.getTraverserContext(), changedFragment);
+                changeNode(environment.getTraverserContext(), changedFragment);
             }
             //TODO: what if all fields inside inline fragment get deleted? we should recheck it on LEAVING the node
             //(after transformations are applied); So we can see what happened. Alternative would be  to do second pass
