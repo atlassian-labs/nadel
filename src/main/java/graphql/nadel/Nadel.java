@@ -18,6 +18,7 @@ import graphql.ExecutionResult;
 import graphql.GraphQLError;
 import graphql.PublicApi;
 import graphql.execution.AsyncExecutionStrategy;
+import graphql.execution.ExecutionStrategy;
 import graphql.execution.instrumentation.Instrumentation;
 import graphql.language.Definition;
 import graphql.language.FieldDefinition;
@@ -30,7 +31,6 @@ import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.idl.TypeDefinitionRegistry;
-import graphql.schema.idl.TypeInfo;
 import graphql.schema.idl.errors.SchemaProblem;
 
 import java.util.ArrayList;
@@ -40,7 +40,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static com.atlassian.braid.LinkArgument.ArgumentSource.*;
 import static com.atlassian.braid.LinkArgument.ArgumentSource.valueOf;
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.TransformationUtils.collectFieldTransformations;
@@ -48,7 +47,6 @@ import static graphql.nadel.TransformationUtils.collectObjectTypeDefinitionWithT
 import static graphql.schema.idl.TypeInfo.typeInfo;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 @PublicApi
 public class Nadel {
@@ -81,10 +79,12 @@ public class Nadel {
                   BatchLoaderEnvironment batchLoaderEnvironment,
                   List<Instrumentation> instrumentations,
                   ArgumentValueProvider argumentValueProvider,
-                  PrivateSchemaProvider privateSchemaProvider) {
+                  PrivateSchemaProvider privateSchemaProvider,
+                  ExecutionStrategy executionStrategy) {
         requireNonNull(dsl, "dsl");
         requireNonNull(schemaSourceFactory, "schemaSourceFactory");
         requireNonNull(transformationsFactory, "transformationsFactory");
+        requireNonNull(executionStrategy);
         this.argumentValueProvider = requireNonNull(argumentValueProvider, "argumentValueProvider");
         this.privateSchemaProvider = requireNonNull(privateSchemaProvider, "privateSchemaProvider");
         this.stitchingDsl = this.parser.parseDSL(dsl);
@@ -113,10 +113,9 @@ public class Nadel {
             schemaSources.add(schemaSource);
         }
 
-        AsyncExecutionStrategy asyncExecutionStrategy = new AsyncExecutionStrategy();
         final List<SchemaTransformation> schemaTransformations = transformationsFactory.create(this.typesByService);
         Braid.BraidBuilder braidBuilder = Braid.builder()
-                .executionStrategy(asyncExecutionStrategy)
+                .executionStrategy(executionStrategy)
                 .customSchemaTransformations(schemaTransformations)
                 .schemaSources(schemaSources)
                 .batchLoaderEnvironment(batchLoaderEnvironment);
@@ -249,6 +248,7 @@ public class Nadel {
         private List<Instrumentation> instrumentations = new ArrayList<>();
         private ArgumentValueProvider argumentValueProvider = DefaultArgumentValueProvider.INSTANCE;
         private PrivateSchemaProvider privateSchemaProvider = PrivateSchemaProvider.DEFAULT;
+        private ExecutionStrategy executionStrategy = new AsyncExecutionStrategy();
 
         public Builder dsl(String dsl) {
             this.dsl = requireNonNull(dsl);
@@ -291,9 +291,13 @@ public class Nadel {
             return this;
         }
 
+        public Builder executionStrategy(ExecutionStrategy executionStrategy){
+            this.executionStrategy = requireNonNull(executionStrategy);
+            return this;
+        }
         public Nadel build() {
             return new Nadel(dsl, schemaSourceFactory, transformationsFactory, batchLoaderEnvironment, instrumentations,
-                    argumentValueProvider, privateSchemaProvider);
+                    argumentValueProvider, privateSchemaProvider, executionStrategy);
         }
     }
 }
