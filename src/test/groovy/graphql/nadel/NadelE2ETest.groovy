@@ -10,7 +10,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
 
-
     def "query to one service"() {
 
         DelegatedExecution delegatedExecution = Mock(DelegatedExecution)

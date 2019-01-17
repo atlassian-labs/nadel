@@ -11,6 +11,8 @@ import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Document;
+import graphql.language.Field;
+import graphql.language.OperationDefinition;
 import graphql.nadel.DelegatedExecution;
 import graphql.nadel.DelegatedExecutionParameters;
 import graphql.nadel.FieldInfo;
@@ -24,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionParameters;
@@ -31,13 +34,16 @@ import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionPa
 @Internal
 public class NadelExecutionStrategy implements ExecutionStrategy {
 
-    private DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
-    private ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
+    DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
+    MergedFieldsToDocument mergedFieldsToDocument = new MergedFieldsToDocument();
+    ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
 
+    private final List<Service> services;
     private FieldInfos fieldInfos;
 
     public NadelExecutionStrategy(List<Service> services, FieldInfos fieldInfos) {
         assertNotEmpty(services);
+        this.services = services;
         this.fieldInfos = fieldInfos;
     }
 
@@ -81,7 +87,12 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                                                                 List<MergedField> mergedFields,
                                                                 DelegatedExecution delegatedExecution,
                                                                 ExecutionStepInfo executionStepInfo) {
-        Document query = SourceQueryTransformer.transform(mergedFields, context, executionStepInfo);
+        SourceQueryTransformer queryTransformer = new SourceQueryTransformer(context);
+        List<Field> fields = mergedFields.stream()
+                .map(MergedField::getSingleField)
+                .collect(Collectors.toList());
+        queryTransformer.transform(fields, OperationDefinition.Operation.QUERY);
+        Document query = queryTransformer.delegateDocument();
 
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
                 .query(query)
