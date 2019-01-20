@@ -8,5 +8,5 @@ public interface ServiceDataFactory {
 
     DelegatedExecution getDelegatedExecution(String serviceName);
 
-    GraphQLSchema getPrivateSchema(String serviceName);
+    GraphQLSchema getUnderlyingSchema(String serviceName);
 }
