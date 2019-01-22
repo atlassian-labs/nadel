@@ -19,6 +19,7 @@ import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Service;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLSchema;
 import graphql.util.FpKit;
 
 import java.util.ArrayList;
@@ -35,12 +36,16 @@ import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionPa
 public class NadelExecutionStrategy implements ExecutionStrategy {
 
     private final DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
+    private final MergedFieldsToDocument mergedFieldsToDocument = new MergedFieldsToDocument();
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
+    private final ResultNodesToOverallResult resultNodesToOverallResult = new ResultNodesToOverallResult();
 
     private final List<Service> services;
     private FieldInfos fieldInfos;
+    private GraphQLSchema overallSchema;
 
-    public NadelExecutionStrategy(List<Service> services, FieldInfos fieldInfos) {
+    public NadelExecutionStrategy(List<Service> services, FieldInfos fieldInfos, GraphQLSchema overallSchema) {
+        this.overallSchema = overallSchema;
         assertNotEmpty(services);
         this.services = services;
         this.fieldInfos = fieldInfos;
@@ -48,10 +53,10 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
     @Override
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext context, FieldSubSelection fieldSubSelection) {
-        Map<DelegatedExecution, List<MergedField>> delegatedExecutionForTopLevel = getDelegatedExecutionForTopLevel(context, fieldSubSelection);
+        Map<Service, List<MergedField>> delegatedExecutionForTopLevel = getDelegatedExecutionForTopLevel(context, fieldSubSelection);
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = FpKit.mapEntries(delegatedExecutionForTopLevel,
-                (delegatedExecution, mergedFields) -> delegate(context, mergedFields, delegatedExecution, fieldSubSelection.getExecutionStepInfo()));
+                (service, mergedFields) -> delegate(context, mergedFields, service, fieldSubSelection.getExecutionStepInfo()));
 
         return mergeTrees(resultNodes);
     }
@@ -64,28 +69,29 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         });
     }
 
-    private Map<DelegatedExecution, List<MergedField>> getDelegatedExecutionForTopLevel(ExecutionContext context, FieldSubSelection fieldSubSelection) {
+    private Map<Service, List<MergedField>> getDelegatedExecutionForTopLevel(ExecutionContext context, FieldSubSelection fieldSubSelection) {
         //TODO: consider dynamic delegation targets in the future
-        Map<DelegatedExecution, List<MergedField>> result = new LinkedHashMap<>();
+        Map<Service, List<MergedField>> result = new LinkedHashMap<>();
         ExecutionStepInfo executionStepInfo = fieldSubSelection.getExecutionStepInfo();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, executionStepInfo);
-            DelegatedExecution delegate = getDelegatedExecutionForFieldDefinition(newExecutionStepInfo.getFieldDefinition());
-            result.computeIfAbsent(delegate, key -> new ArrayList<>());
-            result.get(delegate).add(mergedField);
+            Service service = getServiceForFieldDefinition(newExecutionStepInfo.getFieldDefinition());
+            result.computeIfAbsent(service, key -> new ArrayList<>());
+            result.get(service).add(mergedField);
         }
         return result;
     }
 
-    private DelegatedExecution getDelegatedExecutionForFieldDefinition(GraphQLFieldDefinition fieldDefinition) {
+    private Service getServiceForFieldDefinition(GraphQLFieldDefinition fieldDefinition) {
         FieldInfo info = fieldInfos.getInfo(fieldDefinition);
-        return info.getService().getDelegatedExecution();
+        return info.getService();
     }
 
     private CompletableFuture<RootExecutionResultNode> delegate(ExecutionContext context,
                                                                 List<MergedField> mergedFields,
-                                                                DelegatedExecution delegatedExecution,
-                                                                ExecutionStepInfo executionStepInfo) {
+                                                                Service service,
+                                                                ExecutionStepInfo rootExecutionStepInfo) {
+
         SourceQueryTransformer queryTransformer = new SourceQueryTransformer(context);
         List<Field> fields = mergedFields.stream()
                 .map(MergedField::getSingleField)
@@ -96,8 +102,11 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
                 .query(query)
                 .build();
+        DelegatedExecution delegatedExecution = service.getDelegatedExecution();
         return delegatedExecution.delegate(delegatedExecutionParameters)
-                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, executionStepInfo, mergedFields));
+                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, mergedFields))
+                .thenApply(resultNode -> resultNodesToOverallResult.convert(resultNode, overallSchema));
+
     }
 
 }

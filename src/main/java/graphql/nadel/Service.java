@@ -8,7 +8,7 @@ import graphql.schema.GraphQLSchema;
 public class Service {
 
     private final String name;
-    private final GraphQLSchema privateSchema;
+    private final GraphQLSchema underlyingSchema;
     // this is not enough in the future as we need to allow for dynamic delegationExecution
     private final DelegatedExecution delegatedExecution;
     private final ServiceDefinition serviceDefinition;
@@ -16,12 +16,12 @@ public class Service {
 
 
     public Service(String name,
-                   GraphQLSchema privateSchema,
+                   GraphQLSchema underlyingSchema,
                    DelegatedExecution delegatedExecution,
                    ServiceDefinition serviceDefinition,
                    DefinitionRegistry definitionRegistry) {
         this.name = name;
-        this.privateSchema = privateSchema;
+        this.underlyingSchema = underlyingSchema;
         this.delegatedExecution = delegatedExecution;
         this.serviceDefinition = serviceDefinition;
         this.definitionRegistry = definitionRegistry;
@@ -31,8 +31,8 @@ public class Service {
         return name;
     }
 
-    public GraphQLSchema getPrivateSchema() {
-        return privateSchema;
+    public GraphQLSchema getUnderlyingSchema() {
+        return underlyingSchema;
     }
 
     public DelegatedExecution getDelegatedExecution() {

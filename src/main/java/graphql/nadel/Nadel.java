@@ -45,10 +45,10 @@ public class Nadel {
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             String serviceName = serviceDefinition.getName();
             DelegatedExecution delegatedExecution = serviceDataFactory.getDelegatedExecution(serviceName);
-            GraphQLSchema privateSchema = serviceDataFactory.getPrivateSchema(serviceName);
+            GraphQLSchema underlyingSchema = serviceDataFactory.getUnderlyingSchema(serviceName);
             DefinitionRegistry definitionRegistry = buildServiceRegistry(serviceDefinition);
 
-            Service service = new Service(serviceName, privateSchema, delegatedExecution, serviceDefinition, definitionRegistry);
+            Service service = new Service(serviceName, underlyingSchema, delegatedExecution, serviceDefinition, definitionRegistry);
             services.add(service);
         }
         this.services = services;
