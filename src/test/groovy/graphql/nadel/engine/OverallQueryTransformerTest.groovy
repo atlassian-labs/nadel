@@ -12,7 +12,7 @@ import spock.lang.Specification
 
 import java.util.stream.Collectors
 
-class SourceQueryTransformerTest extends Specification {
+class OverallQueryTransformerTest extends Specification {
     def schema = TestUtil.schemaFromNdsl('''
         service example {
             type Query { 
@@ -143,7 +143,7 @@ class SourceQueryTransformerTest extends Specification {
                 .map({ it.getSingleField() })
                 .collect(Collectors.toList())
 
-        def transformer = new SourceQueryTransformer(executionContext)
+        def transformer = new OverallQueryTransformer(executionContext)
         transformer.transform(fields, OperationDefinition.Operation.QUERY)
         return transformer.delegateDocument()
     }

@@ -31,13 +31,13 @@ public interface FieldTransformation {
      *     }
      * }
      *
-     *Delegate result:
+     * Delegate result:
      * originalName {
      *     alias: "valueB"
      *     fieldC: "valueC"
      * }
      *
-     * SourceQueryTransformer will return FieldTransformation for each field in delegate query.
+     * OverallQueryTransformer will return FieldTransformation for each field in delegate query.
      * Converting back:
      * unapply should be called postOrder (for each field in delegate query there is field transformation function that has
      * some state):

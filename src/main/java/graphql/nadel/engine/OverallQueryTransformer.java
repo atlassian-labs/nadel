@@ -25,10 +25,9 @@ import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
-import graphql.util.TreeTransformerUtil;
 
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,13 +43,13 @@ import static graphql.language.TypeName.newTypeName;
 import static graphql.util.TreeTransformerUtil.changeNode;
 import static java.util.function.Function.identity;
 
-public class SourceQueryTransformer {
+public class OverallQueryTransformer {
     private final ExecutionContext executionContext;
-    private final Map<OperationDefinition.Operation, OperationDefinition> operationDefinitions = new HashMap<>();
+    private final Map<OperationDefinition.Operation, OperationDefinition> operationDefinitions = new LinkedHashMap<>();
     private Set<String> referencedFragmentNames = new HashSet<>();
     private Map<String, FragmentDefinition> transformedFragments;
 
-    public SourceQueryTransformer(ExecutionContext executionContext) {
+    public OverallQueryTransformer(ExecutionContext executionContext) {
         this.executionContext = executionContext;
         //Field transformation may remove fragment reference all together if fragment is reduced to empty selection set
         //so it must be done first
@@ -62,12 +61,12 @@ public class SourceQueryTransformer {
      * It can be called multiple times for different operationType. The result will be merged into document.
      *
      * @param fields        to transform
-     * @param operationType
+     * @param operationType type of the operation
      */
     public void transform(List<Field> fields, OperationDefinition.Operation operationType) {
         List<Field> transformed = fields.stream().map(field -> (Field) transformTopLevelField(field, operationType))
                 .collect(Collectors.toList());
-        assertFalse(operationDefinitions.containsKey(operationType), "Transform was already called for opearation '%s'",
+        assertFalse(operationDefinitions.containsKey(operationType), "Transform was already called for operation '%s'",
                 operationType);
 
         OperationDefinition definition = newOperationDefinition()
@@ -152,7 +151,7 @@ public class SourceQueryTransformer {
             InlineFragment fragment = environment.getInlineFragment();
             TypeName typeName = fragment.getTypeCondition();
             TypeTransformation typeTransformation = typeTransformationForFragment(typeName);
-            if(typeTransformation != null) {
+            if (typeTransformation != null) {
                 InlineFragment changedFragment = fragment.transform(f -> {
                     TypeName newTypeName = newTypeName(typeTransformation.getOriginalName()).build();
                     f.typeCondition(newTypeName);
@@ -172,7 +171,7 @@ public class SourceQueryTransformer {
     private TypeTransformation typeTransformationForFragment(TypeName typeName) {
         GraphQLType type = executionContext.getGraphQLSchema().getType(typeName.getName());
         assertTrue(type instanceof GraphQLObjectType, "Expected type '%s' to be an object type", typeName);
-        ObjectTypeDefinition typeDefinition = ((GraphQLObjectType)type).getDefinition();
+        ObjectTypeDefinition typeDefinition = ((GraphQLObjectType) type).getDefinition();
         if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
             return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeTransformation();
         }

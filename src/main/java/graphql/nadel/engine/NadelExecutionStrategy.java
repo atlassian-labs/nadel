@@ -36,7 +36,6 @@ import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionPa
 public class NadelExecutionStrategy implements ExecutionStrategy {
 
     private final DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
-    private final MergedFieldsToDocument mergedFieldsToDocument = new MergedFieldsToDocument();
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ResultNodesToOverallResult resultNodesToOverallResult = new ResultNodesToOverallResult();
 
@@ -92,7 +91,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                                                                 Service service,
                                                                 ExecutionStepInfo rootExecutionStepInfo) {
 
-        SourceQueryTransformer queryTransformer = new SourceQueryTransformer(context);
+        OverallQueryTransformer queryTransformer = new OverallQueryTransformer(context);
         List<Field> fields = mergedFields.stream()
                 .map(MergedField::getSingleField)
                 .collect(Collectors.toList());
