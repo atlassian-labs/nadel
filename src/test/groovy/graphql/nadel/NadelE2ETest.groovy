@@ -1,5 +1,6 @@
 package graphql.nadel
 
+import graphql.language.AstPrinter
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
 
@@ -9,7 +10,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
 
-
     def "query to one service"() {
 
         def nsdl = """
@@ -18,18 +18,20 @@ class NadelE2ETest extends Specification {
                 hello: World  
             } 
             type World {
+                id: ID
                 name: String
             }
          }
         """
         def query = """
-        { hello {name}}
+        { hello {name} hello {id} }
         """
         def underlyingSchema = TestUtil.schema("""
             type Query{
                 hello: World  
             } 
             type World {
+                id: ID
                 name: String
             }
         """)
@@ -53,15 +55,18 @@ class NadelE2ETest extends Specification {
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
                 .build()
-        def data = [hello: [name: "earth"]]
+        def data = [hello: [id: "3", name: "earth"]]
         DelegatedExecutionResult delegatedExecutionResult = new DelegatedExecutionResult(data)
         when:
         def result = nadel.execute(nadelExecutionInput)
 
         then:
-        1 * delegatedExecution.delegate(_) >> completedFuture(delegatedExecutionResult)
+        1 * delegatedExecution.delegate(_) >> { args ->
+            DelegatedExecutionParameters params = args[0]
+            assert AstPrinter.printAstCompact(params.query) == "query {hello {name} hello {id}}"
+            completedFuture(delegatedExecutionResult)
+        }
         result.get().data == data
-
     }
 
     def "query to two services"() {
@@ -137,6 +142,5 @@ class NadelE2ETest extends Specification {
         1 * delegatedExecution1.delegate(_) >> completedFuture(delegatedExecutionResult1)
         1 * delegatedExecution2.delegate(_) >> completedFuture(delegatedExecutionResult2)
         result.get().data == data1 + data2
-
     }
 }

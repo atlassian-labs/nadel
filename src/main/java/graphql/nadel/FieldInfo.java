@@ -5,9 +5,7 @@ import graphql.schema.GraphQLFieldDefinition;
 public class FieldInfo {
 
     public enum FieldKind {
-        ARTIFICIAL,
-        TOPLEVEL,
-        HYDRATED,
+        TOPLEVEL
     }
 
     private final FieldKind fieldKind;

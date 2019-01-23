@@ -86,6 +86,7 @@ public class ResultNodesToOverallResult {
         GraphQLOutputType fieldType = executionStepInfo.getType();
         GraphQLObjectType fieldContainer = executionStepInfo.getFieldContainer();
         GraphQLObjectType mappedFieldContainer = (GraphQLObjectType) overallSchema.getType(fieldContainer.getName());
+        //TODO: the line below is not correct as it does not work list or non null types (since fieldType#getName will be null in that case)
         GraphQLOutputType mappedFieldType = (GraphQLOutputType) overallSchema.getType(fieldType.getName());
         GraphQLFieldDefinition fieldDefinition = executionStepInfo.getFieldDefinition();
         GraphQLFieldDefinition mappedFieldDefinition = mappedFieldContainer.getFieldDefinition(fieldDefinition.getName());

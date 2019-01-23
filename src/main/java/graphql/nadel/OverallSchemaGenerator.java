@@ -16,23 +16,22 @@ import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
 public class OverallSchemaGenerator {
 
 
-    public GraphQLSchema buildOverallSchema(List<Service> services) {
+    public GraphQLSchema buildOverallSchema(List<DefinitionRegistry> serviceRegistries) {
         //TODO: This will not work for Unions and interfaces as they require TypeResolver
         // need to loose this requirement or add dummy versions
         SchemaGenerator schemaGenerator = new SchemaGenerator();
         RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring().build();
-        return schemaGenerator.makeExecutableSchema(createTypeRegistry(services), runtimeWiring);
+        return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring);
 
     }
 
-    private TypeDefinitionRegistry createTypeRegistry(List<Service> services) {
+    private TypeDefinitionRegistry createTypeRegistry(List<DefinitionRegistry> serviceRegistries) {
         //TODO: this merging not completely correct for example schema definition nodes are not handled correctly
         List<FieldDefinition> queryFields = new ArrayList<>();
         TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
         List<SDLDefinition> allDefinitions = new ArrayList<>();
 
-        for (Service service : services) {
-            DefinitionRegistry definitionRegistry = service.getDefinitionRegistry();
+        for (DefinitionRegistry definitionRegistry : serviceRegistries) {
             ObjectTypeDefinition queryType = definitionRegistry.getQueryType();
             queryFields.addAll(queryType.getFieldDefinitions());
             definitionRegistry

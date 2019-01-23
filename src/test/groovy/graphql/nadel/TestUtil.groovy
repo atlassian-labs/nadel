@@ -122,6 +122,7 @@ class TestUtil {
         schema(spec, runtimeWiring.build())
     }
 
+
     static GraphQLSchema schema(String spec) {
         schema(spec, mockRuntimeWiring)
     }
@@ -157,6 +158,12 @@ class TestUtil {
             assert false: "The schema could not be compiled : ${e}"
             return null
         }
+    }
+
+    static GraphQLSchema schemaFromNdsl(String ndsl) {
+        def stitchingDsl = new NSDLParser().parseDSL(ndsl)
+        def defRegistries = stitchingDsl.serviceDefinitions.collect({ Nadel.buildServiceRegistry(it) })
+        return new OverallSchemaGenerator().buildOverallSchema(defRegistries)
     }
 
     static GraphQL.Builder graphQL(String spec) {

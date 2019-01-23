@@ -11,6 +11,8 @@ import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Document;
+import graphql.language.Field;
+import graphql.language.OperationDefinition;
 import graphql.nadel.DelegatedExecution;
 import graphql.nadel.DelegatedExecutionParameters;
 import graphql.nadel.FieldInfo;
@@ -25,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionParameters;
@@ -32,10 +35,9 @@ import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionPa
 @Internal
 public class NadelExecutionStrategy implements ExecutionStrategy {
 
-    DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
-    MergedFieldsToDocument mergedFieldsToDocument = new MergedFieldsToDocument();
-    ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
-    ResultNodesToOverallResult resultNodesToOverallResult = new ResultNodesToOverallResult();
+    private final DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
+    private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
+    private final ResultNodesToOverallResult resultNodesToOverallResult = new ResultNodesToOverallResult();
 
     private final List<Service> services;
     private FieldInfos fieldInfos;
@@ -89,8 +91,13 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                                                                 Service service,
                                                                 ExecutionStepInfo rootExecutionStepInfo) {
 
-        //TODO: in general we need to to do more here and map to the whole query to the underlying service
-        Document query = mergedFieldsToDocument.mergedSelectionSetToDocument(mergedFields);
+        OverallQueryTransformer queryTransformer = new OverallQueryTransformer(context);
+        List<Field> fields = mergedFields.stream()
+                .flatMap(merged -> merged.getFields().stream())
+                .collect(Collectors.toList());
+        queryTransformer.transform(fields, OperationDefinition.Operation.QUERY);
+        Document query = queryTransformer.delegateDocument();
+
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
                 .query(query)
                 .build();
