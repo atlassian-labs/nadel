@@ -26,8 +26,8 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +46,7 @@ import static java.util.function.Function.identity;
 public class OverallQueryTransformer {
     private final ExecutionContext executionContext;
     private final Map<OperationDefinition.Operation, OperationDefinition> operationDefinitions = new LinkedHashMap<>();
-    private Set<String> referencedFragmentNames = new HashSet<>();
+    private Set<String> referencedFragmentNames = new LinkedHashSet<>();
     private Map<String, FragmentDefinition> transformedFragments;
 
     public OverallQueryTransformer(ExecutionContext executionContext) {
