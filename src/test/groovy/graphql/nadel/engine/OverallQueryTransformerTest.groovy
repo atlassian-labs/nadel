@@ -80,7 +80,7 @@ class OverallQueryTransformerTest extends Specification {
 
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
-                'query {f1:foo(id:"1") {...frag1} f2:foo(id:"2") {...frag2}} fragment frag2 on Foo {id bazId} fragment frag1 on Foo {id}'
+                'query {f1:foo(id:"1") {...frag1} f2:foo(id:"2") {...frag2}} fragment frag1 on Foo {id} fragment frag2 on Foo {id bazId}'
     }
 
     def "nested fragments are transformed and included"() {
