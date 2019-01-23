@@ -93,7 +93,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
         OverallQueryTransformer queryTransformer = new OverallQueryTransformer(context);
         List<Field> fields = mergedFields.stream()
-                .map(MergedField::getSingleField)
+                .flatMap(merged -> merged.getFields().stream())
                 .collect(Collectors.toList());
         queryTransformer.transform(fields, OperationDefinition.Operation.QUERY);
         Document query = queryTransformer.delegateDocument();

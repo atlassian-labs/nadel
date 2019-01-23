@@ -18,18 +18,20 @@ class NadelE2ETest extends Specification {
                 hello: World  
             } 
             type World {
+                id: ID
                 name: String
             }
          }
         """
         def query = """
-        { hello {name}}
+        { hello {name} hello {id} }
         """
         def underlyingSchema = TestUtil.schema("""
             type Query{
                 hello: World  
             } 
             type World {
+                id: ID
                 name: String
             }
         """)
@@ -53,7 +55,7 @@ class NadelE2ETest extends Specification {
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
                 .build()
-        def data = [hello: [name: "earth"]]
+        def data = [hello: [id: "3", name: "earth"]]
         DelegatedExecutionResult delegatedExecutionResult = new DelegatedExecutionResult(data)
         when:
         def result = nadel.execute(nadelExecutionInput)
@@ -61,7 +63,7 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution.delegate(_) >> { args ->
             DelegatedExecutionParameters params = args[0]
-            assert AstPrinter.printAstCompact(params.query) == "query {hello {name}}"
+            assert AstPrinter.printAstCompact(params.query) == "query {hello {name} hello {id}}"
             completedFuture(delegatedExecutionResult)
         }
         result.get().data == data
