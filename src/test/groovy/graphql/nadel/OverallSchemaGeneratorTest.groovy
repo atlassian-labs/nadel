@@ -16,10 +16,19 @@ class OverallSchemaGeneratorTest extends Specification {
             }
     """
     static def fooService_default_query = """
+           directive @cloudId(type:String) on ARGUMENT_DEFINITION
            type Query{
-                foo: Foo
+                foo(name: ID! @cloudId(type:"ari")): Foo
            } 
     """
+
+    static def fooService_with_directives = """
+           directive @cloudId(type:String) on ARGUMENT_DEFINITION
+           type Query{
+                foo(name: ID! @cloudId(type:"ari")): Foo
+           } 
+    """
+
     static def fooService_query_in_schema = """
            schema {
               query: fooQuery
@@ -75,7 +84,12 @@ class OverallSchemaGeneratorTest extends Specification {
                 bar: Bar
            } 
     """
-
+    static def barService_with_directives = """
+           directive @cloudId2(type:String) on ARGUMENT_DEFINITION
+           type Query{
+                bar(id: ID! @cloudId2(type:"ari")): Bar
+           } 
+    """
     static def barService_query_in_schema = """
            schema {
               query: barQuery
@@ -84,7 +98,6 @@ class OverallSchemaGeneratorTest extends Specification {
                 bar: Bar
            } 
     """
-
     static def barQueryExtension = """
            extend type Query { 
                 bar2: Bar
@@ -131,12 +144,22 @@ class OverallSchemaGeneratorTest extends Specification {
         given:
         def schema = TestUtil.schemaFromNdsl(fooService + barService)
         when:
-        def resultList =  (opsType == OperationType.QUERY.opsType)
-                             ? schema.getQueryType().children.stream().map({ gtype -> gtype.getName() }).collect()
-                             : (opsType == OperationType.MUTATION.opsType)
-                                     ? schema.getMutationType().children.stream().map({ gtype -> gtype.getName() }).collect()
-                                     : schema.getSubscriptionType().children.stream().map({ gtype -> gtype.getName() }).collect()
+        def resultList
+        switch (opsType){
+            case OperationType.QUERY.opsType:
+                resultList = schema.getQueryType().children.stream().map({ gtype -> gtype.getName() }).collect()
+                break
+            case OperationType.MUTATION.opsType:
+                resultList = schema.getMutationType().children.stream().map({ gtype -> gtype.getName() }).collect()
+                break
+            case OperationType.SUBSCRIPTION.opsType:
+                resultList = schema.getSubscriptionType().children.stream().map({ gtype -> gtype.getName() }).collect()
+                break
+            case "directives":
+                resultList = schema.getDirectives().stream().map({directive -> directive.getName()}).collect()
+                break
 
+        }
         then:
         resultList != null && resultList as Set == expectedList as Set
 
@@ -157,6 +180,6 @@ class OverallSchemaGeneratorTest extends Specification {
         "subscription"   |"one service with default definition and one service defined in schema and extension" | "service Foo {$fooService_subscription_in_schema $fooType $fooSubscriptionExtension}" | "service Bar {$barService_default_subscription $barType}"                         | ["subFoo", "subFoo2", "subBar"]| _
         "subscription"   |"both services with definition in schema"                                             | "service Foo {$fooService_subscription_in_schema $fooType}"                           | "service Bar {$barService_subscription_in_schema $barType}"                       | ["subFoo", "subBar"]           | _
         "subscription"   |"both services with definition in schema and extension"                               | "service Foo {$fooService_subscription_in_schema $fooType $fooSubscriptionExtension}" | "service Bar {$barService_subscription_in_schema $barType $barSubscriptionExtension}" | ["subFoo", "subFoo2", "subBar", "subBar2"] | _
-
+        "directives"     |"both services"                                                                       | "service Foo {$fooService_with_directives $fooType }" | "service Bar {$barService_with_directives $barType}" | ["include", "skip", "defer", "deprecated", "cloudId","cloudId2"] | _
     }
 }
