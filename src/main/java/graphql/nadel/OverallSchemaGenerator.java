@@ -3,6 +3,7 @@ package graphql.nadel;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
+import graphql.language.SchemaDefinition;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
@@ -37,7 +38,7 @@ public class OverallSchemaGenerator {
             definitionRegistry
                     .getDefinitions()
                     .stream()
-                    .filter(sdlDefinition -> sdlDefinition != queryType)
+                    .filter(sdlDefinition -> !(sdlDefinition instanceof SchemaDefinition) && sdlDefinition != queryType)
                     .forEach(allDefinitions::add);
         }
         ObjectTypeDefinition queryType = newObjectTypeDefinition().name("Query").fieldDefinitions(queryFields).build();
