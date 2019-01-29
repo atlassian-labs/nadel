@@ -48,7 +48,7 @@ public class DefinitionRegistry {
         Map<OperationType, ObjectTypeDefinition > opsTypesMap = new HashMap<>();
 
         Arrays.stream(OperationType.values()).forEach(opsType ->
-                opsTypesMap.put(opsType, getOpsType(opsType.getOpsType(), opsType.getDisplayName())));;
+                opsTypesMap.put(opsType, getOpsType(opsType.getOpsType(), opsType.getDisplayName())));
 
        return opsTypesMap;
     }
@@ -57,17 +57,17 @@ public class DefinitionRegistry {
         return getOpsType(OperationType.QUERY.getOpsType(), OperationType.QUERY.getDisplayName());
     }
 
-    private ObjectTypeDefinition getOpsType(String typeName, String typeFlag ) {
+    private ObjectTypeDefinition getOpsType(String typeName, String typeDisplay ) {
         SchemaDefinition schemaDefinition = getSchemaDefinition();
         if (schemaDefinition != null) {
-            Optional<OperationTypeDefinition> queryOp = schemaDefinition.getOperationTypeDefinitions().stream().filter(op -> typeName.equalsIgnoreCase(op.getName())).findFirst();
-            if (!queryOp.isPresent()) {
+            Optional<OperationTypeDefinition> opDefinitionsOp = schemaDefinition.getOperationTypeDefinitions().stream().filter(op -> typeName.equalsIgnoreCase(op.getName())).findFirst();
+            if (!opDefinitionsOp.isPresent()) {
                 return null;
             }
-            String queryName = queryOp.get().getTypeName().getName();
-            return getDefinition(queryName, ObjectTypeDefinition.class);
+            String operationName = opDefinitionsOp.get().getTypeName().getName();
+            return getDefinition(operationName, ObjectTypeDefinition.class);
         }
-        return getDefinition(typeFlag, ObjectTypeDefinition.class);
+        return getDefinition(typeDisplay, ObjectTypeDefinition.class);
     }
 
     private <T extends SDLDefinition> T getDefinition(String name, Class<? extends T> clazz) {

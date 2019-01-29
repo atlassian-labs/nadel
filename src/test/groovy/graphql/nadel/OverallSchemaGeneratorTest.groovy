@@ -16,16 +16,15 @@ class OverallSchemaGeneratorTest extends Specification {
             }
     """
     static def fooService_default_query = """
-           directive @cloudId(type:String) on ARGUMENT_DEFINITION
            type Query{
-                foo(name: ID! @cloudId(type:"ari")): Foo
+                foo: Foo
            } 
     """
 
     static def fooService_with_directives = """
            directive @cloudId(type:String) on ARGUMENT_DEFINITION
            type Query{
-                foo(name: ID! @cloudId(type:"ari")): Foo
+                foo(name: String @cloudId(type:"ari")): Foo
            } 
     """
 
