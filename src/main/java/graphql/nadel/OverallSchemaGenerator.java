@@ -10,7 +10,10 @@ import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
 
@@ -23,26 +26,36 @@ public class OverallSchemaGenerator {
         SchemaGenerator schemaGenerator = new SchemaGenerator();
         RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring().build();
         return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring);
-
     }
 
     private TypeDefinitionRegistry createTypeRegistry(List<DefinitionRegistry> serviceRegistries) {
         //TODO: this merging not completely correct for example schema definition nodes are not handled correctly
-        List<FieldDefinition> queryFields = new ArrayList<>();
+        Map<OperationType, List<FieldDefinition>> fieldsMapbyType = new HashMap<>();
+        Arrays.stream(OperationType.values()).forEach(
+                value -> fieldsMapbyType.put(value, new ArrayList<>()));
+
         TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
         List<SDLDefinition> allDefinitions = new ArrayList<>();
 
         for (DefinitionRegistry definitionRegistry : serviceRegistries) {
-            ObjectTypeDefinition queryType = definitionRegistry.getQueryType();
-            queryFields.addAll(queryType.getFieldDefinitions());
-            definitionRegistry
-                    .getDefinitions()
-                    .stream()
-                    .filter(sdlDefinition -> !(sdlDefinition instanceof SchemaDefinition) && sdlDefinition != queryType)
-                    .forEach(allDefinitions::add);
+            Map<OperationType, ObjectTypeDefinition> opsTypes = definitionRegistry.getOperationTypes();
+            opsTypes.keySet().stream().forEach(opsType -> {
+                ObjectTypeDefinition opsDefinitions = opsTypes.get(opsType);
+                if (opsDefinitions != null) {
+                    fieldsMapbyType.get(opsType).addAll(opsDefinitions.getFieldDefinitions());
+                }
+                definitionRegistry
+                        .getDefinitions()
+                        .stream()
+                        .filter(sdlDefinition -> !(sdlDefinition instanceof SchemaDefinition) && sdlDefinition != opsDefinitions)
+                        .forEach(allDefinitions::add);
+            });
         }
-        ObjectTypeDefinition queryType = newObjectTypeDefinition().name("Query").fieldDefinitions(queryFields).build();
-        overallRegistry.add(queryType);
+
+        fieldsMapbyType.keySet().stream().forEach(key -> {
+            overallRegistry.add(newObjectTypeDefinition().name(key.getDisplayName()).fieldDefinitions(fieldsMapbyType.get(key)).build());
+        });
+
         allDefinitions.forEach(overallRegistry::add);
         return overallRegistry;
     }

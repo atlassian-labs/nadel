@@ -10,6 +10,8 @@ import graphql.language.SchemaDefinition;
 import graphql.language.TypeDefinition;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,17 +44,30 @@ public class DefinitionRegistry {
         return (SchemaDefinition) definitionsByClass.get(SchemaDefinition.class).get(0);
     }
 
+    public Map<OperationType, ObjectTypeDefinition> getOperationTypes(){
+        Map<OperationType, ObjectTypeDefinition > opsTypesMap = new HashMap<>();
+
+        Arrays.stream(OperationType.values()).forEach(opsType ->
+                opsTypesMap.put(opsType, getOpsType(opsType.getOpsType(), opsType.getDisplayName())));;
+
+       return opsTypesMap;
+    }
+
     public ObjectTypeDefinition getQueryType() {
+        return getOpsType(OperationType.QUERY.getOpsType(), OperationType.QUERY.getDisplayName());
+    }
+
+    private ObjectTypeDefinition getOpsType(String typeName, String typeFlag ) {
         SchemaDefinition schemaDefinition = getSchemaDefinition();
         if (schemaDefinition != null) {
-            Optional<OperationTypeDefinition> queryOp = schemaDefinition.getOperationTypeDefinitions().stream().filter(op -> "query".equals(op.getName())).findFirst();
+            Optional<OperationTypeDefinition> queryOp = schemaDefinition.getOperationTypeDefinitions().stream().filter(op -> typeName.equalsIgnoreCase(op.getName())).findFirst();
             if (!queryOp.isPresent()) {
                 return null;
             }
             String queryName = queryOp.get().getTypeName().getName();
             return getDefinition(queryName, ObjectTypeDefinition.class);
         }
-        return getDefinition("Query", ObjectTypeDefinition.class);
+        return getDefinition(typeFlag, ObjectTypeDefinition.class);
     }
 
     private <T extends SDLDefinition> T getDefinition(String name, Class<? extends T> clazz) {
