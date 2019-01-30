@@ -69,12 +69,12 @@ class NadelE2ETest extends Specification {
         result.get().data == data
     }
 
-    def "query to two services"() {
+    def "query to two services with field rename"() {
 
         def nsdl = """
          service Foo {
             type Query{
-                foo: Foo  
+                foo: Foo  <= \$source.fooOriginal 
                 
             } 
             type Foo {
@@ -83,10 +83,10 @@ class NadelE2ETest extends Specification {
          }
          service Bar {
             type Query{
-                bar: Bar
+                bar: Bar 
             } 
             type Bar {
-                name: String
+                name: String <= \$source.title
             }
          }
         """
@@ -95,7 +95,7 @@ class NadelE2ETest extends Specification {
         """
         def underlyingSchema1 = TestUtil.schema("""
             type Query{
-                foo: Foo  
+                fooOriginal: Foo  
                 
             } 
             type Foo {
@@ -107,7 +107,7 @@ class NadelE2ETest extends Specification {
                 bar: Bar
             } 
             type Bar {
-                name: String
+                title: String
             }
         """)
         DelegatedExecution delegatedExecution1 = Mock(DelegatedExecution)
@@ -131,8 +131,8 @@ class NadelE2ETest extends Specification {
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
                 .build()
-        def data1 = [foo: [name: "Foo"]]
-        def data2 = [bar: [name: "Bar"]]
+        def data1 = [fooOriginal: [name: "Foo"]]
+        def data2 = [bar: [title: "Bar"]]
         DelegatedExecutionResult delegatedExecutionResult1 = new DelegatedExecutionResult(data1)
         DelegatedExecutionResult delegatedExecutionResult2 = new DelegatedExecutionResult(data2)
         when:
@@ -141,6 +141,6 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution1.delegate(_) >> completedFuture(delegatedExecutionResult1)
         1 * delegatedExecution2.delegate(_) >> completedFuture(delegatedExecutionResult2)
-        result.get().data == data1 + data2
+        result.get().data == [foo: [name: "Foo"], bar: [name: "Bar"]]
     }
 }
