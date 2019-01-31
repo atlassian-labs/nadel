@@ -1,16 +1,14 @@
 package graphql.nadel.engine
 
 import graphql.execution.ExecutionContext
+import graphql.execution.MergedField
 import graphql.execution.nextgen.FieldSubSelection
 import graphql.language.AstPrinter
 import graphql.language.Document
-import graphql.language.Field
 import graphql.language.OperationDefinition
 import graphql.nadel.TestUtil
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
-
-import java.util.stream.Collectors
 
 class OverallQueryTransformerTest extends Specification {
     def schema = TestUtil.schemaFromNdsl('''
@@ -139,9 +137,8 @@ class OverallQueryTransformerTest extends Specification {
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
-        List<Field> fields = fieldSubSelection.getSubFields().values().stream()
-                .map({ it.getSingleField() })
-                .collect(Collectors.toList())
+
+        List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
         def transformer = new OverallQueryTransformer(executionContext)
         transformer.transform(fields, OperationDefinition.Operation.QUERY)
