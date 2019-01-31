@@ -75,7 +75,6 @@ class NadelE2ETest extends Specification {
          service Foo {
             type Query{
                 foo: Foo  <= \$source.fooOriginal 
-                
             } 
             type Foo {
                 name: String
@@ -91,7 +90,7 @@ class NadelE2ETest extends Specification {
          }
         """
         def query = """
-        { foo {name} bar{name}}
+        { otherFoo: foo {name} bar{name}}
         """
         def underlyingSchema1 = TestUtil.schema("""
             type Query{
@@ -104,7 +103,7 @@ class NadelE2ETest extends Specification {
         """)
         def underlyingSchema2 = TestUtil.schema("""
             type Query{
-                bar: Bar
+                bar: Bar 
             } 
             type Bar {
                 title: String
@@ -131,7 +130,7 @@ class NadelE2ETest extends Specification {
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
                 .build()
-        def data1 = [fooOriginal: [name: "Foo"]]
+        def data1 = [otherFoo: [name: "Foo"]]
         def data2 = [bar: [title: "Bar"]]
         DelegatedExecutionResult delegatedExecutionResult1 = new DelegatedExecutionResult(data1)
         DelegatedExecutionResult delegatedExecutionResult2 = new DelegatedExecutionResult(data2)
@@ -141,6 +140,6 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution1.delegate(_) >> completedFuture(delegatedExecutionResult1)
         1 * delegatedExecution2.delegate(_) >> completedFuture(delegatedExecutionResult2)
-        result.get().data == [foo: [name: "Foo"], bar: [name: "Bar"]]
+        result.get().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
     }
 }
