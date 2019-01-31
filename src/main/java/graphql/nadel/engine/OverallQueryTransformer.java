@@ -205,7 +205,6 @@ public class OverallQueryTransformer {
         graphql.nadel.dsl.FieldTransformation definition = transformationDefinitionForField(fieldDefinition);
         if (definition == null) {
             return null;
-//            return new CopyFieldTransformation();
         }
         if (definition.getFieldMappingDefinition() != null) {
             return new FieldMappingTransformation(definition.getFieldMappingDefinition());
