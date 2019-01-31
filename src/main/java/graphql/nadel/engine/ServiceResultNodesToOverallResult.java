@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
-import static graphql.Assert.assertTrue;
 
 public class ServiceResultNodesToOverallResult {
 
@@ -35,7 +34,7 @@ public class ServiceResultNodesToOverallResult {
     public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema, Map<Field, FieldTransformation> transformationMap) {
         ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
-        return (RootExecutionResultNode) resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+        RootExecutionResultNode newRoot = (RootExecutionResultNode) resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 ExecutionResultNode node = context.thisNode();
@@ -54,16 +53,17 @@ public class ServiceResultNodesToOverallResult {
                 return TreeTransformerUtil.changeNode(context, convertedNode);
             }
 
+        });
+
+        newRoot = (RootExecutionResultNode) resultNodesTransformer.transform(newRoot, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
-            public TraversalControl leave(TraverserContext<ExecutionResultNode> context) {
+            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 ExecutionResultNode node = context.thisNode();
                 if (node instanceof ObjectExecutionResultNode) {
                     Map<String, ExecutionResultNode> newChildren = new LinkedHashMap<>();
-                    Map<String, List<TraverserContext<ExecutionResultNode>>> childrenContexts = context.getChildrenContexts();
-                    for (String key : childrenContexts.keySet()) {
-                        List<TraverserContext<ExecutionResultNode>> childContext = childrenContexts.get(key);
-                        assertTrue(childContext.size() == 1, "unexpected children count");
-                        ExecutionResultNode childNode = childContext.get(0).thisNode();
+                    Map<String, ExecutionResultNode> children = ((ObjectExecutionResultNode) node).getChildrenMap();
+                    for (String key : children.keySet()) {
+                        ExecutionResultNode childNode = children.get(key);
                         String resultKey = childNode.getMergedField().getResultKey();
                         newChildren.put(resultKey, childNode);
                     }
@@ -75,10 +75,14 @@ public class ServiceResultNodesToOverallResult {
                     }
                     return TreeTransformerUtil.changeNode(context, newNode);
                 }
-                return super.leave(context);
+                return TraversalControl.CONTINUE;
             }
         });
+
+        return newRoot;
+
     }
+
 
     private ListExecutionResultNode mapListExecutionResultNode(ListExecutionResultNode resultNode, GraphQLSchema overallSchema, Map<Field, FieldTransformation> transformationMap) {
         FetchedValueAnalysis fetchedValueAnalysis = mapFetchedValueAnalysis(resultNode.getFetchedValueAnalysis(), overallSchema, transformationMap);
