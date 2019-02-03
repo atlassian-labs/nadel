@@ -18,6 +18,7 @@ import graphql.nadel.DelegatedExecutionParameters;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Service;
+import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
 import graphql.util.FpKit;
@@ -27,7 +28,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionParameters;
@@ -35,9 +35,9 @@ import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionPa
 @Internal
 public class NadelExecutionStrategy implements ExecutionStrategy {
 
-    private final DelegatedResultToResultNode resultToResultNode = new DelegatedResultToResultNode();
+    private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
-    private final ResultNodesToOverallResult resultNodesToOverallResult = new ResultNodesToOverallResult();
+    private final ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
 
     private final List<Service> services;
     private FieldInfos fieldInfos;
@@ -92,19 +92,21 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                                                                 ExecutionStepInfo rootExecutionStepInfo) {
 
         OverallQueryTransformer queryTransformer = new OverallQueryTransformer(context);
-        List<Field> fields = mergedFields.stream()
-                .flatMap(merged -> merged.getFields().stream())
-                .collect(Collectors.toList());
-        queryTransformer.transform(fields, OperationDefinition.Operation.QUERY);
+        queryTransformer.transform(mergedFields, OperationDefinition.Operation.QUERY);
+
         Document query = queryTransformer.delegateDocument();
+        Map<Field, FieldTransformation> transformationByResultField = queryTransformer.getTransformationByResultField();
+        List<MergedField> transformedMergedFields = queryTransformer.getTransformedMergedFields();
 
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
                 .query(query)
                 .build();
         DelegatedExecution delegatedExecution = service.getDelegatedExecution();
+        GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
+
         return delegatedExecution.delegate(delegatedExecutionParameters)
-                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, mergedFields))
-                .thenApply(resultNode -> resultNodesToOverallResult.convert(resultNode, overallSchema));
+                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, transformedMergedFields, underlyingSchema))
+                .thenApply(resultNode -> serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField));
 
     }
 

@@ -6,6 +6,7 @@ import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.analysis.QueryVisitorFragmentSpreadEnvironment;
 import graphql.analysis.QueryVisitorInlineFragmentEnvironment;
 import graphql.execution.ExecutionContext;
+import graphql.execution.MergedField;
 import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.FieldDefinition;
@@ -19,13 +20,13 @@ import graphql.language.VariableReference;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeTransformation;
-import graphql.nadel.engine.transformation.CopyFieldTransformation;
 import graphql.nadel.engine.transformation.FieldMappingTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -48,6 +49,8 @@ public class OverallQueryTransformer {
     private final Map<OperationDefinition.Operation, OperationDefinition> operationDefinitions = new LinkedHashMap<>();
     private Set<String> referencedFragmentNames = new LinkedHashSet<>();
     private Map<String, FragmentDefinition> transformedFragments;
+    private Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
+    private List<MergedField> transformedMergedFields = new ArrayList<>();
 
     public OverallQueryTransformer(ExecutionContext executionContext) {
         this.executionContext = executionContext;
@@ -56,28 +59,32 @@ public class OverallQueryTransformer {
         this.transformedFragments = transformFragments(executionContext.getFragmentsByName());
     }
 
-    /**
-     * Transforms fields into delegate query. Fields passed here needs to be top level fields in delegate service schema.
-     * It can be called multiple times for different operationType. The result will be merged into document.
-     *
-     * @param fields        to transform
-     * @param operationType type of the operation
-     */
-    public void transform(List<Field> fields, OperationDefinition.Operation operationType) {
-        List<Field> transformed = fields.stream().map(field -> (Field) transformTopLevelField(field, operationType))
-                .collect(Collectors.toList());
-        assertFalse(operationDefinitions.containsKey(operationType), "Transform was already called for operation '%s'",
-                operationType);
+    public void transform(List<MergedField> mergedFields, OperationDefinition.Operation operationType) {
 
+        List<Field> selectionSetFields = new ArrayList<>();
+        for (MergedField mergedField : mergedFields) {
+            List<Field> fields = mergedField.getFields();
+            List<Field> transformed = fields.stream().map(field -> (Field) transformTopLevelField(field, operationType))
+                    .collect(Collectors.toList());
+            assertFalse(operationDefinitions.containsKey(operationType), "Transform was already called for operation '%s'",
+                    operationType);
+            selectionSetFields.addAll(transformed);
+            MergedField transformedMergedField = MergedField.newMergedField(transformed).build();
+            transformedMergedFields.add(transformedMergedField);
+
+        }
         OperationDefinition definition = newOperationDefinition()
                 .operation(operationType)
-                .selectionSet(newSelectionSet(transformed).build())
+                .selectionSet(newSelectionSet(selectionSetFields).build())
                 .build();
 
 
         operationDefinitions.put(operationType, definition);
     }
 
+    public List<MergedField> getTransformedMergedFields() {
+        return transformedMergedFields;
+    }
 
     public Document delegateDocument() {
         Document.Builder newDocument = Document.newDocument();
@@ -87,6 +94,10 @@ public class OverallQueryTransformer {
                 .forEach(newDocument::definition);
 
         return newDocument.build();
+    }
+
+    public Map<Field, FieldTransformation> getTransformationByResultField() {
+        return transformationByResultField;
     }
 
     private Map<String, FragmentDefinition> transformFragments(Map<String, FragmentDefinition> fragments) {
@@ -142,8 +153,13 @@ public class OverallQueryTransformer {
             environment.getField().getArguments().stream()
                     .filter(argument -> argument.getValue() instanceof VariableReference)
                     .map(argument -> (VariableReference) argument.getValue())
-                    .forEach(varRef -> varRef.getName());
-            transformationForFieldDefinition(environment.getFieldDefinition().getDefinition()).apply(environment);
+                    .forEach(VariableReference::getName);
+            FieldTransformation fieldTransformation = transformationForFieldDefinition(environment.getFieldDefinition().getDefinition());
+            if (fieldTransformation != null) {
+                fieldTransformation.apply(environment);
+                Field changedNode = (Field) environment.getTraverserContext().thisNode();
+                transformationByResultField.put(changedNode, fieldTransformation);
+            }
         }
 
         @Override
@@ -188,7 +204,7 @@ public class OverallQueryTransformer {
     private FieldTransformation transformationForFieldDefinition(FieldDefinition fieldDefinition) {
         graphql.nadel.dsl.FieldTransformation definition = transformationDefinitionForField(fieldDefinition);
         if (definition == null) {
-            return new CopyFieldTransformation();
+            return null;
         }
         if (definition.getFieldMappingDefinition() != null) {
             return new FieldMappingTransformation(definition.getFieldMappingDefinition());

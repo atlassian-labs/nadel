@@ -16,6 +16,7 @@ import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResultNodesUtil;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.DelegatedExecutionResult;
+import graphql.schema.GraphQLSchema;
 import graphql.util.FpKit;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
@@ -26,7 +27,7 @@ import java.util.Map;
 
 import static graphql.util.FpKit.map;
 
-public class DelegatedResultToResultNode {
+public class ServiceResultToResultNodes {
 
     ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     DelegatedResultAnalyzer fetchedValueAnalyzer = new DelegatedResultAnalyzer();
@@ -36,9 +37,11 @@ public class DelegatedResultToResultNode {
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
                                                       DelegatedExecutionResult delegatedExecutionResult,
                                                       ExecutionStepInfo executionStepInfo,
-                                                      List<MergedField> mergedFields) {
+                                                      List<MergedField> mergedFields,
+                                                      GraphQLSchema underlyingSchema) {
 
-        //TODO: the ExecutionContext and the FieldSubSelection (the ExecutionStepInfo in it) are referencing the overall schema, not the private schema
+        ExecutionContext executionContextForService = executionContext.transform(builder -> builder.graphQLSchema(underlyingSchema));
+        ExecutionStepInfo stepInfoForService = executionStepInfo.transform(builder -> builder.type(underlyingSchema.getQueryType()));
 
 
         Map<String, MergedField> subFields = FpKit.getByName(mergedFields, MergedField::getResultKey);
@@ -46,12 +49,12 @@ public class DelegatedResultToResultNode {
                 .subFields(subFields).build();
 
         FieldSubSelection fieldSubSelectionWithData = FieldSubSelection.newFieldSubSelection().
-                executionInfo(executionStepInfo)
+                executionInfo(stepInfoForService)
                 .source(delegatedExecutionResult.getData())
                 .mergedSelectionSet(mergedSelectionSet)
                 .build();
 
-        List<NamedResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelectionWithData);
+        List<NamedResultNode> namedResultNodes = resolveSubSelection(executionContextForService, fieldSubSelectionWithData);
         return new RootExecutionResultNode(namedResultNodes);
     }
 
