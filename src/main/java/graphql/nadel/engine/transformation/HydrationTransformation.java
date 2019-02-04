@@ -16,6 +16,9 @@ import static graphql.Assert.assertTrue;
 
 public class HydrationTransformation implements FieldTransformation {
 
+    private String originalName;
+    private Field originalField;
+
     private InnerServiceHydration innerServiceHydration;
 
     public HydrationTransformation(InnerServiceHydration innerServiceHydration) {
@@ -32,7 +35,17 @@ public class HydrationTransformation implements FieldTransformation {
         assertTrue(remoteArgumentSource.getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD,
                 "only object field arguments are supported at the moment");
         String hydrationSourceName = remoteArgumentSource.getName();
+        originalField = environment.getField();
+        originalName = environment.getField().getName();
         Field newField = environment.getField().transform(builder -> builder.selectionSet(null).name(hydrationSourceName));
         return TreeTransformerUtil.changeNode(context, newField);
+    }
+
+    public String getOriginalName() {
+        return originalName;
+    }
+
+    public Field getOriginalField() {
+        return originalField;
     }
 }

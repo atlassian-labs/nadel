@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.execution.MergedField;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
@@ -8,6 +9,7 @@ import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Field;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLSchema;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -95,13 +97,16 @@ public class ServiceResultNodesToOverallResult {
     private LeafExecutionResultNode mapLeafResultNode(LeafExecutionResultNode leafExecutionResultNode,
                                                       GraphQLSchema overallSchema,
                                                       Map<Field, FieldTransformation> transformationMap) {
-        //TODO: handle hydration results somehow
+        if (isHydrationInput(leafExecutionResultNode, transformationMap)) {
+            return new HydrationInputNode(leafExecutionResultNode.getFetchedValueAnalysis(), leafExecutionResultNode.getNonNullableFieldWasNullException());
+        }
         FetchedValueAnalysis fetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(leafExecutionResultNode.getFetchedValueAnalysis(), overallSchema, transformationMap);
         return new LeafExecutionResultNode(fetchedValueAnalysis, leafExecutionResultNode.getNonNullableFieldWasNullException());
     }
 
-
-
-
+    private boolean isHydrationInput(LeafExecutionResultNode leafExecutionResultNode, Map<Field, FieldTransformation> transformationMap) {
+        MergedField mergedField = leafExecutionResultNode.getMergedField();
+        return transformationMap.containsKey(mergedField.getSingleField()) && transformationMap.get(mergedField.getSingleField()) instanceof HydrationTransformation;
+    }
 
 }

@@ -10,19 +10,19 @@ public class Service {
     private final String name;
     private final GraphQLSchema underlyingSchema;
     // this is not enough in the future as we need to allow for dynamic delegationExecution
-    private final DelegatedExecution delegatedExecution;
+    private final ServiceExecution serviceExecution;
     private final ServiceDefinition serviceDefinition;
     private DefinitionRegistry definitionRegistry;
 
 
     public Service(String name,
                    GraphQLSchema underlyingSchema,
-                   DelegatedExecution delegatedExecution,
+                   ServiceExecution serviceExecution,
                    ServiceDefinition serviceDefinition,
                    DefinitionRegistry definitionRegistry) {
         this.name = name;
         this.underlyingSchema = underlyingSchema;
-        this.delegatedExecution = delegatedExecution;
+        this.serviceExecution = serviceExecution;
         this.serviceDefinition = serviceDefinition;
         this.definitionRegistry = definitionRegistry;
     }
@@ -35,8 +35,8 @@ public class Service {
         return underlyingSchema;
     }
 
-    public DelegatedExecution getDelegatedExecution() {
-        return delegatedExecution;
+    public ServiceExecution getServiceExecution() {
+        return serviceExecution;
     }
 
     public ServiceDefinition getServiceDefinition() {

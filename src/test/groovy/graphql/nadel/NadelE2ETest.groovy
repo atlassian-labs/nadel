@@ -35,10 +35,10 @@ class NadelE2ETest extends Specification {
                 name: String
             }
         """)
-        DelegatedExecution delegatedExecution = Mock(DelegatedExecution)
+        ServiceExecution delegatedExecution = Mock(ServiceExecution)
         ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
             @Override
-            DelegatedExecution getDelegatedExecution(String serviceName) {
+            ServiceExecution getDelegatedExecution(String serviceName) {
                 return delegatedExecution
             }
 
@@ -61,7 +61,7 @@ class NadelE2ETest extends Specification {
         def result = nadel.execute(nadelExecutionInput)
 
         then:
-        1 * delegatedExecution.delegate(_) >> { args ->
+        1 * delegatedExecution.execute(_) >> { args ->
             DelegatedExecutionParameters params = args[0]
             assert AstPrinter.printAstCompact(params.query) == "query {hello {name} hello {id}}"
             completedFuture(delegatedExecutionResult)
@@ -109,11 +109,11 @@ class NadelE2ETest extends Specification {
                 title: String
             }
         """)
-        DelegatedExecution delegatedExecution1 = Mock(DelegatedExecution)
-        DelegatedExecution delegatedExecution2 = Mock(DelegatedExecution)
+        ServiceExecution delegatedExecution1 = Mock(ServiceExecution)
+        ServiceExecution delegatedExecution2 = Mock(ServiceExecution)
         ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
             @Override
-            DelegatedExecution getDelegatedExecution(String serviceName) {
+            ServiceExecution getDelegatedExecution(String serviceName) {
                 return serviceName == "Foo" ? delegatedExecution1 : delegatedExecution2
             }
 
@@ -138,8 +138,88 @@ class NadelE2ETest extends Specification {
         def result = nadel.execute(nadelExecutionInput)
 
         then:
-        1 * delegatedExecution1.delegate(_) >> completedFuture(delegatedExecutionResult1)
-        1 * delegatedExecution2.delegate(_) >> completedFuture(delegatedExecutionResult2)
+        1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
+        1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
         result.get().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
     }
+
+    @spock.lang.Ignore
+    def "query with hydration"() {
+
+        def nsdl = """
+         service Foo {
+            type Query{
+                foo: Foo  
+            } 
+            type Foo {
+                name: String
+                bar: Bar <= \$innerQueries.Bar.barById(id: \$source.barId)
+            }
+         }
+         service Bar {
+            type Query{
+                bar: Bar 
+            } 
+            type Bar {
+                name: String 
+            }
+         }
+        """
+        def query = """
+        { foo { bar { name } } }
+        """
+        def underlyingSchema1 = TestUtil.schema("""
+            type Query{
+                foo: Foo  
+            } 
+            type Foo {
+                name: String
+                barId: ID
+            }
+        """)
+        def underlyingSchema2 = TestUtil.schema("""
+            type Query{
+                bar: Bar 
+                barById(id: ID): Bar
+            } 
+            type Bar {
+                id: ID
+                name: String
+            }
+        """)
+        ServiceExecution delegatedExecution1 = Mock(ServiceExecution)
+        ServiceExecution delegatedExecution2 = Mock(ServiceExecution)
+        ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
+            @Override
+            ServiceExecution getDelegatedExecution(String serviceName) {
+                return serviceName == "Foo" ? delegatedExecution1 : delegatedExecution2
+            }
+
+            @Override
+            GraphQLSchema getUnderlyingSchema(String serviceName) {
+                return serviceName == "Foo" ? underlyingSchema1 : underlyingSchema2
+            }
+        }
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceDataFactory(serviceDataFactory)
+                .build()
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+        def data1 = [foo: [barId: "barId123"]]
+        def data2 = [bar: [title: "Bar"]]
+        DelegatedExecutionResult delegatedExecutionResult1 = new DelegatedExecutionResult(data1)
+        DelegatedExecutionResult delegatedExecutionResult2 = new DelegatedExecutionResult(data2)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
+        1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
+        result.get().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
+    }
+
+
 }

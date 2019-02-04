@@ -9,28 +9,36 @@ import graphql.execution.MergedField;
 import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
+import graphql.execution.nextgen.result.ResultNodeTraverser;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.OperationDefinition;
-import graphql.nadel.DelegatedExecution;
 import graphql.nadel.DelegatedExecutionParameters;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Service;
+import graphql.nadel.ServiceExecution;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
 import graphql.util.FpKit;
+import graphql.util.NodeZipper;
+import graphql.util.TraversalControl;
+import graphql.util.TraverserContext;
+import graphql.util.TraverserVisitorStub;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
+import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionParameters;
+import static java.util.Collections.singleton;
 
 @Internal
 public class NadelExecutionStrategy implements ExecutionStrategy {
@@ -55,9 +63,19 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         Map<Service, List<MergedField>> delegatedExecutionForTopLevel = getDelegatedExecutionForTopLevel(context, fieldSubSelection);
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = FpKit.mapEntries(delegatedExecutionForTopLevel,
-                (service, mergedFields) -> delegate(context, mergedFields, service, fieldSubSelection.getExecutionStepInfo()));
+                (service, mergedFields) -> callService(context, mergedFields, service, fieldSubSelection.getExecutionStepInfo()));
 
-        return mergeTrees(resultNodes);
+        CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
+
+        return rootResult.thenApply(rootExecutionResultNode -> {
+            List<NodeZipper<ExecutionResultNode>> hydrationInputNodes = getHydrationInputNodes(singleton(rootExecutionResultNode));
+            return rootExecutionResultNode;
+        });
+    }
+
+    private CompletableFuture<RootExecutionResultNode> makeHydrationCalls(List<NodeZipper<ExecutionResultNode>> hydrationInputs) {
+        // the hydration input
+        return null;
     }
 
     private CompletableFuture<RootExecutionResultNode> mergeTrees(List<CompletableFuture<RootExecutionResultNode>> resultNodes) {
@@ -86,10 +104,10 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         return info.getService();
     }
 
-    private CompletableFuture<RootExecutionResultNode> delegate(ExecutionContext context,
-                                                                List<MergedField> mergedFields,
-                                                                Service service,
-                                                                ExecutionStepInfo rootExecutionStepInfo) {
+    private CompletableFuture<RootExecutionResultNode> callService(ExecutionContext context,
+                                                                   List<MergedField> mergedFields,
+                                                                   Service service,
+                                                                   ExecutionStepInfo rootExecutionStepInfo) {
 
         OverallQueryTransformer queryTransformer = new OverallQueryTransformer(context);
         queryTransformer.transform(mergedFields, OperationDefinition.Operation.QUERY);
@@ -101,13 +119,30 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
                 .query(query)
                 .build();
-        DelegatedExecution delegatedExecution = service.getDelegatedExecution();
+        ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
 
-        return delegatedExecution.delegate(delegatedExecutionParameters)
+        return serviceExecution.execute(delegatedExecutionParameters)
                 .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, transformedMergedFields, underlyingSchema))
                 .thenApply(resultNode -> serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField));
 
+    }
+
+    public static List<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(Collection<ExecutionResultNode> roots) {
+        List<NodeZipper<ExecutionResultNode>> result = new ArrayList<>();
+
+        ResultNodeTraverser traverser = ResultNodeTraverser.depthFirst();
+        traverser.traverse(new TraverserVisitorStub<ExecutionResultNode>() {
+            @Override
+            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
+                if (context.thisNode() instanceof HydrationInputNode) {
+                    result.add(new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), RESULT_NODE_ADAPTER));
+                }
+                return TraversalControl.CONTINUE;
+            }
+
+        }, roots);
+        return result;
     }
 
 }

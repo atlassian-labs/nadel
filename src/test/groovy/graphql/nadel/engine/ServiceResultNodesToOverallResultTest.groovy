@@ -23,12 +23,20 @@ class ServiceResultNodesToOverallResultTest extends Specification {
         serviceResultNodesToOverallResult.fetchedAnalysisMapper = fetchedAnalysisMapper
 
         def analysis1 = Mock(FetchedValueAnalysis)
+        def originalStepInfo1 = Mock(ExecutionStepInfo)
+        analysis1.getExecutionStepInfo() >> originalStepInfo1
+        originalStepInfo1.getField() >> Mock(MergedField)
+
         def mappedAnalysis1 = Mock(FetchedValueAnalysis)
         def stepInfo1 = Mock(ExecutionStepInfo)
         1 * mappedAnalysis1.getExecutionStepInfo() >> stepInfo1
         1 * stepInfo1.getField() >> MergedField.newMergedField(Field.newField("x").build()).build()
 
         def analysis2 = Mock(FetchedValueAnalysis)
+        def originalStepInfo2 = Mock(ExecutionStepInfo)
+        analysis2.getExecutionStepInfo() >> originalStepInfo2
+        originalStepInfo2.getField() >> Mock(MergedField)
+
         def mappedAnalysis2 = Mock(FetchedValueAnalysis)
         def stepInfo2 = Mock(ExecutionStepInfo)
         1 * mappedAnalysis2.getExecutionStepInfo() >> stepInfo2

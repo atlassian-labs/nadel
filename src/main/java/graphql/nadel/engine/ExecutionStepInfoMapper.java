@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Assert;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.Field;
@@ -9,10 +10,10 @@ import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
+import graphql.util.FpKit;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ExecutionStepInfoMapper {
 
@@ -47,13 +48,14 @@ public class ExecutionStepInfoMapper {
     private MergedField unapplyTransformation(FieldTransformation fieldTransformation, MergedField mergedField) {
         if (fieldTransformation instanceof FieldRenameTransformation) {
             String originalName = ((FieldRenameTransformation) fieldTransformation).getOriginalName();
-            List<Field> fields = mergedField
-                    .getFields()
-                    .stream()
-                    .map(field -> field.transform(builder -> builder.name(originalName)))
-                    .collect(Collectors.toList());
+            List<Field> fields = FpKit.map(mergedField.getFields(), field -> field.transform(builder -> builder.name(originalName)));
             return MergedField.newMergedField(fields).build();
+//        } else if (fieldTransformation instanceof HydrationTransformation) {
+////            String originalName = ((HydrationTransformation) fieldTransformation).getOriginalName();
+////            List<Field> fields = FpKit.map(mergedField.getFields(), field -> field.transform(builder -> builder.name(originalName)));
+////            return MergedField.newMergedField(fields).build();
         }
-        return mergedField;
+        return Assert.assertShouldNeverHappen("unexpected transformation");
+//        return mergedField;
     }
 }

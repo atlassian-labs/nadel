@@ -6,7 +6,7 @@ import graphql.schema.GraphQLSchema;
 @PublicSpi
 public interface ServiceDataFactory {
 
-    DelegatedExecution getDelegatedExecution(String serviceName);
+    ServiceExecution getDelegatedExecution(String serviceName);
 
     GraphQLSchema getUnderlyingSchema(String serviceName);
 }
