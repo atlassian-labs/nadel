@@ -21,8 +21,9 @@ import graphql.language.VariableReference;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeTransformation;
-import graphql.nadel.engine.transformation.FieldMappingTransformation;
+import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
@@ -116,7 +117,7 @@ public class OverallQueryTransformer {
                 .rootParentType(executionContext.getGraphQLSchema().getQueryType())
                 .schema(executionContext.getGraphQLSchema())
                 .build();
-        return (FragmentDefinition) traversal.transform(new DelegateQueryTransformer());
+        return (FragmentDefinition) traversal.transform(new Transformer());
     }
 
     private Node transformTopLevelField(Field topLevelField, OperationDefinition.Operation operation) {
@@ -129,7 +130,7 @@ public class OverallQueryTransformer {
                 .schema(executionContext.getGraphQLSchema())
                 .build();
 
-        return traversal.transform(new DelegateQueryTransformer());
+        return traversal.transform(new Transformer());
     }
 
     private GraphQLObjectType getRootTypeFromOperation(OperationDefinition.Operation operation, GraphQLSchema schema) {
@@ -145,7 +146,7 @@ public class OverallQueryTransformer {
         }
     }
 
-    private class DelegateQueryTransformer implements QueryVisitor {
+    private class Transformer implements QueryVisitor {
 
         @Override
         public void visitField(QueryVisitorFieldEnvironment environment) {
@@ -208,9 +209,9 @@ public class OverallQueryTransformer {
             return null;
         }
         if (definition.getFieldMappingDefinition() != null) {
-            return new FieldMappingTransformation(definition.getFieldMappingDefinition());
+            return new FieldRenameTransformation(definition.getFieldMappingDefinition());
         } else if (definition.getInnerServiceHydration() != null) {
-            throw new UnsupportedOperationException("Hydration not implemented yet.");
+            return new HydrationTransformation(definition.getInnerServiceHydration());
         }
         throw new UnsupportedOperationException("Unsupported transformation.");
     }

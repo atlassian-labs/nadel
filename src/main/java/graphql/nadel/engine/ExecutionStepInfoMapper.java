@@ -3,7 +3,7 @@ package graphql.nadel.engine;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.Field;
-import graphql.nadel.engine.transformation.FieldMappingTransformation;
+import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
@@ -45,8 +45,8 @@ public class ExecutionStepInfoMapper {
     }
 
     private MergedField unapplyTransformation(FieldTransformation fieldTransformation, MergedField mergedField) {
-        if (fieldTransformation instanceof FieldMappingTransformation) {
-            String originalName = ((FieldMappingTransformation) fieldTransformation).getOriginalName();
+        if (fieldTransformation instanceof FieldRenameTransformation) {
+            String originalName = ((FieldRenameTransformation) fieldTransformation).getOriginalName();
             List<Field> fields = mergedField
                     .getFields()
                     .stream()

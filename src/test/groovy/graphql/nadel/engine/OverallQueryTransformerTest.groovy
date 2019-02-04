@@ -23,9 +23,18 @@ class OverallQueryTransformerTest extends Specification {
                 id: ID!
                 barId: String <= $source.bazId
                 qux: String!
+                anotherFoo: AnotherFoo <= $innerQueries.AnotherService.topLevel(id: $source.anotherSourceId)
             }
             
             type Bar <= $innerTypes.Baz {
+                id: ID!
+            }
+        }
+        service AnotherService {
+            type Query { 
+                topLevel(id:ID): AnotherFoo
+            }
+            type AnotherFoo {
                 id: ID!
             }
         }
@@ -130,6 +139,36 @@ class OverallQueryTransformerTest extends Specification {
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
                 'query {b1:bar(id:"1") {... on Baz {barId:id}}}'
+    }
+
+
+    def "test hydration transformation"() {
+        given:
+        def query = TestUtil.parseQuery(
+                '''
+            {
+                foo(id: "12") {
+                    anotherFoo {
+                        name
+                    }
+                }
+            }
+            ''')
+
+        FieldSubSelection fieldSubSelection
+        ExecutionContext executionContext
+        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+
+        List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
+
+        def transformer = new OverallQueryTransformer(executionContext)
+        transformer.transform(fields, OperationDefinition.Operation.QUERY)
+        when:
+        def document = transformer.delegateDocument()
+
+
+        then:
+        AstPrinter.printAstCompact(document) == 'query {foo(id:"12") {anotherSourceId}}'
     }
 
 
