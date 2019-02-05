@@ -2,7 +2,6 @@ package graphql.nadel
 
 import graphql.language.AstPrinter
 import graphql.schema.GraphQLSchema
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import static graphql.nadel.Nadel.newNadel
@@ -144,7 +143,6 @@ class NadelE2ETest extends Specification {
         result.get().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
     }
 
-    @Ignore
     def "query with hydration"() {
 
         def nsdl = """
