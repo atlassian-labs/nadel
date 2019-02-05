@@ -47,12 +47,15 @@ import static graphql.util.TreeTransformerUtil.changeNode;
 import static java.util.function.Function.identity;
 
 public class OverallQueryTransformer {
+
     private final ExecutionContext executionContext;
     private final Map<OperationDefinition.Operation, OperationDefinition> operationDefinitions = new LinkedHashMap<>();
     private Set<String> referencedFragmentNames = new LinkedHashSet<>();
     private Map<String, FragmentDefinition> transformedFragments;
+
     private Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
     private List<MergedField> transformedMergedFields = new ArrayList<>();
+
 
     public OverallQueryTransformer(ExecutionContext executionContext) {
         this.executionContext = executionContext;

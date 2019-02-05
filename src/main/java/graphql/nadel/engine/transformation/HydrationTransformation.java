@@ -18,6 +18,7 @@ public class HydrationTransformation implements FieldTransformation {
 
     private String originalName;
     private Field originalField;
+    private Field newField;
 
     private InnerServiceHydration innerServiceHydration;
 
@@ -37,7 +38,7 @@ public class HydrationTransformation implements FieldTransformation {
         String hydrationSourceName = remoteArgumentSource.getName();
         originalField = environment.getField();
         originalName = environment.getField().getName();
-        Field newField = environment.getField().transform(builder -> builder.selectionSet(null).name(hydrationSourceName));
+        newField = environment.getField().transform(builder -> builder.selectionSet(null).name(hydrationSourceName));
         return TreeTransformerUtil.changeNode(context, newField);
     }
 
@@ -47,5 +48,13 @@ public class HydrationTransformation implements FieldTransformation {
 
     public Field getOriginalField() {
         return originalField;
+    }
+
+    public Field getNewField() {
+        return newField;
+    }
+
+    public InnerServiceHydration getInnerServiceHydration() {
+        return innerServiceHydration;
     }
 }

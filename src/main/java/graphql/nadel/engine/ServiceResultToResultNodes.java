@@ -40,6 +40,7 @@ public class ServiceResultToResultNodes {
                                                       List<MergedField> mergedFields,
                                                       GraphQLSchema underlyingSchema) {
 
+        //TODO: currently changing the ExecutionContext and stepInfo so that it fits the underlying schema, this should be done somewhere else
         ExecutionContext executionContextForService = executionContext.transform(builder -> builder.graphQLSchema(underlyingSchema));
         ExecutionStepInfo stepInfoForService = executionStepInfo.transform(builder -> builder.type(underlyingSchema.getQueryType()));
 

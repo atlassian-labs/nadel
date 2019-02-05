@@ -2,6 +2,7 @@ package graphql.nadel
 
 import graphql.language.AstPrinter
 import graphql.schema.GraphQLSchema
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import static graphql.nadel.Nadel.newNadel
@@ -143,7 +144,7 @@ class NadelE2ETest extends Specification {
         result.get().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
     }
 
-    @spock.lang.Ignore
+    @Ignore
     def "query with hydration"() {
 
         def nsdl = """
@@ -165,9 +166,6 @@ class NadelE2ETest extends Specification {
             }
          }
         """
-        def query = """
-        { foo { bar { name } } }
-        """
         def underlyingSchema1 = TestUtil.schema("""
             type Query{
                 foo: Foo  
@@ -187,6 +185,10 @@ class NadelE2ETest extends Specification {
                 name: String
             }
         """)
+
+        def query = """
+            { foo { bar { name } } }
+        """
         ServiceExecution delegatedExecution1 = Mock(ServiceExecution)
         ServiceExecution delegatedExecution2 = Mock(ServiceExecution)
         ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
@@ -209,7 +211,7 @@ class NadelE2ETest extends Specification {
                 .query(query)
                 .build()
         def data1 = [foo: [barId: "barId123"]]
-        def data2 = [bar: [title: "Bar"]]
+        def data2 = [barById: [name: "Bar"]]
         DelegatedExecutionResult delegatedExecutionResult1 = new DelegatedExecutionResult(data1)
         DelegatedExecutionResult delegatedExecutionResult2 = new DelegatedExecutionResult(data2)
         when:
@@ -218,7 +220,7 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
         1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
-        result.get().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
+        result.get().data == [foo: [bar: [name: "Bar"]]]
     }
 
 
