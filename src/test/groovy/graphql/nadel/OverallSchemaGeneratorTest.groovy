@@ -145,13 +145,13 @@ class OverallSchemaGeneratorTest extends Specification {
         when:
         def resultList
         switch (opsType){
-            case OperationType.QUERY.opsType:
+            case Operation.QUERY.name:
                 resultList = schema.getQueryType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
-            case OperationType.MUTATION.opsType:
+            case Operation.MUTATION.name:
                 resultList = schema.getMutationType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
-            case OperationType.SUBSCRIPTION.opsType:
+            case Operation.SUBSCRIPTION.name:
                 resultList = schema.getSubscriptionType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
             case "directives":

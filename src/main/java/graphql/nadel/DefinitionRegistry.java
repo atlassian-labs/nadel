@@ -10,12 +10,12 @@ import graphql.language.SchemaDefinition;
 import graphql.language.TypeDefinition;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Internal
 public class DefinitionRegistry {
@@ -44,23 +44,19 @@ public class DefinitionRegistry {
         return (SchemaDefinition) definitionsByClass.get(SchemaDefinition.class).get(0);
     }
 
-    public Map<OperationType, ObjectTypeDefinition> getOperationTypes(){
-        Map<OperationType, ObjectTypeDefinition > opsTypesMap = new HashMap<>();
-
-        Arrays.stream(OperationType.values()).forEach(opsType ->
-                opsTypesMap.put(opsType, getOpsType(opsType.getOpsType(), opsType.getDisplayName())));
-
-       return opsTypesMap;
+    public Map<Operation, ObjectTypeDefinition> getOperationMap() {
+        return Stream.of(Operation.values()).collect(HashMap::new, (m, v) -> m.put(v, getOpsDefinitions(v.getName(), v.getDisplayName())), HashMap::putAll);
     }
 
     public ObjectTypeDefinition getQueryType() {
-        return getOpsType(OperationType.QUERY.getOpsType(), OperationType.QUERY.getDisplayName());
+        return getOpsDefinitions(Operation.QUERY.getName(), Operation.QUERY.getDisplayName());
     }
 
-    private ObjectTypeDefinition getOpsType(String typeName, String typeDisplay ) {
+    private ObjectTypeDefinition getOpsDefinitions(String typeName, String typeDisplay) {
         SchemaDefinition schemaDefinition = getSchemaDefinition();
         if (schemaDefinition != null) {
-            Optional<OperationTypeDefinition> opDefinitionsOp = schemaDefinition.getOperationTypeDefinitions().stream().filter(op -> typeName.equalsIgnoreCase(op.getName())).findFirst();
+            Optional<OperationTypeDefinition> opDefinitionsOp = schemaDefinition.getOperationTypeDefinitions().stream()
+                    .filter(op -> typeName.equalsIgnoreCase(op.getName())).findFirst();
             if (!opDefinitionsOp.isPresent()) {
                 return null;
             }

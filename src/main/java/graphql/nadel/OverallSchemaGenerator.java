@@ -30,15 +30,15 @@ public class OverallSchemaGenerator {
 
     private TypeDefinitionRegistry createTypeRegistry(List<DefinitionRegistry> serviceRegistries) {
         //TODO: this merging not completely correct for example schema definition nodes are not handled correctly
-        Map<OperationType, List<FieldDefinition>> fieldsMapbyType = new HashMap<>();
-        Arrays.stream(OperationType.values()).forEach(
+        Map<Operation, List<FieldDefinition>> fieldsMapbyType = new HashMap<>();
+        Arrays.stream(Operation.values()).forEach(
                 value -> fieldsMapbyType.put(value, new ArrayList<>()));
 
         TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
         List<SDLDefinition> allDefinitions = new ArrayList<>();
 
         for (DefinitionRegistry definitionRegistry : serviceRegistries) {
-            Map<OperationType, ObjectTypeDefinition> opsTypes = definitionRegistry.getOperationTypes();
+            Map<Operation, ObjectTypeDefinition> opsTypes = definitionRegistry.getOperationMap();
             opsTypes.keySet().stream().forEach(opsType -> {
                 ObjectTypeDefinition opsDefinitions = opsTypes.get(opsType);
                 if (opsDefinitions != null) {

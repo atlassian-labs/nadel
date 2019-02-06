@@ -1,19 +1,19 @@
 package graphql.nadel;
 
-public enum OperationType {
+public enum Operation {
     QUERY("query", "Query"),
     MUTATION("mutation", "Mutation"),
     SUBSCRIPTION("subscription", "Subscription");
 
-    private String opsType;
+    private String name;
     private String displayName;
-    private OperationType(String opsType, String displayName){
+    private Operation(String name, String displayName){
         this.displayName = displayName;
-        this.opsType = opsType;
+        this.name = name;
     }
 
-    public String getOpsType() {
-        return opsType;
+    public String getName() {
+        return name;
     }
 
     public String getDisplayName() {
