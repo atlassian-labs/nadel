@@ -143,7 +143,7 @@ class NadelE2ETest extends Specification {
         result.get().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
     }
 
-    def "query with two nested hydrations"() {
+    def "query with three nested hydrations"() {
 
         def nsdl = """
          service Foo {
@@ -187,7 +187,7 @@ class NadelE2ETest extends Specification {
         """)
 
         def query = """
-            { foo { bar { name nestedBar {name} } } }
+            { foo { bar { name nestedBar {name nestedBar { name } } } } }
         """
         ServiceExecution serviceExecution1 = Mock(ServiceExecution)
         ServiceExecution serviceExecution2 = Mock(ServiceExecution)
@@ -212,10 +212,12 @@ class NadelE2ETest extends Specification {
                 .build()
         def topLevelData = [foo: [barId: "barId123"]]
         def hydrationData1 = [barById: [name: "BarName", nestedBarId: "nestedBarId123"]]
-        def hydrationData2 = [barById: [name: "NestedBarName"]]
+        def hydrationData2 = [barById: [name: "NestedBarName1", nestedBarId: "nestedBarId456"]]
+        def hydrationData3 = [barById: [name: "NestedBarName2"]]
         DelegatedExecutionResult topLevelResult = new DelegatedExecutionResult(topLevelData)
         DelegatedExecutionResult hydrationResult1 = new DelegatedExecutionResult(hydrationData1)
         DelegatedExecutionResult hydrationResult2 = new DelegatedExecutionResult(hydrationData2)
+        DelegatedExecutionResult hydrationResult3 = new DelegatedExecutionResult(hydrationData3)
         when:
         def result = nadel.execute(nadelExecutionInput)
 
@@ -223,7 +225,8 @@ class NadelE2ETest extends Specification {
         1 * serviceExecution1.execute(_) >> completedFuture(topLevelResult)
         1 * serviceExecution2.execute(_) >> completedFuture(hydrationResult1)
         1 * serviceExecution2.execute(_) >> completedFuture(hydrationResult2)
-        result.get().data == [foo: [bar: [name: "BarName", nestedBar: [name: "NestedBarName"]]]]
+        1 * serviceExecution2.execute(_) >> completedFuture(hydrationResult3)
+        result.get().data == [foo: [bar: [name: "BarName", nestedBar: [name: "NestedBarName1", nestedBar: [name: "NestedBarName2"]]]]]
     }
 
 
