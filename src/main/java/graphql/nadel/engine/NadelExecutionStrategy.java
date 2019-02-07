@@ -17,7 +17,7 @@ import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Argument;
 import graphql.language.Document;
 import graphql.language.Field;
-import graphql.language.OperationDefinition;
+import graphql.language.SelectionSet;
 import graphql.language.StringValue;
 import graphql.nadel.DelegatedExecutionParameters;
 import graphql.nadel.FieldInfo;
@@ -50,10 +50,7 @@ import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertTrue;
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
 import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
-import static graphql.language.Document.newDocument;
 import static graphql.language.Field.newField;
-import static graphql.language.OperationDefinition.newOperationDefinition;
-import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionParameters;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
@@ -65,6 +62,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
+    private final OverallQueryTransformer queryTransformer = new OverallQueryTransformer();
 
     private final List<Service> services;
     private FieldInfos fieldInfos;
@@ -83,13 +81,11 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         List<HydrationTransformation> hydrationTransformations = new ArrayList<>();
-        List<OverallQueryTransformer> queryTransformers = new ArrayList<>();
         for (Service service : delegatedExecutionForTopLevel.keySet()) {
             List<MergedField> mergedFields = delegatedExecutionForTopLevel.get(service);
-            OverallQueryTransformer queryTransformer = transformQuery(context, mergedFields);
-            hydrationTransformations.addAll(getHydrationTransformations(queryTransformer.getTransformationByResultField().values()));
-            queryTransformers.add(queryTransformer);
-            resultNodes.add(callService(context, queryTransformer, mergedFields, service, fieldSubSelection.getExecutionStepInfo()));
+            OverallQueryTransformer.QueryTransformResult queryTransformerResult = queryTransformer.transform(context, mergedFields);
+            hydrationTransformations.addAll(getHydrationTransformations(queryTransformerResult.transformationByResultField.values()));
+            resultNodes.add(callService(context, queryTransformerResult, service, fieldSubSelection.getExecutionStepInfo()));
         }
 
 
@@ -142,48 +138,58 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         Object value = hydrationInputNode.getFetchedValueAnalysis().getFetchedValue().getFetchedValue();
         Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new StringValue(value.toString())).build();
 
-        Field topLevelField = newField(topLevelFieldName).selectionSet(originalField.getSelectionSet())
-                .arguments(singletonList(argument))
-                .build();
-        OperationDefinition operationDefinition = newOperationDefinition().operation(OperationDefinition.Operation.QUERY)
-                .selectionSet(newSelectionSet().selection(topLevelField).build())
-                .build();
-        Document newDocument = newDocument()
-                .definition(operationDefinition)
-                .build();
+        try {
+            OverallQueryTransformer.QueryTransformResult queryTransformResult = queryTransformer.transform(context,
+                    originalField.getSelectionSet(),
+                    hydrationTransformation.getParentType());
+            SelectionSet transformedSelectionSet = queryTransformResult.transformedSelectionSet;
 
-        Service service = getService(innerServiceHydration);
-        ServiceExecution serviceExecution = service.getServiceExecution();
-        GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
-        DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
-                .query(newDocument)
-                .build();
+            Field topLevelField = newField(topLevelFieldName).selectionSet(transformedSelectionSet)
+                    .arguments(singletonList(argument))
+                    .build();
 
-        MergedField mergedField = MergedField.newMergedField(topLevelField).build();
+            MergedField transformedMergedField = MergedField.newMergedField(topLevelField).build();
 
-        ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema());
-        return serviceExecution.execute(delegatedExecutionParameters)
-                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, singletonList(mergedField), underlyingSchema))
-                .thenApply(resultNode -> {
-                    // here we need to merge the result of the hydration call into the overallResult
-                    RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(resultNode, overallSchema, emptyMap());
 
-                    ExecutionResultNode topLevelResultNode = overallResultNode.getChildren().get(0);
+            Service service = getService(innerServiceHydration);
+            ServiceExecution serviceExecution = service.getServiceExecution();
+            GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
+            DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
+                    .query(queryTransformResult.document)
+                    .build();
 
-                    String oldName = hydrationInputZipper.getBreadcrumbs().get(0).getLocation().getName();
-                    NodeZipper<ExecutionResultNode> parentNodeZipper = hydrationInputZipper.moveUp();
-                    ObjectExecutionResultNode parentNode = (ObjectExecutionResultNode) parentNodeZipper.getCurNode();
-                    Map<String, ExecutionResultNode> namedChildren = parentNode.getChildrenMap();
-                    List<NamedResultNode> newChildren = new ArrayList<>();
-                    for (String key : namedChildren.keySet()) {
-                        if (!key.equals(oldName)) {
-                            newChildren.add(new NamedResultNode(key, namedChildren.get(key)));
-                        }
-                    }
-                    newChildren.add(new NamedResultNode(FieldUtils.resultKeyForField(hydrationTransformation.getOriginalField()), topLevelResultNode));
-                    return parentNodeZipper.withNewNode(parentNode.withChildren(newChildren));
-                });
 
+            ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema());
+            return serviceExecution.execute(delegatedExecutionParameters)
+                    .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, singletonList(transformedMergedField), underlyingSchema))
+                    .thenApply(resultNode -> {
+                        // here we need to merge the result of the hydration call into the overallResult
+                        return mergeHydrationResultIntoOverallResult(hydrationTransformation, hydrationInputZipper, resultNode);
+                    });
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private NodeZipper<ExecutionResultNode> mergeHydrationResultIntoOverallResult(HydrationTransformation hydrationTransformation,
+                                                                                  NodeZipper<ExecutionResultNode> hydrationInputZipper,
+                                                                                  RootExecutionResultNode resultNode) {
+        RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(resultNode, overallSchema, emptyMap());
+        ExecutionResultNode topLevelResultNode = overallResultNode.getChildren().get(0);
+        String oldName = hydrationInputZipper.getBreadcrumbs().get(0).getLocation().getName();
+        NodeZipper<ExecutionResultNode> parentNodeZipper = hydrationInputZipper.moveUp();
+        ObjectExecutionResultNode parentNode = (ObjectExecutionResultNode) parentNodeZipper.getCurNode();
+        Map<String, ExecutionResultNode> namedChildren = parentNode.getChildrenMap();
+        List<NamedResultNode> newChildren = new ArrayList<>();
+        for (String key : namedChildren.keySet()) {
+            if (!key.equals(oldName)) {
+                newChildren.add(new NamedResultNode(key, namedChildren.get(key)));
+            }
+        }
+        newChildren.add(new NamedResultNode(FieldUtils.resultKeyForField(hydrationTransformation.getOriginalField()), topLevelResultNode));
+        return parentNodeZipper.withNewNode(parentNode.withChildren(newChildren));
     }
 
     private ExecutionStepInfo createRootExecutionStepInfo(GraphQLSchema graphQLSchema) {
@@ -223,14 +229,13 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     }
 
     private CompletableFuture<RootExecutionResultNode> callService(ExecutionContext context,
-                                                                   OverallQueryTransformer queryTransformer,
-                                                                   List<MergedField> mergedFields,
+                                                                   OverallQueryTransformer.QueryTransformResult queryTransformerResult,
                                                                    Service service,
                                                                    ExecutionStepInfo rootExecutionStepInfo) {
 
-        Document query = queryTransformer.delegateDocument();
-        Map<Field, FieldTransformation> transformationByResultField = queryTransformer.getTransformationByResultField();
-        List<MergedField> transformedMergedFields = queryTransformer.getTransformedMergedFields();
+        Document query = queryTransformerResult.document;
+        Map<Field, FieldTransformation> transformationByResultField = queryTransformerResult.transformationByResultField;
+        List<MergedField> transformedMergedFields = queryTransformerResult.transformedMergedFields;
 
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
                 .query(query)
@@ -244,11 +249,6 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
     }
 
-    private OverallQueryTransformer transformQuery(ExecutionContext context, List<MergedField> mergedFields) {
-        OverallQueryTransformer queryTransformer = new OverallQueryTransformer(context);
-        queryTransformer.transform(mergedFields, OperationDefinition.Operation.QUERY);
-        return queryTransformer;
-    }
 
     public static List<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(Collection<ExecutionResultNode> roots) {
         List<NodeZipper<ExecutionResultNode>> result = new ArrayList<>();

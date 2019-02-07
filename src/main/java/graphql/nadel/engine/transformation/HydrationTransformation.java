@@ -6,6 +6,7 @@ import graphql.language.Node;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
+import graphql.schema.GraphQLOutputType;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TreeTransformerUtil;
@@ -19,6 +20,7 @@ public class HydrationTransformation implements FieldTransformation {
     private String originalName;
     private Field originalField;
     private Field newField;
+    private GraphQLOutputType parentType;
 
     private InnerServiceHydration innerServiceHydration;
 
@@ -39,6 +41,7 @@ public class HydrationTransformation implements FieldTransformation {
         originalField = environment.getField();
         originalName = environment.getField().getName();
         newField = environment.getField().transform(builder -> builder.selectionSet(null).name(hydrationSourceName));
+        parentType = environment.getParentType();
         return TreeTransformerUtil.changeNode(context, newField);
     }
 
@@ -56,5 +59,9 @@ public class HydrationTransformation implements FieldTransformation {
 
     public InnerServiceHydration getInnerServiceHydration() {
         return innerServiceHydration;
+    }
+
+    public GraphQLOutputType getParentType() {
+        return parentType;
     }
 }
