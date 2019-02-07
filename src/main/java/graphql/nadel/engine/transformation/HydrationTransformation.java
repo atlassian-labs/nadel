@@ -20,7 +20,7 @@ public class HydrationTransformation implements FieldTransformation {
     private String originalName;
     private Field originalField;
     private Field newField;
-    private GraphQLOutputType parentType;
+    private GraphQLOutputType fieldType;
 
     private InnerServiceHydration innerServiceHydration;
 
@@ -41,7 +41,7 @@ public class HydrationTransformation implements FieldTransformation {
         originalField = environment.getField();
         originalName = environment.getField().getName();
         newField = environment.getField().transform(builder -> builder.selectionSet(null).name(hydrationSourceName));
-        parentType = environment.getParentType();
+        fieldType = environment.getFieldDefinition().getType();
         return TreeTransformerUtil.changeNode(context, newField);
     }
 
@@ -61,7 +61,7 @@ public class HydrationTransformation implements FieldTransformation {
         return innerServiceHydration;
     }
 
-    public GraphQLOutputType getParentType() {
-        return parentType;
+    public GraphQLOutputType getFieldType() {
+        return fieldType;
     }
 }

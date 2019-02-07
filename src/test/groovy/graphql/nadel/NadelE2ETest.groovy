@@ -143,7 +143,7 @@ class NadelE2ETest extends Specification {
         result.get().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
     }
 
-    def "query with hydration"() {
+    def "query with two nested hydrations"() {
 
         def nsdl = """
          service Foo {
@@ -161,6 +161,7 @@ class NadelE2ETest extends Specification {
             } 
             type Bar {
                 name: String 
+                nestedBar: Bar <= \$innerQueries.Bar.barById(id: \$source.nestedBarId)
             }
          }
         """
@@ -181,18 +182,19 @@ class NadelE2ETest extends Specification {
             type Bar {
                 id: ID
                 name: String
+                nestedBarId: ID
             }
         """)
 
         def query = """
-            { foo { bar { name } } }
+            { foo { bar { name nestedBar {name} } } }
         """
-        ServiceExecution delegatedExecution1 = Mock(ServiceExecution)
-        ServiceExecution delegatedExecution2 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
         ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
             @Override
             ServiceExecution getDelegatedExecution(String serviceName) {
-                return serviceName == "Foo" ? delegatedExecution1 : delegatedExecution2
+                return serviceName == "Foo" ? serviceExecution1 : serviceExecution2
             }
 
             @Override
@@ -208,17 +210,20 @@ class NadelE2ETest extends Specification {
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
                 .build()
-        def data1 = [foo: [barId: "barId123"]]
-        def data2 = [barById: [name: "Bar"]]
-        DelegatedExecutionResult delegatedExecutionResult1 = new DelegatedExecutionResult(data1)
-        DelegatedExecutionResult delegatedExecutionResult2 = new DelegatedExecutionResult(data2)
+        def topLevelData = [foo: [barId: "barId123"]]
+        def hydrationData1 = [barById: [name: "BarName", nestedBarId: "nestedBarId123"]]
+        def hydrationData2 = [barById: [name: "NestedBarName"]]
+        DelegatedExecutionResult topLevelResult = new DelegatedExecutionResult(topLevelData)
+        DelegatedExecutionResult hydrationResult1 = new DelegatedExecutionResult(hydrationData1)
+        DelegatedExecutionResult hydrationResult2 = new DelegatedExecutionResult(hydrationData2)
         when:
         def result = nadel.execute(nadelExecutionInput)
 
         then:
-        1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
-        1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
-        result.get().data == [foo: [bar: [name: "Bar"]]]
+        1 * serviceExecution1.execute(_) >> completedFuture(topLevelResult)
+        1 * serviceExecution2.execute(_) >> completedFuture(hydrationResult1)
+        1 * serviceExecution2.execute(_) >> completedFuture(hydrationResult2)
+        result.get().data == [foo: [bar: [name: "BarName", nestedBar: [name: "NestedBarName"]]]]
     }
 
 
