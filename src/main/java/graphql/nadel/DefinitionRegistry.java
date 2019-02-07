@@ -10,10 +10,12 @@ import graphql.language.SchemaDefinition;
 import graphql.language.TypeDefinition;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Internal
 public class DefinitionRegistry {
@@ -42,17 +44,26 @@ public class DefinitionRegistry {
         return (SchemaDefinition) definitionsByClass.get(SchemaDefinition.class).get(0);
     }
 
+    public Map<Operation, ObjectTypeDefinition> getOperationMap() {
+        return Stream.of(Operation.values()).collect(HashMap::new, (m, v) -> m.put(v, getOpsDefinitions(v.getName(), v.getDisplayName())), HashMap::putAll);
+    }
+
     public ObjectTypeDefinition getQueryType() {
+        return getOpsDefinitions(Operation.QUERY.getName(), Operation.QUERY.getDisplayName());
+    }
+
+    private ObjectTypeDefinition getOpsDefinitions(String typeName, String typeDisplay) {
         SchemaDefinition schemaDefinition = getSchemaDefinition();
         if (schemaDefinition != null) {
-            Optional<OperationTypeDefinition> queryOp = schemaDefinition.getOperationTypeDefinitions().stream().filter(op -> "query".equals(op.getName())).findFirst();
-            if (!queryOp.isPresent()) {
+            Optional<OperationTypeDefinition> opDefinitionsOp = schemaDefinition.getOperationTypeDefinitions().stream()
+                    .filter(op -> typeName.equalsIgnoreCase(op.getName())).findFirst();
+            if (!opDefinitionsOp.isPresent()) {
                 return null;
             }
-            String queryName = queryOp.get().getTypeName().getName();
-            return getDefinition(queryName, ObjectTypeDefinition.class);
+            String operationName = opDefinitionsOp.get().getTypeName().getName();
+            return getDefinition(operationName, ObjectTypeDefinition.class);
         }
-        return getDefinition("Query", ObjectTypeDefinition.class);
+        return getDefinition(typeDisplay, ObjectTypeDefinition.class);
     }
 
     private <T extends SDLDefinition> T getDefinition(String name, Class<? extends T> clazz) {
