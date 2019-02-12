@@ -8,6 +8,7 @@ import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.GraphQLSchema;
 
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -18,7 +19,7 @@ import static java.util.Objects.requireNonNull;
 @PublicApi
 public class Nadel {
 
-    private final String nsdl;
+    private final Reader nsdl;
     private final StitchingDsl stitchingDsl;
     private final ServiceDataFactory serviceDataFactory;
     private final NSDLParser NSDLParser = new NSDLParser();
@@ -29,7 +30,7 @@ public class Nadel {
 
     private OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
 
-    private Nadel(String nsdl, ServiceDataFactory serviceDataFactory) {
+    private Nadel(Reader nsdl, ServiceDataFactory serviceDataFactory) {
         this.nsdl = nsdl;
         this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
         this.serviceDataFactory = serviceDataFactory;
@@ -85,10 +86,10 @@ public class Nadel {
     }
 
     public static class Builder {
-        private String nsdl;
+        private Reader nsdl;
         private ServiceDataFactory serviceDataFactory;
 
-        public Builder dsl(String nsdl) {
+        public Builder dsl(Reader nsdl) {
             this.nsdl = requireNonNull(nsdl);
             return this;
         }
