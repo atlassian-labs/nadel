@@ -273,7 +273,7 @@ class TestUtil {
         ExecutionInput executionInput = ExecutionInput.newExecutionInput()
                 .query(AstPrinter.printAst(query)).build()
         ExecutionHelper executionHelper = new ExecutionHelper()
-        def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput)
+        def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput, null)
         [executionData.executionContext, executionData.fieldSubSelection]
     }
 

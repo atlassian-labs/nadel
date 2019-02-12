@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.analysis.QueryTransformer;
 import graphql.analysis.QueryTraversal;
 import graphql.analysis.QueryVisitor;
 import graphql.analysis.QueryVisitorFieldEnvironment;
@@ -107,7 +108,7 @@ public class OverallQueryTransformer {
     }
 
     private FragmentDefinition transformNamedFragment(FragmentDefinition fragmentDefinition) {
-        QueryTraversal traversal = QueryTraversal.newQueryTraversal()
+        QueryTransformer traversal = QueryTransformer.newQueryTransformer()
                 .fragmentsByName(executionContext.getFragmentsByName())
                 .variables(executionContext.getVariables())
                 .root(fragmentDefinition)
@@ -119,7 +120,7 @@ public class OverallQueryTransformer {
     }
 
     private Node transformTopLevelField(Field topLevelField, OperationDefinition.Operation operation) {
-        QueryTraversal traversal = QueryTraversal.newQueryTraversal()
+        QueryTransformer traversal = QueryTransformer.newQueryTransformer()
                 .fragmentsByName(executionContext.getFragmentsByName())
                 .variables(executionContext.getVariables())
                 .root(topLevelField)

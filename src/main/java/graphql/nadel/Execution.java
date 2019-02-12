@@ -5,6 +5,7 @@ import graphql.ExecutionResult;
 import graphql.Internal;
 import graphql.VisibleForTesting;
 import graphql.execution.ExecutionId;
+import graphql.execution.instrumentation.InstrumentationState;
 import graphql.execution.nextgen.ExecutionHelper;
 import graphql.execution.nextgen.result.ResultNodesUtil;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
@@ -48,7 +49,11 @@ public class Execution {
                 .operationName(nadelExecutionInput.getOperationName())
                 .variables(nadelExecutionInput.getVariables())
                 .build();
-        ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput);
+
+        // TODO get real instrumentation happening in Nadel - this for now
+        InstrumentationState instrumentationState = new InstrumentationState() {
+        };
+        ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput, instrumentationState);
 
         CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection);
         return resultNodes.thenApply(ResultNodesUtil::toExecutionResult);
