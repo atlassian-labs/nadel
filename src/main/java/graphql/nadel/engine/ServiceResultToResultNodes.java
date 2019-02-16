@@ -55,15 +55,15 @@ public class ServiceResultToResultNodes {
                 .mergedSelectionSet(mergedSelectionSet)
                 .build();
 
-        List<NamedResultNode> namedResultNodes = resolveSubSelection(executionContextForService, fieldSubSelectionWithData);
+        List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContextForService, fieldSubSelectionWithData);
         return new RootExecutionResultNode(namedResultNodes);
     }
 
-    private List<NamedResultNode> resolveSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
+    private List<ExecutionResultNode> resolveSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
         return map(fetchSubSelection(executionContext, fieldSubSelection), node -> resolveAllChildNodes(executionContext, node));
     }
 
-    private NamedResultNode resolveAllChildNodes(ExecutionContext context, NamedResultNode namedResultNode) {
+    private ExecutionResultNode resolveAllChildNodes(ExecutionContext context, NamedResultNode namedResultNode) {
         NodeMultiZipper<ExecutionResultNode> unresolvedNodes = ResultNodesUtil.getUnresolvedNodes(namedResultNode.getNode());
         List<NodeZipper<ExecutionResultNode>> resolvedNodes = map(unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
         return resolvedNodesToResultNode(namedResultNode, unresolvedNodes, resolvedNodes);
@@ -72,15 +72,15 @@ public class ServiceResultToResultNodes {
     private NodeZipper<ExecutionResultNode> resolveNode(ExecutionContext executionContext, NodeZipper<ExecutionResultNode> unresolvedNode) {
         FetchedValueAnalysis fetchedValueAnalysis = unresolvedNode.getCurNode().getFetchedValueAnalysis();
         FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, fetchedValueAnalysis);
-        List<NamedResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelection);
+        List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelection);
         return unresolvedNode.withNewNode(new ObjectExecutionResultNode(fetchedValueAnalysis, namedResultNodes));
     }
 
-    private NamedResultNode resolvedNodesToResultNode(NamedResultNode namedResultNode,
-                                                      NodeMultiZipper<ExecutionResultNode> unresolvedNodes,
-                                                      List<NodeZipper<ExecutionResultNode>> resolvedNodes) {
+    private ExecutionResultNode resolvedNodesToResultNode(NamedResultNode namedResultNode,
+                                                          NodeMultiZipper<ExecutionResultNode> unresolvedNodes,
+                                                          List<NodeZipper<ExecutionResultNode>> resolvedNodes) {
         ExecutionResultNode rootNode = unresolvedNodes.withReplacedZippers(resolvedNodes).toRootNode();
-        return namedResultNode.withNode(rootNode);
+        return rootNode;
     }
 
     private List<NamedResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {

@@ -16,7 +16,6 @@ import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
 import graphql.util.TreeTransformerUtil;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static graphql.Assert.assertShouldNeverHappen;
@@ -51,30 +50,6 @@ public class ServiceResultNodesToOverallResult {
 
         });
 
-        newRoot = (RootExecutionResultNode) resultNodesTransformer.transform(newRoot, new TraverserVisitorStub<ExecutionResultNode>() {
-            @Override
-            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-                ExecutionResultNode node = context.thisNode();
-                if (node instanceof ObjectExecutionResultNode) {
-                    Map<String, ExecutionResultNode> newChildren = new LinkedHashMap<>();
-                    Map<String, ExecutionResultNode> children = ((ObjectExecutionResultNode) node).getChildrenMap();
-                    for (String key : children.keySet()) {
-                        ExecutionResultNode childNode = children.get(key);
-                        String resultKey = childNode.getMergedField().getResultKey();
-                        newChildren.put(resultKey, childNode);
-                    }
-                    ObjectExecutionResultNode newNode;
-                    if (node instanceof RootExecutionResultNode) {
-                        newNode = new RootExecutionResultNode(newChildren);
-                    } else {
-                        newNode = new ObjectExecutionResultNode(node.getFetchedValueAnalysis(), newChildren);
-                    }
-                    return TreeTransformerUtil.changeNode(context, newNode);
-                }
-                return TraversalControl.CONTINUE;
-            }
-        });
-
         return newRoot;
 
     }
@@ -87,7 +62,7 @@ public class ServiceResultNodesToOverallResult {
 
     private ObjectExecutionResultNode mapObjectResultNode(ObjectExecutionResultNode objectResultNode, GraphQLSchema overallSchema, Map<Field, FieldTransformation> transformationMap) {
         FetchedValueAnalysis fetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(objectResultNode.getFetchedValueAnalysis(), overallSchema, transformationMap);
-        return new ObjectExecutionResultNode(fetchedValueAnalysis, objectResultNode.getChildrenMap());
+        return new ObjectExecutionResultNode(fetchedValueAnalysis, objectResultNode.getChildren());
     }
 
     private RootExecutionResultNode mapRootResultNode(RootExecutionResultNode resultNode, Map<Field, FieldTransformation> transformationMap) {

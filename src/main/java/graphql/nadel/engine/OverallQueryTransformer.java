@@ -1,6 +1,6 @@
 package graphql.nadel.engine;
 
-import graphql.analysis.QueryTraversal;
+import graphql.analysis.QueryTransformer;
 import graphql.analysis.QueryVisitor;
 import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.analysis.QueryVisitorFragmentSpreadEnvironment;
@@ -161,7 +161,7 @@ public class OverallQueryTransformer {
                                                            Map<Field, FieldTransformation> transformationByResultField,
                                                            Set<String> referencedFragmentNames
     ) {
-        QueryTraversal traversal = QueryTraversal.newQueryTraversal()
+        QueryTransformer transformer = QueryTransformer.newQueryTransformer()
                 .fragmentsByName(executionContext.getFragmentsByName())
                 .variables(executionContext.getVariables())
                 .root(fragmentDefinition)
@@ -169,7 +169,7 @@ public class OverallQueryTransformer {
                 .rootParentType(executionContext.getGraphQLSchema().getQueryType())
                 .schema(executionContext.getGraphQLSchema())
                 .build();
-        return (FragmentDefinition) traversal.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames));
+        return (FragmentDefinition) transformer.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames));
     }
 
     private Node transformNode(ExecutionContext executionContext,
@@ -178,7 +178,7 @@ public class OverallQueryTransformer {
                                Map<Field, FieldTransformation> transformationByResultField,
                                Set<String> referencedFragmentNames
     ) {
-        QueryTraversal traversal = QueryTraversal.newQueryTraversal()
+        QueryTransformer transformer = QueryTransformer.newQueryTransformer()
                 .fragmentsByName(executionContext.getFragmentsByName())
                 .variables(executionContext.getVariables())
                 .root(node)
@@ -187,7 +187,7 @@ public class OverallQueryTransformer {
                 .schema(executionContext.getGraphQLSchema())
                 .build();
 
-        return traversal.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames));
+        return transformer.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames));
     }
 
 //    private GraphQLObjectType getRootTypeFromOperation(OperationDefinition.Operation operation, GraphQLSchema schema) {

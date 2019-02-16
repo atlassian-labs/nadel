@@ -8,10 +8,9 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.ExecutionStrategy;
+import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.NamedResultNode;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResultNodeTraverser;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Argument;
@@ -27,7 +26,6 @@ import graphql.nadel.ServiceExecution;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
-import graphql.nadel.engine.transformation.FieldUtils;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
@@ -51,6 +49,7 @@ import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
 import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static graphql.language.Field.newField;
 import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionParameters;
+import static graphql.util.FpKit.map;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 
@@ -89,8 +88,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
         CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
 
-        return rootResult
-                .thenCompose(rootExecutionResultNode -> {
+        return rootResult.thenCompose(rootExecutionResultNode -> {
                     List<NodeZipper<ExecutionResultNode>> hydrationInputs = getHydrationInputNodes(singleton(rootExecutionResultNode));
                     return executeHydration(context, hydrationInputs, hydrationTransformations)
                             .thenApply(nodeZippers -> {
@@ -207,18 +205,16 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                                                                                   Map<Field, FieldTransformation> transformationByResultField) {
         RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField);
         ExecutionResultNode topLevelResultNode = overallResultNode.getChildren().get(0);
-        String oldName = hydrationInputZipper.getBreadcrumbs().get(0).getLocation().getName();
-        NodeZipper<ExecutionResultNode> parentNodeZipper = hydrationInputZipper.moveUp();
-        ObjectExecutionResultNode parentNode = (ObjectExecutionResultNode) parentNodeZipper.getCurNode();
-        Map<String, ExecutionResultNode> namedChildren = parentNode.getChildrenMap();
-        List<NamedResultNode> newChildren = new ArrayList<>();
-        for (String key : namedChildren.keySet()) {
-            if (!key.equals(oldName)) {
-                newChildren.add(new NamedResultNode(key, namedChildren.get(key)));
-            }
-        }
-        newChildren.add(new NamedResultNode(FieldUtils.resultKeyForField(hydrationTransformation.getOriginalField()), topLevelResultNode));
-        return parentNodeZipper.withNewNode(parentNode.withChildren(newChildren));
+        ExecutionResultNode topLevelNodeWithOriginalField = changeField(topLevelResultNode, hydrationTransformation.getOriginalField());
+        return hydrationInputZipper.withNewNode(topLevelNodeWithOriginalField);
+    }
+
+    private ExecutionResultNode changeField(ExecutionResultNode executionResultNode, Field newField) {
+        MergedField mergedField = MergedField.newMergedField(newField).build();
+        FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
+        ExecutionStepInfo newStepInfo = fetchedValueAnalysis.getExecutionStepInfo().transform(builder -> builder.field(mergedField));
+        FetchedValueAnalysis newFetchedValueAnalysis = fetchedValueAnalysis.transfrom(builder -> builder.executionStepInfo(newStepInfo));
+        return executionResultNode.withNewFetchedValueAnalysis(newFetchedValueAnalysis);
     }
 
     private ExecutionStepInfo createRootExecutionStepInfo(GraphQLSchema graphQLSchema) {
@@ -233,8 +229,8 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
     private CompletableFuture<RootExecutionResultNode> mergeTrees(List<CompletableFuture<RootExecutionResultNode>> resultNodes) {
         return Async.each(resultNodes).thenApply(rootNodes -> {
-            Map<String, ExecutionResultNode> mergedChildren = new LinkedHashMap<>();
-            rootNodes.forEach(rootNode -> mergedChildren.putAll(rootNode.getChildrenMap()));
+            List<ExecutionResultNode> mergedChildren = new ArrayList<>();
+            map(rootNodes, ExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
             return new RootExecutionResultNode(mergedChildren);
         });
     }
