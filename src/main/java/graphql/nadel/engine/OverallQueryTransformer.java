@@ -52,15 +52,8 @@ public class OverallQueryTransformer {
         //so it must be done first
     }
 
-    public static class QueryTransformResult {
 
-        public List<MergedField> transformedMergedFields;
-        public SelectionSet transformedSelectionSet;
-        public Document document;
-        public Map<Field, FieldTransformation> transformationByResultField;
-    }
-
-    public QueryTransformResult transform(ExecutionContext executionContext, SelectionSet selectionSet, GraphQLOutputType graphQLOutputType) {
+    public QueryTransformationResult transformSelectionSet(ExecutionContext executionContext, SelectionSet selectionSet, GraphQLOutputType graphQLOutputType) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
 
@@ -91,15 +84,17 @@ public class OverallQueryTransformer {
                 .map(transformedFragments::get)
                 .forEach(newDocumentBuilder::definition);
 
-        QueryTransformResult result = new QueryTransformResult();
-        result.transformedSelectionSet = transformedSelectionSet;
-        result.document = newDocumentBuilder.build();
-        result.transformationByResultField = transformationByResultField;
+        QueryTransformationResult result = new QueryTransformationResult(
+                newDocumentBuilder.build(),
+                null,
+                transformedSelectionSet,
+                transformationByResultField
+        );
         return result;
 
     }
 
-    public QueryTransformResult transform(ExecutionContext executionContext, List<MergedField> mergedFields) {
+    public QueryTransformationResult transformMergedFields(ExecutionContext executionContext, List<MergedField> mergedFields) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
 
@@ -137,10 +132,12 @@ public class OverallQueryTransformer {
                 .map(transformedFragments::get)
                 .forEach(newDocumentBuilder::definition);
 
-        QueryTransformResult result = new QueryTransformResult();
-        result.transformedMergedFields = transformedMergedFields;
-        result.document = newDocumentBuilder.build();
-        result.transformationByResultField = transformationByResultField;
+        QueryTransformationResult result = new QueryTransformationResult(
+                newDocumentBuilder.build(),
+                transformedMergedFields,
+                null,
+                transformationByResultField
+        );
 
         return result;
     }

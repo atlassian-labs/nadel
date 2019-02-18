@@ -80,8 +80,8 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         List<HydrationTransformation> hydrationTransformations = new ArrayList<>();
         for (Service service : delegatedExecutionForTopLevel.keySet()) {
             List<MergedField> mergedFields = delegatedExecutionForTopLevel.get(service);
-            OverallQueryTransformer.QueryTransformResult queryTransformerResult = queryTransformer.transform(context, mergedFields);
-            hydrationTransformations.addAll(getHydrationTransformations(queryTransformerResult.transformationByResultField.values()));
+            QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(context, mergedFields);
+            hydrationTransformations.addAll(getHydrationTransformations(queryTransformerResult.getTransformationByResultField().values()));
             resultNodes.add(callService(context, queryTransformerResult, service, fieldSubSelection.getExecutionStepInfo()));
         }
 
@@ -163,10 +163,10 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         Object value = hydrationInputNode.getFetchedValueAnalysis().getFetchedValue().getFetchedValue();
         Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new StringValue(value.toString())).build();
 
-        OverallQueryTransformer.QueryTransformResult queryTransformResult = queryTransformer.transform(context,
+        QueryTransformationResult queryTransformResult = queryTransformer.transformSelectionSet(context,
                 originalField.getSelectionSet(),
                 hydrationTransformation.getFieldType());
-        SelectionSet transformedSelectionSet = queryTransformResult.transformedSelectionSet;
+        SelectionSet transformedSelectionSet = queryTransformResult.getTransformedSelectionSet();
 
 
         Field topLevelField = newField(topLevelFieldName).selectionSet(transformedSelectionSet)
@@ -180,17 +180,17 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
-                .query(queryTransformResult.document)
+                .query(queryTransformResult.getDocument())
                 .build();
 
 
         ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema());
-        Map<Field, FieldTransformation> transformationByResultField = queryTransformResult.transformationByResultField;
+        Map<Field, FieldTransformation> transformationByResultField = queryTransformResult.getTransformationByResultField();
         return serviceExecution.execute(delegatedExecutionParameters)
                 .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, singletonList(transformedMergedField), underlyingSchema))
                 .thenApply(resultNode -> convertHydrationResultIntoOverallResult(hydrationTransformation, resultNode, transformationByResultField))
                 .thenCompose(resultNode -> {
-                    List<HydrationTransformation> hydrationTransformations = getHydrationTransformations(queryTransformResult.transformationByResultField.values());
+                    List<HydrationTransformation> hydrationTransformations = getHydrationTransformations(transformationByResultField.values());
                     return resolveAllHydrationInputs(context, resultNode, hydrationTransformations);
                 });
     }
@@ -249,13 +249,13 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     }
 
     private CompletableFuture<RootExecutionResultNode> callService(ExecutionContext context,
-                                                                   OverallQueryTransformer.QueryTransformResult queryTransformerResult,
+                                                                   QueryTransformationResult queryTransformerResult,
                                                                    Service service,
                                                                    ExecutionStepInfo rootExecutionStepInfo) {
 
-        Document query = queryTransformerResult.document;
-        Map<Field, FieldTransformation> transformationByResultField = queryTransformerResult.transformationByResultField;
-        List<MergedField> transformedMergedFields = queryTransformerResult.transformedMergedFields;
+        Document query = queryTransformerResult.getDocument();
+        Map<Field, FieldTransformation> transformationByResultField = queryTransformerResult.getTransformationByResultField();
+        List<MergedField> transformedMergedFields = queryTransformerResult.getTransformedMergedFields();
 
         DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
                 .query(query)

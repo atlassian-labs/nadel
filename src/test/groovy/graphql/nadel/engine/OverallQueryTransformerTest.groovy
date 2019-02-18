@@ -160,7 +160,7 @@ class OverallQueryTransformerTest extends Specification {
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
         def transformer = new OverallQueryTransformer()
-        def transformationResult = transformer.transform(executionContext, fields)
+        def transformationResult = transformer.transformMergedFields(executionContext, fields)
         when:
         def document = transformationResult.document
 
@@ -178,7 +178,7 @@ class OverallQueryTransformerTest extends Specification {
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
         def transformer = new OverallQueryTransformer()
-        def transformationResult = transformer.transform(executionContext, fields)
+        def transformationResult = transformer.transformMergedFields(executionContext, fields)
         return transformationResult.document
     }
 }
