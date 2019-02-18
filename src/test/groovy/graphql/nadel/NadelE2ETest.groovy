@@ -204,7 +204,7 @@ class NadelE2ETest extends Specification {
         }
         given:
         Nadel nadel = newNadel()
-                .dsl(nsdl)
+                .dsl(new StringReader(nsdl))
                 .serviceDataFactory(serviceDataFactory)
                 .build()
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
