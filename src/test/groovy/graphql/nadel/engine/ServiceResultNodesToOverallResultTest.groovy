@@ -22,20 +22,20 @@ class ServiceResultNodesToOverallResultTest extends Specification {
         ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult()
         serviceResultNodesToOverallResult.fetchedAnalysisMapper = fetchedAnalysisMapper
 
-        def analysis1 = Mock(FetchedValueAnalysis)
+        def originalAnalysis1 = Mock(FetchedValueAnalysis)
         def originalStepInfo1 = Mock(ExecutionStepInfo)
-        analysis1.getExecutionStepInfo() >> originalStepInfo1
-        originalStepInfo1.getField() >> Mock(MergedField)
+        originalAnalysis1.getExecutionStepInfo() >> originalStepInfo1
+        originalStepInfo1.getField() >> MergedField.newMergedField(Field.newField("a").build()).build()
 
         def mappedAnalysis1 = Mock(FetchedValueAnalysis)
         def stepInfo1 = Mock(ExecutionStepInfo)
         1 * mappedAnalysis1.getExecutionStepInfo() >> stepInfo1
         1 * stepInfo1.getField() >> MergedField.newMergedField(Field.newField("x").build()).build()
 
-        def analysis2 = Mock(FetchedValueAnalysis)
+        def originalAnalysis2 = Mock(FetchedValueAnalysis)
         def originalStepInfo2 = Mock(ExecutionStepInfo)
-        analysis2.getExecutionStepInfo() >> originalStepInfo2
-        originalStepInfo2.getField() >> Mock(MergedField)
+        originalAnalysis2.getExecutionStepInfo() >> originalStepInfo2
+        originalStepInfo2.getField() >> MergedField.newMergedField(Field.newField("b").build()).build()
 
         def mappedAnalysis2 = Mock(FetchedValueAnalysis)
         def stepInfo2 = Mock(ExecutionStepInfo)
@@ -43,23 +43,25 @@ class ServiceResultNodesToOverallResultTest extends Specification {
         1 * stepInfo2.getField() >> MergedField.newMergedField(Field.newField("y").build()).build()
 
 
-        def leafResultNode1 = new LeafExecutionResultNode(analysis1, null)
-        def leafResultNode2 = new LeafExecutionResultNode(analysis2, null)
+        def leafResultNode1 = new LeafExecutionResultNode(originalAnalysis1, null)
+        def leafResultNode2 = new LeafExecutionResultNode(originalAnalysis2, null)
 
-        def rootResultNode = new RootExecutionResultNode([a: leafResultNode1, b: leafResultNode2])
+        def rootResultNode = new RootExecutionResultNode([leafResultNode1, leafResultNode2])
 
         def overallSchema = Mock(GraphQLSchema)
-        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(analysis1, overallSchema, [:]) >> mappedAnalysis1
-        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(analysis2, overallSchema, [:]) >> mappedAnalysis2
+        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis1, overallSchema, [:]) >> mappedAnalysis1
+        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis2, overallSchema, [:]) >> mappedAnalysis2
 
         when:
         def newRoot = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, [:])
 
 
         then:
-        newRoot.getChildrenMap().size() == 2
-        newRoot.getChildrenMap()["x"] instanceof LeafExecutionResultNode
-        newRoot.getChildrenMap()["y"] instanceof LeafExecutionResultNode
+        newRoot.getChildren().size() == 2
+        newRoot.getChildren()[0] instanceof LeafExecutionResultNode
+        newRoot.getChildren()[0].getMergedField().getResultKey() == "x"
+        newRoot.getChildren()[1] instanceof LeafExecutionResultNode
+        newRoot.getChildren()[1].getMergedField().getResultKey() == "y"
 
     }
 

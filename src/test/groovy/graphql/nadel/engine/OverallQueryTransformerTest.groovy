@@ -5,7 +5,6 @@ import graphql.execution.MergedField
 import graphql.execution.nextgen.FieldSubSelection
 import graphql.language.AstPrinter
 import graphql.language.Document
-import graphql.language.OperationDefinition
 import graphql.nadel.TestUtil
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
@@ -116,8 +115,7 @@ class OverallQueryTransformerTest extends Specification {
 
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
-                'query {foo(id:"1") {...frag1}} fragment frag2 on Foo {bazId ...frag3} fragment frag3 on Foo {qux} ' +
-                'fragment frag1 on Foo {id ...frag2}'
+                "query {foo(id:\"1\") {...frag1}} fragment frag1 on Foo {id ...frag2} fragment frag2 on Foo {bazId ...frag3} fragment frag3 on Foo {qux}"
     }
 
     def "inline fragments are transformed and types are renamed"() {
@@ -161,10 +159,10 @@ class OverallQueryTransformerTest extends Specification {
 
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
-        def transformer = new OverallQueryTransformer(executionContext)
-        transformer.transform(fields, OperationDefinition.Operation.QUERY)
+        def transformer = new OverallQueryTransformer()
+        def transformationResult = transformer.transform(executionContext, fields)
         when:
-        def document = transformer.delegateDocument()
+        def document = transformationResult.document
 
 
         then:
@@ -179,8 +177,8 @@ class OverallQueryTransformerTest extends Specification {
 
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
-        def transformer = new OverallQueryTransformer(executionContext)
-        transformer.transform(fields, OperationDefinition.Operation.QUERY)
-        return transformer.delegateDocument()
+        def transformer = new OverallQueryTransformer()
+        def transformationResult = transformer.transform(executionContext, fields)
+        return transformationResult.document
     }
 }
