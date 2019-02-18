@@ -47,13 +47,10 @@ import static java.util.function.Function.identity;
 public class OverallQueryTransformer {
 
 
-    public OverallQueryTransformer() {
-        //Field transformation may remove fragment reference all together if fragment is reduced to empty selection set
-        //so it must be done first
-    }
-
-
-    public QueryTransformationResult transformSelectionSet(ExecutionContext executionContext, SelectionSet selectionSet, GraphQLOutputType graphQLOutputType) {
+    public QueryTransformationResult transformSelectionSet(
+            ExecutionContext executionContext,
+            SelectionSet selectionSet,
+            GraphQLOutputType graphQLOutputType) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
 
