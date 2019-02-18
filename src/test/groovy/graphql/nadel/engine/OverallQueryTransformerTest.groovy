@@ -58,7 +58,7 @@ class OverallQueryTransformerTest extends Specification {
         AstPrinter.printAstCompact(delegateQuery) == "query {hAlias:helloWorld foo(id:\"1\") {fooId:id bazId}}"
     }
 
-    def "referenced named fragments are transformed and included"() {
+    def "used fragments are transformed and included and not used ones left out"() {
         def query = TestUtil.parseQuery(
                 '''
             {
