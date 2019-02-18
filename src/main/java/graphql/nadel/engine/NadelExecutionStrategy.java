@@ -3,15 +3,12 @@ package graphql.nadel.engine;
 import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
-import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.ExecutionStrategy;
-import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.ResultNodeTraverser;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Argument;
 import graphql.language.Document;
@@ -32,23 +29,21 @@ import graphql.schema.GraphQLSchema;
 import graphql.util.FpKit;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
-import graphql.util.TraversalControl;
-import graphql.util.TraverserContext;
-import graphql.util.TraverserVisitorStub;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotEmpty;
-import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
 import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static graphql.language.Field.newField;
 import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionParameters;
+import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
+import static graphql.nadel.engine.StrategyUtil.createRootExecutionStepInfo;
+import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
+import static graphql.nadel.engine.StrategyUtil.getHydrationTransformations;
 import static graphql.util.FpKit.map;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
@@ -92,62 +87,31 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                 thenApply(RootExecutionResultNode.class::cast));
     }
 
-    private static class HydrationInfo {
-
-        public HydrationInfo(Field field, HydrationTransformation hydrationTransformation, NodeZipper<ExecutionResultNode> hydrationInputNodeZipper) {
-            this.field = field;
-            this.hydrationTransformation = hydrationTransformation;
-            this.hydrationInputNodeZipper = hydrationInputNodeZipper;
-        }
-
-        Field field;
-        HydrationTransformation hydrationTransformation;
-        NodeZipper<ExecutionResultNode> hydrationInputNodeZipper;
-    }
-
-    private List<HydrationInfo> getHydrationInfos(List<NodeZipper<ExecutionResultNode>> hydrationInputsZippers, List<HydrationTransformation> hydrationTransformations) {
-        Map<Field, List<NodeZipper<ExecutionResultNode>>> nodesByField = FpKit.groupingBy(hydrationInputsZippers, hydrationZipper -> hydrationZipper.getCurNode().getMergedField().getSingleField());
-
-        List<HydrationInfo> result = new ArrayList<>();
-        for (Field field : nodesByField.keySet()) {
-            List<NodeZipper<ExecutionResultNode>> nodeZippers = nodesByField.get(field);
-            HydrationTransformation transformationForField = getTransformationForField(hydrationTransformations, field);
-            for (NodeZipper<ExecutionResultNode> singleZipper : nodeZippers) {
-                HydrationInfo hydrationInfo = new HydrationInfo(field, transformationForField, singleZipper);
-                result.add(hydrationInfo);
-            }
-        }
-        return result;
-    }
 
     private CompletableFuture<ExecutionResultNode> resolveAllHydrationInputs(ExecutionContext context,
                                                                              ExecutionResultNode node,
                                                                              List<HydrationTransformation> hydrationTransformations) {
         List<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(singleton(node));
-        List<HydrationInfo> infos = getHydrationInfos(hydrationInputZippers, hydrationTransformations);
+
         List<CompletableFuture<NodeZipper<ExecutionResultNode>>> resolvedNodeCFs = new ArrayList<>();
 
-        for (HydrationInfo info : infos) {
-            NodeZipper<ExecutionResultNode> hydrationInputNodeZipper = info.hydrationInputNodeZipper;
-            resolvedNodeCFs.add(resolveHydrationInput(context, hydrationInputNodeZipper.getCurNode(), info.hydrationTransformation).thenApply(hydrationInputNodeZipper::withNewNode));
-
+        for (NodeZipper<ExecutionResultNode> zipper : hydrationInputZippers) {
+            Field field = zipper.getCurNode().getMergedField().getSingleField();
+            HydrationTransformation transformationForField = getTransformationForField(hydrationTransformations, field);
+            resolvedNodeCFs.add(resolveHydrationInput(context, zipper.getCurNode(), transformationForField).thenApply(zipper::withNewNode));
         }
-        return Async.each(resolvedNodeCFs).thenApply(resolvedNodes -> {
-            NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, resolvedNodes, RESULT_NODE_ADAPTER);
-            return multiZipper.toRootNode();
-        });
+        return Async
+                .each(resolvedNodeCFs)
+                .thenApply(resolvedNodes -> {
+                    NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, resolvedNodes, RESULT_NODE_ADAPTER);
+                    return multiZipper.toRootNode();
+                });
+
     }
+
 
     private HydrationTransformation getTransformationForField(List<HydrationTransformation> transformations, Field field) {
         return transformations.stream().filter(transformation -> transformation.getNewField() == field).findFirst().get();
-    }
-
-    private List<HydrationTransformation> getHydrationTransformations(Collection<FieldTransformation> transformations) {
-        return transformations
-                .stream()
-                .filter(transformation -> transformation instanceof HydrationTransformation)
-                .map(HydrationTransformation.class::cast)
-                .collect(Collectors.toList());
     }
 
 
@@ -200,22 +164,9 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                                                                         Map<Field, FieldTransformation> transformationByResultField) {
         RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField);
         ExecutionResultNode topLevelResultNode = overallResultNode.getChildren().get(0);
-        ExecutionResultNode topLevelNodeWithOriginalField = changeField(topLevelResultNode, hydrationTransformation.getOriginalField());
-        return topLevelNodeWithOriginalField;
+        return changeFieldInResultNode(topLevelResultNode, hydrationTransformation.getOriginalField());
     }
 
-    private ExecutionResultNode changeField(ExecutionResultNode executionResultNode, Field newField) {
-        MergedField mergedField = MergedField.newMergedField(newField).build();
-        FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
-        ExecutionStepInfo newStepInfo = fetchedValueAnalysis.getExecutionStepInfo().transform(builder -> builder.field(mergedField));
-        FetchedValueAnalysis newFetchedValueAnalysis = fetchedValueAnalysis.transfrom(builder -> builder.executionStepInfo(newStepInfo));
-        return executionResultNode.withNewFetchedValueAnalysis(newFetchedValueAnalysis);
-    }
-
-    private ExecutionStepInfo createRootExecutionStepInfo(GraphQLSchema graphQLSchema) {
-        ExecutionStepInfo executionInfo = newExecutionStepInfo().type(graphQLSchema.getQueryType()).path(ExecutionPath.rootPath()).build();
-        return executionInfo;
-    }
 
     private Service getService(InnerServiceHydration innerServiceHydration) {
         return FpKit.findOne(services, service -> service.getName().equals(innerServiceHydration.getServiceName())).get();
@@ -269,22 +220,5 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
     }
 
-
-    public static List<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(Collection<ExecutionResultNode> roots) {
-        List<NodeZipper<ExecutionResultNode>> result = new ArrayList<>();
-
-        ResultNodeTraverser traverser = ResultNodeTraverser.depthFirst();
-        traverser.traverse(new TraverserVisitorStub<ExecutionResultNode>() {
-            @Override
-            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-                if (context.thisNode() instanceof HydrationInputNode) {
-                    result.add(new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), RESULT_NODE_ADAPTER));
-                }
-                return TraversalControl.CONTINUE;
-            }
-
-        }, roots);
-        return result;
-    }
 
 }

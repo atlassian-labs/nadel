@@ -94,7 +94,10 @@ public class OverallQueryTransformer {
 
     }
 
-    public QueryTransformationResult transformMergedFields(ExecutionContext executionContext, List<MergedField> mergedFields) {
+    public QueryTransformationResult transformMergedFields(
+            ExecutionContext executionContext,
+            List<MergedField> mergedFields
+    ) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
 
