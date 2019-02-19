@@ -3,6 +3,7 @@ package graphql.nadel.engine
 import graphql.ExecutionInput
 import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
+import graphql.language.AstPrinter
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
@@ -50,11 +51,16 @@ class NadelExecutionStrategyTest extends Specification {
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput, null);
         executionData.executionContext
 
+        def expectedQuery = "query {foo}"
+
         when:
         nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
 
+
         then:
-        1 * serviceExecution.execute(_) >> CompletableFuture.completedFuture(Mock(ServiceExecutionResult))
+        1 * serviceExecution.execute({
+            AstPrinter.printAstCompact(it.query) == expectedQuery
+        }) >> CompletableFuture.completedFuture(Mock(ServiceExecutionResult))
     }
 
     FieldInfos topLevelFieldInfo(GraphQLFieldDefinition fieldDefinition, Service service) {
