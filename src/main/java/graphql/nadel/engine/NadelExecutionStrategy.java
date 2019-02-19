@@ -15,11 +15,11 @@ import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.language.StringValue;
-import graphql.nadel.DelegatedExecutionParameters;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
+import graphql.nadel.ServiceExecutionParameters;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
@@ -39,7 +39,7 @@ import java.util.concurrent.CompletableFuture;
 import static graphql.Assert.assertNotEmpty;
 import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static graphql.language.Field.newField;
-import static graphql.nadel.DelegatedExecutionParameters.newDelegatedExecutionParameters;
+import static graphql.nadel.ServiceExecutionParameters.newDelegatedExecutionParameters;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.StrategyUtil.createRootExecutionStepInfo;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
@@ -143,14 +143,14 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         Service service = getService(innerServiceHydration);
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
-        DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
+        ServiceExecutionParameters serviceExecutionParameters = newDelegatedExecutionParameters()
                 .query(queryTransformResult.getDocument())
                 .build();
 
 
         ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema());
         Map<Field, FieldTransformation> transformationByResultField = queryTransformResult.getTransformationByResultField();
-        return serviceExecution.execute(delegatedExecutionParameters)
+        return serviceExecution.execute(serviceExecutionParameters)
                 .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, singletonList(transformedMergedField), underlyingSchema))
                 .thenApply(resultNode -> convertHydrationResultIntoOverallResult(hydrationTransformation, resultNode, transformationByResultField))
                 .thenCompose(resultNode -> {
@@ -208,13 +208,13 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         Map<Field, FieldTransformation> transformationByResultField = queryTransformerResult.getTransformationByResultField();
         List<MergedField> transformedMergedFields = queryTransformerResult.getTransformedMergedFields();
 
-        DelegatedExecutionParameters delegatedExecutionParameters = newDelegatedExecutionParameters()
+        ServiceExecutionParameters serviceExecutionParameters = newDelegatedExecutionParameters()
                 .query(query)
                 .build();
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
 
-        return serviceExecution.execute(delegatedExecutionParameters)
+        return serviceExecution.execute(serviceExecutionParameters)
                 .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, transformedMergedFields, underlyingSchema))
                 .thenApply(resultNode -> serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField));
 

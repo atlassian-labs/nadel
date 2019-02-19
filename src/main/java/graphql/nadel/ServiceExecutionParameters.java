@@ -5,11 +5,11 @@ import graphql.language.Document;
 
 
 @PublicApi
-public class DelegatedExecutionParameters {
+public class ServiceExecutionParameters {
 
     private final Document query;
 
-    private DelegatedExecutionParameters(Document query) {
+    private ServiceExecutionParameters(Document query) {
         this.query = query;
     }
 
@@ -33,8 +33,8 @@ public class DelegatedExecutionParameters {
             return this;
         }
 
-        public DelegatedExecutionParameters build() {
-            return new DelegatedExecutionParameters(query);
+        public ServiceExecutionParameters build() {
+            return new ServiceExecutionParameters(query);
         }
 
     }

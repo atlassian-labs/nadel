@@ -56,13 +56,13 @@ class NadelE2ETest extends Specification {
                 .query(query)
                 .build()
         def data = [hello: [id: "3", name: "earth"]]
-        DelegatedExecutionResult delegatedExecutionResult = new DelegatedExecutionResult(data)
+        ServiceExecutionResult delegatedExecutionResult = new ServiceExecutionResult(data)
         when:
         def result = nadel.execute(nadelExecutionInput)
 
         then:
         1 * delegatedExecution.execute(_) >> { args ->
-            DelegatedExecutionParameters params = args[0]
+            ServiceExecutionParameters params = args[0]
             assert AstPrinter.printAstCompact(params.query) == "query {hello {name} hello {id}}"
             completedFuture(delegatedExecutionResult)
         }
@@ -132,8 +132,8 @@ class NadelE2ETest extends Specification {
                 .build()
         def data1 = [otherFoo: [name: "Foo"]]
         def data2 = [bar: [title: "Bar"]]
-        DelegatedExecutionResult delegatedExecutionResult1 = new DelegatedExecutionResult(data1)
-        DelegatedExecutionResult delegatedExecutionResult2 = new DelegatedExecutionResult(data2)
+        ServiceExecutionResult delegatedExecutionResult1 = new ServiceExecutionResult(data1)
+        ServiceExecutionResult delegatedExecutionResult2 = new ServiceExecutionResult(data2)
         when:
         def result = nadel.execute(nadelExecutionInput)
 
@@ -214,10 +214,10 @@ class NadelE2ETest extends Specification {
         def hydrationData1 = [barById: [name: "BarName", nestedBarId: "nestedBarId123"]]
         def hydrationData2 = [barById: [name: "NestedBarName1", nestedBarId: "nestedBarId456"]]
         def hydrationData3 = [barById: [name: "NestedBarName2"]]
-        DelegatedExecutionResult topLevelResult = new DelegatedExecutionResult(topLevelData)
-        DelegatedExecutionResult hydrationResult1 = new DelegatedExecutionResult(hydrationData1)
-        DelegatedExecutionResult hydrationResult2 = new DelegatedExecutionResult(hydrationData2)
-        DelegatedExecutionResult hydrationResult3 = new DelegatedExecutionResult(hydrationData3)
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
+        ServiceExecutionResult hydrationResult1 = new ServiceExecutionResult(hydrationData1)
+        ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)
+        ServiceExecutionResult hydrationResult3 = new ServiceExecutionResult(hydrationData3)
         when:
         def result = nadel.execute(nadelExecutionInput)
 

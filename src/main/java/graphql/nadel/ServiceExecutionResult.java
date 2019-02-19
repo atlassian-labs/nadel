@@ -5,11 +5,11 @@ import graphql.PublicApi;
 import java.util.Map;
 
 @PublicApi
-public class DelegatedExecutionResult {
+public class ServiceExecutionResult {
 
     private final Map<String, Object> data;
 
-    public DelegatedExecutionResult(Map<String, Object> data) {
+    public ServiceExecutionResult(Map<String, Object> data) {
         this.data = data;
     }
 

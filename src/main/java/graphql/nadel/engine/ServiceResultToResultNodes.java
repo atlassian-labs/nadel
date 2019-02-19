@@ -15,7 +15,7 @@ import graphql.execution.nextgen.result.NamedResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResultNodesUtil;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
-import graphql.nadel.DelegatedExecutionResult;
+import graphql.nadel.ServiceExecutionResult;
 import graphql.schema.GraphQLSchema;
 import graphql.util.FpKit;
 import graphql.util.NodeMultiZipper;
@@ -30,12 +30,12 @@ import static graphql.util.FpKit.map;
 public class ServiceResultToResultNodes {
 
     ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
-    DelegatedResultAnalyzer fetchedValueAnalyzer = new DelegatedResultAnalyzer();
+    ServiceExecutionResultAnalyzer fetchedValueAnalyzer = new ServiceExecutionResultAnalyzer();
     ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
     ExecutionStrategyUtil util = new ExecutionStrategyUtil();
 
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
-                                                      DelegatedExecutionResult delegatedExecutionResult,
+                                                      ServiceExecutionResult serviceExecutionResult,
                                                       ExecutionStepInfo executionStepInfo,
                                                       List<MergedField> mergedFields,
                                                       GraphQLSchema underlyingSchema) {
@@ -51,7 +51,7 @@ public class ServiceResultToResultNodes {
 
         FieldSubSelection fieldSubSelectionWithData = FieldSubSelection.newFieldSubSelection().
                 executionInfo(stepInfoForService)
-                .source(delegatedExecutionResult.getData())
+                .source(serviceExecutionResult.getData())
                 .mergedSelectionSet(mergedSelectionSet)
                 .build();
 
