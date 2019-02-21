@@ -1,9 +1,12 @@
 package graphql.nadel;
 
 import graphql.Internal;
+import graphql.language.Definition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.OperationTypeDefinition;
+import graphql.language.SDLDefinition;
 import graphql.language.TypeName;
+import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
 import java.util.List;
@@ -21,6 +24,14 @@ public class Util {
         } else {
             return (ObjectTypeDefinition) typeDefinitionRegistry.getType("Query").get();
         }
+    }
+
+    public static DefinitionRegistry buildServiceRegistry(ServiceDefinition serviceDefinition) {
+        DefinitionRegistry definitionRegistry = new DefinitionRegistry();
+        for (Definition definition : serviceDefinition.getTypeDefinitions()) {
+            definitionRegistry.add((SDLDefinition) definition);
+        }
+        return definitionRegistry;
     }
 
 }

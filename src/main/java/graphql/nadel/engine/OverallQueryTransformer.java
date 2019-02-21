@@ -47,26 +47,26 @@ import static java.util.function.Function.identity;
 public class OverallQueryTransformer {
 
 
-    public QueryTransformationResult transformSelectionSet(
+    public QueryTransformationResult transformSelectionSetInField(
             ExecutionContext executionContext,
-            SelectionSet selectionSet,
+            Field field,
             GraphQLOutputType graphQLOutputType) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
 
-        List<Field> transformedFields = new ArrayList<>();
 
 
         SelectionSet transformedSelectionSet = (SelectionSet) transformNode(
                 executionContext,
-                selectionSet,
+                field.getSelectionSet(),
                 (GraphQLObjectType) graphQLOutputType,
                 transformationByResultField,
                 referencedFragmentNames);
+        Field transformedField = field.transform(builder -> builder.selectionSet(transformedSelectionSet));
 
         OperationDefinition operationDefinition = newOperationDefinition()
                 .operation(OperationDefinition.Operation.QUERY)
-                .selectionSet(newSelectionSet(transformedFields).build())
+                .selectionSet(newSelectionSet().selection(transformedField).build())
                 .build();
 
 
@@ -84,7 +84,7 @@ public class OverallQueryTransformer {
         QueryTransformationResult result = new QueryTransformationResult(
                 newDocumentBuilder.build(),
                 null,
-                transformedSelectionSet,
+                transformedField,
                 transformationByResultField
         );
         return result;

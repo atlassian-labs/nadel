@@ -13,7 +13,6 @@ import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Argument;
 import graphql.language.Document;
 import graphql.language.Field;
-import graphql.language.SelectionSet;
 import graphql.language.StringValue;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
@@ -127,17 +126,16 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         Object value = hydrationInputNode.getFetchedValueAnalysis().getFetchedValue().getFetchedValue();
         Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new StringValue(value.toString())).build();
 
-        QueryTransformationResult queryTransformResult = queryTransformer.transformSelectionSet(context,
-                originalField.getSelectionSet(),
-                hydrationTransformation.getFieldType());
-        SelectionSet transformedSelectionSet = queryTransformResult.getTransformedSelectionSet();
-
-
-        Field topLevelField = newField(topLevelFieldName).selectionSet(transformedSelectionSet)
+        Field topLevelField = newField(topLevelFieldName).selectionSet(originalField.getSelectionSet())
                 .arguments(singletonList(argument))
                 .build();
 
-        MergedField transformedMergedField = MergedField.newMergedField(topLevelField).build();
+
+        QueryTransformationResult queryTransformResult = queryTransformer.transformSelectionSetInField(context,
+                topLevelField,
+                hydrationTransformation.getFieldType());
+
+        MergedField transformedMergedField = MergedField.newMergedField(queryTransformResult.getTransformedField()).build();
 
 
         Service service = getService(innerServiceHydration);

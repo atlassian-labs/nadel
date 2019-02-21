@@ -24,7 +24,7 @@ class NadelExecutionStrategyTest extends Specification {
 
     def "one call to one service"() {
         given:
-        def serviceSchema1 = TestUtil.schema("""
+        def underlyingSchema = TestUtil.schema("""
         type Query {
             foo: String  
         }
@@ -40,7 +40,7 @@ class NadelExecutionStrategyTest extends Specification {
         def definitionRegistry = Mock(DefinitionRegistry)
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
-        def service = new Service("service1", serviceSchema1, serviceExecution, serviceDefinition, definitionRegistry)
+        def service = new Service("service", underlyingSchema, serviceExecution, serviceDefinition, definitionRegistry)
         def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema)
 
@@ -61,6 +61,87 @@ class NadelExecutionStrategyTest extends Specification {
         1 * serviceExecution.execute({
             AstPrinter.printAstCompact(it.query) == expectedQuery
         }) >> CompletableFuture.completedFuture(Mock(ServiceExecutionResult))
+    }
+
+
+    def "hydration call"() {
+        given:
+        def underlyingSchema1 = TestUtil.schema("""
+        type Query {
+            foo : Foo
+        }
+        type Foo {
+            id: ID
+            barId: ID
+        }
+        """)
+        def underlyingSchema2 = TestUtil.schema("""
+        type Query {
+            barById(id: ID): Bar
+        }
+        type Bar {
+            id: ID
+            name : String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl("""
+        service service1 {
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                id: ID
+                bar: Bar <= \$innerQueries.service2.barById(id: \$source.barId)
+            }
+        }
+        service service2 {
+            type Query {
+                barById(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+                name: String
+            }
+        }
+        """)
+        def service1Execution = Mock(ServiceExecution)
+        def service2Execution = Mock(ServiceExecution)
+        def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
+        def definitionRegistry = Mock(DefinitionRegistry)
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
+
+        def service1 = new Service("service1", underlyingSchema1, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service("service2", underlyingSchema2, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema)
+
+
+        def query = "{foo {bar{id name}}}"
+        def expectedQuery1 = "query {foo {barId}}"
+        def response1 = new ServiceExecutionResult([foo: [barId: "barId"]])
+        def expectedQuery2 = "query {barById(id:\"barId\") {id name}}"
+        def document = TestUtil.parseQuery(query)
+        def executionInput = ExecutionInput.newExecutionInput().query(query).build()
+        ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput, null);
+        executionData.executionContext
+
+
+        when:
+        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({
+            AstPrinter.printAstCompact(it.query) == expectedQuery1
+        }) >> CompletableFuture.completedFuture(response1)
+
+        then:
+        1 * service2Execution.execute({
+            println AstPrinter.printAstCompact(it.query)
+            AstPrinter.printAstCompact(it.query) == expectedQuery2
+        }) >> CompletableFuture.completedFuture(Mock(ServiceExecutionResult))
+
     }
 
     FieldInfos topLevelFieldInfo(GraphQLFieldDefinition fieldDefinition, Service service) {
