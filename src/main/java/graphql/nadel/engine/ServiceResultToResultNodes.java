@@ -15,6 +15,7 @@ import graphql.execution.nextgen.result.NamedResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResultNodesUtil;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
+import graphql.nadel.Operation;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.schema.GraphQLSchema;
 import graphql.util.FpKit;
@@ -38,11 +39,12 @@ public class ServiceResultToResultNodes {
                                                       ServiceExecutionResult serviceExecutionResult,
                                                       ExecutionStepInfo executionStepInfo,
                                                       List<MergedField> mergedFields,
-                                                      GraphQLSchema underlyingSchema) {
+                                                      GraphQLSchema underlyingSchema,
+                                                      Operation operation) {
 
         //TODO: currently changing the ExecutionContext and stepInfo so that it fits the underlying schema, this should be done somewhere else
         ExecutionContext executionContextForService = executionContext.transform(builder -> builder.graphQLSchema(underlyingSchema));
-        ExecutionStepInfo stepInfoForService = executionStepInfo.transform(builder -> builder.type(underlyingSchema.getQueryType()));
+        ExecutionStepInfo stepInfoForService = executionStepInfo.transform(builder -> builder.type(operation.getRootType(underlyingSchema)));
 
 
         Map<String, MergedField> subFields = FpKit.getByName(mergedFields, MergedField::getResultKey);

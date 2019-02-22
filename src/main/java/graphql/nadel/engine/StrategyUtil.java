@@ -7,6 +7,7 @@ import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.ResultNodeTraverser;
 import graphql.language.Field;
+import graphql.nadel.Operation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLSchema;
@@ -42,8 +43,8 @@ public class StrategyUtil {
         return result;
     }
 
-    public static ExecutionStepInfo createRootExecutionStepInfo(GraphQLSchema graphQLSchema) {
-        ExecutionStepInfo executionInfo = newExecutionStepInfo().type(graphQLSchema.getQueryType()).path(ExecutionPath.rootPath()).build();
+    public static ExecutionStepInfo createRootExecutionStepInfo(GraphQLSchema graphQLSchema, Operation operation) {
+        ExecutionStepInfo executionInfo = newExecutionStepInfo().type(operation.getRootType(graphQLSchema)).path(ExecutionPath.rootPath()).build();
         return executionInfo;
     }
 

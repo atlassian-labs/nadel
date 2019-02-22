@@ -229,5 +229,62 @@ class NadelE2ETest extends Specification {
         result.get().data == [foo: [bar: [name: "BarName", nestedBar: [name: "NestedBarName1", nestedBar: [name: "NestedBarName2"]]]]]
     }
 
+    def "simple mutation"() {
 
+        def nsdl = """
+         service MyService {
+            type Query {
+                foo: String
+            }
+            type Mutation{
+                hello: String  
+            } 
+         }
+        """
+        def query = """
+        mutation M{ hello }
+        """
+        def underlyingSchema = TestUtil.schema("""
+            type Query {
+                foo: String
+            }
+            type Mutation{
+                hello: String
+            } 
+        """)
+        ServiceExecution delegatedExecution = Mock(ServiceExecution)
+        ServiceDataFactory serviceDataFactory = new ServiceDataFactory() {
+            @Override
+            ServiceExecution getDelegatedExecution(String serviceName) {
+                return delegatedExecution
+            }
+
+            @Override
+            GraphQLSchema getUnderlyingSchema(String serviceName) {
+                underlyingSchema
+            }
+        }
+        given:
+        Nadel nadel = newNadel()
+                .dsl(new StringReader(nsdl))
+                .serviceDataFactory(serviceDataFactory)
+                .build()
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+        def data = [hello: "world"]
+        ServiceExecutionResult delegatedExecutionResult = new ServiceExecutionResult(data)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            assert AstPrinter.printAstCompact(params.query) == "mutation M {hello}"
+            completedFuture(delegatedExecutionResult)
+        }
+        result.get().data == data
+
+
+    }
 }

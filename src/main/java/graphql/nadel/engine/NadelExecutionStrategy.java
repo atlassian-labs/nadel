@@ -16,6 +16,7 @@ import graphql.language.Field;
 import graphql.language.StringValue;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
+import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.ServiceExecutionParameters;
@@ -72,13 +73,16 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext context, FieldSubSelection fieldSubSelection) {
         Map<Service, List<MergedField>> delegatedExecutionForTopLevel = getDelegatedExecutionForTopLevel(context, fieldSubSelection);
 
+        String operationName = context.getOperationDefinition().getName();
+        Operation operation = Operation.fromAst(context.getOperationDefinition().getOperation());
+
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         List<HydrationTransformation> hydrationTransformations = new ArrayList<>();
         for (Service service : delegatedExecutionForTopLevel.keySet()) {
             List<MergedField> mergedFields = delegatedExecutionForTopLevel.get(service);
-            QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(context, mergedFields);
+            QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(context, mergedFields, operation, operationName);
             hydrationTransformations.addAll(getHydrationTransformations(queryTransformerResult.getTransformationByResultField().values()));
-            resultNodes.add(callService(context, queryTransformerResult, service, fieldSubSelection.getExecutionStepInfo()));
+            resultNodes.add(callService(context, queryTransformerResult, service, fieldSubSelection.getExecutionStepInfo(), operation));
         }
 
 
@@ -157,10 +161,10 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                 .build();
 
 
-        ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema());
+        ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), Operation.fromAst(context.getOperationDefinition().getOperation()));
         Map<Field, FieldTransformation> transformationByResultField = queryTransformResult.getTransformationByResultField();
         return serviceExecution.execute(serviceExecutionParameters)
-                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, singletonList(transformedMergedField), underlyingSchema))
+                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, singletonList(transformedMergedField), underlyingSchema, Operation.QUERY))
                 .thenApply(resultNode -> convertHydrationResultIntoOverallResult(hydrationTransformation, resultNode, transformationByResultField))
                 .thenCompose(resultNode -> {
                     List<HydrationTransformation> hydrationTransformations = getHydrationTransformations(transformationByResultField.values());
@@ -212,7 +216,8 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     private CompletableFuture<RootExecutionResultNode> callService(ExecutionContext context,
                                                                    QueryTransformationResult queryTransformerResult,
                                                                    Service service,
-                                                                   ExecutionStepInfo rootExecutionStepInfo) {
+                                                                   ExecutionStepInfo rootExecutionStepInfo,
+                                                                   Operation operation) {
 
         Document query = queryTransformerResult.getDocument();
         Map<Field, FieldTransformation> transformationByResultField = queryTransformerResult.getTransformationByResultField();
@@ -225,7 +230,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
 
         return serviceExecution.execute(serviceExecutionParameters)
-                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, transformedMergedFields, underlyingSchema))
+                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, transformedMergedFields, underlyingSchema, operation))
                 .thenApply(resultNode -> serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField));
     }
 

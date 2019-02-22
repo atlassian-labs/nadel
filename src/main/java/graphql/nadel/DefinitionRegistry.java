@@ -52,6 +52,10 @@ public class DefinitionRegistry {
         return getOpsDefinitions(Operation.QUERY.getName(), Operation.QUERY.getDisplayName());
     }
 
+    public ObjectTypeDefinition getMutationType() {
+        return getOpsDefinitions(Operation.MUTATION.getName(), Operation.MUTATION.getDisplayName());
+    }
+
     private ObjectTypeDefinition getOpsDefinitions(String typeName, String typeDisplay) {
         SchemaDefinition schemaDefinition = getSchemaDefinition();
         if (schemaDefinition != null) {

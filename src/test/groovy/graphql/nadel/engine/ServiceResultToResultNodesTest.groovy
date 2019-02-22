@@ -3,6 +3,7 @@ package graphql.nadel.engine
 import graphql.execution.ExecutionContext
 import graphql.execution.nextgen.FieldSubSelection
 import graphql.execution.nextgen.result.ResultNodesUtil
+import graphql.nadel.Operation
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.TestUtil
 import spock.lang.Specification
@@ -27,7 +28,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -53,7 +55,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -103,7 +106,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -128,7 +132,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -153,7 +158,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -178,7 +184,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -203,7 +210,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:

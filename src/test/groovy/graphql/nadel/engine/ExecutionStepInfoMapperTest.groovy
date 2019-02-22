@@ -4,6 +4,7 @@ import graphql.execution.ExecutionPath
 import graphql.execution.ExecutionStepInfo
 import graphql.execution.MergedField
 import graphql.language.Field
+import graphql.nadel.Operation
 import graphql.nadel.TestUtil
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLTypeUtil
@@ -19,7 +20,7 @@ class ExecutionStepInfoMapperTest extends Specification {
         GraphQLObjectType queryType = schema.getType("Query")
         def fooField = queryType.getFieldDefinition("foo")
 
-        def parentInfo = StrategyUtil.createRootExecutionStepInfo(schema)
+        def parentInfo = StrategyUtil.createRootExecutionStepInfo(schema, Operation.QUERY)
 
         MergedField mergedField = MergedField.newMergedField(new Field("foo")).build()
         ExecutionStepInfo executionStepInfo = ExecutionStepInfo.newExecutionStepInfo()
@@ -48,7 +49,7 @@ class ExecutionStepInfoMapperTest extends Specification {
         GraphQLObjectType queryType = schema.getType("Query")
         def fooField = queryType.getFieldDefinition("foo")
 
-        def parentInfo = StrategyUtil.createRootExecutionStepInfo(schema)
+        def parentInfo = StrategyUtil.createRootExecutionStepInfo(schema, Operation.QUERY)
 
         MergedField mergedField = MergedField.newMergedField(new Field("foo")).build()
         ExecutionStepInfo executionStepInfo = ExecutionStepInfo.newExecutionStepInfo()

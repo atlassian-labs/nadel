@@ -18,6 +18,7 @@ import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
 import graphql.language.TypeName;
 import graphql.language.VariableReference;
+import graphql.nadel.Operation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeTransformation;
@@ -53,7 +54,6 @@ public class OverallQueryTransformer {
             GraphQLOutputType graphQLOutputType) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
-
 
 
         SelectionSet transformedSelectionSet = (SelectionSet) transformNode(
@@ -93,7 +93,9 @@ public class OverallQueryTransformer {
 
     public QueryTransformationResult transformMergedFields(
             ExecutionContext executionContext,
-            List<MergedField> mergedFields
+            List<MergedField> mergedFields,
+            Operation operation,
+            String operationName
     ) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
@@ -107,7 +109,7 @@ public class OverallQueryTransformer {
             List<Field> transformed = map(fields, field -> (Field) transformNode(
                     executionContext,
                     field,
-                    executionContext.getGraphQLSchema().getQueryType(),
+                    operation.getRootType(executionContext.getGraphQLSchema()),
                     transformationByResultField,
                     referencedFragmentNames));
             transformedFields.addAll(transformed);
@@ -116,7 +118,8 @@ public class OverallQueryTransformer {
 
         }
         OperationDefinition operationDefinition = newOperationDefinition()
-                .operation(OperationDefinition.Operation.QUERY)
+                .operation(operation.getAstOperation())
+                .name(operationName)
                 .selectionSet(newSelectionSet(transformedFields).build())
                 .build();
 
@@ -186,19 +189,6 @@ public class OverallQueryTransformer {
 
         return transformer.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames));
     }
-
-//    private GraphQLObjectType getRootTypeFromOperation(OperationDefinition.Operation operation, GraphQLSchema schema) {
-//        switch (operation) {
-//            case MUTATION:
-//                return assertNotNull(schema.getMutationType());
-//            case QUERY:
-//                return assertNotNull(schema.getQueryType());
-//            case SUBSCRIPTION:
-//                return assertNotNull(schema.getSubscriptionType());
-//            default:
-//                return assertShouldNeverHappen();
-//        }
-//    }
 
     private class Transformer implements QueryVisitor {
 
