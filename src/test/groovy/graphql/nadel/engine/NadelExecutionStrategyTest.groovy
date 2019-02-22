@@ -65,7 +65,7 @@ class NadelExecutionStrategyTest extends Specification {
     }
 
 
-    def "hydration call"() {
+    def "one hydration call"() {
         given:
         def underlyingSchema1 = TestUtil.schema("""
         type Query {
@@ -122,6 +122,7 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery1 = "query {foo {barId}}"
         def response1 = new ServiceExecutionResult([foo: [barId: "barId"]])
         def expectedQuery2 = "query {barById(id:\"barId\") {id name}}"
+        def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
         def document = TestUtil.parseQuery(query)
         def executionInput = ExecutionInput.newExecutionInput().query(query).build()
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput, null);
@@ -129,7 +130,7 @@ class NadelExecutionStrategyTest extends Specification {
 
 
         when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
 
 
         then:
@@ -141,8 +142,9 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service2Execution.execute({
             println AstPrinter.printAstCompact(it.query)
             AstPrinter.printAstCompact(it.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(Mock(ServiceExecutionResult))
+        }) >> CompletableFuture.completedFuture(response2)
 
+        ResultNodesUtil.toExecutionResult(response.get()).data == [foo: [bar: [id: "barId", name: "Bar1"]]]
     }
 
     def "hydration list"() {
