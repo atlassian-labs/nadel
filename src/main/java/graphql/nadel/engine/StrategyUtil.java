@@ -55,6 +55,13 @@ public class StrategyUtil {
         return executionResultNode.withNewFetchedValueAnalysis(newFetchedValueAnalysis);
     }
 
+    public static ExecutionResultNode changeFieldInResultNode(ExecutionResultNode executionResultNode, MergedField mergedField) {
+        FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
+        ExecutionStepInfo newStepInfo = fetchedValueAnalysis.getExecutionStepInfo().transform(builder -> builder.field(mergedField));
+        FetchedValueAnalysis newFetchedValueAnalysis = fetchedValueAnalysis.transfrom(builder -> builder.executionStepInfo(newStepInfo));
+        return executionResultNode.withNewFetchedValueAnalysis(newFetchedValueAnalysis);
+    }
+
 
     public static List<HydrationTransformation> getHydrationTransformations(Collection<FieldTransformation> transformations) {
         return transformations

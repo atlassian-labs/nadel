@@ -38,9 +38,9 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
-import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static graphql.language.Field.newField;
 import static graphql.nadel.ServiceExecutionParameters.newDelegatedExecutionParameters;
+import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.StrategyUtil.createRootExecutionStepInfo;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
@@ -95,6 +95,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                                                                              List<HydrationTransformation> hydrationTransformations) {
         List<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(singleton(node));
 
+
         List<CompletableFuture<NodeZipper<ExecutionResultNode>>> resolvedNodeCFs = new ArrayList<>();
 
         for (NodeZipper<ExecutionResultNode> zipper : hydrationInputZippers) {
@@ -105,7 +106,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         return Async
                 .each(resolvedNodeCFs)
                 .thenApply(resolvedNodes -> {
-                    NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, resolvedNodes, RESULT_NODE_ADAPTER);
+                    NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, resolvedNodes, FIX_NAMES_ADAPTER);
                     return multiZipper.toRootNode();
                 })
                 .whenComplete(this::logException);

@@ -3,6 +3,7 @@ package graphql.nadel.engine
 import graphql.ExecutionInput
 import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
+import graphql.execution.nextgen.result.ResultNodesUtil
 import graphql.language.AstPrinter
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
@@ -236,8 +237,7 @@ class NadelExecutionStrategyTest extends Specification {
             AstPrinter.printAstCompact(it.query) == expectedQuery4
         }) >> CompletableFuture.completedFuture(response4)
 
-        // doens't work yet
-//        ResultNodesUtil.toExecutionResult(response.get()).data == [foo: [bar: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar3"], [id: "barId3", name: "Bar4"]]]]
+        ResultNodesUtil.toExecutionResult(response.get()).data == [foo: [bar: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar3"], [id: "barId3", name: "Bar4"]]]]
     }
 
     FieldInfos topLevelFieldInfo(GraphQLFieldDefinition fieldDefinition, Service service) {
