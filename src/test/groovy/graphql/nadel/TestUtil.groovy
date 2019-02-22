@@ -162,7 +162,7 @@ class TestUtil {
 
     static GraphQLSchema schemaFromNdsl(String ndsl) {
         def stitchingDsl = new NSDLParser().parseDSL(ndsl)
-        def defRegistries = stitchingDsl.serviceDefinitions.collect({ Nadel.buildServiceRegistry(it) })
+        def defRegistries = stitchingDsl.serviceDefinitions.collect({ Util.buildServiceRegistry(it) })
         return new OverallSchemaGenerator().buildOverallSchema(defRegistries)
     }
 

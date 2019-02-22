@@ -8,11 +8,11 @@ import graphql.util.TraversalControl;
 import static graphql.nadel.engine.transformation.FieldUtils.resultKeyForField;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
-public class FieldMappingTransformation extends CopyFieldTransformation {
+public class FieldRenameTransformation extends CopyFieldTransformation {
     private final FieldMappingDefinition mappingDefinition;
     private String originalName;
 
-    public FieldMappingTransformation(FieldMappingDefinition mappingDefinition) {
+    public FieldRenameTransformation(FieldMappingDefinition mappingDefinition) {
         this.mappingDefinition = mappingDefinition;
     }
 

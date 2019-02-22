@@ -5,7 +5,7 @@ import graphql.execution.MergedField
 import graphql.execution.nextgen.FieldSubSelection
 import graphql.language.AstPrinter
 import graphql.language.Document
-import graphql.language.OperationDefinition
+import graphql.nadel.Operation
 import graphql.nadel.TestUtil
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
@@ -18,14 +18,26 @@ class OverallQueryTransformerTest extends Specification {
                 foo(id: ID!): Foo
                 bar(id: ID!): Bar
             }
+            type Mutation {
+                hello: String
+            }
             
             type Foo {
                 id: ID!
                 barId: String <= $source.bazId
                 qux: String!
+                anotherFoo: AnotherFoo <= $innerQueries.AnotherService.topLevel(id: $source.anotherSourceId)
             }
             
             type Bar <= $innerTypes.Baz {
+                id: ID!
+            }
+        }
+        service AnotherService {
+            type Query { 
+                topLevel(id:ID): AnotherFoo
+            }
+            type AnotherFoo {
                 id: ID!
             }
         }
@@ -50,7 +62,22 @@ class OverallQueryTransformerTest extends Specification {
         AstPrinter.printAstCompact(delegateQuery) == "query {hAlias:helloWorld foo(id:\"1\") {fooId:id bazId}}"
     }
 
-    def "referenced named fragments are transformed and included"() {
+    def "simple mutation"() {
+        def query = TestUtil.parseQuery(
+                '''
+            mutation M {
+             hAlias: hello 
+            }
+            ''')
+
+        when:
+        def delegateQuery = doTransform(schema, query, Operation.MUTATION, "M")
+
+        then:
+        AstPrinter.printAstCompact(delegateQuery) == "mutation M {hAlias:hello}"
+    }
+
+    def "used fragments are transformed and included and not used ones left out"() {
         def query = TestUtil.parseQuery(
                 '''
             {
@@ -107,8 +134,7 @@ class OverallQueryTransformerTest extends Specification {
 
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
-                'query {foo(id:"1") {...frag1}} fragment frag2 on Foo {bazId ...frag3} fragment frag3 on Foo {qux} ' +
-                'fragment frag1 on Foo {id ...frag2}'
+                "query {foo(id:\"1\") {...frag1}} fragment frag1 on Foo {id ...frag2} fragment frag2 on Foo {bazId ...frag3} fragment frag3 on Foo {qux}"
     }
 
     def "inline fragments are transformed and types are renamed"() {
@@ -133,15 +159,45 @@ class OverallQueryTransformerTest extends Specification {
     }
 
 
-    private Document doTransform(GraphQLSchema schema, Document query) {
+    def "test hydration transformation"() {
+        given:
+        def query = TestUtil.parseQuery(
+                '''
+            {
+                foo(id: "12") {
+                    anotherFoo {
+                        name
+                    }
+                }
+            }
+            ''')
+
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
-        def transformer = new OverallQueryTransformer(executionContext)
-        transformer.transform(fields, OperationDefinition.Operation.QUERY)
-        return transformer.delegateDocument()
+        def transformer = new OverallQueryTransformer()
+        def transformationResult = transformer.transformMergedFields(executionContext, fields, Operation.QUERY, null)
+        when:
+        def document = transformationResult.document
+
+
+        then:
+        AstPrinter.printAstCompact(document) == 'query {foo(id:"12") {anotherSourceId}}'
+    }
+
+
+    private Document doTransform(GraphQLSchema schema, Document query, Operation operation = Operation.QUERY, String operationName = null) {
+        FieldSubSelection fieldSubSelection
+        ExecutionContext executionContext
+        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+
+        List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
+
+        def transformer = new OverallQueryTransformer()
+        def transformationResult = transformer.transformMergedFields(executionContext, fields, operation, operationName)
+        return transformationResult.document
     }
 }

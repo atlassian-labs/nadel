@@ -15,6 +15,7 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.nadel.engine.NadelExecutionStrategy;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 
 import java.util.LinkedHashMap;
@@ -69,17 +70,24 @@ public class Execution {
 
         for (Service service : services) {
             ObjectTypeDefinition queryType = service.getDefinitionRegistry().getQueryType();
+            GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
             for (FieldDefinition fieldDefinition : queryType.getFieldDefinitions()) {
-                GraphQLFieldDefinition graphQLFieldDefinition = getGraphQLFieldDefinition(fieldDefinition);
+                GraphQLFieldDefinition graphQLFieldDefinition = schemaQueryType.getFieldDefinition(fieldDefinition.getName());
                 FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
                 fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+            }
+            ObjectTypeDefinition mutationType = service.getDefinitionRegistry().getMutationType();
+            if (mutationType != null) {
+                GraphQLObjectType schemaMutationType = overallSchema.getMutationType();
+                for (FieldDefinition fieldDefinition : mutationType.getFieldDefinitions()) {
+                    GraphQLFieldDefinition graphQLFieldDefinition = schemaMutationType.getFieldDefinition(fieldDefinition.getName());
+                    FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
+                    fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+                }
             }
         }
         return new FieldInfos(fieldInfoByDefinition);
     }
 
-    private GraphQLFieldDefinition getGraphQLFieldDefinition(FieldDefinition fieldDefinition) {
-        return overallSchema.getQueryType().getFieldDefinition(fieldDefinition.getName());
-    }
 
 }

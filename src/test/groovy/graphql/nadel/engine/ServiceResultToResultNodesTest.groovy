@@ -3,7 +3,8 @@ package graphql.nadel.engine
 import graphql.execution.ExecutionContext
 import graphql.execution.nextgen.FieldSubSelection
 import graphql.execution.nextgen.result.ResultNodesUtil
-import graphql.nadel.DelegatedExecutionResult
+import graphql.nadel.Operation
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.TestUtil
 import spock.lang.Specification
 
@@ -20,14 +21,15 @@ class ServiceResultToResultNodesTest extends Specification {
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
-        DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
+        ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -46,14 +48,15 @@ class ServiceResultToResultNodesTest extends Specification {
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
-        DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
+        ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -96,14 +99,15 @@ class ServiceResultToResultNodesTest extends Specification {
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
-        DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
+        ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -121,14 +125,15 @@ class ServiceResultToResultNodesTest extends Specification {
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
-        DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
+        ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -146,14 +151,15 @@ class ServiceResultToResultNodesTest extends Specification {
 
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
-        DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
+        ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -171,14 +177,15 @@ class ServiceResultToResultNodesTest extends Specification {
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
-        DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
+        ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:
@@ -196,14 +203,15 @@ class ServiceResultToResultNodesTest extends Specification {
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
-        DelegatedExecutionResult delegatedResult = new DelegatedExecutionResult(data)
+        ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
                 delegatedResult,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                schema)
+                schema,
+                Operation.QUERY)
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
         then:

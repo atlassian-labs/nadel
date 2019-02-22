@@ -2,8 +2,6 @@ package graphql.nadel;
 
 import graphql.ExecutionResult;
 import graphql.PublicApi;
-import graphql.language.Definition;
-import graphql.language.SDLDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.schema.GraphQLSchema;
@@ -14,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static graphql.nadel.Util.buildServiceRegistry;
 import static java.util.Objects.requireNonNull;
 
 @PublicApi
@@ -45,11 +44,11 @@ public class Nadel {
 
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             String serviceName = serviceDefinition.getName();
-            DelegatedExecution delegatedExecution = serviceDataFactory.getDelegatedExecution(serviceName);
+            ServiceExecution serviceExecution = serviceDataFactory.getDelegatedExecution(serviceName);
             GraphQLSchema underlyingSchema = serviceDataFactory.getUnderlyingSchema(serviceName);
             DefinitionRegistry definitionRegistry = buildServiceRegistry(serviceDefinition);
 
-            Service service = new Service(serviceName, underlyingSchema, delegatedExecution, serviceDefinition, definitionRegistry);
+            Service service = new Service(serviceName, underlyingSchema, serviceExecution, serviceDefinition, definitionRegistry);
             services.add(service);
         }
         this.services = services;
@@ -61,13 +60,6 @@ public class Nadel {
 
     }
 
-    static DefinitionRegistry buildServiceRegistry(ServiceDefinition serviceDefinition) {
-        DefinitionRegistry definitionRegistry = new DefinitionRegistry();
-        for (Definition definition : serviceDefinition.getTypeDefinitions()) {
-            definitionRegistry.add((SDLDefinition) definition);
-        }
-        return definitionRegistry;
-    }
 
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
         // we need to actually validate the query with the normal graphql-java validation here

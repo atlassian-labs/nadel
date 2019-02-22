@@ -5,7 +5,7 @@ import graphql.execution.nextgen.FetchedValueAnalyzer;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLScalarType;
 
-public class DelegatedResultAnalyzer extends FetchedValueAnalyzer {
+public class ServiceExecutionResultAnalyzer extends FetchedValueAnalyzer {
 
     @Override
     protected Object serializeScalarValue(Object toAnalyze, GraphQLScalarType scalarType) throws CoercingSerializeException {
