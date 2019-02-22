@@ -27,30 +27,35 @@ public class ServiceResultNodesToOverallResult {
 
     //TODO: the return type is not really ready to return hydration results, which can be used as input for new queries
     public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema, Map<Field, FieldTransformation> transformationMap) {
-        ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
+        try {
+            ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
-        RootExecutionResultNode newRoot = (RootExecutionResultNode) resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
-            @Override
-            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-                ExecutionResultNode node = context.thisNode();
-                ExecutionResultNode convertedNode;
-                if (node instanceof RootExecutionResultNode) {
-                    convertedNode = mapRootResultNode((RootExecutionResultNode) node, transformationMap);
-                } else if (node instanceof ObjectExecutionResultNode) {
-                    convertedNode = mapObjectResultNode((ObjectExecutionResultNode) node, overallSchema, transformationMap);
-                } else if (node instanceof ListExecutionResultNode) {
-                    convertedNode = mapListExecutionResultNode((ListExecutionResultNode) node, overallSchema, transformationMap);
-                } else if (node instanceof LeafExecutionResultNode) {
-                    convertedNode = mapLeafResultNode((LeafExecutionResultNode) node, overallSchema, transformationMap);
-                } else {
-                    return assertShouldNeverHappen();
+            RootExecutionResultNode newRoot = (RootExecutionResultNode) resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+                @Override
+                public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
+                    ExecutionResultNode node = context.thisNode();
+                    ExecutionResultNode convertedNode;
+                    if (node instanceof RootExecutionResultNode) {
+                        convertedNode = mapRootResultNode((RootExecutionResultNode) node, transformationMap);
+                    } else if (node instanceof ObjectExecutionResultNode) {
+                        convertedNode = mapObjectResultNode((ObjectExecutionResultNode) node, overallSchema, transformationMap);
+                    } else if (node instanceof ListExecutionResultNode) {
+                        convertedNode = mapListExecutionResultNode((ListExecutionResultNode) node, overallSchema, transformationMap);
+                    } else if (node instanceof LeafExecutionResultNode) {
+                        convertedNode = mapLeafResultNode((LeafExecutionResultNode) node, overallSchema, transformationMap);
+                    } else {
+                        return assertShouldNeverHappen();
+                    }
+                    return TreeTransformerUtil.changeNode(context, convertedNode);
                 }
-                return TreeTransformerUtil.changeNode(context, convertedNode);
-            }
 
-        });
+            });
+            return newRoot;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
-        return newRoot;
 
     }
 

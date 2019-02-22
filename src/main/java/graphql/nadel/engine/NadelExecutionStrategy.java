@@ -24,7 +24,9 @@ import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLTypeUtil;
 import graphql.util.FpKit;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
@@ -83,7 +85,8 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
 
         return rootResult.thenCompose(rootExecutionResultNode -> resolveAllHydrationInputs(context, rootExecutionResultNode, hydrationTransformations).
-                thenApply(RootExecutionResultNode.class::cast));
+                thenApply(RootExecutionResultNode.class::cast))
+                .whenComplete(this::logException);
     }
 
 
@@ -104,8 +107,15 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                 .thenApply(resolvedNodes -> {
                     NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, resolvedNodes, RESULT_NODE_ADAPTER);
                     return multiZipper.toRootNode();
-                });
+                })
+                .whenComplete(this::logException);
 
+    }
+
+    private <T> void logException(T result, Throwable exception) {
+        if (exception != null) {
+            exception.printStackTrace();
+        }
     }
 
 
@@ -123,22 +133,22 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
         // TODO: just assume String arguments at the moment
         RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
-        Object value = hydrationInputNode.getFetchedValueAnalysis().getFetchedValue().getFetchedValue();
+        Object value = hydrationInputNode.getFetchedValueAnalysis().getCompletedValue();
         Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new StringValue(value.toString())).build();
 
         Field topLevelField = newField(topLevelFieldName).selectionSet(originalField.getSelectionSet())
                 .arguments(singletonList(argument))
                 .build();
 
+        Service service = getService(innerServiceHydration);
 
         QueryTransformationResult queryTransformResult = queryTransformer.transformSelectionSetInField(context,
                 topLevelField,
-                hydrationTransformation.getFieldType());
+                (GraphQLOutputType) GraphQLTypeUtil.unwrapAll(hydrationTransformation.getFieldType()));
 
         MergedField transformedMergedField = MergedField.newMergedField(queryTransformResult.getTransformedField()).build();
 
 
-        Service service = getService(innerServiceHydration);
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
         ServiceExecutionParameters serviceExecutionParameters = newDelegatedExecutionParameters()
@@ -154,7 +164,8 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                 .thenCompose(resultNode -> {
                     List<HydrationTransformation> hydrationTransformations = getHydrationTransformations(transformationByResultField.values());
                     return resolveAllHydrationInputs(context, resultNode, hydrationTransformations);
-                });
+                })
+                .whenComplete(this::logException);
     }
 
     private ExecutionResultNode convertHydrationResultIntoOverallResult(HydrationTransformation hydrationTransformation,
@@ -215,7 +226,6 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         return serviceExecution.execute(serviceExecutionParameters)
                 .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, transformedMergedFields, underlyingSchema))
                 .thenApply(resultNode -> serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField));
-
     }
 
 
