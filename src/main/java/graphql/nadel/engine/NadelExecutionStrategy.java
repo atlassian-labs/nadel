@@ -37,10 +37,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.language.Field.newField;
-import static graphql.nadel.ServiceExecutionParameters.newDelegatedExecutionParameters;
+import static graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.StrategyUtil.createRootExecutionStepInfo;
@@ -90,7 +91,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
         return rootResult.thenCompose(rootExecutionResultNode -> resolveAllHydrationInputs(context, rootExecutionResultNode, hydrationTransformations).
                 thenApply(RootExecutionResultNode.class::cast))
-                .whenComplete(this::logException);
+                .whenComplete(this::possiblyLogException);
     }
 
 
@@ -113,11 +114,11 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
                     NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, resolvedNodes, FIX_NAMES_ADAPTER);
                     return multiZipper.toRootNode();
                 })
-                .whenComplete(this::logException);
+                .whenComplete(this::possiblyLogException);
 
     }
 
-    private <T> void logException(T result, Throwable exception) {
+    private <T> void possiblyLogException(T result, Throwable exception) {
         if (exception != null) {
             exception.printStackTrace();
         }
@@ -129,7 +130,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     }
 
 
-    private CompletableFuture<ExecutionResultNode> resolveHydrationInput(ExecutionContext context,
+    private CompletableFuture<ExecutionResultNode> resolveHydrationInput(ExecutionContext executionContext,
                                                                          ExecutionResultNode hydrationInputNode,
                                                                          HydrationTransformation hydrationTransformation) {
         Field originalField = hydrationTransformation.getOriginalField();
@@ -147,7 +148,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
         Service service = getService(innerServiceHydration);
 
-        QueryTransformationResult queryTransformResult = queryTransformer.transformSelectionSetInField(context,
+        QueryTransformationResult queryTransformResult = queryTransformer.transformSelectionSetInField(executionContext,
                 topLevelField,
                 (GraphQLOutputType) GraphQLTypeUtil.unwrapAll(hydrationTransformation.getFieldType()));
 
@@ -156,21 +157,23 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
-        ServiceExecutionParameters serviceExecutionParameters = newDelegatedExecutionParameters()
-                .query(queryTransformResult.getDocument())
-                .build();
+        Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
+        Document document = queryTransformResult.getDocument();
 
+        ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, document);
 
-        ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), Operation.fromAst(context.getOperationDefinition().getOperation()));
+        ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
         Map<Field, FieldTransformation> transformationByResultField = queryTransformResult.getTransformationByResultField();
         return serviceExecution.execute(serviceExecutionParameters)
-                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, singletonList(transformedMergedField), underlyingSchema, Operation.QUERY))
+                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(executionContext, delegatedExecutionResult, rootExecutionStepInfo, singletonList(transformedMergedField), underlyingSchema, Operation.QUERY))
                 .thenApply(resultNode -> convertHydrationResultIntoOverallResult(hydrationTransformation, resultNode, transformationByResultField))
-                .thenCompose(resultNode -> {
-                    List<HydrationTransformation> hydrationTransformations = getHydrationTransformations(transformationByResultField.values());
-                    return resolveAllHydrationInputs(context, resultNode, hydrationTransformations);
-                })
-                .whenComplete(this::logException);
+                .thenCompose(resultNode -> runHydrationTransformations(executionContext, transformationByResultField, resultNode))
+                .whenComplete(this::possiblyLogException);
+    }
+
+    private CompletionStage<ExecutionResultNode> runHydrationTransformations(ExecutionContext executionContext, Map<Field, FieldTransformation> transformationByResultField, ExecutionResultNode resultNode) {
+        List<HydrationTransformation> hydrationTransformations = getHydrationTransformations(transformationByResultField.values());
+        return resolveAllHydrationInputs(executionContext, resultNode, hydrationTransformations);
     }
 
     private ExecutionResultNode convertHydrationResultIntoOverallResult(HydrationTransformation hydrationTransformation,
@@ -213,7 +216,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         return info.getService();
     }
 
-    private CompletableFuture<RootExecutionResultNode> callService(ExecutionContext context,
+    private CompletableFuture<RootExecutionResultNode> callService(ExecutionContext executionContext,
                                                                    QueryTransformationResult queryTransformerResult,
                                                                    Service service,
                                                                    ExecutionStepInfo rootExecutionStepInfo,
@@ -223,16 +226,22 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         Map<Field, FieldTransformation> transformationByResultField = queryTransformerResult.getTransformationByResultField();
         List<MergedField> transformedMergedFields = queryTransformerResult.getTransformedMergedFields();
 
-        ServiceExecutionParameters serviceExecutionParameters = newDelegatedExecutionParameters()
-                .query(query)
-                .build();
+        ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, query);
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
 
         return serviceExecution.execute(serviceExecutionParameters)
-                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(context, delegatedExecutionResult, rootExecutionStepInfo, transformedMergedFields, underlyingSchema, operation))
+                .thenApply(delegatedExecutionResult -> resultToResultNode.resultToResultNode(executionContext, delegatedExecutionResult, rootExecutionStepInfo, transformedMergedFields, underlyingSchema, operation))
                 .thenApply(resultNode -> serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField));
     }
 
-
+    private ServiceExecutionParameters buildServiceExecutionParameters(ExecutionContext executionContext, Document query) {
+        return newServiceExecutionParameters()
+                    .query(query)
+                    .context(executionContext.getContext())
+                    .variables(executionContext.getVariables())
+                    .fragments(executionContext.getFragmentsByName())
+                    .operationDefinition(executionContext.getOperationDefinition())
+                    .build();
+    }
 }
