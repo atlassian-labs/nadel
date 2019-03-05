@@ -108,6 +108,24 @@ class OverallQueryTransformerTest extends Specification {
                 'query {f1:foo(id:"1") {...frag1} f2:foo(id:"2") {...frag2}} fragment frag1 on Foo {id} fragment frag2 on Foo {id bazId}'
     }
 
+    def "used variables are included and not used ones left out"() {
+        def query = TestUtil.parseQuery(
+                '''query( $usedVariable : String, $unusedVariable : String )
+            {
+               foo(id : $usedVariable) {
+                 id
+               }
+            }
+            ''')
+
+        when:
+        def delegateQuery = doTransform(schema, query)
+
+        then:
+        AstPrinter.printAstCompact(delegateQuery) ==
+                'query ($usedVariable:String) {foo(id:$usedVariable) {id}}'
+    }
+
     def "nested fragments are transformed and included"() {
         def query = TestUtil.parseQuery(
                 '''
