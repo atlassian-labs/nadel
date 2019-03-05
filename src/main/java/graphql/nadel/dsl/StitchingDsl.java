@@ -3,8 +3,10 @@ package graphql.nadel.dsl;
 
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
+import graphql.language.IgnoredChars;
 import graphql.language.Node;
 import graphql.language.NodeBuilder;
+import graphql.language.NodeChildrenContainer;
 import graphql.language.NodeVisitor;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
@@ -18,8 +20,8 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
     private final List<ServiceDefinition> serviceDefinitions;
 
-    private StitchingDsl(List<ServiceDefinition> serviceDefinitions, SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments);
+    private StitchingDsl(List<ServiceDefinition> serviceDefinitions, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
+        super(sourceLocation, comments, ignoredChars);
         this.serviceDefinitions = serviceDefinitions;
     }
 
@@ -31,6 +33,16 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     @Override
     public List<Node> getChildren() {
         return new ArrayList<>(serviceDefinitions);
+    }
+
+    @Override
+    public NodeChildrenContainer getNamedChildren() {
+        return null;
+    }
+
+    @Override
+    public StitchingDsl withNewChildren(NodeChildrenContainer newChildren) {
+        return null;
     }
 
 
@@ -59,6 +71,7 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
         private List<Comment> comments = new ArrayList<>();
         private SourceLocation sourceLocation;
         private List<ServiceDefinition> serviceDefinitions = new ArrayList<>();
+        private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
 
         private Builder() {
 
@@ -66,6 +79,12 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
         public Builder comments(List<Comment> comments) {
             this.comments = comments;
+            return this;
+        }
+
+        @Override
+        public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
+            this.ignoredChars = ignoredChars;
             return this;
         }
 
@@ -81,7 +100,7 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
 
         public StitchingDsl build() {
-            return new StitchingDsl(serviceDefinitions, sourceLocation, comments);
+            return new StitchingDsl(serviceDefinitions, sourceLocation, comments, ignoredChars);
         }
 
     }

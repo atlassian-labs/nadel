@@ -2,7 +2,9 @@ package graphql.nadel.dsl;
 
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
+import graphql.language.IgnoredChars;
 import graphql.language.Node;
+import graphql.language.NodeChildrenContainer;
 import graphql.language.NodeVisitor;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
@@ -16,7 +18,7 @@ public class TypeTransformation extends AbstractNode<TypeTransformation> {
 
 
     public TypeTransformation(SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments);
+        super(sourceLocation, comments, IgnoredChars.EMPTY);
     }
 
     public String getOriginalName() {
@@ -29,6 +31,16 @@ public class TypeTransformation extends AbstractNode<TypeTransformation> {
 
     @Override
     public List<Node> getChildren() {
+        return null;
+    }
+
+    @Override
+    public NodeChildrenContainer getNamedChildren() {
+        return null;
+    }
+
+    @Override
+    public TypeTransformation withNewChildren(NodeChildrenContainer newChildren) {
         return null;
     }
 

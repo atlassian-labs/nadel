@@ -6,7 +6,7 @@ import spock.lang.Specification
 import static graphql.nadel.TestUtil.astAsMap
 import static graphql.nadel.TestUtil.getExpectedData
 
-class ParserTest extends Specification {
+class NSDLParserTest extends Specification {
 
     def "simple service definition"() {
         given:
@@ -17,7 +17,7 @@ class ParserTest extends Specification {
             }
         }
        """
-        Parser parser = new Parser()
+        NSDLParser parser = new NSDLParser()
         when:
         def stitchingDSL = parser.parseDSL(simpleDSL)
 
@@ -40,7 +40,7 @@ class ParserTest extends Specification {
             }
         }
        """
-        Parser parser = new Parser()
+        NSDLParser parser = new NSDLParser()
         when:
         def stitchingDSL = parser.parseDSL(simpleDSL)
 
@@ -57,7 +57,7 @@ class ParserTest extends Specification {
         }
        """
         when:
-        Parser parser = new Parser()
+        NSDLParser parser = new NSDLParser()
         parser.parseDSL(simpleDSL)
 
         then:
@@ -73,7 +73,7 @@ class ParserTest extends Specification {
         someFoo
        """
         when:
-        Parser parser = new Parser()
+        NSDLParser parser = new NSDLParser()
         parser.parseDSL(simpleDSL)
 
         then:
@@ -94,7 +94,7 @@ class ParserTest extends Specification {
         }
         """
         when:
-        Parser parser = new Parser()
+        NSDLParser parser = new NSDLParser()
         then:
         def stitchingDSL = parser.parseDSL(dsl)
 
@@ -120,7 +120,7 @@ class ParserTest extends Specification {
         }
         '''
         when:
-        Parser parser = new Parser()
+        NSDLParser parser = new NSDLParser()
         def stitchingDSL = parser.parseDSL(dsl)
         then:
         astAsMap(stitchingDSL) == getExpectedData("hydration")
@@ -142,7 +142,7 @@ class ParserTest extends Specification {
             }
         """
         when:
-        Parser parser = new Parser()
+        NSDLParser parser = new NSDLParser()
         def stitchingDSL = parser.parseDSL(dsl)
         then:
         astAsMap(stitchingDSL) == getExpectedData("type-transformation")
@@ -164,7 +164,7 @@ class ParserTest extends Specification {
             }
         """
         when:
-        Parser parser = new Parser()
+        NSDLParser parser = new NSDLParser()
         def stitchingDSL = parser.parseDSL(dsl)
         then:
         thrown(Exception)
@@ -187,7 +187,7 @@ class ParserTest extends Specification {
         """
 
         when:
-        Parser parser = new Parser()
+        NSDLParser parser = new NSDLParser()
         def stitchingDSL = parser.parseDSL(dsl)
 
         then:

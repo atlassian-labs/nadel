@@ -1,7 +1,9 @@
 package graphql.nadel.dsl;
 
 import graphql.language.AbstractNode;
+import graphql.language.IgnoredChars;
 import graphql.language.Node;
+import graphql.language.NodeChildrenContainer;
 import graphql.language.NodeVisitor;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
@@ -19,7 +21,7 @@ public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinit
 
     public RemoteArgumentDefinition(String name, RemoteArgumentSource remoteArgumentSource,
                                     SourceLocation sourceLocation) {
-        super(sourceLocation, emptyList());
+        super(sourceLocation, emptyList(), IgnoredChars.EMPTY);
         this.name = name;
         this.remoteArgumentSource = remoteArgumentSource;
     }
@@ -35,6 +37,16 @@ public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinit
     @Override
     public List<Node> getChildren() {
         return new ArrayList<>();
+    }
+
+    @Override
+    public NodeChildrenContainer getNamedChildren() {
+        return null;
+    }
+
+    @Override
+    public RemoteArgumentDefinition withNewChildren(NodeChildrenContainer newChildren) {
+        return null;
     }
 
     @Override

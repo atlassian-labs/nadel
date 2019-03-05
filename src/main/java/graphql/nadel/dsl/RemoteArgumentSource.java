@@ -1,7 +1,9 @@
 package graphql.nadel.dsl;
 
 import graphql.language.AbstractNode;
+import graphql.language.IgnoredChars;
 import graphql.language.Node;
+import graphql.language.NodeChildrenContainer;
 import graphql.language.NodeVisitor;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
@@ -14,13 +16,13 @@ import static java.util.Collections.emptyList;
 
 public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
     public enum SourceType {OBJECT_FIELD, FIELD_ARGUMENT, CONTEXT}
-    
+
     private final String name;
 
     private final SourceType sourceType;
 
     public RemoteArgumentSource(String name, SourceType sourceType, SourceLocation sourceLocation) {
-        super(sourceLocation, emptyList());
+        super(sourceLocation, emptyList(), IgnoredChars.EMPTY);
         this.name = name;
         this.sourceType = sourceType;
     }
@@ -35,6 +37,16 @@ public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
 
     public List<Node> getChildren() {
         return new ArrayList<>();
+    }
+
+    @Override
+    public NodeChildrenContainer getNamedChildren() {
+        return null;
+    }
+
+    @Override
+    public RemoteArgumentSource withNewChildren(NodeChildrenContainer newChildren) {
+        return null;
     }
 
     @Override

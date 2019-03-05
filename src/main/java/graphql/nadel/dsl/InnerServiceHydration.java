@@ -2,7 +2,9 @@ package graphql.nadel.dsl;
 
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
+import graphql.language.IgnoredChars;
 import graphql.language.Node;
+import graphql.language.NodeChildrenContainer;
 import graphql.language.NodeVisitor;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
@@ -22,7 +24,7 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
                                  String serviceName,
                                  String topLevelField,
                                  List<RemoteArgumentDefinition> arguments) {
-        super(sourceLocation, comments);
+        super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.serviceName = serviceName;
         this.topLevelField = topLevelField;
         this.arguments = arguments;
@@ -42,6 +44,16 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
 
     @Override
     public List<Node> getChildren() {
+        return null;
+    }
+
+    @Override
+    public NodeChildrenContainer getNamedChildren() {
+        return null;
+    }
+
+    @Override
+    public InnerServiceHydration withNewChildren(NodeChildrenContainer newChildren) {
         return null;
     }
 
