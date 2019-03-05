@@ -4,34 +4,61 @@ import graphql.Internal;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.parser.antlr.StitchingDSLLexer;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
-import org.antlr.v4.runtime.ANTLRInputStream;
+import graphql.parser.ExtendedBailStrategy;
+import graphql.parser.MultiSourceReader;
 import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.DefaultErrorStrategy;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.util.List;
 
 @Internal
-public class Parser {
-
+public class NSDLParser {
 
     public StitchingDsl parseDSL(String input) {
-        StitchingDSLLexer lexer = new StitchingDSLLexer(new ANTLRInputStream(input));
+        return parseDSL(new StringReader(input));
+    }
+
+    public StitchingDsl parseDSL(Reader reader) {
+
+        MultiSourceReader multiSourceReader;
+        if (reader instanceof MultiSourceReader) {
+            multiSourceReader = (MultiSourceReader) reader;
+        } else {
+            multiSourceReader = MultiSourceReader.newMultiSourceReader()
+                    .reader(reader, null).build();
+        }
+        CodePointCharStream charStream;
+        try {
+            charStream = CharStreams.fromReader(multiSourceReader);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+        StitchingDSLLexer lexer = new StitchingDSLLexer(charStream);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         StitchingDSLParser parser = new StitchingDSLParser(tokens);
         parser.removeErrorListeners();
         parser.addErrorListener(ThrowingErrorListener.INSTANCE);
         parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
-        parser.setErrorHandler(new DefaultErrorStrategy());
+
+
+        ExtendedBailStrategy bailStrategy = new ExtendedBailStrategy(multiSourceReader);
+        parser.setErrorHandler(bailStrategy);
 
         StitchingDSLParser.StitchingDSLContext stitchingDSL = parser.stitchingDSL();
 
-        NadelAntlrToLanguage antlrToLanguage = new NadelAntlrToLanguage(tokens);
+        NadelAntlrToLanguage antlrToLanguage = new NadelAntlrToLanguage(tokens, multiSourceReader);
         StitchingDsl stitchingDsl = antlrToLanguage.createStitchingDsl(stitchingDSL);
 
         Token stop = stitchingDSL.getStop();
@@ -45,7 +72,7 @@ public class Parser {
             boolean lastGreaterThanDocument = last.getTokenIndex() > stop.getTokenIndex();
             boolean sameChannel = last.getChannel() == stop.getChannel();
             if (notEOF && lastGreaterThanDocument && sameChannel) {
-                throw new ParseCancellationException("There are more tokens in the query that have not been consumed");
+                throw new ParseCancellationException("There are more tokens in the document that have not been consumed");
             }
         }
 

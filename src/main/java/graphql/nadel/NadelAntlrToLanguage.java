@@ -1,9 +1,9 @@
 package graphql.nadel;
 
 import graphql.Internal;
-import graphql.language.Definition;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.SDLDefinition;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
@@ -16,6 +16,7 @@ import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.dsl.TypeTransformation;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
+import graphql.parser.MultiSourceReader;
 import org.antlr.v4.runtime.CommonTokenStream;
 
 import java.util.ArrayList;
@@ -32,8 +33,8 @@ import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
 
-    public NadelAntlrToLanguage(CommonTokenStream tokens) {
-        super(tokens);
+    public NadelAntlrToLanguage(CommonTokenStream tokens, MultiSourceReader multiSourceReader) {
+        super(tokens, multiSourceReader);
     }
 
     public StitchingDsl createStitchingDsl(StitchingDSLParser.StitchingDSLContext ctx) {
@@ -48,13 +49,13 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     private ServiceDefinition createServiceDefinition(StitchingDSLParser.ServiceDefinitionContext serviceDefinitionContext) {
         ServiceDefinition.Builder builder = ServiceDefinition.newServiceDefinition();
         builder.name(serviceDefinitionContext.name().getText());
-        List<Definition> definitions = createTypeSystemDefinitions(serviceDefinitionContext.typeSystemDefinition());
+        List<SDLDefinition> definitions = createTypeSystemDefinitions(serviceDefinitionContext.typeSystemDefinition());
         builder.definitions(definitions);
         return builder.build();
     }
 
 
-    private List<Definition> createTypeSystemDefinitions(List<StitchingDSLParser.TypeSystemDefinitionContext> typeSystemDefinitionContexts) {
+    private List<SDLDefinition> createTypeSystemDefinitions(List<StitchingDSLParser.TypeSystemDefinitionContext> typeSystemDefinitionContexts) {
         return typeSystemDefinitionContexts.stream().map(this::createTypeSystemDefinition).collect(Collectors.toList());
     }
 

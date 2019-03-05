@@ -4,7 +4,9 @@ import graphql.language.Comment;
 import graphql.language.Description;
 import graphql.language.Directive;
 import graphql.language.FieldDefinition;
+import graphql.language.IgnoredChars;
 import graphql.language.InputValueDefinition;
+import graphql.language.NodeBuilder;
 import graphql.language.NodeDirectivesBuilder;
 import graphql.language.SourceLocation;
 import graphql.language.Type;
@@ -24,7 +26,7 @@ public class FieldDefinitionWithTransformation extends FieldDefinition {
                                                 Description description,
                                                 FieldTransformation fieldTransformation, SourceLocation sourceLocation,
                                                 List<Comment> comments) {
-        super(name, type, inputValueDefinitions, directives, description, sourceLocation, comments);
+        super(name, type, inputValueDefinitions, directives, description, sourceLocation, comments, IgnoredChars.EMPTY);
         this.fieldTransformation = fieldTransformation;
     }
 
@@ -73,6 +75,11 @@ public class FieldDefinitionWithTransformation extends FieldDefinition {
         public Builder comments(List<Comment> comments) {
             this.comments = comments;
             return this;
+        }
+
+        @Override
+        public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
+            return null;
         }
 
         public Builder type(Type type) {

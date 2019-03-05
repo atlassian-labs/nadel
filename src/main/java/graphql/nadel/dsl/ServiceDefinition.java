@@ -3,9 +3,12 @@ package graphql.nadel.dsl;
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
 import graphql.language.Definition;
+import graphql.language.IgnoredChars;
 import graphql.language.Node;
 import graphql.language.NodeBuilder;
+import graphql.language.NodeChildrenContainer;
 import graphql.language.NodeVisitor;
+import graphql.language.SDLDefinition;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -17,10 +20,10 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
 
     private final String name;
 
-    private List<Definition> typeDefinitions;
+    private List<SDLDefinition> typeDefinitions;
 
-    private ServiceDefinition(String name, List<Definition> definitions, SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments);
+    private ServiceDefinition(String name, List<SDLDefinition> definitions, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
+        super(sourceLocation, comments, ignoredChars);
         this.name = name;
         this.typeDefinitions = new ArrayList<>();
         this.typeDefinitions = definitions;
@@ -29,6 +32,16 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
     @Override
     public List<Node> getChildren() {
         return new ArrayList<>(typeDefinitions);
+    }
+
+    @Override
+    public NodeChildrenContainer getNamedChildren() {
+        return null;
+    }
+
+    @Override
+    public ServiceDefinition withNewChildren(NodeChildrenContainer newChildren) {
+        return null;
     }
 
     @Override
@@ -63,7 +76,8 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
         private List<Comment> comments = new ArrayList<>();
         private SourceLocation sourceLocation;
         private String name;
-        private List<Definition> definitions = new ArrayList<>();
+        private List<SDLDefinition> definitions = new ArrayList<>();
+        private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
 
         private Builder() {
 
@@ -71,6 +85,12 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
 
         public Builder comments(List<Comment> comments) {
             this.comments = comments;
+            return this;
+        }
+
+        @Override
+        public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
+            this.ignoredChars = ignoredChars;
             return this;
         }
 
@@ -84,14 +104,14 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
             return this;
         }
 
-        public Builder definitions(List<Definition> definitions) {
+        public Builder definitions(List<SDLDefinition> definitions) {
             this.definitions = definitions;
             return this;
         }
 
 
         public ServiceDefinition build() {
-            return new ServiceDefinition(name, definitions, sourceLocation, comments);
+            return new ServiceDefinition(name, definitions, sourceLocation, comments, ignoredChars);
 
         }
 

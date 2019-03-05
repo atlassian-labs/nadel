@@ -4,6 +4,7 @@ import graphql.language.Comment;
 import graphql.language.Description;
 import graphql.language.Directive;
 import graphql.language.FieldDefinition;
+import graphql.language.IgnoredChars;
 import graphql.language.NodeBuilder;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SourceLocation;
@@ -23,8 +24,8 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
                                                      Description description,
                                                      SourceLocation sourceLocation,
                                                      List<Comment> comments,
-                                                     TypeTransformation typeTransformation) {
-        super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments);
+                                                     TypeTransformation typeTransformation, IgnoredChars ignoredChars) {
+        super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments, ignoredChars);
         this.typeTransformation = typeTransformation;
     }
 
@@ -45,6 +46,7 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         private List<Directive> directives = new ArrayList<>();
         private List<FieldDefinition> fieldDefinitions = new ArrayList<>();
         private TypeTransformation typeTransformation;
+        private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
 
         private Builder() {
         }
@@ -71,6 +73,12 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
 
         public Builder comments(List<Comment> comments) {
             this.comments = comments;
+            return this;
+        }
+
+        @Override
+        public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
+            this.ignoredChars = ignoredChars;
             return this;
         }
 
@@ -122,7 +130,7 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
                     description,
                     sourceLocation,
                     comments,
-                    typeTransformation);
+                    typeTransformation, ignoredChars);
             return objectTypeDefinition;
         }
     }
