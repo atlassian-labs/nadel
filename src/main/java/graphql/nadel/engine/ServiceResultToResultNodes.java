@@ -15,9 +15,7 @@ import graphql.execution.nextgen.result.NamedResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResultNodesUtil;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
-import graphql.nadel.Operation;
 import graphql.nadel.ServiceExecutionResult;
-import graphql.schema.GraphQLSchema;
 import graphql.util.FpKit;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
@@ -36,28 +34,21 @@ public class ServiceResultToResultNodes {
     ExecutionStrategyUtil util = new ExecutionStrategyUtil();
 
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
-                                                      ServiceExecutionResult serviceExecutionResult,
                                                       ExecutionStepInfo executionStepInfo,
                                                       List<MergedField> mergedFields,
-                                                      GraphQLSchema underlyingSchema,
-                                                      Operation operation) {
-
-        //TODO: currently changing the ExecutionContext and stepInfo so that it fits the underlying schema, this should be done somewhere else
-        ExecutionContext executionContextForService = executionContext.transform(builder -> builder.graphQLSchema(underlyingSchema));
-        ExecutionStepInfo stepInfoForService = executionStepInfo.transform(builder -> builder.type(operation.getRootType(underlyingSchema)));
-
+                                                      ServiceExecutionResult serviceExecutionResult) {
 
         Map<String, MergedField> subFields = FpKit.getByName(mergedFields, MergedField::getResultKey);
         MergedSelectionSet mergedSelectionSet = MergedSelectionSet.newMergedSelectionSet()
                 .subFields(subFields).build();
 
         FieldSubSelection fieldSubSelectionWithData = FieldSubSelection.newFieldSubSelection().
-                executionInfo(stepInfoForService)
+                executionInfo(executionStepInfo)
                 .source(serviceExecutionResult.getData())
                 .mergedSelectionSet(mergedSelectionSet)
                 .build();
 
-        List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContextForService, fieldSubSelectionWithData);
+        List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelectionWithData);
         return new RootExecutionResultNode(namedResultNodes);
     }
 
