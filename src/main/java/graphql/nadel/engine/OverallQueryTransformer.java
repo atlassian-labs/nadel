@@ -3,6 +3,7 @@ package graphql.nadel.engine;
 import graphql.analysis.QueryTransformer;
 import graphql.analysis.QueryVisitor;
 import graphql.analysis.QueryVisitorFieldEnvironment;
+import graphql.analysis.QueryVisitorFragmentDefinitionEnvironment;
 import graphql.analysis.QueryVisitorFragmentSpreadEnvironment;
 import graphql.analysis.QueryVisitorInlineFragmentEnvironment;
 import graphql.execution.ExecutionContext;
@@ -256,6 +257,7 @@ public class OverallQueryTransformer {
         public void visitInlineFragment(QueryVisitorInlineFragmentEnvironment environment) {
             InlineFragment fragment = environment.getInlineFragment();
             TypeName typeName = fragment.getTypeCondition();
+
             TypeTransformation typeTransformation = typeTransformationForFragment(executionContext, typeName);
             if (typeTransformation != null) {
                 InlineFragment changedFragment = fragment.transform(f -> {
@@ -266,6 +268,20 @@ public class OverallQueryTransformer {
             }
             //TODO: what if all fields inside inline fragment get deleted? we should recheck it on LEAVING the node
             //(after transformations are applied); So we can see what happened. Alternative would be  to do second pass
+        }
+
+        @Override
+        public void visitFragmentDefinition(QueryVisitorFragmentDefinitionEnvironment environment) {
+            FragmentDefinition fragment = environment.getFragmentDefinition();
+            TypeName typeName = fragment.getTypeCondition();
+            TypeTransformation typeTransformation = typeTransformationForFragment(executionContext, typeName);
+            if (typeTransformation != null) {
+                FragmentDefinition changedFragment = fragment.transform(f -> {
+                    TypeName newTypeName = newTypeName(typeTransformation.getOriginalName()).build();
+                    f.typeCondition(newTypeName);
+                });
+                changeNode(environment.getTraverserContext(), changedFragment);
+            }
         }
 
         @Override
