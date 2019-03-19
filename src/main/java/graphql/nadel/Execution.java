@@ -48,6 +48,7 @@ public class Execution {
         Document document = parseQuery(nadelExecutionInput.getQuery());
         ExecutionInput executionInput = ExecutionInput.newExecutionInput()
                 .operationName(nadelExecutionInput.getOperationName())
+                .context(nadelExecutionInput.getContext())
                 .variables(nadelExecutionInput.getVariables())
                 .build();
 
