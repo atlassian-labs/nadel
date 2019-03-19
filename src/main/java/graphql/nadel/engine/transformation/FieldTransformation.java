@@ -46,6 +46,11 @@ public interface FieldTransformation {
      * /orginalName/alias: unapply(resultNodeFor(originalName), null) = NamedResultNode(alias: LeafNode("valueB"))
      * /orginalName: unapply(resultNodeFor(RootExecutionNode), (two children from above)) = NamedResultNode(fieldA: ObjectExecutionResultNode(children))
      * </pre>
+     *
+     * @param resultNode the result node
+     * @param children   the result children
+     *
+     * @return a list of named results
      */
     default List<NamedResultNode> unapply(ObjectExecutionResultNode resultNode, List<NamedResultNode> children) {
         //This will be an abstract function

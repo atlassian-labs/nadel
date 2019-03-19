@@ -1,16 +1,17 @@
 package graphql.nadel
 
-import graphql.language.AstPrinter
+
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
 
+import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
 
-    def "query to one service"() {
+    def "query to one service with execution input passed down"() {
 
         def nsdl = """
          service MyService {
@@ -24,7 +25,7 @@ class NadelE2ETest extends Specification {
          }
         """
         def query = """
-        { hello {name} hello {id} }
+        query OpName { hello {name} hello {id} }
         """
         def underlyingSchema = TestUtil.schema("""
             type Query{
@@ -54,6 +55,9 @@ class NadelE2ETest extends Specification {
                 .build()
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
+                .variables(["var1": "val1"])
+                .context("contextObj")
+                .operationName("OpName")
                 .build()
         def data = [hello: [id: "3", name: "earth"]]
         ServiceExecutionResult delegatedExecutionResult = new ServiceExecutionResult(data)
@@ -63,7 +67,9 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
-            assert AstPrinter.printAstCompact(params.query) == "query {hello {name} hello {id}}"
+            assert printAstCompact(params.query) == "query OpName {hello {name} hello {id}}"
+            assert params.context == "contextObj"
+            assert params.operationDefinition.name == "OpName"
             completedFuture(delegatedExecutionResult)
         }
         result.get().data == data
@@ -280,7 +286,7 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
-            assert AstPrinter.printAstCompact(params.query) == "mutation M {hello}"
+            assert printAstCompact(params.query) == "mutation M {hello}"
             completedFuture(delegatedExecutionResult)
         }
         result.get().data == data
