@@ -6,7 +6,7 @@ import graphql.execution.nextgen.FieldSubSelection
 import graphql.language.AstPrinter
 import graphql.language.Document
 import graphql.nadel.Operation
-import graphql.nadel.TestUtil
+import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
 

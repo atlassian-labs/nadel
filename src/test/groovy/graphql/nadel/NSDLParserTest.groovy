@@ -3,8 +3,8 @@ package graphql.nadel
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import spock.lang.Specification
 
-import static graphql.nadel.TestUtil.astAsMap
-import static graphql.nadel.TestUtil.getExpectedData
+import static graphql.nadel.testutils.TestUtil.astAsMap
+import static graphql.nadel.testutils.TestUtil.getExpectedData
 
 class NSDLParserTest extends Specification {
 

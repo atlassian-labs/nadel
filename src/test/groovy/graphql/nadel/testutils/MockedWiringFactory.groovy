@@ -1,4 +1,4 @@
-package graphql.nadel
+package graphql.nadel.testutils
 
 import graphql.TypeResolutionEnvironment
 import graphql.schema.DataFetcher

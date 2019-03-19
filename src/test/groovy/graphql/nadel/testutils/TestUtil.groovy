@@ -1,4 +1,4 @@
-package graphql.nadel
+package graphql.nadel.testutils
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -19,6 +19,11 @@ import graphql.language.Document
 import graphql.language.Field
 import graphql.language.Node
 import graphql.language.ScalarTypeDefinition
+import graphql.nadel.NSDLParser
+import graphql.nadel.OverallSchemaGenerator
+import graphql.nadel.ServiceDataFactory
+import graphql.nadel.ServiceExecution
+import graphql.nadel.Util
 import graphql.schema.Coercing
 import graphql.schema.DataFetcher
 import graphql.schema.GraphQLArgument
@@ -275,6 +280,35 @@ class TestUtil {
         ExecutionHelper executionHelper = new ExecutionHelper()
         def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput, null)
         [executionData.executionContext, executionData.fieldSubSelection]
+    }
+
+
+    static ServiceDataFactory serviceFactory(ServiceExecution delegatedExecution, GraphQLSchema underlyingSchema) {
+        new ServiceDataFactory() {
+            @Override
+            ServiceExecution getDelegatedExecution(String serviceName) {
+                return delegatedExecution
+            }
+
+            @Override
+            GraphQLSchema getUnderlyingSchema(String serviceName) {
+                underlyingSchema
+            }
+        }
+    }
+
+    static ServiceDataFactory serviceFactory(Map<String, Tuple2<ServiceExecution, GraphQLSchema>> serviceMap) {
+        new ServiceDataFactory() {
+            @Override
+            ServiceExecution getDelegatedExecution(String serviceName) {
+                return serviceMap.get(serviceName).get(0)
+            }
+
+            @Override
+            GraphQLSchema getUnderlyingSchema(String serviceName) {
+                return serviceMap.get(serviceName).get(1)
+            }
+        }
     }
 
 

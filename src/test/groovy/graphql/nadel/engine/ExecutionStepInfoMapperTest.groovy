@@ -5,7 +5,7 @@ import graphql.execution.ExecutionStepInfo
 import graphql.execution.MergedField
 import graphql.language.Field
 import graphql.nadel.Operation
-import graphql.nadel.TestUtil
+import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLTypeUtil
 import spock.lang.Specification
