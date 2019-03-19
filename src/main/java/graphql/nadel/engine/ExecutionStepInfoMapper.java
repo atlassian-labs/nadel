@@ -18,6 +18,8 @@ import graphql.util.FpKit;
 import java.util.List;
 import java.util.Map;
 
+import static graphql.Assert.assertNotNull;
+
 public class ExecutionStepInfoMapper {
 
 
@@ -49,7 +51,7 @@ public class ExecutionStepInfoMapper {
 
     private GraphQLOutputType mapOutputType(GraphQLOutputType graphQLOutputType, GraphQLSchema overallSchema) {
         if (GraphQLTypeUtil.isNotWrapped(graphQLOutputType)) {
-            return (GraphQLOutputType) overallSchema.getType(graphQLOutputType.getName());
+            return assertNotNull((GraphQLOutputType) overallSchema.getType(graphQLOutputType.getName()), "type " + graphQLOutputType.getName() + " not found in overall schema");
         }
         if (GraphQLTypeUtil.isList(graphQLOutputType)) {
             return GraphQLList.list(mapOutputType((GraphQLOutputType) ((GraphQLList) graphQLOutputType).getWrappedType(), overallSchema));
