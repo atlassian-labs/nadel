@@ -16,7 +16,7 @@ public enum Operation {
     private final String displayName;
     private final OperationDefinition.Operation astOperation;
 
-    private Operation(String name, String displayName, OperationDefinition.Operation astOperation) {
+    Operation(String name, String displayName, OperationDefinition.Operation astOperation) {
         this.displayName = displayName;
         this.name = name;
         this.astOperation = astOperation;

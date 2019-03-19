@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static graphql.GraphQLContext.newContext;
+import static java.util.Objects.requireNonNull;
 
 @PublicApi
 public class NadelExecutionInput {
@@ -16,10 +17,10 @@ public class NadelExecutionInput {
     private final Map<String, Object> variables;
 
     private NadelExecutionInput(String query, String operationName, Object context, Map<String, Object> variables) {
-        this.query = query;
+        this.query = requireNonNull(query);
         this.operationName = operationName;
         this.context = context;
-        this.variables = variables;
+        this.variables = requireNonNull(variables);
     }
 
     public String getQuery() {

@@ -4,7 +4,7 @@ import graphql.execution.ExecutionContext
 import graphql.execution.nextgen.FieldSubSelection
 import graphql.execution.nextgen.result.ResultNodesUtil
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.TestUtil
+import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
 
 class ServiceResultToResultNodesTest extends Specification {

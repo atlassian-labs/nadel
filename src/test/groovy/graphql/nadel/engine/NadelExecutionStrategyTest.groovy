@@ -12,7 +12,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.TestUtil
+import graphql.nadel.testutils.TestUtil
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
@@ -21,7 +21,7 @@ import spock.lang.Specification
 import java.util.concurrent.CompletableFuture
 
 import static graphql.language.AstPrinter.printAstCompact
-import static graphql.nadel.TestUtil.parseQuery
+import static graphql.nadel.testutils.TestUtil.parseQuery
 
 class NadelExecutionStrategyTest extends Specification {
 

@@ -2,6 +2,7 @@ package graphql.nadel
 
 import graphql.language.Document
 import graphql.language.OperationDefinition
+import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
 
 class ServiceExecutionParametersTest extends Specification {

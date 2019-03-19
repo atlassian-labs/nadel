@@ -1,4 +1,4 @@
-package graphql.nadel;
+package graphql.nadel.testutils;
 
 import com.fasterxml.jackson.annotation.JsonFilter;
 
