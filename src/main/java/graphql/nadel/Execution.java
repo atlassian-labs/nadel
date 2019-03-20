@@ -3,10 +3,12 @@ package graphql.nadel;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.Internal;
+import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
 import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
 import graphql.execution.nextgen.ExecutionHelper;
+import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ResultNodesUtil;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Document;
@@ -15,6 +17,7 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.nadel.engine.NadelExecutionStrategy;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
+import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
@@ -30,28 +33,37 @@ class Execution {
     private final List<Service> services;
     private final GraphQLSchema overallSchema;
     private final NadelInstrumentation instrumentation;
+    private final IntrospectionRunner introspectionRunner;
     private final FieldInfos fieldInfos;
     private final ExecutionHelper executionHelper = new ExecutionHelper();
     private final NadelExecutionStrategy nadelExecutionStrategy;
 
-    public Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation) {
+    Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.instrumentation = instrumentation;
+        this.introspectionRunner = introspectionRunner;
         this.fieldInfos = createFieldsInfos();
         this.nadelExecutionStrategy = new NadelExecutionStrategy(services, this.fieldInfos, overallSchema);
     }
 
-    public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput, Document document, ExecutionId executionId, InstrumentationState instrumentationState) {
+    CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput, Document document, ExecutionId executionId, InstrumentationState instrumentationState) {
 
 
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, executionId, executionInput, instrumentationState);
 
-        InstrumentationContext<ExecutionResult> instrumentationCtx = instrumentation.beginExecute(new NadelInstrumentationExecuteOperationParameters(executionData.executionContext, instrumentationState));
+        ExecutionContext executionContext = executionData.executionContext;
+        FieldSubSelection fieldSubSelection = executionData.fieldSubSelection;
 
-        CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection);
+        InstrumentationContext<ExecutionResult> instrumentationCtx = instrumentation.beginExecute(new NadelInstrumentationExecuteOperationParameters(executionContext, instrumentationState));
 
-        CompletableFuture<ExecutionResult> result = resultNodes.thenApply(ResultNodesUtil::toExecutionResult);
+        CompletableFuture<ExecutionResult> result;
+        if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
+            result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
+        } else {
+            CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection);
+            result = resultNodes.thenApply(ResultNodesUtil::toExecutionResult);
+        }
 
         // note this happens NOW - not when the result completes
         instrumentationCtx.onDispatched(result);
