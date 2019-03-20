@@ -1,5 +1,8 @@
 package graphql.nadel.engine;
 
+import graphql.ErrorType;
+import graphql.GraphQLError;
+import graphql.GraphqlErrorBuilder;
 import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
@@ -32,8 +35,11 @@ import graphql.schema.GraphQLTypeUtil;
 import graphql.util.FpKit;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,11 +56,15 @@ import static graphql.nadel.engine.StrategyUtil.createRootExecutionStepInfo;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
 import static graphql.nadel.engine.StrategyUtil.getHydrationTransformations;
 import static graphql.util.FpKit.map;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 @Internal
 public class NadelExecutionStrategy implements ExecutionStrategy {
+
+    private final Logger log = LoggerFactory.getLogger(ExecutionStrategy.class);
 
     private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
@@ -62,8 +72,8 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     private final OverallQueryTransformer queryTransformer = new OverallQueryTransformer();
 
     private final List<Service> services;
-    private FieldInfos fieldInfos;
-    private GraphQLSchema overallSchema;
+    private final FieldInfos fieldInfos;
+    private final GraphQLSchema overallSchema;
 
     public NadelExecutionStrategy(List<Service> services, FieldInfos fieldInfos, GraphQLSchema overallSchema) {
         this.overallSchema = overallSchema;
@@ -148,7 +158,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
 
         ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
 
-        CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters);
+        CompletableFuture<ServiceExecutionResult> result = invokeService(service, serviceExecution, serviceExecutionParameters, rootExecutionStepInfo);
         assertNotNull(result, "A service execution MUST provide a non null CompletableFuture<ServiceExecutionResult> ");
         return result
                 .thenApply(executionResult -> resultToResultNode(executionContextForService, rootExecutionStepInfo, transformedMergedFields, executionResult))
@@ -190,7 +200,7 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformResult);
         ExecutionContext executionContextForService = buildServiceExecutionContext(executionContext, underlyingSchema, serviceExecutionParameters);
 
-        CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters);
+        CompletableFuture<ServiceExecutionResult> result = invokeService(service, serviceExecution, serviceExecutionParameters, rootExecutionStepInfo);
         assertNotNull(result, "A service execution MUST provide a non null CompletableFuture<ServiceExecutionResult> ");
         return result
                 .thenApply(executionResult -> resultToResultNode(executionContextForService, rootExecutionStepInfo, singletonList(transformedMergedField), executionResult))
@@ -221,6 +231,35 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         return FpKit.findOne(services, service -> service.getName().equals(innerServiceHydration.getServiceName())).get();
     }
 
+    private CompletableFuture<ServiceExecutionResult> invokeService(Service service, ServiceExecution serviceExecution, ServiceExecutionParameters serviceExecutionParameters, ExecutionStepInfo executionStepInfo) {
+        try {
+            log.debug("service {} invocation started", service.getName());
+            CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters);
+            log.debug("service {} invocation finished ", service.getName());
+            return result;
+        } catch (Exception e) {
+            String errorText = String.format("An exception occurred invoking the service '%s' : '%s'", service.getName(), e.getMessage());
+            log.error(errorText, e);
+
+            GraphqlErrorBuilder errorBuilder = GraphqlErrorBuilder.newError();
+            MergedField field = executionStepInfo.getField();
+            if (field != null) {
+                errorBuilder.location(field.getSingleField().getSourceLocation());
+            }
+            GraphQLError error = errorBuilder
+                    .message(errorText)
+                    .path(executionStepInfo.getPath())
+                    .errorType(ErrorType.DataFetchingException)
+                    .build();
+
+            Map<String, Object> errorMap = error.toSpecification();
+
+            Map<String, Object> dataMap = new LinkedHashMap<>();
+
+            ServiceExecutionResult result = new ServiceExecutionResult(dataMap, singletonList(errorMap));
+            return completedFuture(result);
+        }
+    }
 
     private CompletableFuture<RootExecutionResultNode> mergeTrees(List<CompletableFuture<RootExecutionResultNode>> resultNodes) {
         return Async.each(resultNodes).thenApply(rootNodes -> {
