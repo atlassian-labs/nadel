@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
@@ -225,8 +226,10 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     private CompletableFuture<RootExecutionResultNode> mergeTrees(List<CompletableFuture<RootExecutionResultNode>> resultNodes) {
         return Async.each(resultNodes).thenApply(rootNodes -> {
             List<ExecutionResultNode> mergedChildren = new ArrayList<>();
-            map(rootNodes, ExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
-            return new RootExecutionResultNode(mergedChildren);
+            List<GraphQLError> errors = new ArrayList<>();
+            map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
+            map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
+            return new RootExecutionResultNode(mergedChildren, errors);
         });
     }
 

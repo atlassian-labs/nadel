@@ -26,6 +26,7 @@ public class ServiceResultNodesToOverallResult {
 
 
     //TODO: the return type is not really ready to return hydration results, which can be used as input for new queries
+    @SuppressWarnings("UnnecessaryLocalVariable")
     public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema, Map<Field, FieldTransformation> transformationMap) {
         try {
             ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
@@ -36,7 +37,7 @@ public class ServiceResultNodesToOverallResult {
                     ExecutionResultNode node = context.thisNode();
                     ExecutionResultNode convertedNode;
                     if (node instanceof RootExecutionResultNode) {
-                        convertedNode = mapRootResultNode((RootExecutionResultNode) node, transformationMap);
+                        convertedNode = mapRootResultNode((RootExecutionResultNode) node);
                     } else if (node instanceof ObjectExecutionResultNode) {
                         convertedNode = mapObjectResultNode((ObjectExecutionResultNode) node, overallSchema, transformationMap);
                     } else if (node instanceof ListExecutionResultNode) {
@@ -70,8 +71,8 @@ public class ServiceResultNodesToOverallResult {
         return new ObjectExecutionResultNode(fetchedValueAnalysis, objectResultNode.getChildren());
     }
 
-    private RootExecutionResultNode mapRootResultNode(RootExecutionResultNode resultNode, Map<Field, FieldTransformation> transformationMap) {
-        return resultNode;
+    private RootExecutionResultNode mapRootResultNode(RootExecutionResultNode resultNode) {
+        return new RootExecutionResultNode(resultNode.getChildren(), resultNode.getErrors());
     }
 
     private LeafExecutionResultNode mapLeafResultNode(LeafExecutionResultNode leafExecutionResultNode,
