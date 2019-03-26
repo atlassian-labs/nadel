@@ -210,11 +210,13 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     }
 
     private ExecutionResultNode convertHydrationResultIntoOverallResult(HydrationTransformation hydrationTransformation,
-                                                                        RootExecutionResultNode resultNode,
+                                                                        RootExecutionResultNode rootResultNode,
                                                                         Map<Field, FieldTransformation> transformationByResultField) {
-        RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField);
-        ExecutionResultNode topLevelResultNode = overallResultNode.getChildren().get(0);
-        return changeFieldInResultNode(topLevelResultNode, hydrationTransformation.getOriginalField());
+        RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, transformationByResultField);
+        // NOTE : we only take the first result node here but we may have errors in the root node that are global so transfer them in
+        ExecutionResultNode firstTopLevelResultNode = overallResultNode.getChildren().get(0);
+        firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
+        return changeFieldInResultNode(firstTopLevelResultNode, hydrationTransformation.getOriginalField());
     }
 
 
