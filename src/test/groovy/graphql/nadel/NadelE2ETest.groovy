@@ -3,7 +3,6 @@ package graphql.nadel
 import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.nadel.testutils.TestUtil
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import static graphql.language.AstPrinter.printAstCompact
@@ -76,36 +75,6 @@ class NadelE2ETest extends Specification {
             completedFuture(new ServiceExecutionResult(data))
         }
         result.join().data == data
-    }
-
-    @Ignore
-    def "errors in service execution result in graphql errors"() {
-
-        given:
-        def query = '''
-        query { hello {name} }
-        '''
-
-        ServiceExecution serviceExecution = { params -> throw new RuntimeException("Pop goes the weasel") }
-
-        Nadel nadel = newNadel()
-                .dsl(simpleNDSL)
-                .serviceDataFactory(TestUtil.serviceFactory(serviceExecution, simpleUnderlyingSchema))
-                .build()
-
-        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
-                .query(query)
-                .build()
-
-        when:
-        def result = nadel.execute(nadelExecutionInput)
-        def er = result.join()
-
-        then:
-        er.data == null
-        !er.errors.isEmpty()
-        er.errors[0].message.contains("Pop goes the weasel")
-
     }
 
     def "graphql-java validation is invoked"() {

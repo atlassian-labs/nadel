@@ -44,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiFunction;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
@@ -236,29 +237,41 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
             log.debug("service {} invocation started", service.getName());
             CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters);
             log.debug("service {} invocation finished ", service.getName());
-            return result;
+            //
+            // if they return an exceptional CF then we turn that into graphql errors as well
+            return result.handle(handleServiceException(service, executionStepInfo));
         } catch (Exception e) {
-            String errorText = String.format("An exception occurred invoking the service '%s' : '%s'", service.getName(), e.getMessage());
-            log.error(errorText, e);
-
-            GraphqlErrorBuilder errorBuilder = GraphqlErrorBuilder.newError();
-            MergedField field = executionStepInfo.getField();
-            if (field != null) {
-                errorBuilder.location(field.getSingleField().getSourceLocation());
-            }
-            GraphQLError error = errorBuilder
-                    .message(errorText)
-                    .path(executionStepInfo.getPath())
-                    .errorType(ErrorType.DataFetchingException)
-                    .build();
-
-            Map<String, Object> errorMap = error.toSpecification();
-
-            Map<String, Object> dataMap = new LinkedHashMap<>();
-
-            ServiceExecutionResult result = new ServiceExecutionResult(dataMap, singletonList(errorMap));
-            return completedFuture(result);
+            return completedFuture(mkExceptionResult(service, executionStepInfo, e));
         }
+    }
+
+    private BiFunction<ServiceExecutionResult, Throwable, ServiceExecutionResult> handleServiceException(Service service, ExecutionStepInfo executionStepInfo) {
+        return (serviceCallResult, throwable) -> {
+            if (throwable != null) {
+                return mkExceptionResult(service, executionStepInfo, throwable);
+            } else {
+                return serviceCallResult;
+            }
+        };
+    }
+
+    private ServiceExecutionResult mkExceptionResult(Service service, ExecutionStepInfo executionStepInfo, Throwable e) {
+        String errorText = String.format("An exception occurred invoking the service '%s' : '%s'", service.getName(), e.getMessage());
+        log.error(errorText, e);
+
+        GraphqlErrorBuilder errorBuilder = GraphqlErrorBuilder.newError();
+        MergedField field = executionStepInfo.getField();
+        if (field != null) {
+            errorBuilder.location(field.getSingleField().getSourceLocation());
+        }
+        GraphQLError error = errorBuilder
+                .message(errorText)
+                .path(executionStepInfo.getPath())
+                .errorType(ErrorType.DataFetchingException)
+                .build();
+
+        Map<String, Object> errorMap = error.toSpecification();
+        return new ServiceExecutionResult(new LinkedHashMap<>(), singletonList(errorMap));
     }
 
     private CompletableFuture<RootExecutionResultNode> mergeTrees(List<CompletableFuture<RootExecutionResultNode>> resultNodes) {
