@@ -21,6 +21,8 @@ import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
+import graphql.nadel.introspection.DefaultIntrospectionRunner;
+import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.parser.InvalidSyntaxException;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
@@ -35,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.UnaryOperator;
 
 import static graphql.execution.instrumentation.DocumentAndVariables.newDocumentAndVariables;
 import static graphql.nadel.Util.buildServiceRegistry;
@@ -55,14 +58,16 @@ public class Nadel {
     private final NadelInstrumentation instrumentation;
     private final PreparsedDocumentProvider preparsedDocumentProvider;
     private final ExecutionIdProvider executionIdProvider;
+    private final IntrospectionRunner introspectionRunner;
 
-    private Nadel(Reader nsdl, ServiceDataFactory serviceDataFactory, NadelInstrumentation instrumentation, PreparsedDocumentProvider preparsedDocumentProvider, ExecutionIdProvider executionIdProvider) {
+    private Nadel(Reader nsdl, ServiceDataFactory serviceDataFactory, NadelInstrumentation instrumentation, PreparsedDocumentProvider preparsedDocumentProvider, ExecutionIdProvider executionIdProvider, IntrospectionRunner introspectionRunner) {
         this.serviceDataFactory = serviceDataFactory;
         this.instrumentation = instrumentation;
         this.preparsedDocumentProvider = preparsedDocumentProvider;
         this.executionIdProvider = executionIdProvider;
 
         this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
+        this.introspectionRunner = introspectionRunner;
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
 
         List<Service> serviceList = new ArrayList<>();
@@ -106,6 +111,7 @@ public class Nadel {
         };
         private PreparsedDocumentProvider preparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE;
         private ExecutionIdProvider executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER;
+        private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
 
 
         public Builder dsl(Reader nsdl) {
@@ -137,11 +143,24 @@ public class Nadel {
             return this;
         }
 
+        public Builder introspectionRunner(IntrospectionRunner introspectionRunner) {
+            this.introspectionRunner = requireNonNull(introspectionRunner);
+            return this;
+        }
+
         public Nadel build() {
-            return new Nadel(nsdl, serviceDataFactory, instrumentation, preparsedDocumentProvider, executionIdProvider);
+            return new Nadel(nsdl, serviceDataFactory, instrumentation, preparsedDocumentProvider, executionIdProvider, introspectionRunner);
         }
     }
 
+
+    public CompletableFuture<ExecutionResult> execute(NadelExecutionInput.Builder nadelExecutionInput) {
+        return execute(nadelExecutionInput.build());
+    }
+
+    public CompletableFuture<ExecutionResult> execute(UnaryOperator<NadelExecutionInput.Builder> builderFunction) {
+        return execute(builderFunction.apply(NadelExecutionInput.newNadelExecutionInput()).build());
+    }
 
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
         ExecutionInput executionInput = ExecutionInput.newExecutionInput()
@@ -254,7 +273,7 @@ public class Nadel {
         Object context = executionInput.getContext();
 
         ExecutionId executionId = executionIdProvider.provide(query, operationName, context);
-        Execution execution = new Execution(getServices(), overallSchema, instrumentation);
+        Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner);
 
         return execution.execute(executionInput, document, executionId, instrumentationState);
     }

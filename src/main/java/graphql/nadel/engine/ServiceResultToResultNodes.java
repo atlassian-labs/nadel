@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.GraphQLError;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
@@ -28,10 +29,10 @@ import static graphql.util.FpKit.map;
 
 public class ServiceResultToResultNodes {
 
-    ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
-    ServiceExecutionResultAnalyzer fetchedValueAnalyzer = new ServiceExecutionResultAnalyzer();
-    ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
-    ExecutionStrategyUtil util = new ExecutionStrategyUtil();
+    private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
+    private final ServiceExecutionResultAnalyzer fetchedValueAnalyzer = new ServiceExecutionResultAnalyzer();
+    private final ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
+    private final ExecutionStrategyUtil util = new ExecutionStrategyUtil();
 
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
                                                       ExecutionStepInfo executionStepInfo,
@@ -49,7 +50,8 @@ public class ServiceResultToResultNodes {
                 .build();
 
         List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelectionWithData);
-        return new RootExecutionResultNode(namedResultNodes);
+        List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
+        return new RootExecutionResultNode(namedResultNodes,errors);
     }
 
     private List<ExecutionResultNode> resolveSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
@@ -59,7 +61,7 @@ public class ServiceResultToResultNodes {
     private ExecutionResultNode resolveAllChildNodes(ExecutionContext context, NamedResultNode namedResultNode) {
         NodeMultiZipper<ExecutionResultNode> unresolvedNodes = ResultNodesUtil.getUnresolvedNodes(namedResultNode.getNode());
         List<NodeZipper<ExecutionResultNode>> resolvedNodes = map(unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
-        return resolvedNodesToResultNode(namedResultNode, unresolvedNodes, resolvedNodes);
+        return resolvedNodesToResultNode(unresolvedNodes, resolvedNodes);
     }
 
     private NodeZipper<ExecutionResultNode> resolveNode(ExecutionContext executionContext, NodeZipper<ExecutionResultNode> unresolvedNode) {
@@ -69,11 +71,9 @@ public class ServiceResultToResultNodes {
         return unresolvedNode.withNewNode(new ObjectExecutionResultNode(fetchedValueAnalysis, namedResultNodes));
     }
 
-    private ExecutionResultNode resolvedNodesToResultNode(NamedResultNode namedResultNode,
-                                                          NodeMultiZipper<ExecutionResultNode> unresolvedNodes,
+    private ExecutionResultNode resolvedNodesToResultNode(NodeMultiZipper<ExecutionResultNode> unresolvedNodes,
                                                           List<NodeZipper<ExecutionResultNode>> resolvedNodes) {
-        ExecutionResultNode rootNode = unresolvedNodes.withReplacedZippers(resolvedNodes).toRootNode();
-        return rootNode;
+        return unresolvedNodes.withReplacedZippers(resolvedNodes).toRootNode();
     }
 
     private List<NamedResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
@@ -89,11 +89,19 @@ public class ServiceResultToResultNodes {
     private FetchedValueAnalysis fetchAndAnalyzeField(ExecutionContext context, Object source, MergedField mergedField,
                                                       ExecutionStepInfo executionStepInfo) {
         ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, executionStepInfo);
-        FetchedValue fetchedValue = fetchValue(context, source, mergedField, newExecutionStepInfo);
+        FetchedValue fetchedValue = fetchValue(source, mergedField);
         return analyseValue(context, fetchedValue, newExecutionStepInfo);
     }
 
-    private FetchedValue fetchValue(ExecutionContext context, Object source, MergedField mergedField, ExecutionStepInfo newExecutionStepInfo) {
+    private FetchedValue fetchValue(Object source, MergedField mergedField) {
+        if (source == null) {
+            return FetchedValue.newFetchedValue()
+                    .fetchedValue(null)
+                    .rawFetchedValue(null)
+                    .errors(Collections.emptyList())
+                    .build();
+        }
+        @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) source;
         Object fetchedValue = map.get(mergedField.getResultKey());
         return FetchedValue.newFetchedValue()
@@ -104,8 +112,7 @@ public class ServiceResultToResultNodes {
     }
 
     private FetchedValueAnalysis analyseValue(ExecutionContext executionContext, FetchedValue fetchedValue, ExecutionStepInfo executionInfo) {
-        FetchedValueAnalysis fetchedValueAnalysis = fetchedValueAnalyzer.analyzeFetchedValue(executionContext, fetchedValue, executionInfo);
-        return fetchedValueAnalysis;
+        return fetchedValueAnalyzer.analyzeFetchedValue(executionContext, fetchedValue, executionInfo);
     }
 
     private List<NamedResultNode> fetchedValueAnalysisToNodes(List<FetchedValueAnalysis> fetchedValueAnalysisList) {

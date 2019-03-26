@@ -73,6 +73,43 @@ class NadelExecutionStrategyTest extends Specification {
         } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(Mock(ServiceExecutionResult))
     }
 
+    def "one call to one service with list result"() {
+        given:
+        def underlyingSchema = TestUtil.schema("""
+        type Query {
+            foo: [String]
+        }
+        """)
+
+        def overallSchema = TestUtil.schema("""
+        type Query {
+            foo: [String]
+        }
+        """)
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
+
+        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema)
+
+        def query = "{foo}"
+        def executionData = createExecutionData(query, overallSchema)
+
+        def expectedQuery = "query {foo}"
+
+        def serviceResultData = [foo: ["foo1", "foo2"]]
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({
+            printAstCompact(it.query) == expectedQuery
+        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(new ServiceExecutionResult(serviceResultData))
+        resultData(response) == [foo: ["foo1", "foo2"]]
+    }
+
 
     def underlyingHydrationSchema1 = TestUtil.schema("""
         type Query {
