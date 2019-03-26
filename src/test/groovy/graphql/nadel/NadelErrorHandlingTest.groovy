@@ -99,7 +99,7 @@ class NadelErrorHandlingTest extends Specification {
         result.errors.collect({ ge -> ge.message }) == ["Problem1", "Problem2"]
     }
 
-    def "query with hydration that fail with errors"() {
+    def "query with hydration that fail with errors are reflected in the result"() {
 
         def nsdl = '''
          service Foo {
@@ -145,10 +145,10 @@ class NadelErrorHandlingTest extends Specification {
         def query = '''
             { foo { bar { name nestedBar {name nestedBar { name } } } } }
         '''
-        def topLevelData = [foo: [barId: "barId123"]]
-        def hydrationData = [barById: null]
-        ServiceExecution serviceExecution1 = new MockServiceExecution(topLevelData)
-        ServiceExecution serviceExecution2 = new MockServiceExecution(hydrationData,
+
+        ServiceExecution serviceExecution1 = new MockServiceExecution(
+                [foo: [barId: "barId123"]])
+        ServiceExecution serviceExecution2 = new MockServiceExecution([barById: null],
                 [[message: "Error during hydration"]])
 
         ServiceDataFactory serviceFactory = serviceFactory([
@@ -170,7 +170,7 @@ class NadelErrorHandlingTest extends Specification {
 
         then:
         !result.errors.isEmpty()
-        result.errors[0] == [[message: "error during hydration"]]
+        result.errors[0].message == "Error during hydration"
         result.data == [foo: [bar: null]]
     }
 
