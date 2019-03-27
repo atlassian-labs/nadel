@@ -3,6 +3,8 @@ package graphql.nadel
 import graphql.nadel.testutils.MockServiceExecution
 import spock.lang.Specification
 
+import java.util.concurrent.CompletableFuture
+
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import static graphql.nadel.testutils.TestUtil.schema
@@ -66,12 +68,12 @@ class NadelErrorHandlingTest extends Specification {
 
 
         when:
-        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+        def er = nadel.execute(newNadelExecutionInput().query(query)).join()
 
         then:
-        result.data == [hello: null]
-        !result.errors.isEmpty()
-        result.errors.collect({ ge -> ge.message }) == ["Problem1", "Problem2"]
+        er.data == [hello: null]
+        !er.errors.isEmpty()
+        er.errors.collect({ ge -> ge.message }) == ["Problem1", "Problem2"]
 
     }
 
@@ -91,17 +93,15 @@ class NadelErrorHandlingTest extends Specification {
 
 
         when:
-        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+        def er = nadel.execute(newNadelExecutionInput().query(query)).join()
 
         then:
-        result.data == [hello: [name: "World"]]
-        !result.errors.isEmpty()
-        result.errors.collect({ ge -> ge.message }) == ["Problem1", "Problem2"]
+        er.data == [hello: [name: "World"]]
+        !er.errors.isEmpty()
+        er.errors.collect({ ge -> ge.message }) == ["Problem1", "Problem2"]
     }
 
-    def "query with hydration that fail with errors are reflected in the result"() {
-
-        def nsdl = '''
+    def hydratedNDSL = '''
          service Foo {
             type Query{
                 foo: Foo  
@@ -121,7 +121,7 @@ class NadelErrorHandlingTest extends Specification {
             }
          }
         '''
-        def underlyingSchema1 = schema('''
+    def hydratedUnderlyingSchema1 = schema('''
             type Query{
                 foo: Foo  
             } 
@@ -130,7 +130,7 @@ class NadelErrorHandlingTest extends Specification {
                 barId: ID
             }
         ''')
-        def underlyingSchema2 = schema('''
+    def hydratedUnderlyingSchema2 = schema('''
             type Query{
                 bar: Bar 
                 barById(id: ID): Bar
@@ -142,6 +142,8 @@ class NadelErrorHandlingTest extends Specification {
             }
         ''')
 
+    def "query with hydration that fail with errors are reflected in the result"() {
+
         def query = '''
             { foo { bar { name nestedBar {name nestedBar { name } } } } }
         '''
@@ -152,12 +154,12 @@ class NadelErrorHandlingTest extends Specification {
                 [[message: "Error during hydration"]])
 
         ServiceDataFactory serviceFactory = serviceFactory([
-                Foo: new Tuple2(serviceExecution1, underlyingSchema1),
-                Bar: new Tuple2(serviceExecution2, underlyingSchema2)]
+                Foo: new Tuple2(serviceExecution1, hydratedUnderlyingSchema1),
+                Bar: new Tuple2(serviceExecution2, hydratedUnderlyingSchema2)]
         )
         given:
         Nadel nadel = newNadel()
-                .dsl(nsdl)
+                .dsl(hydratedNDSL)
                 .serviceDataFactory(serviceFactory)
                 .build()
 
@@ -166,12 +168,105 @@ class NadelErrorHandlingTest extends Specification {
                 .build()
 
         when:
-        def result = nadel.execute(nadelExecutionInput).join()
+        def er = nadel.execute(nadelExecutionInput).join()
 
         then:
-        !result.errors.isEmpty()
-        result.errors[0].message == "Error during hydration"
-        result.data == [foo: [bar: null]]
+        !er.errors.isEmpty()
+        er.errors[0].message == "Error during hydration"
+        er.data == [foo: [bar: null]]
     }
 
+    def "exceptions in service execution call in graphql errors"() {
+
+        given:
+        def query = '''
+        query { hello {name} }
+        '''
+
+        ServiceExecution serviceExecution = { params -> throw new RuntimeException("Pop goes the weasel") }
+
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceDataFactory(serviceFactory(serviceExecution, simpleUnderlyingSchema))
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        when:
+        def er = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        er.data == [hello: null]
+        !er.errors.isEmpty()
+        er.errors[0].message.contains("Pop goes the weasel")
+
+    }
+
+    def "exceptions in service execution result completable future in graphql errors"() {
+
+        given:
+        def query = '''
+        query { hello {name} }
+        '''
+
+        ServiceExecution serviceExecution = { params ->
+            CompletableFuture cf = new CompletableFuture()
+            cf.completeExceptionally(new RuntimeException("Pop goes the weasel"))
+            return cf
+        }
+
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceDataFactory(serviceFactory(serviceExecution, simpleUnderlyingSchema))
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        when:
+        def er = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        er.data == [hello: null]
+        !er.errors.isEmpty()
+        er.errors[0].message.contains("Pop goes the weasel")
+    }
+
+    def "exceptions in hydration call that fail with errors are reflected in the result"() {
+
+        def query = '''
+            { foo { bar { name nestedBar {name nestedBar { name } } } } }
+        '''
+
+        ServiceExecution serviceExecution1 = new MockServiceExecution(
+                [foo: [barId: "barId123"]])
+        ServiceExecution serviceExecution2 = {
+            throw new RuntimeException("Pop goes the weasel")
+        }
+
+        ServiceDataFactory serviceFactory = serviceFactory([
+                Foo: new Tuple2(serviceExecution1, hydratedUnderlyingSchema1),
+                Bar: new Tuple2(serviceExecution2, hydratedUnderlyingSchema2)]
+        )
+        given:
+        Nadel nadel = newNadel()
+                .dsl(hydratedNDSL)
+                .serviceDataFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        when:
+        def er = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        !er.errors.isEmpty()
+        er.errors[0].message.contains("Pop goes the weasel")
+        er.data == [foo: [bar: null]]
+    }
 }

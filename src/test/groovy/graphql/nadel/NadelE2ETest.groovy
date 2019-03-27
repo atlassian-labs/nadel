@@ -1,21 +1,10 @@
 package graphql.nadel
 
 import graphql.ErrorType
-import graphql.ExecutionResult
 import graphql.GraphQLError
-import graphql.execution.instrumentation.InstrumentationContext
-import graphql.execution.instrumentation.InstrumentationState
-import graphql.language.Document
-import graphql.nadel.instrumentation.NadelInstrumentation
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
-import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters
 import graphql.nadel.testutils.TestUtil
-import graphql.validation.ValidationError
 import spock.lang.Specification
 
-import static graphql.execution.instrumentation.SimpleInstrumentationContext.noOp
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
@@ -23,7 +12,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
 
-    def simpleNDSL = """
+    def simpleNDSL = '''
          service MyService {
             type Query{
                 hello: World  
@@ -36,9 +25,9 @@ class NadelE2ETest extends Specification {
                 hello: String  
             } 
          }
-        """
+        '''
 
-    def simpleUnderlyingSchema = TestUtil.schema("""
+    def simpleUnderlyingSchema = TestUtil.schema('''
             type Query{
                 hello: World  
             } 
@@ -49,7 +38,7 @@ class NadelE2ETest extends Specification {
             type Mutation{
                 hello: String  
             } 
-        """)
+        ''')
 
     def delegatedExecution = Mock(ServiceExecution)
     def serviceFactory = TestUtil.serviceFactory(delegatedExecution, simpleUnderlyingSchema)
@@ -57,9 +46,9 @@ class NadelE2ETest extends Specification {
     def "query to one service with execution input passed down"() {
 
         given:
-        def query = """
+        def query = '''
         query OpName { hello {name} hello {id} }
-        """
+        '''
 
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
@@ -85,84 +74,7 @@ class NadelE2ETest extends Specification {
             assert params.operationDefinition.name == "OpName"
             completedFuture(new ServiceExecutionResult(data))
         }
-        result.get().data == data
-    }
-
-    class TestState implements InstrumentationState {
-    }
-
-    def "instrumentation is called"() {
-
-        given:
-        def query = """
-        query OpName { hello {name} hello {id} }
-        """
-
-        def variables = ["var1": "val1"]
-
-        def instrumentationCalled = false
-        def instrumentationParseCalled = false
-        def instrumentationValidateCalled = false
-        def instrumentationExecuteCalled = false
-        NadelInstrumentation instrumentation = new NadelInstrumentation() {
-            @Override
-            InstrumentationState createState(NadelInstrumentationCreateStateParameters parameters) {
-                return new TestState()
-            }
-
-            @Override
-            InstrumentationContext<ExecutionResult> beginQueryExecution(NadelInstrumentationQueryExecutionParameters parameters) {
-                instrumentationCalled = true
-                parameters.instrumentationState instanceof TestState
-                parameters.query == query
-                parameters.variables == variables
-                parameters.operation == "OpName"
-                noOp()
-            }
-
-            @Override
-            InstrumentationContext<Document> beginParse(NadelInstrumentationQueryExecutionParameters parameters) {
-                instrumentationParseCalled = true
-                noOp()
-            }
-
-            @Override
-            InstrumentationContext<List<ValidationError>> beginValidation(NadelNadelInstrumentationQueryValidationParameters parameters) {
-                instrumentationValidateCalled = true
-                noOp()
-            }
-
-            @Override
-            InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
-                instrumentationExecuteCalled = true
-                noOp()
-            }
-        }
-
-        Nadel nadel = newNadel()
-                .dsl(simpleNDSL)
-                .serviceDataFactory(serviceFactory)
-                .instrumentation(instrumentation)
-                .build()
-
-        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
-                .query(query)
-                .variables(variables)
-                .context("contextObj")
-                .operationName("OpName")
-                .build()
-        when:
-        nadel.execute(nadelExecutionInput)
-
-        then:
-        1 * delegatedExecution.execute(_) >> { args ->
-            def data = [hello: [id: "3", name: "earth"]]
-            completedFuture(new ServiceExecutionResult(data))
-        }
-        instrumentationCalled
-        instrumentationParseCalled
-        instrumentationValidateCalled
-        instrumentationExecuteCalled
+        result.join().data == data
     }
 
     def "graphql-java validation is invoked"() {
@@ -255,7 +167,7 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
         1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
-        result.get().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
+        result.join().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
     }
 
     def "query with three nested hydrations"() {
@@ -349,8 +261,8 @@ class NadelE2ETest extends Specification {
 
                 completedFuture(hydrationResult3)
 
-        result.get().data == [foo: [bar: [name: "BarName", nestedBar: [name: "NestedBarName1", nestedBar: [name
-                                                                                                           : "NestedBarName2"]]]]]
+        result.join().data == [foo: [bar: [name: "BarName", nestedBar: [name: "NestedBarName1", nestedBar: [name
+                                                                                                            : "NestedBarName2"]]]]]
     }
 
     def 'mutation can be executed'() {
@@ -377,7 +289,7 @@ class NadelE2ETest extends Specification {
             assert printAstCompact(params.query) == "mutation M {hello}"
             completedFuture(new ServiceExecutionResult(data))
         }
-        result.get().data == data
+        result.join().data == data
     }
 
 }
