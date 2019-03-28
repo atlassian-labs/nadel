@@ -1,4 +1,4 @@
-package graphql.nadel;
+package graphql.nadel.util;
 
 import java.util.LinkedHashMap;
 import java.util.List;

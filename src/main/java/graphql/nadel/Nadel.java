@@ -17,6 +17,7 @@ import graphql.execution.preparsed.PreparsedDocumentProvider;
 import graphql.language.Document;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
+import graphql.nadel.engine.Execution;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
@@ -40,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 
 import static graphql.execution.instrumentation.DocumentAndVariables.newDocumentAndVariables;
-import static graphql.nadel.Util.buildServiceRegistry;
+import static graphql.nadel.util.Util.buildServiceRegistry;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 

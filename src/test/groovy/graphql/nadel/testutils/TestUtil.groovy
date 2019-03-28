@@ -23,7 +23,7 @@ import graphql.nadel.NSDLParser
 import graphql.nadel.OverallSchemaGenerator
 import graphql.nadel.ServiceDataFactory
 import graphql.nadel.ServiceExecution
-import graphql.nadel.Util
+import graphql.nadel.util.Util
 import graphql.schema.Coercing
 import graphql.schema.DataFetcher
 import graphql.schema.GraphQLArgument

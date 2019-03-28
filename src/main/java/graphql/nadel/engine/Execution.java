@@ -1,4 +1,4 @@
-package graphql.nadel;
+package graphql.nadel.engine;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
@@ -14,7 +14,9 @@ import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Document;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
-import graphql.nadel.engine.NadelExecutionStrategy;
+import graphql.nadel.FieldInfo;
+import graphql.nadel.FieldInfos;
+import graphql.nadel.Service;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.introspection.IntrospectionRunner;
@@ -28,7 +30,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Internal
-class Execution {
+public class Execution {
 
     private final List<Service> services;
     private final GraphQLSchema overallSchema;
@@ -38,16 +40,16 @@ class Execution {
     private final ExecutionHelper executionHelper = new ExecutionHelper();
     private final NadelExecutionStrategy nadelExecutionStrategy;
 
-    Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner) {
+    public Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.instrumentation = instrumentation;
         this.introspectionRunner = introspectionRunner;
         this.fieldInfos = createFieldsInfos();
-        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, this.fieldInfos, overallSchema);
+        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, this.fieldInfos, overallSchema, instrumentation);
     }
 
-    CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput, Document document, ExecutionId executionId, InstrumentationState instrumentationState) {
+    public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput, Document document, ExecutionId executionId, InstrumentationState instrumentationState) {
 
 
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, executionId, executionInput, instrumentationState);

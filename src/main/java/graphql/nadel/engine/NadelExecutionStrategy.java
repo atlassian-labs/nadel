@@ -28,6 +28,8 @@ import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
+import graphql.nadel.instrumentation.NadelInstrumentation;
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
@@ -61,7 +63,7 @@ import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 @Internal
-public class NadelExecutionStrategy implements ExecutionStrategy {
+public class NadelExecutionStrategy {
 
     private final Logger log = LoggerFactory.getLogger(ExecutionStrategy.class);
 
@@ -73,15 +75,16 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
     private final List<Service> services;
     private final FieldInfos fieldInfos;
     private final GraphQLSchema overallSchema;
+    private final NadelInstrumentation instrumentation;
 
-    public NadelExecutionStrategy(List<Service> services, FieldInfos fieldInfos, GraphQLSchema overallSchema) {
+    public NadelExecutionStrategy(List<Service> services, FieldInfos fieldInfos, GraphQLSchema overallSchema, NadelInstrumentation instrumentation) {
         this.overallSchema = overallSchema;
+        this.instrumentation = instrumentation;
         assertNotEmpty(services);
         this.services = services;
         this.fieldInfos = fieldInfos;
     }
 
-    @Override
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext context, FieldSubSelection fieldSubSelection) {
         Map<Service, List<MergedField>> delegatedExecutionForTopLevel = getDelegatedExecutionForTopLevel(context, fieldSubSelection);
 
@@ -156,6 +159,9 @@ public class NadelExecutionStrategy implements ExecutionStrategy {
         ExecutionContext executionContextForService = buildServiceExecutionContext(executionContext, underlyingSchema, serviceExecutionParameters);
 
         ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
+
+        NadelInstrumentationServiceExecutionParameters instrumentationParams = new NadelInstrumentationServiceExecutionParameters(service, executionContext, executionContext.getInstrumentationState());
+        serviceExecution = instrumentation.instrumentServiceExecution(serviceExecution, instrumentationParams);
 
         CompletableFuture<ServiceExecutionResult> result = invokeService(service, serviceExecution, serviceExecutionParameters, rootExecutionStepInfo);
         assertNotNull(result, "A service execution MUST provide a non null CompletableFuture<ServiceExecutionResult> ");

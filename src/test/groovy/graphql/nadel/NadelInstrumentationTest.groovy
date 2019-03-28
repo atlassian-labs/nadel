@@ -1,10 +1,10 @@
 package graphql.nadel
 
-
 import graphql.ExecutionResult
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
+import graphql.nadel.instrumentation.ChainedNadelInstrumentation
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
@@ -129,5 +129,83 @@ class NadelInstrumentationTest extends Specification {
         instrumentationExecuteCalled
     }
 
+    def "chained instrumentation works as expected"() {
 
+        given:
+        def query = """
+        query OpName { hello {name} hello {id} }
+        """
+
+        def variables = ["var1": "val1"]
+
+        def instrumentationCalled = 0
+        def instrumentationParseCalled = 0
+        def instrumentationValidateCalled = 0
+        def instrumentationExecuteCalled = 0
+        NadelInstrumentation instrumentation = new NadelInstrumentation() {
+            @Override
+            InstrumentationState createState(NadelInstrumentationCreateStateParameters parameters) {
+                return new TestState()
+            }
+
+            @Override
+            InstrumentationContext<ExecutionResult> beginQueryExecution(NadelInstrumentationQueryExecutionParameters parameters) {
+                instrumentationCalled++
+                parameters.instrumentationState instanceof TestState
+                parameters.query == query
+                parameters.variables == variables
+                parameters.operation == "OpName"
+                noOp()
+            }
+
+            @Override
+            InstrumentationContext<Document> beginParse(NadelInstrumentationQueryExecutionParameters parameters) {
+                instrumentationParseCalled++
+                noOp()
+            }
+
+            @Override
+            InstrumentationContext<List<ValidationError>> beginValidation(NadelNadelInstrumentationQueryValidationParameters parameters) {
+                instrumentationValidateCalled++
+                noOp()
+            }
+
+            @Override
+            InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+                instrumentationExecuteCalled++
+                noOp()
+            }
+        }
+
+        ChainedNadelInstrumentation chainedInstrumentation = new ChainedNadelInstrumentation(
+                [instrumentation, instrumentation]
+        )
+
+
+
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceDataFactory(serviceFactory)
+                .instrumentation(chainedInstrumentation)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .variables(variables)
+                .context("contextObj")
+                .operationName("OpName")
+                .build()
+        when:
+        nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            def data = [hello: [id: "3", name: "earth"]]
+            completedFuture(new ServiceExecutionResult(data))
+        }
+        instrumentationCalled == 2
+        instrumentationParseCalled == 2
+        instrumentationValidateCalled == 2
+        instrumentationExecuteCalled == 2
+    }
 }
