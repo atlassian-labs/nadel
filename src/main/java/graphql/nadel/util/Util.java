@@ -1,4 +1,4 @@
-package graphql.nadel;
+package graphql.nadel.util;
 
 import graphql.Internal;
 import graphql.language.Definition;
@@ -6,6 +6,7 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.OperationTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.TypeName;
+import graphql.nadel.DefinitionRegistry;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 

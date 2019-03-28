@@ -1,4 +1,4 @@
-package graphql.nadel.engine;
+package graphql.nadel.util;
 
 import graphql.ErrorType;
 import graphql.GraphQLError;

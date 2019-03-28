@@ -56,7 +56,7 @@ class NadelExecutionStrategyTest extends Specification {
 
         def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
         def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation)
 
         def query = "{foo}"
         def executionData = createExecutionData(query, overallSchema)
@@ -90,7 +90,7 @@ class NadelExecutionStrategyTest extends Specification {
 
         def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
         def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation)
 
         def query = "{foo}"
         def executionData = createExecutionData(query, overallSchema)
@@ -159,7 +159,7 @@ class NadelExecutionStrategyTest extends Specification {
         def fooFieldDefinition = overallHydrationSchema.getQueryType().getFieldDefinition("foo")
 
         def fieldInfos = topLevelFieldInfo(fooFieldDefinition, hydrationService1)
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([hydrationService1, hydrationService2], fieldInfos, overallHydrationSchema)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([hydrationService1, hydrationService2], fieldInfos, overallHydrationSchema, instrumentation)
 
 
         def query = '''
@@ -197,7 +197,7 @@ class NadelExecutionStrategyTest extends Specification {
         def fooFieldDefinition = overallHydrationSchema.getQueryType().getFieldDefinition("foo")
 
         def fieldInfos = topLevelFieldInfo(fooFieldDefinition, hydrationService1)
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([hydrationService1, hydrationService2], fieldInfos, overallHydrationSchema)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([hydrationService1, hydrationService2], fieldInfos, overallHydrationSchema, instrumentation)
 
 
         def query = '''
@@ -284,7 +284,7 @@ class NadelExecutionStrategyTest extends Specification {
         def service1 = new Service("service1", underlyingSchema1, service1Execution, serviceDefinition, definitionRegistry)
         def service2 = new Service("service2", underlyingSchema2, service2Execution, serviceDefinition, definitionRegistry)
         def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service1)
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation)
 
 
         def query = "{foo {bar{id name}}}"

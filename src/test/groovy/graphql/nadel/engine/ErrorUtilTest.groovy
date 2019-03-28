@@ -1,6 +1,7 @@
 package graphql.nadel.engine
 
 import graphql.language.SourceLocation
+import graphql.nadel.util.ErrorUtil
 import spock.lang.Specification
 
 class ErrorUtilTest extends Specification {
