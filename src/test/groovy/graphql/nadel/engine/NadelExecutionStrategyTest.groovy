@@ -12,8 +12,9 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.testutils.TestUtil
 import graphql.nadel.dsl.ServiceDefinition
+import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
@@ -30,6 +31,7 @@ class NadelExecutionStrategyTest extends Specification {
     def service2Execution
     def serviceDefinition
     def definitionRegistry
+    def instrumentation
 
     void setup() {
         executionHelper = new ExecutionHelper()
@@ -37,6 +39,7 @@ class NadelExecutionStrategyTest extends Specification {
         service2Execution = Mock(ServiceExecution)
         serviceDefinition = ServiceDefinition.newServiceDefinition().build()
         definitionRegistry = Mock(DefinitionRegistry)
+        instrumentation = new NadelInstrumentation() {}
     }
 
     def "one call to one service"() {
