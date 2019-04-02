@@ -125,7 +125,7 @@ class NadelExecutionStrategyTest extends Specification {
         """)
     def underlyingHydrationSchema2 = TestUtil.schema("""
         type Query {
-            barById(id: ID): Bar
+            barsByIds(ids: [ID]): [Bar]
         }
         type Bar {
             id: ID
@@ -140,12 +140,12 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Foo {
                 id: ID
-                bar: Bar <= \$innerQueries.service2.barById(id: \$source.barId)
+                bar: Bar <= \$innerQueries.service2.barsByIds(ids: \$source.barId)
             }
         }
         service service2 {
             type Query {
-                barById(id: ID): Bar
+                barsByIds(ids: [ID]): [Bar]
             }
             type Bar {
                 id: ID
@@ -171,8 +171,8 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery1 = 'query ($var:ID) {foo(id:$var) {barId}}'
         def response1 = new ServiceExecutionResult([foo: [barId: "barId"]])
 
-        def expectedQuery2 = "query {barById(id:\"barId\") {id name}}"
-        def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
+        def expectedQuery2 = "query {barsByIds(ids:[\"barId\"]) {id name}}"
+        def response2 = new ServiceExecutionResult([barsByIds: [[id: "barId", name: "Bar1"]]])
 
         def executionData = createExecutionData(query, overallHydrationSchema)
 
@@ -217,8 +217,8 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery1 = 'query {foo {...frag1}} fragment frag1 on Foo {barId}'
         def response1 = new ServiceExecutionResult([foo: [barId: "barId"]])
 
-        def expectedQuery2 = "query {barById(id:\"barId\") {id name}}"
-        def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
+        def expectedQuery2 = "query {barsByIds(ids:[\"barId\"]) {id name}}"
+        def response2 = new ServiceExecutionResult([barsByIds: [[id: "barId", name: "Bar1"]]])
 
         def document = parseQuery(query)
         def executionInput = ExecutionInput.newExecutionInput().query(query).build()
@@ -254,7 +254,7 @@ class NadelExecutionStrategyTest extends Specification {
         """)
         def underlyingSchema2 = TestUtil.schema("""
         type Query {
-            barById(id: ID): Bar
+            barsByIds(ids: [ID]): [Bar]
         }
         type Bar {
             id: ID
@@ -269,12 +269,12 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Foo {
                 id: ID
-                bar: [Bar] <= \$innerQueries.service2.barById(id: \$source.barId)
+                bar: [Bar] <= \$innerQueries.service2.barsByIds(ids: \$source.barId)
             }
         }
         service service2 {
             type Query {
-                barById(id: ID): Bar
+                barsByIds(ids: [ID]): [Bar]
             }
             type Bar {
                 id: ID
@@ -294,14 +294,9 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery1 = "query {foo {barId}}"
         def response1 = new ServiceExecutionResult([foo: [barId: ["barId1", "barId2", "barId3"]]])
 
-        def expectedQuery2 = "query {barById(id:\"barId1\") {id name}}"
-        def response2 = new ServiceExecutionResult([barById: [id: "barId1", name: "Bar1"]])
+        def expectedQuery2 = "query {barsByIds(ids:[\"barId1\",\"barId2\",\"barId3\"]) {id name}}"
+        def response2 = new ServiceExecutionResult([barsByIds: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar2"], [id: "barId3", name: "Bar3"]]])
 
-        def expectedQuery3 = "query {barById(id:\"barId2\") {id name}}"
-        def response3 = new ServiceExecutionResult([barById: [id: "barId2", name: "Bar3"]])
-
-        def expectedQuery4 = "query {barById(id:\"barId3\") {id name}}"
-        def response4 = new ServiceExecutionResult([barById: [id: "barId3", name: "Bar4"]])
 
         def executionData = createExecutionData(query, overallSchema)
 
@@ -318,14 +313,8 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
         }) >> CompletableFuture.completedFuture(response2)
-        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
-            printAstCompact(sep.query) == expectedQuery3
-        }) >> CompletableFuture.completedFuture(response3)
-        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
-            printAstCompact(sep.query) == expectedQuery4
-        }) >> CompletableFuture.completedFuture(response4)
 
-        resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar3"], [id: "barId3", name: "Bar4"]]]]
+        resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar2"], [id: "barId3", name: "Bar3"]]]]
     }
 
     def "hydration list with one element"() {
@@ -341,7 +330,7 @@ class NadelExecutionStrategyTest extends Specification {
         """)
         def underlyingSchema2 = TestUtil.schema("""
         type Query {
-            barById(id: ID): Bar
+            barsByIds(ids: [ID]): [Bar]
         }
         type Bar {
             id: ID
@@ -356,12 +345,12 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Foo {
                 id: ID
-                bar: [Bar] <= \$innerQueries.service2.barById(id: \$source.barId)
+                bar: [Bar] <= \$innerQueries.service2.barsByIds(ids: \$source.barId)
             }
         }
         service service2 {
             type Query {
-                barById(id: ID): Bar
+                barsByIds(id: [ID]): [Bar]
             }
             type Bar {
                 id: ID
@@ -381,8 +370,8 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery1 = "query {foo {barId}}"
         def response1 = new ServiceExecutionResult([foo: [barId: ["barId1"]]])
 
-        def expectedQuery2 = "query {barById(id:\"barId1\") {id name}}"
-        def response2 = new ServiceExecutionResult([barById: [id: "barId1", name: "Bar1"]])
+        def expectedQuery2 = "query {barsByIds(ids:[\"barId1\"]) {id name}}"
+        def response2 = new ServiceExecutionResult([barsByIds: [[id: "barId1", name: "Bar1"]]])
 
         def executionData = createExecutionData(query, overallSchema)
 

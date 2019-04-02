@@ -12,11 +12,15 @@ import graphql.execution.MergedField;
 import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
+import graphql.execution.nextgen.result.LeafExecutionResultNode;
+import graphql.execution.nextgen.result.ListExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Argument;
+import graphql.language.ArrayValue;
 import graphql.language.Field;
 import graphql.language.FragmentDefinition;
 import graphql.language.StringValue;
+import graphql.language.Value;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
@@ -45,7 +49,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.function.BiFunction;
 
 import static graphql.Assert.assertNotEmpty;
@@ -57,8 +60,9 @@ import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.StrategyUtil.createRootExecutionStepInfo;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
 import static graphql.nadel.engine.StrategyUtil.getHydrationTransformations;
+import static graphql.nadel.engine.StrategyUtil.groupNodesIntoBatchesByField;
+import static graphql.util.FpKit.flatList;
 import static graphql.util.FpKit.map;
-import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -112,23 +116,36 @@ public class NadelExecutionStrategy {
     private CompletableFuture<ExecutionResultNode> resolveAllHydrationInputs(ExecutionContext context,
                                                                              ExecutionResultNode node,
                                                                              List<HydrationTransformation> hydrationTransformations) {
-        List<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(singleton(node));
+        List<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(node);
         if (hydrationInputZippers.size() == 0) {
             return CompletableFuture.completedFuture(node);
         }
+        List<NodeMultiZipper<ExecutionResultNode>> hydrationInputBatches = groupNodesIntoBatchesByField(hydrationInputZippers, node);
 
 
-        List<CompletableFuture<NodeZipper<ExecutionResultNode>>> resolvedNodeCFs = new ArrayList<>();
+        List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs = new ArrayList<>();
 
-        for (NodeZipper<ExecutionResultNode> zipper : hydrationInputZippers) {
-            Field field = zipper.getCurNode().getMergedField().getSingleField();
+        for (NodeMultiZipper<ExecutionResultNode> batch : hydrationInputBatches) {
+            Field field = batch.getZippers().get(0).getCurNode().getMergedField().getSingleField();
             HydrationTransformation transformationForField = getTransformationForField(hydrationTransformations, field);
-            resolvedNodeCFs.add(resolveHydrationInput(context, zipper.getCurNode(), transformationForField).thenApply(zipper::withNewNode));
+            List<ExecutionResultNode> batchedNodes = map(batch.getZippers(), NodeZipper::getCurNode);
+            CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, batchedNodes, transformationForField);
+
+            resolvedNodeCFs.add(executionResultNodeCompletableFuture.thenApply(executionResultNodes -> {
+                List<NodeZipper<ExecutionResultNode>> newZippers = new ArrayList<>();
+                List<NodeZipper<ExecutionResultNode>> zippers = batch.getZippers();
+                for (int i = 0; i < executionResultNodes.size(); i++) {
+                    NodeZipper<ExecutionResultNode> zipper = zippers.get(i);
+                    NodeZipper<ExecutionResultNode> newZipper = zipper.withNewNode(executionResultNodes.get(i));
+                    newZippers.add(newZipper);
+                }
+                return newZippers;
+            }));
         }
         return Async
                 .each(resolvedNodeCFs)
                 .thenApply(resolvedNodes -> {
-                    NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, resolvedNodes, FIX_NAMES_ADAPTER);
+                    NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, flatList(resolvedNodes), FIX_NAMES_ADAPTER);
                     return multiZipper.toRootNode();
                 })
                 .whenComplete(this::possiblyLogException);
@@ -171,17 +188,21 @@ public class NadelExecutionStrategy {
     }
 
 
-    private CompletableFuture<ExecutionResultNode> resolveHydrationInput(ExecutionContext executionContext,
-                                                                         ExecutionResultNode hydrationInputNode,
-                                                                         HydrationTransformation hydrationTransformation) {
+    private CompletableFuture<List<ExecutionResultNode>> resolveHydrationInputBatch(ExecutionContext executionContext,
+                                                                                    List<ExecutionResultNode> hydrationInputs,
+                                                                                    HydrationTransformation hydrationTransformation) {
         Field originalField = hydrationTransformation.getOriginalField();
         InnerServiceHydration innerServiceHydration = hydrationTransformation.getInnerServiceHydration();
         String topLevelFieldName = innerServiceHydration.getTopLevelField();
 
         // TODO: just assume String arguments at the moment
         RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
-        Object value = hydrationInputNode.getFetchedValueAnalysis().getCompletedValue();
-        Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new StringValue(value.toString())).build();
+        List<Value> values = new ArrayList<>();
+        for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
+            Object value = hydrationInputNode.getFetchedValueAnalysis().getCompletedValue();
+            values.add(StringValue.newStringValue(value.toString()).build());
+        }
+        Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new ArrayValue(values)).build();
 
         Field topLevelField = newField(topLevelFieldName).selectionSet(originalField.getSelectionSet())
                 .arguments(singletonList(argument))
@@ -209,8 +230,14 @@ public class NadelExecutionStrategy {
         assertNotNull(result, "A service execution MUST provide a non null CompletableFuture<ServiceExecutionResult> ");
         return result
                 .thenApply(executionResult -> resultToResultNode(executionContextForService, rootExecutionStepInfo, singletonList(transformedMergedField), executionResult))
-                .thenApply(resultNode -> convertHydrationResultIntoOverallResult(hydrationTransformation, resultNode, transformationByResultField))
-                .thenCompose(resultNode -> runHydrationTransformations(executionContextForService, transformationByResultField, resultNode))
+                .thenApply(topLevelResultNode -> convertHydrationResultIntoOverallResult(hydrationTransformation, topLevelResultNode, transformationByResultField, hydrationInputs))
+                .thenCompose(resultNodes -> {
+                    List<CompletableFuture<ExecutionResultNode>> results = new ArrayList<>();
+                    for (ExecutionResultNode node : resultNodes) {
+                        results.add(runHydrationTransformations(executionContextForService, transformationByResultField, node));
+                    }
+                    return Async.each(results);
+                })
                 .whenComplete(this::possiblyLogException);
     }
 
@@ -218,19 +245,46 @@ public class NadelExecutionStrategy {
         return resultToResultNode.resultToResultNode(executionContextForService, rootExecutionStepInfo, transformedMergedFields, executionResult);
     }
 
-    private CompletionStage<ExecutionResultNode> runHydrationTransformations(ExecutionContext executionContext, Map<Field, FieldTransformation> transformationByResultField, ExecutionResultNode resultNode) {
+    private CompletableFuture<ExecutionResultNode> runHydrationTransformations(ExecutionContext executionContext, Map<Field, FieldTransformation> transformationByResultField, ExecutionResultNode resultNode) {
         List<HydrationTransformation> hydrationTransformations = getHydrationTransformations(transformationByResultField.values());
         return resolveAllHydrationInputs(executionContext, resultNode, hydrationTransformations);
     }
 
-    private ExecutionResultNode convertHydrationResultIntoOverallResult(HydrationTransformation hydrationTransformation,
-                                                                        RootExecutionResultNode rootResultNode,
-                                                                        Map<Field, FieldTransformation> transformationByResultField) {
+    private List<ExecutionResultNode> convertHydrationResultIntoOverallResult(HydrationTransformation hydrationTransformation,
+                                                                              RootExecutionResultNode rootResultNode,
+                                                                              Map<Field, FieldTransformation> transformationByResultField,
+                                                                              List<ExecutionResultNode> hydrationInputs) {
         RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, transformationByResultField);
-        // NOTE : we only take the first result node here but we may have errors in the root node that are global so transfer them in
-        ExecutionResultNode firstTopLevelResultNode = overallResultNode.getChildren().get(0);
-        firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
-        return changeFieldInResultNode(firstTopLevelResultNode, hydrationTransformation.getOriginalField());
+        if (overallResultNode.getChildren().get(0) instanceof LeafExecutionResultNode) {
+            return handleNullHydrationResult(hydrationTransformation, rootResultNode, hydrationInputs, overallResultNode);
+        }
+        // this is an build in assumption that the field type of the hydration call is a List
+        ListExecutionResultNode listResultNode = (ListExecutionResultNode) overallResultNode.getChildren().get(0);
+        List<ExecutionResultNode> result = new ArrayList<>();
+        boolean first = true;
+        for (ExecutionResultNode executionResultNode : listResultNode.getChildren()) {
+            if (first) {
+                executionResultNode = executionResultNode.withNewErrors(rootResultNode.getErrors());
+                first = false;
+            }
+            result.add(changeFieldInResultNode(executionResultNode, hydrationTransformation.getOriginalField()));
+        }
+        return result;
+    }
+
+    private List<ExecutionResultNode> handleNullHydrationResult(HydrationTransformation hydrationTransformation, RootExecutionResultNode rootResultNode, List<ExecutionResultNode> hydrationInputs, RootExecutionResultNode overallResultNode) {
+        List<ExecutionResultNode> result = new ArrayList<>();
+        boolean first = true;
+        // we need the same list length
+        for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
+            ExecutionResultNode nullNode = overallResultNode.getChildren().get(0);
+            if (first) {
+                nullNode = nullNode.withNewErrors(rootResultNode.getErrors());
+                first = false;
+            }
+            result.add(changeFieldInResultNode(nullNode, hydrationTransformation.getOriginalField()));
+        }
+        return result;
     }
 
 

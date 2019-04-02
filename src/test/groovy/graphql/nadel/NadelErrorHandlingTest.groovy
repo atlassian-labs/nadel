@@ -108,7 +108,7 @@ class NadelErrorHandlingTest extends Specification {
             } 
             type Foo {
                 name: String
-                bar: Bar <= \$innerQueries.Bar.barById(id: \$source.barId)
+                bar: Bar <= \$innerQueries.Bar.barsByIds(ids: \$source.barId)
             }
          }
          service Bar {
@@ -117,7 +117,7 @@ class NadelErrorHandlingTest extends Specification {
             } 
             type Bar {
                 name: String 
-                nestedBar: Bar <= \$innerQueries.Bar.barById(id: \$source.nestedBarId)
+                nestedBar: Bar <= \$innerQueries.Bar.barsByIds(ids: \$source.nestedBarId)
             }
          }
         '''
@@ -133,7 +133,7 @@ class NadelErrorHandlingTest extends Specification {
     def hydratedUnderlyingSchema2 = schema('''
             type Query{
                 bar: Bar 
-                barById(id: ID): Bar
+                barsByIds(ids: [ID]): Bar
             } 
             type Bar {
                 id: ID
@@ -150,7 +150,7 @@ class NadelErrorHandlingTest extends Specification {
 
         ServiceExecution serviceExecution1 = new MockServiceExecution(
                 [foo: [barId: "barId123"]])
-        ServiceExecution serviceExecution2 = new MockServiceExecution([barById: null],
+        ServiceExecution serviceExecution2 = new MockServiceExecution([barsByIds: null],
                 [[message: "Error during hydration"]])
 
         ServiceDataFactory serviceFactory = serviceFactory([

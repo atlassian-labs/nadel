@@ -11,6 +11,8 @@ import graphql.nadel.Operation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLSchema;
+import graphql.util.FpKit;
+import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -19,14 +21,16 @@ import graphql.util.TraverserVisitorStub;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
+import static graphql.util.FpKit.mapEntries;
 
 public class StrategyUtil {
 
-    public static List<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(Collection<ExecutionResultNode> roots) {
+    public static List<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(ExecutionResultNode root) {
         List<NodeZipper<ExecutionResultNode>> result = new ArrayList<>();
 
         ResultNodeTraverser traverser = ResultNodeTraverser.depthFirst();
@@ -39,9 +43,16 @@ public class StrategyUtil {
                 return TraversalControl.CONTINUE;
             }
 
-        }, roots);
+        }, root);
         return result;
     }
+
+    public static List<NodeMultiZipper<ExecutionResultNode>> groupNodesIntoBatchesByField(List<NodeZipper<ExecutionResultNode>> nodes, ExecutionResultNode root) {
+        Map<MergedField, List<NodeZipper<ExecutionResultNode>>> zipperBySubSelection = FpKit.groupingBy(nodes,
+                (executionResultZipper -> executionResultZipper.getCurNode().getMergedField()));
+        return mapEntries(zipperBySubSelection, (key, value) -> new NodeMultiZipper<>(root, value, FIX_NAMES_ADAPTER));
+    }
+
 
     public static ExecutionStepInfo createRootExecutionStepInfo(GraphQLSchema graphQLSchema, Operation operation) {
         ExecutionStepInfo executionInfo = newExecutionStepInfo().type(operation.getRootType(graphQLSchema)).path(ExecutionPath.rootPath()).build();
