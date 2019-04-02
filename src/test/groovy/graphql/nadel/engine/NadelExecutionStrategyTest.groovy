@@ -328,6 +328,81 @@ class NadelExecutionStrategyTest extends Specification {
         resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar3"], [id: "barId3", name: "Bar4"]]]]
     }
 
+    def "hydration list with one element"() {
+        given:
+        def underlyingSchema1 = TestUtil.schema("""
+        type Query {
+            foo : Foo
+        }
+        type Foo {
+            id: ID
+            barId: [ID]
+        }
+        """)
+        def underlyingSchema2 = TestUtil.schema("""
+        type Query {
+            barById(id: ID): Bar
+        }
+        type Bar {
+            id: ID
+            name : String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl("""
+        service service1 {
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                id: ID
+                bar: [Bar] <= \$innerQueries.service2.barById(id: \$source.barId)
+            }
+        }
+        service service2 {
+            type Query {
+                barById(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+                name: String
+            }
+        }
+        """)
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
+
+        def service1 = new Service("service1", underlyingSchema1, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service("service2", underlyingSchema2, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation)
+
+
+        def query = "{foo {bar{id name}}}"
+        def expectedQuery1 = "query {foo {barId}}"
+        def response1 = new ServiceExecutionResult([foo: [barId: ["barId1"]]])
+
+        def expectedQuery2 = "query {barById(id:\"barId1\") {id name}}"
+        def response2 = new ServiceExecutionResult([barById: [id: "barId1", name: "Bar1"]])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> CompletableFuture.completedFuture(response1)
+
+        then:
+        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> CompletableFuture.completedFuture(response2)
+
+        resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"]]]]
+    }
+
     FieldInfos topLevelFieldInfo(GraphQLFieldDefinition fieldDefinition, Service service) {
         FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, fieldDefinition)
         return new FieldInfos([(fieldDefinition): fieldInfo])

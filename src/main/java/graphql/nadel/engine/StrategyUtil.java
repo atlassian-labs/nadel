@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
-import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
+import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
 
 public class StrategyUtil {
 
@@ -34,7 +34,7 @@ public class StrategyUtil {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 if (context.thisNode() instanceof HydrationInputNode) {
-                    result.add(new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), RESULT_NODE_ADAPTER));
+                    result.add(new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), FIX_NAMES_ADAPTER));
                 }
                 return TraversalControl.CONTINUE;
             }
