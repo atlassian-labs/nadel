@@ -113,6 +113,9 @@ public class NadelExecutionStrategy {
                                                                              ExecutionResultNode node,
                                                                              List<HydrationTransformation> hydrationTransformations) {
         List<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(singleton(node));
+        if (hydrationInputZippers.size() == 0) {
+            return CompletableFuture.completedFuture(node);
+        }
 
 
         List<CompletableFuture<NodeZipper<ExecutionResultNode>>> resolvedNodeCFs = new ArrayList<>();
