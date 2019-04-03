@@ -8,6 +8,7 @@ import spock.lang.Specification
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
+import static graphql.nadel.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
@@ -27,7 +28,7 @@ class NadelE2ETest extends Specification {
          }
         '''
 
-    def simpleUnderlyingSchema = TestUtil.schema('''
+    def simpleUnderlyingSchema = typeDefinitions('''
             type Query{
                 hello: World  
             } 
@@ -124,7 +125,7 @@ class NadelE2ETest extends Specification {
         def query = '''
         { otherFoo: foo {name} bar{name}}
         '''
-        def underlyingSchema1 = TestUtil.schema('''
+        def underlyingSchema1 = typeDefinitions('''
             type Query{
                 fooOriginal: Foo  
                 
@@ -133,7 +134,7 @@ class NadelE2ETest extends Specification {
                 name: String
             }
         ''')
-        def underlyingSchema2 = TestUtil.schema('''
+        def underlyingSchema2 = typeDefinitions('''
             type Query{
                 bar: Bar 
             } 
@@ -144,7 +145,7 @@ class NadelE2ETest extends Specification {
         ServiceExecution delegatedExecution1 = Mock(ServiceExecution)
         ServiceExecution delegatedExecution2 = Mock(ServiceExecution)
 
-        ServiceDataFactory serviceFactory = TestUtil.serviceFactory([
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
                 Foo: new Tuple2(delegatedExecution1, underlyingSchema1),
                 Bar: new Tuple2(delegatedExecution2, underlyingSchema2)]
         )
@@ -192,7 +193,7 @@ class NadelE2ETest extends Specification {
             }
          }
         '''
-        def underlyingSchema1 = TestUtil.schema('''
+        def underlyingSchema1 = typeDefinitions('''
             type Query{
                 foo: Foo  
             } 
@@ -201,7 +202,7 @@ class NadelE2ETest extends Specification {
                 barId: ID
             }
         ''')
-        def underlyingSchema2 = TestUtil.schema('''
+        def underlyingSchema2 = typeDefinitions('''
             type Query{
                 bar: Bar 
                 barById(id: ID): Bar
@@ -219,7 +220,7 @@ class NadelE2ETest extends Specification {
         ServiceExecution serviceExecution1 = Mock(ServiceExecution)
         ServiceExecution serviceExecution2 = Mock(ServiceExecution)
 
-        ServiceDataFactory serviceFactory = TestUtil.serviceFactory([
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
                 Foo: new Tuple2(serviceExecution1, underlyingSchema1),
                 Bar: new Tuple2(serviceExecution2, underlyingSchema2)]
         )

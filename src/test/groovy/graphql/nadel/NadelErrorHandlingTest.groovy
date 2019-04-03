@@ -7,8 +7,8 @@ import java.util.concurrent.CompletableFuture
 
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
-import static graphql.nadel.testutils.TestUtil.schema
 import static graphql.nadel.testutils.TestUtil.serviceFactory
+import static graphql.nadel.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelErrorHandlingTest extends Specification {
@@ -28,7 +28,7 @@ class NadelErrorHandlingTest extends Specification {
          }
         """
 
-    def simpleUnderlyingSchema = schema("""
+    def simpleUnderlyingSchema = typeDefinitions("""
             type Query{
                 hello: World  
             } 
@@ -121,7 +121,7 @@ class NadelErrorHandlingTest extends Specification {
             }
          }
         '''
-    def hydratedUnderlyingSchema1 = schema('''
+    def hydratedUnderlyingSchema1 = typeDefinitions('''
             type Query{
                 foo: Foo  
             } 
@@ -130,7 +130,7 @@ class NadelErrorHandlingTest extends Specification {
                 barId: ID
             }
         ''')
-    def hydratedUnderlyingSchema2 = schema('''
+    def hydratedUnderlyingSchema2 = typeDefinitions('''
             type Query{
                 bar: Bar 
                 barById(id: ID): Bar
@@ -153,7 +153,7 @@ class NadelErrorHandlingTest extends Specification {
         ServiceExecution serviceExecution2 = new MockServiceExecution([barById: null],
                 [[message: "Error during hydration"]])
 
-        ServiceDataFactory serviceFactory = serviceFactory([
+        ServiceExecutionFactory serviceFactory = serviceFactory([
                 Foo: new Tuple2(serviceExecution1, hydratedUnderlyingSchema1),
                 Bar: new Tuple2(serviceExecution2, hydratedUnderlyingSchema2)]
         )
@@ -247,7 +247,7 @@ class NadelErrorHandlingTest extends Specification {
             throw new RuntimeException("Pop goes the weasel")
         }
 
-        ServiceDataFactory serviceFactory = serviceFactory([
+        ServiceExecutionFactory serviceFactory = serviceFactory([
                 Foo: new Tuple2(serviceExecution1, hydratedUnderlyingSchema1),
                 Bar: new Tuple2(serviceExecution2, hydratedUnderlyingSchema2)]
         )

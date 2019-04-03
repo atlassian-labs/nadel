@@ -25,7 +25,7 @@ class NadelIntrospectionTest extends Specification {
          }
         """
 
-    def simpleUnderlyingSchema = TestUtil.schema("""
+    def simpleUnderlyingSchema = TestUtil.typeDefinitions("""
             type Query{
                 hello: World  
             } 

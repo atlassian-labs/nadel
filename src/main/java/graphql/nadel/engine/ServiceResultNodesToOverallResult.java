@@ -67,8 +67,17 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private ObjectExecutionResultNode mapObjectResultNode(ObjectExecutionResultNode objectResultNode, GraphQLSchema overallSchema, Map<Field, FieldTransformation> transformationMap) {
-        FetchedValueAnalysis fetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(objectResultNode.getFetchedValueAnalysis(), overallSchema, transformationMap);
-        return new ObjectExecutionResultNode(fetchedValueAnalysis, objectResultNode.getChildren());
+        FetchedValueAnalysis originalFetchAnalysis = objectResultNode.getFetchedValueAnalysis();
+        MergedField originalField = originalFetchAnalysis.getExecutionStepInfo().getField();
+        FetchedValueAnalysis fetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(originalFetchAnalysis, overallSchema, transformationMap);
+
+        objectResultNode = new ObjectExecutionResultNode(fetchedValueAnalysis, objectResultNode.getChildren());
+
+        FieldTransformation fieldTransformation = transformationMap.get(originalField.getSingleField());
+        if (fieldTransformation != null) {
+            objectResultNode = fieldTransformation.unapplyResultNode(objectResultNode);
+        }
+        return objectResultNode;
     }
 
     private RootExecutionResultNode mapRootResultNode(RootExecutionResultNode resultNode) {

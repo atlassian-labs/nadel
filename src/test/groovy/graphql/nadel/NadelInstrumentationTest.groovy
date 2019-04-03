@@ -17,6 +17,7 @@ import spock.lang.Specification
 import static graphql.execution.instrumentation.SimpleInstrumentationContext.noOp
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
+import static graphql.nadel.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelInstrumentationTest extends Specification {
@@ -36,7 +37,7 @@ class NadelInstrumentationTest extends Specification {
          }
         """
 
-    def simpleUnderlyingSchema = TestUtil.schema("""
+    def simpleUnderlyingSchema = typeDefinitions("""
             type Query{
                 hello: World  
             } 

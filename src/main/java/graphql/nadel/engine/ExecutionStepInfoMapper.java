@@ -4,7 +4,6 @@ import graphql.Assert;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.Field;
-import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
@@ -13,9 +12,7 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeUtil;
-import graphql.util.FpKit;
 
-import java.util.List;
 import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
@@ -26,10 +23,10 @@ public class ExecutionStepInfoMapper {
     public ExecutionStepInfo mapExecutionStepInfo(ExecutionStepInfo executionStepInfo,
                                                   GraphQLSchema overallSchema,
                                                   Map<Field, FieldTransformation> transformationMap) {
-        //TODO: handle __typename
         MergedField mergedField = executionStepInfo.getField();
         if (!executionStepInfo.isListType() && transformationMap.containsKey(mergedField.getSingleField())) {
-            mergedField = unapplyTransformation(transformationMap.get(mergedField.getSingleField()), mergedField);
+            FieldTransformation transformation = transformationMap.get(mergedField.getSingleField());
+            mergedField = transformation.unapplyMergedField(mergedField);
         }
         GraphQLOutputType fieldType = executionStepInfo.getType();
         GraphQLObjectType fieldContainer = executionStepInfo.getFieldContainer();
@@ -62,12 +59,4 @@ public class ExecutionStepInfoMapper {
         return Assert.assertShouldNeverHappen();
     }
 
-    private MergedField unapplyTransformation(FieldTransformation fieldTransformation, MergedField mergedField) {
-        if (fieldTransformation instanceof FieldRenameTransformation) {
-            String originalName = ((FieldRenameTransformation) fieldTransformation).getOriginalName();
-            List<Field> fields = FpKit.map(mergedField.getFields(), field -> field.transform(builder -> builder.name(originalName)));
-            return MergedField.newMergedField(fields).build();
-        }
-        return Assert.assertShouldNeverHappen("unexpected transformation");
-    }
 }

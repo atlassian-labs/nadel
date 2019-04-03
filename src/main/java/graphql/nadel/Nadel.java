@@ -24,9 +24,12 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
 import graphql.nadel.introspection.DefaultIntrospectionRunner;
 import graphql.nadel.introspection.IntrospectionRunner;
+import graphql.nadel.schema.OverallSchemaGenerator;
+import graphql.nadel.schema.UnderlyingSchemaGenerator;
 import graphql.parser.InvalidSyntaxException;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
 import org.slf4j.Logger;
@@ -50,7 +53,7 @@ public class Nadel {
 
     private final Logger log = LoggerFactory.getLogger(Nadel.class);
     private final StitchingDsl stitchingDsl;
-    private final ServiceDataFactory serviceDataFactory;
+    private final ServiceExecutionFactory serviceExecutionFactory;
     private final NSDLParser NSDLParser = new NSDLParser();
 
     private final List<Service> services;
@@ -61,8 +64,8 @@ public class Nadel {
     private final ExecutionIdProvider executionIdProvider;
     private final IntrospectionRunner introspectionRunner;
 
-    private Nadel(Reader nsdl, ServiceDataFactory serviceDataFactory, NadelInstrumentation instrumentation, PreparsedDocumentProvider preparsedDocumentProvider, ExecutionIdProvider executionIdProvider, IntrospectionRunner introspectionRunner) {
-        this.serviceDataFactory = serviceDataFactory;
+    private Nadel(Reader nsdl, ServiceExecutionFactory serviceExecutionFactory, NadelInstrumentation instrumentation, PreparsedDocumentProvider preparsedDocumentProvider, ExecutionIdProvider executionIdProvider, IntrospectionRunner introspectionRunner) {
+        this.serviceExecutionFactory = serviceExecutionFactory;
         this.instrumentation = instrumentation;
         this.preparsedDocumentProvider = preparsedDocumentProvider;
         this.executionIdProvider = executionIdProvider;
@@ -71,11 +74,14 @@ public class Nadel {
         this.introspectionRunner = introspectionRunner;
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
 
+        UnderlyingSchemaGenerator underlyingSchemaGenerator = new UnderlyingSchemaGenerator();
+
         List<Service> serviceList = new ArrayList<>();
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             String serviceName = serviceDefinition.getName();
-            ServiceExecution serviceExecution = this.serviceDataFactory.getDelegatedExecution(serviceName);
-            GraphQLSchema underlyingSchema = this.serviceDataFactory.getUnderlyingSchema(serviceName);
+            ServiceExecution serviceExecution = this.serviceExecutionFactory.getDelegatedExecution(serviceName);
+            TypeDefinitionRegistry underlyingTypeDefinitions = this.serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName);
+            GraphQLSchema underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(underlyingTypeDefinitions);
             DefinitionRegistry definitionRegistry = buildServiceRegistry(serviceDefinition);
 
             Service service = new Service(serviceName, underlyingSchema, serviceExecution, serviceDefinition, definitionRegistry);
@@ -107,7 +113,7 @@ public class Nadel {
 
     public static class Builder {
         private Reader nsdl;
-        private ServiceDataFactory serviceDataFactory;
+        private ServiceExecutionFactory serviceExecutionFactory;
         private NadelInstrumentation instrumentation = new NadelInstrumentation() {
         };
         private PreparsedDocumentProvider preparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE;
@@ -124,8 +130,8 @@ public class Nadel {
             return dsl(new StringReader(requireNonNull(nsdl)));
         }
 
-        public Builder serviceDataFactory(ServiceDataFactory serviceDataFactory) {
-            this.serviceDataFactory = serviceDataFactory;
+        public Builder serviceDataFactory(ServiceExecutionFactory serviceExecutionFactory) {
+            this.serviceExecutionFactory = serviceExecutionFactory;
             return this;
         }
 
@@ -150,7 +156,7 @@ public class Nadel {
         }
 
         public Nadel build() {
-            return new Nadel(nsdl, serviceDataFactory, instrumentation, preparsedDocumentProvider, executionIdProvider, introspectionRunner);
+            return new Nadel(nsdl, serviceExecutionFactory, instrumentation, preparsedDocumentProvider, executionIdProvider, introspectionRunner);
         }
     }
 

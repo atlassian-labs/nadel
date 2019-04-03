@@ -21,14 +21,16 @@ import graphql.language.SelectionSet;
 import graphql.language.TypeName;
 import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
-import graphql.nadel.util.FpKit;
 import graphql.nadel.Operation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeTransformation;
+import graphql.nadel.engine.transformation.ComposedFieldTransformation;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
+import graphql.nadel.engine.transformation.UnderscoreTypeNameTransformation;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
@@ -231,6 +233,7 @@ public class OverallQueryTransformer {
         public void visitField(QueryVisitorFieldEnvironment environment) {
 
             OperationDefinition operationDefinition = executionContext.getOperationDefinition();
+            Map<String, FragmentDefinition> fragmentsByName = executionContext.getFragmentsByName();
             Map<String, VariableDefinition> variableDefinitions = FpKit.getByName(operationDefinition.getVariableDefinitions(), VariableDefinition::getName);
 
             // capture the variables that are referenced by fields
@@ -244,11 +247,11 @@ public class OverallQueryTransformer {
                         referencedVariables.put(variableDefinition.getName(), variableDefinition);
                     });
 
-
-            FieldTransformation fieldTransformation = transformationForFieldDefinition(environment.getFieldDefinition().getDefinition());
+            FieldTransformation fieldTransformation = transformationForFieldDefinition(environment, fragmentsByName);
             if (fieldTransformation != null) {
                 fieldTransformation.apply(environment);
                 Field changedNode = (Field) environment.getTraverserContext().thisNode();
+
                 transformationByResultField.put(changedNode, fieldTransformation);
             }
         }
@@ -308,17 +311,24 @@ public class OverallQueryTransformer {
         return null;
     }
 
-    private FieldTransformation transformationForFieldDefinition(FieldDefinition fieldDefinition) {
+    private FieldTransformation transformationForFieldDefinition(QueryVisitorFieldEnvironment environment, Map<String, FragmentDefinition> fragmentsByName) {
+        FieldDefinition fieldDefinition = environment.getFieldDefinition().getDefinition();
+        FieldTransformation fieldTransformation = null;
         graphql.nadel.dsl.FieldTransformation definition = transformationDefinitionForField(fieldDefinition);
+        boolean usedHydration = false;
         if (definition == null) {
-            return null;
-        }
-        if (definition.getFieldMappingDefinition() != null) {
-            return new FieldRenameTransformation(definition.getFieldMappingDefinition());
+            fieldTransformation = null;
+        } else if (definition.getFieldMappingDefinition() != null) {
+            fieldTransformation = new FieldRenameTransformation(definition.getFieldMappingDefinition());
         } else if (definition.getInnerServiceHydration() != null) {
-            return new HydrationTransformation(definition.getInnerServiceHydration());
+            fieldTransformation = new HydrationTransformation(definition.getInnerServiceHydration());
+            usedHydration = true;
         }
-        throw new UnsupportedOperationException("Unsupported transformation.");
+
+        if (UnderscoreTypeNameTransformation.isInterfaceOrUnionField(environment) && !usedHydration) {
+            fieldTransformation = new ComposedFieldTransformation(fieldTransformation, new UnderscoreTypeNameTransformation(fragmentsByName));
+        }
+        return fieldTransformation;
     }
 
 }
