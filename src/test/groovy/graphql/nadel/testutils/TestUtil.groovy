@@ -18,14 +18,19 @@ import graphql.introspection.Introspection
 import graphql.language.AstPrinter
 import graphql.language.Document
 import graphql.language.Field
+import graphql.language.FragmentDefinition
 import graphql.language.Node
+import graphql.language.OperationDefinition
 import graphql.language.ScalarTypeDefinition
+import graphql.language.SelectionSet
 import graphql.nadel.NSDLParser
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.schema.OverallSchemaGenerator
+import graphql.nadel.util.FpKit
 import graphql.nadel.util.Util
+import graphql.parser.Parser
 import graphql.schema.Coercing
 import graphql.schema.DataFetcher
 import graphql.schema.GraphQLArgument
@@ -82,6 +87,25 @@ class TestUtil {
     static Map getExpectedData(String name) {
         def stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(name + ".json")
         return new JsonSlurper().parseText(stream.text)
+    }
+
+
+    static Field mkField(String fieldText) {
+        def q = "{ $fieldText }"
+        def parser = new Parser()
+        def document = parser.parseDocument(q)
+        def definition = document.getDefinitions()[0] as OperationDefinition
+        def selectionSet = definition.getChildren()[0] as SelectionSet
+        def field = selectionSet.selections[0] as Field
+        return field
+    }
+
+    static Map<String, FragmentDefinition> mkFragments(String fragmentText) {
+        def parser = new Parser()
+        def document = parser.parseDocument(fragmentText)
+        def frags = document.getDefinitions().findAll({ it instanceof FragmentDefinition })
+        def map = FpKit.getByName(frags, { (it as FragmentDefinition).name })
+        return map
     }
 
 
