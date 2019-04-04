@@ -1,5 +1,6 @@
 package graphql.nadel.schema;
 
+import graphql.nadel.engine.NadelContext;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.TypeResolver;
@@ -51,17 +52,20 @@ public class UnderlyingSchemaGenerator {
             @SuppressWarnings({"unchecked", "ConstantConditions"})
             private TypeResolver underScoreTypeNameResolver() {
                 return env -> {
+                    NadelContext nadelContext = env.getContext();
+                    String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
+
                     Object source = env.getObject();
                     assertTrue(source instanceof Map, "The Nadel result object MUST be a Map");
 
                     Map<String, Object> sourceMap = (Map<String, Object>) source;
-                    assertTrue(sourceMap.containsKey("__typename"), "The Nadel result object for interfaces and unions MUST have __typename in them");
+                    assertTrue(sourceMap.containsKey(underscoreTypeNameAlias), "The Nadel result object for interfaces and unions MUST have an aliased __typename in them");
 
-                    Object typeName = sourceMap.get("__typename");
-                    assertNotNull(typeName, "The Nadel result object for interfaces and unions MUST have __typename with a non null value in them in them");
+                    Object typeName = sourceMap.get(underscoreTypeNameAlias);
+                    assertNotNull(typeName, "The Nadel result object for interfaces and unions MUST have an aliased__typename with a non null value in them");
 
                     GraphQLObjectType objectType = env.getSchema().getObjectType(typeName.toString());
-                    assertNotNull(objectType, "There must be an underlying object type called '%s'", typeName);
+                    assertNotNull(objectType, "There must be an underlying graphql object type called '%s'", typeName);
                     return objectType;
                 };
             }

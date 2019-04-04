@@ -209,7 +209,7 @@ class OverallQueryTransformerTest extends Specification {
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
         def transformer = new OverallQueryTransformer()
-        def transformationResult = transformer.transformMergedFields(executionContext, fields, Operation.QUERY, null)
+        def transformationResult = transformer.transformMergedFields(executionContext, null, Operation.QUERY, fields)
         when:
         def document = transformationResult.document
 
@@ -219,7 +219,7 @@ class OverallQueryTransformerTest extends Specification {
     }
 
 
-    private Document doTransform(GraphQLSchema schema, Document query, Operation operation = Operation.QUERY, String operationName = null) {
+    private static Document doTransform(GraphQLSchema schema, Document query, Operation operation = Operation.QUERY, String operationName = null) {
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
@@ -227,7 +227,7 @@ class OverallQueryTransformerTest extends Specification {
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
         def transformer = new OverallQueryTransformer()
-        def transformationResult = transformer.transformMergedFields(executionContext, fields, operation, operationName)
+        def transformationResult = transformer.transformMergedFields(executionContext, operationName, operation, fields)
         return transformationResult.document
     }
 }

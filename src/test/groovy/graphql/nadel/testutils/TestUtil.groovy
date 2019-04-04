@@ -27,6 +27,7 @@ import graphql.nadel.NSDLParser
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.engine.NadelContext
 import graphql.nadel.schema.OverallSchemaGenerator
 import graphql.nadel.util.FpKit
 import graphql.nadel.util.Util
@@ -325,8 +326,10 @@ class TestUtil {
 
 
     static def executionData(GraphQLSchema schema, Document query) {
-        ExecutionInput executionInput = ExecutionInput.newExecutionInput()
-                .query(AstPrinter.printAst(query)).build()
+        ExecutionInput executionInput = newExecutionInput()
+                .query(AstPrinter.printAst(query))
+                .context(NadelContext.newContext())
+                .build()
         ExecutionHelper executionHelper = new ExecutionHelper()
         def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput, null)
         [executionData.executionContext, executionData.fieldSubSelection]
@@ -373,6 +376,6 @@ class TestUtil {
             def er = graphQL.executeAsync(executionInput)
             return serviceResultFromPromise(er)
         }
-        return serviceExecution;
+        return serviceExecution
     }
 }

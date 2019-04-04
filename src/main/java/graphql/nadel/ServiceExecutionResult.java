@@ -2,9 +2,10 @@ package graphql.nadel;
 
 import graphql.PublicApi;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static java.util.Collections.emptyList;
 
 @PublicApi
 public class ServiceExecutionResult {
@@ -14,12 +15,12 @@ public class ServiceExecutionResult {
 
     public ServiceExecutionResult(Map<String, Object> data, List<Map<String, Object>> errors) {
         this.data = data;
-        this.errors = errors;
+        this.errors = errors == null ? emptyList() : errors;
     }
 
     public ServiceExecutionResult(Map<String, Object> data) {
         this.data = data;
-        this.errors = Collections.emptyList();
+        this.errors = emptyList();
     }
 
     public Map<String, Object> getData() {

@@ -4,7 +4,6 @@ import graphql.GraphQL
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.DataFetcher
 import graphql.schema.TypeResolver
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import static graphql.nadel.Nadel.newNadel
@@ -21,25 +20,25 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
          service PetService {
          
             type Query{
-                pet(isLoyal : Boolean) : Pet
+                pets(isLoyal : Boolean) : [Pet]
                 raining(isLoyal : Boolean) : CatsAndDogs 
             } 
             
             interface Pet {
                 name : String
-                owner: Owner <= $innerQueries.OwnerService.ownerById(id: $source.ownerId)
+                owners: [Owner] <= $innerQueries.OwnerService.ownerById(id: $source.ownerIds)
             }
             
             type Cat implements Pet {
                 name : String
                 wearsBell : Boolean
-                owner: Owner 
+                owners: [Owner] 
             }
 
             type Dog implements Pet {
                 name : String
                 wearsCollar : Boolean
-                owner: Owner 
+                owners: [Owner] 
             }
 
             union CatsAndDogs = Cat | Dog
@@ -69,7 +68,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
     def underlyingSchemaSpecPets = '''
             type Query{
                 hello: World 
-                pet(isLoyal : Boolean) : Pet
+                pets(isLoyal : Boolean) : [Pet]
                 raining(isLoyal : Boolean) : CatsAndDogs 
             } 
             
@@ -83,18 +82,18 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
             }
             
             interface Pet {
-                ownerId : String
+                ownerIds : [String]
                 name : String
             }
             
             type Cat implements Pet {
-                ownerId : String
+                ownerIds : [String]
                 name : String
                 wearsBell : Boolean
             }
 
             type Dog implements Pet {
-                ownerId : String
+                ownerIds : [String]
                 name : String
                 wearsCollar : Boolean
             }
@@ -123,15 +122,11 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
     '''
 
     GraphQL buildUnderlyingImplementationPets(String spec) {
-        def sparkyTheDog = [name: "Sparky", wearsCollar: true, ownerId: "dearly"] // dogs are loyal
-        def whiskersTheCat = [name: "Whiskers", wearsBell: false, ownerId: "cruella"] // cats eat birds
+        def sparkyTheDog = [type: "Dog", name: "Sparky", wearsCollar: true, ownerIds: ["dearly"]] // dogs are loyal
+        def whiskersTheCat = [type: "Cat", name: "Whiskers", wearsBell: false, ownerIds: ["cruella"]] // cats eat birds
 
         DataFetcher petDF = { env ->
-            if (env.getArgument("isLoyal") == true) {
-                return sparkyTheDog
-            } else {
-                return whiskersTheCat
-            }
+            return [sparkyTheDog, whiskersTheCat]
         }
         DataFetcher rainingDF = { env ->
             if (env.getArgument("isLoyal") == true) {
@@ -148,7 +143,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
             }
         }
         TypeResolver catsAndDogsTR = { env ->
-            if (env.object["name"] == "Sparky") {
+            if (env.object["type"] == "Dog") {
                 return env.schema.getObjectType("Dog")
             } else {
                 return env.schema.getObjectType("Cat")
@@ -156,7 +151,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
         }
         def runtimeWiring = newRuntimeWiring()
                 .type(newTypeWiring("Query")
-                .dataFetcher("pet", petDF)
+                .dataFetcher("pets", petDF)
                 .dataFetcher("raining", rainingDF))
                 .type(newTypeWiring("Pet").typeResolver(petTR))
                 .type(newTypeWiring("CatsAndDogs").typeResolver(catsAndDogsTR))
@@ -211,7 +206,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
         given:
         def query = '''
         query petQ($isLoyal : Boolean) { 
-            pet(isLoyal : $isLoyal) {
+            pets(isLoyal : $isLoyal) {
                 name
                 __typename
                 ... on Dog {
@@ -244,17 +239,56 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         then:
         result.data == [
-                pet    : [name: "Sparky", wearsCollar: true, __typename: "Dog"],
+                pets   : [
+                        [name: "Sparky", wearsCollar: true, __typename: "Dog"],
+                        [name: "Whiskers", wearsBell: false, __typename: "Cat"]
+                ],
                 raining: [wearsCollar: true, __typename: "Dog"],
         ]
+    }
+
+    def "query with pass through interfaces and unions that have MIXED __typename in them work as expected"() {
+
+        given:
+        def query = '''
+        query petQ($isLoyal : Boolean) { 
+            pets(isLoyal : $isLoyal) {
+                name
+                ... on Dog {
+                    wearsCollar
+                    __typename
+                }
+                ... on Cat {
+                    wearsBell 
+                }
+            }
+            raining(isLoyal : $isLoyal) {
+                __typename
+                ... on Dog {
+                    wearsCollar
+                }
+                ... on Cat {
+                    wearsBell 
+                }
+            }
+        }    
+        '''
+
+        Nadel nadel = newNadel()
+                .dsl(ndsl)
+                .serviceDataFactory(serviceFactory)
+                .build()
 
         when:
-        result = nadel.execute(newNadelExecutionInput().query(query).variables(isLoyal: false)).join()
+        def result = nadel.execute(newNadelExecutionInput().query(query).variables(isLoyal: true)).join()
 
         then:
         result.data == [
-                pet    : [name: "Whiskers", wearsBell: false, __typename: "Cat"],
-                raining: [wearsBell: false, __typename: "Cat"],
+                pets   : [
+                        [name: "Sparky", wearsCollar: true, __typename: "Dog"],
+                        [name: "Whiskers", wearsBell: false]
+                ],
+                raining: [wearsCollar: true, __typename: "Dog"],
         ]
     }
 
@@ -263,7 +297,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
         given:
         def query = '''
         query petQ($isLoyal : Boolean) { 
-            pet(isLoyal : $isLoyal) {
+            pets(isLoyal : $isLoyal) {
                 name
                 ... on Dog {
                     wearsCollar
@@ -293,17 +327,11 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         then:
         result.data == [
-                pet    : [name: "Sparky", wearsCollar: true],
+                pets   : [
+                        [name: "Sparky", wearsCollar: true],
+                        [name: "Whiskers", wearsBell: false]
+                ],
                 raining: [wearsCollar: true],
-        ]
-
-        when:
-        result = nadel.execute(newNadelExecutionInput().query(query).variables(isLoyal: false)).join()
-
-        then:
-        result.data == [
-                pet    : [name: "Whiskers", wearsBell: false],
-                raining: [wearsBell: false],
         ]
     }
 
@@ -312,7 +340,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
         given:
         def query = '''
         query petQ($isLoyal : Boolean) { 
-            pet(isLoyal : $isLoyal) {
+            pets(isLoyal : $isLoyal) {
                 name
                 ... DogFrag
                 ... on Dog {
@@ -352,17 +380,11 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         then:
         result.data == [
-                pet    : [name: "Sparky", wearsCollar: true, __typename: "Dog"],
+                pets   : [
+                        [name: "Sparky", wearsCollar: true, __typename: "Dog"],
+                        [name: "Whiskers", wearsBell: false, __typename: "Cat"]
+                ],
                 raining: [wearsCollar: true, __typename: "Dog"],
-        ]
-
-        when:
-        result = nadel.execute(newNadelExecutionInput().query(query).variables(isLoyal: false)).join()
-
-        then:
-        result.data == [
-                pet    : [name: "Whiskers", wearsBell: false, __typename: "Cat"],
-                raining: [wearsBell: false, __typename: "Cat"],
         ]
     }
 
@@ -372,7 +394,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
         given:
         def query = '''
         query petQ($isLoyal : Boolean) { 
-            pet(isLoyal : $isLoyal) {
+            pets(isLoyal : $isLoyal) {
                 name
                 ... DogFrag
                 ... on Cat {
@@ -400,27 +422,22 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         then:
         result.data == [
-                pet: [name: "Sparky", wearsCollar: true, aliasedDogTypeName: "Dog"],
-        ]
-
-        when:
-        result = nadel.execute(newNadelExecutionInput().query(query).variables(isLoyal: false)).join()
-
-        then:
-        result.data == [
-                pet: [name: "Whiskers", wearsBell: false, aliasedCatTypeName: "Cat"],
+                pets: [
+                        [name: "Sparky", wearsCollar: true, aliasedDogTypeName: "Dog"],
+                        [name: "Whiskers", wearsBell: false, aliasedCatTypeName: "Cat"]
+                ],
         ]
     }
 
-    @Ignore("Currently the Hydration code in general cant cope with interfaces - we need to fix this")
+    //@Ignore("Currently the Hydration code in general cant cope with interfaces - we need to fix this")
     def "query with hydrated interfaces work as expected"() {
 
         given:
         def query = '''
         query petQ($isLoyal : Boolean) { 
-            pet(isLoyal : $isLoyal) {
+            pets(isLoyal : $isLoyal) {
                 name
-                owner {
+                owners {
                     name
                     ... on CaringOwner {
                         givesPats    
@@ -442,15 +459,11 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         then:
         result.data == [
-                pet: [name: "Sparky", wearsCollar: true, owner: [name: "Mr Dearly", givesPats: true]],
+                pets: [
+                        [name: "Sparky", owners: [[name: "Mr Dearly", givesPats: true]]],
+                        [name: "Whiskers",owners: [[name: "Cruella De Vil", givesSmacks: true]]]
+                ],
         ]
 
-        when:
-        result = nadel.execute(newNadelExecutionInput().query(query).variables(isLoyal: false)).join()
-
-        then:
-        result.data == [
-                pet: [name: "Whiskers", wearsBell: false, owner: [name: "Cruella De Vil", givesSmacks: true]],
-        ]
     }
 }

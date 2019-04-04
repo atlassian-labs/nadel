@@ -64,7 +64,7 @@ class NadelExecutionStrategyTest extends Specification {
         def query = "{foo}"
         def executionData = createExecutionData(query, overallSchema)
 
-        def expectedQuery = "query {foo}"
+        def expectedQuery = "query nadel_2_service {foo}"
 
         when:
         nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
@@ -73,7 +73,7 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({
             printAstCompact(it.query) == expectedQuery
-        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(Mock(ServiceExecutionResult))
+        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(new ServiceExecutionResult(null))
     }
 
     def "one call to one service with list result"() {
@@ -98,7 +98,7 @@ class NadelExecutionStrategyTest extends Specification {
         def query = "{foo}"
         def executionData = createExecutionData(query, overallSchema)
 
-        def expectedQuery = "query {foo}"
+        def expectedQuery = "query nadel_2_service {foo}"
 
         def serviceResultData = [foo: ["foo1", "foo2"]]
 
@@ -168,10 +168,10 @@ class NadelExecutionStrategyTest extends Specification {
         def query = '''
             query($var : ID, $unusedVar2 : ID) {foo(id : $var) {bar{id name}}}
         '''
-        def expectedQuery1 = 'query ($var:ID) {foo(id:$var) {barId}}'
+        def expectedQuery1 = 'query nadel_2_service1($var:ID) {foo(id:$var) {barId}}'
         def response1 = new ServiceExecutionResult([foo: [barId: "barId"]])
 
-        def expectedQuery2 = "query {barById(id:\"barId\") {id name}}"
+        def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId\") {id name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
         def executionData = createExecutionData(query, overallHydrationSchema)
@@ -214,14 +214,14 @@ class NadelExecutionStrategyTest extends Specification {
             }
 
         '''
-        def expectedQuery1 = 'query {foo {...frag1}} fragment frag1 on Foo {barId}'
+        def expectedQuery1 = 'query nadel_2_service1 {foo {...frag1}} fragment frag1 on Foo {barId}'
         def response1 = new ServiceExecutionResult([foo: [barId: "barId"]])
 
-        def expectedQuery2 = "query {barById(id:\"barId\") {id name}}"
+        def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId\") {id name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
         def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).build()
+        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext()) build()
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
@@ -291,16 +291,16 @@ class NadelExecutionStrategyTest extends Specification {
 
 
         def query = "{foo {bar{id name}}}"
-        def expectedQuery1 = "query {foo {barId}}"
+        def expectedQuery1 = "query nadel_2_service1 {foo {barId}}"
         def response1 = new ServiceExecutionResult([foo: [barId: ["barId1", "barId2", "barId3"]]])
 
-        def expectedQuery2 = "query {barById(id:\"barId1\") {id name}}"
+        def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId1\") {id name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId1", name: "Bar1"]])
 
-        def expectedQuery3 = "query {barById(id:\"barId2\") {id name}}"
+        def expectedQuery3 = "query nadel_2_service2 {barById(id:\"barId2\") {id name}}"
         def response3 = new ServiceExecutionResult([barById: [id: "barId2", name: "Bar3"]])
 
-        def expectedQuery4 = "query {barById(id:\"barId3\") {id name}}"
+        def expectedQuery4 = "query nadel_2_service2 {barById(id:\"barId3\") {id name}}"
         def response4 = new ServiceExecutionResult([barById: [id: "barId3", name: "Bar4"]])
 
         def executionData = createExecutionData(query, overallSchema)
@@ -335,8 +335,10 @@ class NadelExecutionStrategyTest extends Specification {
 
     ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema) {
         def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).build()
-        ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput, null);
+        def executionInput = ExecutionInput.newExecutionInput().query(query)
+                .context(NadelContext.newContext())
+                .build()
+        ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput, null)
         executionData
     }
 

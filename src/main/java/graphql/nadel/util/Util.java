@@ -8,6 +8,10 @@ import graphql.language.SDLDefinition;
 import graphql.language.TypeName;
 import graphql.nadel.DefinitionRegistry;
 import graphql.nadel.dsl.ServiceDefinition;
+import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLTypeUtil;
+import graphql.schema.GraphQLUnionType;
 import graphql.schema.idl.TypeDefinitionRegistry;
 
 import java.util.List;
@@ -33,6 +37,10 @@ public class Util {
             definitionRegistry.add((SDLDefinition) definition);
         }
         return definitionRegistry;
+    }
+
+    public static boolean isInterfaceOrUnionField(GraphQLOutputType fieldOutputType) {
+        return GraphQLTypeUtil.unwrapAll(fieldOutputType) instanceof GraphQLInterfaceType || fieldOutputType instanceof GraphQLUnionType;
     }
 
 }

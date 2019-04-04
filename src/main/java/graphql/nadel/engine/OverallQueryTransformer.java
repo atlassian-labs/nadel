@@ -25,12 +25,11 @@ import graphql.nadel.Operation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeTransformation;
-import graphql.nadel.engine.transformation.ComposedFieldTransformation;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
-import graphql.nadel.engine.transformation.UnderscoreTypeNameTransformation;
 import graphql.nadel.util.FpKit;
+import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
@@ -54,32 +53,30 @@ import static java.util.function.Function.identity;
 public class OverallQueryTransformer {
 
 
-    public QueryTransformationResult transformSelectionSetInField(
+    QueryTransformationResult transformHydratedTopLevelField(
             ExecutionContext executionContext,
-            Field field,
-            GraphQLOutputType graphQLOutputType) {
+            String operationName, Operation operation,
+            Field topLevelField, GraphQLCompositeType topLevelFieldType
+    ) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
 
-        SelectionSet transformedSelectionSet = (SelectionSet) transformNode(
+        SelectionSet topLevelFieldSelectionSet = transformNode(
                 executionContext,
-                field.getSelectionSet(),
-                (GraphQLObjectType) graphQLOutputType,
+                topLevelField.getSelectionSet(),
+                topLevelFieldType,
                 transformationByResultField,
                 referencedFragmentNames,
                 referencedVariables);
-        Field transformedField = field.transform(builder -> builder.selectionSet(transformedSelectionSet));
+
+        Field transformedTopLevelField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
+
+        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        transformedTopLevelField = UnderscoreTypeNameUtils.maybeAddUnderscoreTypeName(nadelContext, transformedTopLevelField, topLevelFieldType);
 
         List<VariableDefinition> variableDefinitions = new ArrayList<>(referencedVariables.values());
         List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
-
-        OperationDefinition operationDefinition = newOperationDefinition()
-                .operation(OperationDefinition.Operation.QUERY)
-                .selectionSet(newSelectionSet().selection(transformedField).build())
-                .variableDefinitions(variableDefinitions)
-                .build();
-
 
         Map<String, FragmentDefinition> transformedFragments = transformFragments(executionContext,
                 executionContext.getFragmentsByName(),
@@ -87,28 +84,39 @@ public class OverallQueryTransformer {
                 referencedFragmentNames,
                 referencedVariables);
 
+        SelectionSet newOperationSelectionSet = newSelectionSet().selection(transformedTopLevelField).build();
+        OperationDefinition operationDefinition = newOperationDefinition()
+                .name(operationName)
+                .operation(operation.getAstOperation())
+                .selectionSet(newOperationSelectionSet)
+                .variableDefinitions(variableDefinitions)
+                .build();
+
         Document.Builder newDocumentBuilder = Document.newDocument();
         newDocumentBuilder.definition(operationDefinition);
-        referencedFragmentNames.stream()
-                .map(transformedFragments::get)
-                .forEach(newDocumentBuilder::definition);
+        for (String referencedFragmentName : referencedFragmentNames) {
+            FragmentDefinition fragmentDefinition = transformedFragments.get(referencedFragmentName);
+            newDocumentBuilder.definition(fragmentDefinition);
+        }
+        Document newDocument = newDocumentBuilder.build();
 
         return new QueryTransformationResult(
-                newDocumentBuilder.build(),
+                newDocument,
+                operationDefinition,
                 null,
                 referencedVariableNames,
-                transformedField,
+                transformedTopLevelField,
                 transformationByResultField,
                 transformedFragments);
 
     }
 
-    public QueryTransformationResult transformMergedFields(
+    QueryTransformationResult transformMergedFields(
             ExecutionContext executionContext,
-            List<MergedField> mergedFields,
-            Operation operation,
-            String operationName
+            String operationName, Operation operation,
+            List<MergedField> mergedFields
     ) {
+        NadelContext nadelContext = (NadelContext) executionContext.getContext();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
@@ -121,13 +129,17 @@ public class OverallQueryTransformer {
 
             List<Field> transformed = map(fields, field -> {
                 GraphQLObjectType rootType = operation.getRootType(executionContext.getGraphQLSchema());
-                return (Field) transformNode(
+                Field newField = transformNode(
                         executionContext,
                         field,
                         rootType,
                         transformationByResultField,
                         referencedFragmentNames,
                         referencedVariables);
+
+                GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
+                newField = UnderscoreTypeNameUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
+                return newField;
             });
             transformedFields.addAll(transformed);
             MergedField transformedMergedField = MergedField.newMergedField(transformed).build();
@@ -137,13 +149,14 @@ public class OverallQueryTransformer {
         List<VariableDefinition> variableDefinitions = new ArrayList<>(referencedVariables.values());
         List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
 
+        SelectionSet newSelectionSet = newSelectionSet(transformedFields).build();
+
         OperationDefinition operationDefinition = newOperationDefinition()
                 .operation(operation.getAstOperation())
                 .name(operationName)
-                .selectionSet(newSelectionSet(transformedFields).build())
+                .selectionSet(newSelectionSet)
                 .variableDefinitions(variableDefinitions)
                 .build();
-
 
         Map<String, FragmentDefinition> transformedFragments = transformFragments(
                 executionContext,
@@ -154,12 +167,15 @@ public class OverallQueryTransformer {
 
         Document.Builder newDocumentBuilder = Document.newDocument();
         newDocumentBuilder.definition(operationDefinition);
-        referencedFragmentNames.stream()
-                .map(transformedFragments::get)
-                .forEach(newDocumentBuilder::definition);
+        for (String referencedFragmentName : referencedFragmentNames) {
+            FragmentDefinition fragmentDefinition = transformedFragments.get(referencedFragmentName);
+            newDocumentBuilder.definition(fragmentDefinition);
+        }
 
+        Document newdocument = newDocumentBuilder.build();
         return new QueryTransformationResult(
-                newDocumentBuilder.build(),
+                newdocument,
+                operationDefinition,
                 transformedMergedFields,
                 referencedVariableNames,
                 null,
@@ -194,12 +210,12 @@ public class OverallQueryTransformer {
         return (FragmentDefinition) transformer.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames, referencedVariables));
     }
 
-    private Node transformNode(ExecutionContext executionContext,
-                               Node node,
-                               GraphQLObjectType parentType,
-                               Map<Field, FieldTransformation> transformationByResultField,
-                               Set<String> referencedFragmentNames,
-                               Map<String, VariableDefinition> referencedVariables) {
+    private <T extends Node> T transformNode(ExecutionContext executionContext,
+                                             T node,
+                                             GraphQLCompositeType parentType,
+                                             Map<Field, FieldTransformation> transformationByResultField,
+                                             Set<String> referencedFragmentNames,
+                                             Map<String, VariableDefinition> referencedVariables) {
         QueryTransformer transformer = QueryTransformer.newQueryTransformer()
                 .fragmentsByName(executionContext.getFragmentsByName())
                 .variables(executionContext.getVariables())
@@ -209,7 +225,9 @@ public class OverallQueryTransformer {
                 .schema(executionContext.getGraphQLSchema())
                 .build();
 
-        return transformer.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames, referencedVariables));
+        Node newNode = transformer.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames, referencedVariables));
+        //noinspection unchecked
+        return (T) newNode;
     }
 
     private class Transformer implements QueryVisitor {
@@ -315,18 +333,12 @@ public class OverallQueryTransformer {
         FieldDefinition fieldDefinition = environment.getFieldDefinition().getDefinition();
         FieldTransformation fieldTransformation = null;
         graphql.nadel.dsl.FieldTransformation definition = transformationDefinitionForField(fieldDefinition);
-        boolean usedHydration = false;
-        if (definition == null) {
-            fieldTransformation = null;
-        } else if (definition.getFieldMappingDefinition() != null) {
-            fieldTransformation = new FieldRenameTransformation(definition.getFieldMappingDefinition());
-        } else if (definition.getInnerServiceHydration() != null) {
-            fieldTransformation = new HydrationTransformation(definition.getInnerServiceHydration());
-            usedHydration = true;
-        }
-
-        if (UnderscoreTypeNameTransformation.isInterfaceOrUnionField(environment) && !usedHydration) {
-            fieldTransformation = new ComposedFieldTransformation(fieldTransformation, new UnderscoreTypeNameTransformation(fragmentsByName));
+        if (definition != null) {
+            if (definition.getFieldMappingDefinition() != null) {
+                fieldTransformation = new FieldRenameTransformation(definition.getFieldMappingDefinition());
+            } else if (definition.getInnerServiceHydration() != null) {
+                fieldTransformation = new HydrationTransformation(definition.getInnerServiceHydration());
+            }
         }
         return fieldTransformation;
     }
