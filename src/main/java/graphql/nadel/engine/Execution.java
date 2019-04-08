@@ -49,7 +49,11 @@ public class Execution {
 
     public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput, Document document, ExecutionId executionId, InstrumentationState instrumentationState) {
 
-        NadelContext nadelContext = NadelContext.newContext(executionInput.getContext());
+        NadelContext nadelContext = NadelContext.newContext()
+                .userSuppliedContext(executionInput.getContext())
+                .originalOperationName(document, executionInput.getOperationName())
+                .build();
+
         executionInput = executionInput.transform(builder -> builder.context(nadelContext));
 
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, executionId, executionInput, instrumentationState);

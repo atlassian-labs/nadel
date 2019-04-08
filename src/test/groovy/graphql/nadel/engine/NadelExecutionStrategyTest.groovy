@@ -221,7 +221,7 @@ class NadelExecutionStrategyTest extends Specification {
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
         def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext()) build()
+        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().build()) build()
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
@@ -336,7 +336,7 @@ class NadelExecutionStrategyTest extends Specification {
     ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema) {
         def document = parseQuery(query)
         def executionInput = ExecutionInput.newExecutionInput().query(query)
-                .context(NadelContext.newContext())
+                .context(NadelContext.newContext().build())
                 .build()
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput, null)
         executionData

@@ -328,7 +328,7 @@ class TestUtil {
     static def executionData(GraphQLSchema schema, Document query) {
         ExecutionInput executionInput = newExecutionInput()
                 .query(AstPrinter.printAst(query))
-                .context(NadelContext.newContext())
+                .context(NadelContext.newContext().originalOperationName(query,null).build())
                 .build()
         ExecutionHelper executionHelper = new ExecutionHelper()
         def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput, null)
@@ -339,7 +339,7 @@ class TestUtil {
     static ServiceExecutionFactory serviceFactory(ServiceExecution delegatedExecution, TypeDefinitionRegistry underlyingSchema) {
         new ServiceExecutionFactory() {
             @Override
-            ServiceExecution getDelegatedExecution(String serviceName) {
+            ServiceExecution getServiceExecution(String serviceName) {
                 return delegatedExecution
             }
 
@@ -353,7 +353,7 @@ class TestUtil {
     static ServiceExecutionFactory serviceFactory(Map<String, Tuple2<ServiceExecution, TypeDefinitionRegistry>> serviceMap) {
         new ServiceExecutionFactory() {
             @Override
-            ServiceExecution getDelegatedExecution(String serviceName) {
+            ServiceExecution getServiceExecution(String serviceName) {
                 return serviceMap.get(serviceName).get(0)
             }
 

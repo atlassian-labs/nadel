@@ -13,7 +13,7 @@ public interface ServiceExecutionFactory {
      *
      * @return a function that can be called to get data from that service
      */
-    ServiceExecution getDelegatedExecution(String serviceName);
+    ServiceExecution getServiceExecution(String serviceName);
 
     /**
      * Called to return underlying type definitions for a schema

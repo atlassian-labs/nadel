@@ -71,9 +71,9 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
-            assert printAstCompact(params.query) == "query nadel_2_MyService {hello {name} hello {id}}"
+            assert printAstCompact(params.query) == "query nadel_2_MyService_OpName {hello {name} hello {id}}"
             assert params.context == "contextObj"
-            assert params.operationDefinition.name == "nadel_2_MyService"
+            assert params.operationDefinition.name == "nadel_2_MyService_OpName"
             completedFuture(new ServiceExecutionResult(data))
         }
         result.join().data == data
@@ -288,7 +288,7 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
-            assert printAstCompact(params.query) == "mutation nadel_2_MyService {hello}"
+            assert printAstCompact(params.query) == "mutation nadel_2_MyService_M {hello}"
             completedFuture(new ServiceExecutionResult(data))
         }
         result.join().data == data

@@ -59,6 +59,7 @@ import static graphql.nadel.engine.StrategyUtil.getHydrationTransformations;
 import static graphql.nadel.engine.UnderscoreTypeNameUtils.maybeRemoveUnderscoreTypeName;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import static graphql.util.FpKit.map;
+import static java.lang.String.format;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -94,7 +95,7 @@ public class NadelExecutionStrategy {
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         List<HydrationTransformation> hydrationTransformations = new ArrayList<>();
         for (Service service : delegatedExecutionForTopLevel.keySet()) {
-            String operationName = buildOperationName(service);
+            String operationName = buildOperationName(service, executionContext);
             List<MergedField> mergedFields = delegatedExecutionForTopLevel.get(service);
             QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(executionContext, operationName, operation, mergedFields);
             hydrationTransformations.addAll(getHydrationTransformations(queryTransformerResult.getTransformationByResultField().values()));
@@ -156,7 +157,7 @@ public class NadelExecutionStrategy {
         Service service = getService(innerServiceHydration);
 
         Operation operation = Operation.QUERY;
-        String operationName = buildOperationName(service);
+        String operationName = buildOperationName(service,executionContext);
 
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getFieldType());
         QueryTransformationResult queryTransformResult = queryTransformer
@@ -268,7 +269,7 @@ public class NadelExecutionStrategy {
     }
 
     private ServiceExecutionResult mkExceptionResult(Service service, ExecutionStepInfo executionStepInfo, Throwable e) {
-        String errorText = String.format("An exception occurred invoking the service '%s' : '%s'", service.getName(), e.getMessage());
+        String errorText = format("An exception occurred invoking the service '%s' : '%s'", service.getName(), e.getMessage());
         log.error(errorText, e);
 
         GraphqlErrorBuilder errorBuilder = GraphqlErrorBuilder.newError();
@@ -328,7 +329,7 @@ public class NadelExecutionStrategy {
         Map<String, FragmentDefinition> fragments = queryTransformerResult.getTransformedFragments();
 
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
-        Object callerSuppliedContext = nadelContext.getCallerSuppliedContext();
+        Object callerSuppliedContext = nadelContext.getUserSuppliedContext();
 
         return newServiceExecutionParameters()
                 .query(queryTransformerResult.getDocument())
@@ -348,9 +349,14 @@ public class NadelExecutionStrategy {
         );
     }
 
-    private String buildOperationName(Service service) {
+    private String buildOperationName(Service service, ExecutionContext executionContext) {
         // to help with downstream debugging we put our name and their name in the operation
-        return String.format("nadel_2_%s", service.getName());
+        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        if (nadelContext.getOriginalOperationName() != null) {
+            return format("nadel_2_%s_%s", service.getName(), nadelContext.getOriginalOperationName());
+        } else {
+            return format("nadel_2_%s", service.getName());
+        }
     }
 
     private NadelContext getNadelContext(ExecutionContext executionContext) {

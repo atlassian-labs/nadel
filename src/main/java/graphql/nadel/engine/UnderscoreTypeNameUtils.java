@@ -7,8 +7,11 @@ import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.util.Util;
 import graphql.schema.GraphQLOutputType;
+import graphql.util.TraversalControl;
+import graphql.util.TraverserContext;
+import graphql.util.TraverserVisitorStub;
+import graphql.util.TreeTransformerUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static graphql.Assert.assertNotNull;
@@ -18,6 +21,8 @@ import static graphql.Assert.assertNotNull;
  */
 class UnderscoreTypeNameUtils {
 
+    private static final String UNDERSCORE_TYPENAME = "__typename";
+
     static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
         if (!Util.isInterfaceOrUnionField(fieldType)) {
             return field;
@@ -26,7 +31,7 @@ class UnderscoreTypeNameUtils {
         assertNotNull(underscoreTypeNameAlias, "We MUST have a generated __typename alias in the request context");
 
         SelectionSet selectionSet = field.getSelectionSet();
-        Field underscoreTypeNameAliasField = Field.newField("__typename").alias(underscoreTypeNameAlias).build();
+        Field underscoreTypeNameAliasField = Field.newField(UNDERSCORE_TYPENAME).alias(underscoreTypeNameAlias).build();
         if (selectionSet == null) {
             selectionSet = SelectionSet.newSelectionSet().selection(underscoreTypeNameAliasField).build();
         } else {
@@ -42,30 +47,30 @@ class UnderscoreTypeNameUtils {
         return maybeRemoveUnderscoreTypeNameImpl(underscoreTypeNameAlias, resultNode);
     }
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     private static ExecutionResultNode maybeRemoveUnderscoreTypeNameImpl(String underscoreTypeNameAlias, ExecutionResultNode resultNode) {
-        // leaves never have children
-        if (resultNode instanceof LeafExecutionResultNode) {
-            return resultNode;
-        }
-        List<ExecutionResultNode> currentChildren = resultNode.getChildren();
-        List<ExecutionResultNode> newChildren = new ArrayList<>();
-        for (ExecutionResultNode childNode : currentChildren) {
-            if (childNode instanceof LeafExecutionResultNode) {
-                LeafExecutionResultNode leaf = (LeafExecutionResultNode) childNode;
-                MergedField mergedField = leaf.getFetchedValueAnalysis().getField();
-                if (!isAliasedUnderscoreTpeNameField(underscoreTypeNameAlias, mergedField)) {
-                    newChildren.add(childNode);
+        ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
+        ExecutionResultNode newNode = resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+            @Override
+            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
+                ExecutionResultNode node = context.thisNode();
+                if (node instanceof LeafExecutionResultNode) {
+                    LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
+                    MergedField mergedField = leaf.getFetchedValueAnalysis().getField();
+
+                    if (isAliasedUnderscoreTpeNameField(underscoreTypeNameAlias, mergedField)) {
+                        return TreeTransformerUtil.deleteNode(context);
+                    }
                 }
-            } else {
-                childNode = maybeRemoveUnderscoreTypeNameImpl(underscoreTypeNameAlias, childNode);
-                newChildren.add(childNode);
+                return TraversalControl.CONTINUE;
             }
-        }
-        return resultNode.withNewChildren(newChildren);
+        });
+        return newNode;
     }
 
     private static boolean isAliasedUnderscoreTpeNameField(String underscoreTypeNameAlias, MergedField mergedField) {
         List<Field> fields = mergedField.getFields();
+        // we KNOW we put the field in as a single field with alias (not merged) and hence we can assume that on the reverse
         if (fields.size() == 1) {
             Field singleField = mergedField.getSingleField();
             String alias = singleField.getAlias();

@@ -79,7 +79,7 @@ public class Nadel {
         List<Service> serviceList = new ArrayList<>();
         for (ServiceDefinition serviceDefinition : serviceDefinitions) {
             String serviceName = serviceDefinition.getName();
-            ServiceExecution serviceExecution = this.serviceExecutionFactory.getDelegatedExecution(serviceName);
+            ServiceExecution serviceExecution = this.serviceExecutionFactory.getServiceExecution(serviceName);
             TypeDefinitionRegistry underlyingTypeDefinitions = this.serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName);
             GraphQLSchema underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(underlyingTypeDefinitions);
             DefinitionRegistry definitionRegistry = buildServiceRegistry(serviceDefinition);

@@ -14,7 +14,7 @@ import static graphql.nadel.testutils.TestUtil.mkField
 
 class UnderscoreTypeNameUtilsTest extends Specification {
 
-    def context = NadelContext.newContext()
+    def context = NadelContext.newContext().build()
     def underscoreTypeNameAlias = context.underscoreTypeNameAlias
     def interfaceType = GraphQLInterfaceType.newInterface().name("I").build()
     def objectType = GraphQLObjectType.newObject().name("O").build()
@@ -69,7 +69,7 @@ class UnderscoreTypeNameUtilsTest extends Specification {
 
     def "test that it removes the aliased field but leaves the specific one alone"() {
 
-        def nodeWithAliasedTypeNameAndTypeName = root([
+        def startingNode = root([
                 object("pet", [
                         leaf("__typename"), //  <-- manually added by consumer
                         list("owners", [
@@ -88,7 +88,7 @@ class UnderscoreTypeNameUtilsTest extends Specification {
         ])
 
         when:
-        def newNode = UnderscoreTypeNameUtils.maybeRemoveUnderscoreTypeName(context, nodeWithAliasedTypeNameAndTypeName)
+        def newNode = UnderscoreTypeNameUtils.maybeRemoveUnderscoreTypeName(context, startingNode)
         def data = toData(newNode)
         then:
         data == [
@@ -107,6 +107,32 @@ class UnderscoreTypeNameUtilsTest extends Specification {
                         ]
                 ]
         ]
+    }
+
+    def "test that leaves everything alone"() {
+
+        def startingNode = root([
+                object("pet", [
+                        leaf("__typename"), //  <-- manually added by consumer
+                        list("owners", [
+                                object("0", [
+                                        leaf("__typename"), //  <-- manually added by consumer say via Fragment Spread
+                                        leaf("name"),
+                                        leaf("title"),
+                                ]),
+                                object("1", [
+                                        leaf("name"),
+                                        leaf("title"),
+                                ]),
+                        ])
+                ])
+        ])
+
+        when:
+        def newNode = UnderscoreTypeNameUtils.maybeRemoveUnderscoreTypeName(context, startingNode)
+        then:
+        // zippers allow for no change to objects if there is no change
+        newNode == startingNode
     }
 
 }
