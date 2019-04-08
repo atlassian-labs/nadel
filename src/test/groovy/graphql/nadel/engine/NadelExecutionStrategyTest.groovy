@@ -378,10 +378,10 @@ class NadelExecutionStrategyTest extends Specification {
 
 
         def query = "{foo {bar{id name}}}"
-        def expectedQuery1 = "query {foo {barId}}"
+        def expectedQuery1 = "query nadel_2_service1 {foo {barId}}"
         def response1 = new ServiceExecutionResult([foo: [barId: ["barId1"]]])
 
-        def expectedQuery2 = "query {barById(id:\"barId1\") {id name}}"
+        def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId1\") {id name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId1", name: "Bar1"]])
 
         def executionData = createExecutionData(query, overallSchema)
