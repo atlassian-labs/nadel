@@ -1,5 +1,7 @@
 package graphql.nadel
 
+import graphql.cachecontrol.CacheControl
+import graphql.execution.ExecutionId
 import graphql.language.Document
 import graphql.language.OperationDefinition
 import graphql.nadel.testutils.TestUtil
@@ -13,6 +15,8 @@ class ServiceExecutionParametersTest extends Specification {
         def opDef = document.getChildren()[0] as OperationDefinition
         def context = [some: "Context"]
         def variables = [variables: "okPresent"]
+        def executionId = ExecutionId.generate()
+        def cacheControl = CacheControl.newCacheControl();
 
         when:
         def parameters = ServiceExecutionParameters.newServiceExecutionParameters()
@@ -20,11 +24,15 @@ class ServiceExecutionParametersTest extends Specification {
                 .context(context)
                 .operationDefinition(opDef)
                 .variables(variables)
+                .executionId(executionId)
+                .cacheControl(cacheControl)
                 .build()
 
         then:
         parameters.query == document
         parameters.context == context
         parameters.variables == variables
+        parameters.executionId == executionId
+        parameters.cacheControl == cacheControl
     }
 }

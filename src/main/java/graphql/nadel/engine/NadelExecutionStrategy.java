@@ -160,7 +160,7 @@ public class NadelExecutionStrategy {
         Service service = getService(innerServiceHydration);
 
         Operation operation = Operation.QUERY;
-        String operationName = buildOperationName(service,executionContext);
+        String operationName = buildOperationName(service, executionContext);
 
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getFieldType());
         QueryTransformationResult queryTransformResult = queryTransformer
@@ -340,6 +340,8 @@ public class NadelExecutionStrategy {
                 .variables(variables)
                 .fragments(fragments)
                 .operationDefinition(queryTransformerResult.getOperationDefinition())
+                .executionId(executionContext.getExecutionId())
+                .cacheControl(executionContext.getCacheControl())
                 .build();
     }
 
