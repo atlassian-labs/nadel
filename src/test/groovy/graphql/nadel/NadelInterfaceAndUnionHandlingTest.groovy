@@ -231,7 +231,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(ndsl)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         when:
@@ -276,7 +276,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(ndsl)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         when:
@@ -319,7 +319,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(ndsl)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         when:
@@ -372,7 +372,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(ndsl)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         when:
@@ -414,7 +414,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(ndsl)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         when:
@@ -452,7 +452,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(ndsl)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
         when:
         def result = nadel.execute(newNadelExecutionInput().query(query).variables(isLoyal: true)).join()

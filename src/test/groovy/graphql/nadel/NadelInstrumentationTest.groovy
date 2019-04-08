@@ -106,7 +106,7 @@ class NadelInstrumentationTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .instrumentation(instrumentation)
                 .build()
 
@@ -186,7 +186,7 @@ class NadelInstrumentationTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .instrumentation(chainedInstrumentation)
                 .build()
 

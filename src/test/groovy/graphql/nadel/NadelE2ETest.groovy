@@ -54,7 +54,7 @@ class NadelE2ETest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
@@ -87,7 +87,7 @@ class NadelE2ETest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
@@ -154,7 +154,7 @@ class NadelE2ETest extends Specification {
         given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
@@ -228,7 +228,7 @@ class NadelE2ETest extends Specification {
         given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
@@ -276,7 +276,7 @@ class NadelE2ETest extends Specification {
         given:
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)

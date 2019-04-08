@@ -48,7 +48,7 @@ class NadelErrorHandlingTest extends Specification {
     def buildNadel() {
         newNadel()
                 .dsl(simpleNDSL)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
     }
 
@@ -160,7 +160,7 @@ class NadelErrorHandlingTest extends Specification {
         given:
         Nadel nadel = newNadel()
                 .dsl(hydratedNDSL)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
@@ -187,7 +187,7 @@ class NadelErrorHandlingTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
-                .serviceDataFactory(serviceFactory(serviceExecution, simpleUnderlyingSchema))
+                .serviceExecutionFactory(serviceFactory(serviceExecution, simpleUnderlyingSchema))
                 .build()
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
@@ -219,7 +219,7 @@ class NadelErrorHandlingTest extends Specification {
 
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
-                .serviceDataFactory(serviceFactory(serviceExecution, simpleUnderlyingSchema))
+                .serviceExecutionFactory(serviceFactory(serviceExecution, simpleUnderlyingSchema))
                 .build()
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
@@ -254,7 +254,7 @@ class NadelErrorHandlingTest extends Specification {
         given:
         Nadel nadel = newNadel()
                 .dsl(hydratedNDSL)
-                .serviceDataFactory(serviceFactory)
+                .serviceExecutionFactory(serviceFactory)
                 .build()
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
