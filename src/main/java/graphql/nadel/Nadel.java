@@ -130,7 +130,7 @@ public class Nadel {
             return dsl(new StringReader(requireNonNull(nsdl)));
         }
 
-        public Builder serviceDataFactory(ServiceExecutionFactory serviceExecutionFactory) {
+        public Builder serviceExecutionFactory(ServiceExecutionFactory serviceExecutionFactory) {
             this.serviceExecutionFactory = serviceExecutionFactory;
             return this;
         }
