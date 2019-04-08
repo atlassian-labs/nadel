@@ -1,9 +1,11 @@
-package graphql.nadel;
+package graphql.nadel.schema;
 
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.SchemaDefinition;
+import graphql.nadel.DefinitionRegistry;
+import graphql.nadel.Operation;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
@@ -21,10 +23,10 @@ public class OverallSchemaGenerator {
 
 
     public GraphQLSchema buildOverallSchema(List<DefinitionRegistry> serviceRegistries) {
-        //TODO: This will not work for Unions and interfaces as they require TypeResolver
-        // need to loose this requirement or add dummy versions
         SchemaGenerator schemaGenerator = new SchemaGenerator();
-        RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring().build();
+        RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
+                .wiringFactory(new NeverWiringFactory())
+                .build();
         return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring);
     }
 

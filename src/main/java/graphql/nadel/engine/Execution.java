@@ -36,7 +36,6 @@ public class Execution {
     private final GraphQLSchema overallSchema;
     private final NadelInstrumentation instrumentation;
     private final IntrospectionRunner introspectionRunner;
-    private final FieldInfos fieldInfos;
     private final ExecutionHelper executionHelper = new ExecutionHelper();
     private final NadelExecutionStrategy nadelExecutionStrategy;
 
@@ -45,12 +44,17 @@ public class Execution {
         this.overallSchema = overallSchema;
         this.instrumentation = instrumentation;
         this.introspectionRunner = introspectionRunner;
-        this.fieldInfos = createFieldsInfos();
-        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, this.fieldInfos, overallSchema, instrumentation);
+        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, createFieldsInfos(), overallSchema, instrumentation);
     }
 
     public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput, Document document, ExecutionId executionId, InstrumentationState instrumentationState) {
 
+        NadelContext nadelContext = NadelContext.newContext()
+                .userSuppliedContext(executionInput.getContext())
+                .originalOperationName(document, executionInput.getOperationName())
+                .build();
+
+        executionInput = executionInput.transform(builder -> builder.context(nadelContext));
 
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, executionId, executionInput, instrumentationState);
 

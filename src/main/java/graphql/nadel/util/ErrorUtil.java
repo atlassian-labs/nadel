@@ -6,6 +6,7 @@ import graphql.GraphqlErrorBuilder;
 import graphql.language.SourceLocation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 

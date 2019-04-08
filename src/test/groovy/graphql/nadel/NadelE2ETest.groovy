@@ -1,3 +1,4 @@
+
 package graphql.nadel
 
 import graphql.ErrorType
@@ -8,6 +9,7 @@ import spock.lang.Specification
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
+import static graphql.nadel.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
@@ -27,7 +29,7 @@ class NadelE2ETest extends Specification {
          }
         '''
 
-    def simpleUnderlyingSchema = TestUtil.schema('''
+    def simpleUnderlyingSchema = typeDefinitions('''
             type Query{
                 hello: World  
             } 
@@ -69,9 +71,9 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
-            assert printAstCompact(params.query) == "query OpName {hello {name} hello {id}}"
+            assert printAstCompact(params.query) == "query nadel_2_MyService_OpName {hello {name} hello {id}}"
             assert params.context == "contextObj"
-            assert params.operationDefinition.name == "OpName"
+            assert params.operationDefinition.name == "nadel_2_MyService_OpName"
             completedFuture(new ServiceExecutionResult(data))
         }
         result.join().data == data
@@ -124,7 +126,7 @@ class NadelE2ETest extends Specification {
         def query = '''
         { otherFoo: foo {name} bar{name}}
         '''
-        def underlyingSchema1 = TestUtil.schema('''
+        def underlyingSchema1 = typeDefinitions('''
             type Query{
                 fooOriginal: Foo  
                 
@@ -133,7 +135,7 @@ class NadelE2ETest extends Specification {
                 name: String
             }
         ''')
-        def underlyingSchema2 = TestUtil.schema('''
+        def underlyingSchema2 = typeDefinitions('''
             type Query{
                 bar: Bar 
             } 
@@ -144,7 +146,7 @@ class NadelE2ETest extends Specification {
         ServiceExecution delegatedExecution1 = Mock(ServiceExecution)
         ServiceExecution delegatedExecution2 = Mock(ServiceExecution)
 
-        ServiceDataFactory serviceFactory = TestUtil.serviceFactory([
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
                 Foo: new Tuple2(delegatedExecution1, underlyingSchema1),
                 Bar: new Tuple2(delegatedExecution2, underlyingSchema2)]
         )
@@ -192,7 +194,7 @@ class NadelE2ETest extends Specification {
             }
          }
         '''
-        def underlyingSchema1 = TestUtil.schema('''
+        def underlyingSchema1 = typeDefinitions('''
             type Query{
                 foo: Foo  
             } 
@@ -201,7 +203,7 @@ class NadelE2ETest extends Specification {
                 barId: ID
             }
         ''')
-        def underlyingSchema2 = TestUtil.schema('''
+        def underlyingSchema2 = typeDefinitions('''
             type Query{
                 bar: Bar 
                 barById(id: ID): Bar
@@ -219,7 +221,7 @@ class NadelE2ETest extends Specification {
         ServiceExecution serviceExecution1 = Mock(ServiceExecution)
         ServiceExecution serviceExecution2 = Mock(ServiceExecution)
 
-        ServiceDataFactory serviceFactory = TestUtil.serviceFactory([
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
                 Foo: new Tuple2(serviceExecution1, underlyingSchema1),
                 Bar: new Tuple2(serviceExecution2, underlyingSchema2)]
         )
@@ -286,7 +288,7 @@ class NadelE2ETest extends Specification {
         then:
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
-            assert printAstCompact(params.query) == "mutation M {hello}"
+            assert printAstCompact(params.query) == "mutation nadel_2_MyService_M {hello}"
             completedFuture(new ServiceExecutionResult(data))
         }
         result.join().data == data

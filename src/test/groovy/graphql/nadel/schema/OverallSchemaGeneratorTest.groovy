@@ -1,5 +1,6 @@
-package graphql.nadel
+package graphql.nadel.schema
 
+import graphql.nadel.Operation
 import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
 import spock.lang.Unroll
