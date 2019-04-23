@@ -26,6 +26,7 @@ import graphql.language.SelectionSet
 import graphql.nadel.NSDLParser
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
+import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelContext
 import graphql.nadel.schema.OverallSchemaGenerator
@@ -328,7 +329,7 @@ class TestUtil {
     static def executionData(GraphQLSchema schema, Document query) {
         ExecutionInput executionInput = newExecutionInput()
                 .query(AstPrinter.printAst(query))
-                .context(NadelContext.newContext().originalOperationName(query,null).build())
+                .context(NadelContext.newContext().originalOperationName(query, null).build())
                 .build()
         ExecutionHelper executionHelper = new ExecutionHelper()
         def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput, null)
@@ -377,5 +378,19 @@ class TestUtil {
             return serviceResultFromPromise(er)
         }
         return serviceExecution
+    }
+
+    static ServiceExecution delayedServiceExecution(int ms, ServiceExecution serviceExecution) {
+        if (ms > 0) {
+            return new ServiceExecution() {
+                @Override
+                CompletableFuture<ServiceExecutionResult> execute(ServiceExecutionParameters serviceExecutionParameters) {
+                    def cf = serviceExecution.execute(serviceExecutionParameters)
+                    return cf.thenApply({ r -> Thread.sleep(ms); r })
+                }
+            }
+        } else {
+            return serviceExecution
+        }
     }
 }

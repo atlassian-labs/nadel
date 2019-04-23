@@ -26,6 +26,7 @@ import graphql.nadel.ServiceExecutionParameters;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
+import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.instrumentation.NadelInstrumentation;
@@ -63,6 +64,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.toList;
 
 @Internal
 public class NadelExecutionStrategy {
@@ -88,7 +90,9 @@ public class NadelExecutionStrategy {
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
-        Map<Service, List<MergedField>> delegatedExecutionForTopLevel = getDelegatedExecutionForTopLevel(executionContext, fieldSubSelection);
+        Map<Service, List<ExecutionStepInfo>> delegatedExecutionForTopLevel = getDelegatedExecutionForTopLevel(executionContext, fieldSubSelection);
+
+        FieldTracking fieldTracking = new FieldTracking(instrumentation, executionContext);
 
         Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
 
@@ -96,23 +100,45 @@ public class NadelExecutionStrategy {
         List<HydrationTransformation> hydrationTransformations = new ArrayList<>();
         for (Service service : delegatedExecutionForTopLevel.keySet()) {
             String operationName = buildOperationName(service, executionContext);
-            List<MergedField> mergedFields = delegatedExecutionForTopLevel.get(service);
+            List<ExecutionStepInfo> stepInfos = delegatedExecutionForTopLevel.get(service);
+            List<MergedField> mergedFields = stepInfos.stream().map(ExecutionStepInfo::getField).collect(toList());
+
+            //
+            // take the original query and transform it into the underlying query needed for that top level field
+            //
             QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(executionContext, operationName, operation, mergedFields);
+
             hydrationTransformations.addAll(getHydrationTransformations(queryTransformerResult.getTransformationByResultField().values()));
+
+            //
+            // say they are dispatched
+            fieldTracking.fieldsDispatched(stepInfos);
             //
             // now call put to the service with the new query
-            resultNodes.add(callService(executionContext, queryTransformerResult, service, operation));
+            CompletableFuture<RootExecutionResultNode> serviceResult = callService(executionContext, queryTransformerResult, service, operation);
+
+            //
+            // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
+            serviceResult.whenComplete(fieldTracking::fieldsCompleted);
+
+            resultNodes.add(serviceResult);
         }
 
         CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
-        return rootResult.thenCompose(rootExecutionResultNode -> resolveAllHydrationInputs(executionContext, rootExecutionResultNode, hydrationTransformations)
-                .thenApply(resultNode -> maybeRemoveUnderscoreTypeName(getNadelContext(executionContext), resultNode))
-                .thenApply(RootExecutionResultNode.class::cast))
+        return rootResult.thenCompose(
+                //
+                // all the nodes that are hydrated need to make new service calls to get their eventual value
+                //
+                rootExecutionResultNode -> resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode, hydrationTransformations)
+                        //
+                        // clean up the __typename support for interfaces
+                        .thenApply(resultNode -> maybeRemoveUnderscoreTypeName(getNadelContext(executionContext), resultNode))
+                        .thenApply(RootExecutionResultNode.class::cast))
                 .whenComplete(this::possiblyLogException);
     }
 
     private CompletableFuture<ExecutionResultNode> resolveAllHydrationInputs(ExecutionContext context,
-                                                                             ExecutionResultNode node,
+                                                                             FieldTracking fieldTracking, ExecutionResultNode node,
                                                                              List<HydrationTransformation> hydrationTransformations) {
         List<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(singleton(node));
         if (hydrationInputZippers.size() == 0) {
@@ -125,7 +151,12 @@ public class NadelExecutionStrategy {
         for (NodeZipper<ExecutionResultNode> zipper : hydrationInputZippers) {
             Field field = zipper.getCurNode().getMergedField().getSingleField();
             HydrationTransformation transformationForField = getTransformationForField(hydrationTransformations, field);
-            resolvedNodeCFs.add(resolveHydrationInput(context, zipper.getCurNode(), transformationForField).thenApply(zipper::withNewNode));
+
+            //
+            // now makes call to hydrate the partially completed field
+            CompletableFuture<ExecutionResultNode> hydratedCF = resolveHydrationInput(context, fieldTracking, zipper.getCurNode(), transformationForField);
+            CompletableFuture<NodeZipper<ExecutionResultNode>> zippedCF = hydratedCF.thenApply(zipper::withNewNode);
+            resolvedNodeCFs.add(zippedCF);
         }
         return Async
                 .each(resolvedNodeCFs)
@@ -138,8 +169,12 @@ public class NadelExecutionStrategy {
     }
 
     private CompletableFuture<ExecutionResultNode> resolveHydrationInput(ExecutionContext executionContext,
+                                                                         FieldTracking fieldTracking,
                                                                          ExecutionResultNode hydrationInputNode,
                                                                          HydrationTransformation hydrationTransformation) {
+
+        ExecutionStepInfo hydratedFieldStepInfo = hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo();
+
         Field originalField = hydrationTransformation.getOriginalField();
         InnerServiceHydration innerServiceHydration = hydrationTransformation.getInnerServiceHydration();
         String topLevelFieldName = innerServiceHydration.getTopLevelField();
@@ -171,29 +206,34 @@ public class NadelExecutionStrategy {
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
 
-        ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
+        ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
         Map<Field, FieldTransformation> transformationByResultField = queryTransformResult.getTransformationByResultField();
 
         ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformResult);
         ExecutionContext executionContextForService = buildServiceExecutionContext(executionContext, underlyingSchema, serviceExecutionParameters);
 
-        CompletableFuture<ServiceExecutionResult> callResult = invokeService(service, serviceExecution, serviceExecutionParameters, rootExecutionStepInfo, executionContext);
+        CompletableFuture<ServiceExecutionResult> callResult = invokeService(service, serviceExecution, serviceExecutionParameters, underlyingRootStepInfo, executionContext);
         assertNotNull(callResult, "A service execution MUST provide a non null CompletableFuture<ServiceExecutionResult> ");
+
+        //
+        // tell the fields tracking we are dispatched
+        fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
         return callResult
-                .thenApply(serviceResult -> serviceExecutionResultToResultNode(executionContextForService, rootExecutionStepInfo, singletonList(transformedMergedField), serviceResult))
+                .thenApply(serviceResult -> serviceExecutionResultToResultNode(executionContextForService, underlyingRootStepInfo, singletonList(transformedMergedField), serviceResult))
                 .thenApply(resultNode -> convertHydrationResultIntoOverallResult(hydrationTransformation, resultNode, transformationByResultField))
                 .thenApply(resultNode -> maybeRemoveUnderscoreTypeName(getNadelContext(executionContext), resultNode))
-                .thenCompose(resultNode -> runHydrationTransformations(executionContextForService, transformationByResultField, resultNode))
+                .whenComplete(fieldTracking::fieldsCompleted)
+                .thenCompose(resultNode -> runHydrationTransformations(executionContextForService, fieldTracking, transformationByResultField, resultNode))
                 .whenComplete(this::possiblyLogException);
     }
 
-    private RootExecutionResultNode serviceExecutionResultToResultNode(ExecutionContext executionContextForService, ExecutionStepInfo rootExecutionStepInfo, List<MergedField> transformedMergedFields, ServiceExecutionResult executionResult) {
-        return resultToResultNode.resultToResultNode(executionContextForService, rootExecutionStepInfo, transformedMergedFields, executionResult);
+    private RootExecutionResultNode serviceExecutionResultToResultNode(ExecutionContext executionContextForService, ExecutionStepInfo underlyingRootStepInfo, List<MergedField> transformedMergedFields, ServiceExecutionResult executionResult) {
+        return resultToResultNode.resultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, executionResult);
     }
 
-    private CompletionStage<ExecutionResultNode> runHydrationTransformations(ExecutionContext executionContext, Map<Field, FieldTransformation> transformationByResultField, ExecutionResultNode resultNode) {
+    private CompletionStage<ExecutionResultNode> runHydrationTransformations(ExecutionContext executionContext, FieldTracking fieldTracking, Map<Field, FieldTransformation> transformationByResultField, ExecutionResultNode resultNode) {
         List<HydrationTransformation> hydrationTransformations = getHydrationTransformations(transformationByResultField.values());
-        return resolveAllHydrationInputs(executionContext, resultNode, hydrationTransformations);
+        return resolveAllHydrationInputs(executionContext, fieldTracking, resultNode, hydrationTransformations);
     }
 
     private ExecutionResultNode convertHydrationResultIntoOverallResult(HydrationTransformation hydrationTransformation,
@@ -235,12 +275,12 @@ public class NadelExecutionStrategy {
         ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformerResult);
         ExecutionContext executionContextForService = buildServiceExecutionContext(executionContext, underlyingSchema, serviceExecutionParameters);
 
-        ExecutionStepInfo rootExecutionStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
+        ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
 
-        CompletableFuture<ServiceExecutionResult> result = invokeService(service, serviceExecution, serviceExecutionParameters, rootExecutionStepInfo, executionContext);
+        CompletableFuture<ServiceExecutionResult> result = invokeService(service, serviceExecution, serviceExecutionParameters, underlyingRootStepInfo, executionContext);
         assertNotNull(result, "A service execution MUST provide a non null CompletableFuture<ServiceExecutionResult> ");
         return result
-                .thenApply(executionResult -> serviceExecutionResultToResultNode(executionContextForService, rootExecutionStepInfo, transformedMergedFields, executionResult))
+                .thenApply(executionResult -> serviceExecutionResultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, executionResult))
                 .thenApply(resultNode -> serviceResultNodesToOverallResult.convert(resultNode, overallSchema, transformationByResultField));
     }
 
@@ -300,15 +340,15 @@ public class NadelExecutionStrategy {
         });
     }
 
-    private Map<Service, List<MergedField>> getDelegatedExecutionForTopLevel(ExecutionContext context, FieldSubSelection fieldSubSelection) {
+    private Map<Service, List<ExecutionStepInfo>> getDelegatedExecutionForTopLevel(ExecutionContext context, FieldSubSelection fieldSubSelection) {
         //TODO: consider dynamic delegation targets in the future
-        Map<Service, List<MergedField>> result = new LinkedHashMap<>();
-        ExecutionStepInfo executionStepInfo = fieldSubSelection.getExecutionStepInfo();
+        Map<Service, List<ExecutionStepInfo>> result = new LinkedHashMap<>();
+        ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
-            ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, executionStepInfo);
+            ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, rootExecutionStepInfo);
             Service service = getServiceForFieldDefinition(newExecutionStepInfo.getFieldDefinition());
             result.computeIfAbsent(service, key -> new ArrayList<>());
-            result.get(service).add(mergedField);
+            result.get(service).add(newExecutionStepInfo);
         }
         return result;
     }
@@ -369,3 +409,5 @@ public class NadelExecutionStrategy {
     }
 
 }
+
+

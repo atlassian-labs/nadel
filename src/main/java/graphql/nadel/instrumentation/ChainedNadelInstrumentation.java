@@ -6,10 +6,12 @@ import graphql.execution.Async;
 import graphql.execution.instrumentation.DocumentAndVariables;
 import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
+import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.language.Document;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
@@ -91,6 +93,17 @@ public class ChainedNadelInstrumentation implements NadelInstrumentation {
                 .map(instrumentation -> {
                     InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
                     return instrumentation.beginExecute(parameters.withNewState(state));
+                })
+                .collect(toList()));
+    }
+
+
+    @Override
+    public InstrumentationContext<ExecutionResultNode> beginFieldFetch(NadelInstrumentationFetchFieldParameters parameters) {
+        return new ChainedInstrumentationContext<>(instrumentations.stream()
+                .map(instrumentation -> {
+                    InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
+                    return instrumentation.beginFieldFetch(parameters.withNewState(state));
                 })
                 .collect(toList()));
     }

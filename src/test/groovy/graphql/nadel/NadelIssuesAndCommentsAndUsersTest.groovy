@@ -1,7 +1,16 @@
 package graphql.nadel
 
+
+import graphql.execution.instrumentation.InstrumentationContext
+import graphql.execution.instrumentation.SimpleInstrumentationContext
+import graphql.execution.nextgen.result.ExecutionResultNode
+import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
 import spock.lang.Specification
+
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
@@ -19,6 +28,8 @@ class NadelIssuesAndCommentsAndUsersTest extends Specification {
             issues {
                 key
                 summary
+                key
+                summary
                 reporter {
                     displayName
                 }
@@ -32,9 +43,40 @@ class NadelIssuesAndCommentsAndUsersTest extends Specification {
         }
         '''
 
+        NadelInstrumentation instrumentation = new NadelInstrumentation() {
+            def t = System.nanoTime()
+
+            @Override
+            InstrumentationContext<ExecutionResultNode> beginFieldFetch(NadelInstrumentationFetchFieldParameters parameters) {
+                def path = parameters.getExecutionStepInfo().getPath()
+                return new SimpleInstrumentationContext<ExecutionResultNode>() {
+
+                    private long secs() {
+                        def plus = System.nanoTime() - t
+                        TimeUnit.SECONDS.convert(plus, TimeUnit.NANOSECONDS)
+                    }
+
+                    @Override
+                    void onDispatched(CompletableFuture<ExecutionResultNode> result) {
+                        long t = this.secs()
+                        println "Dispatched   <= $path @ T+$t"
+                    }
+
+                    @Override
+                    void onCompleted(ExecutionResultNode result, Throwable throwable) {
+                        long t = secs()
+                        println "   Completed => $path @ T+$t"
+                    }
+                }
+            }
+        }
+
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2  )
+
         Nadel nadel = newNadel()
                 .dsl(IssuesCommentsUsersHarness.ndsl)
-                .serviceExecutionFactory(IssuesCommentsUsersHarness.serviceFactory)
+                .instrumentation(instrumentation)
+                .serviceExecutionFactory(serviceExecutionFactory)
                 .build()
 
         when:

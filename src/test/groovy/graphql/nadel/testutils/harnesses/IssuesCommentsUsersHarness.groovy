@@ -2,11 +2,13 @@ package graphql.nadel.testutils.harnesses
 
 import graphql.GraphQL
 import graphql.nadel.ServiceExecution
+import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.DataFetcher
 import graphql.schema.TypeResolver
 import graphql.schema.idl.TypeDefinitionRegistry
 
+import static graphql.nadel.testutils.TestUtil.delayedServiceExecution
 import static graphql.nadel.testutils.TestUtil.schema
 import static graphql.nadel.testutils.TestUtil.serviceFactory
 import static graphql.nadel.testutils.TestUtil.typeDefinitions
@@ -140,11 +142,15 @@ class IssuesCommentsUsersHarness {
     static ServiceExecution commentsServiceExecution = TestUtil.serviceExecutionImpl(buildCommentsImpl())
     static ServiceExecution usersServiceExecution = TestUtil.serviceExecutionImpl(buildUsersImpl())
 
-    static def serviceFactory = serviceFactory([
-            IssueService  : new Tuple2(issuesServiceExecution, issuesSchema),
-            CommentService: new Tuple2(commentsServiceExecution, commentsSchema),
-            UserService   : new Tuple2(usersServiceExecution, usersSchema),
-    ])
+    static def serviceFactory = serviceFactoryWithDelay(0)
+
+    static ServiceExecutionFactory serviceFactoryWithDelay(def ms) {
+        serviceFactory([
+                IssueService  : new Tuple2(delayedServiceExecution(ms, issuesServiceExecution), issuesSchema),
+                CommentService: new Tuple2(delayedServiceExecution(ms, commentsServiceExecution), commentsSchema),
+                UserService   : new Tuple2(delayedServiceExecution(ms, usersServiceExecution), usersSchema),
+        ])
+    }
 
     //
     // Implementation under here
