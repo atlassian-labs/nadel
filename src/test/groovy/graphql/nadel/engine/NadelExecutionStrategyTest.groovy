@@ -8,6 +8,7 @@ import graphql.execution.nextgen.result.RootExecutionResultNode
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
+import graphql.nadel.FilterRegistry
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
@@ -32,6 +33,7 @@ class NadelExecutionStrategyTest extends Specification {
     def serviceDefinition
     def definitionRegistry
     def instrumentation
+    def filterRegistry
 
     void setup() {
         executionHelper = new ExecutionHelper()
@@ -40,6 +42,7 @@ class NadelExecutionStrategyTest extends Specification {
         serviceDefinition = ServiceDefinition.newServiceDefinition().build()
         definitionRegistry = Mock(DefinitionRegistry)
         instrumentation = new NadelInstrumentation() {}
+        filterRegistry = new FilterRegistry()
     }
 
     def "one call to one service"() {
@@ -67,7 +70,7 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery = "query nadel_2_service {foo}"
 
         when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, filterRegistry)
 
 
         then:
@@ -103,7 +106,7 @@ class NadelExecutionStrategyTest extends Specification {
         def serviceResultData = [foo: ["foo1", "foo2"]]
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, filterRegistry)
 
 
         then:
@@ -177,7 +180,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallHydrationSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, filterRegistry)
 
         then:
         1 * service1Execution.execute({
@@ -225,7 +228,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, filterRegistry)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -306,7 +309,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, filterRegistry)
 
 
         then:
@@ -387,7 +390,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, filterRegistry)
 
 
         then:
