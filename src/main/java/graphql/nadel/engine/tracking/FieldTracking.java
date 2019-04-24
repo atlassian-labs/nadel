@@ -13,6 +13,7 @@ import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.NadelContext;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters;
+import graphql.nadel.util.ExecutionPathUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,7 +21,6 @@ import java.util.Map;
 
 import static graphql.nadel.engine.UnderscoreTypeNameUtils.isAliasedUnderscoreTypeNameField;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
 
 public class FieldTracking {
     private final NadelInstrumentation instrumentation;
@@ -46,12 +46,12 @@ public class FieldTracking {
         }
     }
 
-    private void dispatchIfNeeded(ExecutionStepInfo stepInfo) {
+    private synchronized void dispatchIfNeeded(ExecutionStepInfo stepInfo) {
         if (skipField(stepInfo)) {
             // don't do things twice
             return;
         }
-        ExecutionPath path = collapsedPath(stepInfo.getPath());
+        ExecutionPath path = stepInfo.getPath();
         if (!dispatchedFields.containsKey(path)) {
             ExecutionStepInfo newStepInfo = stepInfo.transform(builder -> builder.path(path));
             NadelInstrumentationFetchFieldParameters parameters = new NadelInstrumentationFetchFieldParameters(executionContext, newStepInfo, instrumentationState);
@@ -66,8 +66,11 @@ public class FieldTracking {
 
     @SuppressWarnings("RedundantIfStatement")
     private boolean skipField(ExecutionStepInfo stepInfo) {
-        ExecutionPath path = collapsedPath(stepInfo.getPath());
+        ExecutionPath path = stepInfo.getPath();
         if (isAliasedUnderscoreTypeNameField(nadelContext, stepInfo.getField())) {
+            return true;
+        }
+        if (ExecutionPathUtils.isListEndingPath(path)) {
             return true;
         }
         if (completedFields.containsKey(path)) {
@@ -76,14 +79,11 @@ public class FieldTracking {
         return false;
     }
 
-    private ExecutionPath collapsedPath(ExecutionPath path) {
-        List<Object> segments = path.toList();
-        if (segments.isEmpty()) {
-            return path;
-        }
-        List<Object> namesOnly = segments.stream().filter(seg -> seg instanceof String).collect(toList());
-        return ExecutionPath.fromList(namesOnly);
+    public void fieldCompleted(ExecutionStepInfo stepInfo) {
+        dispatchIfNeeded(stepInfo);
+        completeNode(stepInfo, null, null);
     }
+
 
     public void fieldsCompleted(ExecutionResultNode resultNode, Throwable throwable) {
         if (resultNode instanceof RootExecutionResultNode) {
@@ -93,12 +93,11 @@ public class FieldTracking {
         }
     }
 
-    private void completeNodes(List<ExecutionResultNode> resultNodes, Throwable throwable) {
+    private synchronized void completeNodes(List<ExecutionResultNode> resultNodes, Throwable throwable) {
         for (ExecutionResultNode resultNode : resultNodes) {
 
             FetchedValueAnalysis fva = resultNode.getFetchedValueAnalysis();
             ExecutionStepInfo stepInfo = fva.getExecutionStepInfo();
-            ExecutionPath path = collapsedPath(stepInfo.getPath());
 
             // the reason we dispatch during completion is because sub fields are not visited
             // during the initial service call and hence they are never seen until we complete
@@ -111,21 +110,26 @@ public class FieldTracking {
             if (isHydration(resultNode)) {
                 continue;
             }
+            completeNode(stepInfo, resultNode, throwable);
 
-            // we are re-entrant and quite stateful and hence we don't want to do things twice
-            boolean skipField = skipField(stepInfo);
-            if (!skipField) {
-                if (pendingFieldFetchContexts.containsKey(path)) {
-                    InstrumentationContext<ExecutionResultNode> ctx = pendingFieldFetchContexts.get(path);
-                    ctx.onCompleted(resultNode, throwable);
-
-                    pendingFieldFetchContexts.remove(path);
-                    completedFields.put(path, stepInfo);
-                }
-            }
             // and go down and complete the children
             List<ExecutionResultNode> children = resultNode.getChildren();
             completeNodes(children, throwable);
+        }
+    }
+
+    private synchronized void completeNode(ExecutionStepInfo stepInfo, ExecutionResultNode resultNode, Throwable throwable) {
+        // we are re-entrant and quite stateful and hence we don't want to do things twice
+        boolean skipField = skipField(stepInfo);
+        ExecutionPath path = stepInfo.getPath();
+        if (!skipField) {
+            if (pendingFieldFetchContexts.containsKey(path)) {
+                InstrumentationContext<ExecutionResultNode> ctx = pendingFieldFetchContexts.get(path);
+                ctx.onCompleted(resultNode, throwable);
+
+                pendingFieldFetchContexts.remove(path);
+                completedFields.put(path, stepInfo);
+            }
         }
     }
 
@@ -135,4 +139,5 @@ public class FieldTracking {
                 resultNode.getChildren().stream().allMatch(n -> n instanceof HydrationInputNode);
         return hydrationNode || directChildrenAreHydrated;
     }
+
 }

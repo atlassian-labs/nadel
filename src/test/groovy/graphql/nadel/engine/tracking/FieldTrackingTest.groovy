@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture
 
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.esi
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.leaf
+import static graphql.nadel.testutils.ExecutionResultNodeUtil.list
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.root
 
 class FieldTrackingTest extends Specification {
@@ -80,7 +81,7 @@ class FieldTrackingTest extends Specification {
         instrumentation.completed == ["/a": 1, "/b": 1]
     }
 
-    def "will dispatch if it was previously dispatched"() {
+    def "will dispatch if it was not previously dispatched"() {
         def instrumentation = new TestInstrumentation()
         def fieldTracking = new FieldTracking(instrumentation, executionContext)
         when:
@@ -89,5 +90,21 @@ class FieldTrackingTest extends Specification {
         then:
         instrumentation.dispatched == ["/a": 1, "/b": 1]
         instrumentation.completed == ["/a": 1, "/b": 1]
+    }
+
+    def "will ignore list only paths"() {
+        def instrumentation = new TestInstrumentation()
+        def fieldTracking = new FieldTracking(instrumentation, executionContext)
+
+        when:
+        fieldTracking.fieldsDispatched([esi("/a"), esi("/a[0]"), esi("/a[0]/b")])
+        then:
+        instrumentation.dispatched == ["/a": 1, "/a[0]/b": 1]
+
+        when:
+        fieldTracking.fieldsCompleted(root([list("/a", [leaf("/a[0]"), leaf("/a[0]/b")])]), null)
+
+        then:
+        instrumentation.dispatched == ["/a": 1, "/a[0]/b": 1]
     }
 }

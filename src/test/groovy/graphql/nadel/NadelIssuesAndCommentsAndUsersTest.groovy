@@ -4,7 +4,9 @@ package graphql.nadel
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.SimpleInstrumentationContext
 import graphql.execution.nextgen.result.ExecutionResultNode
+import graphql.nadel.instrumentation.ChainedNadelInstrumentation
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.TracingInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
 import spock.lang.Specification
@@ -78,12 +80,13 @@ class NadelIssuesAndCommentsAndUsersTest extends Specification {
         '''
 
         def instrumentation = new CapturingInstrumentation()
+        def chainedInstrumentation = new ChainedNadelInstrumentation([instrumentation, new TracingInstrumentation()])
 
         def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
 
         Nadel nadel = newNadel()
                 .dsl(IssuesCommentsUsersHarness.ndsl)
-                .instrumentation(instrumentation)
+                .instrumentation(chainedInstrumentation)
                 .serviceExecutionFactory(serviceExecutionFactory)
                 .build()
 
@@ -103,30 +106,41 @@ class NadelIssuesAndCommentsAndUsersTest extends Specification {
                             [commentText: "Text of C6", author: [displayName: "Display name of ted"]]]]],
         ]
 
+        def expectedList = [
+                "/issues",
+                "/issues[0]/comments",
+                "/issues[0]/comments[0]/author",
+                "/issues[0]/comments[0]/author/displayName",
+                "/issues[0]/comments[0]/commentText",
+                "/issues[0]/comments[1]/author",
+                "/issues[0]/comments[1]/author/displayName",
+                "/issues[0]/comments[1]/commentText",
+                "/issues[0]/comments[2]/author",
+                "/issues[0]/comments[2]/author/displayName",
+                "/issues[0]/comments[2]/commentText",
+                "/issues[0]/key",
+                "/issues[0]/reporter",
+                "/issues[0]/reporter/displayName",
+                "/issues[0]/summary",
+                "/issues[1]/comments",
+                "/issues[1]/comments[0]/author",
+                "/issues[1]/comments[0]/author/displayName",
+                "/issues[1]/comments[0]/commentText",
+                "/issues[1]/comments[1]/author",
+                "/issues[1]/comments[1]/author/displayName",
+                "/issues[1]/comments[1]/commentText",
+                "/issues[1]/comments[2]/author",
+                "/issues[1]/comments[2]/author/displayName",
+                "/issues[1]/comments[2]/commentText",
+                "/issues[1]/key",
+                "/issues[1]/reporter",
+                "/issues[1]/reporter/displayName",
+                "/issues[1]/summary",
+        ]
         def dispatched = instrumentation.dispatched.keySet().sort()
-        dispatched == [
-                "/issues",
-                "/issues/comments",
-                "/issues/comments/author",
-                "/issues/comments/author/displayName",
-                "/issues/comments/commentText",
-                "/issues/key",
-                "/issues/reporter",
-                "/issues/reporter/displayName",
-                "/issues/summary",
-        ]
-        def completed = instrumentation.completed.keySet().sort()
-        completed == [
-                "/issues",
-                "/issues/comments",
-                "/issues/comments/author",
-                "/issues/comments/author/displayName",
-                "/issues/comments/commentText",
-                "/issues/key",
-                "/issues/reporter",
-                "/issues/reporter/displayName",
-                "/issues/summary",
-        ]
+        dispatched == expectedList
 
+        def completed = instrumentation.completed.keySet().sort()
+        completed == expectedList
     }
 }

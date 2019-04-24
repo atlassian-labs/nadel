@@ -37,7 +37,7 @@ class ExecutionStepInfoMapperTest extends Specification {
 
         ExecutionStepInfoMapper mapper = new ExecutionStepInfoMapper()
         when:
-        def mappedInfo = mapper.mapExecutionStepInfo(rootExecutionStepInfo, executionStepInfo, overallSchema, [:])
+        def mappedInfo = mapper.mapExecutionStepInfo(rootExecutionStepInfo, executionStepInfo, overallSchema, false, [:])
 
 
         then:
@@ -67,7 +67,7 @@ class ExecutionStepInfoMapperTest extends Specification {
 
         ExecutionStepInfoMapper mapper = new ExecutionStepInfoMapper()
         when:
-        def mappedInfo = mapper.mapExecutionStepInfo(rootExecutionStepInfo, executionStepInfo, overallSchema, [:])
+        def mappedInfo = mapper.mapExecutionStepInfo(rootExecutionStepInfo, executionStepInfo, overallSchema, false, [:])
 
 
         then:

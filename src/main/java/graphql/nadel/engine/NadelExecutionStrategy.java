@@ -6,6 +6,7 @@ import graphql.GraphqlErrorBuilder;
 import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
+import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
@@ -31,6 +32,7 @@ import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
+import graphql.nadel.util.ExecutionPathUtils;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
@@ -218,7 +220,7 @@ public class NadelExecutionStrategy {
         fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
         return callResult
                 .thenApply(serviceResult -> serviceExecutionResultToResultNode(executionContextForService, underlyingRootStepInfo, singletonList(transformedMergedField), serviceResult))
-                .thenApply(resultNode -> convertHydrationResultIntoOverallResult(hydratedFieldStepInfo, hydrationTransformation, resultNode, transformationByResultField))
+                .thenApply(resultNode -> convertHydrationResultIntoOverallResult(fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, transformationByResultField))
                 .thenApply(resultNode -> maybeRemoveUnderscoreTypeName(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .thenCompose(resultNode -> resolveAllHydrationInputs(executionContextForService, fieldTracking, resultNode))
@@ -229,15 +231,33 @@ public class NadelExecutionStrategy {
         return resultToResultNode.resultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, executionResult);
     }
 
-    private ExecutionResultNode convertHydrationResultIntoOverallResult(ExecutionStepInfo hydratedFieldStepInfo, HydrationTransformation hydrationTransformation,
+    private ExecutionResultNode convertHydrationResultIntoOverallResult(FieldTracking fieldTracking,
+                                                                        ExecutionStepInfo hydratedFieldStepInfo,
+                                                                        HydrationTransformation hydrationTransformation,
                                                                         RootExecutionResultNode rootResultNode,
                                                                         Map<Field, FieldTransformation> transformationByResultField) {
-        RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, hydratedFieldStepInfo, transformationByResultField);
+
+        synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
+
+        RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, hydratedFieldStepInfo, true, transformationByResultField);
         // NOTE : we only take the first result node here but we may have errors in the root node that are global so transfer them in
         ExecutionResultNode firstTopLevelResultNode = overallResultNode.getChildren().get(0);
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
 
         return changeFieldInResultNode(firstTopLevelResultNode, hydrationTransformation.getOriginalField());
+    }
+
+    private void synthesizeHydratedParentIfNeeded(FieldTracking fieldTracking, ExecutionStepInfo hydratedFieldStepInfo) {
+        ExecutionPath path = hydratedFieldStepInfo.getPath();
+        if (ExecutionPathUtils.isListEndingPath(path)) {
+            //
+            // a path like /issues/comments[0] wont ever have had a /issues/comments path completed but the tracing spec needs
+            // one so we make one
+            ExecutionPath newPath = ExecutionPathUtils.removeLastSegment(path);
+            ExecutionStepInfo newStepInfo = hydratedFieldStepInfo.transform(builder -> builder.path(newPath));
+            fieldTracking.fieldCompleted(newStepInfo);
+        }
+
     }
 
     @SuppressWarnings("unused")
