@@ -16,6 +16,7 @@ import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
+import graphql.nadel.FilterRegistry;
 import graphql.nadel.Service;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
@@ -38,13 +39,15 @@ public class Execution {
     private final IntrospectionRunner introspectionRunner;
     private final ExecutionHelper executionHelper = new ExecutionHelper();
     private final NadelExecutionStrategy nadelExecutionStrategy;
+    private final FilterRegistry filterRegistry;
 
-    public Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner) {
+    public Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner, FilterRegistry filterRegistry) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.instrumentation = instrumentation;
         this.introspectionRunner = introspectionRunner;
         this.nadelExecutionStrategy = new NadelExecutionStrategy(services, createFieldsInfos(), overallSchema, instrumentation);
+        this.filterRegistry = filterRegistry;
     }
 
     public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput, Document document, ExecutionId executionId, InstrumentationState instrumentationState) {
@@ -67,7 +70,7 @@ public class Execution {
         if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
             result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
         } else {
-            CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection);
+            CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection, filterRegistry);
             result = resultNodes.thenApply(ResultNodesUtil::toExecutionResult);
         }
 

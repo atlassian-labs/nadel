@@ -63,8 +63,9 @@ public class Nadel {
     private final PreparsedDocumentProvider preparsedDocumentProvider;
     private final ExecutionIdProvider executionIdProvider;
     private final IntrospectionRunner introspectionRunner;
+    private final FilterRegistry filterRegistry;
 
-    private Nadel(Reader nsdl, ServiceExecutionFactory serviceExecutionFactory, NadelInstrumentation instrumentation, PreparsedDocumentProvider preparsedDocumentProvider, ExecutionIdProvider executionIdProvider, IntrospectionRunner introspectionRunner) {
+    private Nadel(Reader nsdl, ServiceExecutionFactory serviceExecutionFactory, NadelInstrumentation instrumentation, PreparsedDocumentProvider preparsedDocumentProvider, ExecutionIdProvider executionIdProvider, IntrospectionRunner introspectionRunner, FilterRegistry filterRegistry) {
         this.serviceExecutionFactory = serviceExecutionFactory;
         this.instrumentation = instrumentation;
         this.preparsedDocumentProvider = preparsedDocumentProvider;
@@ -72,6 +73,8 @@ public class Nadel {
 
         this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
         this.introspectionRunner = introspectionRunner;
+        this.filterRegistry = filterRegistry;
+
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
 
         UnderlyingSchemaGenerator underlyingSchemaGenerator = new UnderlyingSchemaGenerator();
@@ -119,6 +122,7 @@ public class Nadel {
         private PreparsedDocumentProvider preparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE;
         private ExecutionIdProvider executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER;
         private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
+        private FilterRegistry filterRegistry = new FilterRegistry();
 
 
         public Builder dsl(Reader nsdl) {
@@ -155,8 +159,13 @@ public class Nadel {
             return this;
         }
 
+        public Builder filterRegistry(FilterRegistry filterRegistry){
+            this.filterRegistry = filterRegistry;
+            return this;
+        }
+
         public Nadel build() {
-            return new Nadel(nsdl, serviceExecutionFactory, instrumentation, preparsedDocumentProvider, executionIdProvider, introspectionRunner);
+            return new Nadel(nsdl, serviceExecutionFactory, instrumentation, preparsedDocumentProvider, executionIdProvider, introspectionRunner, filterRegistry);
         }
     }
 
@@ -187,7 +196,7 @@ public class Nadel {
             NadelInstrumentationQueryExecutionParameters instrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, overallSchema, instrumentationState);
             InstrumentationContext<ExecutionResult> executionInstrumentation = instrumentation.beginQueryExecution(instrumentationParameters);
 
-            CompletableFuture<ExecutionResult> executionResult = parseValidateAndExecute(executionInput, overallSchema, instrumentationState);
+            CompletableFuture<ExecutionResult> executionResult = parseValidateAndExecute(executionInput, overallSchema, instrumentationState, filterRegistry);
             //
             // finish up instrumentation
             executionResult = executionResult.whenComplete(executionInstrumentation::onCompleted);
@@ -200,7 +209,7 @@ public class Nadel {
         }
     }
 
-    private CompletableFuture<ExecutionResult> parseValidateAndExecute(ExecutionInput executionInput, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState) {
+    private CompletableFuture<ExecutionResult> parseValidateAndExecute(ExecutionInput executionInput, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState, FilterRegistry filterRegistry) {
         AtomicReference<ExecutionInput> executionInputRef = new AtomicReference<>(executionInput);
         PreparsedDocumentEntry preparsedDoc = preparsedDocumentProvider.get(executionInput.getQuery(),
                 transformedQuery -> {
@@ -212,7 +221,7 @@ public class Nadel {
             return CompletableFuture.completedFuture(new ExecutionResultImpl(preparsedDoc.getErrors()));
         }
 
-        return executeImpl(executionInputRef.get(), preparsedDoc.getDocument(), instrumentationState);
+        return executeImpl(executionInputRef.get(), preparsedDoc.getDocument(), instrumentationState, filterRegistry);
     }
 
     private PreparsedDocumentEntry parseAndValidate(AtomicReference<ExecutionInput> executionInputRef, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState) {
@@ -273,14 +282,14 @@ public class Nadel {
         return validationErrors;
     }
 
-    private CompletableFuture<ExecutionResult> executeImpl(ExecutionInput executionInput, Document document, InstrumentationState instrumentationState) {
+    private CompletableFuture<ExecutionResult> executeImpl(ExecutionInput executionInput, Document document, InstrumentationState instrumentationState, FilterRegistry filterRegistry) {
 
         String query = executionInput.getQuery();
         String operationName = executionInput.getOperationName();
         Object context = executionInput.getContext();
 
         ExecutionId executionId = executionIdProvider.provide(query, operationName, context);
-        Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner);
+        Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner, filterRegistry);
 
         return execution.execute(executionInput, document, executionId, instrumentationState);
     }
