@@ -9,11 +9,14 @@ import graphql.language.Field
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
 
+import static graphql.nadel.testutils.ExecutionResultNodeUtil.esi
+
 class ServiceResultNodesToOverallResultTest extends Specification {
 
 
     def "maps ResultNode with a field rename"() {
         given:
+        def rootExecutionStepInfo = esi("")
         /*
         * This test maps a result tree with two children a,b to a result tree with x,y.
         * This simulates a field from a -> x and b -> y
@@ -49,11 +52,11 @@ class ServiceResultNodesToOverallResultTest extends Specification {
         def rootResultNode = new RootExecutionResultNode([leafResultNode1, leafResultNode2])
 
         def overallSchema = Mock(GraphQLSchema)
-        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis1, overallSchema, [:]) >> mappedAnalysis1
-        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis2, overallSchema, [:]) >> mappedAnalysis2
+        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis1, overallSchema, rootExecutionStepInfo, [:]) >> mappedAnalysis1
+        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis2, overallSchema, rootExecutionStepInfo, [:]) >> mappedAnalysis2
 
         when:
-        def newRoot = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, [:])
+        def newRoot = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, rootExecutionStepInfo, [:])
 
 
         then:

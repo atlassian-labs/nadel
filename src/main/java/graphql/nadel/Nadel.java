@@ -29,6 +29,7 @@ import graphql.nadel.schema.UnderlyingSchemaGenerator;
 import graphql.parser.InvalidSyntaxException;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.idl.ScalarInfo;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
@@ -93,7 +94,12 @@ public class Nadel {
                 .map(Service::getDefinitionRegistry)
                 .collect(toList());
         OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
-        this.overallSchema = overallSchemaGenerator.buildOverallSchema(registries);
+        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries);
+        //
+        // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
+        // make direct use of them, we still have to map between them
+        schema = schema.transform(builder -> ScalarInfo.STANDARD_SCALARS.forEach(builder::additionalType));
+        this.overallSchema = schema;
     }
 
     public List<Service> getServices() {

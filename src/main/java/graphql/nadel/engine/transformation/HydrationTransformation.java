@@ -15,7 +15,7 @@ import java.util.List;
 
 import static graphql.Assert.assertTrue;
 
-public class HydrationTransformation implements FieldTransformation {
+public class HydrationTransformation extends AbstractFieldTransformation {
 
     private String originalName;
     private Field originalField;
@@ -30,6 +30,8 @@ public class HydrationTransformation implements FieldTransformation {
 
     @Override
     public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
+        super.apply(environment);
+
         TraverserContext<Node> context = environment.getTraverserContext();
         List<RemoteArgumentDefinition> arguments = innerServiceHydration.getArguments();
         assertTrue(arguments.size() == 1, "only hydration with one argument are supported");
@@ -41,17 +43,9 @@ public class HydrationTransformation implements FieldTransformation {
         originalField = environment.getField();
         originalName = environment.getField().getName();
         newField = environment.getField().transform(builder -> builder.selectionSet(null).name(hydrationSourceName));
-        fieldType = environment.getFieldDefinition().getType();
         return TreeTransformerUtil.changeNode(context, newField);
     }
 
-    public String getOriginalName() {
-        return originalName;
-    }
-
-    public Field getOriginalField() {
-        return originalField;
-    }
 
     public Field getNewField() {
         return newField;
@@ -61,7 +55,4 @@ public class HydrationTransformation implements FieldTransformation {
         return innerServiceHydration;
     }
 
-    public GraphQLOutputType getFieldType() {
-        return fieldType;
-    }
 }

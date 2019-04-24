@@ -16,8 +16,9 @@ public class FetchedAnalysisMapper {
 
     public FetchedValueAnalysis mapFetchedValueAnalysis(FetchedValueAnalysis fetchedValueAnalysis,
                                                         GraphQLSchema overallSchema,
+                                                        ExecutionStepInfo parentExecutionStepInfo,
                                                         Map<Field, FieldTransformation> transformationMap) {
-        ExecutionStepInfo mappedExecutionStepInfo = executionStepInfoMapper.mapExecutionStepInfo(fetchedValueAnalysis.getExecutionStepInfo(), overallSchema, transformationMap);
+        ExecutionStepInfo mappedExecutionStepInfo = executionStepInfoMapper.mapExecutionStepInfo(parentExecutionStepInfo, fetchedValueAnalysis.getExecutionStepInfo(), overallSchema, transformationMap);
         GraphQLObjectType mappedResolvedType = null;
         if (fetchedValueAnalysis.getValueType() == FetchedValueAnalysis.FetchedValueType.OBJECT && !fetchedValueAnalysis.isNullValue()) {
             mappedResolvedType = (GraphQLObjectType) overallSchema.getType(fetchedValueAnalysis.getResolvedType().getName());

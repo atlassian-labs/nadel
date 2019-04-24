@@ -7,6 +7,7 @@ import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
+import graphql.execution.nextgen.result.ListExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.NadelContext;
@@ -75,6 +76,15 @@ public class FieldTracking {
         return false;
     }
 
+    private ExecutionPath collapsedPath(ExecutionPath path) {
+        List<Object> segments = path.toList();
+        if (segments.isEmpty()) {
+            return path;
+        }
+        List<Object> namesOnly = segments.stream().filter(seg -> seg instanceof String).collect(toList());
+        return ExecutionPath.fromList(namesOnly);
+    }
+
     public void fieldsCompleted(ExecutionResultNode resultNode, Throwable throwable) {
         if (resultNode instanceof RootExecutionResultNode) {
             completeNodes(resultNode.getChildren(), throwable);
@@ -85,22 +95,25 @@ public class FieldTracking {
 
     private void completeNodes(List<ExecutionResultNode> resultNodes, Throwable throwable) {
         for (ExecutionResultNode resultNode : resultNodes) {
+
             FetchedValueAnalysis fva = resultNode.getFetchedValueAnalysis();
             ExecutionStepInfo stepInfo = fva.getExecutionStepInfo();
             ExecutionPath path = collapsedPath(stepInfo.getPath());
 
-            // we are re-entrant and quite stateful and hence we don't want to do things twice
-            boolean skipField = skipField(stepInfo);
-
+            // the reason we dispatch during completion is because sub fields are not visited
+            // during the initial service call and hence they are never seen until we complete
+            // the parent top level field
             dispatchIfNeeded(stepInfo);
 
             //
             // hydrated fields are the exception - they have started to execute but they still need to be completed
             // we have another call back path for them
-            if (resultNode instanceof HydrationInputNode) {
+            if (isHydration(resultNode)) {
                 continue;
             }
 
+            // we are re-entrant and quite stateful and hence we don't want to do things twice
+            boolean skipField = skipField(stepInfo);
             if (!skipField) {
                 if (pendingFieldFetchContexts.containsKey(path)) {
                     InstrumentationContext<ExecutionResultNode> ctx = pendingFieldFetchContexts.get(path);
@@ -116,12 +129,10 @@ public class FieldTracking {
         }
     }
 
-    private ExecutionPath collapsedPath(ExecutionPath path) {
-        List<Object> segments = path.toList();
-        if (segments.isEmpty()) {
-            return path;
-        }
-        List<Object> namesOnly = segments.stream().filter(seg -> seg instanceof String).collect(toList());
-        return ExecutionPath.fromList(namesOnly);
+    private boolean isHydration(ExecutionResultNode resultNode) {
+        boolean hydrationNode = resultNode instanceof HydrationInputNode;
+        boolean directChildrenAreHydrated = resultNode instanceof ListExecutionResultNode &&
+                resultNode.getChildren().stream().allMatch(n -> n instanceof HydrationInputNode);
+        return hydrationNode || directChildrenAreHydrated;
     }
 }
