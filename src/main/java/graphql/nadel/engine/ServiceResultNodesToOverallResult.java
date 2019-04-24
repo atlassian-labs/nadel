@@ -28,7 +28,7 @@ public class ServiceResultNodesToOverallResult {
 
     //TODO: the return type is not really ready to return hydration results, which can be used as input for new queries
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo parentExecutionStepInfo, Map<Field, FieldTransformation> transformationMap) {
+    public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, Map<Field, FieldTransformation> transformationMap) {
         try {
             ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
@@ -41,13 +41,13 @@ public class ServiceResultNodesToOverallResult {
                         convertedNode = mapRootResultNode((RootExecutionResultNode) node);
                     } else if (node instanceof ObjectExecutionResultNode) {
                         ObjectExecutionResultNode objectResultNode = (ObjectExecutionResultNode) node;
-                        convertedNode = mapObjectResultNode(objectResultNode, overallSchema, parentExecutionStepInfo, transformationMap);
+                        convertedNode = mapObjectResultNode(objectResultNode, overallSchema, rootStepInfo, transformationMap);
                     } else if (node instanceof ListExecutionResultNode) {
                         ListExecutionResultNode listExecutionResultNode = (ListExecutionResultNode) node;
-                        convertedNode = mapListExecutionResultNode(listExecutionResultNode, overallSchema, parentExecutionStepInfo, transformationMap);
+                        convertedNode = mapListExecutionResultNode(listExecutionResultNode, overallSchema, rootStepInfo, transformationMap);
                     } else if (node instanceof LeafExecutionResultNode) {
                         LeafExecutionResultNode leafExecutionResultNode = (LeafExecutionResultNode) node;
-                        convertedNode = mapLeafResultNode(leafExecutionResultNode, overallSchema, parentExecutionStepInfo, transformationMap);
+                        convertedNode = mapLeafResultNode(leafExecutionResultNode, overallSchema, rootStepInfo, transformationMap);
                     } else {
                         return assertShouldNeverHappen();
                     }
