@@ -19,11 +19,11 @@ import static graphql.Assert.assertNotNull;
 /**
  * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side
  */
-class UnderscoreTypeNameUtils {
+public class UnderscoreTypeNameUtils {
 
     private static final String UNDERSCORE_TYPENAME = "__typename";
 
-    static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
+    public static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
         if (!Util.isInterfaceOrUnionField(fieldType)) {
             return field;
         }
@@ -42,13 +42,8 @@ class UnderscoreTypeNameUtils {
         return field;
     }
 
-    static ExecutionResultNode maybeRemoveUnderscoreTypeName(NadelContext nadelContext, ExecutionResultNode resultNode) {
-        String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
-        return maybeRemoveUnderscoreTypeNameImpl(underscoreTypeNameAlias, resultNode);
-    }
-
     @SuppressWarnings("UnnecessaryLocalVariable")
-    private static ExecutionResultNode maybeRemoveUnderscoreTypeNameImpl(String underscoreTypeNameAlias, ExecutionResultNode resultNode) {
+    public static ExecutionResultNode maybeRemoveUnderscoreTypeName(NadelContext nadelContext, ExecutionResultNode resultNode) {
         ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
         ExecutionResultNode newNode = resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
@@ -58,7 +53,7 @@ class UnderscoreTypeNameUtils {
                     LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
                     MergedField mergedField = leaf.getFetchedValueAnalysis().getField();
 
-                    if (isAliasedUnderscoreTpeNameField(underscoreTypeNameAlias, mergedField)) {
+                    if (isAliasedUnderscoreTypeNameField(nadelContext, mergedField)) {
                         return TreeTransformerUtil.deleteNode(context);
                     }
                 }
@@ -68,7 +63,8 @@ class UnderscoreTypeNameUtils {
         return newNode;
     }
 
-    private static boolean isAliasedUnderscoreTpeNameField(String underscoreTypeNameAlias, MergedField mergedField) {
+    public static boolean isAliasedUnderscoreTypeNameField(NadelContext nadelContext, MergedField mergedField) {
+        String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
         List<Field> fields = mergedField.getFields();
         // we KNOW we put the field in as a single field with alias (not merged) and hence we can assume that on the reverse
         if (fields.size() == 1) {

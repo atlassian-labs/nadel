@@ -1,5 +1,8 @@
 package graphql.nadel.testutils
 
+
+import graphql.execution.ExecutionPath
+import graphql.execution.ExecutionStepInfo
 import graphql.execution.nextgen.FetchedValueAnalysis
 import graphql.execution.nextgen.result.ExecutionResultNode
 import graphql.execution.nextgen.result.LeafExecutionResultNode
@@ -19,18 +22,38 @@ import static graphql.language.Field.newField
  * A helper for tests around {@link graphql.execution.nextgen.result.ExecutionResultNode}s
  *
  * The convention is that the field name is the field value with "Val" appended
+ *
+ * You can use paths instead of field names and the field name will be the last segment of path
+ * eg "/a/b" will result in a field name "b" and value of "bVal"
  */
 class ExecutionResultNodeUtil {
 
-
-    static FetchedValueAnalysis fva(String fieldName) {
-        fva(fieldName, null)
+    static ExecutionStepInfo esi(String pathName) {
+        return esi(pathName, null)
     }
 
-    static FetchedValueAnalysis fva(String fieldName, String alias) {
+    static ExecutionStepInfo esi(String pathName, String alias) {
+        if (pathName == null || pathName.isAllWhitespace()) {
+            return newExecutionStepInfo().type(GraphQLString).path(ExecutionPath.rootPath()).build()
+        }
+        if (!pathName.contains("/")) {
+            pathName = "/" + pathName
+        }
+        def path = ExecutionPath.parse(pathName)
+        def fieldName = path.getSegmentName()
+
         def field = newMergedField(newField(fieldName).alias(alias).build()).build()
-        def info = newExecutionStepInfo().type(GraphQLString).field(field).build()
-        def value = fieldName + "Val"
+        newExecutionStepInfo().type(GraphQLString).field(field).path(path).build()
+    }
+
+    static FetchedValueAnalysis fva(String pathName) {
+        fva(pathName, null)
+    }
+
+    static FetchedValueAnalysis fva(String pathName, String alias) {
+
+        def info = esi(pathName, alias)
+        def value = info.field.name + "Val"
         def fetchedValue = newFetchedValue().fetchedValue(value).build()
         return newFetchedValueAnalysis()
                 .executionStepInfo(info)

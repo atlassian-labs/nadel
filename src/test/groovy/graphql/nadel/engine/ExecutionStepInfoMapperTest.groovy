@@ -10,11 +10,14 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLTypeUtil
 import spock.lang.Specification
 
+import static graphql.nadel.testutils.ExecutionResultNodeUtil.esi
+
 class ExecutionStepInfoMapperTest extends Specification {
 
 
     def "maps list"() {
         given:
+        def rootExecutionStepInfo = esi("")
         def schema = TestUtil.schema("type Query { foo: [String] }")
         def overallSchema = TestUtil.schema("type Query { foo: [String] }")
         GraphQLObjectType queryType = schema.getType("Query")
@@ -34,7 +37,7 @@ class ExecutionStepInfoMapperTest extends Specification {
 
         ExecutionStepInfoMapper mapper = new ExecutionStepInfoMapper()
         when:
-        def mappedInfo = mapper.mapExecutionStepInfo(executionStepInfo, overallSchema, [:])
+        def mappedInfo = mapper.mapExecutionStepInfo(rootExecutionStepInfo, executionStepInfo, overallSchema, false, [:])
 
 
         then:
@@ -44,6 +47,7 @@ class ExecutionStepInfoMapperTest extends Specification {
 
     def "maps wrapped types"() {
         given:
+        def rootExecutionStepInfo = esi("")
         def schema = TestUtil.schema("type Query { foo: [String!]! }")
         def overallSchema = TestUtil.schema("type Query { foo: [String] }")
         GraphQLObjectType queryType = schema.getType("Query")
@@ -63,7 +67,7 @@ class ExecutionStepInfoMapperTest extends Specification {
 
         ExecutionStepInfoMapper mapper = new ExecutionStepInfoMapper()
         when:
-        def mappedInfo = mapper.mapExecutionStepInfo(executionStepInfo, overallSchema, [:])
+        def mappedInfo = mapper.mapExecutionStepInfo(rootExecutionStepInfo, executionStepInfo, overallSchema, false, [:])
 
 
         then:

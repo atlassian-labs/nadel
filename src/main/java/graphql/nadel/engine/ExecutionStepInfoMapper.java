@@ -1,10 +1,12 @@
 package graphql.nadel.engine;
 
 import graphql.Assert;
+import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.Field;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
@@ -13,6 +15,7 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeUtil;
 
+import java.util.List;
 import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
@@ -20,30 +23,64 @@ import static graphql.Assert.assertNotNull;
 public class ExecutionStepInfoMapper {
 
 
-    public ExecutionStepInfo mapExecutionStepInfo(ExecutionStepInfo executionStepInfo,
+    public ExecutionStepInfo mapExecutionStepInfo(ExecutionStepInfo parentExecutionStepInfo,
+                                                  ExecutionStepInfo executionStepInfo,
                                                   GraphQLSchema overallSchema,
+                                                  boolean isHydrationTransformation,
                                                   Map<Field, FieldTransformation> transformationMap) {
-        MergedField mergedField = executionStepInfo.getField();
-        if (!executionStepInfo.isListType() && transformationMap.containsKey(mergedField.getSingleField())) {
-            FieldTransformation transformation = transformationMap.get(mergedField.getSingleField());
-            mergedField = transformation.unapplyMergedField(mergedField);
+        MergedField underlyingMergedField = executionStepInfo.getField();
+        Field underlyingField = underlyingMergedField.getSingleField();
+        FieldTransformation fieldTransformation = transformationMap.get(underlyingField);
+        if (fieldTransformation != null) {
+            underlyingMergedField = fieldTransformation.unapplyMergedField(underlyingMergedField);
         }
+        MergedField mappedMergedField = underlyingMergedField;
+
         GraphQLOutputType fieldType = executionStepInfo.getType();
         GraphQLObjectType fieldContainer = executionStepInfo.getFieldContainer();
+
         GraphQLObjectType mappedFieldContainer = (GraphQLObjectType) overallSchema.getType(fieldContainer.getName());
         GraphQLOutputType mappedFieldType = mapOutputType(fieldType, overallSchema);
-        GraphQLFieldDefinition fieldDefinition = executionStepInfo.getFieldDefinition();
-        GraphQLFieldDefinition mappedFieldDefinition = mappedFieldContainer.getFieldDefinition(fieldDefinition.getName());
+        GraphQLFieldDefinition mappedFieldDefinition = mappedFieldContainer.getFieldDefinition(mappedMergedField.getName());
 
-        // TODO: map path
+        ExecutionPath mappedPath = mapPath(parentExecutionStepInfo, executionStepInfo, isHydrationTransformation, mappedMergedField);
 
-        MergedField finalMergedField = mergedField;
         return executionStepInfo.transform(builder -> builder
-                .field(finalMergedField)
+                .field(mappedMergedField)
                 .type(mappedFieldType)
+                .path(mappedPath)
                 .fieldContainer(mappedFieldContainer)
-                .fieldDefinition(mappedFieldDefinition));
+                .fieldDefinition(mappedFieldDefinition)
+                .parentInfo(parentExecutionStepInfo)
+        );
 
+    }
+
+    private ExecutionPath mapPath(ExecutionStepInfo parentExecutionStepInfo, ExecutionStepInfo fieldStepInfo, boolean isHydrationTransformation, MergedField mergedField) {
+        String fieldName = mergedField.getName();
+        ExecutionPath fieldPath = fieldStepInfo.getPath();
+        List<Object> fieldSegments = fieldPath.toList();
+        for (int i = fieldSegments.size() - 1; i >= 0; i--) {
+            Object segment = fieldSegments.get(i);
+            if (segment instanceof String) {
+                fieldSegments.set(i, fieldName);
+                break;
+            }
+        }
+
+        ExecutionPath parentPath = parentExecutionStepInfo.getPath();
+        if (isHydrationTransformation) {
+            //
+            // Normally the parent path is all ok and hence there is nothing to add
+            // but if we have a hydrated a field then we need to "merge" the paths not just append them
+            // so for example
+            //
+            // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
+            fieldSegments.remove(0);
+            fieldSegments = FpKit.concat(parentPath.toList(), fieldSegments);
+        }
+        ExecutionPath newPath = ExecutionPath.fromList(fieldSegments);
+        return newPath;
     }
 
     private GraphQLOutputType mapOutputType(GraphQLOutputType graphQLOutputType, GraphQLSchema overallSchema) {

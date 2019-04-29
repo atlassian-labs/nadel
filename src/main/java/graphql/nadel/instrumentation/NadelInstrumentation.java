@@ -2,13 +2,16 @@ package graphql.nadel.instrumentation;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import graphql.execution.ExecutionStepInfo;
 import graphql.execution.instrumentation.DocumentAndVariables;
 import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
+import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.language.Document;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
@@ -85,6 +88,17 @@ public interface NadelInstrumentation {
      * @return a non null {@link InstrumentationContext} object that will be called back when the step ends
      */
     default InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+        return noOp();
+    }
+
+    /**
+     * This is called just before the execution a field fetch is started
+     *
+     * @param parameters the parameters to this step
+     *
+     * @return a non null {@link InstrumentationContext} object that will be called back when the step ends
+     */
+    default InstrumentationContext<ExecutionResultNode> beginFieldFetch(NadelInstrumentationFetchFieldParameters parameters) {
         return noOp();
     }
 
