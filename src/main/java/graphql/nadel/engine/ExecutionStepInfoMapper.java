@@ -15,6 +15,7 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,12 +30,16 @@ public class ExecutionStepInfoMapper {
                                                   boolean isHydrationTransformation,
                                                   Map<Field, FieldTransformation> transformationMap) {
         MergedField underlyingMergedField = executionStepInfo.getField();
-        Field underlyingField = underlyingMergedField.getSingleField();
-        FieldTransformation fieldTransformation = transformationMap.get(underlyingField);
-        if (fieldTransformation != null) {
-            underlyingMergedField = fieldTransformation.unapplyMergedField(underlyingMergedField);
+        List<Field> newFields = new ArrayList<>();
+        for (Field underlyingField : underlyingMergedField.getFields()) {
+            FieldTransformation fieldTransformation = transformationMap.get(underlyingField);
+            if (fieldTransformation != null) {
+                newFields.add(fieldTransformation.unapplyField(underlyingField));
+            } else {
+                newFields.add(underlyingField);
+            }
         }
-        MergedField mappedMergedField = underlyingMergedField;
+        MergedField mappedMergedField = MergedField.newMergedField(newFields).build();
 
         GraphQLOutputType fieldType = executionStepInfo.getType();
         GraphQLObjectType fieldContainer = executionStepInfo.getFieldContainer();
@@ -45,8 +50,9 @@ public class ExecutionStepInfoMapper {
 
         ExecutionPath mappedPath = mapPath(parentExecutionStepInfo, executionStepInfo, isHydrationTransformation, mappedMergedField);
 
+        MergedField finalMappedMergedField = mappedMergedField;
         return executionStepInfo.transform(builder -> builder
-                .field(mappedMergedField)
+                .field(finalMappedMergedField)
                 .type(mappedFieldType)
                 .path(mappedPath)
                 .fieldContainer(mappedFieldContainer)

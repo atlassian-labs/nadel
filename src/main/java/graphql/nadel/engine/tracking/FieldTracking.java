@@ -84,6 +84,11 @@ public class FieldTracking {
         completeNode(stepInfo, null, null);
     }
 
+    public void fieldsCompleted(List<ExecutionResultNode> resultNodes, Throwable throwable) {
+        for (ExecutionResultNode resultNode : resultNodes) {
+            fieldsCompleted(resultNode, throwable);
+        }
+    }
 
     public void fieldsCompleted(ExecutionResultNode resultNode, Throwable throwable) {
         if (resultNode instanceof RootExecutionResultNode) {

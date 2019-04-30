@@ -46,6 +46,10 @@ public class HydrationTransformation extends AbstractFieldTransformation {
         return TreeTransformerUtil.changeNode(context, newField);
     }
 
+    @Override
+    public Field unapplyField(Field field) {
+        return originalField;
+    }
 
     public Field getNewField() {
         return newField;

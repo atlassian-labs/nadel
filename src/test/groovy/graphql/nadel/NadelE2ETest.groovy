@@ -1,4 +1,3 @@
-
 package graphql.nadel
 
 import graphql.ErrorType
@@ -177,11 +176,11 @@ class NadelE2ETest extends Specification {
         def nsdl = '''
          service Foo {
             type Query{
-                foo: Foo  
+                foos: [Foo]  
             } 
             type Foo {
                 name: String
-                bar: Bar <= \$innerQueries.Bar.barById(id: \$source.barId)
+                bar: Bar <= \$innerQueries.Bar.barsById(id: \$source.barId)
             }
          }
          service Bar {
@@ -190,13 +189,13 @@ class NadelE2ETest extends Specification {
             } 
             type Bar {
                 name: String 
-                nestedBar: Bar <= \$innerQueries.Bar.barById(id: \$source.nestedBarId)
+                nestedBar: Bar <= \$innerQueries.Bar.barsById(id: \$source.nestedBarId)
             }
          }
         '''
         def underlyingSchema1 = typeDefinitions('''
             type Query{
-                foo: Foo  
+                foos: [Foo]  
             } 
             type Foo {
                 name: String
@@ -206,7 +205,7 @@ class NadelE2ETest extends Specification {
         def underlyingSchema2 = typeDefinitions('''
             type Query{
                 bar: Bar 
-                barById(id: ID): Bar
+                barsById(id: [ID]): [Bar]
             } 
             type Bar {
                 id: ID
@@ -216,7 +215,7 @@ class NadelE2ETest extends Specification {
         ''')
 
         def query = '''
-            { foo { bar { name nestedBar {name nestedBar { name } } } } }
+            { foos { bar { name nestedBar {name nestedBar { name } } } } }
         '''
         ServiceExecution serviceExecution1 = Mock(ServiceExecution)
         ServiceExecution serviceExecution2 = Mock(ServiceExecution)
@@ -235,10 +234,10 @@ class NadelE2ETest extends Specification {
                 .query(query)
                 .build()
 
-        def topLevelData = [foo: [barId: "barId123"]]
-        def hydrationData1 = [barById: [name: "BarName", nestedBarId: "nestedBarId123"]]
-        def hydrationData2 = [barById: [name: "NestedBarName1", nestedBarId: "nestedBarId456"]]
-        def hydrationData3 = [barById: [name: "NestedBarName2"]]
+        def topLevelData = [foos: [[barId: "barId123"], [barId: "barId456"]]]
+        def hydrationData1 = [barsById: [[name: "BarName", nestedBarId: "nestedBarId123"]]]
+        def hydrationData2 = [barsById: [[name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
+        def hydrationData3 = [barsById: [[name: "NestedBarName2"]]]
         ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
         ServiceExecutionResult hydrationResult1 = new ServiceExecutionResult(hydrationData1)
         ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)

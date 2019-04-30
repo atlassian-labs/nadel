@@ -11,6 +11,8 @@ import graphql.nadel.Operation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLSchema;
+import graphql.util.FpKit;
+import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -19,12 +21,24 @@ import graphql.util.TraverserVisitorStub;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
+import static graphql.util.FpKit.mapEntries;
 
 public class StrategyUtil {
+
+    public static List<NodeMultiZipper<ExecutionResultNode>> groupNodesIntoBatchesByField(List<NodeZipper<ExecutionResultNode>> nodes, ExecutionResultNode root) {
+        Map<MergedField, List<NodeZipper<ExecutionResultNode>>> zipperByField = FpKit.groupingBy(nodes,
+                (executionResultZipper -> {
+                    MergedField mergedField = executionResultZipper.getCurNode().getMergedField();
+                    return mergedField;
+                }));
+        return mapEntries(zipperByField, (key, value) -> new NodeMultiZipper<>(root, value, FIX_NAMES_ADAPTER));
+    }
+
 
     public static List<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(Collection<ExecutionResultNode> roots) {
         List<NodeZipper<ExecutionResultNode>> result = new ArrayList<>();

@@ -15,6 +15,7 @@ import graphql.util.TreeTransformerUtil;
 import java.util.List;
 
 import static graphql.Assert.assertNotNull;
+import static graphql.util.FpKit.map;
 
 /**
  * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side
@@ -42,6 +43,11 @@ public class UnderscoreTypeNameUtils {
         return field;
     }
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
+    public static List<ExecutionResultNode> maybeRemoveUnderscoreTypeName(NadelContext nadelContext, List<ExecutionResultNode> resultNodes) {
+        return map(resultNodes, resultNode -> maybeRemoveUnderscoreTypeName(nadelContext, resultNode));
+
+    }
     @SuppressWarnings("UnnecessaryLocalVariable")
     public static ExecutionResultNode maybeRemoveUnderscoreTypeName(NadelContext nadelContext, ExecutionResultNode resultNode) {
         ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
