@@ -234,8 +234,8 @@ class NadelE2ETest extends Specification {
                 .query(query)
                 .build()
 
-        def topLevelData = [foos: [[barId: "barId123"], [barId: "barId456"]]]
-        def hydrationData1 = [barsById: [[name: "BarName", nestedBarId: "nestedBarId123"]]]
+        def topLevelData = [foos: [[barId: "bar1"], [barId: "bar2"]]]
+        def hydrationData1 = [barsById: [[name: "Bar 1", nestedBarId: "nestedBar1"], [name: "Bar 2", nestedBarId: "nestedBar2"]]]
         def hydrationData2 = [barsById: [[name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
         def hydrationData3 = [barsById: [[name: "NestedBarName2"]]]
         ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
