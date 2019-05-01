@@ -188,6 +188,7 @@ class NadelE2ETest extends Specification {
                 bar: Bar 
             } 
             type Bar {
+                id: ID
                 name: String 
                 nestedBar: Bar <= \$innerQueries.Bar.barsById(id: \$source.nestedBarId)
             }
@@ -215,7 +216,7 @@ class NadelE2ETest extends Specification {
         ''')
 
         def query = '''
-            { foos { bar { name nestedBar {name nestedBar { name } } } } }
+            { foos { bar { id name nestedBar {id name nestedBar { id name } } } } }
         '''
         ServiceExecution serviceExecution1 = Mock(ServiceExecution)
         ServiceExecution serviceExecution2 = Mock(ServiceExecution)
@@ -235,9 +236,9 @@ class NadelE2ETest extends Specification {
                 .build()
 
         def topLevelData = [foos: [[barId: "bar1"], [barId: "bar2"]]]
-        def hydrationData1 = [barsById: [[name: "Bar 1", nestedBarId: "nestedBar1"], [name: "Bar 2", nestedBarId: "nestedBar2"]]]
-        def hydrationData2 = [barsById: [[name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
-        def hydrationData3 = [barsById: [[name: "NestedBarName2"]]]
+        def hydrationData1 = [barsById: [[id: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"], [id: "bar2", name: "Bar 2", nestedBarId: "nestedBar2"]]]
+        def hydrationData2 = [barsById: [[id: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
+        def hydrationData3 = [barsById: [[id: "nestedBarId456", name: "NestedBarName2"]]]
         ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
         ServiceExecutionResult hydrationResult1 = new ServiceExecutionResult(hydrationData1)
         ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)

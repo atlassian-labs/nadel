@@ -63,17 +63,7 @@ public class ExecutionStepInfoMapper {
     }
 
     private ExecutionPath mapPath(ExecutionStepInfo parentExecutionStepInfo, ExecutionStepInfo fieldStepInfo, boolean isHydrationTransformation, MergedField mergedField) {
-        String fieldName = mergedField.getName();
-        ExecutionPath fieldPath = fieldStepInfo.getPath();
-        List<Object> fieldSegments = fieldPath.toList();
-        for (int i = fieldSegments.size() - 1; i >= 0; i--) {
-            Object segment = fieldSegments.get(i);
-            if (segment instanceof String) {
-                fieldSegments.set(i, fieldName);
-                break;
-            }
-        }
-
+        List<Object> fieldSegments = patchLastFieldName(fieldStepInfo, mergedField);
         ExecutionPath parentPath = parentExecutionStepInfo.getPath();
         if (isHydrationTransformation) {
             //
@@ -87,6 +77,20 @@ public class ExecutionStepInfoMapper {
         }
         ExecutionPath newPath = ExecutionPath.fromList(fieldSegments);
         return newPath;
+    }
+
+    private List<Object> patchLastFieldName(ExecutionStepInfo fieldStepInfo, MergedField mergedField) {
+        String fieldName = mergedField.getName();
+        ExecutionPath fieldPath = fieldStepInfo.getPath();
+        List<Object> fieldSegments = fieldPath.toList();
+        for (int i = fieldSegments.size() - 1; i >= 0; i--) {
+            Object segment = fieldSegments.get(i);
+            if (segment instanceof String) {
+                fieldSegments.set(i, fieldName);
+                break;
+            }
+        }
+        return fieldSegments;
     }
 
     private GraphQLOutputType mapOutputType(GraphQLOutputType graphQLOutputType, GraphQLSchema overallSchema) {

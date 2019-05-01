@@ -20,6 +20,7 @@ import graphql.util.TreeTransformerUtil;
 import java.util.Map;
 
 import static graphql.Assert.assertShouldNeverHappen;
+import static java.util.Collections.singletonMap;
 
 public class ServiceResultNodesToOverallResult {
 
@@ -28,21 +29,22 @@ public class ServiceResultNodesToOverallResult {
 
     //TODO: the return type is not really ready to return hydration results, which can be used as input for new queries
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, Map<Field, FieldTransformation> transformationMap) {
+    public ExecutionResultNode convert(ExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, Map<Field, FieldTransformation> transformationMap) {
         return convert(resultNode, overallSchema, rootStepInfo, false, transformationMap);
     }
 
-    public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, boolean isHydrationTransformation, Map<Field, FieldTransformation> transformationMap) {
+    public ExecutionResultNode convert(ExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, boolean isHydrationTransformation, Map<Field, FieldTransformation> transformationMap) {
         try {
             ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
-            RootExecutionResultNode newRoot = (RootExecutionResultNode) resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+            Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
+
+            ExecutionResultNode newRoot = resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
                 @Override
                 public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                     ExecutionResultNode node = context.thisNode();
                     ExecutionResultNode convertedNode;
                     if (node instanceof RootExecutionResultNode) {
-                        context.setVar(ExecutionStepInfo.class, rootStepInfo);
                         convertedNode = mapRootResultNode((RootExecutionResultNode) node);
                     } else if (node instanceof ObjectExecutionResultNode) {
                         ExecutionStepInfo parentStepInfo = context.getVarFromParents(ExecutionStepInfo.class);
@@ -64,7 +66,7 @@ public class ServiceResultNodesToOverallResult {
                     return TreeTransformerUtil.changeNode(context, convertedNode);
                 }
 
-            });
+            }, rootVars);
             return newRoot;
         } catch (Exception e) {
             throw new RuntimeException(e);
