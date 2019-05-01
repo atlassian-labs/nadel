@@ -216,8 +216,9 @@ class NadelE2ETest extends Specification {
         ''')
 
         def query = '''
-            { foos { bar { id name nestedBar {id name nestedBar { id name } } } } }
+            { foos { bar { id name } } }
         '''
+//                { foos { bar { id name nestedBar {id name nestedBar { id name } } } } }
         ServiceExecution serviceExecution1 = Mock(ServiceExecution)
         ServiceExecution serviceExecution2 = Mock(ServiceExecution)
 
@@ -255,16 +256,17 @@ class NadelE2ETest extends Specification {
 
                 completedFuture(hydrationResult1)
 
-        1 * serviceExecution2.execute(_) >>
+//        1 * serviceExecution2.execute(_) >>
+//
+//                completedFuture(hydrationResult2)
+//
+//        1 * serviceExecution2.execute(_) >>
+//
+//                completedFuture(hydrationResult3)
 
-                completedFuture(hydrationResult2)
-
-        1 * serviceExecution2.execute(_) >>
-
-                completedFuture(hydrationResult3)
-
-        result.join().data == [foo: [bar: [name: "BarName", nestedBar: [name: "NestedBarName1", nestedBar: [name
-                                                                                                            : "NestedBarName2"]]]]]
+//        result.join().data == [foo: [bar: [name: "Bar 1", nestedBar: [name: "NestedBarName1", nestedBar: [name
+//                                                                                                            : "NestedBarName2"]]]]]
+        result.join().data == [foos: [[bar: [id: "bar1", name: "Bar 1"]], [bar: [id: "bar2", name: "Bar 2"]]]]
     }
 
     def 'mutation can be executed'() {

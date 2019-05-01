@@ -39,6 +39,7 @@ public class ExecutionStepInfoMapper {
                 newFields.add(underlyingField);
             }
         }
+
         MergedField mappedMergedField = MergedField.newMergedField(newFields).build();
 
         GraphQLOutputType fieldType = executionStepInfo.getType();
@@ -50,9 +51,8 @@ public class ExecutionStepInfoMapper {
 
         ExecutionPath mappedPath = mapPath(parentExecutionStepInfo, executionStepInfo, isHydrationTransformation, mappedMergedField);
 
-        MergedField finalMappedMergedField = mappedMergedField;
         return executionStepInfo.transform(builder -> builder
-                .field(finalMappedMergedField)
+                .field(mappedMergedField)
                 .type(mappedFieldType)
                 .path(mappedPath)
                 .fieldContainer(mappedFieldContainer)
@@ -72,6 +72,7 @@ public class ExecutionStepInfoMapper {
             // so for example
             //
             // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
+            fieldSegments.remove(0);
             fieldSegments.remove(0);
             fieldSegments = FpKit.concat(parentPath.toList(), fieldSegments);
         }

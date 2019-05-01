@@ -288,9 +288,11 @@ public class NadelExecutionStrategy {
             HydrationInputNode matchingInputNode = findMatchingInputNode(objectExecutionResultNode, hydrationInputNodes);
             ExecutionStepInfo executionStepInfo = matchingInputNode.getFetchedValueAnalysis().getExecutionStepInfo();
 
-            ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(objectExecutionResultNode, overallSchema, executionStepInfo.getParent(), true, transformationByResultField);
-            result.add(overallResultNode);
+            ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(objectExecutionResultNode, overallSchema, executionStepInfo, true, transformationByResultField);
+            Field originalField = matchingInputNode.getHydrationTransformation().getOriginalField();
+            result.add(changeFieldInResultNode(overallResultNode, originalField));
         }
+        return result;
 
 //        List<ExecutionResultNode> result = new ArrayList<>();
 //        boolean first = true;
@@ -329,7 +331,6 @@ public class NadelExecutionStrategy {
 //        firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
 //
 //        return changeFieldInResultNode(firstTopLevelResultNode, hydrationTransformation.getOriginalField());
-        return null;
     }
 
     private HydrationInputNode findMatchingInputNode(ObjectExecutionResultNode node, List<HydrationInputNode> inputNodes) {
