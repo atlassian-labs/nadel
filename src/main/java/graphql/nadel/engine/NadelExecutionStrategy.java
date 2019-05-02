@@ -214,25 +214,14 @@ public class NadelExecutionStrategy {
         InnerServiceHydration innerServiceHydration = hydrationTransformation.getInnerServiceHydration();
         String topLevelFieldName = innerServiceHydration.getTopLevelField();
 
-        // TODO: just assume String arguments at the moment
-        RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
-        Object value = hydrationInputNode.getFetchedValueAnalysis().getCompletedValue();
-        Argument argument = Argument.newArgument()
-                .name(remoteArgumentDefinition.getName())
-                .value(new StringValue(value.toString()))
-                .build();
-
-        Field topLevelField = newField(topLevelFieldName)
-                .selectionSet(originalField.getSelectionSet())
-                .arguments(singletonList(argument))
-                .build();
+        Field topLevelField = createSingleHydrationTopLevelField(hydrationInputNode, originalField, innerServiceHydration, topLevelFieldName);
 
         Service service = getService(innerServiceHydration);
 
         Operation operation = Operation.QUERY;
         String operationName = buildOperationName(service, executionContext);
-
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
+
         QueryTransformationResult queryTransformationResult = queryTransformer
                 .transformHydratedTopLevelField(executionContext, operationName, operation, topLevelField, topLevelFieldType);
 
@@ -245,6 +234,20 @@ public class NadelExecutionStrategy {
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
+    }
+
+    private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode, Field originalField, InnerServiceHydration innerServiceHydration, String topLevelFieldName) {
+        RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
+        Object value = hydrationInputNode.getFetchedValueAnalysis().getCompletedValue();
+        Argument argument = Argument.newArgument()
+                .name(remoteArgumentDefinition.getName())
+                .value(new StringValue(value.toString()))
+                .build();
+
+        return newField(topLevelFieldName)
+                .selectionSet(originalField.getSelectionSet())
+                .arguments(singletonList(argument))
+                .build();
     }
 
     private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(FieldTracking fieldTracking,
@@ -276,22 +279,7 @@ public class NadelExecutionStrategy {
         InnerServiceHydration innerServiceHydration = hydrationTransformation.getInnerServiceHydration();
         Service service = getService(innerServiceHydration);
 
-        String topLevelFieldName = innerServiceHydration.getTopLevelField();
-
-        // TODO: just assume String arguments at the moment
-        RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
-        List<Value> values = new ArrayList<>();
-        for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
-            Object value = hydrationInputNode.getFetchedValueAnalysis().getCompletedValue();
-            values.add(StringValue.newStringValue(value.toString()).build());
-        }
-        Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new ArrayValue(values)).build();
-
-        Field topLevelField = newField(topLevelFieldName)
-                .selectionSet(originalField.getSelectionSet())
-                .arguments(singletonList(argument))
-                .build();
-
+        Field topLevelField = createBatchHydrationTopLevelField(hydrationInputs, originalField, innerServiceHydration);
 
         Operation operation = Operation.QUERY;
         String operationName = buildOperationName(service, executionContext);
@@ -311,6 +299,22 @@ public class NadelExecutionStrategy {
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
+    }
+
+    private Field createBatchHydrationTopLevelField(List<HydrationInputNode> hydrationInputs, Field originalField, InnerServiceHydration innerServiceHydration) {
+        String topLevelFieldName = innerServiceHydration.getTopLevelField();
+        RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
+        List<Value> values = new ArrayList<>();
+        for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
+            Object value = hydrationInputNode.getFetchedValueAnalysis().getCompletedValue();
+            values.add(StringValue.newStringValue(value.toString()).build());
+        }
+        Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new ArrayValue(values)).build();
+
+        return newField(topLevelFieldName)
+                .selectionSet(originalField.getSelectionSet())
+                .arguments(singletonList(argument))
+                .build();
     }
 
     private List<ExecutionResultNode> convertHydrationBatchResultIntoOverallResult(FieldTracking fieldTracking,

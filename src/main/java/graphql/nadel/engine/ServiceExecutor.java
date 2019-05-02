@@ -5,7 +5,6 @@ import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
@@ -38,9 +37,6 @@ public class ServiceExecutor {
     private final Logger log = LoggerFactory.getLogger(ExecutionStrategy.class);
 
     private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
-    private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
-    private final ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
-    private final OverallQueryTransformer queryTransformer = new OverallQueryTransformer();
 
     private final GraphQLSchema overallSchema;
     private final NadelInstrumentation instrumentation;
@@ -152,20 +148,6 @@ public class ServiceExecutor {
                 .variables(serviceExecutionParameters.getVariables())
                 .operationDefinition(serviceExecutionParameters.getOperationDefinition())
         );
-    }
-
-    private String buildOperationName(Service service, ExecutionContext executionContext) {
-        // to help with downstream debugging we put our name and their name in the operation
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
-        if (nadelContext.getOriginalOperationName() != null) {
-            return format("nadel_2_%s_%s", service.getName(), nadelContext.getOriginalOperationName());
-        } else {
-            return format("nadel_2_%s", service.getName());
-        }
-    }
-
-    private NadelContext getNadelContext(ExecutionContext executionContext) {
-        return (NadelContext) executionContext.getContext();
     }
 
     private RootExecutionResultNode serviceExecutionResultToResultNode(ExecutionContext executionContextForService, ExecutionStepInfo underlyingRootStepInfo, List<MergedField> transformedMergedFields, ServiceExecutionResult executionResult) {
