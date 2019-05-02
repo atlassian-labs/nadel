@@ -265,7 +265,6 @@ public class NadelExecutionStrategy {
                 .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, transformationByResultField))
                 .thenApply(resultNode -> maybeRemoveUnderscoreTypeName(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
-                .thenCompose(resultNode -> resolveAllHydrationInputs(executionContextForService, fieldTracking, resultNode))
                 .whenComplete(this::possiblyLogException);
 
     }
