@@ -9,8 +9,10 @@ import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
+import graphql.execution.FetchedValue;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.ExecutionStrategy;
+import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
@@ -146,6 +148,7 @@ public class NadelExecutionStrategy {
                 .whenComplete(this::possiblyLogException);
     }
 
+
     private CompletableFuture<ExecutionResultNode> resolveAllHydrationInputs(ExecutionContext context,
                                                                              FieldTracking fieldTracking,
                                                                              ExecutionResultNode node) {
@@ -160,21 +163,17 @@ public class NadelExecutionStrategy {
 
         for (NodeMultiZipper<ExecutionResultNode> batch : hydrationInputBatches) {
             List<HydrationInputNode> batchedNodes = map(batch.getZippers(), zipper -> (HydrationInputNode) zipper.getCurNode());
-
             CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, fieldTracking, batchedNodes);
-
-
             resolvedNodeCFs.add(replaceNodesInZipper(batch, executionResultNodeCompletableFuture));
-
         }
         return Async
                 .each(resolvedNodeCFs)
-                .thenApply(resolvedNodes -> {
+                .thenCompose(resolvedNodes -> {
                     NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, flatList(resolvedNodes), FIX_NAMES_ADAPTER);
-                    return multiZipper.toRootNode();
+                    ExecutionResultNode newRoot = multiZipper.toRootNode();
+                    return resolveAllHydrationInputs(context, fieldTracking, newRoot);
                 })
                 .whenComplete(this::possiblyLogException);
-
     }
 
     private CompletableFuture<List<NodeZipper<ExecutionResultNode>>> replaceNodesInZipper(NodeMultiZipper<ExecutionResultNode> batch,
@@ -247,13 +246,6 @@ public class NadelExecutionStrategy {
                 .thenApply(resultNode -> convertHydrationResultIntoOverallResult(fieldTracking, hydrationInputs, resultNode, transformationByResultField))
                 .thenApply(resultNode -> maybeRemoveUnderscoreTypeName(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
-                .thenCompose(resultNodes -> {
-                    List<CompletableFuture<ExecutionResultNode>> results = new ArrayList<>();
-                    for (ExecutionResultNode node : resultNodes) {
-                        results.add(resolveAllHydrationInputs(executionContextForService, fieldTracking, node));
-                    }
-                    return Async.each(results);
-                })
                 .whenComplete(this::possiblyLogException);
 
     }
@@ -267,10 +259,9 @@ public class NadelExecutionStrategy {
                                                                               RootExecutionResultNode rootResultNode,
                                                                               Map<Field, FieldTransformation> transformationByResultField) {
 
-//        List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, hydrationInputNode -> hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo());
-//        synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfos);
+        List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputNodes, hydrationInputNode -> hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo());
+        synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfos);
 
-        System.out.println(rootResultNode);
         if (rootResultNode.getChildren() instanceof LeafExecutionResultNode) {
             // we only expect a null value here
             assertTrue(rootResultNode.getChildren().get(0).getFetchedValueAnalysis().isNullValue());
@@ -278,59 +269,53 @@ public class NadelExecutionStrategy {
         }
         assertTrue(rootResultNode.getChildren().get(0) instanceof ListExecutionResultNode, "expect a list result from the underlying service for hydration");
         ListExecutionResultNode listResultNode = (ListExecutionResultNode) rootResultNode.getChildren().get(0);
+        List<ExecutionResultNode> resolvedNodes = listResultNode.getChildren();
 
         List<ExecutionResultNode> result = new ArrayList<>();
 
-        for (ExecutionResultNode resolvedHydration : listResultNode.getChildren()) {
-            assertTrue(resolvedHydration instanceof ObjectExecutionResultNode);
-            ObjectExecutionResultNode objectExecutionResultNode = (ObjectExecutionResultNode) resolvedHydration;
+        boolean first = true;
+        for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
+            ExecutionStepInfo executionStepInfo = hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo();
+            ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(hydrationInputNode, resolvedNodes);
+            ExecutionResultNode resultNode;
+            if (matchingResolvedNode != null) {
+                ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(matchingResolvedNode, overallSchema, executionStepInfo, true, transformationByResultField);
+                Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
+                resultNode = changeFieldInResultNode(overallResultNode, originalField);
+            } else {
+                resultNode = createNullValue(executionStepInfo);
+            }
+            if (first) {
+                resultNode = resultNode.withNewErrors(rootResultNode.getErrors());
+                first = false;
+            }
+            result.add(resultNode);
 
-            HydrationInputNode matchingInputNode = findMatchingInputNode(objectExecutionResultNode, hydrationInputNodes);
-            ExecutionStepInfo executionStepInfo = matchingInputNode.getFetchedValueAnalysis().getExecutionStepInfo();
-
-            ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(objectExecutionResultNode, overallSchema, executionStepInfo, true, transformationByResultField);
-            Field originalField = matchingInputNode.getHydrationTransformation().getOriginalField();
-            result.add(changeFieldInResultNode(overallResultNode, originalField));
         }
         return result;
 
-//        List<ExecutionResultNode> result = new ArrayList<>();
-//        boolean first = true;
-//        for (ExecutionResultNode executionResultNode : listResultNode.getChildren()) {
-//            if (first) {
-//                executionResultNode = executionResultNode.withNewErrors(rootResultNode.getErrors());
-//                first = false;
-//            }
-//            result.add(changeFieldInResultNode(executionResultNode, hydrationTransformation.getOriginalField()));
-//        }
-//
-//        // identify each result node by id
-//
-//        for () {
-//            RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, transformationByResultField);
-//        }
-//        if (overallResultNode.getChildren().get(0) instanceof LeafExecutionResultNode) {
-//            return handleNullHydrationResult(hydrationTransformation, rootResultNode, hydrationInputs, overallResultNode);
-//        }
-//        // this is an build in assumption that the field type of the hydration call is a List
-//        ListExecutionResultNode listResultNode = (ListExecutionResultNode) overallResultNode.getChildren().get(0);
-//        List<ExecutionResultNode> result = new ArrayList<>();
-//        boolean first = true;
-//        for (ExecutionResultNode executionResultNode : listResultNode.getChildren()) {
-//            if (first) {
-//                executionResultNode = executionResultNode.withNewErrors(rootResultNode.getErrors());
-//                first = false;
-//            }
-//            result.add(changeFieldInResultNode(executionResultNode, hydrationTransformation.getOriginalField()));
-//        }
-//        return result;
-//
-//        RootExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, hydratedFieldStepInfo, true, transformationByResultField);
-//        // NOTE : we only take the first result node here but we may have errors in the root node that are global so transfer them in
-//        ExecutionResultNode firstTopLevelResultNode = overallResultNode.getChildren().get(0);
-//        firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
-//
-//        return changeFieldInResultNode(firstTopLevelResultNode, hydrationTransformation.getOriginalField());
+    }
+
+    private LeafExecutionResultNode createNullValue(ExecutionStepInfo executionStepInfo) {
+        FetchedValueAnalysis fetchedValueAnalysis = FetchedValueAnalysis.newFetchedValueAnalysis()
+                .valueType(FetchedValueAnalysis.FetchedValueType.OBJECT)
+                .fetchedValue(FetchedValue.newFetchedValue().build())
+                .nullValue()
+                .executionStepInfo(executionStepInfo)
+                .build();
+        return new LeafExecutionResultNode(fetchedValueAnalysis, null);
+    }
+
+    private ObjectExecutionResultNode findMatchingResolvedNode(HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
+        String inputNodeId = (String) inputNode.getFetchedValueAnalysis().getCompletedValue();
+        for (ExecutionResultNode resolvedNode : resolvedNodes) {
+            LeafExecutionResultNode idNode = getFieldValue((ObjectExecutionResultNode) resolvedNode, "id");
+            String id = (String) idNode.getFetchedValueAnalysis().getCompletedValue();
+            if (id.equals(inputNodeId)) {
+                return (ObjectExecutionResultNode) resolvedNode;
+            }
+        }
+        return null;
     }
 
     private HydrationInputNode findMatchingInputNode(ObjectExecutionResultNode node, List<HydrationInputNode> inputNodes) {
