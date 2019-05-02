@@ -35,6 +35,7 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -100,12 +101,12 @@ public class OverallQueryTransformer {
         }
         Document newDocument = newDocumentBuilder.build();
 
+        MergedField transformedMergedField = MergedField.newMergedField(transformedTopLevelField).build();
         return new QueryTransformationResult(
                 newDocument,
                 operationDefinition,
-                null,
+                Collections.singletonList(transformedMergedField),
                 referencedVariableNames,
-                transformedTopLevelField,
                 transformationByResultField,
                 transformedFragments);
 
@@ -178,7 +179,6 @@ public class OverallQueryTransformer {
                 operationDefinition,
                 transformedMergedFields,
                 referencedVariableNames,
-                null,
                 transformationByResultField,
                 transformedFragments);
     }
