@@ -28,6 +28,7 @@ public class ExecutionStepInfoMapper {
                                                   ExecutionStepInfo executionStepInfo,
                                                   GraphQLSchema overallSchema,
                                                   boolean isHydrationTransformation,
+                                                  boolean batched,
                                                   Map<Field, FieldTransformation> transformationMap) {
         MergedField underlyingMergedField = executionStepInfo.getField();
         List<Field> newFields = new ArrayList<>();
@@ -49,7 +50,7 @@ public class ExecutionStepInfoMapper {
         GraphQLOutputType mappedFieldType = mapOutputType(fieldType, overallSchema);
         GraphQLFieldDefinition mappedFieldDefinition = mappedFieldContainer.getFieldDefinition(mappedMergedField.getName());
 
-        ExecutionPath mappedPath = mapPath(parentExecutionStepInfo, executionStepInfo, isHydrationTransformation, mappedMergedField);
+        ExecutionPath mappedPath = mapPath(parentExecutionStepInfo, executionStepInfo, isHydrationTransformation, batched, mappedMergedField);
 
         return executionStepInfo.transform(builder -> builder
                 .field(mappedMergedField)
@@ -62,7 +63,7 @@ public class ExecutionStepInfoMapper {
 
     }
 
-    private ExecutionPath mapPath(ExecutionStepInfo parentExecutionStepInfo, ExecutionStepInfo fieldStepInfo, boolean isHydrationTransformation, MergedField mergedField) {
+    private ExecutionPath mapPath(ExecutionStepInfo parentExecutionStepInfo, ExecutionStepInfo fieldStepInfo, boolean isHydrationTransformation, boolean batched, MergedField mergedField) {
         List<Object> fieldSegments = patchLastFieldName(fieldStepInfo, mergedField);
         ExecutionPath parentPath = parentExecutionStepInfo.getPath();
         if (isHydrationTransformation) {
@@ -73,7 +74,9 @@ public class ExecutionStepInfoMapper {
             //
             // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
             fieldSegments.remove(0);
-            fieldSegments.remove(0);
+            if (batched) {
+                fieldSegments.remove(0);
+            }
             fieldSegments = FpKit.concat(parentPath.toList(), fieldSegments);
         }
         ExecutionPath newPath = ExecutionPath.fromList(fieldSegments);

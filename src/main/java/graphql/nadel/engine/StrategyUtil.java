@@ -32,10 +32,7 @@ public class StrategyUtil {
 
     public static List<NodeMultiZipper<ExecutionResultNode>> groupNodesIntoBatchesByField(List<NodeZipper<ExecutionResultNode>> nodes, ExecutionResultNode root) {
         Map<MergedField, List<NodeZipper<ExecutionResultNode>>> zipperByField = FpKit.groupingBy(nodes,
-                (executionResultZipper -> {
-                    MergedField mergedField = executionResultZipper.getCurNode().getMergedField();
-                    return mergedField;
-                }));
+                (executionResultZipper -> executionResultZipper.getCurNode().getMergedField()));
         return mapEntries(zipperByField, (key, value) -> new NodeMultiZipper<>(root, value, FIX_NAMES_ADAPTER));
     }
 
