@@ -18,17 +18,27 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
     private final String serviceName;
     private final String topLevelField;
     private final List<RemoteArgumentDefinition> arguments;
+    private String objectIdentifier;
+    private Integer batchSize;
 
     public InnerServiceHydration(SourceLocation sourceLocation,
                                  List<Comment> comments,
                                  String serviceName,
                                  String topLevelField,
-                                 List<RemoteArgumentDefinition> arguments) {
+                                 List<RemoteArgumentDefinition> arguments,
+                                 String objectIdentifier
+    ) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.serviceName = serviceName;
         this.topLevelField = topLevelField;
         this.arguments = arguments;
+        this.objectIdentifier = objectIdentifier;
     }
+
+    public String getObjectIdentifier() {
+        return objectIdentifier;
+    }
+
 
     public String getServiceName() {
         return serviceName;
@@ -66,6 +76,7 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
     public InnerServiceHydration deepCopy() {
         return null;
     }
+
 
     @Override
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {

@@ -96,8 +96,12 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         for (StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext : remoteArgumentPairContexts) {
             remoteArguments.add(createRemoteArgumentDefinition(remoteArgumentPairContext));
         }
+        String objectIdentifier = "id";
+        if (ctx.objectIdentifier() != null) {
+            objectIdentifier = ctx.objectIdentifier().name().getText();
+        }
         return new InnerServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField,
-                remoteArguments);
+                remoteArguments, objectIdentifier);
     }
 
     @Override

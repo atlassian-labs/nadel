@@ -180,7 +180,7 @@ class NadelE2ETest extends Specification {
             } 
             type Foo {
                 name: String
-                bar: Bar <= \$innerQueries.Bar.barsById(id: \$source.barId)
+                bar: Bar <= \$innerQueries.Bar.barsById(id: \$source.barId) object identified by barId
             }
          }
          service Bar {
@@ -188,9 +188,9 @@ class NadelE2ETest extends Specification {
                 bar: Bar 
             } 
             type Bar {
-                id: ID
+                barId: ID
                 name: String 
-                nestedBar: Bar <= \$innerQueries.Bar.barsById(id: \$source.nestedBarId)
+                nestedBar: Bar <= \$innerQueries.Bar.barsById(id: \$source.nestedBarId) object identified by barId
             }
          }
         '''
@@ -209,14 +209,14 @@ class NadelE2ETest extends Specification {
                 barsById(id: [ID]): [Bar]
             } 
             type Bar {
-                id: ID
+                barId: ID
                 name: String
                 nestedBarId: ID
             }
         ''')
 
         def query = '''
-                { foos { bar { id name nestedBar {id name nestedBar { id name } } } } }
+                { foos { bar { barId name nestedBar {barId name nestedBar { barId name } } } } }
         '''
         ServiceExecution serviceExecution1 = Mock(ServiceExecution)
         ServiceExecution serviceExecution2 = Mock(ServiceExecution)
@@ -236,9 +236,9 @@ class NadelE2ETest extends Specification {
                 .build()
 
         def topLevelData = [foos: [[barId: "bar1"], [barId: "bar2"]]]
-        def hydrationData1 = [barsById: [[id: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"], [id: "bar2", name: "Bar 2", nestedBarId: "nestedBar2"]]]
-        def hydrationData2 = [barsById: [[id: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
-        def hydrationData3 = [barsById: [[id: "nestedBarId456", name: "NestedBarName2"]]]
+        def hydrationData1 = [barsById: [[barId: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"], [barId: "bar2", name: "Bar 2", nestedBarId: "nestedBar2"]]]
+        def hydrationData2 = [barsById: [[barId: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
+        def hydrationData3 = [barsById: [[barId: "nestedBarId456", name: "NestedBarName2"]]]
         ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
         ServiceExecutionResult hydrationResult1 = new ServiceExecutionResult(hydrationData1)
         ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)
@@ -263,7 +263,7 @@ class NadelE2ETest extends Specification {
 
                 completedFuture(hydrationResult3)
 
-        result.join().data == [foos: [[bar: [id: "bar1", name: "Bar 1", nestedBar: [id: "nestedBar1", name: "NestedBarName1", nestedBar: [id: "nestedBarId456", name: "NestedBarName2"]]]], [bar: [id: "bar2", name: "Bar 2", nestedBar: null]]]]
+        result.join().data == [foos: [[bar: [barId: "bar1", name: "Bar 1", nestedBar: [barId: "nestedBar1", name: "NestedBarName1", nestedBar: [barId: "nestedBarId456", name: "NestedBarName2"]]]], [bar: [barId: "bar2", name: "Bar 2", nestedBar: null]]]]
     }
 
     def 'mutation can be executed'() {

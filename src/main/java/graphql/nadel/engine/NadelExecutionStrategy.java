@@ -403,9 +403,11 @@ public class NadelExecutionStrategy {
     }
 
     private ObjectExecutionResultNode findMatchingResolvedNode(HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
+        String objectIdentifier = inputNode.getHydrationTransformation().getInnerServiceHydration().getObjectIdentifier();
         String inputNodeId = (String) inputNode.getFetchedValueAnalysis().getCompletedValue();
         for (ExecutionResultNode resolvedNode : resolvedNodes) {
-            LeafExecutionResultNode idNode = getFieldValue((ObjectExecutionResultNode) resolvedNode, "id");
+            LeafExecutionResultNode idNode = getFieldValue((ObjectExecutionResultNode) resolvedNode, objectIdentifier);
+            assertNotNull(idNode, "no value found for object identifier: " + objectIdentifier);
             String id = (String) idNode.getFetchedValueAnalysis().getCompletedValue();
             if (id.equals(inputNodeId)) {
                 return (ObjectExecutionResultNode) resolvedNode;

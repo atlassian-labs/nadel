@@ -36,6 +36,7 @@
                 "innerServiceHydration": {
                   "serviceName": "OtherService",
                   "topLevelField": "resolveId",
+                  "objectIdentifier": "id",
                   "arguments": [
                     {
                       "name": "otherId",

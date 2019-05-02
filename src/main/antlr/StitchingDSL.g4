@@ -20,13 +20,17 @@ typeTransformation : '<=' '$innerTypes' '.' name;
 
 fieldMappingDefinition : '$source' '.' name ;
 
-innerServiceHydration: '$innerQueries' '.' serviceName '.' topLevelField remoteCallDefinition?;
+innerServiceHydration: '$innerQueries' '.' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier?;
+
+objectIdentifier: 'object identified by' name;
+
+intValue: IntValue;
 
 serviceName: NAME;
 
 topLevelField: NAME;
 
-remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference  ;
+remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference;
 
 remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 
