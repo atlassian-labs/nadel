@@ -265,12 +265,12 @@ public class HydrationInputResolver {
         List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputNodes, hydrationInputNode -> hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo());
         synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfos);
 
-        if (rootResultNode.getChildren() instanceof LeafExecutionResultNode) {
+        if (rootResultNode.getChildren().get(0) instanceof LeafExecutionResultNode) {
             // we only expect a null value here
             assertTrue(rootResultNode.getChildren().get(0).getFetchedValueAnalysis().isNullValue());
             throw new RuntimeException("null result from hydration call not implemented yet");
         }
-        assertTrue(rootResultNode.getChildren().get(0) instanceof ListExecutionResultNode, "expect a list result from the underlying service for hydration");
+        assertTrue(rootResultNode.getChildren().get(0) instanceof ListExecutionResultNode, "expect a list result from the underlying service for batched hydration");
         ListExecutionResultNode listResultNode = (ListExecutionResultNode) rootResultNode.getChildren().get(0);
         List<ExecutionResultNode> resolvedNodes = listResultNode.getChildren();
 
