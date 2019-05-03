@@ -20,7 +20,7 @@ import static graphql.util.FpKit.map;
 /**
  * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side
  */
-public class UnderscoreTypeNameUtils {
+public class ArtificialFieldUtils {
 
     private static final String UNDERSCORE_TYPENAME = "__typename";
 
@@ -43,13 +43,20 @@ public class UnderscoreTypeNameUtils {
         return field;
     }
 
+    public static Field addObjectIdentifier(NadelContext nadelContext, Field field, String objectIdentifier) {
+        Field idField = Field.newField().alias(nadelContext.getObjectIdentifierAlias()).name(objectIdentifier).build();
+        SelectionSet selectionSet = field.getSelectionSet().transform(builder -> builder.selection(idField));
+        return field.transform(builder -> builder.selectionSet(selectionSet));
+    }
+
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public static List<ExecutionResultNode> maybeRemoveUnderscoreTypeName(NadelContext nadelContext, List<ExecutionResultNode> resultNodes) {
-        return map(resultNodes, resultNode -> maybeRemoveUnderscoreTypeName(nadelContext, resultNode));
+    public static List<ExecutionResultNode> removeArtificialFields(NadelContext nadelContext, List<ExecutionResultNode> resultNodes) {
+        return map(resultNodes, resultNode -> removeArtificialFields(nadelContext, resultNode));
 
     }
+
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public static ExecutionResultNode maybeRemoveUnderscoreTypeName(NadelContext nadelContext, ExecutionResultNode resultNode) {
+    public static ExecutionResultNode removeArtificialFields(NadelContext nadelContext, ExecutionResultNode resultNode) {
         ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
         ExecutionResultNode newNode = resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
@@ -59,7 +66,7 @@ public class UnderscoreTypeNameUtils {
                     LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
                     MergedField mergedField = leaf.getFetchedValueAnalysis().getField();
 
-                    if (isAliasedUnderscoreTypeNameField(nadelContext, mergedField)) {
+                    if (isArtificialField(nadelContext, mergedField)) {
                         return TreeTransformerUtil.deleteNode(context);
                     }
                 }
@@ -69,15 +76,15 @@ public class UnderscoreTypeNameUtils {
         return newNode;
     }
 
-    public static boolean isAliasedUnderscoreTypeNameField(NadelContext nadelContext, MergedField mergedField) {
-        String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
+    public static boolean isArtificialField(NadelContext nadelContext, MergedField mergedField) {
         List<Field> fields = mergedField.getFields();
         // we KNOW we put the field in as a single field with alias (not merged) and hence we can assume that on the reverse
         if (fields.size() == 1) {
             Field singleField = mergedField.getSingleField();
             String alias = singleField.getAlias();
-            return underscoreTypeNameAlias.equals(alias);
+            return nadelContext.getUnderscoreTypeNameAlias().equals(alias) || nadelContext.getObjectIdentifierAlias().equals(alias);
         }
         return false;
     }
+
 }

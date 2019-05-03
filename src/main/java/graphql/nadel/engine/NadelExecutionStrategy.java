@@ -52,11 +52,12 @@ import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.Field.newField;
+import static graphql.nadel.engine.ArtificialFieldUtils.addObjectIdentifier;
+import static graphql.nadel.engine.ArtificialFieldUtils.removeArtificialFields;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
 import static graphql.nadel.engine.StrategyUtil.groupNodesIntoBatchesByField;
-import static graphql.nadel.engine.UnderscoreTypeNameUtils.maybeRemoveUnderscoreTypeName;
 import static graphql.schema.GraphQLTypeUtil.isList;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import static graphql.schema.GraphQLTypeUtil.unwrapNonNull;
@@ -138,7 +139,7 @@ public class NadelExecutionStrategy {
                         rootExecutionResultNode -> resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode)
                                 //
                                 // clean up the __typename support for interfaces
-                                .thenApply(resultNode -> maybeRemoveUnderscoreTypeName(getNadelContext(executionContext), resultNode))
+                                .thenApply(resultNode -> removeArtificialFields(getNadelContext(executionContext), resultNode))
                                 .thenApply(RootExecutionResultNode.class::cast))
                 .whenComplete(this::possiblyLogException);
     }
@@ -230,7 +231,7 @@ public class NadelExecutionStrategy {
         return serviceExecutor
                 .execute(executionContext, queryTransformationResult, service, operation)
                 .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult))
-                .thenApply(resultNode -> maybeRemoveUnderscoreTypeName(getNadelContext(executionContext), resultNode))
+                .thenApply(resultNode -> removeArtificialFields(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
@@ -279,7 +280,7 @@ public class NadelExecutionStrategy {
         InnerServiceHydration innerServiceHydration = hydrationTransformation.getInnerServiceHydration();
         Service service = getService(innerServiceHydration);
 
-        Field topLevelField = createBatchHydrationTopLevelField(hydrationInputs, originalField, innerServiceHydration);
+        Field topLevelField = createBatchHydrationTopLevelField(executionContext, hydrationInputs, originalField, innerServiceHydration);
 
         Operation operation = Operation.QUERY;
         String operationName = buildOperationName(service, executionContext);
@@ -289,19 +290,18 @@ public class NadelExecutionStrategy {
                 .transformHydratedTopLevelField(executionContext, operationName, operation, topLevelField, topLevelFieldType);
 
 
-
         List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, hydrationInputNode -> hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo());
         fieldTracking.fieldsDispatched(hydratedFieldStepInfos);
         return serviceExecutor
                 .execute(executionContext, queryTransformationResult, service, operation)
-                .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(fieldTracking, hydrationInputs, resultNode, queryTransformationResult))
-                .thenApply(resultNode -> maybeRemoveUnderscoreTypeName(getNadelContext(executionContext), resultNode))
+                .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, fieldTracking, hydrationInputs, resultNode, queryTransformationResult))
+                .thenApply(resultNode -> ArtificialFieldUtils.removeArtificialFields(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
     }
 
-    private Field createBatchHydrationTopLevelField(List<HydrationInputNode> hydrationInputs, Field originalField, InnerServiceHydration innerServiceHydration) {
+    private Field createBatchHydrationTopLevelField(ExecutionContext executionContext, List<HydrationInputNode> hydrationInputs, Field originalField, InnerServiceHydration innerServiceHydration) {
         String topLevelFieldName = innerServiceHydration.getTopLevelField();
         RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
         List<Value> values = new ArrayList<>();
@@ -311,13 +311,15 @@ public class NadelExecutionStrategy {
         }
         Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new ArrayValue(values)).build();
 
-        return newField(topLevelFieldName)
+        Field topLevelField = newField(topLevelFieldName)
                 .selectionSet(originalField.getSelectionSet())
                 .arguments(singletonList(argument))
                 .build();
+        return addObjectIdentifier(getNadelContext(executionContext), topLevelField, innerServiceHydration.getObjectIdentifier());
     }
 
-    private List<ExecutionResultNode> convertHydrationBatchResultIntoOverallResult(FieldTracking fieldTracking,
+    private List<ExecutionResultNode> convertHydrationBatchResultIntoOverallResult(ExecutionContext executionContext,
+                                                                                   FieldTracking fieldTracking,
                                                                                    List<HydrationInputNode> hydrationInputNodes,
                                                                                    RootExecutionResultNode rootResultNode,
                                                                                    QueryTransformationResult queryTransformationResult) {
@@ -340,7 +342,7 @@ public class NadelExecutionStrategy {
         boolean first = true;
         for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
             ExecutionStepInfo executionStepInfo = hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo();
-            ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(hydrationInputNode, resolvedNodes);
+            ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
                 ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(matchingResolvedNode, overallSchema, executionStepInfo, true, true, transformationByResultField);
@@ -369,13 +371,15 @@ public class NadelExecutionStrategy {
         return new LeafExecutionResultNode(fetchedValueAnalysis, null);
     }
 
-    private ObjectExecutionResultNode findMatchingResolvedNode(HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
-        String objectIdentifier = inputNode.getHydrationTransformation().getInnerServiceHydration().getObjectIdentifier();
+    private ObjectExecutionResultNode findMatchingResolvedNode(ExecutionContext executionContext, HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
+        NadelContext nadelContext = getNadelContext(executionContext);
+        String objectIdentifier = nadelContext.getObjectIdentifierAlias();
         String inputNodeId = (String) inputNode.getFetchedValueAnalysis().getCompletedValue();
         for (ExecutionResultNode resolvedNode : resolvedNodes) {
-            LeafExecutionResultNode idNode = getFieldValue((ObjectExecutionResultNode) resolvedNode, objectIdentifier);
+            LeafExecutionResultNode idNode = getFieldByResultKey((ObjectExecutionResultNode) resolvedNode, objectIdentifier);
             assertNotNull(idNode, "no value found for object identifier: " + objectIdentifier);
             String id = (String) idNode.getFetchedValueAnalysis().getCompletedValue();
+            assertNotNull(id, "object identifier is null");
             if (id.equals(inputNodeId)) {
                 return (ObjectExecutionResultNode) resolvedNode;
             }
@@ -383,8 +387,8 @@ public class NadelExecutionStrategy {
         return null;
     }
 
-    private LeafExecutionResultNode getFieldValue(ObjectExecutionResultNode node, String fieldName) {
-        return (LeafExecutionResultNode) findOneOrNull(node.getChildren(), child -> child.getMergedField().getResultKey().equals(fieldName));
+    private LeafExecutionResultNode getFieldByResultKey(ObjectExecutionResultNode node, String resultKey) {
+        return (LeafExecutionResultNode) findOneOrNull(node.getChildren(), child -> child.getMergedField().getResultKey().equals(resultKey));
     }
 
 

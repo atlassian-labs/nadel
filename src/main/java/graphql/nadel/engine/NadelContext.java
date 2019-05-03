@@ -14,14 +14,17 @@ import java.util.UUID;
  */
 @Internal
 public class NadelContext {
-    final Object userSuppliedContext;
-    final String underscoreTypeNameAlias;
-    final String originalOperationName;
+    private final Object userSuppliedContext;
+    private final String underscoreTypeNameAlias;
+    private final String originalOperationName;
+    private final String objectIdentifierAlias;
 
-    private NadelContext(Object userSuppliedContext, String underscoreTypeNameAlias, String originalOperationName) {
+
+    private NadelContext(Object userSuppliedContext, String underscoreTypeNameAlias, String originalOperationName, String objectIdentifierAlias) {
         this.userSuppliedContext = userSuppliedContext;
         this.underscoreTypeNameAlias = underscoreTypeNameAlias;
         this.originalOperationName = originalOperationName;
+        this.objectIdentifierAlias = objectIdentifierAlias;
     }
 
     public Object getUserSuppliedContext() {
@@ -32,6 +35,10 @@ public class NadelContext {
         return underscoreTypeNameAlias;
     }
 
+    public String getObjectIdentifierAlias() {
+        return objectIdentifierAlias;
+    }
+
     public String getOriginalOperationName() {
         return originalOperationName;
     }
@@ -40,15 +47,20 @@ public class NadelContext {
         return new Builder();
     }
 
-    private static String mkUnderscoreTypeNameAlias() {
-        String uuid = UUID.randomUUID().toString();
+    private static String mkUnderscoreTypeNameAlias(String uuid) {
         return String.format("typename__%s", uuid.replaceAll("-", "_"));
+    }
+
+    private static String createObjectIdentifierAlias(String uuid) {
+        return String.format("object_identifier__%s", uuid.replaceAll("-", "_"));
     }
 
 
     public static class Builder {
-        Object userSuppliedContext;
-        String originalOperationName;
+        private Object userSuppliedContext;
+        private String originalOperationName;
+        private String artificialFieldsUUID;
+
 
         public Builder userSuppliedContext(Object userSuppliedContext) {
             this.userSuppliedContext = userSuppliedContext;
@@ -67,8 +79,14 @@ public class NadelContext {
             return this;
         }
 
+        public Builder artificialFieldsUUID(String artificialFieldsUUID) {
+            this.artificialFieldsUUID = artificialFieldsUUID;
+            return this;
+        }
+
         public NadelContext build() {
-            return new NadelContext(userSuppliedContext, mkUnderscoreTypeNameAlias(), originalOperationName);
+            String uuid = artificialFieldsUUID != null ? artificialFieldsUUID : UUID.randomUUID().toString();
+            return new NadelContext(userSuppliedContext, mkUnderscoreTypeNameAlias(uuid), originalOperationName, createObjectIdentifierAlias(uuid));
         }
     }
 }

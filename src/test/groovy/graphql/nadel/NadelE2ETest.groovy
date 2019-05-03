@@ -216,7 +216,7 @@ class NadelE2ETest extends Specification {
         ''')
 
         def query = '''
-                { foos { bar { barId name nestedBar {barId name nestedBar { barId name } } } } }
+                { foos { bar { name nestedBar {name nestedBar { name } } } } }
         '''
         ServiceExecution serviceExecution1 = Mock(ServiceExecution)
         ServiceExecution serviceExecution2 = Mock(ServiceExecution)
@@ -233,12 +233,13 @@ class NadelE2ETest extends Specification {
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
+                .artificialFieldsUUID("UUID")
                 .build()
 
         def topLevelData = [foos: [[barId: "bar1"], [barId: "bar2"]]]
-        def hydrationData1 = [barsById: [[barId: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"], [barId: "bar2", name: "Bar 2", nestedBarId: "nestedBar2"]]]
-        def hydrationData2 = [barsById: [[barId: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
-        def hydrationData3 = [barsById: [[barId: "nestedBarId456", name: "NestedBarName2"]]]
+        def hydrationData1 = [barsById: [[object_identifier__UUID: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"], [object_identifier__UUID: "bar2", name: "Bar 2", nestedBarId: "nestedBar2"]]]
+        def hydrationData2 = [barsById: [[object_identifier__UUID: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
+        def hydrationData3 = [barsById: [[object_identifier__UUID: "nestedBarId456", name: "NestedBarName2"]]]
         ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
         ServiceExecutionResult hydrationResult1 = new ServiceExecutionResult(hydrationData1)
         ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)
@@ -263,7 +264,7 @@ class NadelE2ETest extends Specification {
 
                 completedFuture(hydrationResult3)
 
-        result.join().data == [foos: [[bar: [barId: "bar1", name: "Bar 1", nestedBar: [barId: "nestedBar1", name: "NestedBarName1", nestedBar: [barId: "nestedBarId456", name: "NestedBarName2"]]]], [bar: [barId: "bar2", name: "Bar 2", nestedBar: null]]]]
+        result.join().data == [foos: [[bar: [name: "Bar 1", nestedBar: [name: "NestedBarName1", nestedBar: [name: "NestedBarName2"]]]], [bar: [name: "Bar 2", nestedBar: null]]]]
     }
 
     def 'mutation can be executed'() {
