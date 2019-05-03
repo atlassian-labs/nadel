@@ -105,7 +105,6 @@ public class NadelExecutionStrategy {
                         //
                         rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode)
                                 //
-                                // clean up the __typename support for interfaces
                                 .thenApply(resultNode -> removeArtificialFields(getNadelContext(executionContext), resultNode))
                                 .thenApply(RootExecutionResultNode.class::cast))
                 .whenComplete(this::possiblyLogException);
