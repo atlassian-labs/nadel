@@ -20,9 +20,10 @@ typeTransformation : '<=' '$innerTypes' '.' name;
 
 fieldMappingDefinition : '$source' '.' name ;
 
-innerServiceHydration: '$innerQueries' '.' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier?;
+innerServiceHydration: '$innerQueries' '.' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
 
 objectIdentifier: 'object identified by' name;
+batchSize: 'batch size ' intValue;
 
 intValue: IntValue;
 

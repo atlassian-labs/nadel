@@ -26,13 +26,19 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
                                  String serviceName,
                                  String topLevelField,
                                  List<RemoteArgumentDefinition> arguments,
-                                 String objectIdentifier
+                                 String objectIdentifier,
+                                 Integer batchSize
     ) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.serviceName = serviceName;
         this.topLevelField = topLevelField;
         this.arguments = arguments;
         this.objectIdentifier = objectIdentifier;
+        this.batchSize = batchSize;
+    }
+
+    public Integer getBatchSize() {
+        return batchSize;
     }
 
     public String getObjectIdentifier() {

@@ -100,8 +100,12 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         if (ctx.objectIdentifier() != null) {
             objectIdentifier = ctx.objectIdentifier().name().getText();
         }
+        Integer batchSize = null;
+        if (ctx.batchSize() != null) {
+            batchSize = Integer.parseInt(ctx.batchSize().intValue().getText());
+        }
         return new InnerServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField,
-                remoteArguments, objectIdentifier);
+                remoteArguments, objectIdentifier, batchSize);
     }
 
     @Override

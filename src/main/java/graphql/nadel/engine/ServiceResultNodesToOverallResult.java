@@ -20,6 +20,7 @@ import graphql.util.TreeTransformerUtil;
 import java.util.Map;
 
 import static graphql.Assert.assertShouldNeverHappen;
+import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static java.util.Collections.singletonMap;
 
 public class ServiceResultNodesToOverallResult {
@@ -127,9 +128,16 @@ public class ServiceResultNodesToOverallResult {
         MergedField mergedField = leafExecutionResultNode.getMergedField();
         Field singleField = mergedField.getSingleField();
         FieldTransformation fieldTransformation = transformationMap.get(singleField);
+
         if (fieldTransformation instanceof HydrationTransformation) {
             HydrationTransformation hydrationTransformation = (HydrationTransformation) fieldTransformation;
-            return new HydrationInputNode(hydrationTransformation, fetchedValueAnalysis, leafExecutionResultNode.getNonNullableFieldWasNullException());
+            if (fetchedValueAnalysis.isNullValue()) {
+                // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
+                return (LeafExecutionResultNode) changeFieldInResultNode(leafExecutionResultNode, hydrationTransformation.getOriginalField());
+
+            } else {
+                return new HydrationInputNode(hydrationTransformation, fetchedValueAnalysis, leafExecutionResultNode.getNonNullableFieldWasNullException());
+            }
         }
         return new LeafExecutionResultNode(fetchedValueAnalysis, leafExecutionResultNode.getNonNullableFieldWasNullException());
     }

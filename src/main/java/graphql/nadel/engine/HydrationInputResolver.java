@@ -96,18 +96,10 @@ public class HydrationInputResolver {
         List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs = new ArrayList<>();
 
         for (NodeMultiZipper<ExecutionResultNode> batch : hydrationInputBatches) {
-
-            List<HydrationInputNode> batchedNodes = map(batch.getZippers(), zipper -> (HydrationInputNode) zipper.getCurNode());
-
-            if (isBatchHydrationField(batchedNodes.get(0))) {
-                CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, fieldTracking, batchedNodes);
-                resolvedNodeCFs.add(replaceNodesInZipper(batch, executionResultNodeCompletableFuture));
+            if (isBatchHydrationField((HydrationInputNode) batch.getZippers().get(0).getCurNode())) {
+                resolveInputNodesAsBatch(context, fieldTracking, resolvedNodeCFs, batch);
             } else {
-                for (NodeZipper<ExecutionResultNode> hydrationInputNodeZipper : batch.getZippers()) {
-                    HydrationInputNode hydrationInputNode = (HydrationInputNode) hydrationInputNodeZipper.getCurNode();
-                    CompletableFuture<ExecutionResultNode> executionResultNodeCompletableFuture = resolveSingleHydrationInput(context, fieldTracking, hydrationInputNode);
-                    resolvedNodeCFs.add(executionResultNodeCompletableFuture.thenApply(newNode -> singletonList(hydrationInputNodeZipper.withNewNode(newNode))));
-                }
+                resolveInputNodes(context, fieldTracking, resolvedNodeCFs, batch);
             }
 
         }
@@ -120,6 +112,48 @@ public class HydrationInputResolver {
                 })
                 .whenComplete(this::possiblyLogException);
     }
+
+    private void resolveInputNodes(ExecutionContext context, FieldTracking fieldTracking, List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs, NodeMultiZipper<ExecutionResultNode> batch) {
+        for (NodeZipper<ExecutionResultNode> hydrationInputNodeZipper : batch.getZippers()) {
+            HydrationInputNode hydrationInputNode = (HydrationInputNode) hydrationInputNodeZipper.getCurNode();
+            CompletableFuture<ExecutionResultNode> executionResultNodeCompletableFuture = resolveSingleHydrationInput(context, fieldTracking, hydrationInputNode);
+            resolvedNodeCFs.add(executionResultNodeCompletableFuture.thenApply(newNode -> singletonList(hydrationInputNodeZipper.withNewNode(newNode))));
+        }
+    }
+
+    private void resolveInputNodesAsBatch(ExecutionContext context, FieldTracking fieldTracking, List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs, NodeMultiZipper<ExecutionResultNode> batch) {
+        List<NodeMultiZipper<ExecutionResultNode>> batchesWithCorrectSize = groupIntoCorrectBatchSizes(batch);
+        for (NodeMultiZipper<ExecutionResultNode> oneBatch : batchesWithCorrectSize) {
+            List<HydrationInputNode> batchedNodes = map(oneBatch.getZippers(), zipper -> (HydrationInputNode) zipper.getCurNode());
+            CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, fieldTracking, batchedNodes);
+            resolvedNodeCFs.add(replaceNodesInZipper(oneBatch, executionResultNodeCompletableFuture));
+        }
+    }
+
+    private List<NodeMultiZipper<ExecutionResultNode>> groupIntoCorrectBatchSizes(NodeMultiZipper<ExecutionResultNode> batch) {
+        HydrationInputNode node = (HydrationInputNode) batch.getZippers().get(0).getCurNode();
+        Integer batchSize = node.getHydrationTransformation().getInnerServiceHydration().getBatchSize();
+        if (batchSize == null) {
+            return singletonList(batch);
+        }
+        List<NodeMultiZipper<ExecutionResultNode>> result = new ArrayList<>();
+        int counter = 0;
+        List<NodeZipper<ExecutionResultNode>> currentBatch = new ArrayList<>();
+        for (NodeZipper<ExecutionResultNode> zipper : batch.getZippers()) {
+            currentBatch.add(zipper);
+            counter++;
+            if (counter == batchSize) {
+                result.add(new NodeMultiZipper<>(batch.getCommonRoot(), currentBatch, FIX_NAMES_ADAPTER));
+                counter = 0;
+                currentBatch = new ArrayList<>();
+            }
+        }
+        if (currentBatch.size() > 0) {
+            result.add(new NodeMultiZipper<>(batch.getCommonRoot(), currentBatch, FIX_NAMES_ADAPTER));
+        }
+        return result;
+    }
+
 
     private boolean isBatchHydrationField(HydrationInputNode hydrationInputNode) {
         HydrationTransformation hydrationTransformation = hydrationInputNode.getHydrationTransformation();
