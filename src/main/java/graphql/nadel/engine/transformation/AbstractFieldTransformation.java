@@ -21,7 +21,7 @@ public abstract class AbstractFieldTransformation implements FieldTransformation
     }
 
     @Override
-    public Field unapplyField(Field mergedField) {
+    public Field unapplyField(Field field) {
         return getOriginalField();
     }
 

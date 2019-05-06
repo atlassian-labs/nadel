@@ -67,7 +67,7 @@ public class ServiceExecutor {
     }
 
 
-    public CompletableFuture<ServiceExecutionResult> executeImpl(Service service, ServiceExecution serviceExecution, ServiceExecutionParameters serviceExecutionParameters, ExecutionStepInfo executionStepInfo, ExecutionContext executionContext) {
+    private CompletableFuture<ServiceExecutionResult> executeImpl(Service service, ServiceExecution serviceExecution, ServiceExecutionParameters serviceExecutionParameters, ExecutionStepInfo executionStepInfo, ExecutionContext executionContext) {
 
         NadelInstrumentationServiceExecutionParameters instrumentationParams = new NadelInstrumentationServiceExecutionParameters(service, executionContext, executionContext.getInstrumentationState());
         serviceExecution = instrumentation.instrumentServiceExecution(serviceExecution, instrumentationParams);
