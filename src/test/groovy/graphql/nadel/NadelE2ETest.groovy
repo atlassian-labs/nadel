@@ -180,7 +180,7 @@ class NadelE2ETest extends Specification {
             } 
             type Foo {
                 name: String
-                bar: Bar <= \$innerQueries.Bar.barsById(id: \$source.barId) object identified by barId batch size 2
+                bar: Bar <= \$innerQueries.Bar.barsById(id: \$source.barId) object identified by barId, batch size 2
             }
          }
          service Bar {

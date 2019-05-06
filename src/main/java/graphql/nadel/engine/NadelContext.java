@@ -48,11 +48,11 @@ public class NadelContext {
     }
 
     private static String mkUnderscoreTypeNameAlias(String uuid) {
-        return String.format("typename__%s", uuid.replaceAll("-", "_"));
+        return String.format("typename__%s", uuid);
     }
 
     private static String createObjectIdentifierAlias(String uuid) {
-        return String.format("object_identifier__%s", uuid.replaceAll("-", "_"));
+        return String.format("object_identifier__%s", uuid);
     }
 
 
@@ -85,7 +85,7 @@ public class NadelContext {
         }
 
         public NadelContext build() {
-            String uuid = artificialFieldsUUID != null ? artificialFieldsUUID : UUID.randomUUID().toString();
+            String uuid = artificialFieldsUUID != null ? artificialFieldsUUID : UUID.randomUUID().toString().replaceAll("-", "_");
             return new NadelContext(userSuppliedContext, mkUnderscoreTypeNameAlias(uuid), originalOperationName, createObjectIdentifierAlias(uuid));
         }
     }
