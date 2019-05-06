@@ -356,7 +356,7 @@ public class HydrationInputResolver {
         for (ExecutionResultNode resolvedNode : resolvedNodes) {
             LeafExecutionResultNode idNode = getFieldByResultKey((ObjectExecutionResultNode) resolvedNode, objectIdentifier);
             assertNotNull(idNode, "no value found for object identifier: " + objectIdentifier);
-            String id = (String) idNode.getFetchedValueAnalysis().getCompletedValue();
+            Object id = idNode.getFetchedValueAnalysis().getCompletedValue();
             assertNotNull(id, "object identifier is null");
             if (id.equals(inputNodeId)) {
                 return (ObjectExecutionResultNode) resolvedNode;
