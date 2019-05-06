@@ -302,7 +302,13 @@ public class HydrationInputResolver {
         if (rootResultNode.getChildren().get(0) instanceof LeafExecutionResultNode) {
             // we only expect a null value here
             assertTrue(rootResultNode.getChildren().get(0).getFetchedValueAnalysis().isNullValue());
-            throw new RuntimeException("null result from hydration call not implemented yet");
+            List<ExecutionResultNode> result = new ArrayList<>();
+            for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
+                ExecutionStepInfo executionStepInfo = hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo();
+                ExecutionResultNode resultNode = createNullValue(executionStepInfo);
+                result.add(resultNode);
+            }
+            return result;
         }
         assertTrue(rootResultNode.getChildren().get(0) instanceof ListExecutionResultNode, "expect a list result from the underlying service for batched hydration");
         ListExecutionResultNode listResultNode = (ListExecutionResultNode) rootResultNode.getChildren().get(0);
