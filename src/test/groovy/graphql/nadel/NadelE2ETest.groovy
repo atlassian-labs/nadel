@@ -1,4 +1,3 @@
-
 package graphql.nadel
 
 import graphql.ErrorType
@@ -177,11 +176,11 @@ class NadelE2ETest extends Specification {
         def nsdl = '''
          service Foo {
             type Query{
-                foo: Foo  
+                foos: [Foo]  
             } 
             type Foo {
                 name: String
-                bar: Bar <= \$innerQueries.Bar.barById(id: \$source.barId)
+                bar: Bar <= \$innerQueries.Bar.barsById(id: \$source.barId) object identified by barId, batch size 2
             }
          }
          service Bar {
@@ -189,14 +188,15 @@ class NadelE2ETest extends Specification {
                 bar: Bar 
             } 
             type Bar {
+                barId: ID
                 name: String 
-                nestedBar: Bar <= \$innerQueries.Bar.barById(id: \$source.nestedBarId)
+                nestedBar: Bar <= \$innerQueries.Bar.barsById(id: \$source.nestedBarId) object identified by barId
             }
          }
         '''
         def underlyingSchema1 = typeDefinitions('''
             type Query{
-                foo: Foo  
+                foos: [Foo]  
             } 
             type Foo {
                 name: String
@@ -206,17 +206,17 @@ class NadelE2ETest extends Specification {
         def underlyingSchema2 = typeDefinitions('''
             type Query{
                 bar: Bar 
-                barById(id: ID): Bar
+                barsById(id: [ID]): [Bar]
             } 
             type Bar {
-                id: ID
+                barId: ID
                 name: String
                 nestedBarId: ID
             }
         ''')
 
         def query = '''
-            { foo { bar { name nestedBar {name nestedBar { name } } } } }
+                { foos { bar { name nestedBar {name nestedBar { name } } } } }
         '''
         ServiceExecution serviceExecution1 = Mock(ServiceExecution)
         ServiceExecution serviceExecution2 = Mock(ServiceExecution)
@@ -233,14 +233,17 @@ class NadelE2ETest extends Specification {
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
+                .artificialFieldsUUID("UUID")
                 .build()
 
-        def topLevelData = [foo: [barId: "barId123"]]
-        def hydrationData1 = [barById: [name: "BarName", nestedBarId: "nestedBarId123"]]
-        def hydrationData2 = [barById: [name: "NestedBarName1", nestedBarId: "nestedBarId456"]]
-        def hydrationData3 = [barById: [name: "NestedBarName2"]]
+        def topLevelData = [foos: [[barId: "bar1"], [barId: "bar2"], [barId: "bar3"]]]
+        def hydrationDataBatch1 = [barsById: [[object_identifier__UUID: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"], [object_identifier__UUID: "bar2", name: "Bar 2", nestedBarId: "nestedBar2"]]]
+        def hydrationDataBatch2 = [barsById: [[object_identifier__UUID: "bar3", name: "Bar 3", nestedBarId: null]]]
+        def hydrationData2 = [barsById: [[object_identifier__UUID: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
+        def hydrationData3 = [barsById: [[object_identifier__UUID: "nestedBarId456", name: "NestedBarName2"]]]
         ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
-        ServiceExecutionResult hydrationResult1 = new ServiceExecutionResult(hydrationData1)
+        ServiceExecutionResult hydrationResult1_1 = new ServiceExecutionResult(hydrationDataBatch1)
+        ServiceExecutionResult hydrationResult1_2 = new ServiceExecutionResult(hydrationDataBatch2)
         ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)
         ServiceExecutionResult hydrationResult3 = new ServiceExecutionResult(hydrationData3)
         when:
@@ -253,7 +256,12 @@ class NadelE2ETest extends Specification {
 
         1 * serviceExecution2.execute(_) >>
 
-                completedFuture(hydrationResult1)
+                completedFuture(hydrationResult1_1)
+
+        1 * serviceExecution2.execute(_) >>
+
+                completedFuture(hydrationResult1_2)
+
 
         1 * serviceExecution2.execute(_) >>
 
@@ -263,8 +271,7 @@ class NadelE2ETest extends Specification {
 
                 completedFuture(hydrationResult3)
 
-        result.join().data == [foo: [bar: [name: "BarName", nestedBar: [name: "NestedBarName1", nestedBar: [name
-                                                                                                            : "NestedBarName2"]]]]]
+        result.join().data == [foos: [[bar: [name: "Bar 1", nestedBar: [name: "NestedBarName1", nestedBar: [name: "NestedBarName2"]]]], [bar: [name: "Bar 2", nestedBar: null]], [bar: [name: "Bar 3", nestedBar: null]]]]
     }
 
     def 'mutation can be executed'() {

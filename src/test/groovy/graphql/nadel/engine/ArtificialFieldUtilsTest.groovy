@@ -12,7 +12,7 @@ import static graphql.nadel.testutils.ExecutionResultNodeUtil.root
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.toData
 import static graphql.nadel.testutils.TestUtil.mkField
 
-class UnderscoreTypeNameUtilsTest extends Specification {
+class ArtificialFieldUtilsTest extends Specification {
 
     def context = NadelContext.newContext().build()
     def underscoreTypeNameAlias = context.underscoreTypeNameAlias
@@ -29,7 +29,7 @@ class UnderscoreTypeNameUtilsTest extends Specification {
         ''')
 
         when:
-        def newField = UnderscoreTypeNameUtils.maybeAddUnderscoreTypeName(context, petField, interfaceType)
+        def newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(context, petField, interfaceType)
         then:
         AstPrinter.printAstCompact(newField) == """pet {name title $underscoreTypeNameAlias:__typename}"""
     }
@@ -47,7 +47,7 @@ class UnderscoreTypeNameUtilsTest extends Specification {
         ''')
 
         when:
-        def newField = UnderscoreTypeNameUtils.maybeAddUnderscoreTypeName(context, petField, interfaceType)
+        def newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(context, petField, interfaceType)
         then:
         AstPrinter.printAstCompact(newField) == """pet {name title ... {__typename} $underscoreTypeNameAlias:__typename}"""
     }
@@ -62,7 +62,7 @@ class UnderscoreTypeNameUtilsTest extends Specification {
         ''')
 
         when:
-        def newField = UnderscoreTypeNameUtils.maybeAddUnderscoreTypeName(context, petField, objectType)
+        def newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(context, petField, objectType)
         then:
         AstPrinter.printAstCompact(newField) == """pet {name title}"""
     }
@@ -88,7 +88,7 @@ class UnderscoreTypeNameUtilsTest extends Specification {
         ])
 
         when:
-        def newNode = UnderscoreTypeNameUtils.maybeRemoveUnderscoreTypeName(context, startingNode)
+        def newNode = ArtificialFieldUtils.removeArtificialFields(context, startingNode)
         def data = toData(newNode)
         then:
         data == [
@@ -129,7 +129,7 @@ class UnderscoreTypeNameUtilsTest extends Specification {
         ])
 
         when:
-        def newNode = UnderscoreTypeNameUtils.maybeRemoveUnderscoreTypeName(context, startingNode)
+        def newNode = ArtificialFieldUtils.removeArtificialFields(context, startingNode)
         then:
         // zippers allow for no change to objects if there is no change
         newNode == startingNode

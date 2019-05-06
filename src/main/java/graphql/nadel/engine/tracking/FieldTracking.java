@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static graphql.nadel.engine.UnderscoreTypeNameUtils.isAliasedUnderscoreTypeNameField;
+import static graphql.nadel.engine.ArtificialFieldUtils.isArtificialField;
 import static java.util.Collections.singletonList;
 
 public class FieldTracking {
@@ -67,7 +67,7 @@ public class FieldTracking {
     @SuppressWarnings("RedundantIfStatement")
     private boolean skipField(ExecutionStepInfo stepInfo) {
         ExecutionPath path = stepInfo.getPath();
-        if (isAliasedUnderscoreTypeNameField(nadelContext, stepInfo.getField())) {
+        if (isArtificialField(nadelContext, stepInfo.getField())) {
             return true;
         }
         if (ExecutionPathUtils.isListEndingPath(path)) {
@@ -84,6 +84,11 @@ public class FieldTracking {
         completeNode(stepInfo, null, null);
     }
 
+    public void fieldsCompleted(List<ExecutionResultNode> resultNodes, Throwable throwable) {
+        for (ExecutionResultNode resultNode : resultNodes) {
+            fieldsCompleted(resultNode, throwable);
+        }
+    }
 
     public void fieldsCompleted(ExecutionResultNode resultNode, Throwable throwable) {
         if (resultNode instanceof RootExecutionResultNode) {

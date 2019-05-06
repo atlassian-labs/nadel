@@ -20,6 +20,8 @@ import graphql.util.TreeTransformerUtil;
 import java.util.Map;
 
 import static graphql.Assert.assertShouldNeverHappen;
+import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
+import static java.util.Collections.singletonMap;
 
 public class ServiceResultNodesToOverallResult {
 
@@ -28,43 +30,44 @@ public class ServiceResultNodesToOverallResult {
 
     //TODO: the return type is not really ready to return hydration results, which can be used as input for new queries
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, Map<Field, FieldTransformation> transformationMap) {
-        return convert(resultNode, overallSchema, rootStepInfo, false, transformationMap);
+    public ExecutionResultNode convert(ExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, Map<Field, FieldTransformation> transformationMap) {
+        return convert(resultNode, overallSchema, rootStepInfo, false, false, transformationMap);
     }
 
-    public RootExecutionResultNode convert(RootExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, boolean isHydrationTransformation, Map<Field, FieldTransformation> transformationMap) {
+    public ExecutionResultNode convert(ExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, boolean isHydrationTransformation, boolean batched, Map<Field, FieldTransformation> transformationMap) {
         try {
             ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
-            RootExecutionResultNode newRoot = (RootExecutionResultNode) resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+            Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
+
+            ExecutionResultNode newRoot = resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
                 @Override
                 public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                     ExecutionResultNode node = context.thisNode();
                     ExecutionResultNode convertedNode;
                     if (node instanceof RootExecutionResultNode) {
-                        context.setVar(ExecutionStepInfo.class, rootStepInfo);
                         convertedNode = mapRootResultNode((RootExecutionResultNode) node);
                     } else if (node instanceof ObjectExecutionResultNode) {
                         ExecutionStepInfo parentStepInfo = context.getVarFromParents(ExecutionStepInfo.class);
                         ObjectExecutionResultNode objectResultNode = (ObjectExecutionResultNode) node;
-                        convertedNode = mapObjectResultNode(objectResultNode, overallSchema, parentStepInfo, isHydrationTransformation, transformationMap);
+                        convertedNode = mapObjectResultNode(objectResultNode, overallSchema, parentStepInfo, isHydrationTransformation, batched, transformationMap);
                         setExecutionInfo(context, convertedNode);
                     } else if (node instanceof ListExecutionResultNode) {
                         ExecutionStepInfo parentStepInfo = context.getVarFromParents(ExecutionStepInfo.class);
                         ListExecutionResultNode listExecutionResultNode = (ListExecutionResultNode) node;
-                        convertedNode = mapListExecutionResultNode(listExecutionResultNode, overallSchema, parentStepInfo, isHydrationTransformation, transformationMap);
+                        convertedNode = mapListExecutionResultNode(listExecutionResultNode, overallSchema, parentStepInfo, isHydrationTransformation, batched, transformationMap);
                         setExecutionInfo(context, convertedNode);
                     } else if (node instanceof LeafExecutionResultNode) {
                         ExecutionStepInfo parentStepInfo = context.getVarFromParents(ExecutionStepInfo.class);
                         LeafExecutionResultNode leafExecutionResultNode = (LeafExecutionResultNode) node;
-                        convertedNode = mapLeafResultNode(leafExecutionResultNode, overallSchema, parentStepInfo, isHydrationTransformation, transformationMap);
+                        convertedNode = mapLeafResultNode(leafExecutionResultNode, overallSchema, parentStepInfo, isHydrationTransformation, batched, transformationMap);
                     } else {
                         return assertShouldNeverHappen();
                     }
                     return TreeTransformerUtil.changeNode(context, convertedNode);
                 }
 
-            });
+            }, rootVars);
             return newRoot;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -85,9 +88,10 @@ public class ServiceResultNodesToOverallResult {
                                                                GraphQLSchema overallSchema,
                                                                ExecutionStepInfo parentExecutionStepInfo,
                                                                boolean isHydrationTransformation,
+                                                               boolean batched,
                                                                Map<Field, FieldTransformation> transformationMap) {
         FetchedValueAnalysis fetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(
-                resultNode.getFetchedValueAnalysis(), overallSchema, parentExecutionStepInfo, isHydrationTransformation, transformationMap);
+                resultNode.getFetchedValueAnalysis(), overallSchema, parentExecutionStepInfo, isHydrationTransformation, batched, transformationMap);
         return new ListExecutionResultNode(fetchedValueAnalysis, resultNode.getChildren());
     }
 
@@ -95,11 +99,12 @@ public class ServiceResultNodesToOverallResult {
                                                           GraphQLSchema overallSchema,
                                                           ExecutionStepInfo parentExecutionStepInfo,
                                                           boolean isHydrationTransformation,
+                                                          boolean batched,
                                                           Map<Field, FieldTransformation> transformationMap) {
         FetchedValueAnalysis originalFetchAnalysis = objectResultNode.getFetchedValueAnalysis();
         MergedField originalField = originalFetchAnalysis.getExecutionStepInfo().getField();
         FetchedValueAnalysis fetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(
-                originalFetchAnalysis, overallSchema, parentExecutionStepInfo, isHydrationTransformation, transformationMap);
+                originalFetchAnalysis, overallSchema, parentExecutionStepInfo, isHydrationTransformation, batched, transformationMap);
 
         objectResultNode = new ObjectExecutionResultNode(fetchedValueAnalysis, objectResultNode.getChildren());
 
@@ -114,17 +119,25 @@ public class ServiceResultNodesToOverallResult {
                                                       GraphQLSchema overallSchema,
                                                       ExecutionStepInfo parentExecutionStepInfo,
                                                       boolean isHydrationTransformation,
+                                                      boolean batched,
                                                       Map<Field, FieldTransformation> transformationMap) {
         FetchedValueAnalysis originalFetchAnalysis = leafExecutionResultNode.getFetchedValueAnalysis();
         FetchedValueAnalysis fetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(
-                originalFetchAnalysis, overallSchema, parentExecutionStepInfo, isHydrationTransformation, transformationMap);
+                originalFetchAnalysis, overallSchema, parentExecutionStepInfo, isHydrationTransformation, batched, transformationMap);
 
         MergedField mergedField = leafExecutionResultNode.getMergedField();
         Field singleField = mergedField.getSingleField();
         FieldTransformation fieldTransformation = transformationMap.get(singleField);
+
         if (fieldTransformation instanceof HydrationTransformation) {
             HydrationTransformation hydrationTransformation = (HydrationTransformation) fieldTransformation;
-            return new HydrationInputNode(hydrationTransformation, fetchedValueAnalysis, leafExecutionResultNode.getNonNullableFieldWasNullException());
+            if (fetchedValueAnalysis.isNullValue()) {
+                // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
+                return (LeafExecutionResultNode) changeFieldInResultNode(leafExecutionResultNode, hydrationTransformation.getOriginalField());
+
+            } else {
+                return new HydrationInputNode(hydrationTransformation, fetchedValueAnalysis, leafExecutionResultNode.getNonNullableFieldWasNullException());
+            }
         }
         return new LeafExecutionResultNode(fetchedValueAnalysis, leafExecutionResultNode.getNonNullableFieldWasNullException());
     }

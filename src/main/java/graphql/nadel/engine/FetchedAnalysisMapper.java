@@ -4,7 +4,6 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.language.Field;
 import graphql.nadel.engine.transformation.FieldTransformation;
-import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 
@@ -19,9 +18,10 @@ public class FetchedAnalysisMapper {
                                                         GraphQLSchema overallSchema,
                                                         ExecutionStepInfo parentExecutionStepInfo,
                                                         boolean isHydrationTransformation,
+                                                        boolean batched,
                                                         Map<Field, FieldTransformation> transformationMap) {
         ExecutionStepInfo mappedExecutionStepInfo = executionStepInfoMapper.mapExecutionStepInfo(
-                parentExecutionStepInfo, fetchedValueAnalysis.getExecutionStepInfo(), overallSchema, isHydrationTransformation, transformationMap);
+                parentExecutionStepInfo, fetchedValueAnalysis.getExecutionStepInfo(), overallSchema, isHydrationTransformation, batched, transformationMap);
         GraphQLObjectType mappedResolvedType = null;
         if (fetchedValueAnalysis.getValueType() == FetchedValueAnalysis.FetchedValueType.OBJECT && !fetchedValueAnalysis.isNullValue()) {
             mappedResolvedType = (GraphQLObjectType) overallSchema.getType(fetchedValueAnalysis.getResolvedType().getName());

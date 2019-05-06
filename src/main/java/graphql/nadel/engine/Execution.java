@@ -47,11 +47,16 @@ public class Execution {
         this.nadelExecutionStrategy = new NadelExecutionStrategy(services, createFieldsInfos(), overallSchema, instrumentation);
     }
 
-    public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput, Document document, ExecutionId executionId, InstrumentationState instrumentationState) {
+    public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput,
+                                                      Document document,
+                                                      ExecutionId executionId,
+                                                      InstrumentationState instrumentationState,
+                                                      String artificialFieldsUUID) {
 
         NadelContext nadelContext = NadelContext.newContext()
                 .userSuppliedContext(executionInput.getContext())
                 .originalOperationName(document, executionInput.getOperationName())
+                .artificialFieldsUUID(artificialFieldsUUID)
                 .build();
 
         executionInput = executionInput.transform(builder -> builder.context(nadelContext));

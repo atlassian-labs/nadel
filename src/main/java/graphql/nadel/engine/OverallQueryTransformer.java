@@ -35,6 +35,7 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -73,7 +74,7 @@ public class OverallQueryTransformer {
         Field transformedTopLevelField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
-        transformedTopLevelField = UnderscoreTypeNameUtils.maybeAddUnderscoreTypeName(nadelContext, transformedTopLevelField, topLevelFieldType);
+        transformedTopLevelField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedTopLevelField, topLevelFieldType);
 
         List<VariableDefinition> variableDefinitions = new ArrayList<>(referencedVariables.values());
         List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
@@ -100,12 +101,12 @@ public class OverallQueryTransformer {
         }
         Document newDocument = newDocumentBuilder.build();
 
+        MergedField transformedMergedField = MergedField.newMergedField(transformedTopLevelField).build();
         return new QueryTransformationResult(
                 newDocument,
                 operationDefinition,
-                null,
+                Collections.singletonList(transformedMergedField),
                 referencedVariableNames,
-                transformedTopLevelField,
                 transformationByResultField,
                 transformedFragments);
 
@@ -138,7 +139,7 @@ public class OverallQueryTransformer {
                         referencedVariables);
 
                 GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
-                newField = UnderscoreTypeNameUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
+                newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
                 return newField;
             });
             transformedFields.addAll(transformed);
@@ -178,7 +179,6 @@ public class OverallQueryTransformer {
                 operationDefinition,
                 transformedMergedFields,
                 referencedVariableNames,
-                null,
                 transformationByResultField,
                 transformedFragments);
     }

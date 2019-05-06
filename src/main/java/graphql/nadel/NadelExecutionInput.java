@@ -15,16 +15,22 @@ public class NadelExecutionInput {
     private final String operationName;
     private final Object context;
     private final Map<String, Object> variables;
+    private final String artificialFieldsUUID;
 
-    private NadelExecutionInput(String query, String operationName, Object context, Map<String, Object> variables) {
+    private NadelExecutionInput(String query, String operationName, Object context, Map<String, Object> variables, String artificialFieldsUUID) {
         this.query = requireNonNull(query);
         this.operationName = operationName;
         this.context = context;
         this.variables = requireNonNull(variables);
+        this.artificialFieldsUUID = artificialFieldsUUID;
     }
 
     public String getQuery() {
         return query;
+    }
+
+    public String getArtificialFieldsUUID() {
+        return artificialFieldsUUID;
     }
 
     public String getOperationName() {
@@ -48,6 +54,7 @@ public class NadelExecutionInput {
         private String operationName;
         private Object context = newContext().build();
         private Map<String, Object> variables = new LinkedHashMap<>();
+        private String artificialFieldsUUID;
 
         private Builder() {
         }
@@ -72,8 +79,13 @@ public class NadelExecutionInput {
             return this;
         }
 
+        public Builder artificialFieldsUUID(String artificialFieldsUUID) {
+            this.artificialFieldsUUID = artificialFieldsUUID;
+            return this;
+        }
+
         public NadelExecutionInput build() {
-            return new NadelExecutionInput(query, operationName, context, variables);
+            return new NadelExecutionInput(query, operationName, context, variables, artificialFieldsUUID);
         }
 
     }

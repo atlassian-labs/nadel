@@ -17,7 +17,6 @@ public class QueryTransformationResult {
 
     private final List<MergedField> transformedMergedFields;
     private final List<String> referencedVariables;
-    private final Field transformedField;
 
     private final Map<Field, FieldTransformation> transformationByResultField;
     private final Map<String, FragmentDefinition> transformedFragments;
@@ -26,14 +25,12 @@ public class QueryTransformationResult {
                                      OperationDefinition operationDefinition,
                                      List<MergedField> transformedMergedFields,
                                      List<String> referencedVariables,
-                                     Field transformedField,
                                      Map<Field, FieldTransformation> transformationByResultField,
                                      Map<String, FragmentDefinition> transformedFragments) {
         this.document = document;
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
         this.referencedVariables = referencedVariables;
-        this.transformedField = transformedField;
         this.transformationByResultField = transformationByResultField;
         this.transformedFragments = transformedFragments;
     }
@@ -52,10 +49,6 @@ public class QueryTransformationResult {
 
     public List<String> getReferencedVariables() {
         return referencedVariables;
-    }
-
-    public Field getTransformedField() {
-        return transformedField;
     }
 
     public Map<Field, FieldTransformation> getTransformationByResultField() {

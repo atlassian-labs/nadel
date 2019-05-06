@@ -194,7 +194,7 @@ public class Nadel {
             NadelInstrumentationQueryExecutionParameters instrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, overallSchema, instrumentationState);
             InstrumentationContext<ExecutionResult> executionInstrumentation = instrumentation.beginQueryExecution(instrumentationParameters);
 
-            CompletableFuture<ExecutionResult> executionResult = parseValidateAndExecute(executionInput, overallSchema, instrumentationState);
+            CompletableFuture<ExecutionResult> executionResult = parseValidateAndExecute(executionInput, overallSchema, instrumentationState, nadelExecutionInput.getArtificialFieldsUUID());
             //
             // finish up instrumentation
             executionResult = executionResult.whenComplete(executionInstrumentation::onCompleted);
@@ -207,7 +207,7 @@ public class Nadel {
         }
     }
 
-    private CompletableFuture<ExecutionResult> parseValidateAndExecute(ExecutionInput executionInput, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState) {
+    private CompletableFuture<ExecutionResult> parseValidateAndExecute(ExecutionInput executionInput, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState, String artificialFieldsUUID) {
         AtomicReference<ExecutionInput> executionInputRef = new AtomicReference<>(executionInput);
         Function<ExecutionInput, PreparsedDocumentEntry> computeFunction = transformedInput -> {
             // if they change the original query in the pre-parser, then we want to see it downstream from then on
@@ -218,7 +218,7 @@ public class Nadel {
         if (preparsedDoc.hasErrors()) {
             return CompletableFuture.completedFuture(new ExecutionResultImpl(preparsedDoc.getErrors()));
         }
-        return executeImpl(executionInputRef.get(), preparsedDoc.getDocument(), instrumentationState);
+        return executeImpl(executionInputRef.get(), preparsedDoc.getDocument(), instrumentationState, artificialFieldsUUID);
     }
 
     private PreparsedDocumentEntry parseAndValidate(AtomicReference<ExecutionInput> executionInputRef, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState) {
@@ -279,7 +279,7 @@ public class Nadel {
         return validationErrors;
     }
 
-    private CompletableFuture<ExecutionResult> executeImpl(ExecutionInput executionInput, Document document, InstrumentationState instrumentationState) {
+    private CompletableFuture<ExecutionResult> executeImpl(ExecutionInput executionInput, Document document, InstrumentationState instrumentationState, String artificialFieldsUUID) {
 
         String query = executionInput.getQuery();
         String operationName = executionInput.getOperationName();
@@ -288,6 +288,6 @@ public class Nadel {
         ExecutionId executionId = executionIdProvider.provide(query, operationName, context);
         Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner);
 
-        return execution.execute(executionInput, document, executionId, instrumentationState);
+        return execution.execute(executionInput, document, executionId, instrumentationState, artificialFieldsUUID);
     }
 }
