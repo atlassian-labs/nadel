@@ -70,17 +70,17 @@ public class NadelExecutionStrategy {
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
         ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
 
-        List<ServiceCall> serviceCalls = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
+        List<OneServiceExecution> oneServiceExecutions = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
 
         FieldTracking fieldTracking = new FieldTracking(instrumentation, executionContext);
 
         Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
-        for (ServiceCall serviceCall : serviceCalls) {
-            Service service = serviceCall.service;
+        for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
+            Service service = oneServiceExecution.service;
             String operationName = buildOperationName(service, executionContext);
-            ExecutionStepInfo stepInfo = serviceCall.stepInfo;
+            ExecutionStepInfo stepInfo = oneServiceExecution.stepInfo;
             MergedField mergedField = stepInfo.getField();
 
             //
@@ -93,7 +93,7 @@ public class NadelExecutionStrategy {
             fieldTracking.fieldsDispatched(singletonList(stepInfo));
             //
             // now call put to the service with the new query
-            Object serviceContext = serviceCall.serviceContext;
+            Object serviceContext = oneServiceExecution.serviceContext;
             CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
                     .execute(executionContext, queryTransformerResult, service, operation, serviceContext)
                     .thenApply(rootResultNode -> serviceExecutionHooks.postServiceResult(service, serviceContext, overallSchema, rootResultNode))
@@ -137,9 +137,9 @@ public class NadelExecutionStrategy {
         });
     }
 
-    public static class ServiceCall {
+    private static class OneServiceExecution {
 
-        public ServiceCall(Service service, Object serviceContext, ExecutionStepInfo stepInfo) {
+        public OneServiceExecution(Service service, Object serviceContext, ExecutionStepInfo stepInfo) {
             this.service = service;
             this.serviceContext = serviceContext;
             this.stepInfo = stepInfo;
@@ -150,8 +150,8 @@ public class NadelExecutionStrategy {
         ExecutionStepInfo stepInfo;
     }
 
-    private List<ServiceCall> prepareServiceExecution(ExecutionContext context, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
-        List<ServiceCall> result = new ArrayList<>();
+    private List<OneServiceExecution> prepareServiceExecution(ExecutionContext context, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
+        List<OneServiceExecution> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, rootExecutionStepInfo);
             Service service = getServiceForFieldDefinition(newExecutionStepInfo.getFieldDefinition());
@@ -160,7 +160,7 @@ public class NadelExecutionStrategy {
             if (newArguments != null) {
                 newExecutionStepInfo = changeFieldArguments(newExecutionStepInfo, newArguments);
             }
-            result.add(new ServiceCall(service, serviceContext, newExecutionStepInfo));
+            result.add(new OneServiceExecution(service, serviceContext, newExecutionStepInfo));
         }
         return result;
     }
