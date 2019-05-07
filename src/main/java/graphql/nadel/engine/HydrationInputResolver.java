@@ -201,7 +201,7 @@ public class HydrationInputResolver {
 
         fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
         return serviceExecutor
-                .execute(executionContext, queryTransformationResult, service, operation)
+                .execute(executionContext, queryTransformationResult, service, operation, null)
                 .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult))
                 .thenApply(resultNode -> removeArtificialFields(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
@@ -265,7 +265,7 @@ public class HydrationInputResolver {
         List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, hydrationInputNode -> hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo());
         fieldTracking.fieldsDispatched(hydratedFieldStepInfos);
         return serviceExecutor
-                .execute(executionContext, queryTransformationResult, service, operation)
+                .execute(executionContext, queryTransformationResult, service, operation, null)
                 .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, fieldTracking, hydrationInputs, resultNode, queryTransformationResult))
                 .thenApply(resultNode -> ArtificialFieldUtils.removeArtificialFields(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
