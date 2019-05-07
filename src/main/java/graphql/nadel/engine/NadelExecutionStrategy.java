@@ -11,11 +11,13 @@ import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
+import graphql.language.Field;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.engine.tracking.FieldTracking;
+import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
@@ -80,21 +82,24 @@ public class NadelExecutionStrategy {
             // take the original query and transform it into the underlying query needed for that top level field
             //
             QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(executionContext, operationName, operation, mergedFields);
+            Map<Field, FieldTransformation> transformationByResultField = queryTransformerResult.getTransformationByResultField();
+            Map<String, String> typeRenameMappings = queryTransformerResult.getTypeRenameMappings();
 
             //
             // say they are dispatched
             fieldTracking.fieldsDispatched(stepInfos);
             //
             // now call put to the service with the new query
-            CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
-                    .execute(executionContext, queryTransformerResult, service, operation)
-                    .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult.convert(resultNode, overallSchema, rootExecutionStepInfo, queryTransformerResult.getTransformationByResultField()));
+            CompletableFuture<RootExecutionResultNode> executeResult = serviceExecutor.execute(executionContext, queryTransformerResult, service, operation);
+            CompletableFuture<RootExecutionResultNode> convertedResult = executeResult
+                    .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
+                            .convert(resultNode, overallSchema, rootExecutionStepInfo, transformationByResultField, typeRenameMappings));
 
             //
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
-            serviceResult.whenComplete(fieldTracking::fieldsCompleted);
+            convertedResult.whenComplete(fieldTracking::fieldsCompleted);
 
-            resultNodes.add(serviceResult);
+            resultNodes.add(convertedResult);
         }
 
         CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
@@ -109,7 +114,6 @@ public class NadelExecutionStrategy {
                                 .thenApply(RootExecutionResultNode.class::cast))
                 .whenComplete(this::possiblyLogException);
     }
-
 
 
     @SuppressWarnings("unused")

@@ -115,11 +115,11 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             return objectTypeDefinition;
         }
         TypeTransformation typeTransformation = new TypeTransformation(null, new ArrayList<>());
-        typeTransformation.setOriginalName(ctx.typeTransformation().name().getText());
-        ObjectTypeDefinitionWithTransformation objectTypeDefinitionWithTransformation = ObjectTypeDefinitionWithTransformation.newObjectTypeDefinitionWithTransformation(objectTypeDefinition)
+        typeTransformation.setUnderlyingName(ctx.typeTransformation().name().getText());
+        typeTransformation.setOverallName(ctx.name().getText());
+        return ObjectTypeDefinitionWithTransformation.newObjectTypeDefinitionWithTransformation(objectTypeDefinition)
                 .typeTransformation(typeTransformation)
                 .build();
-        return objectTypeDefinitionWithTransformation;
     }
 
     private RemoteArgumentDefinition createRemoteArgumentDefinition(StitchingDSLParser.RemoteArgumentPairContext

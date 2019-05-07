@@ -19,9 +19,11 @@ public class FetchedAnalysisMapper {
                                                         ExecutionStepInfo parentExecutionStepInfo,
                                                         boolean isHydrationTransformation,
                                                         boolean batched,
-                                                        Map<Field, FieldTransformation> transformationMap) {
-        ExecutionStepInfo mappedExecutionStepInfo = executionStepInfoMapper.mapExecutionStepInfo(
-                parentExecutionStepInfo, fetchedValueAnalysis.getExecutionStepInfo(), overallSchema, isHydrationTransformation, batched, transformationMap);
+                                                        Map<Field, FieldTransformation> transformationMap,
+                                                        Map<String, String> typeRenameMappings) {
+        ExecutionStepInfo executionStepInfo = fetchedValueAnalysis.getExecutionStepInfo();
+        ExecutionStepInfo mappedExecutionStepInfo = executionStepInfoMapper
+                .mapExecutionStepInfo(parentExecutionStepInfo, executionStepInfo, overallSchema, isHydrationTransformation, batched, transformationMap, typeRenameMappings);
         GraphQLObjectType mappedResolvedType = null;
         if (fetchedValueAnalysis.getValueType() == FetchedValueAnalysis.FetchedValueType.OBJECT && !fetchedValueAnalysis.isNullValue()) {
             mappedResolvedType = (GraphQLObjectType) overallSchema.getType(fetchedValueAnalysis.getResolvedType().getName());

@@ -29,7 +29,8 @@ public class ExecutionStepInfoMapper {
                                                   GraphQLSchema overallSchema,
                                                   boolean isHydrationTransformation,
                                                   boolean batched,
-                                                  Map<Field, FieldTransformation> transformationMap) {
+                                                  Map<Field, FieldTransformation> transformationMap,
+                                                  Map<String, String> typeRenameMappings) {
         MergedField underlyingMergedField = executionStepInfo.getField();
         List<Field> newFields = new ArrayList<>();
         for (Field underlyingField : underlyingMergedField.getFields()) {
@@ -46,8 +47,10 @@ public class ExecutionStepInfoMapper {
         GraphQLOutputType fieldType = executionStepInfo.getType();
         GraphQLObjectType fieldContainer = executionStepInfo.getFieldContainer();
 
-        GraphQLObjectType mappedFieldContainer = (GraphQLObjectType) overallSchema.getType(fieldContainer.getName());
-        GraphQLOutputType mappedFieldType = mapOutputType(fieldType, overallSchema);
+        String fieldContainerName = mapTypeName(typeRenameMappings, fieldContainer.getName());
+        GraphQLObjectType mappedFieldContainer = overallSchema.getObjectType(fieldContainerName);
+
+        GraphQLOutputType mappedFieldType = mapOutputType(fieldType, overallSchema, typeRenameMappings);
         GraphQLFieldDefinition mappedFieldDefinition = mappedFieldContainer.getFieldDefinition(mappedMergedField.getName());
 
         ExecutionPath mappedPath = mapPath(parentExecutionStepInfo, executionStepInfo, isHydrationTransformation, batched, mappedMergedField);
@@ -79,8 +82,7 @@ public class ExecutionStepInfoMapper {
             }
             fieldSegments = FpKit.concat(parentPath.toList(), fieldSegments);
         }
-        ExecutionPath newPath = ExecutionPath.fromList(fieldSegments);
-        return newPath;
+        return ExecutionPath.fromList(fieldSegments);
     }
 
     private List<Object> patchLastFieldName(ExecutionStepInfo fieldStepInfo, MergedField mergedField) {
@@ -97,17 +99,23 @@ public class ExecutionStepInfoMapper {
         return fieldSegments;
     }
 
-    private GraphQLOutputType mapOutputType(GraphQLOutputType graphQLOutputType, GraphQLSchema overallSchema) {
+    private GraphQLOutputType mapOutputType(GraphQLOutputType graphQLOutputType, GraphQLSchema overallSchema, Map<String, String> typeRenameMappings) {
         if (GraphQLTypeUtil.isNotWrapped(graphQLOutputType)) {
-            return assertNotNull((GraphQLOutputType) overallSchema.getType(graphQLOutputType.getName()), "type " + graphQLOutputType.getName() + " not found in overall schema");
+            String typeName = mapTypeName(typeRenameMappings, graphQLOutputType.getName());
+            GraphQLOutputType outputType = (GraphQLOutputType) overallSchema.getType(typeName);
+            return assertNotNull(outputType, "type " + graphQLOutputType.getName() + " not found in overall schema");
         }
         if (GraphQLTypeUtil.isList(graphQLOutputType)) {
-            return GraphQLList.list(mapOutputType((GraphQLOutputType) ((GraphQLList) graphQLOutputType).getWrappedType(), overallSchema));
+            return GraphQLList.list(mapOutputType((GraphQLOutputType) ((GraphQLList) graphQLOutputType).getWrappedType(), overallSchema, typeRenameMappings));
         }
         if (GraphQLTypeUtil.isNonNull(graphQLOutputType)) {
-            return GraphQLNonNull.nonNull(mapOutputType((GraphQLOutputType) ((GraphQLNonNull) graphQLOutputType).getWrappedType(), overallSchema));
+            return GraphQLNonNull.nonNull(mapOutputType((GraphQLOutputType) ((GraphQLNonNull) graphQLOutputType).getWrappedType(), overallSchema, typeRenameMappings));
         }
         return Assert.assertShouldNeverHappen();
+    }
+
+    private String mapTypeName(Map<String, String> typeRenameMappings, String name) {
+        return typeRenameMappings.getOrDefault(name, name);
     }
 
 }
