@@ -105,10 +105,10 @@ public class ServiceResultNodesToOverallResult {
                                                           Map<String, String> typeRenameMappings) {
         FetchedValueAnalysis originalFetchAnalysis = objectResultNode.getFetchedValueAnalysis();
         MergedField originalField = originalFetchAnalysis.getExecutionStepInfo().getField();
-        FetchedValueAnalysis fetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(
+        FetchedValueAnalysis mappedFetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(
                 originalFetchAnalysis, overallSchema, parentExecutionStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings);
 
-        objectResultNode = new ObjectExecutionResultNode(fetchedValueAnalysis, objectResultNode.getChildren());
+        objectResultNode = new ObjectExecutionResultNode(mappedFetchedValueAnalysis, objectResultNode.getChildren());
 
         FieldTransformation fieldTransformation = transformationMap.get(originalField.getSingleField());
         if (fieldTransformation != null) {

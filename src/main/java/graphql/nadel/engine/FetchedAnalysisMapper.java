@@ -26,7 +26,9 @@ public class FetchedAnalysisMapper {
                 .mapExecutionStepInfo(parentExecutionStepInfo, executionStepInfo, overallSchema, isHydrationTransformation, batched, transformationMap, typeRenameMappings);
         GraphQLObjectType mappedResolvedType = null;
         if (fetchedValueAnalysis.getValueType() == FetchedValueAnalysis.FetchedValueType.OBJECT && !fetchedValueAnalysis.isNullValue()) {
-            mappedResolvedType = (GraphQLObjectType) overallSchema.getType(fetchedValueAnalysis.getResolvedType().getName());
+            String resolvedTypeName = fetchedValueAnalysis.getResolvedType().getName();
+            resolvedTypeName = typeRenameMappings.getOrDefault(resolvedTypeName,resolvedTypeName);
+            mappedResolvedType = (GraphQLObjectType) overallSchema.getType(resolvedTypeName);
         }
         //TODO: match underlying errors
         GraphQLObjectType finalMappedResolvedType = mappedResolvedType;
