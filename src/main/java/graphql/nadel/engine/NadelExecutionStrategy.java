@@ -11,7 +11,6 @@ import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
-import graphql.language.Field;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
@@ -82,7 +81,7 @@ public class NadelExecutionStrategy {
             // take the original query and transform it into the underlying query needed for that top level field
             //
             QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(executionContext, operationName, operation, mergedFields);
-            Map<Field, FieldTransformation> transformationByResultField = queryTransformerResult.getTransformationByResultField();
+            Map<String, FieldTransformation> transformationByResultField = queryTransformerResult.getTransformationByResultField();
             Map<String, String> typeRenameMappings = queryTransformerResult.getTypeRenameMappings();
 
             //

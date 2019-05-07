@@ -231,7 +231,7 @@ public class HydrationInputResolver {
 
         synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
 
-        Map<Field, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
+        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         RootExecutionResultNode overallResultNode = (RootExecutionResultNode) serviceResultNodesToOverallResult
                 .convert(rootResultNode, overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings);
@@ -317,7 +317,7 @@ public class HydrationInputResolver {
         List<ExecutionResultNode> resolvedNodes = listResultNode.getChildren();
 
         List<ExecutionResultNode> result = new ArrayList<>();
-        Map<Field, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
+        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
 
         boolean first = true;

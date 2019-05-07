@@ -2,7 +2,6 @@ package graphql.nadel.engine;
 
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.FetchedValueAnalysis;
-import graphql.language.Field;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
@@ -19,7 +18,7 @@ public class FetchedAnalysisMapper {
                                                         ExecutionStepInfo parentExecutionStepInfo,
                                                         boolean isHydrationTransformation,
                                                         boolean batched,
-                                                        Map<Field, FieldTransformation> transformationMap,
+                                                        Map<String, FieldTransformation> transformationMap,
                                                         Map<String, String> typeRenameMappings) {
         ExecutionStepInfo executionStepInfo = fetchedValueAnalysis.getExecutionStepInfo();
         ExecutionStepInfo mappedExecutionStepInfo = executionStepInfoMapper

@@ -29,12 +29,17 @@ public class ExecutionStepInfoMapper {
                                                   GraphQLSchema overallSchema,
                                                   boolean isHydrationTransformation,
                                                   boolean batched,
-                                                  Map<Field, FieldTransformation> transformationMap,
+                                                  Map<String, FieldTransformation> transformationMap,
                                                   Map<String, String> typeRenameMappings) {
         MergedField underlyingMergedField = executionStepInfo.getField();
         List<Field> newFields = new ArrayList<>();
         for (Field underlyingField : underlyingMergedField.getFields()) {
-            FieldTransformation fieldTransformation = transformationMap.get(underlyingField);
+            String fieldId = underlyingField.getAdditionalData().get(FieldTransformation.NADEL_FIELD_ID);
+            if (fieldId == null) {
+                newFields.add(underlyingField);
+                continue;
+            }
+            FieldTransformation fieldTransformation = transformationMap.get(fieldId);
             if (fieldTransformation != null) {
                 newFields.add(fieldTransformation.unapplyField(underlyingField));
             } else {

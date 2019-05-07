@@ -110,6 +110,6 @@ class NadelRenameTest extends Specification {
         // TODO -  there is still a a bug in the field rename code such that fragments cause the data to NOT be renamed properly
         // so this test has value but not as much with the data assertions
         //
-        //result.data == [renameOverall: [name: "val"]]
+        result.data == [renameOverall: [name: "val"]]
     }
 }

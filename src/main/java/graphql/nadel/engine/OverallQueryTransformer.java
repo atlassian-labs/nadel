@@ -61,7 +61,7 @@ public class OverallQueryTransformer {
             Field topLevelField, GraphQLCompositeType topLevelFieldType
     ) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
-        Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
+        Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
 
@@ -124,7 +124,7 @@ public class OverallQueryTransformer {
     ) {
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
-        Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
+        Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
 
@@ -195,7 +195,7 @@ public class OverallQueryTransformer {
 
     private Map<String, FragmentDefinition> transformFragments(ExecutionContext executionContext,
                                                                Map<String, FragmentDefinition> fragments,
-                                                               Map<Field, FieldTransformation> transformationByResultField,
+                                                               Map<String, FieldTransformation> transformationByResultField,
                                                                Map<String, String> typeRenameMappings,
                                                                Set<String> referencedFragmentNames,
                                                                Map<String, VariableDefinition> referencedVariables) {
@@ -206,7 +206,7 @@ public class OverallQueryTransformer {
 
     private FragmentDefinition transformFragmentDefinition(ExecutionContext executionContext,
                                                            FragmentDefinition fragmentDefinition,
-                                                           Map<Field, FieldTransformation> transformationByResultField,
+                                                           Map<String, FieldTransformation> transformationByResultField,
                                                            Map<String, String> typeRenameMappings,
                                                            Set<String> referencedFragmentNames,
                                                            Map<String, VariableDefinition> referencedVariables) {
@@ -224,7 +224,7 @@ public class OverallQueryTransformer {
     private <T extends Node> T transformNode(ExecutionContext executionContext,
                                              T node,
                                              GraphQLCompositeType parentType,
-                                             Map<Field, FieldTransformation> transformationByResultField,
+                                             Map<String, FieldTransformation> transformationByResultField,
                                              Map<String, String> typeRenameMappings,
                                              Set<String> referencedFragmentNames,
                                              Map<String, VariableDefinition> referencedVariables) {
@@ -245,13 +245,13 @@ public class OverallQueryTransformer {
     private class Transformer implements QueryVisitor {
 
         final ExecutionContext executionContext;
-        final Map<Field, FieldTransformation> transformationByResultField;
+        final Map<String, FieldTransformation> transformationByResultField;
         final Map<String, String> typeRenameMappings;
         final Set<String> referencedFragmentNames;
         final Map<String, VariableDefinition> referencedVariables;
 
         Transformer(ExecutionContext executionContext,
-                    Map<Field, FieldTransformation> transformationByResultField,
+                    Map<String, FieldTransformation> transformationByResultField,
                     Map<String, String> typeRenameMappings,
                     Set<String> referencedFragmentNames,
                     Map<String, VariableDefinition> referencedVariables) {
@@ -290,8 +290,9 @@ public class OverallQueryTransformer {
             if (fieldTransformation != null) {
                 fieldTransformation.apply(environment);
                 Field changedNode = (Field) environment.getTraverserContext().thisNode();
-
-                transformationByResultField.put(changedNode, fieldTransformation);
+                String fieldId = changedNode.getAdditionalData().get(FieldTransformation.NADEL_FIELD_ID);
+                assertNotNull(fieldId, "nadel field it is null for transformation");
+                transformationByResultField.put(fieldId, fieldTransformation);
             }
         }
 
