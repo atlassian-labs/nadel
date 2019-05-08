@@ -172,7 +172,7 @@ public class Nadel {
             return this;
         }
 
-        public Builder introspectionRunner(ServiceExecutionHooks serviceExecutionHooks) {
+        public Builder serviceExecutionHooks(ServiceExecutionHooks serviceExecutionHooks) {
             this.serviceExecutionHooks = requireNonNull(serviceExecutionHooks);
             return this;
         }
