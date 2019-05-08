@@ -27,7 +27,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
-def graphqlJavaVersion = '2019-05-07T18-18-02-bd9240c1'
+def graphqlJavaVersion = '2019-05-08T00-35-46-439e342'
 
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
