@@ -11,10 +11,13 @@ import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
+import graphql.language.Argument;
+import graphql.language.Field;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
+import graphql.nadel.ServiceExecutionHooks;
 import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.schema.GraphQLFieldDefinition;
@@ -23,23 +26,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.nadel.engine.ArtificialFieldUtils.removeArtificialFields;
 import static graphql.util.FpKit.map;
 import static java.lang.String.format;
-import static java.util.stream.Collectors.toList;
+import static java.util.Collections.singletonList;
 
 @Internal
 public class NadelExecutionStrategy {
 
     private final Logger log = LoggerFactory.getLogger(ExecutionStrategy.class);
 
-    private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
     private final OverallQueryTransformer queryTransformer = new OverallQueryTransformer();
@@ -50,13 +50,19 @@ public class NadelExecutionStrategy {
     private final NadelInstrumentation instrumentation;
     private final ServiceExecutor serviceExecutor;
     private final HydrationInputResolver hydrationInputResolver;
+    private final ServiceExecutionHooks serviceExecutionHooks;
 
-    public NadelExecutionStrategy(List<Service> services, FieldInfos fieldInfos, GraphQLSchema overallSchema, NadelInstrumentation instrumentation) {
+    public NadelExecutionStrategy(List<Service> services,
+                                  FieldInfos fieldInfos,
+                                  GraphQLSchema overallSchema,
+                                  NadelInstrumentation instrumentation,
+                                  ServiceExecutionHooks serviceExecutionHooks) {
         this.overallSchema = overallSchema;
         this.instrumentation = instrumentation;
         assertNotEmpty(services);
         this.services = services;
         this.fieldInfos = fieldInfos;
+        this.serviceExecutionHooks = serviceExecutionHooks;
         this.serviceExecutor = new ServiceExecutor(overallSchema, instrumentation);
         this.hydrationInputResolver = new HydrationInputResolver(services, fieldInfos, overallSchema, instrumentation, serviceExecutor);
     }
@@ -64,30 +70,33 @@ public class NadelExecutionStrategy {
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
         ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
 
-        Map<Service, List<ExecutionStepInfo>> delegatedExecutionForTopLevel = getDelegatedExecutionForTopLevel(executionContext, fieldSubSelection, rootExecutionStepInfo);
+        List<OneServiceExecution> oneServiceExecutions = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
 
         FieldTracking fieldTracking = new FieldTracking(instrumentation, executionContext);
 
         Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
-        for (Service service : delegatedExecutionForTopLevel.keySet()) {
+        for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
+            Service service = oneServiceExecution.service;
             String operationName = buildOperationName(service, executionContext);
-            List<ExecutionStepInfo> stepInfos = delegatedExecutionForTopLevel.get(service);
-            List<MergedField> mergedFields = stepInfos.stream().map(ExecutionStepInfo::getField).collect(toList());
+            ExecutionStepInfo stepInfo = oneServiceExecution.stepInfo;
+            MergedField mergedField = stepInfo.getField();
 
             //
             // take the original query and transform it into the underlying query needed for that top level field
             //
-            QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(executionContext, operationName, operation, mergedFields);
+            QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(executionContext, operationName, operation, singletonList(mergedField));
 
             //
             // say they are dispatched
-            fieldTracking.fieldsDispatched(stepInfos);
+            fieldTracking.fieldsDispatched(singletonList(stepInfo));
             //
             // now call put to the service with the new query
+            Object serviceContext = oneServiceExecution.serviceContext;
             CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
-                    .execute(executionContext, queryTransformerResult, service, operation)
+                    .execute(executionContext, queryTransformerResult, service, operation, serviceContext)
+                    .thenApply(rootResultNode -> serviceExecutionHooks.postServiceResult(service, serviceContext, overallSchema, rootResultNode))
                     .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult.convert(resultNode, overallSchema, rootExecutionStepInfo, queryTransformerResult.getTransformationByResultField()));
 
             //
@@ -111,7 +120,6 @@ public class NadelExecutionStrategy {
     }
 
 
-
     @SuppressWarnings("unused")
     private <T> void possiblyLogException(T result, Throwable exception) {
         if (exception != null) {
@@ -129,16 +137,44 @@ public class NadelExecutionStrategy {
         });
     }
 
-    private Map<Service, List<ExecutionStepInfo>> getDelegatedExecutionForTopLevel(ExecutionContext context, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
-        //TODO: consider dynamic delegation targets in the future
-        Map<Service, List<ExecutionStepInfo>> result = new LinkedHashMap<>();
+    private static class OneServiceExecution {
+
+        public OneServiceExecution(Service service, Object serviceContext, ExecutionStepInfo stepInfo) {
+            this.service = service;
+            this.serviceContext = serviceContext;
+            this.stepInfo = stepInfo;
+        }
+
+        Service service;
+        Object serviceContext;
+        ExecutionStepInfo stepInfo;
+    }
+
+    private List<OneServiceExecution> prepareServiceExecution(ExecutionContext context, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
+        List<OneServiceExecution> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, rootExecutionStepInfo);
             Service service = getServiceForFieldDefinition(newExecutionStepInfo.getFieldDefinition());
-            result.computeIfAbsent(service, key -> new ArrayList<>());
-            result.get(service).add(newExecutionStepInfo);
+            Object serviceContext = serviceExecutionHooks.createServiceContext(service, newExecutionStepInfo);
+            List<Argument> newArguments = serviceExecutionHooks.modifyArguments(service, serviceContext, newExecutionStepInfo, mergedField.getArguments());
+            if (newArguments != null) {
+                newExecutionStepInfo = changeFieldArguments(newExecutionStepInfo, newArguments);
+            }
+            result.add(new OneServiceExecution(service, serviceContext, newExecutionStepInfo));
         }
         return result;
+    }
+
+    private ExecutionStepInfo changeFieldArguments(ExecutionStepInfo executionStepInfo, List<Argument> newArguments) {
+        MergedField mergedField = executionStepInfo.getField();
+        List<Field> fields = mergedField.getFields();
+        List<Field> newFields = new ArrayList<>();
+        for (Field field : fields) {
+            newFields.add(field.transform(builder -> builder.arguments(newArguments)));
+        }
+
+        MergedField newMergedField = mergedField.transform(builder -> builder.fields(newFields));
+        return executionStepInfo.transform(builder -> builder.field(newMergedField));
     }
 
     private Service getServiceForFieldDefinition(GraphQLFieldDefinition fieldDefinition) {

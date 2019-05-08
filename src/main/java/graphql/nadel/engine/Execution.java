@@ -17,6 +17,7 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Service;
+import graphql.nadel.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.introspection.IntrospectionRunner;
@@ -39,12 +40,12 @@ public class Execution {
     private final ExecutionHelper executionHelper = new ExecutionHelper();
     private final NadelExecutionStrategy nadelExecutionStrategy;
 
-    public Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner) {
+    public Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner, ServiceExecutionHooks serviceExecutionHooks) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.instrumentation = instrumentation;
         this.introspectionRunner = introspectionRunner;
-        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, createFieldsInfos(), overallSchema, instrumentation);
+        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, createFieldsInfos(), overallSchema, instrumentation, serviceExecutionHooks);
     }
 
     public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput,
