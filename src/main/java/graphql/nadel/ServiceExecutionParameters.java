@@ -75,8 +75,8 @@ public class ServiceExecutionParameters {
         return operationDefinition.getOperation();
     }
 
-    public Object getServiceContext() {
-        return serviceContext;
+    public <T> T getServiceContext() {
+        return (T) serviceContext;
     }
 
     public static Builder newServiceExecutionParameters() {
