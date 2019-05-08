@@ -33,6 +33,8 @@ import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLTypeUtil;
+import graphql.schema.GraphQLUnmodifiedType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -280,8 +282,8 @@ public class OverallQueryTransformer {
                         referencedVariables.put(variableDefinition.getName(), variableDefinition);
                     });
 
-            String fieldTypeName = environment.getFieldDefinition().getType().getName();
-            TypeTransformation typeTransformation = typeTransformation(executionContext, fieldTypeName);
+            GraphQLUnmodifiedType fieldType = GraphQLTypeUtil.unwrapAll(environment.getFieldDefinition().getType());
+            TypeTransformation typeTransformation = typeTransformation(executionContext, fieldType.getName());
             if (typeTransformation != null) {
                 recordTypeRename(typeTransformation);
             }
