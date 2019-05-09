@@ -4,7 +4,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException
 import spock.lang.Specification
 
 import static graphql.nadel.testutils.TestUtil.astAsMap
-import static graphql.nadel.testutils.TestUtil.getExpectedData
+import static graphql.nadel.testutils.TestUtil.expectedJson
 
 class NSDLParserTest extends Specification {
 
@@ -22,7 +22,7 @@ class NSDLParserTest extends Specification {
         def stitchingDSL = parser.parseDSL(simpleDSL)
 
         then:
-        astAsMap(stitchingDSL) == getExpectedData("service-definition")
+        astAsMap(stitchingDSL) == expectedJson("service-definition.json")
 
     }
 
@@ -45,7 +45,7 @@ class NSDLParserTest extends Specification {
         def stitchingDSL = parser.parseDSL(simpleDSL)
 
         then:
-        astAsMap(stitchingDSL) == getExpectedData("two-services")
+        astAsMap(stitchingDSL) == expectedJson("two-services.json")
 
     }
 
@@ -99,7 +99,7 @@ class NSDLParserTest extends Specification {
         def stitchingDSL = parser.parseDSL(dsl)
 
         then:
-        astAsMap(stitchingDSL) == getExpectedData("field-mapping")
+        astAsMap(stitchingDSL) == expectedJson("field-mapping.json")
 
     }
 
@@ -123,11 +123,11 @@ class NSDLParserTest extends Specification {
         NSDLParser parser = new NSDLParser()
         def stitchingDSL = parser.parseDSL(dsl)
         then:
-        astAsMap(stitchingDSL) == getExpectedData("hydration")
+        astAsMap(stitchingDSL) == expectedJson("hydration.json")
     }
 
 
-    def "parse type transformation"() {
+    def "parse object type transformation"() {
         given:
 
         def dsl = """
@@ -136,7 +136,7 @@ class NSDLParserTest extends Specification {
                     foo: Foo
                 }
 
-                type Foo  @directiveFirst  => renamed from OriginalFooName {
+                type Foo  @directiveFirst  => renamed from UnderlyingFooName {
                     id: ID
                 }
             }
@@ -145,7 +145,47 @@ class NSDLParserTest extends Specification {
         NSDLParser parser = new NSDLParser()
         def stitchingDSL = parser.parseDSL(dsl)
         then:
-        astAsMap(stitchingDSL) == getExpectedData("type-transformation")
+        astAsMap(stitchingDSL) == expectedJson("object-type-transformation.json")
+    }
+
+    def "parse interface type transformation"() {
+        given:
+
+        def dsl = """
+            service FooService {
+                type Query {
+                    foo: Foo
+                }
+
+                interface FooInterface @directiveFirst  => renamed from UnderlyingFooName {
+                    id: ID
+                }
+            }
+        """
+        when:
+        NSDLParser parser = new NSDLParser()
+        def stitchingDSL = parser.parseDSL(dsl)
+        then:
+        astAsMap(stitchingDSL) == expectedJson("interface-type-transformation.json")
+    }
+
+    def "parse union type transformation"() {
+        given:
+
+        def dsl = """
+            service FooService {
+                type Query {
+                    foo: Foo
+                }
+
+                union FooUnion  @directiveFirst  => renamed from UnderlyingFooName = Photo | Person
+            }
+        """
+        when:
+        NSDLParser parser = new NSDLParser()
+        def stitchingDSL = parser.parseDSL(dsl)
+        then:
+        astAsMap(stitchingDSL) == expectedJson("union-type-transformation.json")
     }
 
     def "parse directives to wrong place for field transformation"() {

@@ -1,0 +1,40 @@
+{
+  "serviceDefinitions": [
+    {
+      "name": "FooService",
+      "typeDefinitions": [
+        {
+          "name": "Query",
+          "fieldDefinitions": [
+            {
+              "name": "foo",
+              "type": {
+                "name": "Foo"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Foo",
+          "directives": [
+            {
+              "name": "directiveFirst"
+            }
+          ],
+          "fieldDefinitions": [
+            {
+              "name": "id",
+              "type": {
+                "name": "ID"
+              }
+            }
+          ],
+          "typeMappingDefinition": {
+            "underlyingName": "UnderlyingFooName",
+            "overallName": "Foo"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -13,6 +13,10 @@ serviceDefinition:
 
 objectTypeDefinition : description? TYPE name implementsInterfaces? directives? typeTransformation?  fieldsDefinition? ;
 
+interfaceTypeDefinition : description? INTERFACE name directives? typeTransformation? fieldsDefinition?;
+
+unionTypeDefinition : description? UNION name directives? typeTransformation? unionMembership?;
+
 fieldDefinition : description? name argumentsDefinition? ':' type directives? fieldTransformation?;
 
 fieldTransformation : '=>' (fieldMappingDefinition | innerServiceHydration);

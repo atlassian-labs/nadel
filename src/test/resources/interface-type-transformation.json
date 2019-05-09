@@ -15,7 +15,7 @@
           ]
         },
         {
-          "name": "Foo",
+          "name": "FooInterface",
           "directives": [
             {
               "name": "directiveFirst"
@@ -30,8 +30,8 @@
             }
           ],
           "typeMappingDefinition": {
-            "underlyingName": "OriginalFooName",
-            "overallName": "Foo"
+            "underlyingName": "UnderlyingFooName",
+            "overallName": "FooInterface"
           }
         }
       ]
