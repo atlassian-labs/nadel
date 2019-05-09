@@ -98,17 +98,22 @@ public class NadelExecutionStrategy {
             //
             // now call put to the service with the new query
             Object serviceContext = oneServiceExecution.serviceContext;
-            CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
-                    .execute(executionContext, queryTransformerResult, service, operation, serviceContext)
-                    .thenApply(rootResultNode -> serviceExecutionHooks.postServiceResult(service, serviceContext, overallSchema, rootResultNode))
+            CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
+                    .execute(executionContext, queryTransformerResult, service, operation, serviceContext);
+
+            CompletableFuture<RootExecutionResultNode> serviceHookResult = serviceCallResult
+                    .thenApply(rootResultNode -> serviceExecutionHooks.postServiceResult(service, serviceContext, overallSchema, rootResultNode));
+
+            CompletableFuture<RootExecutionResultNode> convertedResult = serviceHookResult
                     .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
                             .convert(resultNode, overallSchema, rootExecutionStepInfo, transformationByResultField, typeRenameMappings));
 
             //
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
-            serviceResult.whenComplete(fieldTracking::fieldsCompleted);
+            convertedResult.whenComplete(fieldTracking::fieldsCompleted);
 
-            resultNodes.add(serviceResult);        }
+            resultNodes.add(convertedResult);
+        }
 
         CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
         return rootResult
