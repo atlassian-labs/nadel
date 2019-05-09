@@ -107,7 +107,7 @@ class NadelE2ETest extends Specification {
         def nsdl = '''
          service Foo {
             type Query{
-                foo: Foo  <= \$source.fooOriginal 
+                foo: Foo  => renamed as fooOriginal 
             } 
             type Foo {
                 name: String
@@ -118,7 +118,7 @@ class NadelE2ETest extends Specification {
                 bar: Bar 
             } 
             type Bar {
-                name: String <= \$source.title
+                name: String => renamed as title
             }
          }
         '''
@@ -180,7 +180,7 @@ class NadelE2ETest extends Specification {
             } 
             type Foo {
                 name: String
-                bar: Bar <= \$innerQueries.Bar.barsById(id: \$source.barId) object identified by barId, batch size 2
+                bar: Bar => hydrated as Bar.barsById(id: $source.barId) object identified by barId, batch size 2
             }
          }
          service Bar {
@@ -190,7 +190,7 @@ class NadelE2ETest extends Specification {
             type Bar {
                 barId: ID
                 name: String 
-                nestedBar: Bar <= \$innerQueries.Bar.barsById(id: \$source.nestedBarId) object identified by barId
+                nestedBar: Bar => hydrated as Bar.barsById(id: $source.nestedBarId) object identified by barId
             }
          }
         '''

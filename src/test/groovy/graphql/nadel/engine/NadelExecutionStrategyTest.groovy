@@ -145,14 +145,14 @@ class NadelExecutionStrategyTest extends Specification {
         }
         """)
 
-    def overallHydrationSchema = TestUtil.schemaFromNdsl("""
+    def overallHydrationSchema = TestUtil.schemaFromNdsl('''
         service service1 {
             type Query {
                 foo(id : ID): Foo
             }
             type Foo {
                 id: ID
-                bar: Bar <= \$innerQueries.service2.barById(id: \$source.barId)
+                bar: Bar => hydrated as service2.barById(id: $source.barId)
             }
         }
         service service2 {
@@ -164,7 +164,7 @@ class NadelExecutionStrategyTest extends Specification {
                 name: String
             }
         }
-        """)
+        ''')
 
 
     def "one hydration call with variables defined"() {
@@ -274,14 +274,14 @@ class NadelExecutionStrategyTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl('''
         service service1 {
             type Query {
                 foo: Foo
             }
             type Foo {
                 id: ID
-                bar: [Bar] <= \$innerQueries.service2.barById(id: \$source.barId)
+                bar: [Bar] => hydrated as service2.barById(id: $source.barId)
             }
         }
         service service2 {
@@ -293,7 +293,7 @@ class NadelExecutionStrategyTest extends Specification {
                 name: String
             }
         }
-        """)
+        ''')
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service1 = new Service("service1", underlyingSchema1, service1Execution, serviceDefinition, definitionRegistry)
@@ -361,14 +361,14 @@ class NadelExecutionStrategyTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl('''
         service service1 {
             type Query {
                 foo: Foo
             }
             type Foo {
                 id: ID
-                bar: [Bar] <= \$innerQueries.service2.barsById(id: \$source.barId)
+                bar: [Bar] => hydrated as service2.barsById(id: $source.barId)
             }
         }
         service service2 {
@@ -380,7 +380,7 @@ class NadelExecutionStrategyTest extends Specification {
                 name: String
             }
         }
-        """)
+        ''')
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service1 = new Service("service1", underlyingSchema1, service1Execution, serviceDefinition, definitionRegistry)
@@ -436,14 +436,14 @@ class NadelExecutionStrategyTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl('''
         service service1 {
             type Query {
                 foo: Foo
             }
             type Foo {
                 id: ID
-                bar: [Bar] <= \$innerQueries.service2.barsById(id: \$source.barId)
+                bar: [Bar] => hydrated as service2.barsById(id: $source.barId)
             }
         }
         service service2 {
@@ -455,7 +455,7 @@ class NadelExecutionStrategyTest extends Specification {
                 name: String
             }
         }
-        """)
+        ''')
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service1 = new Service("service1", underlyingSchema1, service1Execution, serviceDefinition, definitionRegistry)
@@ -511,14 +511,14 @@ class NadelExecutionStrategyTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl('''
         service service1 {
             type Query {
                 foo: Foo
             }
             type Foo {
                 id: ID
-                bar: [Bar] <= \$innerQueries.service2.barById(id: \$source.barId)
+                bar: [Bar] => hydrated as service2.barById(id: $source.barId)
             }
         }
         service service2 {
@@ -530,7 +530,7 @@ class NadelExecutionStrategyTest extends Specification {
                 name: String
             }
         }
-        """)
+        ''')
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service1 = new Service("service1", underlyingSchema1, service1Execution, serviceDefinition, definitionRegistry)

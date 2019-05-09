@@ -89,7 +89,7 @@ class NSDLParserTest extends Specification {
             }
 
             type Foo {
-                id: ID <= \$source.fooId
+                id: ID => renamed as fooId
             }
         }
         """
@@ -114,7 +114,7 @@ class NSDLParserTest extends Specification {
             }
 
             type Foo {
-                id(inputArg: ID!): ID <= $innerQueries.OtherService.resolveId(otherId: $source.id, 
+                id(inputArg: ID!): ID => hydrated as OtherService.resolveId(otherId: $source.id, 
                 arg1: $context.ctxParam, arg2: $argument.inputArg)
             }
         }
@@ -136,7 +136,7 @@ class NSDLParserTest extends Specification {
                     foo: Foo
                 }
 
-                type Foo <= \$innerTypes.OriginalFooName {
+                type Foo => renamed as OriginalFooName {
                     id: ID
                 }
             }
@@ -159,13 +159,13 @@ class NSDLParserTest extends Specification {
                 }
 
                 type Foo {
-                    newId: ID <= \$source.id @testdirective 
+                    newId: ID > renamed as id @testdirective 
                 }
             }
         """
         when:
         NSDLParser parser = new NSDLParser()
-        def stitchingDSL = parser.parseDSL(dsl)
+        parser.parseDSL(dsl)
         then:
         thrown(Exception)
     }
@@ -181,7 +181,7 @@ class NSDLParserTest extends Specification {
                 }
 
                 type Foo {
-                    newId: ID @testdirective  <= \$source.id 
+                    newId: ID @testdirective  => renamed as id 
                 }
             }
         """

@@ -15,7 +15,7 @@ import java.util.List;
 
 public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition {
 
-    private final TypeTransformation typeTransformation;
+    private final TypeMappingDefinition typeMappingDefinition;
 
     protected ObjectTypeDefinitionWithTransformation(String name,
                                                      List<Type> implementz,
@@ -24,13 +24,13 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
                                                      Description description,
                                                      SourceLocation sourceLocation,
                                                      List<Comment> comments,
-                                                     TypeTransformation typeTransformation, IgnoredChars ignoredChars) {
+                                                     TypeMappingDefinition typeMappingDefinition, IgnoredChars ignoredChars) {
         super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments, ignoredChars);
-        this.typeTransformation = typeTransformation;
+        this.typeMappingDefinition = typeMappingDefinition;
     }
 
-    public TypeTransformation getTypeTransformation() {
-        return typeTransformation;
+    public TypeMappingDefinition getTypeMappingDefinition() {
+        return typeMappingDefinition;
     }
 
     public static ObjectTypeDefinitionWithTransformation.Builder newObjectTypeDefinitionWithTransformation(ObjectTypeDefinition copyFrom) {
@@ -45,7 +45,7 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         private List<Type> implementz = new ArrayList<>();
         private List<Directive> directives = new ArrayList<>();
         private List<FieldDefinition> fieldDefinitions = new ArrayList<>();
-        private TypeTransformation typeTransformation;
+        private TypeMappingDefinition typeMappingDefinition;
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
 
         private Builder() {
@@ -61,8 +61,8 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
             this.fieldDefinitions = existing.getFieldDefinitions();
         }
 
-        public Builder typeTransformation(TypeTransformation typeTransformation) {
-            this.typeTransformation = typeTransformation;
+        public Builder typeMappingDefinition(TypeMappingDefinition typeMappingDefinition) {
+            this.typeMappingDefinition = typeMappingDefinition;
             return this;
         }
 
@@ -123,15 +123,15 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         }
 
         public ObjectTypeDefinitionWithTransformation build() {
-            ObjectTypeDefinitionWithTransformation objectTypeDefinition = new ObjectTypeDefinitionWithTransformation(name,
+            return new ObjectTypeDefinitionWithTransformation(name,
                     implementz,
                     directives,
                     fieldDefinitions,
                     description,
                     sourceLocation,
                     comments,
-                    typeTransformation, ignoredChars);
-            return objectTypeDefinition;
+                    typeMappingDefinition,
+                    ignoredChars);
         }
     }
 }

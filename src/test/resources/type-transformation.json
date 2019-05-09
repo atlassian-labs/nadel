@@ -24,7 +24,7 @@
               }
             }
           ],
-          "typeTransformation": {
+          "typeMappingDefinition": {
             "underlyingName": "OriginalFooName",
             "overallName": "Foo"
           }

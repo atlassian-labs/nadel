@@ -13,7 +13,7 @@ import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
-import graphql.nadel.dsl.TypeTransformation;
+import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import graphql.parser.MultiSourceReader;
@@ -114,11 +114,11 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         if (ctx.typeTransformation() == null) {
             return objectTypeDefinition;
         }
-        TypeTransformation typeTransformation = new TypeTransformation(null, new ArrayList<>());
-        typeTransformation.setUnderlyingName(ctx.typeTransformation().name().getText());
-        typeTransformation.setOverallName(ctx.name().getText());
+        TypeMappingDefinition typeMappingDefinition = new TypeMappingDefinition(null, new ArrayList<>());
+        typeMappingDefinition.setUnderlyingName(ctx.typeTransformation().typeMappingDefinition().name().getText());
+        typeMappingDefinition.setOverallName(ctx.name().getText());
         return ObjectTypeDefinitionWithTransformation.newObjectTypeDefinitionWithTransformation(objectTypeDefinition)
-                .typeTransformation(typeTransformation)
+                .typeMappingDefinition(typeMappingDefinition)
                 .build();
     }
 
