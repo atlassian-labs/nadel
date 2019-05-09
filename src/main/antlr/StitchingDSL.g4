@@ -22,14 +22,14 @@ typeTransformation : '=>' typeMappingDefinition;
 //
 // renames
 //
-typeMappingDefinition : 'renamed as' name;
+typeMappingDefinition : 'renamed from' name;
 
-fieldMappingDefinition : 'renamed as' name;
+fieldMappingDefinition : 'renamed from' name;
 
 //
 // hydration
 
-innerServiceHydration: 'hydrated as' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
+innerServiceHydration: 'hydrated from' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
 
 objectIdentifier: 'object identified by' name;
 

@@ -152,7 +152,7 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Foo {
                 id: ID
-                bar: Bar => hydrated as service2.barById(id: $source.barId)
+                bar: Bar => hydrated from service2.barById(id: $source.barId)
             }
         }
         service service2 {
@@ -281,7 +281,7 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Foo {
                 id: ID
-                bar: [Bar] => hydrated as service2.barById(id: $source.barId)
+                bar: [Bar] => hydrated from service2.barById(id: $source.barId)
             }
         }
         service service2 {
@@ -368,7 +368,7 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Foo {
                 id: ID
-                bar: [Bar] => hydrated as service2.barsById(id: $source.barId)
+                bar: [Bar] => hydrated from service2.barsById(id: $source.barId)
             }
         }
         service service2 {
@@ -443,7 +443,7 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Foo {
                 id: ID
-                bar: [Bar] => hydrated as service2.barsById(id: $source.barId)
+                bar: [Bar] => hydrated from service2.barsById(id: $source.barId)
             }
         }
         service service2 {
@@ -518,7 +518,7 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Foo {
                 id: ID
-                bar: [Bar] => hydrated as service2.barById(id: $source.barId)
+                bar: [Bar] => hydrated from service2.barById(id: $source.barId)
             }
         }
         service service2 {

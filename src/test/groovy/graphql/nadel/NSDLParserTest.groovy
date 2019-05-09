@@ -89,7 +89,7 @@ class NSDLParserTest extends Specification {
             }
 
             type Foo {
-                id: ID => renamed as fooId
+                id: ID => renamed from fooId
             }
         }
         """
@@ -114,7 +114,7 @@ class NSDLParserTest extends Specification {
             }
 
             type Foo {
-                id(inputArg: ID!): ID => hydrated as OtherService.resolveId(otherId: $source.id, 
+                id(inputArg: ID!): ID => hydrated from OtherService.resolveId(otherId: $source.id, 
                 arg1: $context.ctxParam, arg2: $argument.inputArg)
             }
         }
@@ -136,7 +136,7 @@ class NSDLParserTest extends Specification {
                     foo: Foo
                 }
 
-                type Foo => renamed as OriginalFooName {
+                type Foo => renamed from OriginalFooName {
                     id: ID
                 }
             }
@@ -159,7 +159,7 @@ class NSDLParserTest extends Specification {
                 }
 
                 type Foo {
-                    newId: ID > renamed as id @testdirective 
+                    newId: ID > renamed from id @testdirective 
                 }
             }
         """
@@ -181,7 +181,7 @@ class NSDLParserTest extends Specification {
                 }
 
                 type Foo {
-                    newId: ID @testdirective  => renamed as id 
+                    newId: ID @testdirective  => renamed from id 
                 }
             }
         """

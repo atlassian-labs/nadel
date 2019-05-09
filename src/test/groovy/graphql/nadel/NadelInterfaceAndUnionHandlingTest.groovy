@@ -26,7 +26,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
             
             interface Pet {
                 name : String
-                owners: [Owner] => hydrated as OwnerService.ownerById(id: $source.ownerIds)
+                owners: [Owner] => hydrated from OwnerService.ownerById(id: $source.ownerIds)
             }
             
             type Cat implements Pet {

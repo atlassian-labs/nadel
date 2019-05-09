@@ -36,8 +36,8 @@ class IssuesCommentsUsersHarness {
                 key : String
                 summary : String
                 description : String
-                reporter : User => hydrated as UserService.userById(id: $source.reporterId)
-                comments : [Comment] => hydrated as CommentService.commentById(id: $source.commentIds)
+                reporter : User => hydrated from UserService.userById(id: $source.reporterId)
+                comments : [Comment] => hydrated from CommentService.commentById(id: $source.commentIds)
             }
          }
          
@@ -49,9 +49,9 @@ class IssuesCommentsUsersHarness {
             
             type Comment {
                 id : ID
-                commentText : String => renamed as text
+                commentText : String => renamed from text
                 created : String
-                author : User => hydrated as UserService.userById(id: $source.authorId)
+                author : User => hydrated from UserService.userById(id: $source.authorId)
             }
         }
         
