@@ -62,13 +62,12 @@ import static graphql.schema.GraphQLArgument.newArgument
 
 class TestUtil {
 
-    static String printAstCompact(Document document) {
-        AstPrinter.printAst(document).replaceAll("\\s+", " ").trim()
-    }
-
     private static String printAstAsJson(Node node) {
+        String[] ignoredProperties = [
+                "sourceLocation", "children", "ignoredChars", "namedChildren", "directivesByName"
+        ]
         SimpleBeanPropertyFilter theFilter = SimpleBeanPropertyFilter
-                .serializeAllExcept("sourceLocation", "children", "ignoredChars", "namedChildren") as SimpleBeanPropertyFilter
+                .serializeAllExcept(ignoredProperties) as SimpleBeanPropertyFilter
         FilterProvider filters = new SimpleFilterProvider()
         filters.addFilter("myFilter" as String, theFilter as SimpleBeanPropertyFilter)
 

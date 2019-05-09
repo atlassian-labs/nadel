@@ -11,7 +11,7 @@ stitchingDSL:
 serviceDefinition:
    'service' name '{' typeSystemDefinition* '}' ;
 
-objectTypeDefinition : description? TYPE name implementsInterfaces? typeTransformation? directives? fieldsDefinition? ;
+objectTypeDefinition : description? TYPE name implementsInterfaces? directives? typeTransformation?  fieldsDefinition? ;
 
 fieldDefinition : description? name argumentsDefinition? ':' type directives? fieldTransformation?;
 

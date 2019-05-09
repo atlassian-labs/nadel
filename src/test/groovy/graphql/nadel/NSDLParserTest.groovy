@@ -136,7 +136,7 @@ class NSDLParserTest extends Specification {
                     foo: Foo
                 }
 
-                type Foo => renamed from OriginalFooName {
+                type Foo  @directiveFirst  => renamed from OriginalFooName {
                     id: ID
                 }
             }
