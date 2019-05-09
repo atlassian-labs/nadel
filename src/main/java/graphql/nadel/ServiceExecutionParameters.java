@@ -23,8 +23,16 @@ public class ServiceExecutionParameters {
     private final OperationDefinition operationDefinition;
     private final ExecutionId executionId;
     private final CacheControl cacheControl;
+    private final Object serviceContext;
 
-    private ServiceExecutionParameters(Document query, Object context, Map<String, Object> variables, Map<String, FragmentDefinition> fragments, OperationDefinition operationDefinition, ExecutionId executionId, CacheControl cacheControl) {
+    private ServiceExecutionParameters(Document query,
+                                       Object context,
+                                       Map<String, Object> variables,
+                                       Map<String, FragmentDefinition> fragments,
+                                       OperationDefinition operationDefinition,
+                                       ExecutionId executionId,
+                                       CacheControl cacheControl,
+                                       Object serviceContext) {
         this.query = assertNotNull(query);
         this.variables = assertNotNull(variables);
         this.fragments = assertNotNull(fragments);
@@ -32,6 +40,7 @@ public class ServiceExecutionParameters {
         this.context = context;
         this.executionId = executionId;
         this.cacheControl = cacheControl;
+        this.serviceContext = serviceContext;
     }
 
     public Document getQuery() {
@@ -66,6 +75,10 @@ public class ServiceExecutionParameters {
         return operationDefinition.getOperation();
     }
 
+    public <T> T getServiceContext() {
+        return (T) serviceContext;
+    }
+
     public static Builder newServiceExecutionParameters() {
         return new Builder();
     }
@@ -78,6 +91,7 @@ public class ServiceExecutionParameters {
         private OperationDefinition operationDefinition;
         private ExecutionId executionId;
         private CacheControl cacheControl;
+        private Object serviceContext;
 
         private Builder() {
         }
@@ -117,8 +131,13 @@ public class ServiceExecutionParameters {
             return this;
         }
 
+        public Builder serviceContext(Object serviceContext) {
+            this.serviceContext = serviceContext;
+            return this;
+        }
+
         public ServiceExecutionParameters build() {
-            return new ServiceExecutionParameters(query, context, variables, fragments, operationDefinition, executionId, cacheControl);
+            return new ServiceExecutionParameters(query, context, variables, fragments, operationDefinition, executionId, cacheControl, serviceContext);
         }
     }
 }

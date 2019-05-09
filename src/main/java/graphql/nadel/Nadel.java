@@ -62,13 +62,21 @@ public class Nadel {
     private final GraphQLSchema overallSchema;
 
     private final NadelInstrumentation instrumentation;
+    private final ServiceExecutionHooks serviceExecutionHooks;
     private final PreparsedDocumentProvider preparsedDocumentProvider;
     private final ExecutionIdProvider executionIdProvider;
     private final IntrospectionRunner introspectionRunner;
 
-    private Nadel(Reader nsdl, ServiceExecutionFactory serviceExecutionFactory, NadelInstrumentation instrumentation, PreparsedDocumentProvider preparsedDocumentProvider, ExecutionIdProvider executionIdProvider, IntrospectionRunner introspectionRunner) {
+    private Nadel(Reader nsdl,
+                  ServiceExecutionFactory serviceExecutionFactory,
+                  NadelInstrumentation instrumentation,
+                  PreparsedDocumentProvider preparsedDocumentProvider,
+                  ExecutionIdProvider executionIdProvider,
+                  IntrospectionRunner introspectionRunner,
+                  ServiceExecutionHooks serviceExecutionHooks) {
         this.serviceExecutionFactory = serviceExecutionFactory;
         this.instrumentation = instrumentation;
+        this.serviceExecutionHooks = serviceExecutionHooks;
         this.preparsedDocumentProvider = preparsedDocumentProvider;
         this.executionIdProvider = executionIdProvider;
 
@@ -123,6 +131,8 @@ public class Nadel {
         private ServiceExecutionFactory serviceExecutionFactory;
         private NadelInstrumentation instrumentation = new NadelInstrumentation() {
         };
+        private ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {
+        };
         private PreparsedDocumentProvider preparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE;
         private ExecutionIdProvider executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER;
         private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
@@ -162,8 +172,13 @@ public class Nadel {
             return this;
         }
 
+        public Builder serviceExecutionHooks(ServiceExecutionHooks serviceExecutionHooks) {
+            this.serviceExecutionHooks = requireNonNull(serviceExecutionHooks);
+            return this;
+        }
+
         public Nadel build() {
-            return new Nadel(nsdl, serviceExecutionFactory, instrumentation, preparsedDocumentProvider, executionIdProvider, introspectionRunner);
+            return new Nadel(nsdl, serviceExecutionFactory, instrumentation, preparsedDocumentProvider, executionIdProvider, introspectionRunner, serviceExecutionHooks);
         }
     }
 
@@ -286,7 +301,7 @@ public class Nadel {
         Object context = executionInput.getContext();
 
         ExecutionId executionId = executionIdProvider.provide(query, operationName, context);
-        Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner);
+        Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner, serviceExecutionHooks);
 
         return execution.execute(executionInput, document, executionId, instrumentationState, artificialFieldsUUID);
     }

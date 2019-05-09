@@ -49,14 +49,15 @@ public class ServiceExecutor {
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext,
                                                               QueryTransformationResult queryTransformerResult,
                                                               Service service,
-                                                              Operation operation) {
+                                                              Operation operation,
+                                                              Object serviceContext) {
 
         List<MergedField> transformedMergedFields = queryTransformerResult.getTransformedMergedFields();
 
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
 
-        ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformerResult);
+        ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformerResult, serviceContext);
         ExecutionContext executionContextForService = buildServiceExecutionContext(executionContext, underlyingSchema, serviceExecutionParameters);
 
         ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
@@ -114,7 +115,7 @@ public class ServiceExecutor {
     }
 
 
-    private ServiceExecutionParameters buildServiceExecutionParameters(ExecutionContext executionContext, QueryTransformationResult queryTransformerResult) {
+    private ServiceExecutionParameters buildServiceExecutionParameters(ExecutionContext executionContext, QueryTransformationResult queryTransformerResult, Object serviceContext) {
 
         // only pass down variables that are referenced in the transformed query
         Map<String, Object> contextVariables = executionContext.getVariables();
@@ -138,6 +139,7 @@ public class ServiceExecutor {
                 .operationDefinition(queryTransformerResult.getOperationDefinition())
                 .executionId(executionContext.getExecutionId())
                 .cacheControl(executionContext.getCacheControl())
+                .serviceContext(serviceContext)
                 .build();
     }
 
