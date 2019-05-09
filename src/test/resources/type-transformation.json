@@ -25,7 +25,8 @@
             }
           ],
           "typeTransformation": {
-            "originalName": "OriginalFooName"
+            "underlyingName": "OriginalFooName",
+            "overallName": "Foo"
           }
         }
       ]

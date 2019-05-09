@@ -231,8 +231,10 @@ public class HydrationInputResolver {
 
         synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
 
-        Map<Field, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
-        RootExecutionResultNode overallResultNode = (RootExecutionResultNode) serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField);
+        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
+        Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
+        RootExecutionResultNode overallResultNode = (RootExecutionResultNode) serviceResultNodesToOverallResult
+                .convert(rootResultNode, overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings);
         // NOTE : we only take the first result node here but we may have errors in the root node that are global so transfer them in
         ExecutionResultNode firstTopLevelResultNode = overallResultNode.getChildren().get(0);
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
@@ -315,7 +317,8 @@ public class HydrationInputResolver {
         List<ExecutionResultNode> resolvedNodes = listResultNode.getChildren();
 
         List<ExecutionResultNode> result = new ArrayList<>();
-        Map<Field, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
+        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
+        Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
 
         boolean first = true;
         for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
@@ -323,7 +326,8 @@ public class HydrationInputResolver {
             ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
-                ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(matchingResolvedNode, overallSchema, executionStepInfo, true, true, transformationByResultField);
+                ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(
+                        matchingResolvedNode, overallSchema, executionStepInfo, true, true, transformationByResultField, typeRenameMappings);
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);
             } else {

@@ -14,19 +14,28 @@ import java.util.List;
 
 public class TypeTransformation extends AbstractNode<TypeTransformation> {
 
-    private String originalName;
+    private String underlyingName;
+    private String overallName;
 
 
     public TypeTransformation(SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
     }
 
-    public String getOriginalName() {
-        return originalName;
+    public String getUnderlyingName() {
+        return underlyingName;
     }
 
-    public void setOriginalName(String originalName) {
-        this.originalName = originalName;
+    public void setUnderlyingName(String underlyingName) {
+        this.underlyingName = underlyingName;
+    }
+
+    public String getOverallName() {
+        return overallName;
+    }
+
+    public void setOverallName(String overallName) {
+        this.overallName = overallName;
     }
 
     @Override

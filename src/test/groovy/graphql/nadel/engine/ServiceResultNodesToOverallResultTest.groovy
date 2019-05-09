@@ -52,11 +52,11 @@ class ServiceResultNodesToOverallResultTest extends Specification {
         def rootResultNode = new RootExecutionResultNode([leafResultNode1, leafResultNode2])
 
         def overallSchema = Mock(GraphQLSchema)
-        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis1, overallSchema, rootExecutionStepInfo, false, false, [:]) >> mappedAnalysis1
-        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis2, overallSchema, rootExecutionStepInfo, false, false, [:]) >> mappedAnalysis2
+        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis1, overallSchema, rootExecutionStepInfo, false, false, [:], [:]) >> mappedAnalysis1
+        1 * fetchedAnalysisMapper.mapFetchedValueAnalysis(originalAnalysis2, overallSchema, rootExecutionStepInfo, false, false, [:], [:]) >> mappedAnalysis2
 
         when:
-        def newRoot = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, rootExecutionStepInfo, [:])
+        def newRoot = serviceResultNodesToOverallResult.convert(rootResultNode, overallSchema, rootExecutionStepInfo, [:], [:])
 
 
         then:

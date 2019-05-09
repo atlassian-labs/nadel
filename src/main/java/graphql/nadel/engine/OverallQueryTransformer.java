@@ -33,6 +33,8 @@ import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLTypeUtil;
+import graphql.schema.GraphQLUnmodifiedType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
@@ -60,7 +63,8 @@ public class OverallQueryTransformer {
             Field topLevelField, GraphQLCompositeType topLevelFieldType
     ) {
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
-        Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
+        Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
+        Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
 
         SelectionSet topLevelFieldSelectionSet = transformNode(
@@ -68,6 +72,7 @@ public class OverallQueryTransformer {
                 topLevelField.getSelectionSet(),
                 topLevelFieldType,
                 transformationByResultField,
+                typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables);
 
@@ -82,6 +87,7 @@ public class OverallQueryTransformer {
         Map<String, FragmentDefinition> transformedFragments = transformFragments(executionContext,
                 executionContext.getFragmentsByName(),
                 transformationByResultField,
+                typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables);
 
@@ -106,6 +112,7 @@ public class OverallQueryTransformer {
                 newDocument,
                 operationDefinition,
                 Collections.singletonList(transformedMergedField),
+                typeRenameMappings,
                 referencedVariableNames,
                 transformationByResultField,
                 transformedFragments);
@@ -119,7 +126,8 @@ public class OverallQueryTransformer {
     ) {
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
-        Map<Field, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
+        Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
+        Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
 
         List<MergedField> transformedMergedFields = new ArrayList<>();
@@ -135,6 +143,7 @@ public class OverallQueryTransformer {
                         field,
                         rootType,
                         transformationByResultField,
+                        typeRenameMappings,
                         referencedFragmentNames,
                         referencedVariables);
 
@@ -163,6 +172,7 @@ public class OverallQueryTransformer {
                 executionContext,
                 executionContext.getFragmentsByName(),
                 transformationByResultField,
+                typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables);
 
@@ -178,25 +188,28 @@ public class OverallQueryTransformer {
                 newdocument,
                 operationDefinition,
                 transformedMergedFields,
-                referencedVariableNames,
+                typeRenameMappings, referencedVariableNames,
                 transformationByResultField,
-                transformedFragments);
+                transformedFragments
+        );
     }
 
 
     private Map<String, FragmentDefinition> transformFragments(ExecutionContext executionContext,
                                                                Map<String, FragmentDefinition> fragments,
-                                                               Map<Field, FieldTransformation> transformationByResultField,
+                                                               Map<String, FieldTransformation> transformationByResultField,
+                                                               Map<String, String> typeRenameMappings,
                                                                Set<String> referencedFragmentNames,
                                                                Map<String, VariableDefinition> referencedVariables) {
         return fragments.values().stream()
-                .map(fragment -> transformFragmentDefinition(executionContext, fragment, transformationByResultField, referencedFragmentNames, referencedVariables))
+                .map(fragment -> transformFragmentDefinition(executionContext, fragment, transformationByResultField, typeRenameMappings, referencedFragmentNames, referencedVariables))
                 .collect(toMapCollector(FragmentDefinition::getName, identity()));
     }
 
     private FragmentDefinition transformFragmentDefinition(ExecutionContext executionContext,
                                                            FragmentDefinition fragmentDefinition,
-                                                           Map<Field, FieldTransformation> transformationByResultField,
+                                                           Map<String, FieldTransformation> transformationByResultField,
+                                                           Map<String, String> typeRenameMappings,
                                                            Set<String> referencedFragmentNames,
                                                            Map<String, VariableDefinition> referencedVariables) {
         QueryTransformer transformer = QueryTransformer.newQueryTransformer()
@@ -207,13 +220,14 @@ public class OverallQueryTransformer {
                 .rootParentType(executionContext.getGraphQLSchema().getQueryType())
                 .schema(executionContext.getGraphQLSchema())
                 .build();
-        return (FragmentDefinition) transformer.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames, referencedVariables));
+        return (FragmentDefinition) transformer.transform(new Transformer(executionContext, transformationByResultField, typeRenameMappings, referencedFragmentNames, referencedVariables));
     }
 
     private <T extends Node> T transformNode(ExecutionContext executionContext,
                                              T node,
                                              GraphQLCompositeType parentType,
-                                             Map<Field, FieldTransformation> transformationByResultField,
+                                             Map<String, FieldTransformation> transformationByResultField,
+                                             Map<String, String> typeRenameMappings,
                                              Set<String> referencedFragmentNames,
                                              Map<String, VariableDefinition> referencedVariables) {
         QueryTransformer transformer = QueryTransformer.newQueryTransformer()
@@ -225,7 +239,7 @@ public class OverallQueryTransformer {
                 .schema(executionContext.getGraphQLSchema())
                 .build();
 
-        Node newNode = transformer.transform(new Transformer(executionContext, transformationByResultField, referencedFragmentNames, referencedVariables));
+        Node newNode = transformer.transform(new Transformer(executionContext, transformationByResultField, typeRenameMappings, referencedFragmentNames, referencedVariables));
         //noinspection unchecked
         return (T) newNode;
     }
@@ -233,16 +247,19 @@ public class OverallQueryTransformer {
     private class Transformer implements QueryVisitor {
 
         final ExecutionContext executionContext;
-        final Map<Field, FieldTransformation> transformationByResultField;
+        final Map<String, FieldTransformation> transformationByResultField;
+        final Map<String, String> typeRenameMappings;
         final Set<String> referencedFragmentNames;
         final Map<String, VariableDefinition> referencedVariables;
 
         Transformer(ExecutionContext executionContext,
-                    Map<Field, FieldTransformation> transformationByResultField,
+                    Map<String, FieldTransformation> transformationByResultField,
+                    Map<String, String> typeRenameMappings,
                     Set<String> referencedFragmentNames,
                     Map<String, VariableDefinition> referencedVariables) {
             this.executionContext = executionContext;
             this.transformationByResultField = transformationByResultField;
+            this.typeRenameMappings = typeRenameMappings;
             this.referencedFragmentNames = referencedFragmentNames;
             this.referencedVariables = referencedVariables;
         }
@@ -265,12 +282,19 @@ public class OverallQueryTransformer {
                         referencedVariables.put(variableDefinition.getName(), variableDefinition);
                     });
 
+            GraphQLUnmodifiedType fieldType = GraphQLTypeUtil.unwrapAll(environment.getFieldDefinition().getType());
+            TypeTransformation typeTransformation = typeTransformation(executionContext, fieldType.getName());
+            if (typeTransformation != null) {
+                recordTypeRename(typeTransformation);
+            }
+
             FieldTransformation fieldTransformation = transformationForFieldDefinition(environment, fragmentsByName);
             if (fieldTransformation != null) {
                 fieldTransformation.apply(environment);
                 Field changedNode = (Field) environment.getTraverserContext().thisNode();
-
-                transformationByResultField.put(changedNode, fieldTransformation);
+                String fieldId = changedNode.getAdditionalData().get(FieldTransformation.NADEL_FIELD_ID);
+                assertNotNull(fieldId, "nadel field it is null for transformation");
+                transformationByResultField.put(fieldId, fieldTransformation);
             }
         }
 
@@ -281,8 +305,9 @@ public class OverallQueryTransformer {
 
             TypeTransformation typeTransformation = typeTransformationForFragment(executionContext, typeName);
             if (typeTransformation != null) {
+                recordTypeRename(typeTransformation);
                 InlineFragment changedFragment = fragment.transform(f -> {
-                    TypeName newTypeName = newTypeName(typeTransformation.getOriginalName()).build();
+                    TypeName newTypeName = newTypeName(typeTransformation.getUnderlyingName()).build();
                     f.typeCondition(newTypeName);
                 });
                 changeNode(environment.getTraverserContext(), changedFragment);
@@ -297,8 +322,9 @@ public class OverallQueryTransformer {
             TypeName typeName = fragment.getTypeCondition();
             TypeTransformation typeTransformation = typeTransformationForFragment(executionContext, typeName);
             if (typeTransformation != null) {
+                recordTypeRename(typeTransformation);
                 FragmentDefinition changedFragment = fragment.transform(f -> {
-                    TypeName newTypeName = newTypeName(typeTransformation.getOriginalName()).build();
+                    TypeName newTypeName = newTypeName(typeTransformation.getUnderlyingName()).build();
                     f.typeCondition(newTypeName);
                 });
                 changeNode(environment.getTraverserContext(), changedFragment);
@@ -309,6 +335,11 @@ public class OverallQueryTransformer {
         public void visitFragmentSpread(QueryVisitorFragmentSpreadEnvironment environment) {
             referencedFragmentNames.add(environment.getFragmentSpread().getName());
         }
+
+        private void recordTypeRename(TypeTransformation typeTransformation) {
+            assertNotNull(typeTransformation);
+            typeRenameMappings.put(typeTransformation.getUnderlyingName(), typeTransformation.getOverallName());
+        }
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -318,6 +349,19 @@ public class OverallQueryTransformer {
         ObjectTypeDefinition typeDefinition = ((GraphQLObjectType) type).getDefinition();
         if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
             return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeTransformation();
+        }
+        return null;
+    }
+
+
+    @SuppressWarnings("ConstantConditions")
+    private TypeTransformation typeTransformation(ExecutionContext executionContext, String typeName) {
+        GraphQLType type = executionContext.getGraphQLSchema().getType(typeName);
+        if (type instanceof GraphQLObjectType) {
+            ObjectTypeDefinition typeDefinition = ((GraphQLObjectType) type).getDefinition();
+            if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
+                return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeTransformation();
+            }
         }
         return null;
     }

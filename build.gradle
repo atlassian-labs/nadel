@@ -27,7 +27,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
-def graphqlJavaVersion = '2019-04-30T09-15-46-9214b60'
+def graphqlJavaVersion = '2019-05-08T02-56-27-cca4316'
 
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
@@ -67,7 +67,7 @@ task generateAntrlToJavaSource {
             into 'build/generated-src/antlr/main/graphql/nadel/parser'
         }
         def replacePatterns = [
-                'package graphql.parser;'                         : 'package graphql.nadel.parser;\nimport graphql.parser.MultiSourceReader;',
+                'package graphql.parser;'                         : 'package graphql.nadel.parser;\nimport graphql.parser.MultiSourceReader;\nimport graphql.parser.SourceLocationHelper;',
                 'import graphql.parser.antlr.GraphqlParser;'     : 'import graphql.nadel.parser.antlr.StitchingDSLParser;',
                 'import graphql.parser.antlr.GraphqlLexer;'      : 'import graphql.nadel.parser.antlr.StitchingDSLLexer;',
                 'import graphql.parser.antlr.GraphqlBaseVisitor;': 'import graphql.nadel.parser.antlr.StitchingDSLBaseVisitor;',

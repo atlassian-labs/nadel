@@ -12,6 +12,7 @@ import graphql.util.TraverserContext;
 import graphql.util.TreeTransformerUtil;
 
 import java.util.List;
+import java.util.UUID;
 
 import static graphql.Assert.assertTrue;
 
@@ -42,7 +43,8 @@ public class HydrationTransformation extends AbstractFieldTransformation {
         String hydrationSourceName = remoteArgumentSource.getName();
         originalField = environment.getField();
         originalName = environment.getField().getName();
-        newField = environment.getField().transform(builder -> builder.selectionSet(null).name(hydrationSourceName));
+        String fieldId = UUID.randomUUID().toString();
+        newField = environment.getField().transform(builder -> builder.selectionSet(null).name(hydrationSourceName).additionalData(NADEL_FIELD_ID, fieldId));
         return TreeTransformerUtil.changeNode(context, newField);
     }
 
