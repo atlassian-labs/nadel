@@ -35,10 +35,7 @@ import graphql.nadel.util.Util
 import graphql.parser.Parser
 import graphql.schema.Coercing
 import graphql.schema.DataFetcher
-import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLDirective
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
@@ -57,18 +54,15 @@ import java.util.function.Supplier
 import java.util.stream.Collectors
 
 import static graphql.ExecutionInput.newExecutionInput
-import static graphql.Scalars.GraphQLString
-import static graphql.schema.GraphQLArgument.newArgument
 
 class TestUtil {
 
-    static String printAstCompact(Document document) {
-        AstPrinter.printAst(document).replaceAll("\\s+", " ").trim()
-    }
-
     private static String printAstAsJson(Node node) {
+        String[] ignoredProperties = [
+                "sourceLocation", "children", "ignoredChars", "namedChildren", "directivesByName"
+        ]
         SimpleBeanPropertyFilter theFilter = SimpleBeanPropertyFilter
-                .serializeAllExcept("sourceLocation", "children", "ignoredChars", "namedChildren") as SimpleBeanPropertyFilter
+                .serializeAllExcept(ignoredProperties) as SimpleBeanPropertyFilter
         FilterProvider filters = new SimpleFilterProvider()
         filters.addFilter("myFilter" as String, theFilter as SimpleBeanPropertyFilter)
 
@@ -76,7 +70,7 @@ class TestUtil {
         mapper.addMixIn(Object.class, FilterMixin.class)
         mapper.disable(SerializationFeature.WRITE_EMPTY_JSON_ARRAYS)
         mapper.disable(SerializationFeature.WRITE_NULL_MAP_VALUES)
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
         mapper.setFilterProvider(filters)
         return mapper.writeValueAsString(node)
     }
@@ -86,8 +80,9 @@ class TestUtil {
         return new JsonSlurper().parseText(json)
     }
 
-    static Map getExpectedData(String name) {
-        def stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(name + ".json")
+    static Map expectedJson(String fileName) {
+        def stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName)
+        assert stream != null, "bad file read of $fileName"
         return new JsonSlurper().parseText(stream.text)
     }
 
@@ -110,20 +105,6 @@ class TestUtil {
         return map
     }
 
-
-    static GraphQLSchema schemaWithInputType(GraphQLInputType inputType) {
-        GraphQLArgument.Builder fieldArgument = newArgument().name("arg").type(inputType)
-        GraphQLFieldDefinition.Builder name = GraphQLFieldDefinition.newFieldDefinition()
-                .name("name").type(GraphQLString).argument(fieldArgument)
-        GraphQLObjectType queryType = GraphQLObjectType.newObject().name("query").field(name).build()
-        new GraphQLSchema(queryType)
-    }
-
-    static dummySchema = GraphQLSchema.newSchema()
-            .query(GraphQLObjectType.newObject()
-            .name("QueryType")
-            .build())
-            .build()
 
     static ServiceExecutionResult serviceResultFrom(ExecutionResult er) {
         def toSpecification = er.toSpecification()
@@ -310,7 +291,7 @@ class TestUtil {
 
 
     static Document parseQuery(String query) {
-        new graphql.parser.Parser().parseDocument(query)
+        new Parser().parseDocument(query)
     }
 
     static MergedField mergedField(List<Field> fields) {

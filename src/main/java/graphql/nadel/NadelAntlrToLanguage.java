@@ -2,18 +2,22 @@ package graphql.nadel;
 
 import graphql.Internal;
 import graphql.language.FieldDefinition;
+import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
+import graphql.language.UnionTypeDefinition;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
+import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
-import graphql.nadel.dsl.TypeTransformation;
+import graphql.nadel.dsl.TypeMappingDefinition;
+import graphql.nadel.dsl.UnionTypeDefinitionWithTransformation;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import graphql.parser.MultiSourceReader;
@@ -114,12 +118,41 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         if (ctx.typeTransformation() == null) {
             return objectTypeDefinition;
         }
-        TypeTransformation typeTransformation = new TypeTransformation(null, new ArrayList<>());
-        typeTransformation.setUnderlyingName(ctx.typeTransformation().name().getText());
-        typeTransformation.setOverallName(ctx.name().getText());
+        TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
         return ObjectTypeDefinitionWithTransformation.newObjectTypeDefinitionWithTransformation(objectTypeDefinition)
-                .typeTransformation(typeTransformation)
+                .typeMappingDefinition(typeMappingDefinition)
                 .build();
+    }
+
+    @Override
+    protected UnionTypeDefinition createUnionTypeDefinition(StitchingDSLParser.UnionTypeDefinitionContext ctx) {
+        UnionTypeDefinition unionTypeDefinition = super.createUnionTypeDefinition(ctx);
+        if (ctx.typeTransformation() == null) {
+            return unionTypeDefinition;
+        }
+        TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
+        return UnionTypeDefinitionWithTransformation.newUnionTypeDefinitionWithTransformation(unionTypeDefinition)
+                .typeMappingDefinition(typeMappingDefinition)
+                .build();
+    }
+
+    @Override
+    protected InterfaceTypeDefinition createInterfaceTypeDefinition(StitchingDSLParser.InterfaceTypeDefinitionContext ctx) {
+        InterfaceTypeDefinition interfaceTypeDefinition = super.createInterfaceTypeDefinition(ctx);
+        if (ctx.typeTransformation() == null) {
+            return interfaceTypeDefinition;
+        }
+        TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
+        return InterfaceTypeDefinitionWithTransformation.newInterfaceTypeDefinitionWithTransformation(interfaceTypeDefinition)
+                .typeMappingDefinition(typeMappingDefinition)
+                .build();
+    }
+
+    private TypeMappingDefinition createTypeMappingDef(StitchingDSLParser.TypeTransformationContext typeTransformationContext, StitchingDSLParser.NameContext name) {
+        TypeMappingDefinition typeMappingDefinition = new TypeMappingDefinition(null, new ArrayList<>());
+        typeMappingDefinition.setUnderlyingName(typeTransformationContext.typeMappingDefinition().name().getText());
+        typeMappingDefinition.setOverallName(name.getText());
+        return typeMappingDefinition;
     }
 
     private RemoteArgumentDefinition createRemoteArgumentDefinition(StitchingDSLParser.RemoteArgumentPairContext

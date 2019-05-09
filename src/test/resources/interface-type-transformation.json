@@ -15,7 +15,12 @@
           ]
         },
         {
-          "name": "Foo",
+          "name": "FooInterface",
+          "directives": [
+            {
+              "name": "directiveFirst"
+            }
+          ],
           "fieldDefinitions": [
             {
               "name": "id",
@@ -24,9 +29,9 @@
               }
             }
           ],
-          "typeTransformation": {
-            "underlyingName": "OriginalFooName",
-            "overallName": "Foo"
+          "typeMappingDefinition": {
+            "underlyingName": "UnderlyingFooName",
+            "overallName": "FooInterface"
           }
         }
       ]

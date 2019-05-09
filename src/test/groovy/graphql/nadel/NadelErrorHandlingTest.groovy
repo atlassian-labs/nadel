@@ -108,7 +108,7 @@ class NadelErrorHandlingTest extends Specification {
             } 
             type Foo {
                 name: String
-                bar: Bar <= \$innerQueries.Bar.barById(id: \$source.barId)
+                bar: Bar => hydrated from Bar.barById(id: $source.barId)
             }
          }
          service Bar {
@@ -117,7 +117,7 @@ class NadelErrorHandlingTest extends Specification {
             } 
             type Bar {
                 name: String 
-                nestedBar: Bar <= \$innerQueries.Bar.barById(id: \$source.nestedBarId)
+                nestedBar: Bar => hydrated from Bar.barById(id: $source.nestedBarId)
             }
          }
         '''

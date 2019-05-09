@@ -24,7 +24,7 @@ import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
-import graphql.nadel.dsl.TypeTransformation;
+import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
@@ -283,12 +283,12 @@ public class OverallQueryTransformer {
                     });
 
             GraphQLUnmodifiedType fieldType = GraphQLTypeUtil.unwrapAll(environment.getFieldDefinition().getType());
-            TypeTransformation typeTransformation = typeTransformation(executionContext, fieldType.getName());
-            if (typeTransformation != null) {
-                recordTypeRename(typeTransformation);
+            TypeMappingDefinition typeMappingDefinition = typeTransformation(executionContext, fieldType.getName());
+            if (typeMappingDefinition != null) {
+                recordTypeRename(typeMappingDefinition);
             }
 
-            FieldTransformation fieldTransformation = transformationForFieldDefinition(environment, fragmentsByName);
+            FieldTransformation fieldTransformation = transformationForFieldDefinition(environment);
             if (fieldTransformation != null) {
                 fieldTransformation.apply(environment);
                 Field changedNode = (Field) environment.getTraverserContext().thisNode();
@@ -303,11 +303,11 @@ public class OverallQueryTransformer {
             InlineFragment fragment = environment.getInlineFragment();
             TypeName typeName = fragment.getTypeCondition();
 
-            TypeTransformation typeTransformation = typeTransformationForFragment(executionContext, typeName);
-            if (typeTransformation != null) {
-                recordTypeRename(typeTransformation);
+            TypeMappingDefinition typeMappingDefinition = typeTransformationForFragment(executionContext, typeName);
+            if (typeMappingDefinition != null) {
+                recordTypeRename(typeMappingDefinition);
                 InlineFragment changedFragment = fragment.transform(f -> {
-                    TypeName newTypeName = newTypeName(typeTransformation.getUnderlyingName()).build();
+                    TypeName newTypeName = newTypeName(typeMappingDefinition.getUnderlyingName()).build();
                     f.typeCondition(newTypeName);
                 });
                 changeNode(environment.getTraverserContext(), changedFragment);
@@ -320,11 +320,11 @@ public class OverallQueryTransformer {
         public void visitFragmentDefinition(QueryVisitorFragmentDefinitionEnvironment environment) {
             FragmentDefinition fragment = environment.getFragmentDefinition();
             TypeName typeName = fragment.getTypeCondition();
-            TypeTransformation typeTransformation = typeTransformationForFragment(executionContext, typeName);
-            if (typeTransformation != null) {
-                recordTypeRename(typeTransformation);
+            TypeMappingDefinition typeMappingDefinition = typeTransformationForFragment(executionContext, typeName);
+            if (typeMappingDefinition != null) {
+                recordTypeRename(typeMappingDefinition);
                 FragmentDefinition changedFragment = fragment.transform(f -> {
-                    TypeName newTypeName = newTypeName(typeTransformation.getUnderlyingName()).build();
+                    TypeName newTypeName = newTypeName(typeMappingDefinition.getUnderlyingName()).build();
                     f.typeCondition(newTypeName);
                 });
                 changeNode(environment.getTraverserContext(), changedFragment);
@@ -336,31 +336,31 @@ public class OverallQueryTransformer {
             referencedFragmentNames.add(environment.getFragmentSpread().getName());
         }
 
-        private void recordTypeRename(TypeTransformation typeTransformation) {
-            assertNotNull(typeTransformation);
-            typeRenameMappings.put(typeTransformation.getUnderlyingName(), typeTransformation.getOverallName());
+        private void recordTypeRename(TypeMappingDefinition typeMappingDefinition) {
+            assertNotNull(typeMappingDefinition);
+            typeRenameMappings.put(typeMappingDefinition.getUnderlyingName(), typeMappingDefinition.getOverallName());
         }
     }
 
     @SuppressWarnings("ConstantConditions")
-    private TypeTransformation typeTransformationForFragment(ExecutionContext executionContext, TypeName typeName) {
+    private TypeMappingDefinition typeTransformationForFragment(ExecutionContext executionContext, TypeName typeName) {
         GraphQLType type = executionContext.getGraphQLSchema().getType(typeName.getName());
         assertTrue(type instanceof GraphQLObjectType, "Expected type '%s' to be an object type", typeName);
         ObjectTypeDefinition typeDefinition = ((GraphQLObjectType) type).getDefinition();
         if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
-            return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeTransformation();
+            return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
         }
         return null;
     }
 
 
     @SuppressWarnings("ConstantConditions")
-    private TypeTransformation typeTransformation(ExecutionContext executionContext, String typeName) {
+    private TypeMappingDefinition typeTransformation(ExecutionContext executionContext, String typeName) {
         GraphQLType type = executionContext.getGraphQLSchema().getType(typeName);
         if (type instanceof GraphQLObjectType) {
             ObjectTypeDefinition typeDefinition = ((GraphQLObjectType) type).getDefinition();
             if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
-                return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeTransformation();
+                return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
             }
         }
         return null;
@@ -373,7 +373,7 @@ public class OverallQueryTransformer {
         return null;
     }
 
-    private FieldTransformation transformationForFieldDefinition(QueryVisitorFieldEnvironment environment, Map<String, FragmentDefinition> fragmentsByName) {
+    private FieldTransformation transformationForFieldDefinition(QueryVisitorFieldEnvironment environment) {
         FieldDefinition fieldDefinition = environment.getFieldDefinition().getDefinition();
         FieldTransformation fieldTransformation = null;
         graphql.nadel.dsl.FieldTransformation definition = transformationDefinitionForField(fieldDefinition);

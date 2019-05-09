@@ -5,27 +5,26 @@ import graphql.language.Description;
 import graphql.language.Directive;
 import graphql.language.FieldDefinition;
 import graphql.language.IgnoredChars;
+import graphql.language.InterfaceTypeDefinition;
 import graphql.language.NodeBuilder;
-import graphql.language.ObjectTypeDefinition;
 import graphql.language.SourceLocation;
-import graphql.language.Type;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition {
+public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
 
-    protected ObjectTypeDefinitionWithTransformation(String name,
-                                                     List<Type> implementz,
-                                                     List<Directive> directives,
-                                                     List<FieldDefinition> fieldDefinitions,
-                                                     Description description,
-                                                     SourceLocation sourceLocation,
-                                                     List<Comment> comments,
-                                                     TypeMappingDefinition typeMappingDefinition, IgnoredChars ignoredChars) {
-        super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments, ignoredChars);
+    protected InterfaceTypeDefinitionWithTransformation(String name,
+                                                        List<FieldDefinition> fieldDefinitions,
+                                                        List<Directive> directives,
+                                                        Description description,
+                                                        SourceLocation sourceLocation,
+                                                        List<Comment> comments,
+                                                        IgnoredChars ignoredChars,
+                                                        TypeMappingDefinition typeMappingDefinition) {
+        super(name, fieldDefinitions, directives, description, sourceLocation, comments, ignoredChars);
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -33,31 +32,29 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         return typeMappingDefinition;
     }
 
-    public static ObjectTypeDefinitionWithTransformation.Builder newObjectTypeDefinitionWithTransformation(ObjectTypeDefinition copyFrom) {
-        return new ObjectTypeDefinitionWithTransformation.Builder(copyFrom);
+    public static InterfaceTypeDefinitionWithTransformation.Builder newInterfaceTypeDefinitionWithTransformation(InterfaceTypeDefinition copyFrom) {
+        return new InterfaceTypeDefinitionWithTransformation.Builder(copyFrom);
     }
 
     public static final class Builder implements NodeBuilder {
         private SourceLocation sourceLocation;
         private List<Comment> comments = new ArrayList<>();
+        private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
         private String name;
         private Description description;
-        private List<Type> implementz = new ArrayList<>();
         private List<Directive> directives = new ArrayList<>();
         private List<FieldDefinition> fieldDefinitions = new ArrayList<>();
         private TypeMappingDefinition typeMappingDefinition;
-        private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
 
         private Builder() {
         }
 
-        private Builder(ObjectTypeDefinition existing) {
+        private Builder(InterfaceTypeDefinition existing) {
             this.sourceLocation = existing.getSourceLocation();
             this.comments = existing.getComments();
             this.name = existing.getName();
             this.description = existing.getDescription();
             this.directives = existing.getDirectives();
-            this.implementz = existing.getImplements();
             this.fieldDefinitions = existing.getFieldDefinitions();
         }
 
@@ -92,15 +89,6 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
             return this;
         }
 
-        public Builder implementz(List<Type> implementz) {
-            this.implementz = implementz;
-            return this;
-        }
-
-        public Builder implementz(Type implement) {
-            this.implementz.add(implement);
-            return this;
-        }
 
         public Builder directives(List<Directive> directives) {
             this.directives = directives;
@@ -122,16 +110,17 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
             return this;
         }
 
-        public ObjectTypeDefinitionWithTransformation build() {
-            return new ObjectTypeDefinitionWithTransformation(name,
-                    implementz,
-                    directives,
+        public InterfaceTypeDefinitionWithTransformation build() {
+            return new InterfaceTypeDefinitionWithTransformation(
+                    name,
                     fieldDefinitions,
+                    directives,
                     description,
                     sourceLocation,
                     comments,
-                    typeMappingDefinition,
-                    ignoredChars);
+                    ignoredChars,
+                    typeMappingDefinition
+            );
         }
     }
 }

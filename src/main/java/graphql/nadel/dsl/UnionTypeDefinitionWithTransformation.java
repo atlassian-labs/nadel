@@ -3,29 +3,28 @@ package graphql.nadel.dsl;
 import graphql.language.Comment;
 import graphql.language.Description;
 import graphql.language.Directive;
-import graphql.language.FieldDefinition;
 import graphql.language.IgnoredChars;
 import graphql.language.NodeBuilder;
-import graphql.language.ObjectTypeDefinition;
 import graphql.language.SourceLocation;
 import graphql.language.Type;
+import graphql.language.UnionTypeDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition {
+public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
 
-    protected ObjectTypeDefinitionWithTransformation(String name,
-                                                     List<Type> implementz,
-                                                     List<Directive> directives,
-                                                     List<FieldDefinition> fieldDefinitions,
-                                                     Description description,
-                                                     SourceLocation sourceLocation,
-                                                     List<Comment> comments,
-                                                     TypeMappingDefinition typeMappingDefinition, IgnoredChars ignoredChars) {
-        super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments, ignoredChars);
+    protected UnionTypeDefinitionWithTransformation(String name,
+                                                    List<Directive> directives,
+                                                    List<Type> memberTypes,
+                                                    Description description,
+                                                    SourceLocation sourceLocation,
+                                                    List<Comment> comments,
+                                                    IgnoredChars ignoredChars,
+                                                    TypeMappingDefinition typeMappingDefinition) {
+        super(name, directives, memberTypes, description, sourceLocation, comments, ignoredChars);
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -33,8 +32,8 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         return typeMappingDefinition;
     }
 
-    public static ObjectTypeDefinitionWithTransformation.Builder newObjectTypeDefinitionWithTransformation(ObjectTypeDefinition copyFrom) {
-        return new ObjectTypeDefinitionWithTransformation.Builder(copyFrom);
+    public static UnionTypeDefinitionWithTransformation.Builder newUnionTypeDefinitionWithTransformation(UnionTypeDefinition copyFrom) {
+        return new UnionTypeDefinitionWithTransformation.Builder(copyFrom);
     }
 
     public static final class Builder implements NodeBuilder {
@@ -42,23 +41,22 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         private List<Comment> comments = new ArrayList<>();
         private String name;
         private Description description;
-        private List<Type> implementz = new ArrayList<>();
-        private List<Directive> directives = new ArrayList<>();
-        private List<FieldDefinition> fieldDefinitions = new ArrayList<>();
-        private TypeMappingDefinition typeMappingDefinition;
+        private List<Directive> directives;
+        private List<Type> memberTypes;
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
+
+        private TypeMappingDefinition typeMappingDefinition;
 
         private Builder() {
         }
 
-        private Builder(ObjectTypeDefinition existing) {
+        private Builder(UnionTypeDefinition existing) {
             this.sourceLocation = existing.getSourceLocation();
             this.comments = existing.getComments();
             this.name = existing.getName();
             this.description = existing.getDescription();
             this.directives = existing.getDirectives();
-            this.implementz = existing.getImplements();
-            this.fieldDefinitions = existing.getFieldDefinitions();
+            this.memberTypes = existing.getMemberTypes();
         }
 
         public Builder typeMappingDefinition(TypeMappingDefinition typeMappingDefinition) {
@@ -92,15 +90,6 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
             return this;
         }
 
-        public Builder implementz(List<Type> implementz) {
-            this.implementz = implementz;
-            return this;
-        }
-
-        public Builder implementz(Type implement) {
-            this.implementz.add(implement);
-            return this;
-        }
 
         public Builder directives(List<Directive> directives) {
             this.directives = directives;
@@ -112,26 +101,27 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
             return this;
         }
 
-        public Builder fieldDefinitions(List<FieldDefinition> fieldDefinitions) {
-            this.fieldDefinitions = fieldDefinitions;
+        public Builder memberTypes(List<Type> memberTypes) {
+            this.memberTypes = memberTypes;
             return this;
         }
 
-        public Builder fieldDefinition(FieldDefinition fieldDefinition) {
-            this.fieldDefinitions.add(fieldDefinition);
+        public Builder memberTypes(Type memberType) {
+            this.memberTypes.add(memberType);
             return this;
         }
 
-        public ObjectTypeDefinitionWithTransformation build() {
-            return new ObjectTypeDefinitionWithTransformation(name,
-                    implementz,
+        public UnionTypeDefinitionWithTransformation build() {
+            return new UnionTypeDefinitionWithTransformation(
+                    name,
                     directives,
-                    fieldDefinitions,
+                    memberTypes,
                     description,
                     sourceLocation,
                     comments,
-                    typeMappingDefinition,
-                    ignoredChars);
+                    ignoredChars,
+                    typeMappingDefinition
+            );
         }
     }
 }

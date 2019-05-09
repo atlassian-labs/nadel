@@ -12,13 +12,13 @@ import graphql.util.TraverserContext;
 
 import java.util.List;
 
-public class TypeTransformation extends AbstractNode<TypeTransformation> {
+public class TypeMappingDefinition extends AbstractNode<TypeMappingDefinition> {
 
     private String underlyingName;
     private String overallName;
 
 
-    public TypeTransformation(SourceLocation sourceLocation, List<Comment> comments) {
+    public TypeMappingDefinition(SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
     }
 
@@ -49,7 +49,7 @@ public class TypeTransformation extends AbstractNode<TypeTransformation> {
     }
 
     @Override
-    public TypeTransformation withNewChildren(NodeChildrenContainer newChildren) {
+    public TypeMappingDefinition withNewChildren(NodeChildrenContainer newChildren) {
         return null;
     }
 
@@ -59,7 +59,7 @@ public class TypeTransformation extends AbstractNode<TypeTransformation> {
     }
 
     @Override
-    public TypeTransformation deepCopy() {
+    public TypeMappingDefinition deepCopy() {
         return null;
     }
 

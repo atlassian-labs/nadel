@@ -5,31 +5,39 @@ import GraphqlSDL;
     package graphql.nadel.parser.antlr;
 }
 
-stitchingDSL: serviceDefinition+;
+stitchingDSL:
+   serviceDefinition+;
 
 serviceDefinition:
-'service' name '{' typeSystemDefinition* '}' ;
+   'service' name '{' typeSystemDefinition* '}' ;
 
-objectTypeDefinition : description? TYPE name implementsInterfaces? typeTransformation? directives? fieldsDefinition? ;
+objectTypeDefinition : description? TYPE name implementsInterfaces? directives? typeTransformation?  fieldsDefinition? ;
+
+interfaceTypeDefinition : description? INTERFACE name directives? typeTransformation? fieldsDefinition?;
+
+unionTypeDefinition : description? UNION name directives? typeTransformation? unionMembership?;
 
 fieldDefinition : description? name argumentsDefinition? ':' type directives? fieldTransformation?;
 
-fieldTransformation : '<=' (fieldMappingDefinition | innerServiceHydration);
+fieldTransformation : '=>' (fieldMappingDefinition | innerServiceHydration);
 
-typeTransformation : '<=' '$innerTypes' '.' name;
+typeTransformation : '=>' typeMappingDefinition;
 
-fieldMappingDefinition : '$source' '.' name ;
+//
+// renames
+//
+typeMappingDefinition : 'renamed from' name;
 
-innerServiceHydration: '$innerQueries' '.' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
+fieldMappingDefinition : 'renamed from' name;
+
+//
+// hydration
+
+innerServiceHydration: 'hydrated from' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
 
 objectIdentifier: 'object identified by' name;
+
 batchSize: 'batch size ' intValue;
-
-intValue: IntValue;
-
-serviceName: NAME;
-
-topLevelField: NAME;
 
 remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference;
 
@@ -44,4 +52,8 @@ fieldArgumentReference : '$argument' '.' name ;
 
 contextArgumentReference : '$context' '.' name ;
 
+intValue: IntValue;
 
+serviceName: NAME;
+
+topLevelField: NAME;

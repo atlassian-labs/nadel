@@ -15,13 +15,13 @@ class NadelRenameTest extends Specification {
          service MyService {
             type Query{
                 hello: World  
-                renameOverall : RenameOverall <= $source.renameUnderlying   # the field is renamed 
+                renameOverall : RenameOverall => renamed from renameUnderlying   # the field is renamed 
             } 
             type World {
                 id: ID
                 name: String
             }
-            type RenameOverall <= $innerTypes.RenameUnderlying {  # and the type is renamed
+            type RenameOverall => renamed from RenameUnderlying {  # and the type is renamed
                 name : String
             }
          }

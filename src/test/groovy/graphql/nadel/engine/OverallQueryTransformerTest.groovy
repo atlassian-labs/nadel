@@ -14,7 +14,7 @@ class OverallQueryTransformerTest extends Specification {
     def schema = TestUtil.schemaFromNdsl('''
         service example {
             type Query { 
-                hello: String <= $source.helloWorld 
+                hello: String => renamed from helloWorld 
                 foo(id: ID!): Foo
                 bar(id: ID!): Bar
             }
@@ -24,12 +24,12 @@ class OverallQueryTransformerTest extends Specification {
             
             type Foo {
                 id: ID!
-                barId: String <= $source.bazId
+                barId: String => renamed from bazId
                 qux: String!
-                anotherFoo: AnotherFoo <= $innerQueries.AnotherService.topLevel(id: $source.anotherSourceId)
+                anotherFoo: AnotherFoo => hydrated from AnotherService.topLevel(id: $source.anotherSourceId)
             }
             
-            type Bar <= $innerTypes.Baz {
+            type Bar => renamed from Baz {
                 id: ID!
             }
         }
