@@ -57,6 +57,8 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     private CommonDefinition createCommonDefinition(StitchingDSLParser.CommonDefinitionContext commonDefinitionContext) {
         CommonDefinition.Builder builder = CommonDefinition.newCommonDefinition();
         List<SDLDefinition> definitions = createTypeSystemDefinitions(commonDefinitionContext.typeSystemDefinition());
+        builder.sourceLocation(getSourceLocation(commonDefinitionContext));
+        builder.comments(getComments(commonDefinitionContext));
         builder.typeDefinitions(definitions);
         return builder.build();
     }
