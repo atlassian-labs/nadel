@@ -15,6 +15,7 @@ import graphql.execution.preparsed.NoOpPreparsedDocumentProvider;
 import graphql.execution.preparsed.PreparsedDocumentEntry;
 import graphql.execution.preparsed.PreparsedDocumentProvider;
 import graphql.language.Document;
+import graphql.nadel.dsl.CommonDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.engine.Execution;
@@ -57,8 +58,10 @@ public class Nadel {
     private final StitchingDsl stitchingDsl;
     private final ServiceExecutionFactory serviceExecutionFactory;
     private final NSDLParser NSDLParser = new NSDLParser();
+    private OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
 
     private final List<Service> services;
+
     private final GraphQLSchema overallSchema;
 
     private final NadelInstrumentation instrumentation;
@@ -66,6 +69,7 @@ public class Nadel {
     private final PreparsedDocumentProvider preparsedDocumentProvider;
     private final ExecutionIdProvider executionIdProvider;
     private final IntrospectionRunner introspectionRunner;
+    private final DefinitionRegistry commonTypes;
 
     private Nadel(Reader nsdl,
                   ServiceExecutionFactory serviceExecutionFactory,
@@ -82,6 +86,17 @@ public class Nadel {
 
         this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
         this.introspectionRunner = introspectionRunner;
+        this.services = createServices();
+        this.commonTypes = createCommonTypes();
+        this.overallSchema = createOverallSchema();
+    }
+
+    private DefinitionRegistry createCommonTypes() {
+        CommonDefinition commonDefinition = stitchingDsl.getCommonDefinition();
+        return buildServiceRegistry(commonDefinition);
+    }
+
+    private List<Service> createServices() {
         List<ServiceDefinition> serviceDefinitions = stitchingDsl.getServiceDefinitions();
 
         UnderlyingSchemaGenerator underlyingSchemaGenerator = new UnderlyingSchemaGenerator();
@@ -91,24 +106,27 @@ public class Nadel {
             String serviceName = serviceDefinition.getName();
             ServiceExecution serviceExecution = this.serviceExecutionFactory.getServiceExecution(serviceName);
             TypeDefinitionRegistry underlyingTypeDefinitions = this.serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName);
+
             GraphQLSchema underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(underlyingTypeDefinitions);
             DefinitionRegistry definitionRegistry = buildServiceRegistry(serviceDefinition);
 
             Service service = new Service(serviceName, underlyingSchema, serviceExecution, serviceDefinition, definitionRegistry);
             serviceList.add(service);
         }
-        this.services = serviceList;
 
-        List<DefinitionRegistry> registries = serviceList.stream()
+        return serviceList;
+
+    }
+
+    private GraphQLSchema createOverallSchema() {
+        List<DefinitionRegistry> registries = this.services.stream()
                 .map(Service::getDefinitionRegistry)
                 .collect(toList());
-        OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
-        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries);
+        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes);
         //
         // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
         // make direct use of them, we still have to map between them
-        schema = schema.transform(builder -> ScalarInfo.STANDARD_SCALARS.forEach(builder::additionalType));
-        this.overallSchema = schema;
+        return schema.transform(builder -> ScalarInfo.STANDARD_SCALARS.forEach(builder::additionalType));
     }
 
     public List<Service> getServices() {

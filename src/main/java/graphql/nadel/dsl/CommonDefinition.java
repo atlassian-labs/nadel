@@ -1,6 +1,5 @@
 package graphql.nadel.dsl;
 
-
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
 import graphql.language.IgnoredChars;
@@ -8,6 +7,7 @@ import graphql.language.Node;
 import graphql.language.NodeBuilder;
 import graphql.language.NodeChildrenContainer;
 import graphql.language.NodeVisitor;
+import graphql.language.SDLDefinition;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -15,33 +15,18 @@ import graphql.util.TraverserContext;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StitchingDsl extends AbstractNode<StitchingDsl> {
+public class CommonDefinition extends AbstractNode<CommonDefinition> {
 
+    private List<SDLDefinition> typeDefinitions;
 
-    private final List<ServiceDefinition> serviceDefinitions;
-    private final CommonDefinition commonDefinition;
-
-    private StitchingDsl(List<ServiceDefinition> serviceDefinitions,
-                         CommonDefinition commonDefinition, SourceLocation sourceLocation,
-                         List<Comment> comments,
-                         IgnoredChars ignoredChars) {
+    private CommonDefinition(List<SDLDefinition> typeDefinitions, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
         super(sourceLocation, comments, ignoredChars);
-        this.serviceDefinitions = serviceDefinitions;
-        this.commonDefinition = commonDefinition;
-    }
-
-
-    public List<ServiceDefinition> getServiceDefinitions() {
-        return new ArrayList<>(serviceDefinitions);
-    }
-
-    public CommonDefinition getCommonDefinition() {
-        return commonDefinition;
+        this.typeDefinitions = typeDefinitions;
     }
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(serviceDefinitions);
+        return null;
     }
 
     @Override
@@ -50,10 +35,9 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     }
 
     @Override
-    public StitchingDsl withNewChildren(NodeChildrenContainer newChildren) {
+    public CommonDefinition withNewChildren(NodeChildrenContainer newChildren) {
         return null;
     }
-
 
     @Override
     public boolean isEqualTo(Node node) {
@@ -61,7 +45,7 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     }
 
     @Override
-    public StitchingDsl deepCopy() {
+    public CommonDefinition deepCopy() {
         return null;
     }
 
@@ -70,8 +54,11 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
         return null;
     }
 
+    public List<SDLDefinition> getTypeDefinitions() {
+        return new ArrayList<>(typeDefinitions);
+    }
 
-    public static Builder newStitchingDSL() {
+    public static Builder newCommonDefinition() {
         return new Builder();
     }
 
@@ -79,8 +66,7 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
         private List<Comment> comments = new ArrayList<>();
         private SourceLocation sourceLocation;
-        private List<ServiceDefinition> serviceDefinitions = new ArrayList<>();
-        private CommonDefinition commonDefinition;
+        private List<SDLDefinition> typeDefinitions = new ArrayList<>();
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
 
         private Builder() {
@@ -103,22 +89,14 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
             return this;
         }
 
-        public Builder serviceDefinitions(List<ServiceDefinition> serviceDefinitions) {
-            this.serviceDefinitions = serviceDefinitions;
-            return this;
-        }
-
-        public Builder commonDefinition(CommonDefinition commonDefinition) {
-            this.commonDefinition = commonDefinition;
+        public Builder typeDefinitions(List<SDLDefinition> typeDefinitions) {
+            this.typeDefinitions = typeDefinitions;
             return this;
         }
 
 
-        public StitchingDsl build() {
-            return new StitchingDsl(serviceDefinitions, commonDefinition, sourceLocation, comments, ignoredChars);
+        public CommonDefinition build() {
+            return new CommonDefinition(typeDefinitions, sourceLocation, comments, ignoredChars);
         }
-
     }
-
-
 }
