@@ -7,6 +7,7 @@ import graphql.language.OperationTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.TypeName;
 import graphql.nadel.DefinitionRegistry;
+import graphql.nadel.dsl.CommonDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.GraphQLInterfaceType;
 import graphql.schema.GraphQLOutputType;
@@ -29,6 +30,17 @@ public class Util {
         } else {
             return (ObjectTypeDefinition) typeDefinitionRegistry.getType("Query").get();
         }
+    }
+
+    public static DefinitionRegistry buildServiceRegistry(CommonDefinition commonDefinition) {
+        if (commonDefinition == null) {
+            return new DefinitionRegistry();
+        }
+        DefinitionRegistry definitionRegistry = new DefinitionRegistry();
+        for (Definition definition : commonDefinition.getTypeDefinitions()) {
+            definitionRegistry.add((SDLDefinition) definition);
+        }
+        return definitionRegistry;
     }
 
     public static DefinitionRegistry buildServiceRegistry(ServiceDefinition serviceDefinition) {

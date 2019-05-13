@@ -301,4 +301,63 @@ class NadelE2ETest extends Specification {
         result.join().data == data
     }
 
+    def "can declare common types"() {
+
+        def nsdl = '''
+         common {
+            interface Node {
+                id: ID!
+            }
+         }
+         service IssueService {
+            type Query{
+                node: Node
+            } 
+            type Issue implements Node {
+                id: ID!
+                name: String
+            }
+         }
+        '''
+        def query = '''
+        { node { ...on Issue { name } } }
+        '''
+        def underlyingSchema = typeDefinitions('''
+            type Query{
+                node: Node  
+                
+            } 
+            interface Node {
+                id: ID!
+            }
+            type Issue implements Node {
+                id: ID!
+                name: String
+            }
+        ''')
+        ServiceExecution serviceExecution = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                IssueService: new Tuple2(serviceExecution, underlyingSchema)]
+        )
+
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("uuid")
+                .build()
+        def data1 = [node: [typename__uuid: "Issue", name: "My Issue"]]
+        ServiceExecutionResult serviceExecutionResult = new ServiceExecutionResult(data1)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution.execute(_) >> completedFuture(serviceExecutionResult)
+        result.join().data == [node: [name: "My Issue"]]
+    }
+
 }

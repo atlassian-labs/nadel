@@ -6,6 +6,7 @@ import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.UnionTypeDefinition;
+import graphql.nadel.dsl.CommonDefinition;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
@@ -47,7 +48,19 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
                 .map(this::createServiceDefinition)
                 .collect(Collectors.toList());
         stitchingDsl.serviceDefinitions(serviceDefintions);
+        if (ctx.commonDefinition() != null) {
+            stitchingDsl.commonDefinition(createCommonDefinition(ctx.commonDefinition()));
+        }
         return stitchingDsl.build();
+    }
+
+    private CommonDefinition createCommonDefinition(StitchingDSLParser.CommonDefinitionContext commonDefinitionContext) {
+        CommonDefinition.Builder builder = CommonDefinition.newCommonDefinition();
+        List<SDLDefinition> definitions = createTypeSystemDefinitions(commonDefinitionContext.typeSystemDefinition());
+        builder.sourceLocation(getSourceLocation(commonDefinitionContext));
+        builder.comments(getComments(commonDefinitionContext));
+        builder.typeDefinitions(definitions);
+        return builder.build();
     }
 
     private ServiceDefinition createServiceDefinition(StitchingDSLParser.ServiceDefinitionContext serviceDefinitionContext) {

@@ -22,44 +22,49 @@ import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
 public class OverallSchemaGenerator {
 
 
-    public GraphQLSchema buildOverallSchema(List<DefinitionRegistry> serviceRegistries) {
+    public GraphQLSchema buildOverallSchema(List<DefinitionRegistry> serviceRegistries, DefinitionRegistry commonTypes) {
         SchemaGenerator schemaGenerator = new SchemaGenerator();
         RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
                 .wiringFactory(new NeverWiringFactory())
                 .build();
-        return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring);
+        return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries, commonTypes), runtimeWiring);
     }
 
-    private TypeDefinitionRegistry createTypeRegistry(List<DefinitionRegistry> serviceRegistries) {
+    private TypeDefinitionRegistry createTypeRegistry(List<DefinitionRegistry> serviceRegistries, DefinitionRegistry commonTypes) {
         //TODO: this merging not completely correct for example schema definition nodes are not handled correctly
-        Map<Operation, List<FieldDefinition>> fieldsMapbyType = new HashMap<>();
+        Map<Operation, List<FieldDefinition>> fieldsMapByType = new HashMap<>();
         Arrays.stream(Operation.values()).forEach(
-                value -> fieldsMapbyType.put(value, new ArrayList<>()));
+                value -> fieldsMapByType.put(value, new ArrayList<>()));
 
         TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
         List<SDLDefinition> allDefinitions = new ArrayList<>();
 
         for (DefinitionRegistry definitionRegistry : serviceRegistries) {
-            Map<Operation, ObjectTypeDefinition> opsTypes = definitionRegistry.getOperationMap();
-            opsTypes.keySet().stream().forEach(opsType -> {
-                ObjectTypeDefinition opsDefinitions = opsTypes.get(opsType);
-                if (opsDefinitions != null) {
-                    fieldsMapbyType.get(opsType).addAll(opsDefinitions.getFieldDefinitions());
-                }
-                definitionRegistry
-                        .getDefinitions()
-                        .stream()
-                        .filter(sdlDefinition -> !(sdlDefinition instanceof SchemaDefinition) && sdlDefinition != opsDefinitions)
-                        .forEach(allDefinitions::add);
-            });
+            collectTypes(fieldsMapByType, allDefinitions, definitionRegistry);
         }
+        collectTypes(fieldsMapByType, allDefinitions, commonTypes);
 
-        fieldsMapbyType.keySet().stream().forEach(key -> {
-            overallRegistry.add(newObjectTypeDefinition().name(key.getDisplayName()).fieldDefinitions(fieldsMapbyType.get(key)).build());
+        fieldsMapByType.keySet().forEach(key -> {
+            overallRegistry.add(newObjectTypeDefinition().name(key.getDisplayName()).fieldDefinitions(fieldsMapByType.get(key)).build());
         });
 
         allDefinitions.forEach(overallRegistry::add);
         return overallRegistry;
+    }
+
+    private void collectTypes(Map<Operation, List<FieldDefinition>> fieldsMapByType, List<SDLDefinition> allDefinitions, DefinitionRegistry definitionRegistry) {
+        Map<Operation, ObjectTypeDefinition> opsTypes = definitionRegistry.getOperationMap();
+        opsTypes.keySet().forEach(opsType -> {
+            ObjectTypeDefinition opsDefinitions = opsTypes.get(opsType);
+            if (opsDefinitions != null) {
+                fieldsMapByType.get(opsType).addAll(opsDefinitions.getFieldDefinitions());
+            }
+            definitionRegistry
+                    .getDefinitions()
+                    .stream()
+                    .filter(sdlDefinition -> !(sdlDefinition instanceof SchemaDefinition) && sdlDefinition != opsDefinitions)
+                    .forEach(allDefinitions::add);
+        });
     }
 
 }

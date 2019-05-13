@@ -23,6 +23,7 @@ import graphql.language.Node
 import graphql.language.OperationDefinition
 import graphql.language.ScalarTypeDefinition
 import graphql.language.SelectionSet
+import graphql.nadel.DefinitionRegistry
 import graphql.nadel.NSDLParser
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
@@ -201,7 +202,7 @@ class TestUtil {
     static GraphQLSchema schemaFromNdsl(String ndsl) {
         def stitchingDsl = new NSDLParser().parseDSL(ndsl)
         def defRegistries = stitchingDsl.serviceDefinitions.collect({ Util.buildServiceRegistry(it) })
-        return new OverallSchemaGenerator().buildOverallSchema(defRegistries)
+        return new OverallSchemaGenerator().buildOverallSchema(defRegistries, new DefinitionRegistry())
     }
 
     static GraphQL.Builder graphQL(String spec) {
