@@ -14,26 +14,34 @@ import graphql.language.Field;
 import graphql.language.FieldDefinition;
 import graphql.language.FragmentDefinition;
 import graphql.language.InlineFragment;
+import graphql.language.InterfaceTypeDefinition;
 import graphql.language.Node;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
 import graphql.language.TypeName;
+import graphql.language.UnionTypeDefinition;
 import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
+import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeMappingDefinition;
+import graphql.nadel.dsl.UnionTypeDefinitionWithTransformation;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLCompositeType;
+import graphql.schema.GraphQLFieldsContainer;
+import graphql.schema.GraphQLInterfaceType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeUtil;
+import graphql.schema.GraphQLUnionType;
 import graphql.schema.GraphQLUnmodifiedType;
 
 import java.util.ArrayList;
@@ -268,7 +276,6 @@ public class OverallQueryTransformer {
         public void visitField(QueryVisitorFieldEnvironment environment) {
 
             OperationDefinition operationDefinition = executionContext.getOperationDefinition();
-            Map<String, FragmentDefinition> fragmentsByName = executionContext.getFragmentsByName();
             Map<String, VariableDefinition> variableDefinitions = FpKit.getByName(operationDefinition.getVariableDefinitions(), VariableDefinition::getName);
 
             // capture the variables that are referenced by fields
@@ -336,35 +343,66 @@ public class OverallQueryTransformer {
             referencedFragmentNames.add(environment.getFragmentSpread().getName());
         }
 
-        private void recordTypeRename(TypeMappingDefinition typeMappingDefinition) {
-            assertNotNull(typeMappingDefinition);
-            typeRenameMappings.put(typeMappingDefinition.getUnderlyingName(), typeMappingDefinition.getOverallName());
-        }
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    private TypeMappingDefinition typeTransformationForFragment(ExecutionContext executionContext, TypeName typeName) {
-        GraphQLType type = executionContext.getGraphQLSchema().getType(typeName.getName());
-        assertTrue(type instanceof GraphQLObjectType, "Expected type '%s' to be an object type", typeName);
-        ObjectTypeDefinition typeDefinition = ((GraphQLObjectType) type).getDefinition();
-        if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
-            return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
-        }
-        return null;
-    }
-
-
-    @SuppressWarnings("ConstantConditions")
-    private TypeMappingDefinition typeTransformation(ExecutionContext executionContext, String typeName) {
-        GraphQLType type = executionContext.getGraphQLSchema().getType(typeName);
-        if (type instanceof GraphQLObjectType) {
-            ObjectTypeDefinition typeDefinition = ((GraphQLObjectType) type).getDefinition();
-            if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
-                return ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
+        private TypeMappingDefinition recordTypeRename(TypeMappingDefinition typeMappingDefinition) {
+            if (typeMappingDefinition != null) {
+                typeRenameMappings.put(typeMappingDefinition.getUnderlyingName(), typeMappingDefinition.getOverallName());
             }
+            return typeMappingDefinition;
         }
-        return null;
+
+        @SuppressWarnings("ConstantConditions")
+        private TypeMappingDefinition typeTransformationForFragment(ExecutionContext executionContext, TypeName typeName) {
+            GraphQLType type = executionContext.getGraphQLSchema().getType(typeName.getName());
+            assertTrue(type instanceof GraphQLFieldsContainer, "Expected type '%s' to be an field container type", typeName);
+            return extractAndRecordTypeMappingDefinition(executionContext.getGraphQLSchema(), type);
+        }
+
+
+        @SuppressWarnings("ConstantConditions")
+        private TypeMappingDefinition typeTransformation(ExecutionContext executionContext, String typeName) {
+            GraphQLType type = executionContext.getGraphQLSchema().getType(typeName);
+            return extractAndRecordTypeMappingDefinition(executionContext.getGraphQLSchema(), type);
+        }
+
+        @SuppressWarnings("UnnecessaryLocalVariable")
+        private TypeMappingDefinition extractAndRecordTypeMappingDefinition(GraphQLSchema graphQLSchema, GraphQLType type) {
+            if (type instanceof GraphQLObjectType) {
+                ObjectTypeDefinition typeDefinition = ((GraphQLObjectType) type).getDefinition();
+                if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
+                    TypeMappingDefinition definition = ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
+                    return recordTypeRename(definition);
+                }
+            }
+            if (type instanceof GraphQLInterfaceType) {
+                GraphQLInterfaceType interfaceType = (GraphQLInterfaceType) type;
+
+                graphQLSchema.getImplementations(interfaceType).forEach(objectType -> {
+                    TypeMappingDefinition definition = extractAndRecordTypeMappingDefinition(graphQLSchema, objectType);
+                    recordTypeRename(definition);
+                });
+
+                InterfaceTypeDefinition typeDefinition = interfaceType.getDefinition();
+                if (typeDefinition instanceof InterfaceTypeDefinitionWithTransformation) {
+                    TypeMappingDefinition definition = ((InterfaceTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
+                    return recordTypeRename(definition);
+                }
+            }
+            if (type instanceof GraphQLUnionType) {
+                GraphQLUnionType unionType = (GraphQLUnionType) type;
+                unionType.getTypes().forEach(typeMember -> {
+                    TypeMappingDefinition definition = extractAndRecordTypeMappingDefinition(graphQLSchema, typeMember);
+                    recordTypeRename(definition);
+                });
+                UnionTypeDefinition typeDefinition = unionType.getDefinition();
+                if (typeDefinition instanceof UnionTypeDefinitionWithTransformation) {
+                    TypeMappingDefinition definition = ((UnionTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
+                    return recordTypeRename(definition);
+                }
+            }
+            return null;
+        }
     }
+
 
     private graphql.nadel.dsl.FieldTransformation transformationDefinitionForField(FieldDefinition definition) {
         if (definition instanceof FieldDefinitionWithTransformation) {
