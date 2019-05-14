@@ -311,10 +311,13 @@ public class OverallQueryTransformer {
                 // inside itself here
                 //
                 fieldTransformation.apply(environment);
-                Field changedNode = (Field) environment.getTraverserContext().thisNode();
-                String fieldId = changedNode.getAdditionalData().get(FieldTransformation.NADEL_FIELD_ID);
+                Field changedField = (Field) environment.getTraverserContext().thisNode();
+                String fieldId = changedField.getAdditionalData().get(FieldTransformation.NADEL_FIELD_ID);
                 assertNotNull(fieldId, "nadel field it is null for transformation");
                 transformationByResultField.put(fieldId, fieldTransformation);
+                if (fieldTransformation instanceof FieldRenameTransformation) {
+                    maybeAddUnderscoreTypeName(environment, changedField, fieldType);
+                }
             } else {
                 maybeAddUnderscoreTypeName(environment, field, fieldType);
             }

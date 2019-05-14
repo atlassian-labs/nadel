@@ -28,6 +28,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
                 name : String
                 owners: [Owner] => hydrated from OwnerService.ownerById(id: $source.ownerIds)
                 collar : Collar
+                collarToRenamed : Collar => renamed from collar
             }
             
             type Cat implements Pet {
@@ -35,6 +36,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
                 wearsBell : Boolean
                 owners: [Owner] 
                 collar : Collar
+                collarToRenamed : Collar => renamed from collar
             }
 
             type Dog implements Pet {
@@ -42,6 +44,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
                 wearsCollar : Boolean
                 owners: [Owner] 
                 collar : Collar
+                collarToRenamed : Collar => renamed from collar
             }
 
             union CatsAndDogs = Cat | Dog
@@ -540,6 +543,37 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
                 pets: [
                         [name: "Sparky", collar: [color: "blue"]],
                         [name: "Whiskers", collar: [color: "red"]]
+                ],
+        ]
+
+    }
+
+    def "lower level interface fields which are renamed get typename added"() {
+
+        given:
+        def query = '''
+        query petQ($isLoyal : Boolean) { 
+            pets(isLoyal : $isLoyal) {
+                name
+                collarToRenamed {
+                    color
+                }
+            }
+        }    
+        '''
+        Nadel nadel = newNadel()
+                .dsl(ndsl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query).variables(isLoyal: true)).join()
+
+        then:
+        result.errors.isEmpty()
+        result.data == [
+                pets: [
+                        [name: "Sparky", collarToRenamed: [color: "blue"]],
+                        [name: "Whiskers", collarToRenamed: [color: "red"]]
                 ],
         ]
 
