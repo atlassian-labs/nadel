@@ -66,11 +66,12 @@ public class NadelExecutionStrategy {
         this.fieldInfos = fieldInfos;
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.serviceExecutor = new ServiceExecutor(overallSchema, instrumentation);
-        this.hydrationInputResolver = new HydrationInputResolver(services, fieldInfos, overallSchema, instrumentation, serviceExecutor);
+        this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor);
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
         ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
+        NadelContext nadelContext = getNadelContext(executionContext);
 
         List<OneServiceExecution> oneServiceExecutions = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
 
@@ -118,15 +119,19 @@ public class NadelExecutionStrategy {
 
         CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
         return rootResult
+                .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext))
                 .thenCompose(
                         //
                         // all the nodes that are hydrated need to make new service calls to get their eventual value
                         //
                         rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode)
                                 //
-                                .thenApply(resultNode -> removeArtificialFields(getNadelContext(executionContext), resultNode))
-                                .thenApply(RootExecutionResultNode.class::cast))
+                                .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext)))
                 .whenComplete(this::possiblyLogException);
+    }
+
+    private RootExecutionResultNode removeArtificialFieldsFromRoot(ExecutionResultNode resultNode, NadelContext nadelContext) {
+        return (RootExecutionResultNode) removeArtificialFields(nadelContext, resultNode);
     }
 
 
