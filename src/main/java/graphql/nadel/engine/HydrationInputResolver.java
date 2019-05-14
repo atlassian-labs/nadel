@@ -16,7 +16,6 @@ import graphql.language.ArrayValue;
 import graphql.language.Field;
 import graphql.language.StringValue;
 import graphql.language.Value;
-import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.InnerServiceHydration;
@@ -24,7 +23,6 @@ import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
-import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.util.ExecutionPathUtils;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
@@ -65,20 +63,14 @@ public class HydrationInputResolver {
 
 
     private final List<Service> services;
-    private final FieldInfos fieldInfos;
     private final GraphQLSchema overallSchema;
-    private final NadelInstrumentation instrumentation;
     private final ServiceExecutor serviceExecutor;
 
     public HydrationInputResolver(List<Service> services,
-                                  FieldInfos fieldInfos,
                                   GraphQLSchema overallSchema,
-                                  NadelInstrumentation instrumentation,
                                   ServiceExecutor serviceExecutor) {
         this.services = services;
-        this.fieldInfos = fieldInfos;
         this.overallSchema = overallSchema;
-        this.instrumentation = instrumentation;
         this.serviceExecutor = serviceExecutor;
     }
 
@@ -200,14 +192,18 @@ public class HydrationInputResolver {
 
 
         fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
-        return serviceExecutor
-                .execute(executionContext, queryTransformationResult, service, operation, null)
+
+        CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
+                .execute(executionContext, queryTransformationResult, service, operation, null);
+
+        return serviceResult
+                .thenApply(resultNode -> removeArtificialFieldsFromRoot(executionContext, resultNode))
                 .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult))
-                .thenApply(resultNode -> removeArtificialFields(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
     }
+
 
     private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode, Field originalField, InnerServiceHydration innerServiceHydration, String topLevelFieldName) {
         RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
@@ -367,6 +363,10 @@ public class HydrationInputResolver {
             }
         }
         return null;
+    }
+
+    private RootExecutionResultNode removeArtificialFieldsFromRoot(ExecutionContext executionContext, RootExecutionResultNode root) {
+        return (RootExecutionResultNode) removeArtificialFields(getNadelContext(executionContext), root);
     }
 
     private LeafExecutionResultNode getFieldByResultKey(ObjectExecutionResultNode node, String resultKey) {

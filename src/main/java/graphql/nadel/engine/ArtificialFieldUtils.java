@@ -31,7 +31,16 @@ public class ArtificialFieldUtils {
         String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
         assertNotNull(underscoreTypeNameAlias, "We MUST have a generated __typename alias in the request context");
 
+        // check if we have already added it
         SelectionSet selectionSet = field.getSelectionSet();
+        if (selectionSet != null) {
+            for (Field fld : selectionSet.getSelectionsOfType(Field.class)) {
+                if (underscoreTypeNameAlias.equals(fld.getAlias())) {
+                    return field;
+                }
+            }
+        }
+
         Field underscoreTypeNameAliasField = Field.newField(UNDERSCORE_TYPENAME).alias(underscoreTypeNameAlias).build();
         if (selectionSet == null) {
             selectionSet = SelectionSet.newSelectionSet().selection(underscoreTypeNameAliasField).build();
