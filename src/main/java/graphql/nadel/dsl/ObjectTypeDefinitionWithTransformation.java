@@ -17,14 +17,15 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
 
     private final TypeMappingDefinition typeMappingDefinition;
 
-    protected ObjectTypeDefinitionWithTransformation(String name,
+    protected ObjectTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition,
+                                                     String name,
                                                      List<Type> implementz,
                                                      List<Directive> directives,
                                                      List<FieldDefinition> fieldDefinitions,
                                                      Description description,
                                                      SourceLocation sourceLocation,
                                                      List<Comment> comments,
-                                                     TypeMappingDefinition typeMappingDefinition, IgnoredChars ignoredChars) {
+                                                     IgnoredChars ignoredChars) {
         super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments, ignoredChars);
         this.typeMappingDefinition = typeMappingDefinition;
     }
@@ -123,14 +124,14 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         }
 
         public ObjectTypeDefinitionWithTransformation build() {
-            return new ObjectTypeDefinitionWithTransformation(name,
+            return new ObjectTypeDefinitionWithTransformation(typeMappingDefinition,
+                    name,
                     implementz,
                     directives,
                     fieldDefinitions,
                     description,
                     sourceLocation,
                     comments,
-                    typeMappingDefinition,
                     ignoredChars);
         }
     }

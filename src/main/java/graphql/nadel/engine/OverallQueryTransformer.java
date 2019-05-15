@@ -14,21 +14,15 @@ import graphql.language.Field;
 import graphql.language.FieldDefinition;
 import graphql.language.FragmentDefinition;
 import graphql.language.InlineFragment;
-import graphql.language.InterfaceTypeDefinition;
 import graphql.language.Node;
-import graphql.language.ObjectTypeDefinition;
 import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
 import graphql.language.TypeName;
-import graphql.language.UnionTypeDefinition;
 import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
-import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation;
-import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeMappingDefinition;
-import graphql.nadel.dsl.UnionTypeDefinitionWithTransformation;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
@@ -42,6 +36,7 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.GraphQLUnionType;
+import graphql.schema.idl.TypeInfo;
 import graphql.util.TreeTransformerUtil;
 
 import java.util.ArrayList;
@@ -58,6 +53,7 @@ import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.language.TypeName.newTypeName;
 import static graphql.nadel.util.FpKit.toMapCollector;
+import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
 import static graphql.util.FpKit.map;
 import static graphql.util.TreeTransformerUtil.changeNode;
 import static java.util.function.Function.identity;
@@ -91,7 +87,7 @@ public class OverallQueryTransformer {
 
         transformedTopLevelField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedTopLevelField, topLevelFieldType);
 
-        List<VariableDefinition> variableDefinitions = new ArrayList<>(referencedVariables.values());
+        List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
         List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
 
         Map<String, FragmentDefinition> transformedFragments = transformFragments(executionContext,
@@ -166,7 +162,7 @@ public class OverallQueryTransformer {
             transformedMergedFields.add(transformedMergedField);
 
         }
-        List<VariableDefinition> variableDefinitions = new ArrayList<>(referencedVariables.values());
+        List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
         List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
 
         SelectionSet newSelectionSet = newSelectionSet(transformedFields).build();
@@ -193,9 +189,9 @@ public class OverallQueryTransformer {
             newDocumentBuilder.definition(fragmentDefinition);
         }
 
-        Document newdocument = newDocumentBuilder.build();
+        Document newDocument = newDocumentBuilder.build();
         return new QueryTransformationResult(
-                newdocument,
+                newDocument,
                 operationDefinition,
                 transformedMergedFields,
                 typeRenameMappings, referencedVariableNames,
@@ -233,6 +229,25 @@ public class OverallQueryTransformer {
                 .schema(executionContext.getGraphQLSchema())
                 .build();
         return (FragmentDefinition) transformer.transform(new Transformer(executionContext, transformationByResultField, typeRenameMappings, referencedFragmentNames, referencedVariables, nadelContext));
+    }
+
+    private List<VariableDefinition> buildReferencedVariableDefinitions(Map<String, VariableDefinition> referencedVariables, GraphQLSchema graphQLSchema, Map<String, String> typeRenameMappings) {
+        List<VariableDefinition> variableDefinitions = new ArrayList<>();
+        for (VariableDefinition vd : referencedVariables.values()) {
+            TypeInfo typeInfo = TypeInfo.typeInfo(vd.getType());
+
+            GraphQLType type = graphQLSchema.getType(typeInfo.getName());
+            TypeMappingDefinition mappingDefinition = getTypeMappingDefinitionFor(type);
+            if (mappingDefinition != null) {
+                typeRenameMappings.put(mappingDefinition.getUnderlyingName(), mappingDefinition.getOverallName());
+
+                String newName = mappingDefinition.getUnderlyingName();
+                TypeInfo newTypeInfo = typeInfo.renameAs(newName);
+                vd = vd.transform(builder -> builder.type(newTypeInfo.getRawType()));
+            }
+            variableDefinitions.add(vd);
+        }
+        return variableDefinitions;
     }
 
     private <T extends Node> T transformNode(ExecutionContext executionContext,
@@ -394,13 +409,10 @@ public class OverallQueryTransformer {
 
         @SuppressWarnings("UnnecessaryLocalVariable")
         private TypeMappingDefinition extractAndRecordTypeMappingDefinition(GraphQLSchema graphQLSchema, GraphQLType type) {
-            if (type instanceof GraphQLObjectType) {
-                ObjectTypeDefinition typeDefinition = ((GraphQLObjectType) type).getDefinition();
-                if (typeDefinition instanceof ObjectTypeDefinitionWithTransformation) {
-                    TypeMappingDefinition definition = ((ObjectTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
-                    return recordTypeRename(definition);
-                }
-            }
+
+            TypeMappingDefinition typeMappingDefinition = getTypeMappingDefinitionFor(type);
+            recordTypeRename(typeMappingDefinition);
+
             if (type instanceof GraphQLInterfaceType) {
                 GraphQLInterfaceType interfaceType = (GraphQLInterfaceType) type;
 
@@ -408,12 +420,6 @@ public class OverallQueryTransformer {
                     TypeMappingDefinition definition = extractAndRecordTypeMappingDefinition(graphQLSchema, objectType);
                     recordTypeRename(definition);
                 });
-
-                InterfaceTypeDefinition typeDefinition = interfaceType.getDefinition();
-                if (typeDefinition instanceof InterfaceTypeDefinitionWithTransformation) {
-                    TypeMappingDefinition definition = ((InterfaceTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
-                    return recordTypeRename(definition);
-                }
             }
             if (type instanceof GraphQLUnionType) {
                 GraphQLUnionType unionType = (GraphQLUnionType) type;
@@ -421,13 +427,8 @@ public class OverallQueryTransformer {
                     TypeMappingDefinition definition = extractAndRecordTypeMappingDefinition(graphQLSchema, typeMember);
                     recordTypeRename(definition);
                 });
-                UnionTypeDefinition typeDefinition = unionType.getDefinition();
-                if (typeDefinition instanceof UnionTypeDefinitionWithTransformation) {
-                    TypeMappingDefinition definition = ((UnionTypeDefinitionWithTransformation) typeDefinition).getTypeMappingDefinition();
-                    return recordTypeRename(definition);
-                }
             }
-            return null;
+            return typeMappingDefinition;
         }
     }
 
