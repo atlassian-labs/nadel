@@ -106,13 +106,13 @@ public class NadelExecutionStrategy {
                     .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
                             .convert(resultNode, overallSchema, rootExecutionStepInfo, transformationByResultField, typeRenameMappings));
 
-            CompletableFuture<RootExecutionResultNode> serviceHookResult = convertedResult
-                    .thenApply(rootResultNode -> serviceExecutionHooks.postServiceResult(service, serviceContext, overallSchema, rootResultNode));
-
-
             //
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
-            convertedResult.whenComplete(fieldTracking::fieldsCompleted);
+            convertedResult = convertedResult
+                    .whenComplete(fieldTracking::fieldsCompleted);
+
+            CompletableFuture<RootExecutionResultNode> serviceHookResult = convertedResult
+                    .thenApply(rootResultNode -> serviceExecutionHooks.postServiceResult(service, serviceContext, overallSchema, rootResultNode));
 
             resultNodes.add(serviceHookResult);
         }
