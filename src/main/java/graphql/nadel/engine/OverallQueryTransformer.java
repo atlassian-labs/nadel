@@ -23,6 +23,7 @@ import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeMappingDefinition;
+import graphql.nadel.engine.transformation.CollapseTransformation;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
@@ -37,6 +38,7 @@ import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.GraphQLUnionType;
 import graphql.schema.idl.TypeInfo;
+import graphql.util.TraversalControl;
 import graphql.util.TreeTransformerUtil;
 
 import java.util.ArrayList;
@@ -48,6 +50,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static graphql.Assert.assertNotNull;
+import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
 import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
@@ -295,7 +298,12 @@ public class OverallQueryTransformer {
         }
 
         @Override
-        public void visitField(QueryVisitorFieldEnvironment environment) {
+        public void visitField(QueryVisitorFieldEnvironment queryVisitorFieldEnvironment) {
+            assertShouldNeverHappen();
+        }
+
+        @Override
+        public TraversalControl visitFieldWithControl(QueryVisitorFieldEnvironment environment) {
 
             OperationDefinition operationDefinition = executionContext.getOperationDefinition();
             Map<String, VariableDefinition> variableDefinitions = FpKit.getByName(operationDefinition.getVariableDefinitions(), VariableDefinition::getName);
@@ -319,24 +327,28 @@ public class OverallQueryTransformer {
             }
 
 
-            FieldTransformation fieldTransformation = transformationForFieldDefinition(environment);
-            if (fieldTransformation != null) {
+            FieldTransformation transformation = createTransformation(environment);
+            if (transformation != null) {
                 //
-                // major side effect alert - we are relying on FieldTransformation to call TreeTransformerUtil.changeNode
+                // major side effect alert - we are relying on transformation to call TreeTransformerUtil.changeNode
                 // inside itself here
                 //
-                fieldTransformation.apply(environment);
+                TraversalControl traversalControl = transformation.apply(environment);
                 Field changedField = (Field) environment.getTraverserContext().thisNode();
+
                 String fieldId = changedField.getAdditionalData().get(FieldTransformation.NADEL_FIELD_ID);
-                assertNotNull(fieldId, "nadel field it is null for transformation");
-                transformationByResultField.put(fieldId, fieldTransformation);
-                if (fieldTransformation instanceof FieldRenameTransformation) {
+                assertNotNull(fieldId, "nadel field metadata it is null after transformation");
+                transformationByResultField.put(fieldId, transformation);
+
+                if (transformation instanceof FieldRenameTransformation) {
                     maybeAddUnderscoreTypeName(environment, changedField, fieldType);
                 }
+                return traversalControl;
+
             } else {
                 maybeAddUnderscoreTypeName(environment, field, fieldType);
             }
-
+            return TraversalControl.CONTINUE;
         }
 
         private Field maybeAddUnderscoreTypeName(QueryVisitorFieldEnvironment environment, Field field, GraphQLOutputType fieldType) {
@@ -440,18 +452,22 @@ public class OverallQueryTransformer {
         return null;
     }
 
-    private FieldTransformation transformationForFieldDefinition(QueryVisitorFieldEnvironment environment) {
+    private FieldTransformation createTransformation(QueryVisitorFieldEnvironment environment) {
         FieldDefinition fieldDefinition = environment.getFieldDefinition().getDefinition();
-        FieldTransformation fieldTransformation = null;
         graphql.nadel.dsl.FieldTransformation definition = transformationDefinitionForField(fieldDefinition);
-        if (definition != null) {
-            if (definition.getFieldMappingDefinition() != null) {
-                fieldTransformation = new FieldRenameTransformation(definition.getFieldMappingDefinition());
-            } else if (definition.getInnerServiceHydration() != null) {
-                fieldTransformation = new HydrationTransformation(definition.getInnerServiceHydration());
-            }
+
+        if (definition == null) {
+            return null;
         }
-        return fieldTransformation;
+        if (definition.getFieldMappingDefinition() != null) {
+            return new FieldRenameTransformation(definition.getFieldMappingDefinition());
+        } else if (definition.getInnerServiceHydration() != null) {
+            return new HydrationTransformation(definition.getInnerServiceHydration());
+        } else if (definition.getCollapseDefinition() != null) {
+            return new CollapseTransformation(definition.getCollapseDefinition());
+        } else {
+            return assertShouldNeverHappen();
+        }
     }
 
 }

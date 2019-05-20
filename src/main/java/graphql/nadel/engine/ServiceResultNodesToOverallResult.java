@@ -103,27 +103,33 @@ public class ServiceResultNodesToOverallResult {
         return new ListExecutionResultNode(fetchedValueAnalysis, resultNode.getChildren());
     }
 
-    private ObjectExecutionResultNode mapObjectResultNode(ObjectExecutionResultNode objectResultNode,
-                                                          GraphQLSchema overallSchema,
-                                                          ExecutionStepInfo parentExecutionStepInfo,
-                                                          boolean isHydrationTransformation,
-                                                          boolean batched,
-                                                          Map<String, FieldTransformation> transformationMap,
-                                                          Map<String, String> typeRenameMappings) {
+    private ExecutionResultNode mapObjectResultNode(ObjectExecutionResultNode objectResultNode,
+                                                    GraphQLSchema overallSchema,
+                                                    ExecutionStepInfo parentExecutionStepInfo,
+                                                    boolean isHydrationTransformation,
+                                                    boolean batched,
+                                                    Map<String, FieldTransformation> transformationMap,
+                                                    Map<String, String> typeRenameMappings) {
         FetchedValueAnalysis originalFetchAnalysis = objectResultNode.getFetchedValueAnalysis();
         MergedField originalField = originalFetchAnalysis.getExecutionStepInfo().getField();
+
+        String fieldId = originalField.getSingleField().getAdditionalData().get(NADEL_FIELD_ID);
+        FieldTransformation fieldTransformation = null;
+        if (fieldId != null) {
+            fieldTransformation = transformationMap.get(fieldId);
+        }
+        if (fieldTransformation != null) {
+            ExecutionResultNode newNode = fieldTransformation.unapplyResultNode(objectResultNode);
+            if (newNode != null) {
+                return newNode;
+            }
+        }
+
         FetchedValueAnalysis mappedFetchedValueAnalysis = fetchedAnalysisMapper.mapFetchedValueAnalysis(
                 originalFetchAnalysis, overallSchema, parentExecutionStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings);
 
         objectResultNode = new ObjectExecutionResultNode(mappedFetchedValueAnalysis, objectResultNode.getChildren());
 
-        String fieldId = originalField.getSingleField().getAdditionalData().get(NADEL_FIELD_ID);
-        if (fieldId != null) {
-            FieldTransformation fieldTransformation = transformationMap.get(fieldId);
-            if (fieldTransformation != null) {
-                objectResultNode = fieldTransformation.unapplyResultNode(objectResultNode);
-            }
-        }
         return objectResultNode;
     }
 

@@ -360,4 +360,58 @@ class NadelE2ETest extends Specification {
         result.join().data == [node: [name: "My Issue"]]
     }
 
+    def "can collapse a field "() {
+
+        def nsdl = '''
+         service IssueService {
+            type Query{
+                issue: Issue
+            } 
+            type Issue {
+                name: String => collapse from detail.detailName
+            }
+         }
+        '''
+        def query = '''
+        { issue { name } } 
+        '''
+        def underlyingSchema = typeDefinitions('''
+            type Query{
+                issue: Issue 
+                
+            } 
+            type Issue {
+                detail: IssueDetails
+            }
+            type IssueDetails {
+                detailName: String
+            }
+        ''')
+        ServiceExecution serviceExecution = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                IssueService: new Tuple2(serviceExecution, underlyingSchema)]
+        )
+
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("uuid")
+                .build()
+        def data1 = [issue: [detail: [detailName: "My Issue"]]]
+        ServiceExecutionResult serviceExecutionResult = new ServiceExecutionResult(data1)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution.execute({ params ->
+            printAstCompact(params.query) == "query nadel_2_IssueService {issue {detail {detailName}}}"
+        }) >> completedFuture(serviceExecutionResult)
+        result.join().data == [issue: [name: "My Issue"]]
+    }
+
 }

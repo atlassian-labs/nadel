@@ -9,6 +9,7 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.UnionTypeDefinition;
+import graphql.nadel.dsl.CollapseDefinition;
 import graphql.nadel.dsl.CommonDefinition;
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
@@ -28,7 +29,9 @@ import graphql.nadel.dsl.UnionTypeDefinitionWithTransformation;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import graphql.parser.MultiSourceReader;
+import graphql.util.FpKit;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RuleContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +102,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         } else if (ctx.innerServiceHydration() != null) {
             return new FieldTransformation(createInnerServiceHydration(ctx.innerServiceHydration()),
                     getSourceLocation(ctx), new ArrayList<>());
+        } else if (ctx.collapseDefinition() != null) {
+            return new FieldTransformation(createCollapseDefinition(ctx.collapseDefinition()),
+                    getSourceLocation(ctx), new ArrayList<>());
         } else {
             return assertShouldNeverHappen();
         }
@@ -106,6 +112,12 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     private FieldMappingDefinition createFieldMappingDefinition(StitchingDSLParser.FieldMappingDefinitionContext ctx) {
         return new FieldMappingDefinition(ctx.name().getText(), getSourceLocation(ctx), new ArrayList<>());
+    }
+
+    private CollapseDefinition createCollapseDefinition(StitchingDSLParser.CollapseDefinitionContext ctx) {
+        List<String> path = FpKit.map(ctx.name(), RuleContext::getText);
+        CollapseDefinition collapseDefinition = new CollapseDefinition(path, getSourceLocation(ctx), getComments(ctx));
+        return collapseDefinition;
     }
 
     private InnerServiceHydration createInnerServiceHydration(StitchingDSLParser.InnerServiceHydrationContext ctx) {
