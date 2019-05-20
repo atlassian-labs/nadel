@@ -1,20 +1,26 @@
 package graphql.nadel;
 
 import graphql.Internal;
+import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
+import graphql.language.InputObjectTypeDefinition;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
+import graphql.language.ScalarTypeDefinition;
 import graphql.language.UnionTypeDefinition;
 import graphql.nadel.dsl.CommonDefinition;
+import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InnerServiceHydration;
+import graphql.nadel.dsl.InputObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
+import graphql.nadel.dsl.ScalarTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.dsl.TypeMappingDefinition;
@@ -36,7 +42,6 @@ import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
 
 @Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
-
 
     public NadelAntlrToLanguage(CommonTokenStream tokens, MultiSourceReader multiSourceReader) {
         super(tokens, multiSourceReader);
@@ -160,6 +165,43 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
                 .typeMappingDefinition(typeMappingDefinition)
                 .build();
     }
+
+    @Override
+    protected InputObjectTypeDefinition createInputObjectTypeDefinition(StitchingDSLParser.InputObjectTypeDefinitionContext ctx) {
+        InputObjectTypeDefinition inputObjectTypeDefinition = super.createInputObjectTypeDefinition(ctx);
+        if (ctx.typeTransformation() == null) {
+            return inputObjectTypeDefinition;
+        }
+        TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
+        return InputObjectTypeDefinitionWithTransformation.newInputObjectTypeDefinitionWithTransformation(inputObjectTypeDefinition)
+                .typeMappingDefinition(typeMappingDefinition)
+                .build();
+    }
+
+    @Override
+    protected EnumTypeDefinition createEnumTypeDefinition(StitchingDSLParser.EnumTypeDefinitionContext ctx) {
+        EnumTypeDefinition enumTypeDefinition = super.createEnumTypeDefinition(ctx);
+        if (ctx.typeTransformation() == null) {
+            return enumTypeDefinition;
+        }
+        TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
+        return EnumTypeDefinitionWithTransformation.newEnumTypeDefinitionWithTransformation(enumTypeDefinition)
+                .typeMappingDefinition(typeMappingDefinition)
+                .build();
+    }
+
+    @Override
+    protected ScalarTypeDefinition createScalarTypeDefinition(StitchingDSLParser.ScalarTypeDefinitionContext ctx) {
+        ScalarTypeDefinition scalarTypeDefinition = super.createScalarTypeDefinition(ctx);
+        if (ctx.typeTransformation() == null) {
+            return scalarTypeDefinition;
+        }
+        TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
+        return ScalarTypeDefinitionWithTransformation.newScalarTypeDefinitionWithTransformation(scalarTypeDefinition)
+                .typeMappingDefinition(typeMappingDefinition)
+                .build();
+    }
+
 
     private TypeMappingDefinition createTypeMappingDef(StitchingDSLParser.TypeTransformationContext typeTransformationContext, StitchingDSLParser.NameContext name) {
         TypeMappingDefinition typeMappingDefinition = new TypeMappingDefinition(null, new ArrayList<>());

@@ -273,7 +273,7 @@ public class Nadel {
             log.debug("Validating query: '{}'", query);
             final List<ValidationError> errors = validate(executionInput, document, graphQLSchema, instrumentationState);
             if (!errors.isEmpty()) {
-                log.warn("Query failed to validate : '{}'", query);
+                log.warn("Query failed to validate : '{}' because of {} ", query, errors);
                 return new PreparsedDocumentEntry(errors);
             }
 

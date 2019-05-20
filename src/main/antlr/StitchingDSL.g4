@@ -19,6 +19,13 @@ interfaceTypeDefinition : description? INTERFACE name directives? typeTransforma
 
 unionTypeDefinition : description? UNION name directives? typeTransformation? unionMembership?;
 
+inputObjectTypeDefinition : description? INPUT name directives? typeTransformation? inputObjectValueDefinitions?;
+
+enumTypeDefinition : description? ENUM name directives? typeTransformation? enumValueDefinitions?;
+
+scalarTypeDefinition : description? SCALAR name directives? typeTransformation?;
+
+
 fieldDefinition : description? name argumentsDefinition? ':' type directives? fieldTransformation?;
 
 fieldTransformation : '=>' (fieldMappingDefinition | innerServiceHydration);

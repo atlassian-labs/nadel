@@ -18,6 +18,7 @@ class NadelRenameTest extends Specification {
                 renameObject : ObjectOverall => renamed from renameObjectUnderlying   # the field is renamed
                 renameInterface : InterfaceOverall => renamed from renameInterfaceUnderlying
                 renameUnion : UnionOverall => renamed from renameUnionUnderlying
+                renameInput(arg1 : InputOverall!, arg2 : URL, arg3 : EnumOverall) : String
             } 
             
             type World {
@@ -42,6 +43,18 @@ class NadelRenameTest extends Specification {
             type Y => renamed from YUnderlying {
                 y : Int
             }
+            
+            
+            input InputOverall => renamed from InputUnderlying  {
+                inputVal : String
+            }
+            
+            scalar URL => renamed from String
+            
+            enum EnumOverall => renamed from EnumUnderlying {
+                X,Y
+            }
+                
          }
         '''
 
@@ -51,6 +64,7 @@ class NadelRenameTest extends Specification {
                 renameObjectUnderlying : ObjectUnderlying
                 renameInterfaceUnderlying : InterfaceUnderlying
                 renameUnionUnderlying : UnionUnderlying
+                renameInput(arg1 : InputUnderlying!, arg2 : String, arg3 : EnumUnderlying) : String
             } 
             type World {
                 id: ID
@@ -74,6 +88,15 @@ class NadelRenameTest extends Specification {
             type YUnderlying {
                 y : Int
             }
+            
+            input InputUnderlying  {
+                inputVal : String
+            }
+            
+            enum EnumUnderlying {
+                X,Y
+            }
+
         ''')
 
     def delegatedExecution = Mock(ServiceExecution)
@@ -235,5 +258,37 @@ class NadelRenameTest extends Specification {
         }
         result.errors.isEmpty()
         result.data == [renameUnion: [x: 1]]
+    }
+
+
+    def "variable referenced input types rename works as expected"() {
+        def query = '''
+        query X($var1 : InputOverall!, $var2 : URL, $var3 : EnumOverall) { 
+            renameInput(arg1 : $var1, arg2: $var2, arg3: $var3)
+        }
+        '''
+
+        given:
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .variables([var1: [inputVal: "x"]])
+                .build()
+        //
+        // note how we have to give back an implementation object type not and interface
+        //
+        def data = [renameInput: "done"]
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            def q = printAstCompact(params.query)
+            assert q == 'query nadel_2_MyService_X($var1:InputUnderlying!,$var2:String,$var3:EnumUnderlying) {renameInput(arg1:$var1,arg2:$var2,arg3:$var3)}',
+                    "Unexpected query: $q"
+            completedFuture(new ServiceExecutionResult(data))
+        }
+        result.errors.isEmpty()
+        result.data == [renameInput: "done"]
     }
 }

@@ -3,28 +3,21 @@ package graphql.nadel.dsl;
 import graphql.language.Comment;
 import graphql.language.Description;
 import graphql.language.Directive;
+import graphql.language.EnumTypeDefinition;
+import graphql.language.EnumValueDefinition;
 import graphql.language.IgnoredChars;
 import graphql.language.NodeBuilder;
 import graphql.language.SourceLocation;
-import graphql.language.Type;
-import graphql.language.UnionTypeDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
+public class EnumTypeDefinitionWithTransformation extends EnumTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
 
-    protected UnionTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition,
-                                                    String name,
-                                                    List<Directive> directives,
-                                                    List<Type> memberTypes,
-                                                    Description description,
-                                                    SourceLocation sourceLocation,
-                                                    List<Comment> comments,
-                                                    IgnoredChars ignoredChars) {
-        super(name, directives, memberTypes, description, sourceLocation, comments, ignoredChars);
+    protected EnumTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition, String name, List<EnumValueDefinition> enumValueDefinitions, List<Directive> directives, Description description, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
+        super(name, enumValueDefinitions, directives, description, sourceLocation, comments, ignoredChars);
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -32,8 +25,8 @@ public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
         return typeMappingDefinition;
     }
 
-    public static UnionTypeDefinitionWithTransformation.Builder newUnionTypeDefinitionWithTransformation(UnionTypeDefinition copyFrom) {
-        return new UnionTypeDefinitionWithTransformation.Builder(copyFrom);
+    public static Builder newEnumTypeDefinitionWithTransformation(EnumTypeDefinition existing) {
+        return new Builder(existing);
     }
 
     public static final class Builder implements NodeBuilder {
@@ -41,22 +34,22 @@ public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
         private List<Comment> comments = new ArrayList<>();
         private String name;
         private Description description;
-        private List<Directive> directives;
-        private List<Type> memberTypes;
+        private List<EnumValueDefinition> enumValueDefinitions = new ArrayList<>();
+        private List<Directive> directives = new ArrayList<>();
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
-
         private TypeMappingDefinition typeMappingDefinition;
 
         private Builder() {
         }
 
-        private Builder(UnionTypeDefinition existing) {
+        private Builder(EnumTypeDefinition existing) {
             this.sourceLocation = existing.getSourceLocation();
             this.comments = existing.getComments();
             this.name = existing.getName();
             this.description = existing.getDescription();
             this.directives = existing.getDirectives();
-            this.memberTypes = existing.getMemberTypes();
+            this.enumValueDefinitions = existing.getEnumValueDefinitions();
+            this.ignoredChars = existing.getIgnoredChars();
         }
 
         public Builder typeMappingDefinition(TypeMappingDefinition typeMappingDefinition) {
@@ -74,12 +67,6 @@ public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
             return this;
         }
 
-        @Override
-        public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
-            this.ignoredChars = ignoredChars;
-            return this;
-        }
-
         public Builder name(String name) {
             this.name = name;
             return this;
@@ -90,6 +77,15 @@ public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
             return this;
         }
 
+        public Builder enumValueDefinitions(List<EnumValueDefinition> enumValueDefinitions) {
+            this.enumValueDefinitions = enumValueDefinitions;
+            return this;
+        }
+
+        public Builder enumValueDefinition(EnumValueDefinition enumValueDefinition) {
+            this.enumValueDefinitions.add(enumValueDefinition);
+            return this;
+        }
 
         public Builder directives(List<Directive> directives) {
             this.directives = directives;
@@ -101,27 +97,13 @@ public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
             return this;
         }
 
-        public Builder memberTypes(List<Type> memberTypes) {
-            this.memberTypes = memberTypes;
+        public Builder ignoredChars(IgnoredChars ignoredChars) {
+            this.ignoredChars = ignoredChars;
             return this;
         }
 
-        public Builder memberTypes(Type memberType) {
-            this.memberTypes.add(memberType);
-            return this;
-        }
-
-        public UnionTypeDefinitionWithTransformation build() {
-            return new UnionTypeDefinitionWithTransformation(
-                    typeMappingDefinition,
-                    name,
-                    directives,
-                    memberTypes,
-                    description,
-                    sourceLocation,
-                    comments,
-                    ignoredChars
-            );
+        public EnumTypeDefinitionWithTransformation build() {
+            return new EnumTypeDefinitionWithTransformation(typeMappingDefinition, name, enumValueDefinitions, directives, description, sourceLocation, comments, ignoredChars);
         }
     }
 }

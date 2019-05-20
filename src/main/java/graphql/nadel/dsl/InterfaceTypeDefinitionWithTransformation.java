@@ -16,14 +16,14 @@ public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefi
 
     private final TypeMappingDefinition typeMappingDefinition;
 
-    protected InterfaceTypeDefinitionWithTransformation(String name,
+    protected InterfaceTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition,
+                                                        String name,
                                                         List<FieldDefinition> fieldDefinitions,
                                                         List<Directive> directives,
                                                         Description description,
                                                         SourceLocation sourceLocation,
                                                         List<Comment> comments,
-                                                        IgnoredChars ignoredChars,
-                                                        TypeMappingDefinition typeMappingDefinition) {
+                                                        IgnoredChars ignoredChars) {
         super(name, fieldDefinitions, directives, description, sourceLocation, comments, ignoredChars);
         this.typeMappingDefinition = typeMappingDefinition;
     }
@@ -112,14 +112,14 @@ public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefi
 
         public InterfaceTypeDefinitionWithTransformation build() {
             return new InterfaceTypeDefinitionWithTransformation(
+                    typeMappingDefinition,
                     name,
                     fieldDefinitions,
                     directives,
                     description,
                     sourceLocation,
                     comments,
-                    ignoredChars,
-                    typeMappingDefinition
+                    ignoredChars
             );
         }
     }
