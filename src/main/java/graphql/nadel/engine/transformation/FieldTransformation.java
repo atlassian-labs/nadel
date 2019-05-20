@@ -13,8 +13,8 @@ public interface FieldTransformation {
         return field;
     }
 
-    default <T extends ExecutionResultNode> T unapplyResultNode(T executionResultNode) {
-        return executionResultNode;
+    default ExecutionResultNode unapplyResultNode(ExecutionResultNode executionResultNode) {
+        return null;
     }
 
     String NADEL_FIELD_ID = "FIELD_ID";

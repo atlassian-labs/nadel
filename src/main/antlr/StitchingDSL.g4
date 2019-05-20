@@ -28,9 +28,11 @@ scalarTypeDefinition : description? SCALAR name directives? typeTransformation?;
 
 fieldDefinition : description? name argumentsDefinition? ':' type directives? fieldTransformation?;
 
-fieldTransformation : '=>' (fieldMappingDefinition | innerServiceHydration);
+fieldTransformation : '=>' (fieldMappingDefinition | innerServiceHydration | collapseDefinition);
 
 typeTransformation : '=>' typeMappingDefinition;
+
+collapseDefinition: 'collapse from ' name ('.'name)+ ;
 
 //
 // renames

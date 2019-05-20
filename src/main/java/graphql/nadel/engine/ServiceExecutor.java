@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Assert;
 import graphql.ErrorType;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
@@ -76,6 +77,7 @@ public class ServiceExecutor {
         try {
             log.debug("service {} invocation started", service.getName());
             CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters);
+            Assert.assertNotNull(result, "service execution returned null");
             log.debug("service {} invocation finished ", service.getName());
             //
             // if they return an exceptional CF then we turn that into graphql errors as well
