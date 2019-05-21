@@ -133,8 +133,13 @@ class NadelExecutionStrategyTest extends Specification {
         type Foo {
             id: ID
             barId: ID
+            fooDetails: FooDetails
+        }
+        type FooDetails {
+            externalBarId: ID
         }
         """)
+
     def underlyingHydrationSchema2 = TestUtil.schema("""
         type Query {
             barById(id: ID): Bar
@@ -153,6 +158,7 @@ class NadelExecutionStrategyTest extends Specification {
             type Foo {
                 id: ID
                 bar: Bar => hydrated from service2.barById(id: $source.barId)
+                barCollapsed: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)
             }
         }
         service service2 {
@@ -250,6 +256,45 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> CompletableFuture.completedFuture(response2)
 
         resultData(response) == [foo: [bar: [id: "barId", name: "Bar1"]]]
+    }
+
+    def "one hydration call with collapsed arguments"() {
+        given:
+        def hydrationService1 = new Service("service1", underlyingHydrationSchema1, service1Execution, serviceDefinition, definitionRegistry)
+        def hydrationService2 = new Service("service2", underlyingHydrationSchema2, service2Execution, serviceDefinition, definitionRegistry)
+        def fooFieldDefinition = overallHydrationSchema.getQueryType().getFieldDefinition("foo")
+
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, hydrationService1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([hydrationService1, hydrationService2], fieldInfos, overallHydrationSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = '''
+            query { foo { barCollapsed  { name } } } 
+        '''
+        def expectedQuery1 = 'query nadel_2_service1 {foo { fooDetails { externalBarId }} '
+        def response1 = new ServiceExecutionResult([foo: [fooDetails: [externalBarId: "barId"]]])
+
+        def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId\") {id name}}"
+        def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
+
+        def document = parseQuery(query)
+        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().build()) build()
+        def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> CompletableFuture.completedFuture(response1)
+
+        then:
+        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> CompletableFuture.completedFuture(response2)
+
+        resultData(response) == [foo: [barCollapsed: [name: "Bar1"]]]
     }
 
 

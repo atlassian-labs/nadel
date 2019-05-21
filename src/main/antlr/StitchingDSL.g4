@@ -28,7 +28,7 @@ scalarTypeDefinition : description? SCALAR name directives? typeTransformation?;
 
 fieldDefinition : description? name argumentsDefinition? ':' type directives? fieldTransformation?;
 
-fieldTransformation : '=>' (fieldMappingDefinition | innerServiceHydration | collapseDefinition);
+fieldTransformation : '=>' (fieldMappingDefinition | underlyingServiceHydration | collapseDefinition);
 
 typeTransformation : '=>' typeMappingDefinition;
 
@@ -44,7 +44,7 @@ fieldMappingDefinition : 'renamed from' name;
 //
 // hydration
 
-innerServiceHydration: 'hydrated from' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
+underlyingServiceHydration: 'hydrated from' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
 
 objectIdentifier: 'object identified by' name;
 
@@ -57,7 +57,7 @@ remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 remoteArgumentPair : name ':' remoteArgumentSource ;
 
 
-sourceObjectReference : '$source' '.' name ;
+sourceObjectReference : '$source' '.' name ('.'name)*;
 
 fieldArgumentReference : '$argument' '.' name ;
 

@@ -1,10 +1,16 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.analysis.QueryVisitorFieldEnvironment;
+import graphql.execution.ExecutionStepInfo;
+import graphql.execution.MergedField;
 import graphql.language.Field;
 import graphql.schema.GraphQLOutputType;
 import graphql.util.TraversalControl;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static graphql.Assert.assertTrue;
 import static graphql.nadel.engine.transformation.FieldUtils.resultKeyForField;
 
 public abstract class AbstractFieldTransformation implements FieldTransformation {
@@ -20,10 +26,10 @@ public abstract class AbstractFieldTransformation implements FieldTransformation
         return TraversalControl.CONTINUE;
     }
 
-    @Override
-    public Field unapplyField(Field field) {
-        return getOriginalField();
-    }
+//    @Override
+//    public Field unapplyField(Field field) {
+//        return getOriginalField();
+//    }
 
     public String getResultKey() {
         return resultKey;
@@ -39,6 +45,22 @@ public abstract class AbstractFieldTransformation implements FieldTransformation
 
     public GraphQLOutputType getOriginalFieldType() {
         return getOriginalFieldEnvironment().getFieldDefinition().getType();
+    }
+
+
+    protected ExecutionStepInfo replaceFieldsWithOriginalFields(List<FieldTransformation> allTransformations, ExecutionStepInfo esi) {
+        MergedField underlyingMergedField = esi.getField();
+        List<Field> underlyingFields = underlyingMergedField.getFields();
+        assertTrue(allTransformations.size() == underlyingFields.size());
+
+        // core objective: replacing the fields with the original fields
+        List<Field> newFields = new ArrayList<>();
+        for (FieldTransformation fieldTransformation : allTransformations) {
+            newFields.add(fieldTransformation.getOriginalField());
+        }
+        MergedField newMergedField = MergedField.newMergedField(newFields).build();
+        ExecutionStepInfo esiWithMappedField = esi.transform(builder -> builder.field(newMergedField));
+        return esiWithMappedField;
     }
 
 }

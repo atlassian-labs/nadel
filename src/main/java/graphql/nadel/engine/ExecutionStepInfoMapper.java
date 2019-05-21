@@ -3,10 +3,6 @@ package graphql.nadel.engine;
 import graphql.Assert;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.MergedField;
-import graphql.language.Field;
-import graphql.nadel.engine.transformation.FieldTransformation;
-import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
@@ -15,53 +11,33 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeUtil;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
 
 public class ExecutionStepInfoMapper {
 
+    private PathMapper pathMapper = new PathMapper();
 
-    public ExecutionStepInfo mapExecutionStepInfo(ExecutionStepInfo parentExecutionStepInfo,
-                                                  ExecutionStepInfo executionStepInfo,
-                                                  GraphQLSchema overallSchema,
-                                                  boolean isHydrationTransformation,
-                                                  boolean batched,
-                                                  Map<String, FieldTransformation> transformationMap,
-                                                  Map<String, String> typeRenameMappings) {
-        MergedField underlyingMergedField = executionStepInfo.getField();
-        List<Field> newFields = new ArrayList<>();
-        for (Field underlyingField : underlyingMergedField.getFields()) {
-            String fieldId = underlyingField.getAdditionalData().get(FieldTransformation.NADEL_FIELD_ID);
-            if (fieldId == null) {
-                newFields.add(underlyingField);
-                continue;
-            }
-            FieldTransformation fieldTransformation = transformationMap.get(fieldId);
-            if (fieldTransformation != null) {
-                newFields.add(fieldTransformation.unapplyField(underlyingField));
-            } else {
-                newFields.add(underlyingField);
-            }
-        }
+    public ExecutionStepInfo mapExecutionStepInfo(ExecutionStepInfo executionStepInfo, UnapplyEnvironment environment) {
 
-        MergedField mappedMergedField = MergedField.newMergedField(newFields).build();
+        Map<String, String> typeRenameMappings = environment.typeRenameMappings;
+        GraphQLSchema overallSchema = environment.overallSchema;
+        ExecutionStepInfo parentExecutionStepInfo = environment.parentExecutionStepInfo;
+
+        String fieldName = executionStepInfo.getField().getName();
 
         GraphQLOutputType fieldType = executionStepInfo.getType();
         GraphQLObjectType fieldContainer = executionStepInfo.getFieldContainer();
-
         String fieldContainerName = mapTypeName(typeRenameMappings, fieldContainer.getName());
+
         GraphQLObjectType mappedFieldContainer = overallSchema.getObjectType(fieldContainerName);
-
         GraphQLOutputType mappedFieldType = mapOutputType(fieldType, overallSchema, typeRenameMappings);
-        GraphQLFieldDefinition mappedFieldDefinition = mappedFieldContainer.getFieldDefinition(mappedMergedField.getName());
+        GraphQLFieldDefinition mappedFieldDefinition = mappedFieldContainer.getFieldDefinition(fieldName);
 
-        ExecutionPath mappedPath = mapPath(parentExecutionStepInfo, executionStepInfo, isHydrationTransformation, batched, mappedMergedField);
+        ExecutionPath mappedPath = pathMapper.mapPath(executionStepInfo, executionStepInfo.getField(), environment);
 
         return executionStepInfo.transform(builder -> builder
-                .field(mappedMergedField)
                 .type(mappedFieldType)
                 .path(mappedPath)
                 .fieldContainer(mappedFieldContainer)
@@ -71,37 +47,8 @@ public class ExecutionStepInfoMapper {
 
     }
 
-    private ExecutionPath mapPath(ExecutionStepInfo parentExecutionStepInfo, ExecutionStepInfo fieldStepInfo, boolean isHydrationTransformation, boolean batched, MergedField mergedField) {
-        List<Object> fieldSegments = patchLastFieldName(fieldStepInfo, mergedField);
-        ExecutionPath parentPath = parentExecutionStepInfo.getPath();
-        if (isHydrationTransformation) {
-            //
-            // Normally the parent path is all ok and hence there is nothing to add
-            // but if we have a hydrated a field then we need to "merge" the paths not just append them
-            // so for example
-            //
-            // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
-            fieldSegments.remove(0);
-            if (batched) {
-                fieldSegments.remove(0);
-            }
-            fieldSegments = FpKit.concat(parentPath.toList(), fieldSegments);
-        }
-        return ExecutionPath.fromList(fieldSegments);
-    }
-
-    private List<Object> patchLastFieldName(ExecutionStepInfo fieldStepInfo, MergedField mergedField) {
-        String fieldName = mergedField.getName();
-        ExecutionPath fieldPath = fieldStepInfo.getPath();
-        List<Object> fieldSegments = fieldPath.toList();
-        for (int i = fieldSegments.size() - 1; i >= 0; i--) {
-            Object segment = fieldSegments.get(i);
-            if (segment instanceof String) {
-                fieldSegments.set(i, fieldName);
-                break;
-            }
-        }
-        return fieldSegments;
+    private String mapTypeName(Map<String, String> typeRenameMappings, String name) {
+        return typeRenameMappings.getOrDefault(name, name);
     }
 
     private GraphQLOutputType mapOutputType(GraphQLOutputType graphQLOutputType, GraphQLSchema overallSchema, Map<String, String> typeRenameMappings) {
@@ -119,8 +66,5 @@ public class ExecutionStepInfoMapper {
         return Assert.assertShouldNeverHappen();
     }
 
-    private String mapTypeName(Map<String, String> typeRenameMappings, String name) {
-        return typeRenameMappings.getOrDefault(name, name);
-    }
 
 }
