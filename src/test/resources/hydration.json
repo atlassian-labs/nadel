@@ -41,7 +41,9 @@
                     {
                       "name": "otherId",
                       "remoteArgumentSource": {
-                        "name": "id",
+                        "path": [
+                          "id"
+                        ],
                         "sourceType": "OBJECT_FIELD"
                       }
                     },

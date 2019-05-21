@@ -18,13 +18,20 @@ public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
     public enum SourceType {OBJECT_FIELD, FIELD_ARGUMENT, CONTEXT}
 
     private final String name;
+    // for OBJECT_FIELD
+    private final List<String> path;
 
     private final SourceType sourceType;
 
-    public RemoteArgumentSource(String name, SourceType sourceType, SourceLocation sourceLocation) {
+    public RemoteArgumentSource(String name, List<String> path, SourceType sourceType, SourceLocation sourceLocation) {
         super(sourceLocation, emptyList(), IgnoredChars.EMPTY);
         this.name = name;
+        this.path = path;
         this.sourceType = sourceType;
+    }
+
+    public List<String> getPath() {
+        return path;
     }
 
     public String getName() {

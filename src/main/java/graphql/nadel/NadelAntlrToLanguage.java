@@ -29,7 +29,6 @@ import graphql.nadel.dsl.UnionTypeDefinitionWithTransformation;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import graphql.parser.MultiSourceReader;
-import graphql.util.FpKit;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RuleContext;
 
@@ -42,6 +41,7 @@ import static graphql.nadel.dsl.FieldDefinitionWithTransformation.newFieldDefini
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.CONTEXT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
+import static graphql.util.FpKit.map;
 
 @Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
@@ -99,8 +99,8 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         if (ctx.fieldMappingDefinition() != null) {
             return new FieldTransformation(createFieldMappingDefinition(ctx.fieldMappingDefinition()),
                     getSourceLocation(ctx), new ArrayList<>());
-        } else if (ctx.innerServiceHydration() != null) {
-            return new FieldTransformation(createInnerServiceHydration(ctx.innerServiceHydration()),
+        } else if (ctx.underlyingServiceHydration() != null) {
+            return new FieldTransformation(createUnderlyingServiceHydration(ctx.underlyingServiceHydration()),
                     getSourceLocation(ctx), new ArrayList<>());
         } else if (ctx.collapseDefinition() != null) {
             return new FieldTransformation(createCollapseDefinition(ctx.collapseDefinition()),
@@ -115,12 +115,12 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     }
 
     private CollapseDefinition createCollapseDefinition(StitchingDSLParser.CollapseDefinitionContext ctx) {
-        List<String> path = FpKit.map(ctx.name(), RuleContext::getText);
+        List<String> path = map(ctx.name(), RuleContext::getText);
         CollapseDefinition collapseDefinition = new CollapseDefinition(path, getSourceLocation(ctx), getComments(ctx));
         return collapseDefinition;
     }
 
-    private InnerServiceHydration createInnerServiceHydration(StitchingDSLParser.InnerServiceHydrationContext ctx) {
+    private InnerServiceHydration createUnderlyingServiceHydration(StitchingDSLParser.UnderlyingServiceHydrationContext ctx) {
         String serviceName = ctx.serviceName().getText();
         String topLevelField = ctx.topLevelField().getText();
 
@@ -232,6 +232,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     private RemoteArgumentSource createRemoteArgumentSource(StitchingDSLParser.RemoteArgumentSourceContext ctx) {
         RemoteArgumentSource.SourceType argumentType = null;
         String argumentName = null;
+        List<String> path = null;
 
         if (ctx.fieldArgumentReference() != null) {
             argumentName = ctx.fieldArgumentReference().name().getText();
@@ -240,12 +241,12 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             argumentName = ctx.contextArgumentReference().name().getText();
             argumentType = CONTEXT;
         } else if (ctx.sourceObjectReference() != null) {
-            argumentName = ctx.sourceObjectReference().name().getText();
+            path = map(ctx.sourceObjectReference().name(), RuleContext::getText);
             argumentType = OBJECT_FIELD;
         } else {
             assertShouldNeverHappen();
         }
 
-        return new RemoteArgumentSource(argumentName, argumentType, getSourceLocation(ctx));
+        return new RemoteArgumentSource(argumentName, path, argumentType, getSourceLocation(ctx));
     }
 }
