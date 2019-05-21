@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Assert;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.FetchedValueAnalysis;
@@ -70,10 +71,7 @@ public class ServiceResultNodesToOverallResult {
                         convertedNode = defaultMapping(node, unapplyEnvironment);
                     } else {
                         FieldTransformation transformation = transformations.get(0);
-                        convertedNode = transformation.unapplyResultNode(node, transformations, unapplyEnvironment);
-                        if (convertedNode == null) {
-                            convertedNode = defaultMapping(node, unapplyEnvironment);
-                        }
+                        convertedNode = Assert.assertNotNull(transformation.unapplyResultNode(node, transformations, unapplyEnvironment));
                     }
                     if (!(convertedNode instanceof LeafExecutionResultNode)) {
                         setExecutionInfo(context, convertedNode);

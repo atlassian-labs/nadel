@@ -62,12 +62,6 @@ public class HydrationTransformation extends AbstractFieldTransformation {
 
     @Override
     public ExecutionResultNode unapplyResultNode(ExecutionResultNode executionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
-        // we only care about leaf results here, even if the LIST nodes also references HydrationTransformation because
-        // LIST share the field with all children
-        if (!(executionResultNode instanceof LeafExecutionResultNode)) {
-            return null;
-        }
-
 //        LeafExecutionResultNode leafExecutionResultNode = getLeafNode(executionResultNode);
         FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
 
@@ -77,6 +71,10 @@ public class HydrationTransformation extends AbstractFieldTransformation {
         };
         FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
                 esiMapper);
+
+        if (!(executionResultNode instanceof LeafExecutionResultNode)) {
+            return executionResultNode.withNewFetchedValueAnalysis(mappedFVA);
+        }
 
         if (fetchedValueAnalysis.isNullValue()) {
             // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
