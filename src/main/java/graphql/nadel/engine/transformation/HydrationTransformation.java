@@ -25,7 +25,7 @@ import java.util.function.BiFunction;
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 
-public class HydrationTransformation extends AbstractFieldTransformation {
+public class HydrationTransformation extends FieldTransformation {
 
 
     private InnerServiceHydration innerServiceHydration;

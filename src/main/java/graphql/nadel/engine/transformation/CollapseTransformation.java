@@ -16,7 +16,7 @@ import static graphql.nadel.engine.transformation.FieldUtils.getLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
-public class CollapseTransformation extends AbstractFieldTransformation {
+public class CollapseTransformation extends FieldTransformation {
     private final CollapseDefinition collapseDefinition;
 
     public CollapseTransformation(CollapseDefinition collapseDefinition) {
