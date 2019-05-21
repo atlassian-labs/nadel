@@ -17,7 +17,7 @@ import java.util.function.BiFunction;
 
 import static graphql.util.TreeTransformerUtil.changeNode;
 
-public class FieldRenameTransformation extends AbstractFieldTransformation {
+public class FieldRenameTransformation extends FieldTransformation {
 
     FetchedValueAnalysisMapper fetchedValueAnalysisMapper = new FetchedValueAnalysisMapper();
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
