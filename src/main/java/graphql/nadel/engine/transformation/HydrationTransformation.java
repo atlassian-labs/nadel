@@ -5,6 +5,7 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
+import graphql.execution.nextgen.result.ListExecutionResultNode;
 import graphql.language.Field;
 import graphql.language.Node;
 import graphql.nadel.dsl.InnerServiceHydration;
@@ -24,6 +25,7 @@ import java.util.function.BiFunction;
 
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
+import static graphql.nadel.engine.transformation.FieldUtils.getLeafNode;
 
 public class HydrationTransformation extends FieldTransformation {
 
@@ -53,7 +55,8 @@ public class HydrationTransformation extends FieldTransformation {
         Field newField = FieldUtils.pathToFields(hydrationSourceName);
         String fieldId = UUID.randomUUID().toString();
         newField = newField.transform(builder -> builder.additionalData(NADEL_FIELD_ID, fieldId));
-        return TreeTransformerUtil.changeNode(context, newField);
+        TreeTransformerUtil.changeNode(context, newField);
+        return TraversalControl.ABORT;
     }
 
     public InnerServiceHydration getInnerServiceHydration() {
@@ -62,25 +65,40 @@ public class HydrationTransformation extends FieldTransformation {
 
     @Override
     public ExecutionResultNode unapplyResultNode(ExecutionResultNode executionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
-//        LeafExecutionResultNode leafExecutionResultNode = getLeafNode(executionResultNode);
-        FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
+        if (executionResultNode instanceof ListExecutionResultNode) {
+            FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
+            FetchedValueAnalysis mappedFVA = mapToOriginalFields(fetchedValueAnalysis, allTransformations, environment);
+            return executionResultNode.withNewFetchedValueAnalysis(mappedFVA);
+        }
+
+        // we can have collapsed arguments, this is why maybe don't have a leaf node directly
+        LeafExecutionResultNode leafNode = getLeafNode(executionResultNode);
+        FetchedValueAnalysis leafFetchedValueAnalysis = leafNode.getFetchedValueAnalysis();
+        ExecutionStepInfo leafESI = leafFetchedValueAnalysis.getExecutionStepInfo();
+
+        // we need to build a correct ESI based on the leaf node and the current node for the overall schema
+        ExecutionStepInfo correctESI = executionResultNode.getFetchedValueAnalysis().getExecutionStepInfo();
+        correctESI = correctESI.transform(builder -> builder.type(leafESI.getType()));
+        ExecutionStepInfo finalCorrectESI = correctESI;
+        leafFetchedValueAnalysis = leafFetchedValueAnalysis.transfrom(builder -> builder.executionStepInfo(finalCorrectESI));
+
+        // we need to use the correct
+        FetchedValueAnalysis mappedFVA = mapToOriginalFields(leafFetchedValueAnalysis, allTransformations, environment);
+        if (mappedFVA.isNullValue()) {
+            // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
+            return changeFieldInResultNode(leafNode, getOriginalField());
+        } else {
+            return new HydrationInputNode(this, mappedFVA, null);
+        }
+    }
+
+    private FetchedValueAnalysis mapToOriginalFields(FetchedValueAnalysis fetchedValueAnalysis, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
 
         BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> {
             ExecutionStepInfo esiWithMappedField = replaceFieldsWithOriginalFields(allTransformations, esi);
             return executionStepInfoMapper.mapExecutionStepInfo(esiWithMappedField, environment);
         };
-        FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
+        return fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
                 esiMapper);
-
-        if (!(executionResultNode instanceof LeafExecutionResultNode)) {
-            return executionResultNode.withNewFetchedValueAnalysis(mappedFVA);
-        }
-
-        if (fetchedValueAnalysis.isNullValue()) {
-            // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
-            return changeFieldInResultNode(executionResultNode, getOriginalField());
-        } else {
-            return new HydrationInputNode(this, mappedFVA, null);
-        }
     }
 }
