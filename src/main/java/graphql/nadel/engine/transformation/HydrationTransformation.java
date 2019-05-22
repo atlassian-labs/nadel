@@ -71,6 +71,8 @@ public class HydrationTransformation extends FieldTransformation {
             return executionResultNode.withNewFetchedValueAnalysis(mappedFVA);
         }
 
+        //TODO: we might need to split ERN up in two Nodes
+
         // we can have collapsed arguments, this is why maybe don't have a leaf node directly
         LeafExecutionResultNode leafNode = getLeafNode(executionResultNode);
         FetchedValueAnalysis leafFetchedValueAnalysis = leafNode.getFetchedValueAnalysis();
