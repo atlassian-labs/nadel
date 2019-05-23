@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static graphql.Assert.assertTrue;
-import static graphql.nadel.engine.transformation.FieldUtils.resultKeyForField;
 
 public abstract class FieldTransformation {
 
@@ -24,18 +23,15 @@ public abstract class FieldTransformation {
      * This is a bit strange method because n FieldTransformations map to one unapply method and we don't know the mapping until
      * this method is called. So we actually give all relevant transformations as a List
      */
-    public abstract ExecutionResultNode unapplyResultNode(ExecutionResultNode executionResultNode,
-                                                          List<FieldTransformation> allTransformations,
-                                                          UnapplyEnvironment environment);
+    public abstract TraversalControl unapplyResultNode(ExecutionResultNode executionResultNode,
+                                                       List<FieldTransformation> allTransformations,
+                                                       UnapplyEnvironment environment);
 
 
-    private String resultKey;
     private QueryVisitorFieldEnvironment environment;
 
     public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
         this.environment = environment;
-        resultKey = resultKeyForField(environment.getField());
-        // Not changing node means it will be preserved as is
         return TraversalControl.CONTINUE;
     }
 

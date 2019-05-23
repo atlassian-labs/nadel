@@ -10,6 +10,7 @@ import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.FetchedValueAnalysisMapper;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.util.TraversalControl;
+import graphql.util.TreeTransformerUtil;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,9 +37,9 @@ public class FieldRenameTransformation extends FieldTransformation {
     }
 
     @Override
-    public ExecutionResultNode unapplyResultNode(ExecutionResultNode executionResultNode,
-                                                 List<FieldTransformation> allTransformations,
-                                                 UnapplyEnvironment environment) {
+    public TraversalControl unapplyResultNode(ExecutionResultNode executionResultNode,
+                                              List<FieldTransformation> allTransformations,
+                                              UnapplyEnvironment environment) {
 
         FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
 
@@ -48,8 +49,7 @@ public class FieldRenameTransformation extends FieldTransformation {
         };
         FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
                 esiMapper);
-
-        return executionResultNode.withNewFetchedValueAnalysis(mappedFVA);
+        return TreeTransformerUtil.changeNode(environment.context, executionResultNode.withNewFetchedValueAnalysis(mappedFVA));
     }
 
 
