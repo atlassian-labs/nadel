@@ -9,7 +9,6 @@ import graphql.analysis.QueryVisitorInlineFragmentEnvironment;
 import graphql.execution.ExecutionContext;
 import graphql.execution.MergedField;
 import graphql.language.Argument;
-import graphql.language.AstPrinter;
 import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.FieldDefinition;
@@ -271,7 +270,6 @@ public class OverallQueryTransformer {
                 .schema(executionContext.getGraphQLSchema())
                 .build();
 
-        System.out.println(AstPrinter.printAst(node));
         Node newNode = transformer.transform(new Transformer(executionContext, transformationByResultField, typeRenameMappings, referencedFragmentNames, referencedVariables, nadelContext));
         //noinspection unchecked
         return (T) newNode;
