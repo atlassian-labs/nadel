@@ -6,6 +6,8 @@ import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.language.Field;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLOutputType;
 import graphql.util.TraversalControl;
 
@@ -19,7 +21,7 @@ public abstract class FieldTransformation {
     public static final String NADEL_FIELD_ID = "FIELD_ID";
 
 
-    /**
+    /*
      * This is a bit strange method because n FieldTransformations map to one unapply method and we don't know the mapping until
      * this method is called. So we actually give all relevant transformations as a List
      */
@@ -48,19 +50,31 @@ public abstract class FieldTransformation {
         return getOriginalFieldEnvironment().getFieldDefinition().getType();
     }
 
+    public GraphQLFieldsContainer getOriginalFieldsContainer() {
+        return getOriginalFieldEnvironment().getFieldsContainer();
+    }
 
-    protected ExecutionStepInfo replaceFieldsWithOriginalFields(List<FieldTransformation> allTransformations, ExecutionStepInfo esi) {
+    public GraphQLFieldDefinition getOriginalFieldDefinition() {
+        return getOriginalFieldEnvironment().getFieldDefinition();
+    }
+
+
+    protected ExecutionStepInfo replaceFieldsAndTypesWithOriginalValues(List<FieldTransformation> allTransformations, ExecutionStepInfo esi) {
         MergedField underlyingMergedField = esi.getField();
         List<Field> underlyingFields = underlyingMergedField.getFields();
         assertTrue(allTransformations.size() == underlyingFields.size());
 
-        // core objective: replacing the fields with the original fields
         List<Field> newFields = new ArrayList<>();
         for (FieldTransformation fieldTransformation : allTransformations) {
             newFields.add(fieldTransformation.getOriginalField());
         }
         MergedField newMergedField = MergedField.newMergedField(newFields).build();
-        ExecutionStepInfo esiWithMappedField = esi.transform(builder -> builder.field(newMergedField));
+        GraphQLOutputType originalFieldType = allTransformations.get(0).getOriginalFieldType();
+
+        ExecutionStepInfo esiWithMappedField = esi.transform(builder -> builder
+                .field(newMergedField)
+                .type(originalFieldType)
+        );
         return esiWithMappedField;
     }
 

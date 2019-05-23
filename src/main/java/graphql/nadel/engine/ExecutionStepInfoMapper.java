@@ -9,11 +9,15 @@ import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLTypeUtil;
 
 import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
+import static graphql.schema.GraphQLList.list;
+import static graphql.schema.GraphQLNonNull.nonNull;
+import static graphql.schema.GraphQLTypeUtil.isList;
+import static graphql.schema.GraphQLTypeUtil.isNonNull;
+import static graphql.schema.GraphQLTypeUtil.isNotWrapped;
 
 public class ExecutionStepInfoMapper {
 
@@ -33,7 +37,7 @@ public class ExecutionStepInfoMapper {
 
         GraphQLObjectType mappedFieldContainer = overallSchema.getObjectType(fieldContainerName);
         assertNotNull(mappedFieldContainer, "no type " + fieldContainerName + " found in overall schema");
-        GraphQLOutputType mappedFieldType = mapOutputType(fieldType, overallSchema, typeRenameMappings);
+        GraphQLOutputType mappedFieldType = mapFieldType(fieldType, overallSchema, typeRenameMappings);
         GraphQLFieldDefinition mappedFieldDefinition = mappedFieldContainer.getFieldDefinition(fieldName);
 
         ExecutionPath mappedPath = pathMapper.mapPath(executionStepInfo, executionStepInfo.getField(), environment);
@@ -52,17 +56,17 @@ public class ExecutionStepInfoMapper {
         return typeRenameMappings.getOrDefault(name, name);
     }
 
-    private GraphQLOutputType mapOutputType(GraphQLOutputType graphQLOutputType, GraphQLSchema overallSchema, Map<String, String> typeRenameMappings) {
-        if (GraphQLTypeUtil.isNotWrapped(graphQLOutputType)) {
+    private GraphQLOutputType mapFieldType(GraphQLOutputType graphQLOutputType, GraphQLSchema overallSchema, Map<String, String> typeRenameMappings) {
+        if (isNotWrapped(graphQLOutputType)) {
             String typeName = mapTypeName(typeRenameMappings, graphQLOutputType.getName());
             GraphQLOutputType outputType = (GraphQLOutputType) overallSchema.getType(typeName);
-            return assertNotNull(outputType, "type " + graphQLOutputType.getName() + " not found in overall schema");
+            return assertNotNull(outputType, "type " + graphQLOutputType.getName() + " not found in overall schema for field type");
         }
-        if (GraphQLTypeUtil.isList(graphQLOutputType)) {
-            return GraphQLList.list(mapOutputType((GraphQLOutputType) ((GraphQLList) graphQLOutputType).getWrappedType(), overallSchema, typeRenameMappings));
+        if (isList(graphQLOutputType)) {
+            return list(mapFieldType((GraphQLOutputType) ((GraphQLList) graphQLOutputType).getWrappedType(), overallSchema, typeRenameMappings));
         }
-        if (GraphQLTypeUtil.isNonNull(graphQLOutputType)) {
-            return GraphQLNonNull.nonNull(mapOutputType((GraphQLOutputType) ((GraphQLNonNull) graphQLOutputType).getWrappedType(), overallSchema, typeRenameMappings));
+        if (isNonNull(graphQLOutputType)) {
+            return nonNull(mapFieldType((GraphQLOutputType) ((GraphQLNonNull) graphQLOutputType).getWrappedType(), overallSchema, typeRenameMappings));
         }
         return Assert.assertShouldNeverHappen();
     }

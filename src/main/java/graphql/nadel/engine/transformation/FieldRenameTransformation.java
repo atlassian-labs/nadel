@@ -44,7 +44,7 @@ public class FieldRenameTransformation extends FieldTransformation {
         FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
 
         BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> {
-            ExecutionStepInfo esiWithMappedField = replaceFieldsWithOriginalFields(allTransformations, esi);
+            ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi);
             return executionStepInfoMapper.mapExecutionStepInfo(esiWithMappedField, environment);
         };
         FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,

@@ -6,6 +6,7 @@ import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.execution.nextgen.result.ListExecutionResultNode;
+import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.language.Field;
 import graphql.language.Node;
 import graphql.nadel.dsl.InnerServiceHydration;
@@ -27,6 +28,7 @@ import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.transformation.FieldUtils.getLeafNode;
+import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
 public class HydrationTransformation extends FieldTransformation {
@@ -73,27 +75,40 @@ public class HydrationTransformation extends FieldTransformation {
             ExecutionResultNode child = transformedNode.getChildren().get(0);
             if (child instanceof LeafExecutionResultNode) {
                 return handleListOfLeafs((ListExecutionResultNode) transformedNode, allTransformations, environment);
+            } else if (child instanceof ObjectExecutionResultNode) {
+                return handleListOfObjects((ListExecutionResultNode) transformedNode, allTransformations, environment);
+            } else {
+                return assertShouldNeverHappen("Not implemented yet");
             }
-//            } else if (child instanceof ObjectExecutionResultNode) {
-//                List<ExecutionResultNode> executionResultNodes = flattenList((ListExecutionResultNode) transformedNode);
-//                executionResultNodes = FpKit.map(executionResultNodes, executionResultNode -> {
-//                    FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
-//                    ExecutionStepInfo esi = fetchedValueAnalysis.getExecutionStepInfo();
-//                    final ExecutionStepInfo mappedEsi = replaceFieldsWithOriginalFields(allTransformations, esi);
-//                    fetchedValueAnalysis = fetchedValueAnalysis.transfrom(builder -> builder.executionStepInfo(mappedEsi));
-//                    return executionResultNode.withNewFetchedValueAnalysis(fetchedValueAnalysis);
-//                });
-//                transformedNode.withNewChildren(executionResultNodes);
-//            } else {
-            return assertShouldNeverHappen("Not implemented yet");
-//            }
         }
 
         LeafExecutionResultNode leafNode = getLeafNode(transformedNode);
         LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getFetchedValueAnalysis().getExecutionStepInfo(), leafNode, allTransformations, environment);
+
         changeNode(environment.context, changedNode);
         return TraversalControl.ABORT;
 
+    }
+
+    private TraversalControl handleListOfObjects(ListExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+        // we handle here a list of objects with each object containing one node
+        FetchedValueAnalysis fetchedValueAnalysis = transformedNode.getFetchedValueAnalysis();
+        ExecutionStepInfo esi = fetchedValueAnalysis.getExecutionStepInfo();
+
+        ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi);
+        // the type of the fiel is
+
+        FetchedValueAnalysis mappedFVA = mapToOriginalFields(fetchedValueAnalysis, allTransformations, environment);
+
+        ExecutionResultNode changedNode = mapChildren(transformedNode, objectChild -> {
+            environment.parentExecutionStepInfo = mappedFVA.getExecutionStepInfo();
+            LeafExecutionResultNode leaf = (LeafExecutionResultNode) objectChild.getChildren().get(0);
+            return unapplyLeafNode(objectChild.getFetchedValueAnalysis().getExecutionStepInfo(), leaf, allTransformations, environment);
+        });
+
+        changedNode = changedNode.withNewFetchedValueAnalysis(mappedFVA);
+        changeNode(environment.context, changedNode);
+        return TraversalControl.ABORT;
     }
 
     private TraversalControl handleListOfLeafs(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
@@ -112,24 +127,6 @@ public class HydrationTransformation extends FieldTransformation {
         return TraversalControl.ABORT;
     }
 
-//    // we assume here every object inside the list has one child again
-//    private List<ExecutionResultNode> flattenList(ListExecutionResultNode listExecutionResultNode) {
-//        List<ExecutionResultNode> result = new ArrayList<>();
-//        for (ExecutionResultNode child : listExecutionResultNode.getChildren()) {
-//            result.add(child.getChildren().get(0));
-//        }
-//        return result;
-//    }
-
-//    private List<LeafExecutionResultNode> unapplyListOfObjects(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
-//        List<LeafExecutionResultNode> result = new ArrayList<>();
-//        for (ExecutionResultNode child : listExecutionResultNode.getChildren()) {
-//            ObjectExecutionResultNode objectExecutionResultNode = (ObjectExecutionResultNode) child;
-//            LeafExecutionResultNode leafExecutionResultNode = (LeafExecutionResultNode) objectExecutionResultNode.getChildren().get(0);
-//            result.add(unapplyLeafNode(leafExecutionResultNode.getFetchedValueAnalysis().getExecutionStepInfo(), leafExecutionResultNode, allTransformations, environment));
-//        }
-//        return result;
-//    }
 
     private LeafExecutionResultNode unapplyLeafNode(ExecutionStepInfo correctESI, LeafExecutionResultNode leafNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
         FetchedValueAnalysis leafFetchedValueAnalysis = leafNode.getFetchedValueAnalysis();
@@ -153,7 +150,7 @@ public class HydrationTransformation extends FieldTransformation {
     private FetchedValueAnalysis mapToOriginalFields(FetchedValueAnalysis fetchedValueAnalysis, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
 
         BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> {
-            ExecutionStepInfo esiWithMappedField = replaceFieldsWithOriginalFields(allTransformations, esi);
+            ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi);
             return executionStepInfoMapper.mapExecutionStepInfo(esiWithMappedField, environment);
         };
         return fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
