@@ -10,8 +10,9 @@ import java.util.List;
 public class PathMapper {
 
     public ExecutionPath mapPath(ExecutionStepInfo executionStepInfo, MergedField mergedField, UnapplyEnvironment environment) {
-        ExecutionStepInfo parentExecutionStepInfo = environment.parentExecutionStepInfo;
         List<Object> fieldSegments = patchLastFieldName(executionStepInfo, mergedField);
+
+        ExecutionStepInfo parentExecutionStepInfo = environment.parentExecutionStepInfo;
         ExecutionPath parentPath = parentExecutionStepInfo.getPath();
         if (environment.isHydrationTransformation) {
             //

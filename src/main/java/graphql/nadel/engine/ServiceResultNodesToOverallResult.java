@@ -1,6 +1,5 @@
 package graphql.nadel.engine;
 
-import graphql.Assert;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.FetchedValueAnalysis;
@@ -20,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import static graphql.Assert.assertNotNull;
 import static graphql.nadel.engine.transformation.FieldTransformation.NADEL_FIELD_ID;
 import static java.util.Collections.singletonMap;
 
@@ -65,18 +65,19 @@ public class ServiceResultNodesToOverallResult {
                             batched, typeRenameMappings,
                             overallSchema);
 
-                    ExecutionResultNode convertedNode;
+                    TraversalControl traversalControl = TraversalControl.CONTINUE;
                     List<FieldTransformation> transformations = getTransformations(node.getMergedField(), transformationMap);
                     if (transformations.size() == 0) {
-                        convertedNode = defaultMapping(node, unapplyEnvironment);
+                        defaultMapping(node, unapplyEnvironment);
                     } else {
                         FieldTransformation transformation = transformations.get(0);
-                        convertedNode = Assert.assertNotNull(transformation.unapplyResultNode(node, transformations, unapplyEnvironment));
+                        traversalControl = assertNotNull(transformation.unapplyResultNode(node, transformations, unapplyEnvironment));
                     }
+                    ExecutionResultNode convertedNode = context.thisNode();
                     if (!(convertedNode instanceof LeafExecutionResultNode)) {
                         setExecutionInfo(context, convertedNode);
                     }
-                    return TreeTransformerUtil.changeNode(context, convertedNode);
+                    return traversalControl;
                 }
 
             }, rootVars);
@@ -86,12 +87,12 @@ public class ServiceResultNodesToOverallResult {
         }
     }
 
-    private ExecutionResultNode defaultMapping(ExecutionResultNode node, UnapplyEnvironment environment) {
+    private void defaultMapping(ExecutionResultNode node, UnapplyEnvironment environment) {
         FetchedValueAnalysis originalFetchAnalysis = node.getFetchedValueAnalysis();
 
         BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> executionStepInfoMapper.mapExecutionStepInfo(esi, env);
         FetchedValueAnalysis mappedFetchedValueAnalysis = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(originalFetchAnalysis, environment, esiMapper);
-        return node.withNewFetchedValueAnalysis(mappedFetchedValueAnalysis);
+        TreeTransformerUtil.changeNode(environment.context, node.withNewFetchedValueAnalysis(mappedFetchedValueAnalysis));
     }
 
     private List<FieldTransformation> getTransformations(MergedField mergedField, Map<String, FieldTransformation> transformationMap) {

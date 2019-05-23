@@ -39,10 +39,12 @@ public class CollapseTransformation extends FieldTransformation {
 
 
     @Override
-    public ExecutionResultNode unapplyResultNode(ExecutionResultNode executionResultNode, List<FieldTransformation> transformations, UnapplyEnvironment environment) {
+    public TraversalControl unapplyResultNode(ExecutionResultNode executionResultNode, List<FieldTransformation> transformations, UnapplyEnvironment environment) {
         LeafExecutionResultNode leafExecutionResultNode = getLeafNode(executionResultNode);
         // path and type is still wrong here
-        return changeFieldInResultNode(leafExecutionResultNode, getOriginalField());
+        LeafExecutionResultNode leafNode = changeFieldInResultNode(leafExecutionResultNode, getOriginalField());
+        changeNode(environment.context, leafNode);
+        return TraversalControl.ABORT;
     }
 
 
