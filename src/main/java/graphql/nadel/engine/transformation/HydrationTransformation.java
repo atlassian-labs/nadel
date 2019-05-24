@@ -93,10 +93,6 @@ public class HydrationTransformation extends FieldTransformation {
     private TraversalControl handleListOfObjects(ListExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
         // we handle here a list of objects with each object containing one node
         FetchedValueAnalysis fetchedValueAnalysis = transformedNode.getFetchedValueAnalysis();
-        ExecutionStepInfo esi = fetchedValueAnalysis.getExecutionStepInfo();
-
-        ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi);
-        // the type of the fiel is
 
         FetchedValueAnalysis mappedFVA = mapToOriginalFields(fetchedValueAnalysis, allTransformations, environment);
 
