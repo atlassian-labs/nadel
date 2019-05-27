@@ -36,7 +36,7 @@ class ExecutionStepInfoMapperTest extends Specification {
                 .build()
 
         ExecutionStepInfoMapper mapper = new ExecutionStepInfoMapper()
-        UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(null, rootExecutionStepInfo, false, false, [:], overallSchema)
+        UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(null, rootExecutionStepInfo, false, false, [:], overallSchema, null)
         when:
         def mappedInfo = mapper.mapExecutionStepInfo(executionStepInfo, unapplyEnvironment)
 
@@ -67,7 +67,7 @@ class ExecutionStepInfoMapperTest extends Specification {
                 .build()
 
         ExecutionStepInfoMapper mapper = new ExecutionStepInfoMapper()
-        UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(null, rootExecutionStepInfo, false, false, [:], overallSchema)
+        UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(null, rootExecutionStepInfo, false, false, [:], overallSchema, null)
         when:
         def mappedInfo = mapper.mapExecutionStepInfo(executionStepInfo, unapplyEnvironment)
 

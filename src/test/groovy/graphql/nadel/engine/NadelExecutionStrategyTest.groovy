@@ -400,7 +400,7 @@ class NadelExecutionStrategyTest extends Specification {
         def response1 = new ServiceExecutionResult([issues: [issue1]])
 
 
-        def expectedQuery2 = "query nadel_2_UserService {usersByIds(id:[\"USER-1\",\"USER-2\"]) {name id object_identifier__UUID:id}}"
+        def expectedQuery2 = "query nadel_2_UserService {usersByIds(id:[\"USER-1\",\"USER-2\"]) {id object_identifier__UUID:id}}"
         def batchResponse1 = [[id: "USER-1", name: "User 1", object_identifier__UUID: "USER-1"], [id: "USER-2", name: "User 2", object_identifier__UUID: "USER-2"]]
         def response2 = new ServiceExecutionResult([usersByIds: batchResponse1])
 
@@ -422,7 +422,7 @@ class NadelExecutionStrategyTest extends Specification {
             printAstCompact(sep.query) == expectedQuery2
         }) >> CompletableFuture.completedFuture(response2)
 
-        def issue1Result = [id: "ISSUE-1", authors: [[id: "USER-1", name: "User 1"], [id: "USER-2", name: "User 2"]]]
+        def issue1Result = [id: "ISSUE-1", authorDetails: [[name: "User 1"], [name: "User 2"]], authors: [[id: "USER-1"], [id: "USER-2"]]]
         resultData(response) == [issues: [issue1Result]]
 
     }

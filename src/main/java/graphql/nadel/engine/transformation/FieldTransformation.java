@@ -13,12 +13,13 @@ import graphql.util.TraversalControl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static graphql.Assert.assertTrue;
 
 public abstract class FieldTransformation {
 
-    public static final String NADEL_FIELD_ID = "FIELD_ID";
+    public static final String NADEL_FIELD_ID = "NADEL_FIELD_ID";
 
 
     /*
@@ -31,12 +32,16 @@ public abstract class FieldTransformation {
 
 
     private QueryVisitorFieldEnvironment environment;
+    private String fieldId = UUID.randomUUID().toString();
 
     public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
         this.environment = environment;
         return TraversalControl.CONTINUE;
     }
 
+    public String getFieldId() {
+        return fieldId;
+    }
 
     public QueryVisitorFieldEnvironment getOriginalFieldEnvironment() {
         return environment;
