@@ -25,6 +25,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
 import graphql.nadel.introspection.DefaultIntrospectionRunner;
 import graphql.nadel.introspection.IntrospectionRunner;
+import graphql.nadel.schema.NeverWiringFactory;
 import graphql.nadel.schema.OverallSchemaGenerator;
 import graphql.nadel.schema.UnderlyingSchemaGenerator;
 import graphql.parser.InvalidSyntaxException;
@@ -32,6 +33,7 @@ import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.ScalarInfo;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import graphql.schema.idl.WiringFactory;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
 import org.slf4j.Logger;
@@ -70,6 +72,7 @@ public class Nadel {
     private final ExecutionIdProvider executionIdProvider;
     private final IntrospectionRunner introspectionRunner;
     private final DefinitionRegistry commonTypes;
+    private final WiringFactory wiringFactory;
 
     private Nadel(Reader nsdl,
                   ServiceExecutionFactory serviceExecutionFactory,
@@ -77,7 +80,8 @@ public class Nadel {
                   PreparsedDocumentProvider preparsedDocumentProvider,
                   ExecutionIdProvider executionIdProvider,
                   IntrospectionRunner introspectionRunner,
-                  ServiceExecutionHooks serviceExecutionHooks) {
+                  ServiceExecutionHooks serviceExecutionHooks,
+                  WiringFactory wiringFactory) {
         this.serviceExecutionFactory = serviceExecutionFactory;
         this.instrumentation = instrumentation;
         this.serviceExecutionHooks = serviceExecutionHooks;
@@ -86,6 +90,7 @@ public class Nadel {
 
         this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
         this.introspectionRunner = introspectionRunner;
+        this.wiringFactory = wiringFactory;
         this.services = createServices();
         this.commonTypes = createCommonTypes();
         this.overallSchema = createOverallSchema();
@@ -122,7 +127,7 @@ public class Nadel {
         List<DefinitionRegistry> registries = this.services.stream()
                 .map(Service::getDefinitionRegistry)
                 .collect(toList());
-        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes);
+        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, wiringFactory);
         //
         // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
         // make direct use of them, we still have to map between them
@@ -154,6 +159,7 @@ public class Nadel {
         private PreparsedDocumentProvider preparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE;
         private ExecutionIdProvider executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER;
         private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
+        private WiringFactory wiringFactory = new NeverWiringFactory();
 
 
         public Builder dsl(Reader nsdl) {
@@ -195,8 +201,21 @@ public class Nadel {
             return this;
         }
 
+        public Builder wiringFactory(WiringFactory wiringFactory) {
+            this.wiringFactory = requireNonNull(wiringFactory);
+            return this;
+        }
+
         public Nadel build() {
-            return new Nadel(nsdl, serviceExecutionFactory, instrumentation, preparsedDocumentProvider, executionIdProvider, introspectionRunner, serviceExecutionHooks);
+            return new Nadel(
+                    nsdl,
+                    serviceExecutionFactory,
+                    instrumentation,
+                    preparsedDocumentProvider,
+                    executionIdProvider,
+                    introspectionRunner,
+                    serviceExecutionHooks,
+                    wiringFactory);
         }
     }
 

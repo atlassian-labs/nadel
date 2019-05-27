@@ -10,6 +10,7 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import graphql.schema.idl.WiringFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,10 +23,10 @@ import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
 public class OverallSchemaGenerator {
 
 
-    public GraphQLSchema buildOverallSchema(List<DefinitionRegistry> serviceRegistries, DefinitionRegistry commonTypes) {
+    public GraphQLSchema buildOverallSchema(List<DefinitionRegistry> serviceRegistries, DefinitionRegistry commonTypes, WiringFactory wiringFactory) {
         SchemaGenerator schemaGenerator = new SchemaGenerator();
         RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
-                .wiringFactory(new NeverWiringFactory())
+                .wiringFactory(wiringFactory)
                 .build();
         return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries, commonTypes), runtimeWiring);
     }

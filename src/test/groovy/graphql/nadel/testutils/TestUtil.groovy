@@ -30,6 +30,7 @@ import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelContext
+import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.OverallSchemaGenerator
 import graphql.nadel.util.FpKit
 import graphql.nadel.util.Util
@@ -202,7 +203,7 @@ class TestUtil {
     static GraphQLSchema schemaFromNdsl(String ndsl) {
         def stitchingDsl = new NSDLParser().parseDSL(ndsl)
         def defRegistries = stitchingDsl.serviceDefinitions.collect({ Util.buildServiceRegistry(it) })
-        return new OverallSchemaGenerator().buildOverallSchema(defRegistries, new DefinitionRegistry())
+        return new OverallSchemaGenerator().buildOverallSchema(defRegistries, new DefinitionRegistry(), new NeverWiringFactory())
     }
 
     static GraphQL.Builder graphQL(String spec) {

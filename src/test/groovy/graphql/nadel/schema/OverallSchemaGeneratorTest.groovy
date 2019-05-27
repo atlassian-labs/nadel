@@ -139,13 +139,14 @@ class OverallSchemaGeneratorTest extends Specification {
                 subBar2: Bar
            }
     """
+
     @Unroll
     def "#opsType definition could be merged for #caseName"(String opsType, String caseName, String fooService, String barService, List<String> expectedList) {
         given:
         def schema = TestUtil.schemaFromNdsl(fooService + barService)
         when:
         def resultList
-        switch (opsType){
+        switch (opsType) {
             case Operation.QUERY.name:
                 resultList = schema.getQueryType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
@@ -156,7 +157,7 @@ class OverallSchemaGeneratorTest extends Specification {
                 resultList = schema.getSubscriptionType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
             case "directives":
-                resultList = schema.getDirectives().stream().map({directive -> directive.getName()}).collect()
+                resultList = schema.getDirectives().stream().map({ directive -> directive.getName() }).collect()
                 break
 
         }
@@ -164,22 +165,22 @@ class OverallSchemaGeneratorTest extends Specification {
         resultList != null && resultList as Set == expectedList as Set
 
         where:
-        opsType          | caseName                                                                             | fooService                                                                    | barService                                                                    | expectedList                   | _
-        "query"          |"both services with default definition"                                               | "service Foo {$fooService_default_query $fooType}"                            | "service Bar {$barService_default_query $barType}"                            | ["foo", "bar"]                 | _
-        "query"          |"one service with default definition and one service defined in schema"               | "service Foo {$fooService_query_in_schema $fooType}"                          | "service Bar {$barService_default_query $barType}"                            | ["foo", "bar"]                 | _
-        "query"          |"one service with default definition and one service defined in schema and extension" | "service Foo {$fooService_query_in_schema $fooType $fooQueryExtension}"       | "service Bar {$barService_default_query $barType}"                            | ["foo", "foo2", "bar"]         | _
-        "query"          |"both services with definition in schema"                                             | "service Foo {$fooService_query_in_schema $fooType}"                          | "service Bar {$barService_query_in_schema $barType}"                          | ["foo", "bar"]                 | _
-        "query"          |"both services with definition in schema and extension"                               | "service Foo {$fooService_query_in_schema $fooType $fooQueryExtension}"       | "service Bar {$barService_query_in_schema $barType, $barQueryExtension}"      | ["foo", "foo2", "bar", "bar2"] | _
-        "mutation"       |"both services with default definition"                                               | "service Foo {$fooService_default_mutation $fooType}"                         | "service Bar {$barService_default_mutation $barType}"                         | ["setFoo", "setBar"]                 | _
-        "mutation"       |"one service with default definition and one service defined in schema"               | "service Foo {$fooService_mutation_in_schema $fooType}"                       | "service Bar {$barService_default_mutation $barType}"                         | ["setFoo", "setBar"]                 | _
-        "mutation"       |"one service with default definition and one service defined in schema and extension" | "service Foo {$fooService_mutation_in_schema $fooType $fooMutationExtension}" | "service Bar {$barService_default_mutation $barType}"                         | ["setFoo", "setFoo2", "setBar"]      | _
-        "mutation"       |"both services with definition in schema"                                             | "service Foo {$fooService_mutation_in_schema $fooType}"                       | "service Bar {$barService_mutation_in_schema $barType}"                       | ["setFoo", "setBar"]                 | _
-        "mutation"       |"both services with definition in schema and extension"                               | "service Foo {$fooService_mutation_in_schema $fooType $fooMutationExtension}" | "service Bar {$barService_mutation_in_schema $barType $barMutationExtension}" | ["setFoo", "setFoo2", "setBar", "setBar2"] | _
-        "subscription"   |"both services with default definition"                                               | "service Foo {$fooService_default_subscription $fooType}"                             | "service Bar {$barService_default_subscription $barType}"                         | ["subFoo", "subBar"]           | _
-        "subscription"   |"one service with default definition and one service defined in schema"               | "service Foo {$fooService_subscription_in_schema $fooType}"                           | "service Bar {$barService_default_subscription $barType}"                         | ["subFoo", "subBar"]           | _
-        "subscription"   |"one service with default definition and one service defined in schema and extension" | "service Foo {$fooService_subscription_in_schema $fooType $fooSubscriptionExtension}" | "service Bar {$barService_default_subscription $barType}"                         | ["subFoo", "subFoo2", "subBar"]| _
-        "subscription"   |"both services with definition in schema"                                             | "service Foo {$fooService_subscription_in_schema $fooType}"                           | "service Bar {$barService_subscription_in_schema $barType}"                       | ["subFoo", "subBar"]           | _
-        "subscription"   |"both services with definition in schema and extension"                               | "service Foo {$fooService_subscription_in_schema $fooType $fooSubscriptionExtension}" | "service Bar {$barService_subscription_in_schema $barType $barSubscriptionExtension}" | ["subFoo", "subFoo2", "subBar", "subBar2"] | _
-        "directives"     |"both services"                                                                       | "service Foo {$fooService_with_directives $fooType }" | "service Bar {$barService_with_directives $barType}" | ["include", "skip", "deprecated", "cloudId","cloudId2"] | _
+        opsType        | caseName                                                                              | fooService                                                                            | barService                                                                            | expectedList                                             | _
+        "query"        | "both services with default definition"                                               | "service Foo {$fooService_default_query $fooType}"                                    | "service Bar {$barService_default_query $barType}"                                    | ["foo", "bar"]                                           | _
+        "query"        | "one service with default definition and one service defined in schema"               | "service Foo {$fooService_query_in_schema $fooType}"                                  | "service Bar {$barService_default_query $barType}"                                    | ["foo", "bar"]                                           | _
+        "query"        | "one service with default definition and one service defined in schema and extension" | "service Foo {$fooService_query_in_schema $fooType $fooQueryExtension}"               | "service Bar {$barService_default_query $barType}"                                    | ["foo", "foo2", "bar"]                                   | _
+        "query"        | "both services with definition in schema"                                             | "service Foo {$fooService_query_in_schema $fooType}"                                  | "service Bar {$barService_query_in_schema $barType}"                                  | ["foo", "bar"]                                           | _
+        "query"        | "both services with definition in schema and extension"                               | "service Foo {$fooService_query_in_schema $fooType $fooQueryExtension}"               | "service Bar {$barService_query_in_schema $barType, $barQueryExtension}"              | ["foo", "foo2", "bar", "bar2"]                           | _
+        "mutation"     | "both services with default definition"                                               | "service Foo {$fooService_default_mutation $fooType}"                                 | "service Bar {$barService_default_mutation $barType}"                                 | ["setFoo", "setBar"]                                     | _
+        "mutation"     | "one service with default definition and one service defined in schema"               | "service Foo {$fooService_mutation_in_schema $fooType}"                               | "service Bar {$barService_default_mutation $barType}"                                 | ["setFoo", "setBar"]                                     | _
+        "mutation"     | "one service with default definition and one service defined in schema and extension" | "service Foo {$fooService_mutation_in_schema $fooType $fooMutationExtension}"         | "service Bar {$barService_default_mutation $barType}"                                 | ["setFoo", "setFoo2", "setBar"]                          | _
+        "mutation"     | "both services with definition in schema"                                             | "service Foo {$fooService_mutation_in_schema $fooType}"                               | "service Bar {$barService_mutation_in_schema $barType}"                               | ["setFoo", "setBar"]                                     | _
+        "mutation"     | "both services with definition in schema and extension"                               | "service Foo {$fooService_mutation_in_schema $fooType $fooMutationExtension}"         | "service Bar {$barService_mutation_in_schema $barType $barMutationExtension}"         | ["setFoo", "setFoo2", "setBar", "setBar2"]               | _
+        "subscription" | "both services with default definition"                                               | "service Foo {$fooService_default_subscription $fooType}"                             | "service Bar {$barService_default_subscription $barType}"                             | ["subFoo", "subBar"]                                     | _
+        "subscription" | "one service with default definition and one service defined in schema"               | "service Foo {$fooService_subscription_in_schema $fooType}"                           | "service Bar {$barService_default_subscription $barType}"                             | ["subFoo", "subBar"]                                     | _
+        "subscription" | "one service with default definition and one service defined in schema and extension" | "service Foo {$fooService_subscription_in_schema $fooType $fooSubscriptionExtension}" | "service Bar {$barService_default_subscription $barType}"                             | ["subFoo", "subFoo2", "subBar"]                          | _
+        "subscription" | "both services with definition in schema"                                             | "service Foo {$fooService_subscription_in_schema $fooType}"                           | "service Bar {$barService_subscription_in_schema $barType}"                           | ["subFoo", "subBar"]                                     | _
+        "subscription" | "both services with definition in schema and extension"                               | "service Foo {$fooService_subscription_in_schema $fooType $fooSubscriptionExtension}" | "service Bar {$barService_subscription_in_schema $barType $barSubscriptionExtension}" | ["subFoo", "subFoo2", "subBar", "subBar2"]               | _
+        "directives"   | "both services"                                                                       | "service Foo {$fooService_with_directives $fooType }"                                 | "service Bar {$barService_with_directives $barType}"                                  | ["include", "skip", "deprecated", "cloudId", "cloudId2"] | _
     }
 }
