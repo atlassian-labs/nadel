@@ -72,7 +72,8 @@ public class Nadel {
     private final ExecutionIdProvider executionIdProvider;
     private final IntrospectionRunner introspectionRunner;
     private final DefinitionRegistry commonTypes;
-    private final WiringFactory wiringFactory;
+    private final WiringFactory overallWiringFactory;
+    private final WiringFactory underlyingWiringFactory;
 
     private Nadel(Reader nsdl,
                   ServiceExecutionFactory serviceExecutionFactory,
@@ -81,7 +82,8 @@ public class Nadel {
                   ExecutionIdProvider executionIdProvider,
                   IntrospectionRunner introspectionRunner,
                   ServiceExecutionHooks serviceExecutionHooks,
-                  WiringFactory wiringFactory) {
+                  WiringFactory overallWiringFactory,
+                  WiringFactory underlyingWiringFactory) {
         this.serviceExecutionFactory = serviceExecutionFactory;
         this.instrumentation = instrumentation;
         this.serviceExecutionHooks = serviceExecutionHooks;
@@ -90,7 +92,8 @@ public class Nadel {
 
         this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
         this.introspectionRunner = introspectionRunner;
-        this.wiringFactory = wiringFactory;
+        this.overallWiringFactory = overallWiringFactory;
+        this.underlyingWiringFactory = underlyingWiringFactory;
         this.services = createServices();
         this.commonTypes = createCommonTypes();
         this.overallSchema = createOverallSchema();
@@ -112,7 +115,7 @@ public class Nadel {
             ServiceExecution serviceExecution = this.serviceExecutionFactory.getServiceExecution(serviceName);
             TypeDefinitionRegistry underlyingTypeDefinitions = this.serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName);
 
-            GraphQLSchema underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(underlyingTypeDefinitions);
+            GraphQLSchema underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(underlyingTypeDefinitions, underlyingWiringFactory);
             DefinitionRegistry definitionRegistry = buildServiceRegistry(serviceDefinition);
 
             Service service = new Service(serviceName, underlyingSchema, serviceExecution, serviceDefinition, definitionRegistry);
@@ -127,7 +130,7 @@ public class Nadel {
         List<DefinitionRegistry> registries = this.services.stream()
                 .map(Service::getDefinitionRegistry)
                 .collect(toList());
-        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, wiringFactory);
+        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory);
         //
         // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
         // make direct use of them, we still have to map between them
@@ -159,7 +162,8 @@ public class Nadel {
         private PreparsedDocumentProvider preparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE;
         private ExecutionIdProvider executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER;
         private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
-        private WiringFactory wiringFactory = new NeverWiringFactory();
+        private WiringFactory overallWiringFactory = new NeverWiringFactory();
+        private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
 
 
         public Builder dsl(Reader nsdl) {
@@ -201,8 +205,13 @@ public class Nadel {
             return this;
         }
 
-        public Builder wiringFactory(WiringFactory wiringFactory) {
-            this.wiringFactory = requireNonNull(wiringFactory);
+        public Builder overallWiringFactory(WiringFactory wiringFactory) {
+            this.overallWiringFactory = requireNonNull(wiringFactory);
+            return this;
+        }
+
+        public Builder underlyingWiringFactory(WiringFactory wiringFactory) {
+            this.underlyingWiringFactory = requireNonNull(wiringFactory);
             return this;
         }
 
@@ -215,7 +224,8 @@ public class Nadel {
                     executionIdProvider,
                     introspectionRunner,
                     serviceExecutionHooks,
-                    wiringFactory);
+                    overallWiringFactory,
+                    underlyingWiringFactory);
         }
     }
 
