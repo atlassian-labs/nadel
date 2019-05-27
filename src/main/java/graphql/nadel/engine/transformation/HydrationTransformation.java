@@ -21,7 +21,6 @@ import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.BiFunction;
 
 import static graphql.Assert.assertShouldNeverHappen;
@@ -38,6 +37,7 @@ public class HydrationTransformation extends FieldTransformation {
 
     private FetchedValueAnalysisMapper fetchedValueAnalysisMapper = new FetchedValueAnalysisMapper();
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
+
 
     public HydrationTransformation(InnerServiceHydration innerServiceHydration) {
         this.innerServiceHydration = innerServiceHydration;
@@ -56,9 +56,7 @@ public class HydrationTransformation extends FieldTransformation {
                 "only object field arguments are supported at the moment");
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
-        Field newField = FieldUtils.pathToFields(hydrationSourceName);
-        String fieldId = UUID.randomUUID().toString();
-        newField = newField.transform(builder -> builder.additionalData(NADEL_FIELD_ID, fieldId));
+        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId());
         changeNode(context, newField);
         return TraversalControl.ABORT;
     }
@@ -69,6 +67,10 @@ public class HydrationTransformation extends FieldTransformation {
 
     @Override
     public TraversalControl unapplyResultNode(ExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+
+        // TODO: handle merged fields by extracting nodes handling transformed field and nodes which are not transformed
+
+
         // we can have a list of hydration inputs. E.g.: $source.userIds (this is a list of leafs)
         // or we can have a list of things inside the path: e.g.: $source.issues.userIds (this is a list of objects)
         if (transformedNode instanceof ListExecutionResultNode) {
@@ -85,12 +87,13 @@ public class HydrationTransformation extends FieldTransformation {
         LeafExecutionResultNode leafNode = getLeafNode(transformedNode);
         LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getFetchedValueAnalysis().getExecutionStepInfo(), leafNode, allTransformations, environment);
 
-        changeNode(environment.context, changedNode);
+        environment.unapplyNode.accept(changedNode);
         return TraversalControl.ABORT;
 
     }
 
     private TraversalControl handleListOfObjects(ListExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+        // if we have more merged fields than transformations
         // we handle here a list of objects with each object containing one node
         FetchedValueAnalysis fetchedValueAnalysis = transformedNode.getFetchedValueAnalysis();
 
@@ -103,9 +106,10 @@ public class HydrationTransformation extends FieldTransformation {
         });
 
         changedNode = changedNode.withNewFetchedValueAnalysis(mappedFVA);
-        changeNode(environment.context, changedNode);
+        environment.unapplyNode.accept(changedNode);
         return TraversalControl.ABORT;
     }
+
 
     private TraversalControl handleListOfLeafs(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
         FetchedValueAnalysis fetchedValueAnalysis = listExecutionResultNode.getFetchedValueAnalysis();
@@ -119,7 +123,7 @@ public class HydrationTransformation extends FieldTransformation {
             newChildren.add(newChild);
         }
         ExecutionResultNode changedNode = listExecutionResultNode.withNewFetchedValueAnalysis(mappedFVA).withNewChildren(newChildren);
-        changeNode(environment.context, changedNode);
+        environment.unapplyNode.accept(changedNode);
         return TraversalControl.ABORT;
     }
 

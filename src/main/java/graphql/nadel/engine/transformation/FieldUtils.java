@@ -25,10 +25,10 @@ public final class FieldUtils {
         return field.getAlias() != null ? field.getAlias() : field.getName();
     }
 
-    public static Field pathToFields(List<String> path) {
+    public static Field pathToFields(List<String> path, String nadelFieldId) {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
-            Field.Builder newField = Field.newField();
+            Field.Builder newField = Field.newField().additionalData(FieldTransformation.NADEL_FIELD_ID, nadelFieldId);
             if (curField != null) {
                 newField.selectionSet(newSelectionSet().selection(curField).build());
             }

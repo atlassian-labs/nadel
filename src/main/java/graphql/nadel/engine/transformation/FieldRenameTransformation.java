@@ -10,10 +10,8 @@ import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.FetchedValueAnalysisMapper;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.util.TraversalControl;
-import graphql.util.TreeTransformerUtil;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.function.BiFunction;
 
 import static graphql.util.TreeTransformerUtil.changeNode;
@@ -31,8 +29,9 @@ public class FieldRenameTransformation extends FieldTransformation {
     @Override
     public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
         super.apply(environment);
-        String fieldId = UUID.randomUUID().toString();
-        Field changedNode = environment.getField().transform(t -> t.name(mappingDefinition.getInputName()).additionalData(NADEL_FIELD_ID, fieldId));
+        Field changedNode = environment.getField().transform(t -> t
+                .name(mappingDefinition.getInputName())
+                .additionalData(NADEL_FIELD_ID, getFieldId()));
         return changeNode(environment.getTraverserContext(), changedNode);
     }
 
@@ -49,7 +48,8 @@ public class FieldRenameTransformation extends FieldTransformation {
         };
         FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
                 esiMapper);
-        return TreeTransformerUtil.changeNode(environment.context, executionResultNode.withNewFetchedValueAnalysis(mappedFVA));
+        environment.unapplyNode.accept(executionResultNode.withNewFetchedValueAnalysis(mappedFVA));
+        return TraversalControl.CONTINUE;
     }
 
 
