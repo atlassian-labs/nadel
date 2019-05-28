@@ -23,7 +23,6 @@ import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeMappingDefinition;
-import graphql.nadel.engine.transformation.CollapseTransformation;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
@@ -463,8 +462,6 @@ public class OverallQueryTransformer {
             return new FieldRenameTransformation(definition.getFieldMappingDefinition());
         } else if (definition.getInnerServiceHydration() != null) {
             return new HydrationTransformation(definition.getInnerServiceHydration());
-        } else if (definition.getCollapseDefinition() != null) {
-            return new CollapseTransformation(definition.getCollapseDefinition());
         } else {
             return assertShouldNeverHappen();
         }

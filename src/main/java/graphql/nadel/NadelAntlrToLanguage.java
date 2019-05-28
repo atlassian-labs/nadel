@@ -9,7 +9,6 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.UnionTypeDefinition;
-import graphql.nadel.dsl.CollapseDefinition;
 import graphql.nadel.dsl.CommonDefinition;
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
@@ -102,23 +101,16 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         } else if (ctx.underlyingServiceHydration() != null) {
             return new FieldTransformation(createUnderlyingServiceHydration(ctx.underlyingServiceHydration()),
                     getSourceLocation(ctx), new ArrayList<>());
-        } else if (ctx.collapseDefinition() != null) {
-            return new FieldTransformation(createCollapseDefinition(ctx.collapseDefinition()),
-                    getSourceLocation(ctx), new ArrayList<>());
         } else {
             return assertShouldNeverHappen();
         }
     }
 
     private FieldMappingDefinition createFieldMappingDefinition(StitchingDSLParser.FieldMappingDefinitionContext ctx) {
-        return new FieldMappingDefinition(ctx.name().getText(), getSourceLocation(ctx), new ArrayList<>());
+        List<String> path = map(ctx.name(), RuleContext::getText);
+        return new FieldMappingDefinition(path, getSourceLocation(ctx), new ArrayList<>());
     }
 
-    private CollapseDefinition createCollapseDefinition(StitchingDSLParser.CollapseDefinitionContext ctx) {
-        List<String> path = map(ctx.name(), RuleContext::getText);
-        CollapseDefinition collapseDefinition = new CollapseDefinition(path, getSourceLocation(ctx), getComments(ctx));
-        return collapseDefinition;
-    }
 
     private InnerServiceHydration createUnderlyingServiceHydration(StitchingDSLParser.UnderlyingServiceHydrationContext ctx) {
         String serviceName = ctx.serviceName().getText();

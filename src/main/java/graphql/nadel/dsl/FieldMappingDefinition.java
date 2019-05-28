@@ -15,15 +15,15 @@ import java.util.List;
 
 public class FieldMappingDefinition extends AbstractNode<FieldMappingDefinition> {
 
-    private final String inputName;
+    private final List<String> inputPath;
 
-    public FieldMappingDefinition(String inputName, SourceLocation sourceLocation, List<Comment> comments) {
+    public FieldMappingDefinition(List<String> inputPath, SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
-        this.inputName = inputName;
+        this.inputPath = inputPath;
     }
 
-    public String getInputName() {
-        return inputName;
+    public List<String> getInputPath() {
+        return inputPath;
     }
 
     @Override
