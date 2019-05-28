@@ -17,27 +17,17 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     private final FieldMappingDefinition fieldMappingDefinition;
     private final InnerServiceHydration innerServiceHydration;
-    private final CollapseDefinition collapseDefinition;
 
     public FieldTransformation(FieldMappingDefinition fieldMappingDefinition, SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.fieldMappingDefinition = fieldMappingDefinition;
         this.innerServiceHydration = null;
-        this.collapseDefinition = null;
     }
 
     public FieldTransformation(InnerServiceHydration innerServiceHydration, SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.fieldMappingDefinition = null;
         this.innerServiceHydration = innerServiceHydration;
-        this.collapseDefinition = null;
-    }
-
-    public FieldTransformation(CollapseDefinition collapseDefinition, SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments, IgnoredChars.EMPTY);
-        this.fieldMappingDefinition = null;
-        this.innerServiceHydration = null;
-        this.collapseDefinition = collapseDefinition;
     }
 
     public FieldMappingDefinition getFieldMappingDefinition() {
@@ -46,10 +36,6 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     public InnerServiceHydration getInnerServiceHydration() {
         return innerServiceHydration;
-    }
-
-    public CollapseDefinition getCollapseDefinition() {
-        return collapseDefinition;
     }
 
     @Override

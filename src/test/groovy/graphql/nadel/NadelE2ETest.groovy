@@ -360,7 +360,7 @@ class NadelE2ETest extends Specification {
         result.join().data == [node: [name: "My Issue"]]
     }
 
-    def "can collapse a field "() {
+    def "can rename a field with value along a path"() {
 
         def nsdl = '''
          service IssueService {
@@ -368,7 +368,7 @@ class NadelE2ETest extends Specification {
                 issue: Issue
             } 
             type Issue {
-                name: String => collapse from detail.detailName
+                name: String => renamed from detail.detailName
             }
          }
         '''

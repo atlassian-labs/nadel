@@ -24,7 +24,9 @@
               },
               "fieldTransformation": {
                 "fieldMappingDefinition": {
-                  "inputName": "fooId"
+                  "inputPath": [
+                    "fooId"
+                  ]
                 }
               }
             }
