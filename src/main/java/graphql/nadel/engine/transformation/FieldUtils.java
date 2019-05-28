@@ -38,7 +38,7 @@ public final class FieldUtils {
         return curField;
     }
 
-    public static LeafExecutionResultNode getLeafNode(ExecutionResultNode executionResultNode) {
+    public static LeafExecutionResultNode geFirstLeafNode(ExecutionResultNode executionResultNode) {
         ExecutionResultNode curNode = executionResultNode;
         while (curNode instanceof ObjectExecutionResultNode) {
             assertTrue(curNode.getChildren().size() == 1, "expecting one child ");

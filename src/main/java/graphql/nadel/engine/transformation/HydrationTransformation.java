@@ -26,7 +26,7 @@ import java.util.function.BiFunction;
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
-import static graphql.nadel.engine.transformation.FieldUtils.getLeafNode;
+import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
@@ -84,7 +84,7 @@ public class HydrationTransformation extends FieldTransformation {
             }
         }
 
-        LeafExecutionResultNode leafNode = getLeafNode(transformedNode);
+        LeafExecutionResultNode leafNode = geFirstLeafNode(transformedNode);
         LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getFetchedValueAnalysis().getExecutionStepInfo(), leafNode, allTransformations, environment);
 
         environment.unapplyNode.accept(changedNode);

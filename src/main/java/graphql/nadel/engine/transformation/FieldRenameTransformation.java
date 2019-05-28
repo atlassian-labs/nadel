@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
-import static graphql.nadel.engine.transformation.FieldUtils.getLeafNode;
+import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
@@ -65,7 +65,7 @@ public class FieldRenameTransformation extends FieldTransformation {
             environment.unapplyNode.accept(executionResultNode.withNewFetchedValueAnalysis(mappedFVA));
             return TraversalControl.CONTINUE;
         } else {
-            LeafExecutionResultNode leafExecutionResultNode = getLeafNode(executionResultNode);
+            LeafExecutionResultNode leafExecutionResultNode = geFirstLeafNode(executionResultNode);
             // path and type is still wrong here
             LeafExecutionResultNode leafNode = changeFieldInResultNode(leafExecutionResultNode, getOriginalField());
             changeNode(environment.context, leafNode);
