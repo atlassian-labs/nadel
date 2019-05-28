@@ -41,10 +41,10 @@ public final class FieldUtils {
     public static LeafExecutionResultNode getLeafNode(ExecutionResultNode executionResultNode) {
         ExecutionResultNode curNode = executionResultNode;
         while (curNode instanceof ObjectExecutionResultNode) {
-            assertTrue(curNode.getChildren().size() == 1, "expecting one child along the collapse path");
+            assertTrue(curNode.getChildren().size() == 1, "expecting one child ");
             curNode = curNode.getChildren().get(0);
         }
-        assertTrue(curNode instanceof LeafExecutionResultNode, "expecting only object results and at the end one leaf result along the collapse path");
+        assertTrue(curNode instanceof LeafExecutionResultNode, "expecting only object results and at the end one leaf");
         return (LeafExecutionResultNode) curNode;
     }
 

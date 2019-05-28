@@ -158,7 +158,7 @@ class NadelExecutionStrategyTest extends Specification {
             type Foo {
                 id: ID
                 bar: Bar => hydrated from service2.barById(id: $source.barId)
-                barCollapsed: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)
+                barLongerInput: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)
             }
         }
         service service2 {
@@ -297,7 +297,7 @@ class NadelExecutionStrategyTest extends Specification {
         resultData(response) == [foo: [bar: [name: "Bar1"]]]
     }
 
-    def "one hydration call with collapsed arguments"() {
+    def "one hydration call with input value having longer path"() {
         given:
         def hydrationService1 = new Service("service1", underlyingHydrationSchema1, service1Execution, serviceDefinition, definitionRegistry)
         def hydrationService2 = new Service("service2", underlyingHydrationSchema2, service2Execution, serviceDefinition, definitionRegistry)
@@ -308,7 +308,7 @@ class NadelExecutionStrategyTest extends Specification {
 
 
         def query = '''
-            query { foo { barCollapsed  { name } } } 
+            query { foo { barLongerInput  { name } } } 
         '''
         def expectedQuery1 = 'query nadel_2_service1 {foo {fooDetails {externalBarId}}}'
         def response1 = new ServiceExecutionResult([foo: [fooDetails: [externalBarId: "barId"]]])
@@ -333,10 +333,10 @@ class NadelExecutionStrategyTest extends Specification {
             printAstCompact(sep.query) == expectedQuery2
         }) >> CompletableFuture.completedFuture(response2)
 
-        resultData(response) == [foo: [barCollapsed: [name: "Bar1"]]]
+        resultData(response) == [foo: [barLongerInput: [name: "Bar1"]]]
     }
 
-    def "one hydration call with collapsed arguments and same named overall field"() {
+    def "one hydration call with longer input path and same named overall field"() {
         given:
         def issueSchema = TestUtil.schema("""
         type Query {
@@ -427,7 +427,7 @@ class NadelExecutionStrategyTest extends Specification {
 
     }
 
-    def "one hydration call with collapsed arguments and merged fields"() {
+    def "one hydration call with longer input path arguments and merged fields"() {
         given:
         def issueSchema = TestUtil.schema("""
         type Query {
