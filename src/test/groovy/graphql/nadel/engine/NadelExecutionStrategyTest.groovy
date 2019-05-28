@@ -336,7 +336,8 @@ class NadelExecutionStrategyTest extends Specification {
         resultData(response) == [foo: [barLongerInput: [name: "Bar1"]]]
     }
 
-    def "one hydration call with longer input path and same named overall field"() {
+
+    def "one hydration call with longer path and same named overall field"() {
         given:
         def issueSchema = TestUtil.schema("""
         type Query {
@@ -427,7 +428,7 @@ class NadelExecutionStrategyTest extends Specification {
 
     }
 
-    def "one hydration call with longer input path arguments and merged fields"() {
+    def "one hydration call with longer path arguments and merged fields"() {
         given:
         def issueSchema = TestUtil.schema("""
         type Query {
@@ -786,6 +787,102 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> CompletableFuture.completedFuture(response4)
 
         resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar3"], [id: "barId3", name: "Bar4"]]]]
+    }
+
+    def "rename with first path element returning null"() {
+
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue : Issue
+        }
+        type Issue {
+            details: IssueDetails
+        }
+        type IssueDetails {
+            name: String
+        }
+        """)
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issue: Issue
+            }
+            type Issue {
+                name: String => renamed from details.name
+            }
+        }
+        ''')
+        def issueFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issue")
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issueFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = "{issue {name}}"
+        def expectedQuery1 = "query nadel_2_Issues {issue {details {name}}}"
+        def response1 = new ServiceExecutionResult([issue: [details: null]])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> CompletableFuture.completedFuture(response1)
+
+        resultData(response) == [issue: [name: null]]
+    }
+
+    def "rename with first last path element returning null"() {
+
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue : Issue
+        }
+        type Issue {
+            details: IssueDetails
+        }
+        type IssueDetails {
+            name: String
+        }
+        """)
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issue: Issue
+            }
+            type Issue {
+                name: String => renamed from details.name
+            }
+        }
+        ''')
+        def issueFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issue")
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issueFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = "{issue {name}}"
+        def expectedQuery1 = "query nadel_2_Issues {issue {details {name}}}"
+        def response1 = new ServiceExecutionResult([issue: [details: [name: null]]])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> CompletableFuture.completedFuture(response1)
+
+        resultData(response) == [issue: [name: null]]
     }
 
     def "hydration list with batching"() {
