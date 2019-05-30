@@ -6,13 +6,13 @@ import java.util.Objects;
 
 
 @Internal
-public class NadelTuple2<T1, T2> {
+public class TuplesTwo<T1, T2> {
 
 
     private final T1 t1;
     private final T2 t2;
 
-    NadelTuple2(T1 t1, T2 t2) {
+    TuplesTwo(T1 t1, T2 t2) {
         this.t1 = t1;
         this.t2 = t2;
     }
@@ -34,9 +34,9 @@ public class NadelTuple2<T1, T2> {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        NadelTuple2<?, ?> nadelTuple2 = (NadelTuple2<?, ?>) o;
-        return Objects.equals(t1, nadelTuple2.t1) &&
-                Objects.equals(t2, nadelTuple2.t2);
+        TuplesTwo<?, ?> tuplesTwo = (TuplesTwo<?, ?>) o;
+        return Objects.equals(t1, tuplesTwo.t1) &&
+                Objects.equals(t2, tuplesTwo.t2);
     }
 
     @Override
@@ -47,7 +47,7 @@ public class NadelTuple2<T1, T2> {
 
     @Override
     public String toString() {
-        return "NadelTuple2{" +
+        return "TuplesTwo{" +
                 "t1=" + t1 +
                 ", t2=" + t2 +
                 '}';

@@ -7,8 +7,8 @@ import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Field;
-import graphql.nadel.NadelTuple2;
 import graphql.nadel.Tuples;
+import graphql.nadel.TuplesTwo;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLSchema;
@@ -66,7 +66,7 @@ public class ServiceResultNodesToOverallResult {
                     }
 
                     TraversalControl traversalControl = TraversalControl.CONTINUE;
-                    NadelTuple2<List<FieldTransformation>, List<Field>> transformationsAndNotTransformedFields =
+                    TuplesTwo<List<FieldTransformation>, List<Field>> transformationsAndNotTransformedFields =
                             getTransformationsAndNotTransformedFields(node.getMergedField(), transformationMap);
                     List<FieldTransformation> transformations = transformationsAndNotTransformedFields.getT1();
                     List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
@@ -105,7 +105,7 @@ public class ServiceResultNodesToOverallResult {
 
         //TODO: This is not great that we need to handle Hydrations in a special way here by splitting merged fields up again
         if (transformation instanceof HydrationTransformation) {
-            NadelTuple2<ExecutionResultNode, ExecutionResultNode> splittedNodes = splitNodes(node);
+            TuplesTwo<ExecutionResultNode, ExecutionResultNode> splittedNodes = splitNodes(node);
             ExecutionResultNode nodesWithTransformedFields = splittedNodes.getT1();
             ExecutionResultNode nodesWithoutTransformedFields = splittedNodes.getT2();
             if (nodesWithoutTransformedFields != null) {
@@ -119,7 +119,7 @@ public class ServiceResultNodesToOverallResult {
         return traversalControl;
     }
 
-    private NadelTuple2<ExecutionResultNode, ExecutionResultNode> splitNodes(ExecutionResultNode executionResultNode) {
+    private TuplesTwo<ExecutionResultNode, ExecutionResultNode> splitNodes(ExecutionResultNode executionResultNode) {
 
         if (executionResultNode instanceof RootExecutionResultNode) {
             return Tuples.of(executionResultNode, null);
@@ -179,7 +179,7 @@ public class ServiceResultNodesToOverallResult {
         TreeTransformerUtil.changeNode(environment.context, node.withNewFetchedValueAnalysis(mappedFetchedValueAnalysis));
     }
 
-    private NadelTuple2<List<FieldTransformation>, List<Field>> getTransformationsAndNotTransformedFields(MergedField mergedField, Map<String, FieldTransformation> transformationMap) {
+    private TuplesTwo<List<FieldTransformation>, List<Field>> getTransformationsAndNotTransformedFields(MergedField mergedField, Map<String, FieldTransformation> transformationMap) {
         String prevFieldId = null;
         List<FieldTransformation> transformations = new ArrayList<>();
         List<Field> notTransformedFields = new ArrayList<>();

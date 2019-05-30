@@ -66,7 +66,6 @@ public class FieldRenameTransformation extends FieldTransformation {
             return TraversalControl.CONTINUE;
         } else {
             LeafExecutionResultNode leafExecutionResultNode = geFirstLeafNode(executionResultNode);
-            // path and type is still wrong here
             LeafExecutionResultNode leafNode = changeFieldInResultNode(leafExecutionResultNode, getOriginalField());
             changeNode(environment.context, leafNode);
             return TraversalControl.ABORT;
