@@ -37,7 +37,7 @@ typeTransformation : '=>' typeMappingDefinition;
 //
 typeMappingDefinition : 'renamed from' name;
 
-fieldMappingDefinition : 'renamed from' name ('.'name)*;
+fieldMappingDefinition : 'renamed from' name ('.'name)?;
 
 //
 // hydration
@@ -55,7 +55,7 @@ remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 remoteArgumentPair : name ':' remoteArgumentSource ;
 
 
-sourceObjectReference : '$source' '.' name ('.'name)*;
+sourceObjectReference : '$source' '.' name ('.'name)?;
 
 fieldArgumentReference : '$argument' '.' name ;
 

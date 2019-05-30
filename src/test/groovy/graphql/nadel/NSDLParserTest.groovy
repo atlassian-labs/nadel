@@ -1,5 +1,6 @@
 package graphql.nadel
 
+import graphql.parser.InvalidSyntaxException
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import spock.lang.Specification
 
@@ -7,6 +8,44 @@ import static graphql.nadel.testutils.TestUtil.astAsMap
 import static graphql.nadel.testutils.TestUtil.expectedJson
 
 class NSDLParserTest extends Specification {
+
+
+    def "rename with more than one level is not allowed"() {
+        given:
+        def simpleDSL = """
+        service Foo {
+            type Query {
+                hello: String => renamed from detail.subDetail.hello
+            }
+        }
+       """
+        NSDLParser parser = new NSDLParser()
+        when:
+        parser.parseDSL(simpleDSL)
+
+        then:
+        thrown(InvalidSyntaxException)
+
+    }
+
+    def "hydration with more than one level is not allowed"() {
+        given:
+        def simpleDSL = """
+        service Foo {
+            type Query {
+                 id(inputArg: ID!): ID => hydrated from OtherService.resolveId(otherId: \$source.detail.subDetail.id)
+
+            }
+        }
+       """
+        NSDLParser parser = new NSDLParser()
+        when:
+        parser.parseDSL(simpleDSL)
+
+        then:
+        thrown(InvalidSyntaxException)
+
+    }
 
     def "simple service definition"() {
         given:
