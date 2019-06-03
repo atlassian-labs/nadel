@@ -14,7 +14,7 @@ import graphql.schema.idl.WiringFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +33,7 @@ public class OverallSchemaGenerator {
 
     private TypeDefinitionRegistry createTypeRegistry(List<DefinitionRegistry> serviceRegistries, DefinitionRegistry commonTypes) {
         //TODO: this merging not completely correct for example schema definition nodes are not handled correctly
-        Map<Operation, List<FieldDefinition>> fieldsMapByType = new HashMap<>();
+        Map<Operation, List<FieldDefinition>> fieldsMapByType = new LinkedHashMap<>();
         Arrays.stream(Operation.values()).forEach(
                 value -> fieldsMapByType.put(value, new ArrayList<>()));
 
@@ -46,7 +46,10 @@ public class OverallSchemaGenerator {
         collectTypes(fieldsMapByType, allDefinitions, commonTypes);
 
         fieldsMapByType.keySet().forEach(key -> {
-            overallRegistry.add(newObjectTypeDefinition().name(key.getDisplayName()).fieldDefinitions(fieldsMapByType.get(key)).build());
+            List<FieldDefinition> fields = fieldsMapByType.get(key);
+            if (fields.size() > 0) {
+                overallRegistry.add(newObjectTypeDefinition().name(key.getDisplayName()).fieldDefinitions(fields).build());
+            }
         });
 
         allDefinitions.forEach(overallRegistry::add);

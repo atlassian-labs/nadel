@@ -47,10 +47,17 @@ class OverallSchemaGeneratorTest extends Specification {
            type Mutation{
                 setFoo(name:String): Foo
            } 
+           type Query {
+                hello: String 
+           }
     """
     static def fooService_mutation_in_schema = """
            schema {
               mutation: fooMutation
+              query: Query
+           }
+           type Query {
+              foo: String
            }
            type fooMutation{
                 setFoo(name:String): Foo
@@ -65,10 +72,17 @@ class OverallSchemaGeneratorTest extends Specification {
            type Subscription{
                 subFoo: Foo
            } 
+           type Query {
+                foo: String
+            }
     """
     static def fooService_subscription_in_schema = """
            schema {
               subscription: fooSubscription
+              query: MyQuery
+           }
+           type MyQuery {
+             foo: String
            }
            type fooSubscription{
                 subFoo: Foo
@@ -182,5 +196,25 @@ class OverallSchemaGeneratorTest extends Specification {
         "subscription" | "both services with definition in schema"                                             | "service Foo {$fooService_subscription_in_schema $fooType}"                           | "service Bar {$barService_subscription_in_schema $barType}"                           | ["subFoo", "subBar"]                                     | _
         "subscription" | "both services with definition in schema and extension"                               | "service Foo {$fooService_subscription_in_schema $fooType $fooSubscriptionExtension}" | "service Bar {$barService_subscription_in_schema $barType $barSubscriptionExtension}" | ["subFoo", "subFoo2", "subBar", "subBar2"]               | _
         "directives"   | "both services"                                                                       | "service Foo {$fooService_with_directives $fooType }"                                 | "service Bar {$barService_with_directives $barType}"                                  | ["include", "skip", "deprecated", "cloudId", "cloudId2"] | _
+    }
+
+
+    def "doesn't contain empty Mutation or Subscription"() {
+        when:
+        def schema = TestUtil.schemaFromNdsl("service Foo { type Query{hello:String}}")
+
+        then:
+        schema.getMutationType() == null
+        schema.getSubscriptionType() == null
+
+    }
+
+    def "doesn't contain empty Subscription"() {
+        when:
+        def schema = TestUtil.schemaFromNdsl("service Foo { type Query{hello:String} type Mutation{hello:String}}")
+
+        then:
+        schema.getSubscriptionType() == null
+
     }
 }
