@@ -60,12 +60,8 @@ public class Nadel {
     private final StitchingDsl stitchingDsl;
     private final ServiceExecutionFactory serviceExecutionFactory;
     private final NSDLParser NSDLParser = new NSDLParser();
-    private OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
-
     private final List<Service> services;
-
     private final GraphQLSchema overallSchema;
-
     private final NadelInstrumentation instrumentation;
     private final ServiceExecutionHooks serviceExecutionHooks;
     private final PreparsedDocumentProvider preparsedDocumentProvider;
@@ -74,6 +70,7 @@ public class Nadel {
     private final DefinitionRegistry commonTypes;
     private final WiringFactory overallWiringFactory;
     private final WiringFactory underlyingWiringFactory;
+    private final OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
 
     private Nadel(Reader nsdl,
                   ServiceExecutionFactory serviceExecutionFactory,
@@ -145,91 +142,6 @@ public class Nadel {
         return overallSchema;
     }
 
-    /**
-     * @return a builder of Nadel objects
-     */
-    public static Builder newNadel() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private Reader nsdl;
-        private ServiceExecutionFactory serviceExecutionFactory;
-        private NadelInstrumentation instrumentation = new NadelInstrumentation() {
-        };
-        private ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {
-        };
-        private PreparsedDocumentProvider preparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE;
-        private ExecutionIdProvider executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER;
-        private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
-        private WiringFactory overallWiringFactory = new NeverWiringFactory();
-        private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
-
-
-        public Builder dsl(Reader nsdl) {
-            this.nsdl = requireNonNull(nsdl);
-            return this;
-        }
-
-        public Builder dsl(String nsdl) {
-            return dsl(new StringReader(requireNonNull(nsdl)));
-        }
-
-        public Builder serviceExecutionFactory(ServiceExecutionFactory serviceExecutionFactory) {
-            this.serviceExecutionFactory = serviceExecutionFactory;
-            return this;
-        }
-
-        public Builder instrumentation(NadelInstrumentation instrumentation) {
-            this.instrumentation = requireNonNull(instrumentation);
-            return this;
-        }
-
-        public Builder preparsedDocumentProvider(PreparsedDocumentProvider preparsedDocumentProvider) {
-            this.preparsedDocumentProvider = requireNonNull(preparsedDocumentProvider);
-            return this;
-        }
-
-        public Builder executionIdProvider(ExecutionIdProvider executionIdProvider) {
-            this.executionIdProvider = requireNonNull(executionIdProvider);
-            return this;
-        }
-
-        public Builder introspectionRunner(IntrospectionRunner introspectionRunner) {
-            this.introspectionRunner = requireNonNull(introspectionRunner);
-            return this;
-        }
-
-        public Builder serviceExecutionHooks(ServiceExecutionHooks serviceExecutionHooks) {
-            this.serviceExecutionHooks = requireNonNull(serviceExecutionHooks);
-            return this;
-        }
-
-        public Builder overallWiringFactory(WiringFactory wiringFactory) {
-            this.overallWiringFactory = requireNonNull(wiringFactory);
-            return this;
-        }
-
-        public Builder underlyingWiringFactory(WiringFactory wiringFactory) {
-            this.underlyingWiringFactory = requireNonNull(wiringFactory);
-            return this;
-        }
-
-        public Nadel build() {
-            return new Nadel(
-                    nsdl,
-                    serviceExecutionFactory,
-                    instrumentation,
-                    preparsedDocumentProvider,
-                    executionIdProvider,
-                    introspectionRunner,
-                    serviceExecutionHooks,
-                    overallWiringFactory,
-                    underlyingWiringFactory);
-        }
-    }
-
-
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput.Builder nadelExecutionInput) {
         return execute(nadelExecutionInput.build());
     }
@@ -244,6 +156,7 @@ public class Nadel {
                 .operationName(nadelExecutionInput.getOperationName())
                 .context(nadelExecutionInput.getContext())
                 .variables(nadelExecutionInput.getVariables())
+                .executionId(nadelExecutionInput.getExecutionId())
                 .build();
 
         try {
@@ -347,9 +260,97 @@ public class Nadel {
         String operationName = executionInput.getOperationName();
         Object context = executionInput.getContext();
 
-        ExecutionId executionId = executionIdProvider.provide(query, operationName, context);
+        ExecutionId executionId = executionInput.getExecutionId();
+        if (executionId == null) {
+            executionId = executionIdProvider.provide(query, operationName, context);
+        }
+
         Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner, serviceExecutionHooks);
 
         return execution.execute(executionInput, document, executionId, instrumentationState, artificialFieldsUUID);
+    }
+
+    /**
+     * @return a builder of Nadel objects
+     */
+    public static Builder newNadel() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private Reader nsdl;
+        private ServiceExecutionFactory serviceExecutionFactory;
+        private NadelInstrumentation instrumentation = new NadelInstrumentation() {
+        };
+        private ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {
+        };
+        private PreparsedDocumentProvider preparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE;
+        private ExecutionIdProvider executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER;
+        private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
+        private WiringFactory overallWiringFactory = new NeverWiringFactory();
+        private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
+
+
+        public Builder dsl(Reader nsdl) {
+            this.nsdl = requireNonNull(nsdl);
+            return this;
+        }
+
+        public Builder dsl(String nsdl) {
+            return dsl(new StringReader(requireNonNull(nsdl)));
+        }
+
+        public Builder serviceExecutionFactory(ServiceExecutionFactory serviceExecutionFactory) {
+            this.serviceExecutionFactory = serviceExecutionFactory;
+            return this;
+        }
+
+        public Builder instrumentation(NadelInstrumentation instrumentation) {
+            this.instrumentation = requireNonNull(instrumentation);
+            return this;
+        }
+
+        public Builder preparsedDocumentProvider(PreparsedDocumentProvider preparsedDocumentProvider) {
+            this.preparsedDocumentProvider = requireNonNull(preparsedDocumentProvider);
+            return this;
+        }
+
+        public Builder executionIdProvider(ExecutionIdProvider executionIdProvider) {
+            this.executionIdProvider = requireNonNull(executionIdProvider);
+            return this;
+        }
+
+        public Builder introspectionRunner(IntrospectionRunner introspectionRunner) {
+            this.introspectionRunner = requireNonNull(introspectionRunner);
+            return this;
+        }
+
+        public Builder serviceExecutionHooks(ServiceExecutionHooks serviceExecutionHooks) {
+            this.serviceExecutionHooks = requireNonNull(serviceExecutionHooks);
+            return this;
+        }
+
+        public Builder overallWiringFactory(WiringFactory wiringFactory) {
+            this.overallWiringFactory = requireNonNull(wiringFactory);
+            return this;
+        }
+
+        public Builder underlyingWiringFactory(WiringFactory wiringFactory) {
+            this.underlyingWiringFactory = requireNonNull(wiringFactory);
+            return this;
+        }
+
+        public Nadel build() {
+            return new Nadel(
+                    nsdl,
+                    serviceExecutionFactory,
+                    instrumentation,
+                    preparsedDocumentProvider,
+                    executionIdProvider,
+                    introspectionRunner,
+                    serviceExecutionHooks,
+                    overallWiringFactory,
+                    underlyingWiringFactory);
+        }
     }
 }

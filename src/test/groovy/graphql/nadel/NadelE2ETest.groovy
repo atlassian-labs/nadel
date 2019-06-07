@@ -2,6 +2,8 @@ package graphql.nadel
 
 import graphql.ErrorType
 import graphql.GraphQLError
+import graphql.execution.ExecutionId
+import graphql.execution.ExecutionIdProvider
 import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
 
@@ -412,6 +414,65 @@ class NadelE2ETest extends Specification {
             printAstCompact(params.query) == "query nadel_2_IssueService {issue {detail {detailName}}}"
         }) >> completedFuture(serviceExecutionResult)
         result.join().data == [issue: [name: "My Issue"]]
+    }
+
+    ExecutionIdProvider idProvider = new ExecutionIdProvider() {
+        @Override
+        ExecutionId provide(String queryStr, String operationName, Object context) {
+            return ExecutionId.from("fromProvider")
+        }
+    }
+
+    def "executionId is transferred from input"() {
+        given:
+        def query = '''
+        query { hello {name} hello {id} }
+        '''
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .executionIdProvider(idProvider)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .executionId(ExecutionId.from("fromInput"))
+                .build()
+        when:
+        nadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            assert params.executionId == ExecutionId.from("fromInput")
+            completedFuture(new ServiceExecutionResult([:]))
+        }
+    }
+
+
+    def "executionId is transferred from provider if missing in input"() {
+        given:
+        def query = '''
+        query { hello {name} hello {id} }
+        '''
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .executionIdProvider(idProvider)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+        when:
+        nadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            assert params.executionId == ExecutionId.from("fromProvider")
+            completedFuture(new ServiceExecutionResult([:]))
+        }
     }
 
 }

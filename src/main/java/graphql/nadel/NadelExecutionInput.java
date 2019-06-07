@@ -1,6 +1,7 @@
 package graphql.nadel;
 
 import graphql.PublicApi;
+import graphql.execution.ExecutionId;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -16,13 +17,19 @@ public class NadelExecutionInput {
     private final Object context;
     private final Map<String, Object> variables;
     private final String artificialFieldsUUID;
+    private final ExecutionId executionId;
 
-    private NadelExecutionInput(String query, String operationName, Object context, Map<String, Object> variables, String artificialFieldsUUID) {
+    private NadelExecutionInput(String query, String operationName, Object context, Map<String, Object> variables, String artificialFieldsUUID, ExecutionId executionId) {
         this.query = requireNonNull(query);
         this.operationName = operationName;
         this.context = context;
         this.variables = requireNonNull(variables);
         this.artificialFieldsUUID = artificialFieldsUUID;
+        this.executionId = executionId;
+    }
+
+    public static Builder newNadelExecutionInput() {
+        return new Builder();
     }
 
     public String getQuery() {
@@ -45,8 +52,11 @@ public class NadelExecutionInput {
         return new LinkedHashMap<>(variables);
     }
 
-    public static Builder newNadelExecutionInput() {
-        return new Builder();
+    /**
+     * @return Id that will be/was used to execute this operation.
+     */
+    public ExecutionId getExecutionId() {
+        return executionId;
     }
 
     public static class Builder {
@@ -55,6 +65,7 @@ public class NadelExecutionInput {
         private Object context = newContext().build();
         private Map<String, Object> variables = new LinkedHashMap<>();
         private String artificialFieldsUUID;
+        private ExecutionId executionId;
 
         private Builder() {
         }
@@ -79,13 +90,18 @@ public class NadelExecutionInput {
             return this;
         }
 
+        public Builder executionId(ExecutionId executionId) {
+            this.executionId = executionId;
+            return this;
+        }
+
         public Builder artificialFieldsUUID(String artificialFieldsUUID) {
             this.artificialFieldsUUID = artificialFieldsUUID;
             return this;
         }
 
         public NadelExecutionInput build() {
-            return new NadelExecutionInput(query, operationName, context, variables, artificialFieldsUUID);
+            return new NadelExecutionInput(query, operationName, context, variables, artificialFieldsUUID, executionId);
         }
 
     }
