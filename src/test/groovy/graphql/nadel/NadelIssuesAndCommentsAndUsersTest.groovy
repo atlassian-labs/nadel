@@ -57,6 +57,10 @@ class NadelIssuesAndCommentsAndUsersTest extends Specification {
 
     }
 
+    def instrumentation = new CapturingInstrumentation()
+    def chainedInstrumentation = new ChainedNadelInstrumentation([instrumentation, new TracingInstrumentation()])
+
+
     def "basic execution with hydration"() {
         given:
         def query = '''
@@ -79,8 +83,6 @@ class NadelIssuesAndCommentsAndUsersTest extends Specification {
         }
         '''
 
-        def instrumentation = new CapturingInstrumentation()
-        def chainedInstrumentation = new ChainedNadelInstrumentation([instrumentation, new TracingInstrumentation()])
 
         def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
 
@@ -142,5 +144,42 @@ class NadelIssuesAndCommentsAndUsersTest extends Specification {
 
         def completed = instrumentation.completed.keySet().sort()
         completed == expectedList
+    }
+
+    def "BUG FIX - underscore typename and tracing can worked as expected"() {
+
+        given:
+        def query = '''
+        {
+            issues {
+                key
+                __typename
+                reporter {
+                    displayName
+                    __typename
+                }
+            }
+        }
+        '''
+
+
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
+
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .instrumentation(chainedInstrumentation)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .build()
+
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
+        then:
+        result.errors.isEmpty()
+
+        result.data == [issues: [
+                [key: "WORK-I1", __typename: "Issue", reporter: [displayName: "Display name of fred", __typename: "User"]],
+                [key: "WORK-I2", __typename: "Issue", reporter: [displayName: "Display name of zed", __typename: "User"]],
+        ]]
     }
 }

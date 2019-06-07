@@ -3,6 +3,7 @@ package graphql.nadel.engine;
 import graphql.Assert;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
+import graphql.introspection.Introspection;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
@@ -38,7 +39,7 @@ public class ExecutionStepInfoMapper {
         GraphQLObjectType mappedFieldContainer = overallSchema.getObjectType(fieldContainerName);
         assertNotNull(mappedFieldContainer, "no type " + fieldContainerName + " found in overall schema");
         GraphQLOutputType mappedFieldType = mapFieldType(fieldType, overallSchema, typeRenameMappings);
-        GraphQLFieldDefinition mappedFieldDefinition = mappedFieldContainer.getFieldDefinition(fieldName);
+        GraphQLFieldDefinition mappedFieldDefinition = Introspection.getFieldDef(overallSchema,mappedFieldContainer,fieldName);
 
         ExecutionPath mappedPath = pathMapper.mapPath(executionStepInfo, executionStepInfo.getField(), environment);
 
