@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Assert;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.FetchedValueAnalysis;
@@ -14,6 +15,7 @@ import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLSchema;
+import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
@@ -78,7 +80,6 @@ public class ServiceResultNodesToOverallResult {
                     List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
 
                     UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(
-                            context,
                             parentStepInfo,
                             isHydrationTransformation,
                             batched,
@@ -87,9 +88,9 @@ public class ServiceResultNodesToOverallResult {
                             notTransformedFields
                     );
                     if (transformations.size() == 0) {
-                        defaultMapping(node, unapplyEnvironment);
+                        defaultMapping(node, unapplyEnvironment, context);
                     } else {
-                        traversalControl = unapplyTransformations(node, transformations, unapplyEnvironment, transformationMap);
+                        traversalControl = unapplyTransformations(node, transformations, unapplyEnvironment, transformationMap, context);
                     }
                     ExecutionResultNode convertedNode = context.thisNode();
                     if (!(convertedNode instanceof LeafExecutionResultNode)) {
@@ -105,47 +106,99 @@ public class ServiceResultNodesToOverallResult {
         }
     }
 
-    private TraversalControl unapplyTransformations(ExecutionResultNode node, List<FieldTransformation> transformations, UnapplyEnvironment unapplyEnvironment, Map<String, FieldTransformation> transformationMap) {
+    private TraversalControl unapplyTransformations(ExecutionResultNode node,
+                                                    List<FieldTransformation> transformations,
+                                                    UnapplyEnvironment unapplyEnvironment,
+                                                    Map<String, FieldTransformation> transformationMap,
+                                                    TraverserContext<ExecutionResultNode> context) {
 
         TraversalControl traversalControl;
 
         FieldTransformation transformation = transformations.get(0);
 
         if (transformation instanceof HydrationTransformation) {
-            TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, transformationMap);
-            ExecutionResultNode withoutTransformedFields = splittedNodes.getT1();
-            assertTrue(splittedNodes.getT2().size() == 1, "only one split tree expected atm");
-            ExecutionResultNode nodesWithTransformedFields = graphql.nadel.util.FpKit.getSingleMapValue(splittedNodes.getT2());
-            if (withoutTransformedFields != null) {
-                unapplyEnvironment.treeIsSplit = true;
-                defaultMapping(withoutTransformedFields, unapplyEnvironment);
-            }
-            traversalControl = assertNotNull(transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment));
+            traversalControl = unapplyHydration(node, transformations, unapplyEnvironment, transformationMap, transformation, context);
         } else if (transformation instanceof FieldRenameTransformation) {
-
-            Map<AbstractNode, List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
-
-            TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, transformationMap);
-            ExecutionResultNode withoutTransformedFields = splittedNodes.getT1();
-            Map<AbstractNode, ExecutionResultNode> nodesWithTransformedFields = splittedNodes.getT2();
-            if (withoutTransformedFields != null) {
-                unapplyEnvironment.treeIsSplit = true;
-                defaultMapping(withoutTransformedFields, unapplyEnvironment);
-            }
-            traversalControl = TraversalControl.CONTINUE;
-            boolean first = true;
-            for (AbstractNode definition : nodesWithTransformedFields.keySet()) {
-                List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
-                traversalControl = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
-                if (first) {
-                    unapplyEnvironment.treeIsSplit = true;
-                    first = false;
-                }
-            }
+            traversalControl = unapplyFieldRename(node, transformations, unapplyEnvironment, transformationMap, context);
         } else {
-            traversalControl = assertNotNull(transformation.unapplyResultNode(node, transformations, unapplyEnvironment));
+            return Assert.assertShouldNeverHappen("Unexpected transformation type " + transformation);
         }
         return traversalControl;
+    }
+
+    private TraversalControl unapplyFieldRename(ExecutionResultNode node,
+                                                List<FieldTransformation> transformations,
+                                                UnapplyEnvironment unapplyEnvironment,
+                                                Map<String, FieldTransformation> transformationMap,
+                                                TraverserContext<ExecutionResultNode> context) {
+        Map<AbstractNode, List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
+
+        TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, transformationMap);
+        ExecutionResultNode notTransformedTree = splittedNodes.getT1();
+        Map<AbstractNode, ExecutionResultNode> nodesWithTransformedFields = splittedNodes.getT2();
+
+        List<FieldTransformation.UnapplyResult> unapplyResults = new ArrayList<>();
+        for (AbstractNode definition : nodesWithTransformedFields.keySet()) {
+            List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
+            FieldTransformation.UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
+            unapplyResults.add(unapplyResult);
+        }
+        if (notTransformedTree != null) {
+            defaultMapping(notTransformedTree, unapplyEnvironment, context);
+            for (FieldTransformation.UnapplyResult unapplyResult : unapplyResults) {
+                TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
+            }
+            return TraversalControl.CONTINUE;
+        }
+
+        FieldTransformation.UnapplyResult continueResult = FpKit.findOneOrNull(unapplyResults, unapplyResult -> unapplyResult.getTraversalControl() == TraversalControl.CONTINUE);
+
+        if (continueResult != null) {
+            TreeTransformerUtil.changeNode(context, continueResult.getNode());
+            for (FieldTransformation.UnapplyResult unapplyResult : unapplyResults) {
+                if (unapplyResult == continueResult) {
+                    continue;
+                }
+                TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
+            }
+            return TraversalControl.CONTINUE;
+        }
+
+        boolean first = true;
+        for (FieldTransformation.UnapplyResult unapplyResult : unapplyResults) {
+            if (first) {
+                TreeTransformerUtil.changeNode(context, unapplyResult.getNode());
+                first = false;
+                continue;
+            }
+            TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
+        }
+        return TraversalControl.ABORT;
+
+    }
+
+    private TraversalControl unapplyHydration(ExecutionResultNode node,
+                                              List<FieldTransformation> transformations,
+                                              UnapplyEnvironment unapplyEnvironment,
+                                              Map<String, FieldTransformation> transformationMap,
+                                              FieldTransformation transformation,
+                                              TraverserContext<ExecutionResultNode> context
+    ) {
+        TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, transformationMap);
+        ExecutionResultNode withoutTransformedFields = splittedNodes.getT1();
+        assertTrue(splittedNodes.getT2().size() == 1, "only one split tree expected atm");
+        ExecutionResultNode nodesWithTransformedFields = graphql.nadel.util.FpKit.getSingleMapValue(splittedNodes.getT2());
+
+        FieldTransformation.UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);
+
+        if (withoutTransformedFields != null) {
+            defaultMapping(withoutTransformedFields, unapplyEnvironment, context);
+            TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
+            return TraversalControl.CONTINUE;
+        } else {
+            TreeTransformerUtil.changeNode(context, unapplyResult.getNode());
+            return unapplyResult.getTraversalControl();
+        }
     }
 
 
@@ -158,7 +211,7 @@ public class ServiceResultNodesToOverallResult {
         Map<AbstractNode, Set<String>> idsByTransformationDefinition = new LinkedHashMap<>();
         List<Field> fields = executionResultNode.getMergedField().getFields();
         for (Field field : fields) {
-            List<String> fieldIds = FieldIdUtil.getFieldIds(field);
+            List<String> fieldIds = FieldIdUtil.getRootOfTransformationIds(field);
             for (String fieldId : fieldIds) {
                 FieldTransformation fieldTransformation = assertNotNull(transformationMap.get(fieldId));
                 AbstractNode definition = fieldTransformation.getDefinition();
@@ -212,12 +265,12 @@ public class ServiceResultNodesToOverallResult {
         }).collect(Collectors.toList());
     }
 
-    private void defaultMapping(ExecutionResultNode node, UnapplyEnvironment environment) {
+    private void defaultMapping(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
         FetchedValueAnalysis originalFetchAnalysis = node.getFetchedValueAnalysis();
 
         BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> executionStepInfoMapper.mapExecutionStepInfo(esi, env);
         FetchedValueAnalysis mappedFetchedValueAnalysis = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(originalFetchAnalysis, environment, esiMapper);
-        TreeTransformerUtil.changeNode(environment.context, node.withNewFetchedValueAnalysis(mappedFetchedValueAnalysis));
+        TreeTransformerUtil.changeNode(context, node.withNewFetchedValueAnalysis(mappedFetchedValueAnalysis));
     }
 
     private TuplesTwo<Set<FieldTransformation>, List<Field>> getTransformationsAndNotTransformedFields(MergedField mergedField, Map<String, FieldTransformation> transformationMap) {

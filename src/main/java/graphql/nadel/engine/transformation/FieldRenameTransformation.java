@@ -58,9 +58,9 @@ public class FieldRenameTransformation extends FieldTransformation {
 
 
     @Override
-    public TraversalControl unapplyResultNode(ExecutionResultNode executionResultNode,
-                                              List<FieldTransformation> allTransformations,
-                                              UnapplyEnvironment environment) {
+    public UnapplyResult unapplyResultNode(ExecutionResultNode executionResultNode,
+                                           List<FieldTransformation> allTransformations,
+                                           UnapplyEnvironment environment) {
         List<String> path = mappingDefinition.getInputPath();
         if (path.size() == 1) {
             FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
@@ -71,13 +71,11 @@ public class FieldRenameTransformation extends FieldTransformation {
             };
             FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
                     esiMapper);
-            environment.unapplyNode(executionResultNode.withNewFetchedValueAnalysis(mappedFVA));
-            return TraversalControl.CONTINUE;
+            return new UnapplyResult(executionResultNode.withNewFetchedValueAnalysis(mappedFVA), TraversalControl.CONTINUE);
         } else {
             LeafExecutionResultNode leafExecutionResultNode = geFirstLeafNode(executionResultNode);
             LeafExecutionResultNode leafNode = changeFieldInResultNode(leafExecutionResultNode, getOriginalField());
-            environment.unapplyNode(leafNode);
-            return TraversalControl.ABORT;
+            return new UnapplyResult(leafNode, TraversalControl.ABORT);
         }
     }
 

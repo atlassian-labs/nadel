@@ -68,12 +68,12 @@ public class FieldIdUtil {
         return field.transform(builder -> builder.additionalData(NADEL_FIELD_ID, newSerializedValue));
     }
 
-    public static String getUniqueFieldId(Field field) {
+    public static String getUniqueRootFieldId(Field field) {
         String serialized = assertNotNull(field.getAdditionalData().get(NADEL_FIELD_ID), "nadel field id expected");
         List<NadelInfo> nadelInfos = readNadelInfos(serialized);
-        assertTrue(nadelInfos.size() == 1, "exactly one nadel infos expected");
-        NadelInfo nadelInfo = nadelInfos.get(0);
-        return nadelInfo.id;
+        List<NadelInfo> rootNadelInfos = nadelInfos.stream().filter(nadelInfo -> nadelInfo.rootOfTransformation).collect(Collectors.toList());
+        assertTrue(rootNadelInfos.size() == 1, "exactly one root nadel infos expected");
+        return rootNadelInfos.get(0).id;
     }
 
     public static void setFieldId(Field.Builder builder, String id, boolean rootOfTransformation) {

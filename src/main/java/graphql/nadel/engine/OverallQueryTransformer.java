@@ -334,7 +334,7 @@ public class OverallQueryTransformer {
                 TraversalControl traversalControl = transformation.apply(environment);
                 Field changedField = (Field) environment.getTraverserContext().thisNode();
 
-                String fieldId = FieldIdUtil.getUniqueFieldId(changedField);
+                String fieldId = FieldIdUtil.getUniqueRootFieldId(changedField);
                 transformationByResultField.put(fieldId, transformation);
 
                 if (transformation instanceof FieldRenameTransformation) {

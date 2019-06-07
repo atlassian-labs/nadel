@@ -21,6 +21,24 @@ import static graphql.Assert.assertTrue;
 public abstract class FieldTransformation {
 
 
+    public static class UnapplyResult {
+
+        private final ExecutionResultNode node;
+        private final TraversalControl traversalControl;
+
+        public UnapplyResult(ExecutionResultNode node, TraversalControl traversalControl) {
+            this.node = node;
+            this.traversalControl = traversalControl;
+        }
+
+        public ExecutionResultNode getNode() {
+            return node;
+        }
+
+        public TraversalControl getTraversalControl() {
+            return traversalControl;
+        }
+    }
 
     private QueryVisitorFieldEnvironment environment;
     private String fieldId = UUID.randomUUID().toString();
@@ -34,9 +52,9 @@ public abstract class FieldTransformation {
      * This is a bit strange method because n FieldTransformations map to one unapply method and we don't know the mapping until
      * this method is called. So we actually give all relevant transformations as a List
      */
-    public abstract TraversalControl unapplyResultNode(ExecutionResultNode executionResultNode,
-                                                       List<FieldTransformation> allTransformations,
-                                                       UnapplyEnvironment environment);
+    public abstract UnapplyResult unapplyResultNode(ExecutionResultNode executionResultNode,
+                                                    List<FieldTransformation> allTransformations,
+                                                    UnapplyEnvironment environment);
 
     public abstract AbstractNode getDefinition();
 

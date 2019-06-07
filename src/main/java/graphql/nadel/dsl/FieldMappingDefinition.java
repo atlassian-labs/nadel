@@ -55,4 +55,11 @@ public class FieldMappingDefinition extends AbstractNode<FieldMappingDefinition>
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
     }
+
+    @Override
+    public String toString() {
+        return "FieldMappingDefinition{" +
+                "inputPath=" + inputPath +
+                '}';
+    }
 }
