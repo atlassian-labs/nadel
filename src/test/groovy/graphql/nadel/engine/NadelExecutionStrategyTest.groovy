@@ -1246,5 +1246,66 @@ class NadelExecutionStrategyTest extends Specification {
         resultData(response) == [foo: "hello world-CHANGED"]
     }
 
+    def "two renames with longer path"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorDetails: AuthorDetail
+        }
+        type AuthorDetail {
+            authorId: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authorId: ID => renamed from authorDetails.authorId
+                authorName: ID => renamed from authorDetails.name
+            }
+        }
+        ''')
+        def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
+
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = "{issues {id authorId authorName}}"
+
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorDetails {authorId} authorDetails {name}}}"
+        def issue1 = [id: "ISSUE-1", authorDetails: [authorId: "USER-1", name: "User 1"]]
+        def issue2 = [id: "ISSUE-2", authorDetails: [authorId: "USER-2", name: "User 2"]]
+        def response1 = new ServiceExecutionResult([issues: [issue1, issue2]])
+
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> CompletableFuture.completedFuture(response1)
+
+        def issue1Result = [id: "ISSUE-1", authorId: "USER-1", authorName: "User 1"]
+        def issue2Result = [id: "ISSUE-2", authorId: "USER-2", authorName: "User 2"]
+        resultData(response) == [issues: [issue1Result, issue2Result]]
+
+    }
+
 
 }

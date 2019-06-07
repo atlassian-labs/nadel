@@ -4,6 +4,7 @@ import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ExecutionResultNode;
+import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
@@ -19,16 +20,6 @@ import static graphql.Assert.assertTrue;
 
 public abstract class FieldTransformation {
 
-    public static final String NADEL_FIELD_ID = "NADEL_FIELD_ID";
-
-
-    /*
-     * This is a bit strange method because n FieldTransformations map to one unapply method and we don't know the mapping until
-     * this method is called. So we actually give all relevant transformations as a List
-     */
-    public abstract TraversalControl unapplyResultNode(ExecutionResultNode executionResultNode,
-                                                       List<FieldTransformation> allTransformations,
-                                                       UnapplyEnvironment environment);
 
 
     private QueryVisitorFieldEnvironment environment;
@@ -38,6 +29,16 @@ public abstract class FieldTransformation {
         this.environment = environment;
         return TraversalControl.CONTINUE;
     }
+
+    /*
+     * This is a bit strange method because n FieldTransformations map to one unapply method and we don't know the mapping until
+     * this method is called. So we actually give all relevant transformations as a List
+     */
+    public abstract TraversalControl unapplyResultNode(ExecutionResultNode executionResultNode,
+                                                       List<FieldTransformation> allTransformations,
+                                                       UnapplyEnvironment environment);
+
+    public abstract AbstractNode getDefinition();
 
     public String getFieldId() {
         return fieldId;

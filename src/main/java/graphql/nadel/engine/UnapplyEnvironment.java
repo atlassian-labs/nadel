@@ -9,7 +9,6 @@ import graphql.util.TreeTransformerUtil;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class UnapplyEnvironment {
 
@@ -40,13 +39,12 @@ public class UnapplyEnvironment {
 
     public boolean treeIsSplit;
 
-    public final Consumer<ExecutionResultNode> unapplyNode = (node) -> {
+    public void unapplyNode(ExecutionResultNode node) {
         if (treeIsSplit) {
             TreeTransformerUtil.insertAfter(context, node);
         } else {
             TreeTransformerUtil.changeNode(context, node);
         }
-
-    };
+    }
 
 }

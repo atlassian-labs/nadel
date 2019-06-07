@@ -33,4 +33,8 @@ public class FpKit {
     public static <T> List<T> concat(List<T>... lists) {
         return Stream.of(lists).flatMap(Collection::stream).collect(toList());
     }
+
+    public static <K, V> V getSingleMapValue(Map<K, V> map) {
+        return map.values().iterator().next();
+    }
 }

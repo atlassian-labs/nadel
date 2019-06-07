@@ -7,6 +7,7 @@ import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.execution.nextgen.result.ListExecutionResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
+import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
 import graphql.nadel.dsl.InnerServiceHydration;
@@ -41,6 +42,11 @@ public class HydrationTransformation extends FieldTransformation {
 
     public HydrationTransformation(InnerServiceHydration innerServiceHydration) {
         this.innerServiceHydration = innerServiceHydration;
+    }
+
+    @Override
+    public AbstractNode getDefinition() {
+        return innerServiceHydration;
     }
 
     @Override
@@ -87,7 +93,7 @@ public class HydrationTransformation extends FieldTransformation {
         LeafExecutionResultNode leafNode = geFirstLeafNode(transformedNode);
         LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getFetchedValueAnalysis().getExecutionStepInfo(), leafNode, allTransformations, environment);
 
-        environment.unapplyNode.accept(changedNode);
+        environment.unapplyNode(changedNode);
         return TraversalControl.ABORT;
 
     }
@@ -106,7 +112,7 @@ public class HydrationTransformation extends FieldTransformation {
         });
 
         changedNode = changedNode.withNewFetchedValueAnalysis(mappedFVA);
-        environment.unapplyNode.accept(changedNode);
+        environment.unapplyNode(changedNode);
         return TraversalControl.ABORT;
     }
 
@@ -123,7 +129,7 @@ public class HydrationTransformation extends FieldTransformation {
             newChildren.add(newChild);
         }
         ExecutionResultNode changedNode = listExecutionResultNode.withNewFetchedValueAnalysis(mappedFVA).withNewChildren(newChildren);
-        environment.unapplyNode.accept(changedNode);
+        environment.unapplyNode(changedNode);
         return TraversalControl.ABORT;
     }
 
