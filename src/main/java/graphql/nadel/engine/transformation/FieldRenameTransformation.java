@@ -9,6 +9,7 @@ import graphql.language.Field;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.FetchedValueAnalysisMapper;
+import graphql.nadel.engine.FieldIdUtil;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.util.TraversalControl;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
+import static graphql.nadel.engine.transformation.FieldUtils.addFieldIdToChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
 import static graphql.util.TreeTransformerUtil.changeNode;
@@ -30,17 +32,24 @@ public class FieldRenameTransformation extends FieldTransformation {
         this.mappingDefinition = mappingDefinition;
     }
 
+
+    @Override
+    public FieldMappingDefinition getDefinition() {
+        return mappingDefinition;
+    }
+
     @Override
     public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
         super.apply(environment);
         List<String> path = mappingDefinition.getInputPath();
         if (path.size() == 1) {
             Field changedNode = environment.getField().transform(t -> t
-                    .name(mappingDefinition.getInputPath().get(0))
-                    .additionalData(NADEL_FIELD_ID, getFieldId()));
+                    .name(mappingDefinition.getInputPath().get(0)));
+            changedNode = FieldIdUtil.addFieldId(changedNode, getFieldId(), true);
+            changedNode = addFieldIdToChildren(changedNode, getFieldId());
             return changeNode(environment.getTraverserContext(), changedNode);
         }
-
+        // we expect here that the last path element is a scalar/enum
         Field finalCurField = pathToFields(path, getFieldId());
         changeNode(environment.getTraverserContext(), finalCurField);
         // skip traversing subtree because the fields are in respect to the underlying schema and not the overall which will break
@@ -49,9 +58,9 @@ public class FieldRenameTransformation extends FieldTransformation {
 
 
     @Override
-    public TraversalControl unapplyResultNode(ExecutionResultNode executionResultNode,
-                                              List<FieldTransformation> allTransformations,
-                                              UnapplyEnvironment environment) {
+    public UnapplyResult unapplyResultNode(ExecutionResultNode executionResultNode,
+                                           List<FieldTransformation> allTransformations,
+                                           UnapplyEnvironment environment) {
         List<String> path = mappingDefinition.getInputPath();
         if (path.size() == 1) {
             FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
@@ -62,13 +71,11 @@ public class FieldRenameTransformation extends FieldTransformation {
             };
             FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
                     esiMapper);
-            environment.unapplyNode.accept(executionResultNode.withNewFetchedValueAnalysis(mappedFVA));
-            return TraversalControl.CONTINUE;
+            return new UnapplyResult(executionResultNode.withNewFetchedValueAnalysis(mappedFVA), TraversalControl.CONTINUE);
         } else {
             LeafExecutionResultNode leafExecutionResultNode = geFirstLeafNode(executionResultNode);
             LeafExecutionResultNode leafNode = changeFieldInResultNode(leafExecutionResultNode, getOriginalField());
-            changeNode(environment.context, leafNode);
-            return TraversalControl.ABORT;
+            return new UnapplyResult(leafNode, TraversalControl.ABORT);
         }
     }
 

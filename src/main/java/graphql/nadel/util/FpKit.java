@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -32,5 +34,13 @@ public class FpKit {
     @SafeVarargs
     public static <T> List<T> concat(List<T>... lists) {
         return Stream.of(lists).flatMap(Collection::stream).collect(toList());
+    }
+
+    public static <K, V> V getSingleMapValue(Map<K, V> map) {
+        return map.values().iterator().next();
+    }
+
+    public static <T, U> List<U> filterAndMap(List<T> list, Predicate<T> filter, Function<T, U> function) {
+        return list.stream().filter(filter).map(function).collect(Collectors.toList());
     }
 }

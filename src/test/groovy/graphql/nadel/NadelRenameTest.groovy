@@ -19,6 +19,7 @@ class NadelRenameTest extends Specification {
                 renameInterface : InterfaceOverall => renamed from renameInterfaceUnderlying
                 renameUnion : UnionOverall => renamed from renameUnionUnderlying
                 renameInput(arg1 : InputOverall!, arg2 : URL, arg3 : EnumOverall) : String
+                renameString : String => renamed from renameStringUnderlying 
             } 
             
             type World {
@@ -65,6 +66,7 @@ class NadelRenameTest extends Specification {
                 renameInterfaceUnderlying : InterfaceUnderlying
                 renameUnionUnderlying : UnionUnderlying
                 renameInput(arg1 : InputUnderlying!, arg2 : String, arg3 : EnumUnderlying) : String
+                renameStringUnderlying: String
             } 
             type World {
                 id: ID
@@ -290,5 +292,34 @@ class NadelRenameTest extends Specification {
         }
         result.errors.isEmpty()
         result.data == [renameInput: "done"]
+    }
+
+
+    def "string field rename"() {
+        def query = '''
+        query { renameString }
+        '''
+
+        given:
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        def data = [renameStringUnderlying: "hello"]
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            def q = printAstCompact(params.query)
+            println q
+            assert q == 'query nadel_2_MyService {renameStringUnderlying}',
+                    "Unexpected query: $q"
+            completedFuture(new ServiceExecutionResult(data))
+        }
+        result.errors.isEmpty()
+        result.data == [renameString: "hello"]
+
     }
 }

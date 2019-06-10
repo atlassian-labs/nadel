@@ -48,7 +48,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
 import static graphql.language.OperationDefinition.newOperationDefinition;
@@ -335,8 +334,7 @@ public class OverallQueryTransformer {
                 TraversalControl traversalControl = transformation.apply(environment);
                 Field changedField = (Field) environment.getTraverserContext().thisNode();
 
-                String fieldId = changedField.getAdditionalData().get(FieldTransformation.NADEL_FIELD_ID);
-                assertNotNull(fieldId, "nadel field metadata it is null after transformation");
+                String fieldId = FieldIdUtil.getUniqueRootFieldId(changedField);
                 transformationByResultField.put(fieldId, transformation);
 
                 if (transformation instanceof FieldRenameTransformation) {
