@@ -1,6 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.language.Field;
+import graphql.nadel.util.FpKit;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +29,14 @@ public class FieldIdUtil {
             this.id = id;
             this.rootOfTransformation = rootOfTransformation;
         }
+
+        public String getId() {
+            return id;
+        }
+
+        public boolean isRootOfTransformation() {
+            return rootOfTransformation;
+        }
     }
 
     public static List<String> getRootOfTransformationIds(Field field) {
@@ -37,10 +46,7 @@ public class FieldIdUtil {
         }
         List<NadelInfo> nadelInfos = readNadelInfos(serialized);
 
-        return nadelInfos.stream()
-                .filter(nadelInfo -> nadelInfo.rootOfTransformation)
-                .map(nadelInfo -> nadelInfo.id)
-                .collect(Collectors.toList());
+        return FpKit.filterAndMap(nadelInfos, NadelInfo::isRootOfTransformation, NadelInfo::getId);
     }
 
     public static List<String> getFieldIds(Field field) {
@@ -49,9 +55,7 @@ public class FieldIdUtil {
             return Collections.emptyList();
         }
         List<NadelInfo> nadelInfos = readNadelInfos(serialized);
-        return nadelInfos.stream()
-                .map(nadelInfo -> nadelInfo.id)
-                .collect(Collectors.toList());
+        return graphql.util.FpKit.map(nadelInfos, NadelInfo::getId);
     }
 
     public static Field addFieldId(Field field, String id, boolean rootOfTransformation) {
@@ -90,25 +94,22 @@ public class FieldIdUtil {
     private static String writeNadelInfos(List<NadelInfo> nadelInfos) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(nadelInfos);
-            oos.close();
-            baos.close();
-            String encoded = Base64.getEncoder().encodeToString(baos.toByteArray());
-            return encoded;
+            try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+                oos.writeObject(nadelInfos);
+                return Base64.getEncoder().encodeToString(baos.toByteArray());
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
     }
 
     private static List<NadelInfo> readNadelInfos(String serialized) {
         try {
             byte[] decoded = Base64.getDecoder().decode(serialized);
             ByteArrayInputStream bais = new ByteArrayInputStream(decoded);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            List<NadelInfo> nadelInfos = (List<NadelInfo>) ois.readObject();
-            return nadelInfos;
+            try (ObjectInputStream ois = new ObjectInputStream(bais)) {
+                return (List<NadelInfo>) ois.readObject();
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
