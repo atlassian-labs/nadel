@@ -4,8 +4,8 @@ import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.language.Field;
+import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.FetchedValueAnalysisMapper;
@@ -18,7 +18,7 @@ import java.util.function.BiFunction;
 
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.transformation.FieldUtils.addFieldIdToChildren;
-import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
+import static graphql.nadel.engine.transformation.FieldUtils.getSubTree;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
@@ -49,8 +49,9 @@ public class FieldRenameTransformation extends FieldTransformation {
             changedNode = addFieldIdToChildren(changedNode, getFieldId());
             return changeNode(environment.getTraverserContext(), changedNode);
         }
-        // we expect here that the last path element is a scalar/enum
-        Field finalCurField = pathToFields(path, getFieldId());
+        SelectionSet selectionSetWithIds = addFieldIdToChildren(environment.getField(), getFieldId()).getSelectionSet();
+
+        Field finalCurField = pathToFields(path, getFieldId(), selectionSetWithIds);
         changeNode(environment.getTraverserContext(), finalCurField);
         // skip traversing subtree because the fields are in respect to the underlying schema and not the overall which will break
         return TraversalControl.ABORT;
@@ -73,9 +74,9 @@ public class FieldRenameTransformation extends FieldTransformation {
                     esiMapper);
             return new UnapplyResult(executionResultNode.withNewFetchedValueAnalysis(mappedFVA), TraversalControl.CONTINUE);
         } else {
-            LeafExecutionResultNode leafExecutionResultNode = geFirstLeafNode(executionResultNode);
-            LeafExecutionResultNode leafNode = changeFieldInResultNode(leafExecutionResultNode, getOriginalField());
-            return new UnapplyResult(leafNode, TraversalControl.ABORT);
+            ExecutionResultNode subTree = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
+            subTree = changeFieldInResultNode(subTree, getOriginalField());
+            return new UnapplyResult(subTree, TraversalControl.ABORT);
         }
     }
 
