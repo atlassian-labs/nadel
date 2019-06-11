@@ -7,6 +7,7 @@ import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.execution.nextgen.result.ListExecutionResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
+import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
 import graphql.nadel.dsl.InnerServiceHydration;
@@ -44,6 +45,11 @@ public class HydrationTransformation extends FieldTransformation {
     }
 
     @Override
+    public AbstractNode getDefinition() {
+        return innerServiceHydration;
+    }
+
+    @Override
     public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
         super.apply(environment);
 
@@ -66,7 +72,7 @@ public class HydrationTransformation extends FieldTransformation {
     }
 
     @Override
-    public TraversalControl unapplyResultNode(ExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+    public UnapplyResult unapplyResultNode(ExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
 
         // TODO: handle merged fields by extracting nodes handling transformed field and nodes which are not transformed
 
@@ -86,13 +92,10 @@ public class HydrationTransformation extends FieldTransformation {
 
         LeafExecutionResultNode leafNode = geFirstLeafNode(transformedNode);
         LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getFetchedValueAnalysis().getExecutionStepInfo(), leafNode, allTransformations, environment);
-
-        environment.unapplyNode.accept(changedNode);
-        return TraversalControl.ABORT;
-
+        return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
-    private TraversalControl handleListOfObjects(ListExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+    private UnapplyResult handleListOfObjects(ListExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
         // if we have more merged fields than transformations
         // we handle here a list of objects with each object containing one node
         FetchedValueAnalysis fetchedValueAnalysis = transformedNode.getFetchedValueAnalysis();
@@ -106,12 +109,11 @@ public class HydrationTransformation extends FieldTransformation {
         });
 
         changedNode = changedNode.withNewFetchedValueAnalysis(mappedFVA);
-        environment.unapplyNode.accept(changedNode);
-        return TraversalControl.ABORT;
+        return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
 
-    private TraversalControl handleListOfLeafs(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+    private UnapplyResult handleListOfLeafs(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
         FetchedValueAnalysis fetchedValueAnalysis = listExecutionResultNode.getFetchedValueAnalysis();
         FetchedValueAnalysis mappedFVA = mapToOriginalFields(fetchedValueAnalysis, allTransformations, environment);
 
@@ -123,8 +125,7 @@ public class HydrationTransformation extends FieldTransformation {
             newChildren.add(newChild);
         }
         ExecutionResultNode changedNode = listExecutionResultNode.withNewFetchedValueAnalysis(mappedFVA).withNewChildren(newChildren);
-        environment.unapplyNode.accept(changedNode);
-        return TraversalControl.ABORT;
+        return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
 
