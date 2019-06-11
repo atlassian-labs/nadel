@@ -3,8 +3,9 @@ package graphql.nadel.engine;
 import graphql.Assert;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
-import graphql.introspection.Introspection;
+import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
@@ -14,6 +15,9 @@ import graphql.schema.GraphQLSchema;
 import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
+import static graphql.introspection.Introspection.SchemaMetaFieldDef;
+import static graphql.introspection.Introspection.TypeMetaFieldDef;
+import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 import static graphql.schema.GraphQLList.list;
 import static graphql.schema.GraphQLNonNull.nonNull;
 import static graphql.schema.GraphQLTypeUtil.isList;
@@ -39,7 +43,7 @@ public class ExecutionStepInfoMapper {
         GraphQLObjectType mappedFieldContainer = overallSchema.getObjectType(fieldContainerName);
         assertNotNull(mappedFieldContainer, "no type " + fieldContainerName + " found in overall schema");
         GraphQLOutputType mappedFieldType = mapFieldType(fieldType, overallSchema, typeRenameMappings);
-        GraphQLFieldDefinition mappedFieldDefinition = Introspection.getFieldDef(overallSchema,mappedFieldContainer,fieldName);
+        GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedFieldContainer, fieldName);
 
         ExecutionPath mappedPath = pathMapper.mapPath(executionStepInfo, executionStepInfo.getField(), environment);
 
@@ -72,5 +76,19 @@ public class ExecutionStepInfoMapper {
         return Assert.assertShouldNeverHappen();
     }
 
-
+    public static GraphQLFieldDefinition getFieldDef(GraphQLSchema schema, GraphQLCompositeType parentType, String fieldName) {
+        if (schema.getQueryType() == parentType) {
+            if (fieldName.equals(SchemaMetaFieldDef.getName())) {
+                return SchemaMetaFieldDef;
+            }
+            if (fieldName.equals(TypeMetaFieldDef.getName())) {
+                return TypeMetaFieldDef;
+            }
+        }
+        if (fieldName.equals(TypeNameMetaFieldDef.getName())) {
+            return TypeNameMetaFieldDef;
+        }
+        GraphQLFieldsContainer fieldsContainer = (GraphQLFieldsContainer) parentType;
+        return schema.getCodeRegistry().getFieldVisibility().getFieldDefinition(fieldsContainer, fieldName);
+    }
 }
