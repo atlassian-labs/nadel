@@ -34,10 +34,17 @@ public final class FieldUtils {
     }
 
     public static Field pathToFields(List<String> path, String nadelFieldId) {
+        return pathToFields(path, nadelFieldId, null);
+    }
+
+    public static Field pathToFields(List<String> path, String nadelFieldId, SelectionSet selectionSet) {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
             Field.Builder newField = Field.newField();
             FieldIdUtil.setFieldId(newField, nadelFieldId, ix == 0);
+            if (ix == path.size() - 1 && selectionSet != null) {
+                newField.selectionSet(selectionSet);
+            }
             if (curField != null) {
                 newField.selectionSet(newSelectionSet().selection(curField).build());
             }
@@ -55,6 +62,20 @@ public final class FieldUtils {
         }
         assertTrue(curNode instanceof LeafExecutionResultNode, "expecting only object results and at the end one leaf");
         return (LeafExecutionResultNode) curNode;
+    }
+
+
+    public static ExecutionResultNode getSubTree(ExecutionResultNode executionResultNode, int levels) {
+        ExecutionResultNode curNode = executionResultNode;
+        int curLevel = 0;
+        while (curNode.getChildren().size() > 0 && curLevel++ < levels) {
+            assertTrue(curNode.getChildren().size() == 1, "expecting one child ");
+            curNode = curNode.getChildren().get(0);
+            if (curNode instanceof LeafExecutionResultNode) {
+                return curNode;
+            }
+        }
+        return curNode;
     }
 
     public static Field addFieldIdToChildren(Field field, String id) {
