@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
@@ -39,7 +38,7 @@ public class FieldRenameTransformation extends FieldTransformation {
     }
 
     @Override
-    public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
+    public TraversalControl apply(ApplyEnvironment environment) {
         super.apply(environment);
         List<String> path = mappingDefinition.getInputPath();
         if (path.size() == 1) {

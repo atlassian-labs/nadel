@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
@@ -50,7 +49,7 @@ public class HydrationTransformation extends FieldTransformation {
     }
 
     @Override
-    public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
+    public TraversalControl apply(ApplyEnvironment environment) {
         super.apply(environment);
 
         TraverserContext<Node> context = environment.getTraverserContext();

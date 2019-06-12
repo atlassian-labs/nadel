@@ -1,16 +1,17 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
+import graphql.language.Node;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLOutputType;
 import graphql.util.TraversalControl;
+import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,10 +41,40 @@ public abstract class FieldTransformation {
         }
     }
 
-    private QueryVisitorFieldEnvironment environment;
+    public static class ApplyEnvironment {
+        private final Field field;
+        private final GraphQLFieldDefinition fieldDefinition;
+        private final GraphQLFieldsContainer fieldsContainer;
+        private final TraverserContext<Node> traverserContext;
+
+        public ApplyEnvironment(Field field, GraphQLFieldDefinition fieldDefinition, GraphQLFieldsContainer fieldsContainer, TraverserContext<Node> traverserContext) {
+            this.field = field;
+            this.fieldDefinition = fieldDefinition;
+            this.fieldsContainer = fieldsContainer;
+            this.traverserContext = traverserContext;
+        }
+
+        public Field getField() {
+            return field;
+        }
+
+        public GraphQLFieldDefinition getFieldDefinition() {
+            return fieldDefinition;
+        }
+
+        public GraphQLFieldsContainer getFieldsContainer() {
+            return fieldsContainer;
+        }
+
+        public TraverserContext<Node> getTraverserContext() {
+            return traverserContext;
+        }
+    }
+
+    private ApplyEnvironment environment;
     private String fieldId = UUID.randomUUID().toString();
 
-    public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
+    public TraversalControl apply(ApplyEnvironment environment) {
         this.environment = environment;
         return TraversalControl.CONTINUE;
     }
@@ -62,24 +93,24 @@ public abstract class FieldTransformation {
         return fieldId;
     }
 
-    public QueryVisitorFieldEnvironment getOriginalFieldEnvironment() {
+    public ApplyEnvironment getApplyEnvironment() {
         return environment;
     }
 
     public Field getOriginalField() {
-        return getOriginalFieldEnvironment().getField();
+        return getApplyEnvironment().getField();
     }
 
     public GraphQLOutputType getOriginalFieldType() {
-        return getOriginalFieldEnvironment().getFieldDefinition().getType();
+        return getApplyEnvironment().getFieldDefinition().getType();
     }
 
     public GraphQLFieldsContainer getOriginalFieldsContainer() {
-        return getOriginalFieldEnvironment().getFieldsContainer();
+        return getApplyEnvironment().getFieldsContainer();
     }
 
     public GraphQLFieldDefinition getOriginalFieldDefinition() {
-        return getOriginalFieldEnvironment().getFieldDefinition();
+        return getApplyEnvironment().getFieldDefinition();
     }
 
 
