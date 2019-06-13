@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 import static graphql.language.SelectionSet.newSelectionSet;
-import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.transformation.FieldUtils.addFieldIdToChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.getSubTree;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
@@ -46,7 +45,7 @@ public class FieldRenameTransformation extends FieldTransformation {
         changedNode = FieldMetadataUtil.addFieldMetadata(changedNode, getFieldId(), true, false);
         SelectionSet selectionSetWithIds = addFieldIdToChildren(environment.getField(), getFieldId()).getSelectionSet();
         if (path.size() > 1) {
-            Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), selectionSetWithIds);
+            Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), false, selectionSetWithIds);
             changedNode = changedNode.transform(builder -> builder.selectionSet(newSelectionSet().selection(firstChildField).build()));
         } else {
             changedNode = changedNode.transform(builder -> builder.selectionSet(selectionSetWithIds));
@@ -60,22 +59,16 @@ public class FieldRenameTransformation extends FieldTransformation {
     public UnapplyResult unapplyResultNode(ExecutionResultNode executionResultNode,
                                            List<FieldTransformation> allTransformations,
                                            UnapplyEnvironment environment) {
-        List<String> path = mappingDefinition.getInputPath();
-        if (path.size() == 1) {
-            FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
+        ExecutionResultNode subTree = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
+        FetchedValueAnalysis fetchedValueAnalysis = subTree.getFetchedValueAnalysis();
 
-            BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> {
-                ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi);
-                return executionStepInfoMapper.mapExecutionStepInfo(esiWithMappedField, environment);
-            };
-            FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
-                    esiMapper);
-            return new UnapplyResult(executionResultNode.withNewFetchedValueAnalysis(mappedFVA), TraversalControl.CONTINUE);
-        } else {
-            ExecutionResultNode subTree = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
-            subTree = changeFieldInResultNode(subTree, getOriginalField());
-            return new UnapplyResult(subTree, TraversalControl.ABORT);
-        }
+        BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> {
+            ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, env.parentExecutionStepInfo);
+            return executionStepInfoMapper.mapExecutionStepInfo(esiWithMappedField, environment);
+        };
+        FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
+                esiMapper);
+        return new UnapplyResult(subTree.withNewFetchedValueAnalysis(mappedFVA), TraversalControl.CONTINUE);
     }
 
 

@@ -15,7 +15,6 @@ import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.schema.GraphQLSchema;
-import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
@@ -47,64 +46,75 @@ public class ServiceResultNodesToOverallResult {
 
     @SuppressWarnings("UnnecessaryLocalVariable")
     public ExecutionResultNode convert(ExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, Map<String, FieldTransformation> transformationMap, Map<String, String> typeRenameMappings) {
-        return convert(resultNode, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings);
+        return convertImpl(resultNode, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false);
     }
 
-    public ExecutionResultNode convert(ExecutionResultNode resultNode,
+    public ExecutionResultNode convert(ExecutionResultNode root,
                                        GraphQLSchema overallSchema,
                                        ExecutionStepInfo rootStepInfo,
                                        boolean isHydrationTransformation,
                                        boolean batched,
                                        Map<String, FieldTransformation> transformationMap,
                                        Map<String, String> typeRenameMappings) {
-        try {
 
-            Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
+        return convertImpl(root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, false);
+    }
 
-            ExecutionResultNode newRoot = resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
-                @Override
-                public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
+    private ExecutionResultNode convertImpl(ExecutionResultNode root,
+                                            GraphQLSchema overallSchema,
+                                            ExecutionStepInfo rootStepInfo,
+                                            boolean isHydrationTransformation,
+                                            boolean batched,
+                                            Map<String, FieldTransformation> transformationMap,
+                                            Map<String, String> typeRenameMappings,
+                                            boolean onlyChildren) {
 
-                    ExecutionResultNode node = context.thisNode();
-                    ExecutionStepInfo parentStepInfo = context.getVarFromParents(ExecutionStepInfo.class);
+        Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
+        ExecutionResultNode newRoot = resultNodesTransformer.transform(root, new TraverserVisitorStub<ExecutionResultNode>() {
+            @Override
+            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
+                ExecutionResultNode node = context.thisNode();
+                if (onlyChildren && node == root) {
+                    return TraversalControl.CONTINUE;
+                }
+                ExecutionStepInfo parentStepInfo = context.getVarFromParents(ExecutionStepInfo.class);
 
-                    if (node instanceof RootExecutionResultNode) {
-                        ExecutionResultNode convertedNode = mapRootResultNode((RootExecutionResultNode) node);
-                        return TreeTransformerUtil.changeNode(context, convertedNode);
-                    }
-
-                    TraversalControl traversalControl = TraversalControl.CONTINUE;
-                    TuplesTwo<Set<FieldTransformation>, List<Field>> transformationsAndNotTransformedFields =
-                            getTransformationsAndNotTransformedFields(node.getMergedField(), transformationMap);
-                    List<FieldTransformation> transformations = new ArrayList<>(transformationsAndNotTransformedFields.getT1());
-                    List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
-
-                    UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(
-                            parentStepInfo,
-                            isHydrationTransformation,
-                            batched,
-                            typeRenameMappings,
-                            overallSchema,
-                            notTransformedFields
-                    );
-                    if (transformations.size() == 0) {
-                        defaultMapping(node, unapplyEnvironment, context);
-                    } else {
-                        traversalControl = unapplyTransformations(node, transformations, unapplyEnvironment, transformationMap, context);
-                    }
-                    ExecutionResultNode convertedNode = context.thisNode();
-                    if (!(convertedNode instanceof LeafExecutionResultNode)) {
-                        setExecutionInfo(context, convertedNode);
-                    }
-                    return traversalControl;
+                if (node instanceof RootExecutionResultNode) {
+                    ExecutionResultNode convertedNode = mapRootResultNode((RootExecutionResultNode) node);
+                    return TreeTransformerUtil.changeNode(context, convertedNode);
                 }
 
-            }, rootVars);
-            return newRoot;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+                TraversalControl traversalControl = TraversalControl.CONTINUE;
+                TuplesTwo<Set<FieldTransformation>, List<Field>> transformationsAndNotTransformedFields =
+                        getTransformationsAndNotTransformedFields(node.getMergedField(), transformationMap);
+                List<FieldTransformation> transformations = new ArrayList<>(transformationsAndNotTransformedFields.getT1());
+                List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
+
+                UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(
+                        parentStepInfo,
+                        isHydrationTransformation,
+                        batched,
+                        typeRenameMappings,
+                        overallSchema,
+                        notTransformedFields
+                );
+                if (transformations.size() == 0) {
+                    mapAndChangeNode(node, unapplyEnvironment, context);
+                } else {
+                    traversalControl = unapplyTransformations(node, transformations, unapplyEnvironment, transformationMap, context);
+                }
+                ExecutionResultNode convertedNode = context.thisNode();
+                if (!(convertedNode instanceof LeafExecutionResultNode)) {
+                    setExecutionInfo(context, convertedNode);
+                }
+                return traversalControl;
+            }
+
+        }, rootVars);
+        return newRoot;
+
     }
+
 
     private TraversalControl unapplyTransformations(ExecutionResultNode node,
                                                     List<FieldTransformation> transformations,
@@ -143,38 +153,38 @@ public class ServiceResultNodesToOverallResult {
             FieldTransformation.UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
             unapplyResults.add(unapplyResult);
         }
-        if (notTransformedTree != null) {
-            defaultMapping(notTransformedTree, unapplyEnvironment, context);
-            for (FieldTransformation.UnapplyResult unapplyResult : unapplyResults) {
-                TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
-            }
-            return TraversalControl.CONTINUE;
-        }
-
-        FieldTransformation.UnapplyResult continueResult = FpKit.findOneOrNull(unapplyResults, unapplyResult -> unapplyResult.getTraversalControl() == TraversalControl.CONTINUE);
-
-        if (continueResult != null) {
-            TreeTransformerUtil.changeNode(context, continueResult.getNode());
-            for (FieldTransformation.UnapplyResult unapplyResult : unapplyResults) {
-                if (unapplyResult == continueResult) {
-                    continue;
-                }
-                TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
-            }
-            return TraversalControl.CONTINUE;
-        }
-
         boolean first = true;
+        if (notTransformedTree != null) {
+            mapAndChangeNode(notTransformedTree, unapplyEnvironment, context);
+            ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, context);
+            TreeTransformerUtil.changeNode(context, mappedNode);
+            first = false;
+        }
+
+
         for (FieldTransformation.UnapplyResult unapplyResult : unapplyResults) {
+            ExecutionResultNode transformedResult;
+            if (unapplyResult.getTraversalControl() != TraversalControl.CONTINUE) {
+                transformedResult = unapplyResult.getNode();
+            } else {
+                ExecutionResultNode unapplyResultNode = unapplyResult.getNode();
+                transformedResult = convertImpl(unapplyResultNode,
+                        unapplyEnvironment.overallSchema,
+                        unapplyEnvironment.parentExecutionStepInfo,
+                        unapplyEnvironment.isHydrationTransformation,
+                        unapplyEnvironment.batched,
+                        transformationMap,
+                        unapplyEnvironment.typeRenameMappings,
+                        true);
+            }
             if (first) {
-                TreeTransformerUtil.changeNode(context, unapplyResult.getNode());
+                TreeTransformerUtil.changeNode(context, transformedResult);
                 first = false;
                 continue;
             }
-            TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
+            TreeTransformerUtil.insertAfter(context, transformedResult);
         }
-        return TraversalControl.ABORT;
-
+        return TraversalControl.CONTINUE;
     }
 
     private TraversalControl unapplyHydration(ExecutionResultNode node,
@@ -192,7 +202,7 @@ public class ServiceResultNodesToOverallResult {
         FieldTransformation.UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);
 
         if (withoutTransformedFields != null) {
-            defaultMapping(withoutTransformedFields, unapplyEnvironment, context);
+            mapAndChangeNode(withoutTransformedFields, unapplyEnvironment, context);
             TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
             return TraversalControl.CONTINUE;
         } else {
@@ -265,12 +275,17 @@ public class ServiceResultNodesToOverallResult {
         }).collect(Collectors.toList());
     }
 
-    private void defaultMapping(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
+    private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
         FetchedValueAnalysis originalFetchAnalysis = node.getFetchedValueAnalysis();
 
         BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> executionStepInfoMapper.mapExecutionStepInfo(esi, env);
         FetchedValueAnalysis mappedFetchedValueAnalysis = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(originalFetchAnalysis, environment, esiMapper);
-        TreeTransformerUtil.changeNode(context, node.withNewFetchedValueAnalysis(mappedFetchedValueAnalysis));
+        return node.withNewFetchedValueAnalysis(mappedFetchedValueAnalysis);
+    }
+
+    private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
+        ExecutionResultNode mappedNode = mapNode(node, environment, context);
+        TreeTransformerUtil.changeNode(context, mappedNode);
     }
 
     private TuplesTwo<Set<FieldTransformation>, List<Field>> getTransformationsAndNotTransformedFields(MergedField mergedField, Map<String, FieldTransformation> transformationMap) {

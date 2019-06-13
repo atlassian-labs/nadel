@@ -61,7 +61,7 @@ public class HydrationTransformation extends FieldTransformation {
                 "only object field arguments are supported at the moment");
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
-        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId());
+        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), true);
         changeNode(context, newField);
         return TraversalControl.ABORT;
     }
@@ -150,7 +150,7 @@ public class HydrationTransformation extends FieldTransformation {
     private FetchedValueAnalysis mapToOriginalFields(FetchedValueAnalysis fetchedValueAnalysis, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
 
         BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> {
-            ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi);
+            ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, env.parentExecutionStepInfo);
             return executionStepInfoMapper.mapExecutionStepInfo(esiWithMappedField, environment);
         };
         return fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,

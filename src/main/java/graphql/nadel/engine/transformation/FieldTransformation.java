@@ -9,6 +9,7 @@ import graphql.language.Node;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -114,7 +115,7 @@ public abstract class FieldTransformation {
     }
 
 
-    protected ExecutionStepInfo replaceFieldsAndTypesWithOriginalValues(List<FieldTransformation> allTransformations, ExecutionStepInfo esi) {
+    protected ExecutionStepInfo replaceFieldsAndTypesWithOriginalValues(List<FieldTransformation> allTransformations, ExecutionStepInfo esi, ExecutionStepInfo parentEsi) {
         MergedField underlyingMergedField = esi.getField();
         List<Field> underlyingFields = underlyingMergedField.getFields();
         assertTrue(allTransformations.size() == underlyingFields.size());
@@ -124,11 +125,19 @@ public abstract class FieldTransformation {
             newFields.add(fieldTransformation.getOriginalField());
         }
         MergedField newMergedField = MergedField.newMergedField(newFields).build();
-        GraphQLOutputType originalFieldType = allTransformations.get(0).getOriginalFieldType();
+        FieldTransformation fieldTransformation = allTransformations.get(0);
+        GraphQLOutputType originalFieldType = fieldTransformation.getOriginalFieldType();
 
-        ExecutionStepInfo esiWithMappedField = esi.transform(builder -> builder
-                .field(newMergedField)
-                .type(originalFieldType)
+        ExecutionStepInfo esiWithMappedField = esi.transform(builder -> {
+                    builder
+                            .field(newMergedField)
+                            .fieldDefinition(allTransformations.get(0).getOriginalFieldDefinition())
+                            .type(originalFieldType);
+                    if (parentEsi.getType() instanceof GraphQLObjectType) {
+                        builder.fieldContainer((GraphQLObjectType) parentEsi.getType());
+                    }
+                }
+
         );
         return esiWithMappedField;
     }
