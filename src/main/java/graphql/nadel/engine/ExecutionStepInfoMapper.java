@@ -89,6 +89,6 @@ public class ExecutionStepInfoMapper {
             return TypeNameMetaFieldDef;
         }
         GraphQLFieldsContainer fieldsContainer = (GraphQLFieldsContainer) parentType;
-        return schema.getCodeRegistry().getFieldVisibility().getFieldDefinition(fieldsContainer, fieldName);
+        return assertNotNull(schema.getCodeRegistry().getFieldVisibility().getFieldDefinition(fieldsContainer, fieldName));
     }
 }

@@ -60,13 +60,13 @@ public class ServiceResultNodesToOverallResult {
         return convertImpl(root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, false);
     }
 
-    private ExecutionResultNode convertChildren(ExecutionResultNode root,
-                                                GraphQLSchema overallSchema,
-                                                ExecutionStepInfo rootStepInfo,
-                                                boolean isHydrationTransformation,
-                                                boolean batched,
-                                                Map<String, FieldTransformation> transformationMap,
-                                                Map<String, String> typeRenameMappings) {
+    public ExecutionResultNode convertChildren(ExecutionResultNode root,
+                                               GraphQLSchema overallSchema,
+                                               ExecutionStepInfo rootStepInfo,
+                                               boolean isHydrationTransformation,
+                                               boolean batched,
+                                               Map<String, FieldTransformation> transformationMap,
+                                               Map<String, String> typeRenameMappings) {
         return convertImpl(root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true);
     }
 
@@ -186,7 +186,7 @@ public class ServiceResultNodesToOverallResult {
                 ExecutionResultNode unapplyResultNode = unapplyResult.getNode();
                 transformedResult = convertChildren(unapplyResultNode,
                         unapplyEnvironment.overallSchema,
-                        unapplyEnvironment.parentExecutionStepInfo,
+                        unapplyResultNode.getFetchedValueAnalysis().getExecutionStepInfo(),
                         unapplyEnvironment.isHydrationTransformation,
                         unapplyEnvironment.batched,
                         transformationMap,

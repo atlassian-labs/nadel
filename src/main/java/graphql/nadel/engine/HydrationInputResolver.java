@@ -42,6 +42,7 @@ import static graphql.language.Field.newField;
 import static graphql.nadel.engine.ArtificialFieldUtils.addObjectIdentifier;
 import static graphql.nadel.engine.ArtificialFieldUtils.removeArtificialFields;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
+import static graphql.nadel.engine.StrategyUtil.changeEsiInResultNode;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
 import static graphql.nadel.engine.StrategyUtil.groupNodesIntoBatchesByField;
@@ -229,11 +230,10 @@ public class HydrationInputResolver {
 
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
-        RootExecutionResultNode overallResultNode = (RootExecutionResultNode) serviceResultNodesToOverallResult
-                .convert(rootResultNode, overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings);
-        // NOTE : we only take the first result node here but we may have errors in the root node that are global so transfer them in
-        ExecutionResultNode firstTopLevelResultNode = overallResultNode.getChildren().get(0);
+        ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
+                .convertChildren(rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings);
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
+        firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
 
         return changeFieldInResultNode(firstTopLevelResultNode, hydrationTransformation.getOriginalField());
     }
@@ -322,7 +322,7 @@ public class HydrationInputResolver {
             ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
-                ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convert(
+                ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convertChildren(
                         matchingResolvedNode, overallSchema, executionStepInfo, true, true, transformationByResultField, typeRenameMappings);
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);
