@@ -211,7 +211,7 @@ public class ServiceResultNodesToOverallResult {
         Map<AbstractNode, Set<String>> idsByTransformationDefinition = new LinkedHashMap<>();
         List<Field> fields = executionResultNode.getMergedField().getFields();
         for (Field field : fields) {
-            List<String> fieldIds = FieldIdUtil.getRootOfTransformationIds(field);
+            List<String> fieldIds = FieldMetadataUtil.getRootOfTransformationIds(field);
             for (String fieldId : fieldIds) {
                 FieldTransformation fieldTransformation = assertNotNull(transformationMap.get(fieldId));
                 AbstractNode definition = fieldTransformation.getDefinition();
@@ -255,12 +255,12 @@ public class ServiceResultNodesToOverallResult {
 
 
     private List<Field> getFieldsWithoutNadelId(ExecutionResultNode node) {
-        return node.getMergedField().getFields().stream().filter(field -> FieldIdUtil.getFieldIds(field).size() == 0).collect(Collectors.toList());
+        return node.getMergedField().getFields().stream().filter(field -> FieldMetadataUtil.getFieldIds(field).size() == 0).collect(Collectors.toList());
     }
 
     private List<Field> getFieldsWithNadelId(ExecutionResultNode node, Set<String> ids) {
         return node.getMergedField().getFields().stream().filter(field -> {
-            List<String> fieldIds = FieldIdUtil.getFieldIds(field);
+            List<String> fieldIds = FieldMetadataUtil.getFieldIds(field);
             return fieldIds.containsAll(ids);
         }).collect(Collectors.toList());
     }
@@ -277,7 +277,7 @@ public class ServiceResultNodesToOverallResult {
         Set<FieldTransformation> transformations = new LinkedHashSet<>();
         List<Field> notTransformedFields = new ArrayList<>();
         for (Field field : mergedField.getFields()) {
-            List<String> fieldIds = FieldIdUtil.getRootOfTransformationIds(field);
+            List<String> fieldIds = FieldMetadataUtil.getRootOfTransformationIds(field);
             if (fieldIds.size() == 0) {
                 notTransformedFields.add(field);
                 continue;

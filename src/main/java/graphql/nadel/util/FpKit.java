@@ -43,4 +43,8 @@ public class FpKit {
     public static <T, U> List<U> filterAndMap(List<T> list, Predicate<T> filter, Function<T, U> function) {
         return list.stream().filter(filter).map(function).collect(Collectors.toList());
     }
+
+    public static <T> List<T> filter(List<T> list, Predicate<T> filter) {
+        return list.stream().filter(filter).collect(Collectors.toList());
+    }
 }

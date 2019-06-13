@@ -8,7 +8,7 @@ import graphql.language.Field;
 import graphql.language.Node;
 import graphql.language.NodeVisitorStub;
 import graphql.language.SelectionSet;
-import graphql.nadel.engine.FieldIdUtil;
+import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -37,13 +37,13 @@ public final class FieldUtils {
         return pathToFields(path, nadelFieldId, null);
     }
 
-    public static Field pathToFields(List<String> path, String nadelFieldId, SelectionSet selectionSet) {
+    public static Field pathToFields(List<String> path, String nadelFieldId, SelectionSet lastSelectionSet) {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
             Field.Builder newField = Field.newField();
-            FieldIdUtil.setFieldId(newField, nadelFieldId, ix == 0);
-            if (ix == path.size() - 1 && selectionSet != null) {
-                newField.selectionSet(selectionSet);
+            FieldMetadataUtil.setFieldMetadata(newField, nadelFieldId, ix == 0, true);
+            if (ix == path.size() - 1 && lastSelectionSet != null) {
+                newField.selectionSet(lastSelectionSet);
             }
             if (curField != null) {
                 newField.selectionSet(newSelectionSet().selection(curField).build());
@@ -86,7 +86,7 @@ public final class FieldUtils {
 
             @Override
             public TraversalControl visitField(Field field, TraverserContext<Node> context) {
-                return TreeTransformerUtil.changeNode(context, FieldIdUtil.addFieldId(field, id, false));
+                return TreeTransformerUtil.changeNode(context, FieldMetadataUtil.addFieldMetadata(field, id, false, false));
             }
         });
         return field.transform(builder -> builder.selectionSet(selectionSet));
