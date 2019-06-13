@@ -67,6 +67,12 @@ public class StrategyUtil {
         return (T) executionResultNode.withNewFetchedValueAnalysis(newFetchedValueAnalysis);
     }
 
+    public static <T extends ExecutionResultNode> T changeEsiInResultNode(T executionResultNode, ExecutionStepInfo newEsi) {
+        FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
+        FetchedValueAnalysis newFVA = fetchedValueAnalysis.transfrom(builder -> builder.executionStepInfo(newEsi));
+        return (T) executionResultNode.withNewFetchedValueAnalysis(newFVA);
+    }
+
     public static ExecutionResultNode changeFieldInResultNode(ExecutionResultNode executionResultNode, MergedField mergedField) {
         FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
         ExecutionStepInfo newStepInfo = fetchedValueAnalysis.getExecutionStepInfo().transform(builder -> builder.field(mergedField));

@@ -89,7 +89,7 @@ public class NadelExecutionStrategy {
             //
             // take the original query and transform it into the underlying query needed for that top level field
             //
-            QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(executionContext, operationName, operation, singletonList(mergedField));
+            QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(executionContext, service.getUnderlyingSchema(), operationName, operation, singletonList(mergedField));
             Map<String, FieldTransformation> transformationByResultField = queryTransformerResult.getTransformationByResultField();
             Map<String, String> typeRenameMappings = queryTransformerResult.getTypeRenameMappings();
 

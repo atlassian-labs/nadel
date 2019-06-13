@@ -362,7 +362,7 @@ class NadelE2ETest extends Specification {
         result.join().data == [node: [name: "My Issue"]]
     }
 
-    def "can rename a field with value along a path"() {
+    def "deep rename works"() {
 
         def nsdl = '''
          service IssueService {
@@ -373,9 +373,6 @@ class NadelE2ETest extends Specification {
                 name: String => renamed from detail.detailName
             }
          }
-        '''
-        def query = '''
-        { issue { name } } 
         '''
         def underlyingSchema = typeDefinitions('''
             type Query{
@@ -396,6 +393,9 @@ class NadelE2ETest extends Specification {
         )
 
         given:
+        def query = '''
+        { issue { name } } 
+        '''
         Nadel nadel = newNadel()
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)

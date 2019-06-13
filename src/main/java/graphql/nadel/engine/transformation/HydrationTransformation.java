@@ -1,6 +1,5 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
@@ -50,7 +49,7 @@ public class HydrationTransformation extends FieldTransformation {
     }
 
     @Override
-    public TraversalControl apply(QueryVisitorFieldEnvironment environment) {
+    public TraversalControl apply(ApplyEnvironment environment) {
         super.apply(environment);
 
         TraverserContext<Node> context = environment.getTraverserContext();
@@ -62,7 +61,7 @@ public class HydrationTransformation extends FieldTransformation {
                 "only object field arguments are supported at the moment");
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
-        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId());
+        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), true);
         changeNode(context, newField);
         return TraversalControl.ABORT;
     }
@@ -151,7 +150,7 @@ public class HydrationTransformation extends FieldTransformation {
     private FetchedValueAnalysis mapToOriginalFields(FetchedValueAnalysis fetchedValueAnalysis, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
 
         BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> {
-            ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi);
+            ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, env.parentExecutionStepInfo);
             return executionStepInfoMapper.mapExecutionStepInfo(esiWithMappedField, environment);
         };
         return fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
