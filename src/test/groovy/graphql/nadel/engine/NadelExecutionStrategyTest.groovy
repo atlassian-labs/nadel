@@ -1351,7 +1351,6 @@ class NadelExecutionStrategyTest extends Specification {
 
         def expectedQuery1 = "query nadel_2_Issues {issue {id authorDetails {authorId} authorDetails {name} authorDetails {extraInfo}}}"
         def issue1 = [id: "ISSUE-1", authorDetails: [authorId: "USER-1", name: "User 1", extraInfo: "extra 1"]]
-//        def issue2 = [id: "ISSUE-2", authorDetails: [authorId: "USER-2", name: "User 2", extraInfo: "extra 2"]]
         def response1 = new ServiceExecutionResult([issue: issue1])
 
 
@@ -1368,7 +1367,6 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> CompletableFuture.completedFuture(response1)
 
         def issue1Result = [id: "ISSUE-1", authorId: "USER-1", authorName: "User 1", details: [extra: "extra 1"]]
-//        def issue2Result = [id: "ISSUE-2", authorId: "USER-2", authorName: "User 2", details: [extra: "extra 2"]]
         resultData(response) == [issue: issue1Result]
 
     }
