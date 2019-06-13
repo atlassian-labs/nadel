@@ -60,6 +60,16 @@ public class ServiceResultNodesToOverallResult {
         return convertImpl(root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, false);
     }
 
+    private ExecutionResultNode convertChildren(ExecutionResultNode root,
+                                                GraphQLSchema overallSchema,
+                                                ExecutionStepInfo rootStepInfo,
+                                                boolean isHydrationTransformation,
+                                                boolean batched,
+                                                Map<String, FieldTransformation> transformationMap,
+                                                Map<String, String> typeRenameMappings) {
+        return convertImpl(root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true);
+    }
+
     private ExecutionResultNode convertImpl(ExecutionResultNode root,
                                             GraphQLSchema overallSchema,
                                             ExecutionStepInfo rootStepInfo,
@@ -153,14 +163,20 @@ public class ServiceResultNodesToOverallResult {
             FieldTransformation.UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
             unapplyResults.add(unapplyResult);
         }
+
         boolean first = true;
         if (notTransformedTree != null) {
-            mapAndChangeNode(notTransformedTree, unapplyEnvironment, context);
             ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, context);
+            mappedNode = convertChildren(mappedNode,
+                    unapplyEnvironment.overallSchema,
+                    unapplyEnvironment.parentExecutionStepInfo,
+                    unapplyEnvironment.isHydrationTransformation,
+                    unapplyEnvironment.batched,
+                    transformationMap,
+                    unapplyEnvironment.typeRenameMappings);
             TreeTransformerUtil.changeNode(context, mappedNode);
             first = false;
         }
-
 
         for (FieldTransformation.UnapplyResult unapplyResult : unapplyResults) {
             ExecutionResultNode transformedResult;
@@ -168,23 +184,22 @@ public class ServiceResultNodesToOverallResult {
                 transformedResult = unapplyResult.getNode();
             } else {
                 ExecutionResultNode unapplyResultNode = unapplyResult.getNode();
-                transformedResult = convertImpl(unapplyResultNode,
+                transformedResult = convertChildren(unapplyResultNode,
                         unapplyEnvironment.overallSchema,
                         unapplyEnvironment.parentExecutionStepInfo,
                         unapplyEnvironment.isHydrationTransformation,
                         unapplyEnvironment.batched,
                         transformationMap,
-                        unapplyEnvironment.typeRenameMappings,
-                        true);
+                        unapplyEnvironment.typeRenameMappings);
             }
             if (first) {
                 TreeTransformerUtil.changeNode(context, transformedResult);
                 first = false;
-                continue;
+            } else {
+                TreeTransformerUtil.insertAfter(context, transformedResult);
             }
-            TreeTransformerUtil.insertAfter(context, transformedResult);
         }
-        return TraversalControl.CONTINUE;
+        return TraversalControl.ABORT;
     }
 
     private TraversalControl unapplyHydration(ExecutionResultNode node,
