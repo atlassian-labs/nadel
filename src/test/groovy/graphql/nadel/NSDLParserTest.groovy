@@ -28,25 +28,6 @@ class NSDLParserTest extends Specification {
 
     }
 
-    def "hydration with more than one level is not allowed"() {
-        given:
-        def simpleDSL = """
-        service Foo {
-            type Query {
-                 id(inputArg: ID!): ID => hydrated from OtherService.resolveId(otherId: \$source.detail.subDetail.id)
-
-            }
-        }
-       """
-        NSDLParser parser = new NSDLParser()
-        when:
-        parser.parseDSL(simpleDSL)
-
-        then:
-        thrown(InvalidSyntaxException)
-
-    }
-
     def "simple service definition"() {
         given:
         def simpleDSL = """
