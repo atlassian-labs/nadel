@@ -55,7 +55,7 @@ remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 remoteArgumentPair : name ':' remoteArgumentSource ;
 
 
-sourceObjectReference : '$source' '.' name ('.'name)?;
+sourceObjectReference : '$source' '.' name ('.'name)*;
 
 fieldArgumentReference : '$argument' '.' name ;
 
