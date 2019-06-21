@@ -45,10 +45,11 @@ service Issues {
     }
     type Issue {
         id: ID
-        authors: [User] => hydrated from UserService.usersById(id: $source.authorIds) batch size 10
+        authors: [User] => hydrated from Users.usersById(id: $source.authorIds) batch size 10
     }
 }
-service User {
+
+service Users {
     type Query {
         usersById(id: [ID]): [User]
     }
