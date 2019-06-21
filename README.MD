@@ -38,7 +38,7 @@ type User {
 ```
 This is how you would combine these two services together with Nadel while also renaming a field at the same time.
 
-```
+```graphql
 service Issues {
     type Query {
         issues: [Issue]
