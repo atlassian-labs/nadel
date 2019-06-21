@@ -45,7 +45,7 @@ service Issues {
     }
     type Issue {
         id: ID
-        authors: [User] => hydrated from UserService.usersById(id: $source.authorIds) object identified by id, batch size 10
+        authors: [User] => hydrated from UserService.usersById(id: $source.authorIds) batch size 10
     }
 }
 service User {
@@ -79,8 +79,9 @@ type User {
 
 ## Features
 
-- Explicit overall schema design: every field for the overall schema needs to be declared in the Nadel DSL. If it doesnt' show up it will not be exposed
+- Explicit overall schema design: every field for the overall schema needs to be declared in the Nadel DSL. If it is not declared it will not be exposed
 - Hydration: resolving referencing to other objects by calling another service
 - Field rename: renaming field from the underlying schema to a new name in the overall schema
 - Type rename: renaming a type from the underlying schema to a new name in the overall schema
+- Batching: Hydration calls are automatically batched with a configurable max batch size per call  
 
