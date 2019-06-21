@@ -18,7 +18,7 @@ Lets assume we have two Services: "Issues" and "Users". One has Issues referenci
 This is the schema for the Issues service:
 ```graphql
 type Query {
-    issues : [Issue]
+    issues: [Issue]
 }
 type Issue {
     id: ID
