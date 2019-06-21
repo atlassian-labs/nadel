@@ -58,7 +58,6 @@ service Users {
         name: String => renamed from $source.fullName
     }
 }
-
 ```
 
 The result is a new GraphQL API which combines the two services in one and has the following schema:
