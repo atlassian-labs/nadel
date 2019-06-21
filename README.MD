@@ -13,7 +13,7 @@ GraphQL API and no Java Code is needed to combine services together. It is all d
 
 ## Example:
 
-Lets assume we have two Services: "Issues" and "Users". One has Issues referencing Users. 
+Lets assume we have two Services: "Issues" and "Users". One has Issues and one has Users. An Issue has a reference to its authors.
 
 This is the schema for the Issues service:
 ```graphql
@@ -26,7 +26,7 @@ type Issue {
 }
 ```
 
-And this is the User service:
+And this is the Users service:
 ```graphql
 type Query {
     usersById(id: [ID]): [User]
