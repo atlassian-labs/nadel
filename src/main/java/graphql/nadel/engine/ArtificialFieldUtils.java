@@ -73,7 +73,7 @@ public class ArtificialFieldUtils {
                 ExecutionResultNode node = context.thisNode();
                 if (node instanceof LeafExecutionResultNode) {
                     LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
-                    MergedField mergedField = leaf.getFetchedValueAnalysis().getField();
+                    MergedField mergedField = leaf.getMergedField();
 
                     if (isArtificialField(nadelContext, mergedField)) {
                         return TreeTransformerUtil.deleteNode(context);

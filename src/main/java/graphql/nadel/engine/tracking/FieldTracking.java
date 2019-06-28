@@ -101,8 +101,7 @@ public class FieldTracking {
     private synchronized void completeNodes(List<ExecutionResultNode> resultNodes, Throwable throwable) {
         for (ExecutionResultNode resultNode : resultNodes) {
 
-            FetchedValueAnalysis fva = resultNode.getFetchedValueAnalysis();
-            ExecutionStepInfo stepInfo = fva.getExecutionStepInfo();
+            ExecutionStepInfo stepInfo = resultNode.getExecutionStepInfo();
 
             // the reason we dispatch during completion is because sub fields are not visited
             // during the initial service call and hence they are never seen until we complete

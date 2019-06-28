@@ -61,23 +61,16 @@ public class StrategyUtil {
 
     public static <T extends ExecutionResultNode> T changeFieldInResultNode(T executionResultNode, Field newField) {
         MergedField mergedField = MergedField.newMergedField(newField).build();
-        FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
-        ExecutionStepInfo newStepInfo = fetchedValueAnalysis.getExecutionStepInfo().transform(builder -> builder.field(mergedField));
-        FetchedValueAnalysis newFetchedValueAnalysis = fetchedValueAnalysis.transfrom(builder -> builder.executionStepInfo(newStepInfo));
-        return (T) executionResultNode.withNewFetchedValueAnalysis(newFetchedValueAnalysis);
+        return (T) changeFieldInResultNode(executionResultNode, mergedField);
     }
 
     public static <T extends ExecutionResultNode> T changeEsiInResultNode(T executionResultNode, ExecutionStepInfo newEsi) {
-        FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
-        FetchedValueAnalysis newFVA = fetchedValueAnalysis.transfrom(builder -> builder.executionStepInfo(newEsi));
-        return (T) executionResultNode.withNewFetchedValueAnalysis(newFVA);
+        return (T) executionResultNode.withNewExecutionStepInfo(newEsi);
     }
 
-    public static ExecutionResultNode changeFieldInResultNode(ExecutionResultNode executionResultNode, MergedField mergedField) {
-        FetchedValueAnalysis fetchedValueAnalysis = executionResultNode.getFetchedValueAnalysis();
-        ExecutionStepInfo newStepInfo = fetchedValueAnalysis.getExecutionStepInfo().transform(builder -> builder.field(mergedField));
-        FetchedValueAnalysis newFetchedValueAnalysis = fetchedValueAnalysis.transfrom(builder -> builder.executionStepInfo(newStepInfo));
-        return executionResultNode.withNewFetchedValueAnalysis(newFetchedValueAnalysis);
+    public static <T extends ExecutionResultNode> T changeFieldInResultNode(T executionResultNode, MergedField mergedField) {
+        ExecutionStepInfo newStepInfo = executionResultNode.getExecutionStepInfo().transform(builder -> builder.field(mergedField));
+        return (T) executionResultNode.withNewExecutionStepInfo(newStepInfo);
     }
 
 

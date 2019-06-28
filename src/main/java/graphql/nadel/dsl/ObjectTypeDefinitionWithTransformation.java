@@ -11,7 +11,9 @@ import graphql.language.SourceLocation;
 import graphql.language.Type;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition {
 
@@ -26,7 +28,7 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
                                                      SourceLocation sourceLocation,
                                                      List<Comment> comments,
                                                      IgnoredChars ignoredChars) {
-        super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments, ignoredChars);
+        super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments, ignoredChars, Collections.emptyMap());
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -81,6 +83,16 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
             this.ignoredChars = ignoredChars;
             return this;
+        }
+
+        @Override
+        public NodeBuilder additionalData(Map<String, String> additionalData) {
+            return null;
+        }
+
+        @Override
+        public NodeBuilder additionalData(String key, String value) {
+            return null;
         }
 
         public Builder name(String name) {

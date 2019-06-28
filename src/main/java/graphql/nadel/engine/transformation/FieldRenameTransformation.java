@@ -7,7 +7,7 @@ import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
-import graphql.nadel.engine.FetchedValueAnalysisMapper;
+import graphql.nadel.engine.ResolvedValueMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.util.TraversalControl;
@@ -23,7 +23,7 @@ import static graphql.util.TreeTransformerUtil.changeNode;
 
 public class FieldRenameTransformation extends FieldTransformation {
 
-    FetchedValueAnalysisMapper fetchedValueAnalysisMapper = new FetchedValueAnalysisMapper();
+    ResolvedValueMapper resolvedValueMapper = new ResolvedValueMapper();
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
     private final FieldMappingDefinition mappingDefinition;
 
@@ -60,15 +60,12 @@ public class FieldRenameTransformation extends FieldTransformation {
                                            List<FieldTransformation> allTransformations,
                                            UnapplyEnvironment environment) {
         ExecutionResultNode subTree = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
-        FetchedValueAnalysis fetchedValueAnalysis = subTree.getFetchedValueAnalysis();
+        ExecutionStepInfo esi = subTree.getExecutionStepInfo();
 
-        BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> {
-            ExecutionStepInfo esiWithMappedField = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, env.parentExecutionStepInfo);
-            return executionStepInfoMapper.mapExecutionStepInfo(esiWithMappedField, environment);
-        };
-        FetchedValueAnalysis mappedFVA = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(fetchedValueAnalysis, environment,
-                esiMapper);
-        return new UnapplyResult(subTree.withNewFetchedValueAnalysis(mappedFVA), TraversalControl.CONTINUE);
+        esi = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, environment.parentExecutionStepInfo);
+        esi = executionStepInfoMapper.mapExecutionStepInfo(esi, environment);
+
+        return new UnapplyResult(subTree.withNewExecutionStepInfo(esi), TraversalControl.CONTINUE);
     }
 
 

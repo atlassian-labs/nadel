@@ -9,14 +9,16 @@ import graphql.language.ScalarTypeDefinition;
 import graphql.language.SourceLocation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class ScalarTypeDefinitionWithTransformation extends ScalarTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
 
     protected ScalarTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition, String name, List<Directive> directives, Description description, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
-        super(name, directives, description, sourceLocation, comments, ignoredChars);
+        super(name, directives, description, sourceLocation, comments, ignoredChars, Collections.emptyMap());
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -88,6 +90,16 @@ public class ScalarTypeDefinitionWithTransformation extends ScalarTypeDefinition
         public Builder ignoredChars(IgnoredChars ignoredChars) {
             this.ignoredChars = ignoredChars;
             return this;
+        }
+
+        @Override
+        public NodeBuilder additionalData(Map<String, String> additionalData) {
+            return null;
+        }
+
+        @Override
+        public NodeBuilder additionalData(String key, String value) {
+            return null;
         }
 
         public ScalarTypeDefinition build() {

@@ -6,6 +6,7 @@ import graphql.execution.MergedField;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
+import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
@@ -38,7 +39,7 @@ import static java.util.Collections.singletonMap;
 
 public class ServiceResultNodesToOverallResult {
 
-    FetchedValueAnalysisMapper fetchedValueAnalysisMapper = new FetchedValueAnalysisMapper();
+    ResolvedValueMapper resolvedValueMapper = new ResolvedValueMapper();
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
 
     ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
@@ -186,7 +187,7 @@ public class ServiceResultNodesToOverallResult {
                 ExecutionResultNode unapplyResultNode = unapplyResult.getNode();
                 transformedResult = convertChildren(unapplyResultNode,
                         unapplyEnvironment.overallSchema,
-                        unapplyResultNode.getFetchedValueAnalysis().getExecutionStepInfo(),
+                        unapplyResultNode.getExecutionStepInfo(),
                         unapplyEnvironment.isHydrationTransformation,
                         unapplyEnvironment.batched,
                         transformationMap,
@@ -291,11 +292,10 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
-        FetchedValueAnalysis originalFetchAnalysis = node.getFetchedValueAnalysis();
 
-        BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> executionStepInfoMapper.mapExecutionStepInfo(esi, env);
-        FetchedValueAnalysis mappedFetchedValueAnalysis = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(originalFetchAnalysis, environment, esiMapper);
-        return node.withNewFetchedValueAnalysis(mappedFetchedValueAnalysis);
+        ExecutionStepInfo mappedEsi = executionStepInfoMapper.mapExecutionStepInfo(node.getExecutionStepInfo(), environment);
+        ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node.getResolvedValue(), environment);
+        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue);
     }
 
     private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
@@ -321,8 +321,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private void setExecutionInfo(TraverserContext<ExecutionResultNode> context, ExecutionResultNode resultNode) {
-        FetchedValueAnalysis fva = resultNode.getFetchedValueAnalysis();
-        ExecutionStepInfo stepInfo = fva.getExecutionStepInfo();
+        ExecutionStepInfo stepInfo = resultNode.getExecutionStepInfo();
         context.setVar(ExecutionStepInfo.class, stepInfo);
     }
 
