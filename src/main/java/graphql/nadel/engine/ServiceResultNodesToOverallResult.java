@@ -106,8 +106,7 @@ public class ServiceResultNodesToOverallResult {
                         isHydrationTransformation,
                         batched,
                         typeRenameMappings,
-                        overallSchema,
-                        notTransformedFields
+                        overallSchema
                 );
                 if (transformations.size() == 0) {
                     mapAndChangeNode(node, unapplyEnvironment, context);
