@@ -1,19 +1,16 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
-import graphql.nadel.engine.ResolvedValueMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.util.TraversalControl;
 
 import java.util.List;
-import java.util.function.BiFunction;
 
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.nadel.engine.transformation.FieldUtils.addFieldIdToChildren;
@@ -23,7 +20,6 @@ import static graphql.util.TreeTransformerUtil.changeNode;
 
 public class FieldRenameTransformation extends FieldTransformation {
 
-    ResolvedValueMapper resolvedValueMapper = new ResolvedValueMapper();
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
     private final FieldMappingDefinition mappingDefinition;
 

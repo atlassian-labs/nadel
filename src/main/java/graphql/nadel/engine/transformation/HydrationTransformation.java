@@ -1,7 +1,6 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.execution.nextgen.result.ListExecutionResultNode;
@@ -13,7 +12,6 @@ import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
-import graphql.nadel.engine.ResolvedValueMapper;
 import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.util.TraversalControl;
@@ -21,9 +19,7 @@ import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 
-import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
@@ -36,7 +32,6 @@ public class HydrationTransformation extends FieldTransformation {
 
     private InnerServiceHydration innerServiceHydration;
 
-    private ResolvedValueMapper resolvedValueMapper = new ResolvedValueMapper();
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
 
 

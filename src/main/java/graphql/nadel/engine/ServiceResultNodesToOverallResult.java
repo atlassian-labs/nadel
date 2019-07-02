@@ -3,10 +3,8 @@ package graphql.nadel.engine;
 import graphql.Assert;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
-import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
-import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
@@ -27,7 +25,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
@@ -39,7 +36,6 @@ import static java.util.Collections.singletonMap;
 
 public class ServiceResultNodesToOverallResult {
 
-    ResolvedValueMapper resolvedValueMapper = new ResolvedValueMapper();
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
 
     ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
@@ -293,8 +289,7 @@ public class ServiceResultNodesToOverallResult {
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
 
         ExecutionStepInfo mappedEsi = executionStepInfoMapper.mapExecutionStepInfo(node.getExecutionStepInfo(), environment);
-        ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node.getResolvedValue(), environment);
-        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue);
+        return node.withNewExecutionStepInfo(mappedEsi);
     }
 
     private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
