@@ -10,14 +10,16 @@ import graphql.language.NodeBuilder;
 import graphql.language.SourceLocation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class InputObjectTypeDefinitionWithTransformation extends InputObjectTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
 
     protected InputObjectTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition, String name, List<Directive> directives, List<InputValueDefinition> inputValueDefinitions, Description description, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
-        super(name, directives, inputValueDefinitions, description, sourceLocation, comments, ignoredChars);
+        super(name, directives, inputValueDefinitions, description, sourceLocation, comments, ignoredChars, Collections.emptyMap());
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -101,6 +103,16 @@ public class InputObjectTypeDefinitionWithTransformation extends InputObjectType
         public Builder ignoredChars(IgnoredChars ignoredChars) {
             this.ignoredChars = ignoredChars;
             return this;
+        }
+
+        @Override
+        public NodeBuilder additionalData(Map<String, String> additionalData) {
+            return null;
+        }
+
+        @Override
+        public NodeBuilder additionalData(String key, String value) {
+            return null;
         }
 
         public InputObjectTypeDefinition build() {

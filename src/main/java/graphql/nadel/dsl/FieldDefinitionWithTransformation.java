@@ -12,7 +12,9 @@ import graphql.language.SourceLocation;
 import graphql.language.Type;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class FieldDefinitionWithTransformation extends FieldDefinition {
 
@@ -26,7 +28,7 @@ public class FieldDefinitionWithTransformation extends FieldDefinition {
                                                 Description description,
                                                 FieldTransformation fieldTransformation, SourceLocation sourceLocation,
                                                 List<Comment> comments) {
-        super(name, type, inputValueDefinitions, directives, description, sourceLocation, comments, IgnoredChars.EMPTY);
+        super(name, type, inputValueDefinitions, directives, description, sourceLocation, comments, IgnoredChars.EMPTY, Collections.emptyMap());
         this.fieldTransformation = fieldTransformation;
     }
 
@@ -79,6 +81,16 @@ public class FieldDefinitionWithTransformation extends FieldDefinition {
 
         @Override
         public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
+            return null;
+        }
+
+        @Override
+        public NodeBuilder additionalData(Map<String, String> additionalData) {
+            return null;
+        }
+
+        @Override
+        public NodeBuilder additionalData(String key, String value) {
             return null;
         }
 

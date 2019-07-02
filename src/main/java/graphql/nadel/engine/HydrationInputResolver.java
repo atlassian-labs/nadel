@@ -10,6 +10,7 @@ import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.execution.nextgen.result.ListExecutionResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
+import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Argument;
 import graphql.language.ArrayValue;
@@ -53,6 +54,7 @@ import static graphql.util.FpKit.findOneOrNull;
 import static graphql.util.FpKit.flatList;
 import static graphql.util.FpKit.map;
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 
@@ -174,7 +176,7 @@ public class HydrationInputResolver {
                                                                                FieldTracking fieldTracking,
                                                                                HydrationInputNode hydrationInputNode) {
         HydrationTransformation hydrationTransformation = hydrationInputNode.getHydrationTransformation();
-        ExecutionStepInfo hydratedFieldStepInfo = hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo();
+        ExecutionStepInfo hydratedFieldStepInfo = hydrationInputNode.getExecutionStepInfo();
 
         Field originalField = hydrationTransformation.getOriginalField();
         InnerServiceHydration innerServiceHydration = hydrationTransformation.getInnerServiceHydration();
@@ -208,7 +210,7 @@ public class HydrationInputResolver {
 
     private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode, Field originalField, InnerServiceHydration innerServiceHydration, String topLevelFieldName) {
         RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
-        Object value = hydrationInputNode.getFetchedValueAnalysis().getCompletedValue();
+        Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
         Argument argument = Argument.newArgument()
                 .name(remoteArgumentDefinition.getName())
                 .value(new StringValue(value.toString()))
@@ -260,7 +262,7 @@ public class HydrationInputResolver {
                 .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType);
 
 
-        List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, hydrationInputNode -> hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo());
+        List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, ExecutionResultNode::getExecutionStepInfo);
         fieldTracking.fieldsDispatched(hydratedFieldStepInfos);
         return serviceExecutor
                 .execute(executionContext, queryTransformationResult, service, operation, null)
@@ -276,7 +278,7 @@ public class HydrationInputResolver {
         RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
         List<Value> values = new ArrayList<>();
         for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
-            Object value = hydrationInputNode.getFetchedValueAnalysis().getCompletedValue();
+            Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
             values.add(StringValue.newStringValue(value.toString()).build());
         }
         Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new ArrayValue(values)).build();
@@ -294,15 +296,15 @@ public class HydrationInputResolver {
                                                                                    RootExecutionResultNode rootResultNode,
                                                                                    QueryTransformationResult queryTransformationResult) {
 
-        List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputNodes, hydrationInputNode -> hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo());
+        List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputNodes, ExecutionResultNode::getExecutionStepInfo);
         synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfos);
 
         if (rootResultNode.getChildren().get(0) instanceof LeafExecutionResultNode) {
             // we only expect a null value here
-            assertTrue(rootResultNode.getChildren().get(0).getFetchedValueAnalysis().isNullValue());
+            assertTrue(rootResultNode.getChildren().get(0).getResolvedValue().isNullValue());
             List<ExecutionResultNode> result = new ArrayList<>();
             for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
-                ExecutionStepInfo executionStepInfo = hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo();
+                ExecutionStepInfo executionStepInfo = hydrationInputNode.getExecutionStepInfo();
                 ExecutionResultNode resultNode = createNullValue(executionStepInfo);
                 result.add(resultNode);
             }
@@ -318,7 +320,7 @@ public class HydrationInputResolver {
 
         boolean first = true;
         for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
-            ExecutionStepInfo executionStepInfo = hydrationInputNode.getFetchedValueAnalysis().getExecutionStepInfo();
+            ExecutionStepInfo executionStepInfo = hydrationInputNode.getExecutionStepInfo();
             ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
@@ -340,23 +342,21 @@ public class HydrationInputResolver {
     }
 
     private LeafExecutionResultNode createNullValue(ExecutionStepInfo executionStepInfo) {
-        FetchedValueAnalysis fetchedValueAnalysis = FetchedValueAnalysis.newFetchedValueAnalysis()
-                .valueType(FetchedValueAnalysis.FetchedValueType.OBJECT)
-                .fetchedValue(FetchedValue.newFetchedValue().build())
-                .nullValue()
-                .executionStepInfo(executionStepInfo)
+        ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
+                .localContext(null)
+                .nullValue(true)
                 .build();
-        return new LeafExecutionResultNode(fetchedValueAnalysis, null);
+        return new LeafExecutionResultNode(executionStepInfo, resolvedValue, null);
     }
 
     private ObjectExecutionResultNode findMatchingResolvedNode(ExecutionContext executionContext, HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
         NadelContext nadelContext = getNadelContext(executionContext);
         String objectIdentifier = nadelContext.getObjectIdentifierAlias();
-        String inputNodeId = (String) inputNode.getFetchedValueAnalysis().getCompletedValue();
+        String inputNodeId = (String) inputNode.getResolvedValue().getCompletedValue();
         for (ExecutionResultNode resolvedNode : resolvedNodes) {
             LeafExecutionResultNode idNode = getFieldByResultKey((ObjectExecutionResultNode) resolvedNode, objectIdentifier);
             assertNotNull(idNode, "no value found for object identifier: " + objectIdentifier);
-            Object id = idNode.getFetchedValueAnalysis().getCompletedValue();
+            Object id = idNode.getResolvedValue().getCompletedValue();
             assertNotNull(id, "object identifier is null");
             if (id.equals(inputNodeId)) {
                 return (ObjectExecutionResultNode) resolvedNode;

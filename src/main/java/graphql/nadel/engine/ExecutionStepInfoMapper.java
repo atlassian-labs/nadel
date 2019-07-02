@@ -34,34 +34,40 @@ public class ExecutionStepInfoMapper {
         GraphQLSchema overallSchema = environment.overallSchema;
         ExecutionStepInfo parentExecutionStepInfo = environment.parentExecutionStepInfo;
 
-        String fieldName = executionStepInfo.getField().getName();
-
-        GraphQLOutputType fieldType = executionStepInfo.getType();
-        GraphQLObjectType fieldContainer = executionStepInfo.getFieldContainer();
-        String fieldContainerName = mapTypeName(typeRenameMappings, fieldContainer.getName());
-
-        GraphQLObjectType mappedFieldContainer = overallSchema.getObjectType(fieldContainerName);
-        assertNotNull(mappedFieldContainer, "field container type " + fieldContainerName + " found in overall schema");
-        GraphQLOutputType mappedFieldType = mapFieldType(fieldType, overallSchema, typeRenameMappings);
-        GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedFieldContainer, fieldName);
-
+        GraphQLOutputType mappedType = mapFieldType(executionStepInfo, typeRenameMappings, overallSchema);
         ExecutionPath mappedPath = pathMapper.mapPath(executionStepInfo, executionStepInfo.getField(), environment);
 
+        GraphQLObjectType mappedFieldContainer = mapFieldContainer(executionStepInfo, typeRenameMappings, overallSchema);
+        GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedFieldContainer, executionStepInfo.getField().getName());
+
         return executionStepInfo.transform(builder -> builder
-                .type(mappedFieldType)
-                .path(mappedPath)
+                .type(mappedType)
                 .fieldContainer(mappedFieldContainer)
                 .fieldDefinition(mappedFieldDefinition)
+                .path(mappedPath)
                 .parentInfo(parentExecutionStepInfo)
         );
 
+    }
+
+    private GraphQLObjectType mapFieldContainer(ExecutionStepInfo executionStepInfo, Map<String, String> typeRenameMappings, GraphQLSchema overallSchema) {
+        String fieldContainerName = mapTypeName(typeRenameMappings, executionStepInfo.getFieldContainer().getName());
+        GraphQLObjectType mappedFieldContainer = overallSchema.getObjectType(fieldContainerName);
+        assertNotNull(mappedFieldContainer, "field container type " + fieldContainerName + " found in overall schema");
+        return mappedFieldContainer;
+    }
+
+    private GraphQLOutputType mapFieldType(ExecutionStepInfo executionStepInfo, Map<String, String> typeRenameMappings, GraphQLSchema overallSchema) {
+        return mapFieldType(executionStepInfo.getType(), overallSchema, typeRenameMappings);
     }
 
     private String mapTypeName(Map<String, String> typeRenameMappings, String name) {
         return typeRenameMappings.getOrDefault(name, name);
     }
 
-    private GraphQLOutputType mapFieldType(GraphQLOutputType graphQLOutputType, GraphQLSchema overallSchema, Map<String, String> typeRenameMappings) {
+    private GraphQLOutputType mapFieldType(GraphQLOutputType graphQLOutputType,
+                                           GraphQLSchema overallSchema,
+                                           Map<String, String> typeRenameMappings) {
         if (isNotWrapped(graphQLOutputType)) {
             String typeName = mapTypeName(typeRenameMappings, graphQLOutputType.getName());
             GraphQLOutputType outputType = (GraphQLOutputType) overallSchema.getType(typeName);
@@ -89,6 +95,7 @@ public class ExecutionStepInfoMapper {
             return TypeNameMetaFieldDef;
         }
         GraphQLFieldsContainer fieldsContainer = (GraphQLFieldsContainer) parentType;
-        return assertNotNull(schema.getCodeRegistry().getFieldVisibility().getFieldDefinition(fieldsContainer, fieldName));
+        GraphQLFieldDefinition fieldDefinition = schema.getCodeRegistry().getFieldVisibility().getFieldDefinition(fieldsContainer, fieldName);
+        return assertNotNull(fieldDefinition, "field '" + fieldName + "' not found in container '" + fieldsContainer + "'");
     }
 }

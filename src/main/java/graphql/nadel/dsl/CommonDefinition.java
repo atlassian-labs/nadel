@@ -13,7 +13,9 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class CommonDefinition extends AbstractNode<CommonDefinition> {
 
@@ -82,6 +84,16 @@ public class CommonDefinition extends AbstractNode<CommonDefinition> {
         public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
             this.ignoredChars = ignoredChars;
             return this;
+        }
+
+        @Override
+        public NodeBuilder additionalData(Map<String, String> additionalData) {
+            return null;
+        }
+
+        @Override
+        public NodeBuilder additionalData(String key, String value) {
+            return null;
         }
 
         public Builder sourceLocation(SourceLocation sourceLocation) {

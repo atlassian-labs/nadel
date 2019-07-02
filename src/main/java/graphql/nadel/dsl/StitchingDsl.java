@@ -14,6 +14,7 @@ import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
@@ -96,6 +97,16 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
         public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
             this.ignoredChars = ignoredChars;
             return this;
+        }
+
+        @Override
+        public NodeBuilder additionalData(Map<String, String> additionalData) {
+            return null;
+        }
+
+        @Override
+        public NodeBuilder additionalData(String key, String value) {
+            return null;
         }
 
         public Builder sourceLocation(SourceLocation sourceLocation) {

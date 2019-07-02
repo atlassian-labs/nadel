@@ -10,14 +10,16 @@ import graphql.language.NodeBuilder;
 import graphql.language.SourceLocation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class EnumTypeDefinitionWithTransformation extends EnumTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
 
     protected EnumTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition, String name, List<EnumValueDefinition> enumValueDefinitions, List<Directive> directives, Description description, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
-        super(name, enumValueDefinitions, directives, description, sourceLocation, comments, ignoredChars);
+        super(name, enumValueDefinitions, directives, description, sourceLocation, comments, ignoredChars, Collections.emptyMap());
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -100,6 +102,16 @@ public class EnumTypeDefinitionWithTransformation extends EnumTypeDefinition {
         public Builder ignoredChars(IgnoredChars ignoredChars) {
             this.ignoredChars = ignoredChars;
             return this;
+        }
+
+        @Override
+        public NodeBuilder additionalData(Map<String, String> additionalData) {
+            return null;
+        }
+
+        @Override
+        public NodeBuilder additionalData(String key, String value) {
+            return null;
         }
 
         public EnumTypeDefinitionWithTransformation build() {

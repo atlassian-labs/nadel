@@ -6,6 +6,7 @@ import graphql.execution.ExecutionStepInfo
 import graphql.execution.nextgen.ExecutionHelper
 import graphql.execution.nextgen.result.ExecutionResultNode
 import graphql.execution.nextgen.result.LeafExecutionResultNode
+import graphql.execution.nextgen.result.ResolvedValue
 import graphql.execution.nextgen.result.ResultNodesUtil
 import graphql.execution.nextgen.result.RootExecutionResultNode
 import graphql.language.Argument
@@ -1213,10 +1214,10 @@ class NadelExecutionStrategyTest extends Specification {
                     TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                         if (context.thisNode() instanceof LeafExecutionResultNode) {
                             LeafExecutionResultNode leafExecutionResultNode = context.thisNode();
-                            def fetchedValueAnalysis = leafExecutionResultNode.getFetchedValueAnalysis()
-                            def completedValue = fetchedValueAnalysis.getCompletedValue()
-                            def newFVA = fetchedValueAnalysis.transfrom({ builder -> builder.completedValue(completedValue + "-CHANGED") })
-                            def newNode = leafExecutionResultNode.withNewFetchedValueAnalysis(newFVA)
+                            def resolvedValue = leafExecutionResultNode.getResolvedValue()
+                            def completedValue = resolvedValue.getCompletedValue();
+                            def newResolvedValue = resolvedValue.transform({ builder -> builder.completedValue(completedValue + "-CHANGED") })
+                            def newNode = leafExecutionResultNode.withNewResolvedValue(newResolvedValue)
                             return TreeTransformerUtil.changeNode(context, newNode)
                         }
                         return TraversalControl.CONTINUE

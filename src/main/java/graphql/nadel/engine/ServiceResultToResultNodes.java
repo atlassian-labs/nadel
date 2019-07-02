@@ -14,6 +14,7 @@ import graphql.execution.nextgen.ResultNodesCreator;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.NamedResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
+import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.execution.nextgen.result.ResultNodesUtil;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.ServiceExecutionResult;
@@ -52,7 +53,7 @@ public class ServiceResultToResultNodes {
 
         List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelectionWithData);
         List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
-        return new RootExecutionResultNode(namedResultNodes,errors);
+        return new RootExecutionResultNode(namedResultNodes, errors);
     }
 
     private List<ExecutionResultNode> resolveSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
@@ -66,10 +67,11 @@ public class ServiceResultToResultNodes {
     }
 
     private NodeZipper<ExecutionResultNode> resolveNode(ExecutionContext executionContext, NodeZipper<ExecutionResultNode> unresolvedNode) {
-        FetchedValueAnalysis fetchedValueAnalysis = unresolvedNode.getCurNode().getFetchedValueAnalysis();
-        FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, fetchedValueAnalysis);
+        ResolvedValue resolvedValue = unresolvedNode.getCurNode().getResolvedValue();
+        ExecutionStepInfo esi = unresolvedNode.getCurNode().getExecutionStepInfo();
+        FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, esi, resolvedValue);
         List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelection);
-        return unresolvedNode.withNewNode(new ObjectExecutionResultNode(fetchedValueAnalysis, namedResultNodes));
+        return unresolvedNode.withNewNode(new ObjectExecutionResultNode(esi, resolvedValue, namedResultNodes));
     }
 
     private ExecutionResultNode resolvedNodesToResultNode(NodeMultiZipper<ExecutionResultNode> unresolvedNodes,

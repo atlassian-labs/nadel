@@ -3,7 +3,6 @@ package graphql.nadel.engine;
 import graphql.Assert;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
-import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
@@ -26,7 +25,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
@@ -38,7 +36,6 @@ import static java.util.Collections.singletonMap;
 
 public class ServiceResultNodesToOverallResult {
 
-    FetchedValueAnalysisMapper fetchedValueAnalysisMapper = new FetchedValueAnalysisMapper();
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
 
     ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
@@ -105,8 +102,7 @@ public class ServiceResultNodesToOverallResult {
                         isHydrationTransformation,
                         batched,
                         typeRenameMappings,
-                        overallSchema,
-                        notTransformedFields
+                        overallSchema
                 );
                 if (transformations.size() == 0) {
                     mapAndChangeNode(node, unapplyEnvironment, context);
@@ -186,7 +182,7 @@ public class ServiceResultNodesToOverallResult {
                 ExecutionResultNode unapplyResultNode = unapplyResult.getNode();
                 transformedResult = convertChildren(unapplyResultNode,
                         unapplyEnvironment.overallSchema,
-                        unapplyResultNode.getFetchedValueAnalysis().getExecutionStepInfo(),
+                        unapplyResultNode.getExecutionStepInfo(),
                         unapplyEnvironment.isHydrationTransformation,
                         unapplyEnvironment.batched,
                         transformationMap,
@@ -291,11 +287,9 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
-        FetchedValueAnalysis originalFetchAnalysis = node.getFetchedValueAnalysis();
 
-        BiFunction<ExecutionStepInfo, UnapplyEnvironment, ExecutionStepInfo> esiMapper = (esi, env) -> executionStepInfoMapper.mapExecutionStepInfo(esi, env);
-        FetchedValueAnalysis mappedFetchedValueAnalysis = fetchedValueAnalysisMapper.mapFetchedValueAnalysis(originalFetchAnalysis, environment, esiMapper);
-        return node.withNewFetchedValueAnalysis(mappedFetchedValueAnalysis);
+        ExecutionStepInfo mappedEsi = executionStepInfoMapper.mapExecutionStepInfo(node.getExecutionStepInfo(), environment);
+        return node.withNewExecutionStepInfo(mappedEsi);
     }
 
     private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
@@ -321,8 +315,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private void setExecutionInfo(TraverserContext<ExecutionResultNode> context, ExecutionResultNode resultNode) {
-        FetchedValueAnalysis fva = resultNode.getFetchedValueAnalysis();
-        ExecutionStepInfo stepInfo = fva.getExecutionStepInfo();
+        ExecutionStepInfo stepInfo = resultNode.getExecutionStepInfo();
         context.setVar(ExecutionStepInfo.class, stepInfo);
     }
 

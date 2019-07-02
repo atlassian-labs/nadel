@@ -8,6 +8,7 @@ import graphql.execution.nextgen.result.ExecutionResultNode
 import graphql.execution.nextgen.result.LeafExecutionResultNode
 import graphql.execution.nextgen.result.ListExecutionResultNode
 import graphql.execution.nextgen.result.ObjectExecutionResultNode
+import graphql.execution.nextgen.result.ResolvedValue
 import graphql.execution.nextgen.result.ResultNodesUtil
 import graphql.execution.nextgen.result.RootExecutionResultNode
 
@@ -46,37 +47,25 @@ class ExecutionResultNodeUtil {
         newExecutionStepInfo().type(GraphQLString).field(field).path(path).build()
     }
 
-    static FetchedValueAnalysis fva(String pathName) {
-        fva(pathName, null)
-    }
 
-    static FetchedValueAnalysis fva(String pathName, String alias) {
-
-        def info = esi(pathName, alias)
-        def value = info.field.name + "Val"
-        def fetchedValue = newFetchedValue().fetchedValue(value).build()
-        return newFetchedValueAnalysis()
-                .executionStepInfo(info)
-                .fetchedValue(fetchedValue)
-                .completedValue(value)
-                .valueType(FetchedValueAnalysis.FetchedValueType.SCALAR)
-                .build()
+    static ResolvedValue resolvedValue(String value) {
+        return ResolvedValue.newResolvedValue().completedValue(value).build();
     }
 
     static LeafExecutionResultNode leaf(String name, String alias) {
-        new LeafExecutionResultNode(fva(name, alias), null)
+        new LeafExecutionResultNode(esi(name, alias), resolvedValue(name + "Val"), null)
     }
 
     static LeafExecutionResultNode leaf(String name) {
-        new LeafExecutionResultNode(fva(name), null)
+        new LeafExecutionResultNode(esi(name), resolvedValue(name + "Val"), null)
     }
 
     static ObjectExecutionResultNode object(String name, List<ExecutionResultNode> children) {
-        new ObjectExecutionResultNode(fva(name), children)
+        new ObjectExecutionResultNode(esi(name), resolvedValue(name + "Val"), children)
     }
 
     static ListExecutionResultNode list(String name, List<ExecutionResultNode> children) {
-        new ListExecutionResultNode(fva(name), children)
+        new ListExecutionResultNode(esi(name), resolvedValue(name + "Val"), children)
     }
 
     static RootExecutionResultNode root(List<ExecutionResultNode> children) {

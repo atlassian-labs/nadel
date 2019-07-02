@@ -14,14 +14,12 @@ public class UnapplyEnvironment {
                               boolean isHydrationTransformation,
                               boolean batched,
                               Map<String, String> typeRenameMappings,
-                              GraphQLSchema overallSchema,
-                              List<Field> notTransformedFields) {
+                              GraphQLSchema overallSchema) {
         this.parentExecutionStepInfo = parentExecutionStepInfo;
         this.isHydrationTransformation = isHydrationTransformation;
         this.batched = batched;
         this.typeRenameMappings = typeRenameMappings;
         this.overallSchema = overallSchema;
-        this.notTransformedFields = notTransformedFields;
     }
 
     public ExecutionStepInfo parentExecutionStepInfo;
@@ -29,6 +27,5 @@ public class UnapplyEnvironment {
     public boolean batched;
     public Map<String, String> typeRenameMappings;
     public GraphQLSchema overallSchema;
-    public List<Field> notTransformedFields;
 
 }
