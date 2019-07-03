@@ -1437,7 +1437,7 @@ class NadelExecutionStrategyTest extends Specification {
         resultData(response) == [issues: [issue1Result, issue2Result]]
     }
 
-    def "deep rename of an list"() {
+    def "deep rename of list"() {
         given:
         def issueSchema = TestUtil.schema("""
         type Query {
@@ -1488,6 +1488,60 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> CompletableFuture.completedFuture(response1)
 
         def detail1Result = [labels: ["label1", "label2"]]
+        resultData(response) == [details: [detail1Result]]
+    }
+
+    def "deep rename of list of list"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            details : [IssueDetail]
+        }
+        type IssueDetail {
+            issue: Issue
+        }
+        type Issue {
+            labels: [[String]] 
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                details: [IssueDetail]
+            }
+            type IssueDetail {
+                labels: [[String]] => renamed from issue.labels
+            }
+        }
+        ''')
+        def detailsDefinition = overallSchema.getQueryType().getFieldDefinition("details")
+
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(detailsDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = "{details {labels}}"
+
+        def expectedQuery1 = "query nadel_2_Issues {details {issue {labels}}}"
+        def detail1 = [issue: [labels: [["label1", "label2"], ["label3"]]]]
+        def response1 = new ServiceExecutionResult([details: [detail1]])
+
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> CompletableFuture.completedFuture(response1)
+
+        def detail1Result = [labels: [["label1", "label2"], ["label3"]]]
         resultData(response) == [details: [detail1Result]]
     }
 
