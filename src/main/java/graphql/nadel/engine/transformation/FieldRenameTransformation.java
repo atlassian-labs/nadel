@@ -64,14 +64,24 @@ public class FieldRenameTransformation extends FieldTransformation {
         esi = executionStepInfoMapper.mapExecutionStepInfo(esi, environment);
         ExecutionResultNode resultNode = subTree.withNewExecutionStepInfo(esi);
 
-        if (resultNode instanceof ListExecutionResultNode) {
-            resultNode = mapChildren(subTree, child -> {
-                ExecutionStepInfo newEsi = replaceFieldsAndTypesWithOriginalValues(allTransformations, child.getExecutionStepInfo(), environment.parentExecutionStepInfo);
-                return child.withNewExecutionStepInfo(newEsi);
-            });
-        }
+        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, environment);
 
         return new UnapplyResult(resultNode, TraversalControl.CONTINUE);
+    }
+
+    private ExecutionResultNode replaceFieldsAndTypesInsideList(ExecutionResultNode node,
+                                                                List<FieldTransformation> allTransformations,
+                                                                UnapplyEnvironment environment) {
+
+        if (node instanceof ListExecutionResultNode) {
+            return mapChildren(node, child -> {
+                ExecutionStepInfo newEsi = replaceFieldsAndTypesWithOriginalValues(allTransformations, child.getExecutionStepInfo(), environment.parentExecutionStepInfo);
+                return replaceFieldsAndTypesInsideList(child.withNewExecutionStepInfo(newEsi),
+                        allTransformations,
+                        environment);
+            });
+        }
+        return node;
     }
 
 
