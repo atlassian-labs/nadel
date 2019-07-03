@@ -2,6 +2,7 @@ package graphql.nadel.engine.transformation;
 
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.result.ExecutionResultNode;
+import graphql.execution.nextgen.result.ListExecutionResultNode;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
@@ -15,6 +16,7 @@ import java.util.List;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.nadel.engine.transformation.FieldUtils.addFieldIdToChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.getSubTree;
+import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
@@ -60,8 +62,16 @@ public class FieldRenameTransformation extends FieldTransformation {
 
         esi = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, environment.parentExecutionStepInfo);
         esi = executionStepInfoMapper.mapExecutionStepInfo(esi, environment);
+        ExecutionResultNode resultNode = subTree.withNewExecutionStepInfo(esi);
 
-        return new UnapplyResult(subTree.withNewExecutionStepInfo(esi), TraversalControl.CONTINUE);
+        if (resultNode instanceof ListExecutionResultNode) {
+            resultNode = mapChildren(subTree, child -> {
+                ExecutionStepInfo newEsi = replaceFieldsAndTypesWithOriginalValues(allTransformations, child.getExecutionStepInfo(), environment.parentExecutionStepInfo);
+                return child.withNewExecutionStepInfo(newEsi);
+            });
+        }
+
+        return new UnapplyResult(resultNode, TraversalControl.CONTINUE);
     }
 
 
