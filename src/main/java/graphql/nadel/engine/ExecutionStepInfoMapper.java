@@ -53,7 +53,7 @@ public class ExecutionStepInfoMapper {
     private GraphQLObjectType mapFieldContainer(ExecutionStepInfo executionStepInfo, Map<String, String> typeRenameMappings, GraphQLSchema overallSchema) {
         String fieldContainerName = mapTypeName(typeRenameMappings, executionStepInfo.getFieldContainer().getName());
         GraphQLObjectType mappedFieldContainer = overallSchema.getObjectType(fieldContainerName);
-        assertNotNull(mappedFieldContainer, "field container type " + fieldContainerName + " found in overall schema");
+        assertNotNull(mappedFieldContainer, "field container type " + fieldContainerName + "not found in overall schema");
         return mappedFieldContainer;
     }
 
