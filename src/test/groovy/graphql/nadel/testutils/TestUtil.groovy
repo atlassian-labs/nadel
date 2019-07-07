@@ -49,6 +49,7 @@ import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.schema.idl.TypeRuntimeWiring
 import graphql.schema.idl.WiringFactory
 import graphql.schema.idl.errors.SchemaProblem
+import graphql.schema.visibility.DefaultGraphqlFieldVisibility
 import groovy.json.JsonSlurper
 
 import java.util.concurrent.CompletableFuture
@@ -203,7 +204,9 @@ class TestUtil {
     static GraphQLSchema schemaFromNdsl(String ndsl) {
         def stitchingDsl = new NSDLParser().parseDSL(ndsl)
         def defRegistries = stitchingDsl.serviceDefinitions.collect({ Util.buildServiceRegistry(it) })
-        return new OverallSchemaGenerator().buildOverallSchema(defRegistries, new DefinitionRegistry(), new NeverWiringFactory())
+        return new OverallSchemaGenerator().buildOverallSchema(
+                defRegistries, new DefinitionRegistry(), new NeverWiringFactory(),
+                DefaultGraphqlFieldVisibility.DEFAULT_FIELD_VISIBILITY)
     }
 
     static GraphQL.Builder graphQL(String spec) {

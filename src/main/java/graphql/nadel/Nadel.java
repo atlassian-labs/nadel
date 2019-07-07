@@ -34,6 +34,8 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.ScalarInfo;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.WiringFactory;
+import graphql.schema.visibility.DefaultGraphqlFieldVisibility;
+import graphql.schema.visibility.GraphqlFieldVisibility;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
 import org.slf4j.Logger;
@@ -59,7 +61,6 @@ public class Nadel {
     private final Logger log = LoggerFactory.getLogger(Nadel.class);
     private final StitchingDsl stitchingDsl;
     private final ServiceExecutionFactory serviceExecutionFactory;
-    private final NSDLParser NSDLParser = new NSDLParser();
     private final List<Service> services;
     private final GraphQLSchema overallSchema;
     private final NadelInstrumentation instrumentation;
@@ -70,27 +71,22 @@ public class Nadel {
     private final DefinitionRegistry commonTypes;
     private final WiringFactory overallWiringFactory;
     private final WiringFactory underlyingWiringFactory;
+    private final GraphqlFieldVisibility overallFieldVisibility;
     private final OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
 
-    private Nadel(Reader nsdl,
-                  ServiceExecutionFactory serviceExecutionFactory,
-                  NadelInstrumentation instrumentation,
-                  PreparsedDocumentProvider preparsedDocumentProvider,
-                  ExecutionIdProvider executionIdProvider,
-                  IntrospectionRunner introspectionRunner,
-                  ServiceExecutionHooks serviceExecutionHooks,
-                  WiringFactory overallWiringFactory,
-                  WiringFactory underlyingWiringFactory) {
-        this.serviceExecutionFactory = serviceExecutionFactory;
-        this.instrumentation = instrumentation;
-        this.serviceExecutionHooks = serviceExecutionHooks;
-        this.preparsedDocumentProvider = preparsedDocumentProvider;
-        this.executionIdProvider = executionIdProvider;
+    private Nadel(Builder builder) {
+        this.serviceExecutionFactory = builder.serviceExecutionFactory;
+        this.instrumentation = builder.instrumentation;
+        this.serviceExecutionHooks = builder.serviceExecutionHooks;
+        this.preparsedDocumentProvider = builder.preparsedDocumentProvider;
+        this.executionIdProvider = builder.executionIdProvider;
 
-        this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
-        this.introspectionRunner = introspectionRunner;
-        this.overallWiringFactory = overallWiringFactory;
-        this.underlyingWiringFactory = underlyingWiringFactory;
+        this.introspectionRunner = builder.introspectionRunner;
+        this.overallWiringFactory = builder.overallWiringFactory;
+        this.underlyingWiringFactory = builder.underlyingWiringFactory;
+        this.overallFieldVisibility = builder.overallFieldVisibility;
+
+        this.stitchingDsl = new NSDLParser().parseDSL(builder.nsdl);
         this.services = createServices();
         this.commonTypes = createCommonTypes();
         this.overallSchema = createOverallSchema();
@@ -127,7 +123,7 @@ public class Nadel {
         List<DefinitionRegistry> registries = this.services.stream()
                 .map(Service::getDefinitionRegistry)
                 .collect(toList());
-        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory);
+        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory, overallFieldVisibility);
         //
         // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
         // make direct use of them, we still have to map between them
@@ -289,6 +285,7 @@ public class Nadel {
         private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
         private WiringFactory overallWiringFactory = new NeverWiringFactory();
         private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
+        private GraphqlFieldVisibility overallFieldVisibility = DefaultGraphqlFieldVisibility.DEFAULT_FIELD_VISIBILITY;
 
 
         public Builder dsl(Reader nsdl) {
@@ -335,22 +332,18 @@ public class Nadel {
             return this;
         }
 
+        public Builder overallFieldVisibility(GraphqlFieldVisibility overallFieldVisibility) {
+            this.overallFieldVisibility = requireNonNull(overallFieldVisibility);
+            return this;
+        }
+
         public Builder underlyingWiringFactory(WiringFactory wiringFactory) {
             this.underlyingWiringFactory = requireNonNull(wiringFactory);
             return this;
         }
 
         public Nadel build() {
-            return new Nadel(
-                    nsdl,
-                    serviceExecutionFactory,
-                    instrumentation,
-                    preparsedDocumentProvider,
-                    executionIdProvider,
-                    introspectionRunner,
-                    serviceExecutionHooks,
-                    overallWiringFactory,
-                    underlyingWiringFactory);
+            return new Nadel(this);
         }
     }
 }
