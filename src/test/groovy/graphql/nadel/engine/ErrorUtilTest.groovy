@@ -47,4 +47,15 @@ class ErrorUtilTest extends Specification {
         graphlErrors[0].locations == [new SourceLocation(5, 2)]
         graphlErrors[0].extensions == [ext: "val"]
     }
+
+    def "test that an bogus errors can be converted"() {
+
+        def rawError = [:]
+
+        when:
+        def graphlError = ErrorUtil.createGraphqlErrorFromRawError(rawError)
+
+        then:
+        graphlError.message == "null"
+    }
 }

@@ -6,7 +6,6 @@ import graphql.GraphqlErrorBuilder;
 import graphql.language.SourceLocation;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +23,7 @@ public class ErrorUtil {
     public static GraphQLError createGraphqlErrorFromRawError(Map<String, Object> rawError) {
 
         GraphqlErrorBuilder errorBuilder = GraphqlErrorBuilder.newError();
-        errorBuilder.message(rawError.get("message").toString());
+        errorBuilder.message(String.valueOf(rawError.get("message")));
         errorBuilder.errorType(ErrorType.DataFetchingException);
         extractLocations(errorBuilder, rawError);
         extractPath(errorBuilder, rawError);
