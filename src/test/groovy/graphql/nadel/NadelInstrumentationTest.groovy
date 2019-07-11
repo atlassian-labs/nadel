@@ -1,6 +1,8 @@
 package graphql.nadel
 
 import graphql.ExecutionResult
+import graphql.ExecutionResultImpl
+import graphql.execution.AbortExecutionException
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
@@ -13,6 +15,8 @@ import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryVa
 import graphql.nadel.testutils.TestUtil
 import graphql.validation.ValidationError
 import spock.lang.Specification
+
+import java.util.concurrent.CompletableFuture
 
 import static graphql.execution.instrumentation.SimpleInstrumentationContext.noOp
 import static graphql.nadel.Nadel.newNadel
@@ -208,5 +212,109 @@ class NadelInstrumentationTest extends Specification {
         instrumentationParseCalled == 2
         instrumentationValidateCalled == 2
         instrumentationExecuteCalled == 2
+    }
+
+
+    def "abort execution within instrumentation will still call enhancing instrumentation methods"() {
+
+        given:
+        def query = """
+        query OpName { hello {name} hello {id} }
+        """
+
+        def variables = ["var1": "val1"]
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .variables(variables)
+                .operationName("OpName")
+                .build()
+
+        NadelInstrumentation instrumentation = new NadelInstrumentation() {
+
+            @Override
+            InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+                throw new AbortExecutionException("beginExecute")
+            }
+
+            @Override
+            CompletableFuture<ExecutionResult> instrumentExecutionResult(ExecutionResult executionResult, NadelInstrumentationQueryExecutionParameters parameters) {
+                def newEr = ExecutionResultImpl.newExecutionResult().from(executionResult).data("enhanced beginExecute").build()
+                return completedFuture(newEr)
+            }
+        }
+
+        Nadel nadel = mkNadelWith(instrumentation)
+
+        when:
+        def er = nadel.execute(nadelExecutionInput).join()
+
+        then:
+
+        er.errors.size() == 1
+        er.errors[0].message == "beginExecute"
+        er.data == "enhanced beginExecute"
+
+
+        when:
+
+        instrumentation = new NadelInstrumentation() {
+
+            @Override
+            InstrumentationContext<ExecutionResult> beginQueryExecution(NadelInstrumentationQueryExecutionParameters parameters) {
+                throw new AbortExecutionException("beginQueryExecution")
+            }
+
+            @Override
+            CompletableFuture<ExecutionResult> instrumentExecutionResult(ExecutionResult executionResult, NadelInstrumentationQueryExecutionParameters parameters) {
+                def newEr = ExecutionResultImpl.newExecutionResult().from(executionResult).data("enhanced beginQueryExecution").build()
+                return completedFuture(newEr)
+            }
+        }
+
+        nadel = mkNadelWith(instrumentation)
+
+        er = nadel.execute(nadelExecutionInput).join()
+
+        then:
+
+        er.errors.size() == 1
+        er.errors[0].message == "beginQueryExecution"
+        er.data == "enhanced beginQueryExecution"
+
+
+        when:
+
+        instrumentation = new NadelInstrumentation() {
+
+            @Override
+            InstrumentationContext<List<ValidationError>> beginValidation(NadelNadelInstrumentationQueryValidationParameters parameters) {
+                throw new AbortExecutionException("beginValidation")
+            }
+
+            @Override
+            CompletableFuture<ExecutionResult> instrumentExecutionResult(ExecutionResult executionResult, NadelInstrumentationQueryExecutionParameters parameters) {
+                def newEr = ExecutionResultImpl.newExecutionResult().from(executionResult).data("enhanced beginValidation").build()
+                return completedFuture(newEr)
+            }
+        }
+
+        nadel = mkNadelWith(instrumentation)
+
+        er = nadel.execute(nadelExecutionInput).join()
+
+        then:
+
+        er.errors.size() == 1
+        er.errors[0].message == "beginValidation"
+        er.data == "enhanced beginValidation"
+    }
+
+    private Nadel mkNadelWith(NadelInstrumentation instrumentation) {
+        newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .instrumentation(instrumentation)
+                .build()
     }
 }
