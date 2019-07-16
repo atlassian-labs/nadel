@@ -16,26 +16,26 @@ import java.util.List;
 public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     private final FieldMappingDefinition fieldMappingDefinition;
-    private final InnerServiceHydration innerServiceHydration;
+    private final UnderlyingServiceHydration underlyingServiceHydration;
 
     public FieldTransformation(FieldMappingDefinition fieldMappingDefinition, SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.fieldMappingDefinition = fieldMappingDefinition;
-        this.innerServiceHydration = null;
+        this.underlyingServiceHydration = null;
     }
 
-    public FieldTransformation(InnerServiceHydration innerServiceHydration, SourceLocation sourceLocation, List<Comment> comments) {
+    public FieldTransformation(UnderlyingServiceHydration underlyingServiceHydration, SourceLocation sourceLocation, List<Comment> comments) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.fieldMappingDefinition = null;
-        this.innerServiceHydration = innerServiceHydration;
+        this.underlyingServiceHydration = underlyingServiceHydration;
     }
 
     public FieldMappingDefinition getFieldMappingDefinition() {
         return fieldMappingDefinition;
     }
 
-    public InnerServiceHydration getInnerServiceHydration() {
-        return innerServiceHydration;
+    public UnderlyingServiceHydration getUnderlyingServiceHydration() {
+        return underlyingServiceHydration;
     }
 
     @Override

@@ -33,7 +33,7 @@
                 }
               ],
               "fieldTransformation": {
-                "innerServiceHydration": {
+                "underlyingServiceHydration": {
                   "serviceName": "OtherService",
                   "topLevelField": "resolveId",
                   "objectIdentifier": "id",

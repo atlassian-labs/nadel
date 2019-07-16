@@ -4,8 +4,6 @@ import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.FetchedValue;
-import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.execution.nextgen.result.ListExecutionResultNode;
@@ -19,8 +17,9 @@ import graphql.language.StringValue;
 import graphql.language.Value;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
-import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
+import graphql.nadel.dsl.RemoteArgumentSource;
+import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
@@ -47,6 +46,7 @@ import static graphql.nadel.engine.StrategyUtil.changeEsiInResultNode;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
 import static graphql.nadel.engine.StrategyUtil.groupNodesIntoBatchesByField;
+import static graphql.nadel.util.FpKit.filter;
 import static graphql.schema.GraphQLTypeUtil.isList;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import static graphql.schema.GraphQLTypeUtil.unwrapNonNull;
@@ -54,7 +54,6 @@ import static graphql.util.FpKit.findOneOrNull;
 import static graphql.util.FpKit.flatList;
 import static graphql.util.FpKit.map;
 import static java.lang.String.format;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 
@@ -127,7 +126,7 @@ public class HydrationInputResolver {
 
     private List<NodeMultiZipper<ExecutionResultNode>> groupIntoCorrectBatchSizes(NodeMultiZipper<ExecutionResultNode> batch) {
         HydrationInputNode node = (HydrationInputNode) batch.getZippers().get(0).getCurNode();
-        Integer batchSize = node.getHydrationTransformation().getInnerServiceHydration().getBatchSize();
+        Integer batchSize = node.getHydrationTransformation().getUnderlyingServiceHydration().getBatchSize();
         if (batchSize == null) {
             return singletonList(batch);
         }
@@ -152,8 +151,8 @@ public class HydrationInputResolver {
 
     private boolean isBatchHydrationField(HydrationInputNode hydrationInputNode) {
         HydrationTransformation hydrationTransformation = hydrationInputNode.getHydrationTransformation();
-        Service service = getService(hydrationTransformation.getInnerServiceHydration());
-        String topLevelFieldName = hydrationTransformation.getInnerServiceHydration().getTopLevelField();
+        Service service = getService(hydrationTransformation.getUnderlyingServiceHydration());
+        String topLevelFieldName = hydrationTransformation.getUnderlyingServiceHydration().getTopLevelField();
         GraphQLFieldDefinition topLevelFieldDefinition = service.getUnderlyingSchema().getQueryType().getFieldDefinition(topLevelFieldName);
         return isList(unwrapNonNull(topLevelFieldDefinition.getType()));
     }
@@ -179,12 +178,12 @@ public class HydrationInputResolver {
         ExecutionStepInfo hydratedFieldStepInfo = hydrationInputNode.getExecutionStepInfo();
 
         Field originalField = hydrationTransformation.getOriginalField();
-        InnerServiceHydration innerServiceHydration = hydrationTransformation.getInnerServiceHydration();
-        String topLevelFieldName = innerServiceHydration.getTopLevelField();
+        UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
+        String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
 
-        Field topLevelField = createSingleHydrationTopLevelField(hydrationInputNode, originalField, innerServiceHydration, topLevelFieldName);
+        Field topLevelField = createSingleHydrationTopLevelField(hydrationInputNode, originalField, underlyingServiceHydration, topLevelFieldName);
 
-        Service service = getService(innerServiceHydration);
+        Service service = getService(underlyingServiceHydration);
 
         Operation operation = Operation.QUERY;
         String operationName = buildOperationName(service, executionContext);
@@ -208,8 +207,8 @@ public class HydrationInputResolver {
     }
 
 
-    private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode, Field originalField, InnerServiceHydration innerServiceHydration, String topLevelFieldName) {
-        RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
+    private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode, Field originalField, UnderlyingServiceHydration underlyingServiceHydration, String topLevelFieldName) {
+        RemoteArgumentDefinition remoteArgumentDefinition = underlyingServiceHydration.getArguments().get(0);
         Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
         Argument argument = Argument.newArgument()
                 .name(remoteArgumentDefinition.getName())
@@ -249,10 +248,10 @@ public class HydrationInputResolver {
 
         HydrationTransformation hydrationTransformation = hydrationTransformations.get(0);
         Field originalField = hydrationTransformation.getOriginalField();
-        InnerServiceHydration innerServiceHydration = hydrationTransformation.getInnerServiceHydration();
-        Service service = getService(innerServiceHydration);
+        UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
+        Service service = getService(underlyingServiceHydration);
 
-        Field topLevelField = createBatchHydrationTopLevelField(executionContext, hydrationInputs, originalField, innerServiceHydration);
+        Field topLevelField = createBatchHydrationTopLevelField(executionContext, hydrationInputs, originalField, underlyingServiceHydration);
 
         Operation operation = Operation.QUERY;
         String operationName = buildOperationName(service, executionContext);
@@ -273,22 +272,38 @@ public class HydrationInputResolver {
 
     }
 
-    private Field createBatchHydrationTopLevelField(ExecutionContext executionContext, List<HydrationInputNode> hydrationInputs, Field originalField, InnerServiceHydration innerServiceHydration) {
-        String topLevelFieldName = innerServiceHydration.getTopLevelField();
-        RemoteArgumentDefinition remoteArgumentDefinition = innerServiceHydration.getArguments().get(0);
+    private Field createBatchHydrationTopLevelField(ExecutionContext executionContext,
+                                                    List<HydrationInputNode> hydrationInputs,
+                                                    Field originalField,
+                                                    UnderlyingServiceHydration underlyingServiceHydration) {
+        String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
+        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
+        RemoteArgumentDefinition argumentFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
+        List<RemoteArgumentDefinition> extraArguments = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
+
         List<Value> values = new ArrayList<>();
         for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
             Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
             values.add(StringValue.newStringValue(value.toString()).build());
         }
-        Argument argument = Argument.newArgument().name(remoteArgumentDefinition.getName()).value(new ArrayValue(values)).build();
+        Argument argumentAstFromSourceObject = Argument.newArgument().name(argumentFromSourceObject.getName()).value(new ArrayValue(values)).build();
+        List<Argument> allArguments = new ArrayList<>();
+        allArguments.add(argumentAstFromSourceObject);
+
+        Map<String, Argument> originalArgumentsByName = FpKit.getByName(originalField.getArguments(), Argument::getName);
+        for (RemoteArgumentDefinition argumentDefinition : extraArguments) {
+            if (originalArgumentsByName.containsKey(argumentDefinition.getName())) {
+                allArguments.add(originalArgumentsByName.get(argumentDefinition.getName()));
+            }
+        }
 
         Field topLevelField = newField(topLevelFieldName)
                 .selectionSet(originalField.getSelectionSet())
-                .arguments(singletonList(argument))
+                .arguments(allArguments)
                 .build();
-        return addObjectIdentifier(getNadelContext(executionContext), topLevelField, innerServiceHydration.getObjectIdentifier());
+        return addObjectIdentifier(getNadelContext(executionContext), topLevelField, underlyingServiceHydration.getObjectIdentifier());
     }
+
 
     private List<ExecutionResultNode> convertHydrationBatchResultIntoOverallResult(ExecutionContext executionContext,
                                                                                    FieldTracking fieldTracking,
@@ -402,8 +417,8 @@ public class HydrationInputResolver {
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    private Service getService(InnerServiceHydration innerServiceHydration) {
-        return FpKit.findOne(services, service -> service.getName().equals(innerServiceHydration.getServiceName())).get();
+    private Service getService(UnderlyingServiceHydration underlyingServiceHydration) {
+        return FpKit.findOne(services, service -> service.getName().equals(underlyingServiceHydration.getServiceName())).get();
     }
 
     private String buildOperationName(Service service, ExecutionContext executionContext) {

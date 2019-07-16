@@ -14,7 +14,6 @@ import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
-import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.InputObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
@@ -24,6 +23,7 @@ import graphql.nadel.dsl.ScalarTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.dsl.TypeMappingDefinition;
+import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.dsl.UnionTypeDefinitionWithTransformation;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
@@ -112,7 +112,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     }
 
 
-    private InnerServiceHydration createUnderlyingServiceHydration(StitchingDSLParser.UnderlyingServiceHydrationContext ctx) {
+    private UnderlyingServiceHydration createUnderlyingServiceHydration(StitchingDSLParser.UnderlyingServiceHydrationContext ctx) {
         String serviceName = ctx.serviceName().getText();
         String topLevelField = ctx.topLevelField().getText();
 
@@ -130,7 +130,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         if (ctx.batchSize() != null) {
             batchSize = Integer.parseInt(ctx.batchSize().intValue().getText());
         }
-        return new InnerServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField,
+        return new UnderlyingServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField,
                 remoteArguments, objectIdentifier, batchSize);
     }
 

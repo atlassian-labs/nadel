@@ -13,7 +13,7 @@ import graphql.util.TraverserContext;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
+public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHydration> {
 
     private final String serviceName;
     private final String topLevelField;
@@ -21,13 +21,13 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
     private String objectIdentifier;
     private Integer batchSize;
 
-    public InnerServiceHydration(SourceLocation sourceLocation,
-                                 List<Comment> comments,
-                                 String serviceName,
-                                 String topLevelField,
-                                 List<RemoteArgumentDefinition> arguments,
-                                 String objectIdentifier,
-                                 Integer batchSize
+    public UnderlyingServiceHydration(SourceLocation sourceLocation,
+                                      List<Comment> comments,
+                                      String serviceName,
+                                      String topLevelField,
+                                      List<RemoteArgumentDefinition> arguments,
+                                      String objectIdentifier,
+                                      Integer batchSize
     ) {
         super(sourceLocation, comments, IgnoredChars.EMPTY);
         this.serviceName = serviceName;
@@ -36,6 +36,7 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
         this.objectIdentifier = objectIdentifier;
         this.batchSize = batchSize;
     }
+
 
     public Integer getBatchSize() {
         return batchSize;
@@ -69,7 +70,7 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
     }
 
     @Override
-    public InnerServiceHydration withNewChildren(NodeChildrenContainer newChildren) {
+    public UnderlyingServiceHydration withNewChildren(NodeChildrenContainer newChildren) {
         return null;
     }
 
@@ -79,7 +80,7 @@ public class InnerServiceHydration extends AbstractNode<InnerServiceHydration> {
     }
 
     @Override
-    public InnerServiceHydration deepCopy() {
+    public UnderlyingServiceHydration deepCopy() {
         return null;
     }
 

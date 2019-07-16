@@ -537,8 +537,8 @@ public class OverallQueryTransformer {
         }
         if (definition.getFieldMappingDefinition() != null) {
             return new FieldRenameTransformation(definition.getFieldMappingDefinition());
-        } else if (definition.getInnerServiceHydration() != null) {
-            return new HydrationTransformation(definition.getInnerServiceHydration());
+        } else if (definition.getUnderlyingServiceHydration() != null) {
+            return new HydrationTransformation(definition.getUnderlyingServiceHydration());
         } else {
             return assertShouldNeverHappen();
         }
