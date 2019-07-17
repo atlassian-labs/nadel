@@ -8,9 +8,9 @@ import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
-import graphql.nadel.dsl.InnerServiceHydration;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
+import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.UnapplyEnvironment;
@@ -25,23 +25,24 @@ import static graphql.Assert.assertTrue;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
+import static graphql.nadel.util.FpKit.filter;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
 public class HydrationTransformation extends FieldTransformation {
 
 
-    private InnerServiceHydration innerServiceHydration;
+    private UnderlyingServiceHydration underlyingServiceHydration;
 
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
 
 
-    public HydrationTransformation(InnerServiceHydration innerServiceHydration) {
-        this.innerServiceHydration = innerServiceHydration;
+    public HydrationTransformation(UnderlyingServiceHydration underlyingServiceHydration) {
+        this.underlyingServiceHydration = underlyingServiceHydration;
     }
 
     @Override
     public AbstractNode getDefinition() {
-        return innerServiceHydration;
+        return underlyingServiceHydration;
     }
 
     @Override
@@ -49,12 +50,14 @@ public class HydrationTransformation extends FieldTransformation {
         super.apply(environment);
 
         TraverserContext<Node> context = environment.getTraverserContext();
-        List<RemoteArgumentDefinition> arguments = innerServiceHydration.getArguments();
-        assertTrue(arguments.size() == 1, "only hydration with one argument are supported");
-        RemoteArgumentDefinition remoteArgumentDefinition = arguments.get(0);
-        RemoteArgumentSource remoteArgumentSource = remoteArgumentDefinition.getRemoteArgumentSource();
-        assertTrue(remoteArgumentSource.getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD,
-                "only object field arguments are supported at the moment");
+        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
+
+        List<RemoteArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
+        assertTrue(sourceValues.size() == 1, "exactly one object field source expected");
+        List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
+        assertTrue(1 + argumentValues.size() == arguments.size(), "only $source and $argument values for arguments are supported");
+
+        RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
         Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), true);
@@ -62,8 +65,8 @@ public class HydrationTransformation extends FieldTransformation {
         return TraversalControl.ABORT;
     }
 
-    public InnerServiceHydration getInnerServiceHydration() {
-        return innerServiceHydration;
+    public UnderlyingServiceHydration getUnderlyingServiceHydration() {
+        return underlyingServiceHydration;
     }
 
     @Override
