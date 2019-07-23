@@ -772,17 +772,21 @@ class NadelExecutionStrategyTest extends Specification {
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
         }) >> CompletableFuture.completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery2
         }) >> CompletableFuture.completedFuture(response2)
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery3
         }) >> CompletableFuture.completedFuture(response3)
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery4
         }) >> CompletableFuture.completedFuture(response4)
 
@@ -1789,7 +1793,7 @@ class NadelExecutionStrategyTest extends Specification {
         """)
         def userServiceSchema = TestUtil.schema("""
         type Query {
-            userByIds(id1: ID, id2: ID): User
+            userById(id1: ID, id2: ID): User
         }
         type User {
             id: ID
@@ -1804,12 +1808,12 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Issue {
                 id: ID
-                author: User => hydrated from UserService.userByIds(id1: $source.id1, id2: $source.id2) 
+                author: User => hydrated from UserService.userById(id1: $source.authorId1, id2: $source.authorId2) 
             }
         }
         service UserService {
             type Query {
-                userByIds(id1: ID, id2: ID): User
+                userById(id1: ID, id2: ID): User
             }
             type User {
                 id: ID
@@ -1831,9 +1835,9 @@ class NadelExecutionStrategyTest extends Specification {
         def response1 = new ServiceExecutionResult([issues: [issue1]])
 
 
-        def expectedQuery2 = "query nadel_2_UserService {usersByIds(id1:\"USER-1-1\",id2:\"USER-1-2\") {name object_identifier__UUID:id}}"
-        def batchResponse1 = [[id: "USER-1", name: "User 1", object_identifier__UUID: "USER-1"]]
-        def response2 = new ServiceExecutionResult([usersByIds: batchResponse1])
+        def expectedQuery2 = "query nadel_2_UserService {userById(id1:\"USER-1-1\",id2:\"USER-1-2\") {name}}"
+        def user1 = [id: "USER-1", name: "User 1"]
+        def response2 = new ServiceExecutionResult([userById: user1])
 
         def executionData = createExecutionData(query, overallSchema)
 

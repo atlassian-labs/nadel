@@ -27,6 +27,7 @@ import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.util.FpKit.filter;
 import static graphql.util.TreeTransformerUtil.changeNode;
+import static graphql.util.TreeTransformerUtil.insertAfter;
 
 public class HydrationTransformation extends FieldTransformation {
 
@@ -54,13 +55,19 @@ public class HydrationTransformation extends FieldTransformation {
 
         List<HydrationArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getHydrationArgumentValue().getValueType() == HydrationArgumentValue.ValueType.OBJECT_FIELD);
         List<HydrationArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getHydrationArgumentValue().getValueType() == HydrationArgumentValue.ValueType.FIELD_ARGUMENT);
-        assertTrue(1 + argumentValues.size() == arguments.size(), "only $source and $argument values for arguments are supported");
+        assertTrue(sourceValues.size() + argumentValues.size() == arguments.size(), "only $source and $argument values for arguments are supported");
 
+        boolean first = true;
         for (HydrationArgumentDefinition argumentDefinition : sourceValues) {
             HydrationArgumentValue hydrationArgumentValue = argumentDefinition.getHydrationArgumentValue();
             List<String> hydrationSourceName = hydrationArgumentValue.getPath();
             Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), true);
-            changeNode(context, newField);
+            if (first) {
+                changeNode(context, newField);
+                first = false;
+            } else {
+                insertAfter(context, newField);
+            }
         }
         return TraversalControl.ABORT;
     }
@@ -86,7 +93,7 @@ public class HydrationTransformation extends FieldTransformation {
         }
 
         LeafExecutionResultNode leafNode = geFirstLeafNode(transformedNode);
-        LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getExecutionStepInfo(), leafNode, allTransformations, environment);
+        LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getExecutionStepInfo(), leafNode, allTransformations, environment, false);
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
@@ -99,7 +106,7 @@ public class HydrationTransformation extends FieldTransformation {
         ExecutionResultNode changedNode = mapChildren(transformedNode, objectChild -> {
             environment.parentExecutionStepInfo = mappedEsi;
             LeafExecutionResultNode leaf = (LeafExecutionResultNode) objectChild.getChildren().get(0);
-            return unapplyLeafNode(objectChild.getExecutionStepInfo(), leaf, allTransformations, environment);
+            return unapplyLeafNode(objectChild.getExecutionStepInfo(), leaf, allTransformations, environment, true);
         });
 
         changedNode = changedNode.withNewExecutionStepInfo(mappedEsi);
@@ -114,7 +121,7 @@ public class HydrationTransformation extends FieldTransformation {
         List<ExecutionResultNode> newChildren = new ArrayList<>();
         for (ExecutionResultNode leafNode : listExecutionResultNode.getChildren()) {
             environment.parentExecutionStepInfo = mappedEsi;
-            LeafExecutionResultNode newChild = unapplyLeafNode(leafNode.getExecutionStepInfo(), (LeafExecutionResultNode) leafNode, allTransformations, environment);
+            LeafExecutionResultNode newChild = unapplyLeafNode(leafNode.getExecutionStepInfo(), (LeafExecutionResultNode) leafNode, allTransformations, environment, true);
             newChildren.add(newChild);
         }
         ExecutionResultNode changedNode = listExecutionResultNode.withNewExecutionStepInfo(mappedEsi).withNewChildren(newChildren);
@@ -122,7 +129,11 @@ public class HydrationTransformation extends FieldTransformation {
     }
 
 
-    private LeafExecutionResultNode unapplyLeafNode(ExecutionStepInfo correctESI, LeafExecutionResultNode leafNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+    private LeafExecutionResultNode unapplyLeafNode(ExecutionStepInfo correctESI,
+                                                    LeafExecutionResultNode leafNode,
+                                                    List<FieldTransformation> allTransformations,
+                                                    UnapplyEnvironment environment,
+                                                    boolean insideList) {
         ExecutionStepInfo leafESI = leafNode.getExecutionStepInfo();
 
         // we need to build a correct ESI based on the leaf node and the current node for the overall schema
@@ -133,7 +144,7 @@ public class HydrationTransformation extends FieldTransformation {
             // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
             return changeFieldInResultNode(leafNode, getOriginalField());
         } else {
-            return new HydrationInputNode(this, correctESI, leafNode.getResolvedValue(), null);
+            return new HydrationInputNode(this, leafNode.getExecutionStepInfo().getField().getName(), insideList, correctESI, leafNode.getResolvedValue(), null);
         }
     }
 

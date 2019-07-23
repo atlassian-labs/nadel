@@ -32,8 +32,10 @@ import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotNull;
@@ -50,6 +52,7 @@ import static graphql.nadel.util.FpKit.filter;
 import static graphql.schema.GraphQLTypeUtil.isList;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import static graphql.schema.GraphQLTypeUtil.unwrapNonNull;
+import static graphql.util.FpKit.findOne;
 import static graphql.util.FpKit.findOneOrNull;
 import static graphql.util.FpKit.flatList;
 import static graphql.util.FpKit.map;
@@ -107,13 +110,45 @@ public class HydrationInputResolver {
                 .whenComplete(this::possiblyLogException);
     }
 
-    private void resolveInputNodes(ExecutionContext context, FieldTracking fieldTracking, List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs, NodeMultiZipper<ExecutionResultNode> batch) {
-        for (NodeZipper<ExecutionResultNode> hydrationInputNodeZipper : batch.getZippers()) {
-            HydrationInputNode hydrationInputNode = (HydrationInputNode) hydrationInputNodeZipper.getCurNode();
-            CompletableFuture<ExecutionResultNode> executionResultNodeCompletableFuture = resolveSingleHydrationInput(context, fieldTracking, hydrationInputNode);
-            resolvedNodeCFs.add(executionResultNodeCompletableFuture.thenApply(newNode -> singletonList(hydrationInputNodeZipper.withNewNode(newNode))));
+    private void resolveInputNodes(ExecutionContext context,
+                                   FieldTracking fieldTracking,
+                                   List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs,
+                                   NodeMultiZipper<ExecutionResultNode> batch) {
+
+        if (isOneHydrationCall(batch)) {
+            // this means this batch is actually a list of different argument values for one hydration call
+            List<NodeZipper<ExecutionResultNode>> nodeZippers = batch.getZippers();
+            List<HydrationInputNode> hydrationInputNodes = map(nodeZippers, zipper -> ((HydrationInputNode) zipper.getCurNode()));
+            CompletableFuture<ExecutionResultNode> executionResultNodeCompletableFuture = resolveSingleHydrationInput(context, fieldTracking, hydrationInputNodes);
+            resolvedNodeCFs.add(executionResultNodeCompletableFuture.thenApply(newNode -> {
+                List<NodeZipper<ExecutionResultNode>> resolvedZippers = new ArrayList<>();
+                resolvedZippers.add(nodeZippers.get(0).withNewNode(newNode));
+                for (int i = 1; i < nodeZippers.size(); i++) {
+                    resolvedZippers.add(nodeZippers.get(i).deleteNode());
+                }
+                return resolvedZippers;
+            }));
+        } else {
+            for (NodeZipper<ExecutionResultNode> hydrationInputNodeZipper : batch.getZippers()) {
+                HydrationInputNode hydrationInputNode = (HydrationInputNode) hydrationInputNodeZipper.getCurNode();
+                CompletableFuture<ExecutionResultNode> executionResultNodeCompletableFuture = resolveSingleHydrationInput(context, fieldTracking, singletonList(hydrationInputNode));
+                resolvedNodeCFs.add(executionResultNodeCompletableFuture.thenApply(newNode -> singletonList(hydrationInputNodeZipper.withNewNode(newNode))));
+            }
         }
     }
+
+    private boolean isOneHydrationCall(NodeMultiZipper<ExecutionResultNode> batch) {
+        Set<ExecutionPath> paths = new LinkedHashSet<>();
+        boolean notInsideList = true;
+        for (NodeZipper<ExecutionResultNode> zipper : batch.getZippers()) {
+            HydrationInputNode hydrationInputNode = (HydrationInputNode) zipper.getCurNode();
+            paths.add(hydrationInputNode.getExecutionStepInfo().getPath());
+            notInsideList = notInsideList && !hydrationInputNode.isInsideList();
+
+        }
+        return notInsideList && paths.size() == 1;
+    }
+
 
     private void resolveInputNodesAsBatch(ExecutionContext context, FieldTracking fieldTracking, List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs, NodeMultiZipper<ExecutionResultNode> batch) {
         List<NodeMultiZipper<ExecutionResultNode>> batchesWithCorrectSize = groupIntoCorrectBatchSizes(batch);
@@ -173,15 +208,16 @@ public class HydrationInputResolver {
 
     private CompletableFuture<ExecutionResultNode> resolveSingleHydrationInput(ExecutionContext executionContext,
                                                                                FieldTracking fieldTracking,
-                                                                               HydrationInputNode hydrationInputNode) {
-        HydrationTransformation hydrationTransformation = hydrationInputNode.getHydrationTransformation();
-        ExecutionStepInfo hydratedFieldStepInfo = hydrationInputNode.getExecutionStepInfo();
+                                                                               List<HydrationInputNode> sourceInputValues) {
+        // all sourceInputValues have the same HydrationTransformation
+        HydrationTransformation hydrationTransformation = sourceInputValues.get(0).getHydrationTransformation();
+        ExecutionStepInfo hydratedFieldStepInfo = sourceInputValues.get(0).getExecutionStepInfo();
 
         Field originalField = hydrationTransformation.getOriginalField();
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
         String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
 
-        Field topLevelField = createSingleHydrationTopLevelField(hydrationInputNode, originalField, underlyingServiceHydration, topLevelFieldName);
+        Field topLevelField = createSingleHydrationTopLevelField(sourceInputValues, originalField, underlyingServiceHydration, topLevelFieldName);
 
         Service service = getService(underlyingServiceHydration);
 
@@ -207,18 +243,33 @@ public class HydrationInputResolver {
     }
 
 
-    private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode, Field originalField, UnderlyingServiceHydration underlyingServiceHydration, String topLevelFieldName) {
-        HydrationArgumentDefinition hydrationArgumentDefinition = underlyingServiceHydration.getArguments().get(0);
-        Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
-        Argument argument = Argument.newArgument()
-                .name(hydrationArgumentDefinition.getName())
-                .value(new StringValue(value.toString()))
-                .build();
+    private Field createSingleHydrationTopLevelField(List<HydrationInputNode> hydrationInputNodes, Field originalField, UnderlyingServiceHydration underlyingServiceHydration, String topLevelFieldName) {
+        List<Argument> arguments = new ArrayList<>();
+        for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
+
+            Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
+            HydrationArgumentDefinition argumentDefinition = getArgumentDefinitionBySourceName(hydrationInputNode.getFieldName(), underlyingServiceHydration);
+            Argument argument = Argument.newArgument()
+                    .name(argumentDefinition.getName())
+                    .value(new StringValue(value.toString()))
+                    .build();
+            arguments.add(argument);
+        }
 
         return newField(topLevelFieldName)
                 .selectionSet(originalField.getSelectionSet())
-                .arguments(singletonList(argument))
+                .arguments(arguments)
                 .build();
+    }
+
+    private HydrationArgumentDefinition getArgumentDefinitionBySourceName(String name, UnderlyingServiceHydration underlyingServiceHydration) {
+        return findOne(underlyingServiceHydration.getArguments(), argumentDefinition -> {
+            HydrationArgumentValue argumentValue = argumentDefinition.getHydrationArgumentValue();
+            if (argumentValue.getValueType() != HydrationArgumentValue.ValueType.OBJECT_FIELD) {
+                return false;
+            }
+            return argumentValue.getPath().get(argumentValue.getPath().size() - 1).equals(name);
+        }).get();
     }
 
     private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(FieldTracking fieldTracking,

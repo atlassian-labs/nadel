@@ -20,6 +20,10 @@ import java.util.UUID;
 
 import static graphql.Assert.assertTrue;
 
+
+/*
+ * Created per field in the overall query.
+ */
 public abstract class FieldTransformation {
 
 
