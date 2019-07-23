@@ -1725,7 +1725,7 @@ class NadelExecutionStrategyTest extends Specification {
             }
             type Issue {
                 id: ID
-                author(extraArg: String): User => hydrated from UserService.usersByIds(extraArg1: $argument.extraArg1, extraArg2: $argument.extraArg2, id: $source.authorId) object identified by id, batch size 2
+                author(extraArg1: String, extraArg2: Int): User => hydrated from UserService.usersByIds(extraArg1: $argument.extraArg1, extraArg2: $argument.extraArg2, id: $source.authorId) object identified by id, batch size 2
             }
         }
         service UserService {
@@ -1836,6 +1836,89 @@ class NadelExecutionStrategyTest extends Specification {
 
 
         def expectedQuery2 = "query nadel_2_UserService {userById(id1:\"USER-1-1\",id2:\"USER-1-2\") {name}}"
+        def user1 = [id: "USER-1", name: "User 1"]
+        def response2 = new ServiceExecutionResult([userById: user1])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> CompletableFuture.completedFuture(response1)
+
+        then:
+        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> CompletableFuture.completedFuture(response2)
+
+        def issue1Result = [id: "ISSUE-1", author: [name: "User 1"]]
+        resultData(response) == [issues: [issue1Result]]
+
+    }
+
+    def "hydration call with two source values and extra arguments"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorId1: ID
+            authorId2: ID
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            userById(extraArg1: String, extraArg2: Int,id1: ID, id2: ID): User
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                author(arg1: String, arg2: Int): User => hydrated from UserService.userById(id1: $source.authorId1, id2: $source.authorId2, extraArg1: $argument.arg1, extraArg2: $argument.arg2) 
+            }
+        }
+        service UserService {
+            type Query {
+                userById(extraArg1: String, extraArg2: Int, id1: ID, id2: ID): User
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+        def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
+
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service("UserService", userServiceSchema, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = '{issues {id author(arg1: "arg1", arg2: 10) {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorId1 authorId2}}"
+        def issue1 = [id: "ISSUE-1", authorId1: "USER-1-1", authorId2: "USER-1-2"]
+        def response1 = new ServiceExecutionResult([issues: [issue1]])
+
+
+        def expectedQuery2 = "query nadel_2_UserService {userById(id1:\"USER-1-1\",id2:\"USER-1-2\",extraArg1:\"arg1\",extraArg2:10) {name}}"
         def user1 = [id: "USER-1", name: "User 1"]
         def response2 = new ServiceExecutionResult([userById: user1])
 

@@ -244,7 +244,7 @@ public class HydrationInputResolver {
 
 
     private Field createSingleHydrationTopLevelField(List<HydrationInputNode> hydrationInputNodes, Field originalField, UnderlyingServiceHydration underlyingServiceHydration, String topLevelFieldName) {
-        List<Argument> arguments = new ArrayList<>();
+        List<Argument> allArguments = new ArrayList<>();
         for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
 
             Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
@@ -253,12 +253,22 @@ public class HydrationInputResolver {
                     .name(argumentDefinition.getName())
                     .value(new StringValue(value.toString()))
                     .build();
-            arguments.add(argument);
+            allArguments.add(argument);
+        }
+        List<HydrationArgumentDefinition> argumentDefinitions = underlyingServiceHydration.getArguments();
+        List<HydrationArgumentDefinition> extraArgumentDefinitions = filter(argumentDefinitions, argument -> argument.getHydrationArgumentValue().getValueType() == HydrationArgumentValue.ValueType.FIELD_ARGUMENT);
+        Map<String, Argument> originalArgumentsByName = FpKit.getByName(originalField.getArguments(), Argument::getName);
+        for (HydrationArgumentDefinition argumentDefinition : extraArgumentDefinitions) {
+            String valueName = argumentDefinition.getHydrationArgumentValue().getName();
+            Argument providedArgument = originalArgumentsByName.get(valueName);
+            Value providedValue = providedArgument != null ? providedArgument.getValue() : null;
+            Argument extraArgument = Argument.newArgument(argumentDefinition.getName(), providedValue).build();
+            allArguments.add(extraArgument);
         }
 
         return newField(topLevelFieldName)
                 .selectionSet(originalField.getSelectionSet())
-                .arguments(arguments)
+                .arguments(allArguments)
                 .build();
     }
 
