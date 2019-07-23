@@ -14,27 +14,34 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinition> {
+public class HydrationArgumentValue extends AbstractNode<HydrationArgumentValue> {
+    public enum ValueType {OBJECT_FIELD, FIELD_ARGUMENT, CONTEXT}
 
     private final String name;
-    private final RemoteArgumentSource remoteArgumentSource;
+    // for OBJECT_FIELD
+    private final List<String> path;
 
-    public RemoteArgumentDefinition(String name, RemoteArgumentSource remoteArgumentSource,
-                                    SourceLocation sourceLocation) {
+    private final ValueType valueType;
+
+    public HydrationArgumentValue(String name, List<String> path, ValueType valueType, SourceLocation sourceLocation) {
         super(sourceLocation, emptyList(), IgnoredChars.EMPTY);
         this.name = name;
-        this.remoteArgumentSource = remoteArgumentSource;
+        this.path = path;
+        this.valueType = valueType;
+    }
+
+    public List<String> getPath() {
+        return path;
     }
 
     public String getName() {
         return name;
     }
 
-    public RemoteArgumentSource getRemoteArgumentSource() {
-        return remoteArgumentSource;
+    public ValueType getValueType() {
+        return valueType;
     }
 
-    @Override
     public List<Node> getChildren() {
         return new ArrayList<>();
     }
@@ -45,7 +52,7 @@ public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinit
     }
 
     @Override
-    public RemoteArgumentDefinition withNewChildren(NodeChildrenContainer newChildren) {
+    public HydrationArgumentValue withNewChildren(NodeChildrenContainer newChildren) {
         return null;
     }
 
@@ -55,7 +62,7 @@ public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinit
     }
 
     @Override
-    public RemoteArgumentDefinition deepCopy() {
+    public HydrationArgumentValue deepCopy() {
         return null;
     }
 

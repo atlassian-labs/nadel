@@ -14,11 +14,11 @@ import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
+import graphql.nadel.dsl.HydrationArgumentDefinition;
+import graphql.nadel.dsl.HydrationArgumentValue;
 import graphql.nadel.dsl.InputObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
-import graphql.nadel.dsl.RemoteArgumentDefinition;
-import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.ScalarTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
@@ -37,9 +37,9 @@ import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.nadel.dsl.FieldDefinitionWithTransformation.newFieldDefinitionWithTransformation;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.CONTEXT;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
+import static graphql.nadel.dsl.HydrationArgumentValue.ValueType.CONTEXT;
+import static graphql.nadel.dsl.HydrationArgumentValue.ValueType.FIELD_ARGUMENT;
+import static graphql.nadel.dsl.HydrationArgumentValue.ValueType.OBJECT_FIELD;
 import static graphql.util.FpKit.map;
 
 @Internal
@@ -116,11 +116,11 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         String serviceName = ctx.serviceName().getText();
         String topLevelField = ctx.topLevelField().getText();
 
-        List<RemoteArgumentDefinition> remoteArguments = new ArrayList<>();
-        List<StitchingDSLParser.RemoteArgumentPairContext> remoteArgumentPairContexts = ctx.remoteCallDefinition()
-                .remoteArgumentPair();
-        for (StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext : remoteArgumentPairContexts) {
-            remoteArguments.add(createRemoteArgumentDefinition(remoteArgumentPairContext));
+        List<HydrationArgumentDefinition> remoteArguments = new ArrayList<>();
+        List<StitchingDSLParser.ArgumentPairContext> argumentPair = ctx.hydrationCallDefinition()
+                .argumentPair();
+        for (StitchingDSLParser.ArgumentPairContext argumentPairContext : argumentPair) {
+            remoteArguments.add(createArgumentDefinition(argumentPairContext));
         }
         String objectIdentifier = "id";
         if (ctx.objectIdentifier() != null) {
@@ -214,31 +214,31 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         return typeMappingDefinition;
     }
 
-    private RemoteArgumentDefinition createRemoteArgumentDefinition(StitchingDSLParser.RemoteArgumentPairContext
-                                                                            remoteArgumentPairContext) {
-        return new RemoteArgumentDefinition(remoteArgumentPairContext.name().getText(),
-                createRemoteArgumentSource(remoteArgumentPairContext.remoteArgumentSource()),
-                getSourceLocation(remoteArgumentPairContext));
+    private HydrationArgumentDefinition createArgumentDefinition(StitchingDSLParser.ArgumentPairContext
+                                                                         argumentPairContext) {
+        return new HydrationArgumentDefinition(argumentPairContext.name().getText(),
+                createArgumentValue(argumentPairContext.argumentValue()),
+                getSourceLocation(argumentPairContext));
     }
 
-    private RemoteArgumentSource createRemoteArgumentSource(StitchingDSLParser.RemoteArgumentSourceContext ctx) {
-        RemoteArgumentSource.SourceType argumentType = null;
+    private HydrationArgumentValue createArgumentValue(StitchingDSLParser.ArgumentValueContext ctx) {
+        HydrationArgumentValue.ValueType argumentType = null;
         String argumentName = null;
         List<String> path = null;
 
-        if (ctx.fieldArgumentReference() != null) {
-            argumentName = ctx.fieldArgumentReference().name().getText();
+        if (ctx.fieldArgumentValue() != null) {
+            argumentName = ctx.fieldArgumentValue().name().getText();
             argumentType = FIELD_ARGUMENT;
-        } else if (ctx.contextArgumentReference() != null) {
-            argumentName = ctx.contextArgumentReference().name().getText();
+        } else if (ctx.contextArgumentValue() != null) {
+            argumentName = ctx.contextArgumentValue().name().getText();
             argumentType = CONTEXT;
-        } else if (ctx.sourceObjectReference() != null) {
-            path = map(ctx.sourceObjectReference().name(), RuleContext::getText);
+        } else if (ctx.sourceObjectValue() != null) {
+            path = map(ctx.sourceObjectValue().name(), RuleContext::getText);
             argumentType = OBJECT_FIELD;
         } else {
             assertShouldNeverHappen();
         }
 
-        return new RemoteArgumentSource(argumentName, path, argumentType, getSourceLocation(ctx));
+        return new HydrationArgumentValue(argumentName, path, argumentType, getSourceLocation(ctx));
     }
 }

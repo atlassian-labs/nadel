@@ -42,24 +42,25 @@ fieldMappingDefinition : 'renamed from' name ('.'name)?;
 //
 // hydration
 
-underlyingServiceHydration: 'hydrated from' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
+underlyingServiceHydration: 'hydrated from' serviceName '.' topLevelField hydrationCallDefinition? objectIdentifier? batchSize?;
 
 objectIdentifier: 'object identified by' name;
 
 batchSize: 'batch size ' intValue;
 
-remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference;
 
-remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
+hydrationCallDefinition : '(' argumentPair+ ')' ;
 
-remoteArgumentPair : name ':' remoteArgumentSource ;
+argumentPair : name ':' argumentValue ;
+
+argumentValue :  sourceObjectValue | fieldArgumentValue | contextArgumentValue;
 
 
-sourceObjectReference : '$source' '.' name ('.'name)*;
+sourceObjectValue : '$source' '.' name ('.'name)*;
 
-fieldArgumentReference : '$argument' '.' name ;
+fieldArgumentValue : '$argument' '.' name ;
 
-contextArgumentReference : '$context' '.' name ;
+contextArgumentValue : '$context' '.' name ;
 
 intValue: IntValue;
 

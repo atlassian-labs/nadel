@@ -17,7 +17,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
 
     private final String serviceName;
     private final String topLevelField;
-    private final List<RemoteArgumentDefinition> arguments;
+    private final List<HydrationArgumentDefinition> arguments;
     private String objectIdentifier;
     private Integer batchSize;
 
@@ -25,7 +25,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
                                       List<Comment> comments,
                                       String serviceName,
                                       String topLevelField,
-                                      List<RemoteArgumentDefinition> arguments,
+                                      List<HydrationArgumentDefinition> arguments,
                                       String objectIdentifier,
                                       Integer batchSize
     ) {
@@ -55,7 +55,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
         return topLevelField;
     }
 
-    public List<RemoteArgumentDefinition> getArguments() {
+    public List<HydrationArgumentDefinition> getArguments() {
         return new ArrayList<>(arguments);
     }
 

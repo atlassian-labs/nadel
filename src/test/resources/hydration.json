@@ -40,25 +40,25 @@
                   "arguments": [
                     {
                       "name": "otherId",
-                      "remoteArgumentSource": {
+                      "hydrationArgumentValue": {
                         "path": [
                           "id"
                         ],
-                        "sourceType": "OBJECT_FIELD"
+                        "valueType": "OBJECT_FIELD"
                       }
                     },
                     {
                       "name": "arg1",
-                      "remoteArgumentSource": {
+                      "hydrationArgumentValue": {
                         "name": "ctxParam",
-                        "sourceType": "CONTEXT"
+                        "valueType": "CONTEXT"
                       }
                     },
                     {
                       "name": "arg2",
-                      "remoteArgumentSource": {
+                      "hydrationArgumentValue": {
                         "name": "inputArg",
-                        "sourceType": "FIELD_ARGUMENT"
+                        "valueType": "FIELD_ARGUMENT"
                       }
                     }
                   ]

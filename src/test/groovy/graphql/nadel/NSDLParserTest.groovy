@@ -219,7 +219,7 @@ class NSDLParserTest extends Specification {
                 }
 
                 type Foo {
-                    newId: ID > renamed from id @testdirective 
+                    newId: ID  renamed from id @testdirective 
                 }
             }
         """

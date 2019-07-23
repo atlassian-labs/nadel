@@ -8,8 +8,8 @@ import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
-import graphql.nadel.dsl.RemoteArgumentDefinition;
-import graphql.nadel.dsl.RemoteArgumentSource;
+import graphql.nadel.dsl.HydrationArgumentDefinition;
+import graphql.nadel.dsl.HydrationArgumentValue;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.HydrationInputNode;
@@ -50,18 +50,18 @@ public class HydrationTransformation extends FieldTransformation {
         super.apply(environment);
 
         TraverserContext<Node> context = environment.getTraverserContext();
-        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
+        List<HydrationArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
 
-        List<RemoteArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
-        assertTrue(sourceValues.size() == 1, "exactly one object field source expected");
-        List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
+        List<HydrationArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getHydrationArgumentValue().getValueType() == HydrationArgumentValue.ValueType.OBJECT_FIELD);
+        List<HydrationArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getHydrationArgumentValue().getValueType() == HydrationArgumentValue.ValueType.FIELD_ARGUMENT);
         assertTrue(1 + argumentValues.size() == arguments.size(), "only $source and $argument values for arguments are supported");
 
-        RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
-        List<String> hydrationSourceName = remoteArgumentSource.getPath();
-
-        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), true);
-        changeNode(context, newField);
+        for (HydrationArgumentDefinition argumentDefinition : sourceValues) {
+            HydrationArgumentValue hydrationArgumentValue = argumentDefinition.getHydrationArgumentValue();
+            List<String> hydrationSourceName = hydrationArgumentValue.getPath();
+            Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), true);
+            changeNode(context, newField);
+        }
         return TraversalControl.ABORT;
     }
 

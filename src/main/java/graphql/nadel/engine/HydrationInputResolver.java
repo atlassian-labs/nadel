@@ -17,8 +17,8 @@ import graphql.language.StringValue;
 import graphql.language.Value;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
-import graphql.nadel.dsl.RemoteArgumentDefinition;
-import graphql.nadel.dsl.RemoteArgumentSource;
+import graphql.nadel.dsl.HydrationArgumentDefinition;
+import graphql.nadel.dsl.HydrationArgumentValue;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
@@ -208,10 +208,10 @@ public class HydrationInputResolver {
 
 
     private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode, Field originalField, UnderlyingServiceHydration underlyingServiceHydration, String topLevelFieldName) {
-        RemoteArgumentDefinition remoteArgumentDefinition = underlyingServiceHydration.getArguments().get(0);
+        HydrationArgumentDefinition hydrationArgumentDefinition = underlyingServiceHydration.getArguments().get(0);
         Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
         Argument argument = Argument.newArgument()
-                .name(remoteArgumentDefinition.getName())
+                .name(hydrationArgumentDefinition.getName())
                 .value(new StringValue(value.toString()))
                 .build();
 
@@ -277,9 +277,9 @@ public class HydrationInputResolver {
                                                     Field originalField,
                                                     UnderlyingServiceHydration underlyingServiceHydration) {
         String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
-        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
-        RemoteArgumentDefinition argumentFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
-        List<RemoteArgumentDefinition> extraArguments = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
+        List<HydrationArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
+        HydrationArgumentDefinition argumentFromSourceObject = findOneOrNull(arguments, argument -> argument.getHydrationArgumentValue().getValueType() == HydrationArgumentValue.ValueType.OBJECT_FIELD);
+        List<HydrationArgumentDefinition> extraArguments = filter(arguments, argument -> argument.getHydrationArgumentValue().getValueType() == HydrationArgumentValue.ValueType.FIELD_ARGUMENT);
 
         List<Value> values = new ArrayList<>();
         for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
@@ -291,7 +291,7 @@ public class HydrationInputResolver {
         allArguments.add(argumentAstFromSourceObject);
 
         Map<String, Argument> originalArgumentsByName = FpKit.getByName(originalField.getArguments(), Argument::getName);
-        for (RemoteArgumentDefinition argumentDefinition : extraArguments) {
+        for (HydrationArgumentDefinition argumentDefinition : extraArguments) {
             if (originalArgumentsByName.containsKey(argumentDefinition.getName())) {
                 allArguments.add(originalArgumentsByName.get(argumentDefinition.getName()));
             }
