@@ -7,7 +7,6 @@ import graphql.GraphqlErrorBuilder;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
-import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.FragmentDefinition;
 import graphql.nadel.Operation;
@@ -17,6 +16,7 @@ import graphql.nadel.ServiceExecutionParameters;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
+import graphql.nadel.util.LogKit;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class ServiceExecutor {
 
-    private final Logger log = LoggerFactory.getLogger(ExecutionStrategy.class);
+    private final Logger log = LoggerFactory.getLogger(ServiceExecutor.class);
+    private final Logger logNotSafe = LogKit.getNotPrivacySafeLogger(ServiceExecutor.class);
 
     private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
 
@@ -99,7 +100,7 @@ public class ServiceExecutor {
 
     private ServiceExecutionResult mkExceptionResult(Service service, ExecutionStepInfo executionStepInfo, Throwable e) {
         String errorText = format("An exception occurred invoking the service '%s' : '%s'", service.getName(), e.getMessage());
-        log.error(errorText, e);
+        logNotSafe.error(errorText, e);
 
         GraphqlErrorBuilder errorBuilder = GraphqlErrorBuilder.newError();
         MergedField field = executionStepInfo.getField();

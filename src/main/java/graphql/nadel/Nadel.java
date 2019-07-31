@@ -28,6 +28,7 @@ import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.schema.NeverWiringFactory;
 import graphql.nadel.schema.OverallSchemaGenerator;
 import graphql.nadel.schema.UnderlyingSchemaGenerator;
+import graphql.nadel.util.LogKit;
 import graphql.parser.InvalidSyntaxException;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
@@ -37,7 +38,6 @@ import graphql.schema.idl.WiringFactory;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -56,7 +56,8 @@ import static java.util.stream.Collectors.toList;
 @PublicApi
 public class Nadel {
 
-    private final Logger log = LoggerFactory.getLogger(Nadel.class);
+    private static final Logger logNotSafe = LogKit.getNotPrivacySafeLogger(Nadel.class);
+
     private final StitchingDsl stitchingDsl;
     private final ServiceExecutionFactory serviceExecutionFactory;
     private final NSDLParser NSDLParser = new NSDLParser();
@@ -163,7 +164,7 @@ public class Nadel {
         InstrumentationState instrumentationState = instrumentation.createState(new NadelInstrumentationCreateStateParameters(overallSchema, executionInput));
         NadelInstrumentationQueryExecutionParameters instrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, overallSchema, instrumentationState);
         try {
-            log.debug("Executing request. operation name: '{}'. query: '{}'. variables '{}'", executionInput.getOperationName(), executionInput.getQuery(), executionInput.getVariables());
+            logNotSafe.debug("Executing request. operation name: '{}'. query: '{}'. variables '{}'", executionInput.getOperationName(), executionInput.getQuery(), executionInput.getVariables());
 
             NadelInstrumentationQueryExecutionParameters inputInstrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, overallSchema, instrumentationState);
             executionInput = instrumentation.instrumentExecutionInput(executionInput, inputInstrumentationParameters);
@@ -202,10 +203,10 @@ public class Nadel {
         ExecutionInput executionInput = executionInputRef.get();
         String query = executionInput.getQuery();
 
-        log.debug("Parsing query: '{}'...", query);
+        logNotSafe.debug("Parsing query: '{}'...", query);
         ParseResult parseResult = parse(executionInput, graphQLSchema, instrumentationState);
         if (parseResult.isFailure()) {
-            log.warn("Query failed to parse : '{}'", executionInput.getQuery());
+            logNotSafe.warn("Query failed to parse : '{}'", executionInput.getQuery());
             return new PreparsedDocumentEntry(parseResult.getException().toInvalidSyntaxError());
         } else {
             final Document document = parseResult.getDocument();
@@ -213,10 +214,10 @@ public class Nadel {
             executionInput = executionInput.transform(builder -> builder.variables(parseResult.getVariables()));
             executionInputRef.set(executionInput);
 
-            log.debug("Validating query: '{}'", query);
+            logNotSafe.debug("Validating query: '{}'", query);
             final List<ValidationError> errors = validate(executionInput, document, graphQLSchema, instrumentationState);
             if (!errors.isEmpty()) {
-                log.warn("Query failed to validate : '{}' because of {} ", query, errors);
+                logNotSafe.warn("Query failed to validate : '{}' because of {} ", query, errors);
                 return new PreparsedDocumentEntry(errors);
             }
 

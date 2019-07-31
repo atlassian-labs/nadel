@@ -7,7 +7,6 @@ import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
-import graphql.execution.nextgen.ExecutionStrategy;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
@@ -23,8 +22,6 @@ import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +36,6 @@ import static java.util.Collections.singletonList;
 
 @Internal
 public class NadelExecutionStrategy {
-
-    private final Logger log = LoggerFactory.getLogger(ExecutionStrategy.class);
 
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
