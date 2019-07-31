@@ -38,6 +38,7 @@ import graphql.schema.idl.WiringFactory;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Reader;
 import java.io.StringReader;
@@ -57,6 +58,7 @@ import static java.util.stream.Collectors.toList;
 public class Nadel {
 
     private static final Logger logNotSafe = LogKit.getNotPrivacySafeLogger(Nadel.class);
+    private static final Logger log = LoggerFactory.getLogger(Nadel.class);
 
     private final StitchingDsl stitchingDsl;
     private final ServiceExecutionFactory serviceExecutionFactory;
@@ -153,6 +155,7 @@ public class Nadel {
     }
 
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
+        long startTime = System.currentTimeMillis();
         ExecutionInput executionInput = ExecutionInput.newExecutionInput()
                 .query(nadelExecutionInput.getQuery())
                 .operationName(nadelExecutionInput.getOperationName())
@@ -178,7 +181,10 @@ public class Nadel {
             //
             // allow instrumentation to tweak the result
             executionResult = executionResult.thenCompose(result -> instrumentation.instrumentExecutionResult(result, instrumentationParameters));
-            return executionResult;
+            return executionResult.whenComplete((executionResult1, throwable) -> {
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                log.debug("Finished execution in {} ms, executionId: {}", elapsedTime, nadelExecutionInput.getExecutionId());
+            });
         } catch (AbortExecutionException abortException) {
             return instrumentation.instrumentExecutionResult(abortException.toExecutionResult(), instrumentationParameters);
         }

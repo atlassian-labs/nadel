@@ -22,6 +22,8 @@ import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +51,8 @@ public class NadelExecutionStrategy {
     private final HydrationInputResolver hydrationInputResolver;
     private final ServiceExecutionHooks serviceExecutionHooks;
 
+    private static final Logger log = LoggerFactory.getLogger(NadelExecutionStrategy.class);
+
     public NadelExecutionStrategy(List<Service> services,
                                   FieldInfos fieldInfos,
                                   GraphQLSchema overallSchema,
@@ -65,6 +69,7 @@ public class NadelExecutionStrategy {
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
+        long startTime = System.currentTimeMillis();
         ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
         NadelContext nadelContext = getNadelContext(executionContext);
 
@@ -99,7 +104,7 @@ public class NadelExecutionStrategy {
 
             CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
                     .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
-                            .convert(resultNode, overallSchema, rootExecutionStepInfo, transformationByResultField, typeRenameMappings));
+                            .convert(executionContext.getExecutionId(), resultNode, overallSchema, rootExecutionStepInfo, transformationByResultField, typeRenameMappings));
 
             //
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
@@ -122,7 +127,11 @@ public class NadelExecutionStrategy {
                         rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode)
                                 //
                                 .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext)))
-                .whenComplete(this::possiblyLogException);
+                .whenComplete((resultNode, throwable) -> {
+                    possiblyLogException(resultNode, throwable);
+                    long elapsedTime = System.currentTimeMillis() - startTime;
+                    log.debug("NadelExecutionStrategy time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
+                });
     }
 
     private RootExecutionResultNode removeArtificialFieldsFromRoot(ExecutionResultNode resultNode, NadelContext nadelContext) {

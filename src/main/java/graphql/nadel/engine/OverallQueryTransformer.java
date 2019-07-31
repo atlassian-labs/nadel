@@ -41,6 +41,8 @@ import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
 import graphql.util.TreeTransformer;
 import graphql.util.TreeTransformerUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,6 +67,7 @@ import static java.util.function.Function.identity;
 
 public class OverallQueryTransformer {
 
+    private static final Logger log = LoggerFactory.getLogger(OverallQueryTransformer.class);
 
     QueryTransformationResult transformHydratedTopLevelField(
             ExecutionContext executionContext,
@@ -74,6 +77,7 @@ public class OverallQueryTransformer {
             Field topLevelField,
             GraphQLCompositeType topLevelFieldType
     ) {
+        long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
@@ -124,6 +128,8 @@ public class OverallQueryTransformer {
         Document newDocument = newDocumentBuilder.build();
 
         MergedField transformedMergedField = MergedField.newMergedField(transformedTopLevelField).build();
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        log.debug("OverallQueryTransformer.transformHydratedTopLevelField time: {}, executionId: {}", elapsedTime, executionContext.getExecutionId());
         return new QueryTransformationResult(
                 newDocument,
                 operationDefinition,
@@ -141,6 +147,7 @@ public class OverallQueryTransformer {
             String operationName, Operation operation,
             List<MergedField> mergedFields
     ) {
+        long startTime = System.currentTimeMillis();
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
@@ -203,6 +210,8 @@ public class OverallQueryTransformer {
         }
 
         Document newDocument = newDocumentBuilder.build();
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        log.debug("OverallQueryTransformer.transformMergedFields time: {}, executionId: {}", elapsedTime, executionContext.getExecutionId());
         return new QueryTransformationResult(
                 newDocument,
                 operationDefinition,
