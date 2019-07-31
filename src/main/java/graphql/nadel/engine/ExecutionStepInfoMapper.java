@@ -7,6 +7,7 @@ import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNamedOutputType;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
@@ -69,9 +70,9 @@ public class ExecutionStepInfoMapper {
                                            GraphQLSchema overallSchema,
                                            Map<String, String> typeRenameMappings) {
         if (isNotWrapped(graphQLOutputType)) {
-            String typeName = mapTypeName(typeRenameMappings, graphQLOutputType.getName());
+            String typeName = mapTypeName(typeRenameMappings, ((GraphQLNamedOutputType) graphQLOutputType).getName());
             GraphQLOutputType outputType = (GraphQLOutputType) overallSchema.getType(typeName);
-            return assertNotNull(outputType, "type " + graphQLOutputType.getName() + " not found in overall schema for field type");
+            return assertNotNull(outputType, "type " + ((GraphQLNamedOutputType) graphQLOutputType).getName() + " not found in overall schema for field type");
         }
         if (isList(graphQLOutputType)) {
             return list(mapFieldType((GraphQLOutputType) ((GraphQLList) graphQLOutputType).getWrappedType(), overallSchema, typeRenameMappings));

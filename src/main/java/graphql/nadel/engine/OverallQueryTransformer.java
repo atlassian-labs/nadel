@@ -28,6 +28,7 @@ import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLNamedOutputType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
@@ -352,7 +353,7 @@ public class OverallQueryTransformer {
             saveReferencesVariables(field);
 
             GraphQLOutputType fieldOutputType = applyEnvironment.getFieldDefinition().getType();
-            GraphQLOutputType fieldType = (GraphQLOutputType) GraphQLTypeUtil.unwrapAll(fieldOutputType);
+            GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldOutputType);
 
             TypeMappingDefinition typeMappingDefinition = typeTransformation(executionContext, fieldType.getName());
             if (typeMappingDefinition != null) {
