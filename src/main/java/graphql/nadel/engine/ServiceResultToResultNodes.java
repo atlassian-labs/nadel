@@ -22,6 +22,8 @@ import graphql.nadel.util.ErrorUtil;
 import graphql.util.FpKit;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,10 +38,13 @@ public class ServiceResultToResultNodes {
     private final ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
     private final ExecutionStrategyUtil util = new ExecutionStrategyUtil();
 
+    private static final Logger log = LoggerFactory.getLogger(ServiceResultToResultNodes.class);
+
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
                                                       ExecutionStepInfo executionStepInfo,
                                                       List<MergedField> mergedFields,
                                                       ServiceExecutionResult serviceExecutionResult) {
+        long startTime = System.currentTimeMillis();
 
         Map<String, MergedField> subFields = FpKit.getByName(mergedFields, MergedField::getResultKey);
         MergedSelectionSet mergedSelectionSet = MergedSelectionSet.newMergedSelectionSet()
@@ -53,6 +58,8 @@ public class ServiceResultToResultNodes {
 
         List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelectionWithData);
         List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        log.debug("ServiceResultToResultNodes time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
         return new RootExecutionResultNode(namedResultNodes, errors);
     }
 

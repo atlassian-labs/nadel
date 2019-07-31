@@ -2,6 +2,7 @@ package graphql.nadel.engine;
 
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
+import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.result.ExecutionResultNode;
@@ -200,7 +201,7 @@ public class HydrationInputResolver {
 
         return serviceResult
                 .thenApply(resultNode -> removeArtificialFieldsFromRoot(executionContext, resultNode))
-                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult))
+                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(), fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
@@ -221,7 +222,8 @@ public class HydrationInputResolver {
                 .build();
     }
 
-    private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(FieldTracking fieldTracking,
+    private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(ExecutionId executionId,
+                                                                              FieldTracking fieldTracking,
                                                                               ExecutionStepInfo hydratedFieldStepInfo,
                                                                               HydrationTransformation hydrationTransformation,
                                                                               RootExecutionResultNode rootResultNode,
@@ -232,7 +234,7 @@ public class HydrationInputResolver {
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
-                .convertChildren(rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings);
+                .convertChildren(executionId, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings);
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
 
@@ -339,7 +341,7 @@ public class HydrationInputResolver {
             ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
-                ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convertChildren(
+                ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convertChildren(executionContext.getExecutionId(),
                         matchingResolvedNode, overallSchema, executionStepInfo, true, true, transformationByResultField, typeRenameMappings);
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);
