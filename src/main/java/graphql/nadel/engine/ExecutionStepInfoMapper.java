@@ -54,7 +54,7 @@ public class ExecutionStepInfoMapper {
     private GraphQLObjectType mapFieldContainer(ExecutionStepInfo executionStepInfo, Map<String, String> typeRenameMappings, GraphQLSchema overallSchema) {
         String fieldContainerName = mapTypeName(typeRenameMappings, executionStepInfo.getFieldContainer().getName());
         GraphQLObjectType mappedFieldContainer = overallSchema.getObjectType(fieldContainerName);
-        assertNotNull(mappedFieldContainer, "field container type " + fieldContainerName + "not found in overall schema");
+        assertNotNull(mappedFieldContainer, "field container type %s not found in overall schema", fieldContainerName);
         return mappedFieldContainer;
     }
 
@@ -72,7 +72,7 @@ public class ExecutionStepInfoMapper {
         if (isNotWrapped(graphQLOutputType)) {
             String typeName = mapTypeName(typeRenameMappings, ((GraphQLNamedOutputType) graphQLOutputType).getName());
             GraphQLOutputType outputType = (GraphQLOutputType) overallSchema.getType(typeName);
-            return assertNotNull(outputType, "type " + ((GraphQLNamedOutputType) graphQLOutputType).getName() + " not found in overall schema for field type");
+            return assertNotNull(outputType, "type %s not found in overall schema for field type", ((GraphQLNamedOutputType) graphQLOutputType).getName());
         }
         if (isList(graphQLOutputType)) {
             return list(mapFieldType((GraphQLOutputType) ((GraphQLList) graphQLOutputType).getWrappedType(), overallSchema, typeRenameMappings));
@@ -97,6 +97,6 @@ public class ExecutionStepInfoMapper {
         }
         GraphQLFieldsContainer fieldsContainer = (GraphQLFieldsContainer) parentType;
         GraphQLFieldDefinition fieldDefinition = schema.getCodeRegistry().getFieldVisibility().getFieldDefinition(fieldsContainer, fieldName);
-        return assertNotNull(fieldDefinition, "field '" + fieldName + "' not found in container '" + fieldsContainer + "'");
+        return assertNotNull(fieldDefinition, "field '%s' not found in container '%s'", fieldName, fieldsContainer);
     }
 }
