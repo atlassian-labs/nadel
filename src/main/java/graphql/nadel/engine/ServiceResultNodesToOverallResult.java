@@ -87,7 +87,7 @@ public class ServiceResultNodesToOverallResult {
         long startTime = System.currentTimeMillis();
         final long[] nodeCount = {0};
         Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
-        ExecutionResultNode newRoot = resultNodesTransformer.transform(root, new TraverserVisitorStub<ExecutionResultNode>() {
+        ExecutionResultNode newRoot = resultNodesTransformer.transformParallel(root, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 nodeCount[0]++;
@@ -265,7 +265,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private ExecutionResultNode nodesWithFieldId(ExecutionResultNode executionResultNode, Set<String> ids) {
-        return resultNodesTransformer.transform(executionResultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+        return resultNodesTransformer.transformParallel(executionResultNode, new TraverserVisitorStub<ExecutionResultNode>() {
 
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {

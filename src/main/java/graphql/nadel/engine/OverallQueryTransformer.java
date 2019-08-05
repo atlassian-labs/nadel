@@ -249,7 +249,7 @@ public class OverallQueryTransformer {
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         rootVars.put(NodeTypeContext.class, new NodeTypeContext(null, null));
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
-        Node newNode = treeTransformer.transform(fragmentDefinition, new TraverserVisitorStub<Node>() {
+        Node newNode = treeTransformer.transformParallel(fragmentDefinition, new TraverserVisitorStub<Node>() {
                     @Override
                     public TraversalControl enter(TraverserContext<Node> context) {
                         return context.thisNode().accept(context, transformer);
@@ -293,7 +293,7 @@ public class OverallQueryTransformer {
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         rootVars.put(NodeTypeContext.class, new NodeTypeContext(parentType, null));
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
-        Node newNode = treeTransformer.transform(node, new TraverserVisitorStub<Node>() {
+        Node newNode = treeTransformer.transformParallel(node, new TraverserVisitorStub<Node>() {
                     @Override
                     public TraversalControl enter(TraverserContext<Node> context) {
                         return context.thisNode().accept(context, transformer);

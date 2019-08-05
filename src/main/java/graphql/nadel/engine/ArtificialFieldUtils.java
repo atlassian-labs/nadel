@@ -67,7 +67,7 @@ public class ArtificialFieldUtils {
     @SuppressWarnings("UnnecessaryLocalVariable")
     public static ExecutionResultNode removeArtificialFields(NadelContext nadelContext, ExecutionResultNode resultNode) {
         ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
-        ExecutionResultNode newNode = resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+        ExecutionResultNode newNode = resultNodesTransformer.transformParallel(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 ExecutionResultNode node = context.thisNode();
