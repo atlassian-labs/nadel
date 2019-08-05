@@ -28,8 +28,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static graphql.util.FpKit.map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ServiceResultToResultNodes {
 
@@ -64,12 +64,17 @@ public class ServiceResultToResultNodes {
     }
 
     private List<ExecutionResultNode> resolveSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
-        return map(fetchSubSelection(executionContext, fieldSubSelection), node -> resolveAllChildNodes(executionContext, node));
+        return mapParallel(fetchSubSelection(executionContext, fieldSubSelection), node -> resolveAllChildNodes(executionContext, node));
     }
+
+    public static <T, U> List<U> mapParallel(List<T> list, Function<T, U> function) {
+        return list.stream().map(function).parallel().collect(Collectors.toList());
+    }
+
 
     private ExecutionResultNode resolveAllChildNodes(ExecutionContext context, NamedResultNode namedResultNode) {
         NodeMultiZipper<ExecutionResultNode> unresolvedNodes = ResultNodesUtil.getUnresolvedNodes(namedResultNode.getNode());
-        List<NodeZipper<ExecutionResultNode>> resolvedNodes = map(unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
+        List<NodeZipper<ExecutionResultNode>> resolvedNodes = mapParallel(unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
         return resolvedNodesToResultNode(unresolvedNodes, resolvedNodes);
     }
 
@@ -126,7 +131,7 @@ public class ServiceResultToResultNodes {
     }
 
     private List<NamedResultNode> fetchedValueAnalysisToNodes(List<FetchedValueAnalysis> fetchedValueAnalysisList) {
-        return FpKit.map(fetchedValueAnalysisList, fetchedValueAnalysis -> {
+        return mapParallel(fetchedValueAnalysisList, fetchedValueAnalysis -> {
             ExecutionResultNode resultNode = resultNodesCreator.createResultNode(fetchedValueAnalysis);
             return new NamedResultNode(fetchedValueAnalysis.getField().getResultKey(), resultNode);
         });
