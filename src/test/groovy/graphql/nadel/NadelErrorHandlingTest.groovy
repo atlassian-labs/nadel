@@ -17,6 +17,7 @@ class NadelErrorHandlingTest extends Specification {
          service MyService {
             type Query{
                 hello: World  
+                helloWithArgs(arg1 : String! arg2 : String) : World
             } 
             type World {
                 id: ID
@@ -31,6 +32,7 @@ class NadelErrorHandlingTest extends Specification {
     def simpleUnderlyingSchema = typeDefinitions("""
             type Query{
                 hello: World  
+                helloWithArgs(arg1 : String! arg2 : String) : World
             } 
             type World {
                 id: ID
@@ -99,6 +101,27 @@ class NadelErrorHandlingTest extends Specification {
         er.data == [hello: [name: "World"]]
         !er.errors.isEmpty()
         er.errors.collect({ ge -> ge.message }) == ["Problem1", "Problem2"]
+    }
+
+    def "missing null variables are handled"() {
+        given:
+        def query = '''
+            query with($var1 : String!) { helloWithArgs(arg1 : $var1) { name } }
+        '''
+
+        Nadel nadel = buildNadel()
+
+        0 * delegatedExecution.execute(_) >> { args ->
+            completedFuture(new ServiceExecutionResult([:], []))
+        }
+
+        when:
+        def er = nadel.execute(newNadelExecutionInput().query(query).variables([:])).join()
+
+        then:
+        er.data == null
+        !er.errors.isEmpty()
+        er.errors[0].message.contains("Variable 'var1' has coerced Null value")
     }
 
     def hydratedNDSL = '''
