@@ -9,6 +9,7 @@ import graphql.util.ParallelTraverser;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitor;
+import graphql.util.TreeTransformer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +23,12 @@ import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADA
 @Internal
 public class ResultNodesTransformer {
 
+    public ExecutionResultNode transform(ExecutionResultNode root, TraverserVisitor<ExecutionResultNode> traverserVisitor) {
+        assertNotNull(root);
+
+        TreeTransformer<ExecutionResultNode> treeTransformer = new TreeTransformer<>(RESULT_NODE_ADAPTER);
+        return treeTransformer.transform(root, traverserVisitor);
+    }
 
     public ExecutionResultNode transformParallel(ExecutionResultNode root, TraverserVisitor<ExecutionResultNode> traverserVisitor) {
         return transformParallel(root, traverserVisitor, Collections.emptyMap());

@@ -1208,7 +1208,7 @@ class NadelExecutionStrategyTest extends Specification {
             @Override
             RootExecutionResultNode postServiceResult(Service s, Object sc, GraphQLSchema os, RootExecutionResultNode resultNode) {
                 def transformer = new ResultNodesTransformer()
-                return transformer.transform(resultNode, new TraverserVisitor<ExecutionResultNode>() {
+                return transformer.transformParallel(resultNode, new TraverserVisitor<ExecutionResultNode>() {
                     @Override
                     TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                         if (context.thisNode() instanceof LeafExecutionResultNode) {

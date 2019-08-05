@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
@@ -80,9 +81,11 @@ public class ServiceResultNodesToOverallResult {
                                             ExecutionStepInfo rootStepInfo,
                                             boolean isHydrationTransformation,
                                             boolean batched,
-                                            Map<String, FieldTransformation> transformationMap,
+                                            Map<String, FieldTransformation> transformationMapInput,
                                             Map<String, String> typeRenameMappings,
                                             boolean onlyChildren) {
+
+        ConcurrentHashMap<String, FieldTransformation> transformationMap = new ConcurrentHashMap<>(transformationMapInput);
 
         long startTime = System.currentTimeMillis();
         final long[] nodeCount = {0};
@@ -105,6 +108,7 @@ public class ServiceResultNodesToOverallResult {
                 TraversalControl traversalControl = TraversalControl.CONTINUE;
                 TuplesTwo<Set<FieldTransformation>, List<Field>> transformationsAndNotTransformedFields =
                         getTransformationsAndNotTransformedFields(node.getMergedField(), transformationMap);
+
                 List<FieldTransformation> transformations = new ArrayList<>(transformationsAndNotTransformedFields.getT1());
                 List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
 
@@ -265,7 +269,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private ExecutionResultNode nodesWithFieldId(ExecutionResultNode executionResultNode, Set<String> ids) {
-        return resultNodesTransformer.transformParallel(executionResultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+        return resultNodesTransformer.transform(executionResultNode, new TraverserVisitorStub<ExecutionResultNode>() {
 
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
@@ -312,7 +316,8 @@ public class ServiceResultNodesToOverallResult {
         TreeTransformerUtil.changeNode(context, mappedNode);
     }
 
-    private TuplesTwo<Set<FieldTransformation>, List<Field>> getTransformationsAndNotTransformedFields(MergedField mergedField, Map<String, FieldTransformation> transformationMap) {
+    private TuplesTwo<Set<FieldTransformation>, List<Field>> getTransformationsAndNotTransformedFields(MergedField mergedField,
+                                                                                                       Map<String, FieldTransformation> transformationMap) {
         Set<FieldTransformation> transformations = new LinkedHashSet<>();
         List<Field> notTransformedFields = new ArrayList<>();
         for (Field field : mergedField.getFields()) {
