@@ -1776,4 +1776,54 @@ class NadelExecutionStrategyTest extends Specification {
 
     }
 
+    def "call with variables inside input objects"() {
+        given:
+        def serviceSchema = TestUtil.schema("""
+        type Query {
+            hello(arg: Arg, otherArg: String): String
+        }
+        input Arg {
+            ids: [ID]
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service  MyService{
+            type Query {
+                hello(arg: Arg, otherArg: String): String
+            }
+            input Arg {
+                ids: [ID]
+            }
+        }
+        ''')
+        def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("hello")
+
+        def service1 = new Service("MyService", serviceSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = 'query myQuery($varIds: [ID], $otherVar: String) { hello(arg: {ids: $varIds}, otherArg: $otherVar) }'
+        def expectedQuery1 = 'query nadel_2_MyService($varIds:[ID],$otherVar:String) {hello(arg:{ids:$varIds},otherArg:$otherVar)}'
+        def response1 = new ServiceExecutionResult([hello: "world"])
+
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> CompletableFuture.completedFuture(response1)
+
+
+        resultData(response) == [hello: "world"]
+
+    }
+
 }

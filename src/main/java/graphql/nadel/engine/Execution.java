@@ -2,6 +2,8 @@ package graphql.nadel.engine;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import graphql.ExecutionResultImpl;
+import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
@@ -30,6 +32,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
 @Internal
 public class Execution {
@@ -64,7 +68,17 @@ public class Execution {
 
         executionInput = executionInput.transform(builder -> builder.context(nadelContext));
 
-        ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, executionId, executionInput, instrumentationState);
+        ExecutionHelper.ExecutionData executionData;
+        try {
+            executionData = executionHelper.createExecutionData(document, overallSchema, executionId, executionInput, instrumentationState);
+        } catch (RuntimeException rte) {
+            //
+            // this is the same behavior as in graphql-java
+            if (rte instanceof GraphQLError) {
+                return completedFuture(new ExecutionResultImpl((GraphQLError) rte));
+            }
+            throw rte;
+        }
 
         ExecutionContext executionContext = executionData.executionContext;
         FieldSubSelection fieldSubSelection = executionData.fieldSubSelection;

@@ -2,7 +2,6 @@ package graphql.nadel.engine;
 
 import graphql.execution.ExecutionContext;
 import graphql.execution.MergedField;
-import graphql.language.Argument;
 import graphql.language.AstNodeAdapter;
 import graphql.language.Document;
 import graphql.language.Field;
@@ -171,7 +170,8 @@ public class OverallQueryTransformer {
                         transformationByResultField,
                         typeRenameMappings,
                         referencedFragmentNames,
-                        referencedVariables, nadelContext);
+                        referencedVariables,
+                        nadelContext);
 
                 GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
                 newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
@@ -261,7 +261,9 @@ public class OverallQueryTransformer {
         return (FragmentDefinition) newNode;
     }
 
-    private List<VariableDefinition> buildReferencedVariableDefinitions(Map<String, VariableDefinition> referencedVariables, GraphQLSchema graphQLSchema, Map<String, String> typeRenameMappings) {
+    private List<VariableDefinition> buildReferencedVariableDefinitions(Map<String, VariableDefinition> referencedVariables,
+                                                                        GraphQLSchema graphQLSchema,
+                                                                        Map<String, String> typeRenameMappings) {
         List<VariableDefinition> variableDefinitions = new ArrayList<>();
         for (VariableDefinition vd : referencedVariables.values()) {
             TypeInfo typeInfo = TypeInfo.typeInfo(vd.getType());
@@ -289,7 +291,13 @@ public class OverallQueryTransformer {
                                              Set<String> referencedFragmentNames,
                                              Map<String, VariableDefinition> referencedVariables,
                                              NadelContext nadelContext) {
-        Transformer transformer = new Transformer(executionContext, underlyingSchema, transformationByResultField, typeRenameMappings, referencedFragmentNames, referencedVariables, nadelContext);
+        Transformer transformer = new Transformer(executionContext,
+                underlyingSchema,
+                transformationByResultField,
+                typeRenameMappings,
+                referencedFragmentNames,
+                referencedVariables,
+                nadelContext);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         rootVars.put(NodeTypeContext.class, new NodeTypeContext(parentType, null));
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
@@ -315,6 +323,7 @@ public class OverallQueryTransformer {
         final Set<String> referencedFragmentNames;
         final Map<String, VariableDefinition> referencedVariables;
         final NadelContext nadelContext;
+        private final Map<String, VariableDefinition> variableDefinitions;
 
         Transformer(ExecutionContext executionContext,
                     GraphQLSchema underlyingSchema,
@@ -329,8 +338,16 @@ public class OverallQueryTransformer {
             this.referencedFragmentNames = referencedFragmentNames;
             this.referencedVariables = referencedVariables;
             this.nadelContext = nadelContext;
+            OperationDefinition operationDefinition = executionContext.getOperationDefinition();
+            this.variableDefinitions = FpKit.getByName(operationDefinition.getVariableDefinitions(), VariableDefinition::getName);
         }
 
+        @Override
+        public TraversalControl visitVariableReference(VariableReference variableReference, TraverserContext<Node> context) {
+            VariableDefinition variableDefinition = variableDefinitions.get(variableReference.getName());
+            referencedVariables.put(variableDefinition.getName(), variableDefinition);
+            return TraversalControl.CONTINUE;
+        }
 
         @Override
         public TraversalControl visitField(Field field, TraverserContext<Node> context) {
@@ -350,7 +367,6 @@ public class OverallQueryTransformer {
             }
 
 
-            saveReferencesVariables(field);
 
             GraphQLOutputType fieldOutputType = applyEnvironment.getFieldDefinition().getType();
             GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldOutputType);
@@ -383,21 +399,6 @@ public class OverallQueryTransformer {
                 maybeAddUnderscoreTypeName(applyEnvironment, field, fieldType);
             }
             return TraversalControl.CONTINUE;
-        }
-
-        private void saveReferencesVariables(Field field) {
-            OperationDefinition operationDefinition = executionContext.getOperationDefinition();
-            Map<String, VariableDefinition> variableDefinitions = FpKit.getByName(operationDefinition.getVariableDefinitions(), VariableDefinition::getName);
-
-            // capture the variables that are referenced by fields
-            field.getArguments().stream()
-                    .map(Argument::getValue)
-                    .filter(value -> value instanceof VariableReference)
-                    .map(VariableReference.class::cast)
-                    .forEach(variableReference -> {
-                        VariableDefinition variableDefinition = variableDefinitions.get(variableReference.getName());
-                        referencedVariables.put(variableDefinition.getName(), variableDefinition);
-                    });
         }
 
         FieldTransformation.ApplyEnvironment createApplyEnvironment(Field field, TraverserContext<Node> context) {
