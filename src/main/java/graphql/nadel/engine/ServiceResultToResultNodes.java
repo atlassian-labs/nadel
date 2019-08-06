@@ -60,7 +60,6 @@ public class ServiceResultToResultNodes {
         List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
         long elapsedTime = System.currentTimeMillis() - startTime;
         log.debug("ServiceResultToResultNodes time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
-        // System.out.println("ServiceResultToResultNodes time: " + elapsedTime);
         return new RootExecutionResultNode(namedResultNodes, errors);
     }
 
@@ -69,12 +68,6 @@ public class ServiceResultToResultNodes {
     }
 
     private static <T, U> List<U> mapParallel(ExecutionContext executionContext, List<T> list, Function<T, U> function) {
-//        NadelContext nadelContext = (NadelContext) executionContext.getContext();
-//        try {
-//            return nadelContext.getForkJoinPool().submit(() -> list.parallelStream().map(function).collect(Collectors.toList())).get();
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
         return list.parallelStream().map(function).collect(Collectors.toList());
     }
 
