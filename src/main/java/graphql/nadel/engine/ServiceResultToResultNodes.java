@@ -12,7 +12,6 @@ import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.ResultNodesCreator;
 import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.NamedResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.execution.nextgen.result.ResultNodesUtil;
@@ -29,7 +28,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+
+import static graphql.util.FpKit.map;
 
 public class ServiceResultToResultNodes {
 
@@ -64,16 +64,16 @@ public class ServiceResultToResultNodes {
     }
 
     private List<ExecutionResultNode> resolveSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
-        return mapParallel(executionContext, fetchSubSelection(executionContext, fieldSubSelection), node -> resolveAllChildNodes(executionContext, node));
+        return map(fetchSubSelection(executionContext, fieldSubSelection), node -> resolveAllChildNodes(executionContext, node));
     }
 
     private static <T, U> List<U> mapParallel(ExecutionContext executionContext, List<T> list, Function<T, U> function) {
-        return list.parallelStream().map(function).collect(Collectors.toList());
+        return ParallelMapper.mapParallel(executionContext, list, function, 2);
     }
 
 
-    private ExecutionResultNode resolveAllChildNodes(ExecutionContext context, NamedResultNode namedResultNode) {
-        NodeMultiZipper<ExecutionResultNode> unresolvedNodes = ResultNodesUtil.getUnresolvedNodes(namedResultNode.getNode());
+    private ExecutionResultNode resolveAllChildNodes(ExecutionContext context, ExecutionResultNode resultNode) {
+        NodeMultiZipper<ExecutionResultNode> unresolvedNodes = ResultNodesUtil.getUnresolvedNodes(resultNode);
         List<NodeZipper<ExecutionResultNode>> resolvedNodes = mapParallel(context, unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
         return resolvedNodesToResultNode(unresolvedNodes, resolvedNodes);
     }
@@ -91,13 +91,13 @@ public class ServiceResultToResultNodes {
         return unresolvedNodes.withReplacedZippers(resolvedNodes).toRootNode();
     }
 
-    private List<NamedResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
+    private List<ExecutionResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
         List<FetchedValueAnalysis> fetchedValueAnalysisList = fetchAndAnalyze(executionContext, fieldSubSelection);
         return fetchedValueAnalysisToNodes(executionContext, fetchedValueAnalysisList);
     }
 
     private List<FetchedValueAnalysis> fetchAndAnalyze(ExecutionContext context, FieldSubSelection fieldSubSelection) {
-        return mapParallel(context, fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
+        return map(fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 mergedField -> fetchAndAnalyzeField(context, fieldSubSelection.getSource(), mergedField, fieldSubSelection.getExecutionStepInfo()));
     }
 
@@ -130,10 +130,9 @@ public class ServiceResultToResultNodes {
         return fetchedValueAnalyzer.analyzeFetchedValue(executionContext, fetchedValue, executionInfo);
     }
 
-    private List<NamedResultNode> fetchedValueAnalysisToNodes(ExecutionContext executionContext, List<FetchedValueAnalysis> fetchedValueAnalysisList) {
-        return mapParallel(executionContext, fetchedValueAnalysisList, fetchedValueAnalysis -> {
-            ExecutionResultNode resultNode = resultNodesCreator.createResultNode(fetchedValueAnalysis);
-            return new NamedResultNode(fetchedValueAnalysis.getField().getResultKey(), resultNode);
+    private List<ExecutionResultNode> fetchedValueAnalysisToNodes(ExecutionContext executionContext, List<FetchedValueAnalysis> fetchedValueAnalysisList) {
+        return map(fetchedValueAnalysisList, fetchedValueAnalysis -> {
+            return resultNodesCreator.createResultNode(fetchedValueAnalysis);
         });
     }
 
