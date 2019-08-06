@@ -60,21 +60,28 @@ public class ServiceResultToResultNodes {
         List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
         long elapsedTime = System.currentTimeMillis() - startTime;
         log.debug("ServiceResultToResultNodes time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
+        // System.out.println("ServiceResultToResultNodes time: " + elapsedTime);
         return new RootExecutionResultNode(namedResultNodes, errors);
     }
 
     private List<ExecutionResultNode> resolveSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
-        return mapParallel(fetchSubSelection(executionContext, fieldSubSelection), node -> resolveAllChildNodes(executionContext, node));
+        return mapParallel(executionContext, fetchSubSelection(executionContext, fieldSubSelection), node -> resolveAllChildNodes(executionContext, node));
     }
 
-    public static <T, U> List<U> mapParallel(List<T> list, Function<T, U> function) {
-        return list.stream().map(function).parallel().collect(Collectors.toList());
+    private static <T, U> List<U> mapParallel(ExecutionContext executionContext, List<T> list, Function<T, U> function) {
+//        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+//        try {
+//            return nadelContext.getForkJoinPool().submit(() -> list.parallelStream().map(function).collect(Collectors.toList())).get();
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+        return list.parallelStream().map(function).collect(Collectors.toList());
     }
 
 
     private ExecutionResultNode resolveAllChildNodes(ExecutionContext context, NamedResultNode namedResultNode) {
         NodeMultiZipper<ExecutionResultNode> unresolvedNodes = ResultNodesUtil.getUnresolvedNodes(namedResultNode.getNode());
-        List<NodeZipper<ExecutionResultNode>> resolvedNodes = mapParallel(unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
+        List<NodeZipper<ExecutionResultNode>> resolvedNodes = mapParallel(context, unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
         return resolvedNodesToResultNode(unresolvedNodes, resolvedNodes);
     }
 
@@ -93,11 +100,11 @@ public class ServiceResultToResultNodes {
 
     private List<NamedResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
         List<FetchedValueAnalysis> fetchedValueAnalysisList = fetchAndAnalyze(executionContext, fieldSubSelection);
-        return fetchedValueAnalysisToNodes(fetchedValueAnalysisList);
+        return fetchedValueAnalysisToNodes(executionContext, fetchedValueAnalysisList);
     }
 
     private List<FetchedValueAnalysis> fetchAndAnalyze(ExecutionContext context, FieldSubSelection fieldSubSelection) {
-        return FpKit.map(fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
+        return mapParallel(context, fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 mergedField -> fetchAndAnalyzeField(context, fieldSubSelection.getSource(), mergedField, fieldSubSelection.getExecutionStepInfo()));
     }
 
@@ -130,8 +137,8 @@ public class ServiceResultToResultNodes {
         return fetchedValueAnalyzer.analyzeFetchedValue(executionContext, fetchedValue, executionInfo);
     }
 
-    private List<NamedResultNode> fetchedValueAnalysisToNodes(List<FetchedValueAnalysis> fetchedValueAnalysisList) {
-        return mapParallel(fetchedValueAnalysisList, fetchedValueAnalysis -> {
+    private List<NamedResultNode> fetchedValueAnalysisToNodes(ExecutionContext executionContext, List<FetchedValueAnalysis> fetchedValueAnalysisList) {
+        return mapParallel(executionContext, fetchedValueAnalysisList, fetchedValueAnalysis -> {
             ExecutionResultNode resultNode = resultNodesCreator.createResultNode(fetchedValueAnalysis);
             return new NamedResultNode(fetchedValueAnalysis.getField().getResultKey(), resultNode);
         });

@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ForkJoinPool;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
@@ -30,11 +31,11 @@ public class ResultNodesTransformer {
         return treeTransformer.transform(root, traverserVisitor);
     }
 
-    public ExecutionResultNode transformParallel(ExecutionResultNode root, TraverserVisitor<ExecutionResultNode> traverserVisitor) {
-        return transformParallel(root, traverserVisitor, Collections.emptyMap());
+    public ExecutionResultNode transformParallel(ForkJoinPool forkJoinPool, ExecutionResultNode root, TraverserVisitor<ExecutionResultNode> traverserVisitor) {
+        return transformParallel(forkJoinPool, root, traverserVisitor, Collections.emptyMap());
     }
 
-    public ExecutionResultNode transformParallel(ExecutionResultNode root, TraverserVisitor<ExecutionResultNode> traverserVisitor, Map<Class<?>, Object> rootVars) {
+    public ExecutionResultNode transformParallel(ForkJoinPool forkJoinPool, ExecutionResultNode root, TraverserVisitor<ExecutionResultNode> traverserVisitor, Map<Class<?>, Object> rootVars) {
         assertNotNull(root);
 
         TraverserVisitor<ExecutionResultNode> nodeTraverserVisitor = new TraverserVisitor<ExecutionResultNode>() {
@@ -54,7 +55,7 @@ public class ResultNodesTransformer {
         };
 
         Queue<NodeZipper<ExecutionResultNode>> zippers = new ConcurrentLinkedQueue<>();
-        ParallelTraverser<ExecutionResultNode> traverser = ParallelTraverser.parallelTraverser(ExecutionResultNode::getChildren, zippers);
+        ParallelTraverser<ExecutionResultNode> traverser = ParallelTraverser.parallelTraverser(ExecutionResultNode::getChildren, zippers, forkJoinPool);
         traverser.rootVars(rootVars);
         traverser.traverse(root, nodeTraverserVisitor);
 

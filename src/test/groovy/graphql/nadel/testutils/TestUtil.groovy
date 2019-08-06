@@ -52,6 +52,7 @@ import graphql.schema.idl.errors.SchemaProblem
 import groovy.json.JsonSlurper
 
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ForkJoinPool
 import java.util.function.Supplier
 import java.util.stream.Collectors
 
@@ -312,7 +313,7 @@ class TestUtil {
     static def executionData(GraphQLSchema schema, Document query) {
         ExecutionInput executionInput = newExecutionInput()
                 .query(AstPrinter.printAst(query))
-                .context(NadelContext.newContext().originalOperationName(query, null).build())
+                .context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).originalOperationName(query, null).build())
                 .build()
         ExecutionHelper executionHelper = new ExecutionHelper()
         def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput, null)

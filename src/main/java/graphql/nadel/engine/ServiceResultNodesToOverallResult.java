@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
@@ -48,23 +49,18 @@ public class ServiceResultNodesToOverallResult {
 
 
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public ExecutionResultNode convert(ExecutionId executionId, ExecutionResultNode resultNode, GraphQLSchema overallSchema, ExecutionStepInfo rootStepInfo, Map<String, FieldTransformation> transformationMap, Map<String, String> typeRenameMappings) {
-        return convertImpl(executionId, resultNode, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false);
-    }
-
     public ExecutionResultNode convert(ExecutionId executionId,
-                                       ExecutionResultNode root,
+                                       ForkJoinPool forkJoinPool,
+                                       ExecutionResultNode resultNode,
                                        GraphQLSchema overallSchema,
                                        ExecutionStepInfo rootStepInfo,
-                                       boolean isHydrationTransformation,
-                                       boolean batched,
                                        Map<String, FieldTransformation> transformationMap,
                                        Map<String, String> typeRenameMappings) {
-
-        return convertImpl(executionId, root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, false);
+        return convertImpl(executionId, forkJoinPool, resultNode, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false);
     }
 
     public ExecutionResultNode convertChildren(ExecutionId executionId,
+                                               ForkJoinPool forkJoinPool,
                                                ExecutionResultNode root,
                                                GraphQLSchema overallSchema,
                                                ExecutionStepInfo rootStepInfo,
@@ -72,10 +68,11 @@ public class ServiceResultNodesToOverallResult {
                                                boolean batched,
                                                Map<String, FieldTransformation> transformationMap,
                                                Map<String, String> typeRenameMappings) {
-        return convertImpl(executionId, root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true);
+        return convertImpl(executionId, forkJoinPool, root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true);
     }
 
     private ExecutionResultNode convertImpl(ExecutionId executionId,
+                                            ForkJoinPool forkJoinPool,
                                             ExecutionResultNode root,
                                             GraphQLSchema overallSchema,
                                             ExecutionStepInfo rootStepInfo,
@@ -90,7 +87,7 @@ public class ServiceResultNodesToOverallResult {
         long startTime = System.currentTimeMillis();
         final long[] nodeCount = {0};
         Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
-        ExecutionResultNode newRoot = resultNodesTransformer.transformParallel(root, new TraverserVisitorStub<ExecutionResultNode>() {
+        ExecutionResultNode newRoot = resultNodesTransformer.transformParallel(forkJoinPool, root, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 nodeCount[0]++;
@@ -122,7 +119,7 @@ public class ServiceResultNodesToOverallResult {
                 if (transformations.size() == 0) {
                     mapAndChangeNode(node, unapplyEnvironment, context);
                 } else {
-                    traversalControl = unapplyTransformations(executionId, node, transformations, unapplyEnvironment, transformationMap, context);
+                    traversalControl = unapplyTransformations(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context);
                 }
                 ExecutionResultNode convertedNode = context.thisNode();
                 if (!(convertedNode instanceof LeafExecutionResultNode)) {
@@ -140,6 +137,7 @@ public class ServiceResultNodesToOverallResult {
 
 
     private TraversalControl unapplyTransformations(ExecutionId executionId,
+                                                    ForkJoinPool forkJoinPool,
                                                     ExecutionResultNode node,
                                                     List<FieldTransformation> transformations,
                                                     UnapplyEnvironment unapplyEnvironment,
@@ -153,7 +151,7 @@ public class ServiceResultNodesToOverallResult {
         if (transformation instanceof HydrationTransformation) {
             traversalControl = unapplyHydration(node, transformations, unapplyEnvironment, transformationMap, transformation, context);
         } else if (transformation instanceof FieldRenameTransformation) {
-            traversalControl = unapplyFieldRename(executionId, node, transformations, unapplyEnvironment, transformationMap, context);
+            traversalControl = unapplyFieldRename(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context);
         } else {
             return Assert.assertShouldNeverHappen("Unexpected transformation type " + transformation);
         }
@@ -161,6 +159,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private TraversalControl unapplyFieldRename(ExecutionId executionId,
+                                                ForkJoinPool forkJoinPool,
                                                 ExecutionResultNode node,
                                                 List<FieldTransformation> transformations,
                                                 UnapplyEnvironment unapplyEnvironment,
@@ -182,7 +181,9 @@ public class ServiceResultNodesToOverallResult {
         boolean first = true;
         if (notTransformedTree != null) {
             ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, context);
-            mappedNode = convertChildren(executionId, mappedNode,
+            mappedNode = convertChildren(executionId,
+                    forkJoinPool,
+                    mappedNode,
                     unapplyEnvironment.overallSchema,
                     unapplyEnvironment.parentExecutionStepInfo,
                     unapplyEnvironment.isHydrationTransformation,
@@ -199,7 +200,9 @@ public class ServiceResultNodesToOverallResult {
                 transformedResult = unapplyResult.getNode();
             } else {
                 ExecutionResultNode unapplyResultNode = unapplyResult.getNode();
-                transformedResult = convertChildren(executionId, unapplyResultNode,
+                transformedResult = convertChildren(executionId,
+                        forkJoinPool,
+                        unapplyResultNode,
                         unapplyEnvironment.overallSchema,
                         unapplyResultNode.getExecutionStepInfo(),
                         unapplyEnvironment.isHydrationTransformation,

@@ -109,6 +109,8 @@ dependencies {
     testCompile 'com.google.code.gson:gson:2.8.0'
     testCompile 'org.slf4j:slf4j-simple:' + slf4jVersion
     testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.6'
+    testCompile 'org.openjdk.jmh:jmh-core:1.21'
+    testCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
 }
 
 compileJava.source file("build/generated-src"), sourceSets.main.java

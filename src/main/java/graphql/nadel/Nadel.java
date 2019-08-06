@@ -164,6 +164,8 @@ public class Nadel {
                 .executionId(nadelExecutionInput.getExecutionId())
                 .build();
 
+        NadelExtraInput nadelExtraInput = new NadelExtraInput(nadelExecutionInput.getArtificialFieldsUUID(), nadelExecutionInput.getForkJoinPool());
+
         InstrumentationState instrumentationState = instrumentation.createState(new NadelInstrumentationCreateStateParameters(overallSchema, executionInput));
         NadelInstrumentationQueryExecutionParameters instrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, overallSchema, instrumentationState);
         try {
@@ -174,7 +176,7 @@ public class Nadel {
 
             InstrumentationContext<ExecutionResult> executionInstrumentation = instrumentation.beginQueryExecution(instrumentationParameters);
 
-            CompletableFuture<ExecutionResult> executionResult = parseValidateAndExecute(executionInput, overallSchema, instrumentationState, nadelExecutionInput.getArtificialFieldsUUID());
+            CompletableFuture<ExecutionResult> executionResult = parseValidateAndExecute(executionInput, overallSchema, instrumentationState, nadelExtraInput);
             //
             // finish up instrumentation
             executionResult = executionResult.whenComplete(executionInstrumentation::onCompleted);
@@ -190,7 +192,10 @@ public class Nadel {
         }
     }
 
-    private CompletableFuture<ExecutionResult> parseValidateAndExecute(ExecutionInput executionInput, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState, String artificialFieldsUUID) {
+    private CompletableFuture<ExecutionResult> parseValidateAndExecute(ExecutionInput executionInput,
+                                                                       GraphQLSchema graphQLSchema,
+                                                                       InstrumentationState instrumentationState,
+                                                                       NadelExtraInput nadelExtraInput) {
         AtomicReference<ExecutionInput> executionInputRef = new AtomicReference<>(executionInput);
         Function<ExecutionInput, PreparsedDocumentEntry> computeFunction = transformedInput -> {
             // if they change the original query in the pre-parser, then we want to see it downstream from then on
@@ -201,7 +206,7 @@ public class Nadel {
         if (preparsedDoc.hasErrors()) {
             return CompletableFuture.completedFuture(new ExecutionResultImpl(preparsedDoc.getErrors()));
         }
-        return executeImpl(executionInputRef.get(), preparsedDoc.getDocument(), instrumentationState, artificialFieldsUUID);
+        return executeImpl(executionInputRef.get(), preparsedDoc.getDocument(), instrumentationState, nadelExtraInput);
     }
 
     private PreparsedDocumentEntry parseAndValidate(AtomicReference<ExecutionInput> executionInputRef, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState) {
@@ -262,7 +267,10 @@ public class Nadel {
         return validationErrors;
     }
 
-    private CompletableFuture<ExecutionResult> executeImpl(ExecutionInput executionInput, Document document, InstrumentationState instrumentationState, String artificialFieldsUUID) {
+    private CompletableFuture<ExecutionResult> executeImpl(ExecutionInput executionInput,
+                                                           Document document,
+                                                           InstrumentationState instrumentationState,
+                                                           NadelExtraInput nadelExtraInput) {
 
         String query = executionInput.getQuery();
         String operationName = executionInput.getOperationName();
@@ -275,7 +283,7 @@ public class Nadel {
 
         Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner, serviceExecutionHooks);
 
-        return execution.execute(executionInput, document, executionId, instrumentationState, artificialFieldsUUID);
+        return execution.execute(executionInput, document, executionId, instrumentationState, nadelExtraInput);
     }
 
     /**
