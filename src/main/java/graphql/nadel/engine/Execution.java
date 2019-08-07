@@ -18,7 +18,7 @@ import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
-import graphql.nadel.NadelExtraInput;
+import graphql.nadel.NadelExecutionParams;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
@@ -57,13 +57,13 @@ public class Execution {
                                                       Document document,
                                                       ExecutionId executionId,
                                                       InstrumentationState instrumentationState,
-                                                      NadelExtraInput nadelExtraInput) {
+                                                      NadelExecutionParams nadelExecutionParams) {
 
         NadelContext nadelContext = NadelContext.newContext()
                 .userSuppliedContext(executionInput.getContext())
                 .originalOperationName(document, executionInput.getOperationName())
-                .artificialFieldsUUID(nadelExtraInput.getArtificialFieldsUUID())
-                .forkJoinPool(nadelExtraInput.getForkJoinPool())
+                .artificialFieldsUUID(nadelExecutionParams.getArtificialFieldsUUID())
+                .forkJoinPool(nadelExecutionParams.getForkJoinPool())
                 .build();
 
         executionInput = executionInput.transform(builder -> builder.context(nadelContext));

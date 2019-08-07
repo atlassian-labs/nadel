@@ -5,12 +5,12 @@ import graphql.Internal;
 import java.util.concurrent.ForkJoinPool;
 
 @Internal
-public class NadelExtraInput {
+public class NadelExecutionParams {
 
     private final String artificialFieldsUUID;
     private final ForkJoinPool forkJoinPool;
 
-    public NadelExtraInput(String artificialFieldsUUID, ForkJoinPool forkJoinPool) {
+    public NadelExecutionParams(String artificialFieldsUUID, ForkJoinPool forkJoinPool) {
         this.artificialFieldsUUID = artificialFieldsUUID;
         this.forkJoinPool = forkJoinPool;
     }
