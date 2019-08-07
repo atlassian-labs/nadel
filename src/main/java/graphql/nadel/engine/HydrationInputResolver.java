@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ForkJoinPool;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
@@ -199,9 +200,10 @@ public class HydrationInputResolver {
         CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
                 .execute(executionContext, queryTransformationResult, service, operation, null);
 
+        ForkJoinPool forkJoinPool = getNadelContext(executionContext).getForkJoinPool();
         return serviceResult
                 .thenApply(resultNode -> removeArtificialFieldsFromRoot(executionContext, resultNode))
-                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(), fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult))
+                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(), forkJoinPool, fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
@@ -223,6 +225,7 @@ public class HydrationInputResolver {
     }
 
     private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(ExecutionId executionId,
+                                                                              ForkJoinPool forkJoinPool,
                                                                               FieldTracking fieldTracking,
                                                                               ExecutionStepInfo hydratedFieldStepInfo,
                                                                               HydrationTransformation hydrationTransformation,
@@ -234,7 +237,7 @@ public class HydrationInputResolver {
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
-                .convertChildren(executionId, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings);
+                .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings);
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
 
@@ -336,13 +339,22 @@ public class HydrationInputResolver {
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
 
         boolean first = true;
+        ForkJoinPool forkJoinPool = getNadelContext(executionContext).getForkJoinPool();
         for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
             ExecutionStepInfo executionStepInfo = hydrationInputNode.getExecutionStepInfo();
             ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
-                ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convertChildren(executionContext.getExecutionId(),
-                        matchingResolvedNode, overallSchema, executionStepInfo, true, true, transformationByResultField, typeRenameMappings);
+                ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convertChildren(
+                        executionContext.getExecutionId(),
+                        forkJoinPool,
+                        matchingResolvedNode,
+                        overallSchema,
+                        executionStepInfo,
+                        true,
+                        true,
+                        transformationByResultField,
+                        typeRenameMappings);
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);
             } else {

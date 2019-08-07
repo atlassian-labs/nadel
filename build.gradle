@@ -29,7 +29,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
-def graphqlJavaVersion = '2019-08-02T04-53-20-6063e7e'
+def graphqlJavaVersion = '2019-08-05T23-30-46-c454ba2'
 
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
@@ -111,7 +111,6 @@ dependencies {
     testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.6'
     testCompile 'org.openjdk.jmh:jmh-core:1.21'
     testCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
-
 }
 
 compileJava.source file("build/generated-src"), sourceSets.main.java

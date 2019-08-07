@@ -12,16 +12,17 @@ import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.ResultNodesCreator;
 import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.NamedResultNode;
 import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResolvedValue;
-import graphql.execution.nextgen.result.ResultNodesUtil;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
+import graphql.execution.nextgen.result.UnresolvedObjectResultNode;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.util.ErrorUtil;
 import graphql.util.FpKit;
-import graphql.util.NodeMultiZipper;
-import graphql.util.NodeZipper;
+import graphql.util.TraversalControl;
+import graphql.util.TraverserContext;
+import graphql.util.TraverserVisitorStub;
+import graphql.util.TreeTransformerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,7 @@ public class ServiceResultToResultNodes {
     private final ServiceExecutionResultAnalyzer fetchedValueAnalyzer = new ServiceExecutionResultAnalyzer();
     private final ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
     private final ExecutionStrategyUtil util = new ExecutionStrategyUtil();
+    ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
     private static final Logger log = LoggerFactory.getLogger(ServiceResultToResultNodes.class);
 
@@ -46,6 +48,42 @@ public class ServiceResultToResultNodes {
                                                       ServiceExecutionResult serviceExecutionResult) {
         long startTime = System.currentTimeMillis();
 
+        List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
+        RootExecutionResultNode rootNode = new RootExecutionResultNode(Collections.emptyList(), errors);
+        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+
+        RootExecutionResultNode result = (RootExecutionResultNode) resultNodesTransformer.transformParallel(nadelContext.getForkJoinPool(), rootNode, new TraverserVisitorStub<ExecutionResultNode>() {
+            @Override
+            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
+                ExecutionResultNode node = context.thisNode();
+                if (node instanceof RootExecutionResultNode) {
+                    changeRootNode(context, (RootExecutionResultNode) node, executionContext, executionStepInfo, mergedFields, serviceExecutionResult);
+                    return TraversalControl.CONTINUE;
+                }
+                if (!(node instanceof UnresolvedObjectResultNode)) {
+                    return TraversalControl.CONTINUE;
+                }
+                UnresolvedObjectResultNode unresolvedNode = (UnresolvedObjectResultNode) node;
+                ResolvedValue resolvedValue = unresolvedNode.getResolvedValue();
+                ExecutionStepInfo esi = unresolvedNode.getExecutionStepInfo();
+                FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, esi, resolvedValue);
+                List<ExecutionResultNode> children = fetchSubSelection(executionContext, fieldSubSelection);
+                TreeTransformerUtil.changeNode(context, new ObjectExecutionResultNode(esi, resolvedValue, children));
+                return TraversalControl.CONTINUE;
+            }
+        });
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        log.debug("ServiceResultToResultNodes time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
+//        System.out.println("ServiceResultToResultNodes time: " + elapsedTime);
+        return result;
+    }
+
+    private void changeRootNode(TraverserContext<ExecutionResultNode> context,
+                                RootExecutionResultNode rootNode,
+                                ExecutionContext executionContext,
+                                ExecutionStepInfo executionStepInfo,
+                                List<MergedField> mergedFields,
+                                ServiceExecutionResult serviceExecutionResult) {
         Map<String, MergedField> subFields = FpKit.getByName(mergedFields, MergedField::getResultKey);
         MergedSelectionSet mergedSelectionSet = MergedSelectionSet.newMergedSelectionSet()
                 .subFields(subFields).build();
@@ -56,47 +94,24 @@ public class ServiceResultToResultNodes {
                 .mergedSelectionSet(mergedSelectionSet)
                 .build();
 
-        List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelectionWithData);
-        List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
-        long elapsedTime = System.currentTimeMillis() - startTime;
-        log.debug("ServiceResultToResultNodes time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
-        return new RootExecutionResultNode(namedResultNodes, errors);
+        List<ExecutionResultNode> subNodes = fetchSubSelection(executionContext, fieldSubSelectionWithData);
+        TreeTransformerUtil.changeNode(context, rootNode.withNewChildren(subNodes));
+
     }
 
-    private List<ExecutionResultNode> resolveSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
-        return map(fetchSubSelection(executionContext, fieldSubSelection), node -> resolveAllChildNodes(executionContext, node));
-    }
-
-    private ExecutionResultNode resolveAllChildNodes(ExecutionContext context, NamedResultNode namedResultNode) {
-        NodeMultiZipper<ExecutionResultNode> unresolvedNodes = ResultNodesUtil.getUnresolvedNodes(namedResultNode.getNode());
-        List<NodeZipper<ExecutionResultNode>> resolvedNodes = map(unresolvedNodes.getZippers(), unresolvedNode -> resolveNode(context, unresolvedNode));
-        return resolvedNodesToResultNode(unresolvedNodes, resolvedNodes);
-    }
-
-    private NodeZipper<ExecutionResultNode> resolveNode(ExecutionContext executionContext, NodeZipper<ExecutionResultNode> unresolvedNode) {
-        ResolvedValue resolvedValue = unresolvedNode.getCurNode().getResolvedValue();
-        ExecutionStepInfo esi = unresolvedNode.getCurNode().getExecutionStepInfo();
-        FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, esi, resolvedValue);
-        List<ExecutionResultNode> namedResultNodes = resolveSubSelection(executionContext, fieldSubSelection);
-        return unresolvedNode.withNewNode(new ObjectExecutionResultNode(esi, resolvedValue, namedResultNodes));
-    }
-
-    private ExecutionResultNode resolvedNodesToResultNode(NodeMultiZipper<ExecutionResultNode> unresolvedNodes,
-                                                          List<NodeZipper<ExecutionResultNode>> resolvedNodes) {
-        return unresolvedNodes.withReplacedZippers(resolvedNodes).toRootNode();
-    }
-
-    private List<NamedResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
+    private List<ExecutionResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
         List<FetchedValueAnalysis> fetchedValueAnalysisList = fetchAndAnalyze(executionContext, fieldSubSelection);
-        return fetchedValueAnalysisToNodes(fetchedValueAnalysisList);
+        return fetchedValueAnalysisToNodes(executionContext, fetchedValueAnalysisList);
     }
 
     private List<FetchedValueAnalysis> fetchAndAnalyze(ExecutionContext context, FieldSubSelection fieldSubSelection) {
-        return FpKit.map(fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
+        return map(fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 mergedField -> fetchAndAnalyzeField(context, fieldSubSelection.getSource(), mergedField, fieldSubSelection.getExecutionStepInfo()));
     }
 
-    private FetchedValueAnalysis fetchAndAnalyzeField(ExecutionContext context, Object source, MergedField mergedField,
+    private FetchedValueAnalysis fetchAndAnalyzeField(ExecutionContext context,
+                                                      Object source,
+                                                      MergedField mergedField,
                                                       ExecutionStepInfo executionStepInfo) {
         ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, executionStepInfo);
         FetchedValue fetchedValue = fetchValue(source, mergedField);
@@ -125,11 +140,8 @@ public class ServiceResultToResultNodes {
         return fetchedValueAnalyzer.analyzeFetchedValue(executionContext, fetchedValue, executionInfo);
     }
 
-    private List<NamedResultNode> fetchedValueAnalysisToNodes(List<FetchedValueAnalysis> fetchedValueAnalysisList) {
-        return FpKit.map(fetchedValueAnalysisList, fetchedValueAnalysis -> {
-            ExecutionResultNode resultNode = resultNodesCreator.createResultNode(fetchedValueAnalysis);
-            return new NamedResultNode(fetchedValueAnalysis.getField().getResultKey(), resultNode);
-        });
+    private List<ExecutionResultNode> fetchedValueAnalysisToNodes(ExecutionContext executionContext, List<FetchedValueAnalysis> fetchedValueAnalysisList) {
+        return map(fetchedValueAnalysisList, resultNodesCreator::createResultNode);
     }
 
 

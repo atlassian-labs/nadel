@@ -5,6 +5,8 @@ import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
 import spock.lang.Specification
 
+import java.util.concurrent.ForkJoinPool
+
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.leaf
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.list
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.object
@@ -14,7 +16,7 @@ import static graphql.nadel.testutils.TestUtil.mkField
 
 class ArtificialFieldUtilsTest extends Specification {
 
-    def context = NadelContext.newContext().build()
+    def context = NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()
     def underscoreTypeNameAlias = context.underscoreTypeNameAlias
     def interfaceType = GraphQLInterfaceType.newInterface().name("I").build()
     def objectType = GraphQLObjectType.newObject().name("O").build()

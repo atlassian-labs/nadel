@@ -30,13 +30,14 @@ import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ForkJoinPool
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.testutils.TestUtil.parseQuery
 
 class NadelExecutionStrategyTest extends Specification {
 
-    def executionHelper
+    ExecutionHelper executionHelper
     def service1Execution
     def service2Execution
     def serviceDefinition
@@ -239,7 +240,7 @@ class NadelExecutionStrategyTest extends Specification {
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
         def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().build()) build()
+        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()) build()
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
@@ -278,7 +279,7 @@ class NadelExecutionStrategyTest extends Specification {
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
         def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().build()) build()
+        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()) build()
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
@@ -317,7 +318,7 @@ class NadelExecutionStrategyTest extends Specification {
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
         def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().build()) build()
+        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()) build()
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
@@ -1118,7 +1119,7 @@ class NadelExecutionStrategyTest extends Specification {
     ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema) {
         def document = parseQuery(query)
 
-        def nadelContext = NadelContext.newContext().artificialFieldsUUID("UUID").build()
+        def nadelContext = NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).artificialFieldsUUID("UUID").build()
         def executionInput = ExecutionInput.newExecutionInput().query(query)
                 .context(nadelContext)
                 .build()
@@ -1208,7 +1209,7 @@ class NadelExecutionStrategyTest extends Specification {
             @Override
             RootExecutionResultNode postServiceResult(Service s, Object sc, GraphQLSchema os, RootExecutionResultNode resultNode) {
                 def transformer = new ResultNodesTransformer()
-                return transformer.transform(resultNode, new TraverserVisitor<ExecutionResultNode>() {
+                return transformer.transformParallel(ForkJoinPool.commonPool(), resultNode, new TraverserVisitor<ExecutionResultNode>() {
                     @Override
                     TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                         if (context.thisNode() instanceof LeafExecutionResultNode) {

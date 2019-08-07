@@ -82,7 +82,7 @@ public final class FieldUtils {
         if (field.getSelectionSet() == null) {
             return field;
         }
-        SelectionSet selectionSet = (SelectionSet) new AstTransformer().transform(field.getSelectionSet(), new NodeVisitorStub() {
+        SelectionSet selectionSet = (SelectionSet) new AstTransformer().transformParallel(field.getSelectionSet(), new NodeVisitorStub() {
 
             @Override
             public TraversalControl visitField(Field field, TraverserContext<Node> context) {
