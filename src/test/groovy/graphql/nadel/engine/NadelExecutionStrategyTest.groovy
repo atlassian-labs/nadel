@@ -1226,7 +1226,7 @@ class NadelExecutionStrategyTest extends Specification {
         def query = 'query q($variable : String) { foo(id: $variable) }'
         def executionData = createExecutionData(query, [variable: "abc"], overallSchema)
 
-        def expectedQuery = 'query nadel_2_service {foo(id:$variable)}'
+        def expectedQuery = 'query nadel_2_service($variable:String) {foo(id:$variable)}'
 
         when:
         nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
@@ -1234,11 +1234,14 @@ class NadelExecutionStrategyTest extends Specification {
 
         then:
         1 * service1Execution.execute({ it ->
-            printAstCompact(it.query) == expectedQuery && it.serviceContext == serviceContext
+            assert printAstCompact(it.query) == expectedQuery
+            assert it.serviceContext == serviceContext
             //
             // you can add all the extra variables you like but Nadel will only pass on ones
             // that are referenced by your part of the query
-            it.variables == ["variable": "123"]
+            assert it.variables == ["variable": "123"]
+
+            true
         } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(new ServiceExecutionResult(null))
     }
 
