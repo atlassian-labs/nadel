@@ -10,15 +10,15 @@ import graphql.execution.MergedField;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
-import graphql.language.Argument;
 import graphql.language.Field;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
-import graphql.nadel.ServiceExecutionHooks;
 import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.hooks.ModifiedArguments;
+import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
@@ -26,6 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -82,14 +84,17 @@ public class NadelExecutionStrategy {
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
             Service service = oneServiceExecution.service;
-            String operationName = buildOperationName(service, executionContext);
             ExecutionStepInfo stepInfo = oneServiceExecution.stepInfo;
+
+            ExecutionContext runExecutionCtx = buildServiceVariableOverrides(executionContext, oneServiceExecution.variables);
+
+            String operationName = buildOperationName(service, runExecutionCtx);
             MergedField mergedField = stepInfo.getField();
 
             //
             // take the original query and transform it into the underlying query needed for that top level field
             //
-            QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(executionContext, service.getUnderlyingSchema(), operationName, operation, singletonList(mergedField));
+            QueryTransformationResult queryTransformerResult = queryTransformer.transformMergedFields(runExecutionCtx, service.getUnderlyingSchema(), operationName, operation, singletonList(mergedField));
             Map<String, FieldTransformation> transformationByResultField = queryTransformerResult.getTransformationByResultField();
             Map<String, String> typeRenameMappings = queryTransformerResult.getTypeRenameMappings();
 
@@ -100,11 +105,11 @@ public class NadelExecutionStrategy {
             // now call put to the service with the new query
             Object serviceContext = oneServiceExecution.serviceContext;
             CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
-                    .execute(executionContext, queryTransformerResult, service, operation, serviceContext);
+                    .execute(runExecutionCtx, queryTransformerResult, service, operation, serviceContext);
 
             CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
                     .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
-                            .convert(executionContext.getExecutionId(), nadelContext.getForkJoinPool(), resultNode, overallSchema, rootExecutionStepInfo, transformationByResultField, typeRenameMappings));
+                            .convert(runExecutionCtx.getExecutionId(), nadelContext.getForkJoinPool(), resultNode, overallSchema, rootExecutionStepInfo, transformationByResultField, typeRenameMappings));
 
             //
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
@@ -146,6 +151,20 @@ public class NadelExecutionStrategy {
         }
     }
 
+    private ExecutionContext buildServiceVariableOverrides(ExecutionContext executionContext, Map<String, Object> overrideVariables) {
+        if (!overrideVariables.isEmpty()) {
+            Map<String, Object> newVariables = mergeVariables(executionContext.getVariables(), overrideVariables);
+            executionContext = executionContext.transform(builder -> builder.variables(newVariables));
+        }
+        return executionContext;
+    }
+
+    private Map<String, Object> mergeVariables(Map<String, Object> variables, Map<String, Object> overrideVariables) {
+        Map<String, Object> newVariables = new LinkedHashMap<>(variables);
+        newVariables.putAll(overrideVariables);
+        return newVariables;
+    }
+
     private CompletableFuture<RootExecutionResultNode> mergeTrees(List<CompletableFuture<RootExecutionResultNode>> resultNodes) {
         return Async.each(resultNodes).thenApply(rootNodes -> {
             List<ExecutionResultNode> mergedChildren = new ArrayList<>();
@@ -158,15 +177,17 @@ public class NadelExecutionStrategy {
 
     private static class OneServiceExecution {
 
-        public OneServiceExecution(Service service, Object serviceContext, ExecutionStepInfo stepInfo) {
+        public OneServiceExecution(Service service, Object serviceContext, ExecutionStepInfo stepInfo, Map<String, Object> variables) {
             this.service = service;
             this.serviceContext = serviceContext;
             this.stepInfo = stepInfo;
+            this.variables = variables;
         }
 
-        Service service;
-        Object serviceContext;
-        ExecutionStepInfo stepInfo;
+        final Service service;
+        final Object serviceContext;
+        final ExecutionStepInfo stepInfo;
+        final Map<String, Object> variables;
     }
 
     private List<OneServiceExecution> prepareServiceExecution(ExecutionContext context, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
@@ -175,25 +196,27 @@ public class NadelExecutionStrategy {
             ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, rootExecutionStepInfo);
             Service service = getServiceForFieldDefinition(newExecutionStepInfo.getFieldDefinition());
             Object serviceContext = serviceExecutionHooks.createServiceContext(service, newExecutionStepInfo);
-            List<Argument> newArguments = serviceExecutionHooks.modifyArguments(service, serviceContext, newExecutionStepInfo, mergedField.getArguments());
-            if (newArguments != null) {
-                newExecutionStepInfo = changeFieldArguments(newExecutionStepInfo, newArguments);
+            ModifiedArguments modifiedArguments = serviceExecutionHooks.modifyArguments(service, serviceContext, newExecutionStepInfo);
+
+            Map<String, Object> variables = Collections.emptyMap();
+            if (modifiedArguments != null) {
+                newExecutionStepInfo = changeFieldArguments(newExecutionStepInfo, modifiedArguments);
+                variables = modifiedArguments.getVariables();
             }
-            result.add(new OneServiceExecution(service, serviceContext, newExecutionStepInfo));
+            result.add(new OneServiceExecution(service, serviceContext, newExecutionStepInfo, variables));
         }
         return result;
     }
 
-    private ExecutionStepInfo changeFieldArguments(ExecutionStepInfo executionStepInfo, List<Argument> newArguments) {
+    private ExecutionStepInfo changeFieldArguments(ExecutionStepInfo executionStepInfo, ModifiedArguments newArguments) {
         MergedField mergedField = executionStepInfo.getField();
         List<Field> fields = mergedField.getFields();
         List<Field> newFields = new ArrayList<>();
         for (Field field : fields) {
-            newFields.add(field.transform(builder -> builder.arguments(newArguments)));
+            newFields.add(field.transform(builder -> builder.arguments(newArguments.getFieldArgs())));
         }
-
         MergedField newMergedField = mergedField.transform(builder -> builder.fields(newFields));
-        return executionStepInfo.transform(builder -> builder.field(newMergedField));
+        return executionStepInfo.transform(builder -> builder.field(newMergedField).arguments(newArguments.getVariables()));
     }
 
     private Service getServiceForFieldDefinition(GraphQLFieldDefinition fieldDefinition) {

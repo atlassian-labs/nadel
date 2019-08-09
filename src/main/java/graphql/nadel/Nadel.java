@@ -19,6 +19,7 @@ import graphql.nadel.dsl.CommonDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.engine.Execution;
+import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
