@@ -20,7 +20,7 @@ import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.NadelExecutionParams;
 import graphql.nadel.Service;
-import graphql.nadel.ServiceExecutionHooks;
+import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.introspection.IntrospectionRunner;

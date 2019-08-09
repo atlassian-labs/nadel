@@ -15,10 +15,11 @@ import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
-import graphql.nadel.ServiceExecutionHooks
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
+import graphql.nadel.hooks.ModifiedArguments
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
@@ -1117,10 +1118,16 @@ class NadelExecutionStrategyTest extends Specification {
     }
 
     ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema) {
+        createExecutionData(query, [:], overallSchema)
+    }
+
+    ExecutionHelper.ExecutionData createExecutionData(String query, Map<String, Object> variables, GraphQLSchema overallSchema) {
         def document = parseQuery(query)
 
         def nadelContext = NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).artificialFieldsUUID("UUID").build()
-        def executionInput = ExecutionInput.newExecutionInput().query(query)
+        def executionInput = ExecutionInput.newExecutionInput()
+                .query(query)
+                .variables(variables)
                 .context(nadelContext)
                 .build()
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput, null)
@@ -1158,8 +1165,11 @@ class NadelExecutionStrategyTest extends Specification {
             }
 
             @Override
-            List<Argument> modifyArguments(Service s, Object sc, ExecutionStepInfo topLevelStepInfo, List<Argument> arguments) {
-                return [Argument.newArgument("id", StringValue.newStringValue("modified").build()).build()]
+            ModifiedArguments modifyArguments(Service s, Object sc, ExecutionStepInfo topLevelStepInfo) {
+
+                return ModifiedArguments.newModifiedArguments(topLevelStepInfo)
+                        .fieldArgs([Argument.newArgument("id", StringValue.newStringValue("modified").build()).build()])
+                        .build()
             }
         }
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
@@ -1179,6 +1189,58 @@ class NadelExecutionStrategyTest extends Specification {
         } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(new ServiceExecutionResult(null))
     }
 
+    def "service context created and arguments modified with variable reference AST"() {
+        given:
+        def underlyingSchema = TestUtil.schema("""
+        type Query {
+            foo(id: String): String  
+        }
+        """)
+
+        def overallSchema = TestUtil.schema("""
+        type Query {
+            foo(id: String): String
+        }
+        """)
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
+
+        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
+
+        def serviceContext = "Service-Context"
+
+        def serviceExecutionHooks = new ServiceExecutionHooks() {
+            @Override
+            Object createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
+                return serviceContext
+            }
+
+            @Override
+            ModifiedArguments modifyArguments(Service s, Object sc, ExecutionStepInfo topLevelStepInfo) {
+
+                ModifiedArguments.newModifiedArguments(topLevelStepInfo).variables(["variable": "123", "extra": "present"]).build()
+            }
+        }
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def query = 'query q($variable : String) { foo(id: $variable) }'
+        def executionData = createExecutionData(query, [variable: "abc"], overallSchema)
+
+        def expectedQuery = 'query nadel_2_service {foo(id:$variable)}'
+
+        when:
+        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ it ->
+            printAstCompact(it.query) == expectedQuery && it.serviceContext == serviceContext
+            //
+            // you can add all the extra variables you like but Nadel will only pass on ones
+            // that are referenced by your part of the query
+            it.variables == ["variable": "123"]
+        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(new ServiceExecutionResult(null))
+    }
 
     def "service result can be modified"() {
         given:
@@ -1213,7 +1275,7 @@ class NadelExecutionStrategyTest extends Specification {
                     @Override
                     TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                         if (context.thisNode() instanceof LeafExecutionResultNode) {
-                            LeafExecutionResultNode leafExecutionResultNode = context.thisNode();
+                            LeafExecutionResultNode leafExecutionResultNode = context.thisNode()
                             def resolvedValue = leafExecutionResultNode.getResolvedValue()
                             def completedValue = resolvedValue.getCompletedValue();
                             def newResolvedValue = resolvedValue.transform({ builder -> builder.completedValue(completedValue + "-CHANGED") })
