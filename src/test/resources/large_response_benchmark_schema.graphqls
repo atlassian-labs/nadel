@@ -1,0 +1,55 @@
+type Query {
+    myActivities: MyActivity!
+}
+
+interface Node {
+    id: ID!
+}
+enum ActivityEventType {
+    ASSIGNED
+    UNASSIGNED
+    VIEWED
+    COMMENTED
+    UPDATED
+    CREATED
+    LIKED
+    TRANSITIONED
+    PUBLISHED
+    EDITED
+}
+
+type MyActivity {
+    workedOn: ActivityConnection!
+    viewed: ActivityConnection!
+}
+
+type ActivityConnection {
+    nodes: [ActivityItem]!
+}
+
+type ActivityItem implements Node {
+    id: ID!
+    timestamp: String
+    eventType: ActivityEventType
+    object: ActivityObject
+    containers: [ActivityObject]
+    contributors: [ActivityContributor]
+}
+
+type ActivityObject implements Node {
+    id: ID!
+    name: String
+    cloudID: String
+    url: String
+    iconURL: String
+}
+
+type ActivityContributor {
+    profile: ActivityUser
+}
+
+type ActivityUser {
+    accountId: ID!
+    name: String
+    picture: String
+}

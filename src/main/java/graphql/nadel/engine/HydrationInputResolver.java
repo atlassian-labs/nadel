@@ -35,6 +35,7 @@ import graphql.util.NodeZipper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 
@@ -56,7 +57,6 @@ import static graphql.util.FpKit.findOneOrNull;
 import static graphql.util.FpKit.flatList;
 import static graphql.util.FpKit.map;
 import static java.lang.String.format;
-import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 
 public class HydrationInputResolver {
@@ -82,7 +82,8 @@ public class HydrationInputResolver {
     public CompletableFuture<ExecutionResultNode> resolveAllHydrationInputs(ExecutionContext context,
                                                                             FieldTracking fieldTracking,
                                                                             ExecutionResultNode node) {
-        List<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(singleton(node));
+        NadelContext nadelContext = (NadelContext) context.getContext();
+        Set<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(nadelContext.getForkJoinPool(), node);
         if (hydrationInputZippers.size() == 0) {
             return CompletableFuture.completedFuture(node);
         }

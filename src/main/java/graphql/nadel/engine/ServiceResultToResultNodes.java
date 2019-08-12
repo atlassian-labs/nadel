@@ -74,7 +74,6 @@ public class ServiceResultToResultNodes {
         });
         long elapsedTime = System.currentTimeMillis() - startTime;
         log.debug("ServiceResultToResultNodes time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
-//        System.out.println("ServiceResultToResultNodes time: " + elapsedTime);
         return result;
     }
 
