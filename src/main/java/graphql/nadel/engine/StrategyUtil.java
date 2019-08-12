@@ -84,13 +84,11 @@ public class StrategyUtil {
         return (T) changeFieldInResultNode(executionResultNode, mergedField);
     }
 
-    public static <T extends ExecutionResultNode> T
-    changeEsiInResultNode(T executionResultNode, ExecutionStepInfo newEsi) {
+    public static <T extends ExecutionResultNode> T changeEsiInResultNode(T executionResultNode, ExecutionStepInfo newEsi) {
         return (T) executionResultNode.withNewExecutionStepInfo(newEsi);
     }
 
-    public static <T extends ExecutionResultNode> T
-    changeFieldInResultNode(T executionResultNode, MergedField mergedField) {
+    public static <T extends ExecutionResultNode> T changeFieldInResultNode(T executionResultNode, MergedField mergedField) {
         ExecutionStepInfo newStepInfo = executionResultNode.getExecutionStepInfo().transform(builder -> builder.field(mergedField));
         return (T) executionResultNode.withNewExecutionStepInfo(newStepInfo);
     }
