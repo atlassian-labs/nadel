@@ -111,6 +111,7 @@ dependencies {
     testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.6'
     testCompile 'org.openjdk.jmh:jmh-core:1.21'
     testCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
+    testCompile 'com.google.guava:guava:28.0-jre'
 }
 
 compileJava.source file("build/generated-src"), sourceSets.main.java
