@@ -10,9 +10,9 @@ import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
-import graphql.nadel.ServiceExecutionHooks
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
