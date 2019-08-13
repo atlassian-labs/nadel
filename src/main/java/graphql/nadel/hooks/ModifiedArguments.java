@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
 import static java.util.Collections.unmodifiableList;
@@ -44,6 +45,12 @@ public class ModifiedArguments {
         return new Builder(executionStepInfo);
     }
 
+    public ModifiedArguments transform(Consumer<Builder> consumer) {
+        Builder builder = new Builder(this);
+        consumer.accept(builder);
+        return builder.build();
+    }
+
     public static class Builder {
         private List<Argument> fieldArgs;
         private Map<String, Object> variables;
@@ -51,6 +58,11 @@ public class ModifiedArguments {
         public Builder(ExecutionStepInfo executionStepInfo) {
             this.fieldArgs = assertNotNull(executionStepInfo).getField().getSingleField().getArguments();
             this.variables = Collections.emptyMap();
+        }
+
+        public Builder(ModifiedArguments modifiedArguments) {
+            this.fieldArgs = assertNotNull(modifiedArguments).getFieldArgs();
+            this.variables = modifiedArguments.getVariables();
         }
 
         public Builder fieldArgs(List<Argument> fieldArgs) {
