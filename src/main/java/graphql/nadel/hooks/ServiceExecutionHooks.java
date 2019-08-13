@@ -5,6 +5,8 @@ import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.Service;
 import graphql.schema.GraphQLSchema;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * These hooks allow you to change the way service execution happens
  */
@@ -17,10 +19,10 @@ public interface ServiceExecutionHooks {
      * @param service          the service in play
      * @param topLevelStepInfo the top level field execution step info
      *
-     * @return a context object of your choosing
+     * @return an async context object of your choosing
      */
-    default Object createServiceContext(Service service, ExecutionStepInfo topLevelStepInfo) {
-        return null;
+    default CompletableFuture<Object> createServiceContext(Service service, ExecutionStepInfo topLevelStepInfo) {
+        return CompletableFuture.completedFuture(null);
     }
 
     /**
@@ -30,10 +32,10 @@ public interface ServiceExecutionHooks {
      * @param serviceContext   the context object created in {@link #createServiceContext(graphql.nadel.Service, graphql.execution.ExecutionStepInfo)}
      * @param topLevelStepInfo the top level field execution step info
      *
-     * @return null to indicate NO change needed or a new set of ModifiedArguments
+     * @return an async null to indicate NO change needed or an async new set of ModifiedArguments
      */
-    default ModifiedArguments modifyArguments(Service service, Object serviceContext, ExecutionStepInfo topLevelStepInfo) {
-        return null;
+    default CompletableFuture<ModifiedArguments> modifyArguments(Service service, Object serviceContext, ExecutionStepInfo topLevelStepInfo) {
+        return CompletableFuture.completedFuture(null);
     }
 
     /**
@@ -44,10 +46,10 @@ public interface ServiceExecutionHooks {
      * @param overallSchema  the overall schema
      * @param resultNode     the result
      *
-     * @return a possible result node
+     * @return an async possible result node
      */
-    default RootExecutionResultNode postServiceResult(Service service, Object serviceContext, GraphQLSchema overallSchema, RootExecutionResultNode resultNode) {
-        return resultNode;
+    default CompletableFuture<RootExecutionResultNode> postServiceResult(Service service, Object serviceContext, GraphQLSchema overallSchema, RootExecutionResultNode resultNode) {
+        return CompletableFuture.completedFuture(resultNode);
     }
 
 }

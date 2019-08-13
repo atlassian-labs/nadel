@@ -31,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.nadel.engine.ArtificialFieldUtils.removeArtificialFields;
@@ -75,12 +76,36 @@ public class NadelExecutionStrategy {
         ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
         NadelContext nadelContext = getNadelContext(executionContext);
 
-        List<OneServiceExecution> oneServiceExecutions = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
-
         FieldTracking fieldTracking = new FieldTracking(instrumentation, executionContext);
 
         Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
 
+        CompletableFuture<List<OneServiceExecution>> oneServiceExecutionsCF = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
+        return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
+            List<CompletableFuture<RootExecutionResultNode>> resultNodes =
+                    executeTopLevelFields(executionContext, rootExecutionStepInfo, nadelContext, fieldTracking, operation, oneServiceExecutions);
+
+            CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
+            return rootResult
+                    .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext))
+                    .thenCompose(
+                            //
+                            // all the nodes that are hydrated need to make new service calls to get their eventual value
+                            //
+                            rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode)
+                                    //
+                                    .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext)))
+                    .whenComplete((resultNode, throwable) -> {
+                        possiblyLogException(resultNode, throwable);
+                        long elapsedTime = System.currentTimeMillis() - startTime;
+                        log.debug("NadelExecutionStrategy time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
+                    });
+        });
+
+
+    }
+
+    private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(ExecutionContext executionContext, ExecutionStepInfo rootExecutionStepInfo, NadelContext nadelContext, FieldTracking fieldTracking, Operation operation, List<OneServiceExecution> oneServiceExecutions) {
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
             Service service = oneServiceExecution.service;
@@ -117,26 +142,11 @@ public class NadelExecutionStrategy {
                     .whenComplete(fieldTracking::fieldsCompleted);
 
             CompletableFuture<RootExecutionResultNode> serviceHookResult = convertedResult
-                    .thenApply(rootResultNode -> serviceExecutionHooks.postServiceResult(service, serviceContext, overallSchema, rootResultNode));
+                    .thenCompose(rootResultNode -> serviceExecutionHooks.postServiceResult(service, serviceContext, overallSchema, rootResultNode));
 
             resultNodes.add(serviceHookResult);
         }
-
-        CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
-        return rootResult
-                .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext))
-                .thenCompose(
-                        //
-                        // all the nodes that are hydrated need to make new service calls to get their eventual value
-                        //
-                        rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode)
-                                //
-                                .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext)))
-                .whenComplete((resultNode, throwable) -> {
-                    possiblyLogException(resultNode, throwable);
-                    long elapsedTime = System.currentTimeMillis() - startTime;
-                    log.debug("NadelExecutionStrategy time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
-                });
+        return resultNodes;
     }
 
     private RootExecutionResultNode removeArtificialFieldsFromRoot(ExecutionResultNode resultNode, NadelContext nadelContext) {
@@ -190,22 +200,30 @@ public class NadelExecutionStrategy {
         final Map<String, Object> variables;
     }
 
-    private List<OneServiceExecution> prepareServiceExecution(ExecutionContext context, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
-        List<OneServiceExecution> result = new ArrayList<>();
+    private CompletableFuture<List<OneServiceExecution>> prepareServiceExecution(ExecutionContext context, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
+        List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
-            ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, rootExecutionStepInfo);
-            Service service = getServiceForFieldDefinition(newExecutionStepInfo.getFieldDefinition());
-            Object serviceContext = serviceExecutionHooks.createServiceContext(service, newExecutionStepInfo);
-            ModifiedArguments modifiedArguments = serviceExecutionHooks.modifyArguments(service, serviceContext, newExecutionStepInfo);
+            ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, rootExecutionStepInfo);
+            Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(service, fieldExecutionStepInfo);
+            CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenCompose(serviceContext -> modifyArguments(fieldExecutionStepInfo, service, serviceContext));
+            result.add(serviceCF);
+        }
+        return Async.each(result);
+    }
 
+    private CompletionStage<OneServiceExecution> modifyArguments(ExecutionStepInfo fieldExecutionStepInfo, Service service, Object serviceContext) {
+        CompletableFuture<ModifiedArguments> modifiedArgumentsCF = serviceExecutionHooks.modifyArguments(service, serviceContext, fieldExecutionStepInfo);
+
+        return modifiedArgumentsCF.thenApply(modifiedArguments -> {
             Map<String, Object> variables = Collections.emptyMap();
             if (modifiedArguments != null) {
-                newExecutionStepInfo = changeFieldArguments(newExecutionStepInfo, modifiedArguments);
+                ExecutionStepInfo newExecutionStepInfo = changeFieldArguments(fieldExecutionStepInfo, modifiedArguments);
                 variables = modifiedArguments.getVariables();
+                return new OneServiceExecution(service, serviceContext, newExecutionStepInfo, variables);
             }
-            result.add(new OneServiceExecution(service, serviceContext, newExecutionStepInfo, variables));
-        }
-        return result;
+            return new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo, variables);
+        });
     }
 
     private ExecutionStepInfo changeFieldArguments(ExecutionStepInfo executionStepInfo, ModifiedArguments newArguments) {

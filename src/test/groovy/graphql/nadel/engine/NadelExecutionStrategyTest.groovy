@@ -35,6 +35,7 @@ import java.util.concurrent.ForkJoinPool
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.testutils.TestUtil.parseQuery
+import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelExecutionStrategyTest extends Specification {
 
@@ -87,7 +88,7 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({
             printAstCompact(it.query) == expectedQuery
-        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(new ServiceExecutionResult(null))
+        } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
     }
 
     def "one call to one service with list result"() {
@@ -123,7 +124,7 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({
             printAstCompact(it.query) == expectedQuery
-        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(new ServiceExecutionResult(serviceResultData))
+        } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(serviceResultData))
         resultData(response) == [foo: ["foo1", "foo2"]]
     }
 
@@ -202,12 +203,12 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({
             printAstCompact(it.query) == expectedQuery1
-        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(response1)
+        } as ServiceExecutionParameters) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({
             printAstCompact(it.query) == expectedQuery2
-        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(response2)
+        } as ServiceExecutionParameters) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [id: "barId", name: "Bar1"]]]
     }
@@ -250,12 +251,12 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [id: "barId", name: "Bar1"]]]
     }
@@ -289,12 +290,12 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [name: "Bar1"]]]
     }
@@ -328,12 +329,12 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         resultData(response) == [foo: [barLongerInput: [name: "Bar1"]]]
     }
@@ -417,13 +418,13 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         def issue1Result = [id: "ISSUE-1", authorDetails: [[name: "User 1"], [name: "User 2"]], authors: [[id: "USER-1"], [id: "USER-2"]]]
         resultData(response) == [issues: [issue1Result]]
@@ -503,13 +504,13 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         def issue1Result = [id: "ISSUE-1", authors: [[id: "USER-1", name: "User 1"], [id: "USER-2", name: "User 2"]]]
         resultData(response) == [issues: [issue1Result]]
@@ -588,15 +589,15 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery3
-        }) >> CompletableFuture.completedFuture(response3)
+        }) >> completedFuture(response3)
 
 
         def issue1Result = [id: "ISSUE-1", authors: [[id: "USER-1"], [id: "USER-2"]]]
@@ -683,17 +684,17 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery3
-        }) >> CompletableFuture.completedFuture(response3)
+        }) >> completedFuture(response3)
 
 
         def issue1Result = [id: "ISSUE-1", authors: [[id: "USER-1"], [id: "USER-2"]]]
@@ -775,18 +776,18 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery3
-        }) >> CompletableFuture.completedFuture(response3)
+        }) >> completedFuture(response3)
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery4
-        }) >> CompletableFuture.completedFuture(response4)
+        }) >> completedFuture(response4)
 
         resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar3"], [id: "barId3", name: "Bar4"]]]]
     }
@@ -834,7 +835,7 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         resultData(response) == [issue: [name: null]]
     }
@@ -882,7 +883,7 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         resultData(response) == [issue: [name: null]]
     }
@@ -952,12 +953,12 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [[name: "Bar1"], [name: "Bar2"], [name: "Bar3"]]]]
     }
@@ -1027,12 +1028,12 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [null, null, null]]]
     }
@@ -1102,12 +1103,12 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"]]]]
     }
@@ -1160,16 +1161,17 @@ class NadelExecutionStrategyTest extends Specification {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            Object createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
-                return serviceContext
+            CompletableFuture<Object> createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
+                return completedFuture(serviceContext)
             }
 
             @Override
-            ModifiedArguments modifyArguments(Service s, Object sc, ExecutionStepInfo topLevelStepInfo) {
+            CompletableFuture<ModifiedArguments> modifyArguments(Service s, Object sc, ExecutionStepInfo topLevelStepInfo) {
 
-                return ModifiedArguments.newModifiedArguments(topLevelStepInfo)
+                def modifiedArguments = ModifiedArguments.newModifiedArguments(topLevelStepInfo)
                         .fieldArgs([Argument.newArgument("id", StringValue.newStringValue("modified").build()).build()])
                         .build()
+                return completedFuture(modifiedArguments)
             }
         }
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
@@ -1186,7 +1188,7 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ it ->
             printAstCompact(it.query) == expectedQuery && it.serviceContext == serviceContext
-        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(new ServiceExecutionResult(null))
+        } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
     }
 
     def "service context created and arguments modified with variable reference AST"() {
@@ -1211,14 +1213,15 @@ class NadelExecutionStrategyTest extends Specification {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            Object createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
-                return serviceContext
+            CompletableFuture<Object> createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
+                return completedFuture(serviceContext)
             }
 
             @Override
-            ModifiedArguments modifyArguments(Service s, Object sc, ExecutionStepInfo topLevelStepInfo) {
+            CompletableFuture<ModifiedArguments> modifyArguments(Service s, Object sc, ExecutionStepInfo topLevelStepInfo) {
 
-                ModifiedArguments.newModifiedArguments(topLevelStepInfo).variables(["variable": "123", "extra": "present"]).build()
+                def modifiedArguments = ModifiedArguments.newModifiedArguments(topLevelStepInfo).variables(["variable": "123", "extra": "present"]).build()
+                completedFuture(modifiedArguments)
             }
         }
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
@@ -1242,7 +1245,7 @@ class NadelExecutionStrategyTest extends Specification {
             assert it.variables == ["variable": "123"]
 
             true
-        } as ServiceExecutionParameters) >> CompletableFuture.completedFuture(new ServiceExecutionResult(null))
+        } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
     }
 
     def "service result can be modified"() {
@@ -1267,14 +1270,14 @@ class NadelExecutionStrategyTest extends Specification {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            Object createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
-                return serviceContext
+            CompletableFuture<Object> createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
+                return completedFuture(serviceContext)
             }
 
             @Override
-            RootExecutionResultNode postServiceResult(Service s, Object sc, GraphQLSchema os, RootExecutionResultNode resultNode) {
+            CompletableFuture<RootExecutionResultNode> postServiceResult(Service s, Object sc, GraphQLSchema os, RootExecutionResultNode resultNode) {
                 def transformer = new ResultNodesTransformer()
-                return transformer.transformParallel(ForkJoinPool.commonPool(), resultNode, new TraverserVisitor<ExecutionResultNode>() {
+                def result = transformer.transformParallel(ForkJoinPool.commonPool(), resultNode, new TraverserVisitor<ExecutionResultNode>() {
                     @Override
                     TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                         if (context.thisNode() instanceof LeafExecutionResultNode) {
@@ -1293,6 +1296,7 @@ class NadelExecutionStrategyTest extends Specification {
                         return TraversalControl.CONTINUE
                     }
                 })
+                return completedFuture(result)
             }
         }
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
@@ -1307,7 +1311,7 @@ class NadelExecutionStrategyTest extends Specification {
 
 
         then:
-        1 * service1Execution.execute(_) >> CompletableFuture.completedFuture(new ServiceExecutionResult(data))
+        1 * service1Execution.execute(_) >> completedFuture(new ServiceExecutionResult(data))
 
         resultData(response) == [foo: "hello world-CHANGED"]
     }
@@ -1365,7 +1369,7 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         def issue1Result = [id: "ISSUE-1", authorId: "USER-1", authorName: "User 1"]
         def issue2Result = [id: "ISSUE-2", authorId: "USER-2", authorName: "User 2"]
@@ -1430,7 +1434,7 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         def issue1Result = [id: "ISSUE-1", authorId: "USER-1", authorName: "User 1", details: [extra: "extra 1"]]
         resultData(response) == [issue: issue1Result]
@@ -1496,7 +1500,7 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         def issue1Result = [id: "ISSUE-1", authorName: [firstName: "George", lastName: "Smith"]]
         def issue2Result = [id: "ISSUE-2", authorName: [firstName: "Elizabeth", lastName: "Windsor"]]
@@ -1551,7 +1555,7 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         def detail1Result = [labels: ["label1", "label2"]]
         resultData(response) == [details: [detail1Result]]
@@ -1605,7 +1609,7 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         def detail1Result = [labels: [["label1", "label2"], ["label3"]]]
         resultData(response) == [details: [detail1Result]]
@@ -1670,7 +1674,7 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         def issue1Result = [id: "ISSUE-1", authorName: [firstName: "George", lastName: "Smith"]]
         def issue2Result = [id: "ISSUE-2", authorName: [firstName: "Elizabeth", lastName: "Windsor"]]
@@ -1746,13 +1750,13 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         def issue1Result = [id: "ISSUE-1", author: [name: "User 1"]]
         resultData(response) == [issues: [issue1Result]]
@@ -1828,13 +1832,13 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery2
-        }) >> CompletableFuture.completedFuture(response2)
+        }) >> completedFuture(response2)
 
         def issue1Result = [id: "ISSUE-1", author: [name: "User 1"]]
         resultData(response) == [issues: [issue1Result]]
@@ -1884,7 +1888,7 @@ class NadelExecutionStrategyTest extends Specification {
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
-        }) >> CompletableFuture.completedFuture(response1)
+        }) >> completedFuture(response1)
 
 
         resultData(response) == [hello: "world"]
