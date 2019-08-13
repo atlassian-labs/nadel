@@ -297,6 +297,21 @@ class TestUtil {
         new Parser().parseDocument(query)
     }
 
+    static Field parseField(String sdlField) {
+        String spec = """ query Foo {
+        $sdlField
+        }
+        """
+        def document = parseQuery(spec)
+        def op = document.getDefinitionsOfType(OperationDefinition.class)[0]
+        return op.getSelectionSet().getSelectionsOfType(Field.class)[0] as Field
+    }
+
+    static MergedField parseMergedField(String sdlField) {
+        def field = parseField(sdlField)
+        MergedField.newMergedField(field).build()
+    }
+
     static MergedField mergedField(List<Field> fields) {
         return MergedField.newMergedField(fields).build()
     }
