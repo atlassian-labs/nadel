@@ -1,6 +1,5 @@
 package graphql.nadel.hooks;
 
-import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.Service;
@@ -17,13 +16,11 @@ public interface ServiceExecutionHooks {
     /**
      * Called per top level field that for a service.  This allows you to create a "context" object that will be passed into further calls.
      *
-     * @param executionCtx     the {@link graphql.execution.ExecutionContext} in play
-     * @param service          the service in play
-     * @param topLevelStepInfo the top level field execution step info
+     * @param hooksContextParameters the parameters to this call
      *
      * @return an async context object of your choosing
      */
-    default CompletableFuture<Object> createServiceContext(ExecutionContext executionCtx, Service service, ExecutionStepInfo topLevelStepInfo) {
+    default CompletableFuture<Object> createServiceContext(ServiceExecutionHooksContextParameters hooksContextParameters) {
         return CompletableFuture.completedFuture(null);
     }
 
@@ -31,7 +28,7 @@ public interface ServiceExecutionHooks {
      * Called to possibly change the arguments and runtime variables that are passed onto a called service
      *
      * @param service          the service in play
-     * @param serviceContext   the context object created in {@link #createServiceContext(graphql.execution.ExecutionContext, graphql.nadel.Service, graphql.execution.ExecutionStepInfo)}
+     * @param serviceContext   the context object created in {@link #createServiceContext(ServiceExecutionHooksContextParameters)}
      * @param topLevelStepInfo the top level field execution step info
      *
      * @return an async null to indicate NO change needed or an async new set of ModifiedArguments
@@ -44,7 +41,7 @@ public interface ServiceExecutionHooks {
      * Called to allow a service to post process the service result in some fashion.
      *
      * @param service        the service in play
-     * @param serviceContext the context object created in {@link #createServiceContext(graphql.execution.ExecutionContext, graphql.nadel.Service, graphql.execution.ExecutionStepInfo)}
+     * @param serviceContext the context object created in {@link #createServiceContext(ServiceExecutionHooksContextParameters)}
      * @param overallSchema  the overall schema
      * @param resultNode     the result
      *

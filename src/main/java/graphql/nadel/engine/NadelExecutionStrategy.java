@@ -19,6 +19,7 @@ import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.hooks.ModifiedArguments;
 import graphql.nadel.hooks.ServiceExecutionHooks;
+import graphql.nadel.hooks.ServiceExecutionHooksContextParameters;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
@@ -206,7 +207,13 @@ public class NadelExecutionStrategy {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
             Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
 
-            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(executionCtx, service, fieldExecutionStepInfo);
+            ServiceExecutionHooksContextParameters parameters = ServiceExecutionHooksContextParameters.newContextParameters()
+                    .executionContext(executionCtx)
+                    .service(service)
+                    .executionStepInfo(fieldExecutionStepInfo)
+                    .build();
+
+            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
             CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenCompose(serviceContext -> modifyArguments(fieldExecutionStepInfo, service, serviceContext));
             result.add(serviceCF);
         }

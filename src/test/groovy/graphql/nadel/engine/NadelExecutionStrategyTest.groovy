@@ -1,7 +1,6 @@
 package graphql.nadel.engine
 
 import graphql.ExecutionInput
-import graphql.execution.ExecutionContext
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionStepInfo
 import graphql.execution.nextgen.ExecutionHelper
@@ -21,6 +20,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ModifiedArguments
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.ServiceExecutionHooksContextParameters
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
@@ -1161,8 +1161,9 @@ class NadelExecutionStrategyTest extends Specification {
         def serviceContext = "Service-Context"
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
+
             @Override
-            CompletableFuture<Object> createServiceContext(ExecutionContext executionCtx, Service s, ExecutionStepInfo topLevelStepInfo) {
+            CompletableFuture<Object> createServiceContext(ServiceExecutionHooksContextParameters hooksContextParameters) {
                 return completedFuture(serviceContext)
             }
 
@@ -1214,7 +1215,7 @@ class NadelExecutionStrategyTest extends Specification {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Object> createServiceContext(ExecutionContext executionCtx, Service s, ExecutionStepInfo topLevelStepInfo) {
+            CompletableFuture<Object> createServiceContext(ServiceExecutionHooksContextParameters hooksContextParameters) {
                 return completedFuture(serviceContext)
             }
 
@@ -1271,7 +1272,7 @@ class NadelExecutionStrategyTest extends Specification {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Object> createServiceContext(ExecutionContext executionCtx, Service s, ExecutionStepInfo topLevelStepInfo) {
+            CompletableFuture<Object> createServiceContext(ServiceExecutionHooksContextParameters hooksContextParameters) {
                 return completedFuture(serviceContext)
             }
 
