@@ -1,54 +1,48 @@
 package graphql.nadel.hooks;
 
-import graphql.execution.ExecutionStepInfo;
+import graphql.PublicSpi;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
-import graphql.nadel.Service;
-import graphql.schema.GraphQLSchema;
 
 import java.util.concurrent.CompletableFuture;
 
 /**
  * These hooks allow you to change the way service execution happens
  */
+@PublicSpi
 public interface ServiceExecutionHooks {
 
 
     /**
-     * Called per top level field that for a service.  This allows you to create a "context" object that will be passed into further calls.
+     * Called per top level field for a service.  This allows you to create a "context" object that will be passed into further calls.
      *
-     * @param hooksContextParameters the parameters to this call
+     * @param params the parameters to this call
      *
      * @return an async context object of your choosing
      */
-    default CompletableFuture<Object> createServiceContext(ServiceExecutionHooksContextParameters hooksContextParameters) {
+    default CompletableFuture<Object> createServiceContext(CreateServiceContextParams params) {
         return CompletableFuture.completedFuture(null);
     }
 
     /**
      * Called to possibly change the arguments and runtime variables that are passed onto a called service
      *
-     * @param service          the service in play
-     * @param serviceContext   the context object created in {@link #createServiceContext(ServiceExecutionHooksContextParameters)}
-     * @param topLevelStepInfo the top level field execution step info
+     * @param params the parameters to this call
      *
-     * @return an async null to indicate NO change needed or an async new set of ModifiedArguments
+     * @return an async null to indicate NO change needed or an async new document and variables
      */
-    default CompletableFuture<ModifiedArguments> modifyArguments(Service service, Object serviceContext, ExecutionStepInfo topLevelStepInfo) {
+    default CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
         return CompletableFuture.completedFuture(null);
     }
 
     /**
      * Called to allow a service to post process the service result in some fashion.
      *
-     * @param service        the service in play
-     * @param serviceContext the context object created in {@link #createServiceContext(ServiceExecutionHooksContextParameters)}
-     * @param overallSchema  the overall schema
-     * @param resultNode     the result
+     * @param params the parameters to this call
      *
      * @return an async possible result node
      */
-    default CompletableFuture<RootExecutionResultNode> postServiceResult(Service service, Object serviceContext, GraphQLSchema overallSchema, RootExecutionResultNode resultNode) {
-        return CompletableFuture.completedFuture(resultNode);
+    default CompletableFuture<RootExecutionResultNode> resultRewrite(ResultRewriteParams params) {
+        return CompletableFuture.completedFuture(params.getResultNode());
     }
 
 }

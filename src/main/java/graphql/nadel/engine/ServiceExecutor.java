@@ -121,12 +121,7 @@ public class ServiceExecutor {
     private ServiceExecutionParameters buildServiceExecutionParameters(ExecutionContext executionContext, QueryTransformationResult queryTransformerResult, Object serviceContext) {
 
         // only pass down variables that are referenced in the transformed query
-        Map<String, Object> contextVariables = executionContext.getVariables();
-        Map<String, Object> variables = new LinkedHashMap<>();
-        for (String referencedVariable : queryTransformerResult.getReferencedVariables()) {
-            Object value = contextVariables.get(referencedVariable);
-            variables.put(referencedVariable, value);
-        }
+        Map<String, Object> variables = buildReferencedVariables(executionContext, queryTransformerResult);
 
         // only pass down fragments that have been used by the query after it is transformed
         Map<String, FragmentDefinition> fragments = queryTransformerResult.getTransformedFragments();
@@ -144,6 +139,16 @@ public class ServiceExecutor {
                 .cacheControl(executionContext.getCacheControl())
                 .serviceContext(serviceContext)
                 .build();
+    }
+
+    Map<String, Object> buildReferencedVariables(ExecutionContext executionContext, QueryTransformationResult queryTransformerResult) {
+        Map<String, Object> contextVariables = executionContext.getVariables();
+        Map<String, Object> variables = new LinkedHashMap<>();
+        for (String referencedVariable : queryTransformerResult.getReferencedVariables()) {
+            Object value = contextVariables.get(referencedVariable);
+            variables.put(referencedVariable, value);
+        }
+        return variables;
     }
 
     private ExecutionContext buildServiceExecutionContext(ExecutionContext executionContext, GraphQLSchema underlyingSchema, ServiceExecutionParameters serviceExecutionParameters) {
