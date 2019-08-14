@@ -200,12 +200,13 @@ public class NadelExecutionStrategy {
         final Map<String, Object> variables;
     }
 
-    private CompletableFuture<List<OneServiceExecution>> prepareServiceExecution(ExecutionContext context, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
+    private CompletableFuture<List<OneServiceExecution>> prepareServiceExecution(ExecutionContext executionCtx, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
         List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
-            ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, rootExecutionStepInfo);
+            ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
             Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
-            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(service, fieldExecutionStepInfo);
+
+            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(executionCtx, service, fieldExecutionStepInfo);
             CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenCompose(serviceContext -> modifyArguments(fieldExecutionStepInfo, service, serviceContext));
             result.add(serviceCF);
         }

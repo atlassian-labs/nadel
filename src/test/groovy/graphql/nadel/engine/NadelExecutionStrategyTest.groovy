@@ -1,6 +1,7 @@
 package graphql.nadel.engine
 
 import graphql.ExecutionInput
+import graphql.execution.ExecutionContext
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionStepInfo
 import graphql.execution.nextgen.ExecutionHelper
@@ -1161,7 +1162,7 @@ class NadelExecutionStrategyTest extends Specification {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Object> createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
+            CompletableFuture<Object> createServiceContext(ExecutionContext executionCtx, Service s, ExecutionStepInfo topLevelStepInfo) {
                 return completedFuture(serviceContext)
             }
 
@@ -1213,7 +1214,7 @@ class NadelExecutionStrategyTest extends Specification {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Object> createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
+            CompletableFuture<Object> createServiceContext(ExecutionContext executionCtx, Service s, ExecutionStepInfo topLevelStepInfo) {
                 return completedFuture(serviceContext)
             }
 
@@ -1270,7 +1271,7 @@ class NadelExecutionStrategyTest extends Specification {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Object> createServiceContext(Service s, ExecutionStepInfo topLevelStepInfo) {
+            CompletableFuture<Object> createServiceContext(ExecutionContext executionCtx, Service s, ExecutionStepInfo topLevelStepInfo) {
                 return completedFuture(serviceContext)
             }
 
