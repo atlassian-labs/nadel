@@ -128,10 +128,9 @@ public class NadelExecutionStrategy {
 
             Map<String, Object> variables = serviceExecutor.buildReferencedVariables(executionContext, queryTransformInitial);
             QueryRewriteParams rewriteParams = QueryRewriteParams.newParameters()
-                    .executionContext(executionContext).executionStepInfo(stepInfo).service(service)
-                    .document(queryTransformInitial.getDocument())
-                    .variables(variables)
-                    .serviceContext(serviceContext)
+                    .from(executionContext)
+                    .serviceContext(serviceContext).service(service).executionStepInfo(stepInfo)
+                    .document(queryTransformInitial.getDocument()).variables(variables)
                     .build();
 
             CompletableFuture<QueryRewriteResult> rewriteResult = serviceExecutionHooks.queryRewrite(rewriteParams);

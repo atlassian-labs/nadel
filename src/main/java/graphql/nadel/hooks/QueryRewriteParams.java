@@ -81,6 +81,14 @@ public class QueryRewriteParams {
         private Document document;
         private Map<String, Object> variables;
 
+        @Internal
+        public Builder from(ExecutionContext executionContext) {
+            this.executionId = executionContext.getExecutionId();
+            this.schema = executionContext.getGraphQLSchema();
+            this.nadelContext = (NadelContext) executionContext.getContext();
+            return this;
+        }
+
         public Builder service(Service service) {
             this.service = service;
             return this;
@@ -98,14 +106,6 @@ public class QueryRewriteParams {
 
         public Builder document(Document document) {
             this.document = document;
-            return this;
-        }
-
-        @Internal
-        public Builder executionContext(ExecutionContext executionContext) {
-            this.executionId = executionContext.getExecutionId();
-            this.schema = executionContext.getGraphQLSchema();
-            this.nadelContext = (NadelContext) executionContext.getContext();
             return this;
         }
 
