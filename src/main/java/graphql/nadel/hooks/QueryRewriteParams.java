@@ -5,35 +5,34 @@ import graphql.PublicApi;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionStepInfo;
-import graphql.language.FragmentDefinition;
+import graphql.language.Document;
 import graphql.nadel.Service;
 import graphql.nadel.engine.NadelContext;
 import graphql.schema.GraphQLSchema;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static java.util.Collections.unmodifiableMap;
-
 @PublicApi
-public class ServiceExecutionHooksContextParameters {
+public class QueryRewriteParams {
     private final Service service;
     private final ExecutionStepInfo executionStepInfo;
     private final ExecutionId executionId;
     private final GraphQLSchema schema;
-    private final Map<String, FragmentDefinition> fragmentsByName;
+    private final NadelContext nadelContext;
+    private final Object serviceContext;
+    private final Document document;
     private final Map<String, Object> variables;
-    private final NadelContext context;
 
 
-    private ServiceExecutionHooksContextParameters(Builder builder) {
+    private QueryRewriteParams(Builder builder) {
         this.service = builder.service;
         this.executionStepInfo = builder.executionStepInfo;
         this.executionId = builder.executionId;
         this.schema = builder.schema;
-        this.fragmentsByName = unmodifiableMap(new LinkedHashMap<>(builder.fragmentsByName));
-        this.variables = unmodifiableMap(new LinkedHashMap<>(builder.variables));
-        this.context = builder.context;
+        this.nadelContext = builder.nadelContext;
+        this.serviceContext = builder.serviceContext;
+        this.document = builder.document;
+        this.variables = builder.variables;
     }
 
     public Service getService() {
@@ -52,19 +51,23 @@ public class ServiceExecutionHooksContextParameters {
         return schema;
     }
 
-    public Map<String, FragmentDefinition> getFragmentsByName() {
-        return fragmentsByName;
+    public NadelContext getNadelContext() {
+        return nadelContext;
+    }
+
+    public Object getServiceContext() {
+        return serviceContext;
+    }
+
+    public Document getDocument() {
+        return document;
     }
 
     public Map<String, Object> getVariables() {
         return variables;
     }
 
-    public NadelContext getContext() {
-        return context;
-    }
-
-    public static Builder newContextParameters() {
+    public static Builder newParameters() {
         return new Builder();
     }
 
@@ -73,9 +76,10 @@ public class ServiceExecutionHooksContextParameters {
         private ExecutionStepInfo executionStepInfo;
         private ExecutionId executionId;
         private GraphQLSchema schema;
-        private Map<String, FragmentDefinition> fragmentsByName;
+        private Object serviceContext;
+        private NadelContext nadelContext;
+        private Document document;
         private Map<String, Object> variables;
-        private NadelContext context;
 
         public Builder service(Service service) {
             this.service = service;
@@ -87,18 +91,31 @@ public class ServiceExecutionHooksContextParameters {
             return this;
         }
 
+        public Builder serviceContext(Object serviceContext) {
+            this.serviceContext = serviceContext;
+            return this;
+        }
+
+        public Builder document(Document document) {
+            this.document = document;
+            return this;
+        }
+
         @Internal
         public Builder executionContext(ExecutionContext executionContext) {
             this.executionId = executionContext.getExecutionId();
             this.schema = executionContext.getGraphQLSchema();
-            this.fragmentsByName = executionContext.getFragmentsByName();
-            this.variables = executionContext.getVariables();
-            this.context = (NadelContext) executionContext.getContext();
+            this.nadelContext = (NadelContext) executionContext.getContext();
             return this;
         }
 
-        public ServiceExecutionHooksContextParameters build() {
-            return new ServiceExecutionHooksContextParameters(this);
+        public Builder variables(Map<String, Object> variables) {
+            this.variables = variables;
+            return this;
+        }
+
+        public QueryRewriteParams build() {
+            return new QueryRewriteParams(this);
         }
     }
 }

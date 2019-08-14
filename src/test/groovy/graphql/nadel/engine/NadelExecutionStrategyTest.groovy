@@ -2,13 +2,16 @@ package graphql.nadel.engine
 
 import graphql.ExecutionInput
 import graphql.execution.ExecutionId
-import graphql.execution.ExecutionStepInfo
 import graphql.execution.nextgen.ExecutionHelper
 import graphql.execution.nextgen.result.ExecutionResultNode
 import graphql.execution.nextgen.result.LeafExecutionResultNode
 import graphql.execution.nextgen.result.ResultNodesUtil
 import graphql.execution.nextgen.result.RootExecutionResultNode
 import graphql.language.Argument
+import graphql.language.AstTransformer
+import graphql.language.Field
+import graphql.language.Node
+import graphql.language.NodeVisitorStub
 import graphql.language.StringValue
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
@@ -18,9 +21,11 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
-import graphql.nadel.hooks.ModifiedArguments
+import graphql.nadel.hooks.CreateServiceContextParams
+import graphql.nadel.hooks.QueryRewriteParams
+import graphql.nadel.hooks.QueryRewriteResult
+import graphql.nadel.hooks.ResultRewriteParams
 import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.hooks.ServiceExecutionHooksContextParameters
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
@@ -1140,183 +1145,6 @@ class NadelExecutionStrategyTest extends Specification {
         ResultNodesUtil.toExecutionResult(response.get()).data
     }
 
-    def "service context created and arguments modified"() {
-        given:
-        def underlyingSchema = TestUtil.schema("""
-        type Query {
-            foo(id: String): String  
-        }
-        """)
-
-        def overallSchema = TestUtil.schema("""
-        type Query {
-            foo(id: String): String
-        }
-        """)
-        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
-
-        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
-        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
-
-        def serviceContext = "Service-Context"
-
-        def serviceExecutionHooks = new ServiceExecutionHooks() {
-
-            @Override
-            CompletableFuture<Object> createServiceContext(ServiceExecutionHooksContextParameters hooksContextParameters) {
-                return completedFuture(serviceContext)
-            }
-
-            @Override
-            CompletableFuture<ModifiedArguments> modifyArguments(Service s, Object sc, ExecutionStepInfo topLevelStepInfo) {
-
-                def modifiedArguments = ModifiedArguments.newModifiedArguments(topLevelStepInfo)
-                        .fieldArgs([Argument.newArgument("id", StringValue.newStringValue("modified").build()).build()])
-                        .build()
-                return completedFuture(modifiedArguments)
-            }
-        }
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
-
-        def query = "{foo(id: \"fullID\")}"
-        def executionData = createExecutionData(query, overallSchema)
-
-        def expectedQuery = "query nadel_2_service {foo(id:\"modified\")}"
-
-        when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
-
-
-        then:
-        1 * service1Execution.execute({ it ->
-            printAstCompact(it.query) == expectedQuery && it.serviceContext == serviceContext
-        } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
-    }
-
-    def "service context created and arguments modified with variable reference AST"() {
-        given:
-        def underlyingSchema = TestUtil.schema("""
-        type Query {
-            foo(id: String): String  
-        }
-        """)
-
-        def overallSchema = TestUtil.schema("""
-        type Query {
-            foo(id: String): String
-        }
-        """)
-        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
-
-        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
-        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
-
-        def serviceContext = "Service-Context"
-
-        def serviceExecutionHooks = new ServiceExecutionHooks() {
-            @Override
-            CompletableFuture<Object> createServiceContext(ServiceExecutionHooksContextParameters hooksContextParameters) {
-                return completedFuture(serviceContext)
-            }
-
-            @Override
-            CompletableFuture<ModifiedArguments> modifyArguments(Service s, Object sc, ExecutionStepInfo topLevelStepInfo) {
-
-                def modifiedArguments = ModifiedArguments.newModifiedArguments(topLevelStepInfo).variables(["variable": "123", "extra": "present"]).build()
-                completedFuture(modifiedArguments)
-            }
-        }
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
-
-        def query = 'query q($variable : String) { foo(id: $variable) }'
-        def executionData = createExecutionData(query, [variable: "abc"], overallSchema)
-
-        def expectedQuery = 'query nadel_2_service($variable:String) {foo(id:$variable)}'
-
-        when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
-
-
-        then:
-        1 * service1Execution.execute({ it ->
-            assert printAstCompact(it.query) == expectedQuery
-            assert it.serviceContext == serviceContext
-            //
-            // you can add all the extra variables you like but Nadel will only pass on ones
-            // that are referenced by your part of the query
-            assert it.variables == ["variable": "123"]
-
-            true
-        } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
-    }
-
-    def "service result can be modified"() {
-        given:
-        def underlyingSchema = TestUtil.schema("""
-        type Query {
-            foo: String  
-        }
-        """)
-
-        def overallSchema = TestUtil.schema("""
-        type Query {
-            foo: String
-        }
-        """)
-        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
-
-        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
-        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
-
-        def serviceContext = "Service-Context"
-
-        def serviceExecutionHooks = new ServiceExecutionHooks() {
-            @Override
-            CompletableFuture<Object> createServiceContext(ServiceExecutionHooksContextParameters hooksContextParameters) {
-                return completedFuture(serviceContext)
-            }
-
-            @Override
-            CompletableFuture<RootExecutionResultNode> postServiceResult(Service s, Object sc, GraphQLSchema os, RootExecutionResultNode resultNode) {
-                def transformer = new ResultNodesTransformer()
-                def result = transformer.transformParallel(ForkJoinPool.commonPool(), resultNode, new TraverserVisitor<ExecutionResultNode>() {
-                    @Override
-                    TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-                        if (context.thisNode() instanceof LeafExecutionResultNode) {
-                            LeafExecutionResultNode leafExecutionResultNode = context.thisNode()
-                            def resolvedValue = leafExecutionResultNode.getResolvedValue()
-                            def completedValue = resolvedValue.getCompletedValue();
-                            def newResolvedValue = resolvedValue.transform({ builder -> builder.completedValue(completedValue + "-CHANGED") })
-                            def newNode = leafExecutionResultNode.withNewResolvedValue(newResolvedValue)
-                            return TreeTransformerUtil.changeNode(context, newNode)
-                        }
-                        return TraversalControl.CONTINUE
-                    }
-
-                    @Override
-                    TraversalControl leave(TraverserContext<ExecutionResultNode> context) {
-                        return TraversalControl.CONTINUE
-                    }
-                })
-                return completedFuture(result)
-            }
-        }
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
-
-        def query = "{foo}"
-        def executionData = createExecutionData(query, overallSchema)
-
-        def data = [foo: "hello world"]
-
-        when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
-
-
-        then:
-        1 * service1Execution.execute(_) >> completedFuture(new ServiceExecutionResult(data))
-
-        resultData(response) == [foo: "hello world-CHANGED"]
-    }
 
     def "two deep renames"() {
         given:
