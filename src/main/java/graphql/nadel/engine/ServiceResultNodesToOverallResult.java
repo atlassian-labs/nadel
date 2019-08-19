@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
@@ -85,12 +86,12 @@ public class ServiceResultNodesToOverallResult {
         ConcurrentHashMap<String, FieldTransformation> transformationMap = new ConcurrentHashMap<>(transformationMapInput);
 
         long startTime = System.currentTimeMillis();
-        final long[] nodeCount = {0};
+        final AtomicInteger nodeCount = new AtomicInteger();
         Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
         ExecutionResultNode newRoot = resultNodesTransformer.transformParallel(forkJoinPool, root, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-                nodeCount[0]++;
+                nodeCount.incrementAndGet();
                 ExecutionResultNode node = context.thisNode();
                 if (onlyChildren && node == root) {
                     return TraversalControl.CONTINUE;
@@ -130,7 +131,7 @@ public class ServiceResultNodesToOverallResult {
 
         }, rootVars);
         long elapsedTime = System.currentTimeMillis() - startTime;
-        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount[0], executionId);
+        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
         return newRoot;
 
     }
