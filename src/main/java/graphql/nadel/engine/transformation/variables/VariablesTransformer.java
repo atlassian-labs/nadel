@@ -45,7 +45,7 @@ public class VariablesTransformer {
             if (variables.containsKey(argumentName)) {
                 Object startingValue = variables.get(argumentName);
 
-                InputValueTree inputValueTree = new InputValueTree(null, argument.getType(), argumentName);
+                InputValueTree inputValueTree = new InputValueTree(null, argumentName, argument.getType(), argument);
                 Object newValue = transformValue(startingValue, argumentName, argument.getType(), inputValueTree, inputValueTransform);
 
                 newVariables.put(argumentName, newValue);
@@ -86,7 +86,7 @@ public class VariablesTransformer {
         for (GraphQLInputObjectField inputFieldDef : inputObjectType.getFieldDefinitions()) {
             String fieldName = inputFieldDef.getName();
             GraphQLInputType fieldType = inputFieldDef.getType();
-            InputValueTree newInputValueTree = new InputValueTree(inputValueTree, fieldType, fieldName);
+            InputValueTree newInputValueTree = new InputValueTree(inputValueTree, fieldName, fieldType, inputFieldDef);
             if (startingValue.containsKey(fieldName)) {
                 Object value = startingValue.get(fieldName);
                 Object newValue = transformValue(value, fieldName, fieldType, newInputValueTree, inputValueTransform);
@@ -108,5 +108,4 @@ public class VariablesTransformer {
     private static GraphQLInputType unwrapOne(GraphQLInputType type) {
         return (GraphQLInputType) GraphQLTypeUtil.unwrapOne(type);
     }
-
 }

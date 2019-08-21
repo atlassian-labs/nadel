@@ -1,5 +1,7 @@
 package graphql.nadel.engine.transformation.variables;
 
+import graphql.PublicApi;
+import graphql.schema.GraphQLDirectiveContainer;
 import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLTypeUtil;
 
@@ -7,19 +9,22 @@ import graphql.schema.GraphQLTypeUtil;
  * Complex input types such as lists and inout object types form a tree of input types
  * as you descend their values
  */
+@PublicApi
 public class InputValueTree {
     private final InputValueTree parent;
-    private final GraphQLInputType inputType;
     private final String name;
+    private final GraphQLInputType inputType;
+    private final GraphQLDirectiveContainer directivesContainer;
 
-    public InputValueTree(InputValueTree parent, GraphQLInputType inputType, String name) {
+    public InputValueTree(InputValueTree parent, String name, GraphQLInputType inputType, GraphQLDirectiveContainer directivesContainer) {
         this.parent = parent;
+        this.directivesContainer = directivesContainer;
         this.inputType = inputType;
         this.name = name;
     }
 
     public InputValueTree unwrapOne() {
-        return new InputValueTree(parent, (GraphQLInputType) GraphQLTypeUtil.unwrapOne(inputType), name);
+        return new InputValueTree(parent, name, (GraphQLInputType) GraphQLTypeUtil.unwrapOne(inputType), directivesContainer);
     }
 
     public String getName() {
@@ -34,12 +39,17 @@ public class InputValueTree {
         return inputType;
     }
 
+    public GraphQLDirectiveContainer getDirectivesContainer() {
+        return directivesContainer;
+    }
+
     @Override
     public String toString() {
-        return "InputTypeTree{" +
-                "name='" + name + '\'' +
+        return "InputValueTree{" +
+                "parent=" + parent +
+                ", name='" + name + '\'' +
                 ", inputType=" + inputType +
-                ", parent=" + parent +
+                ", directivesContainer=" + directivesContainer +
                 '}';
     }
 }
