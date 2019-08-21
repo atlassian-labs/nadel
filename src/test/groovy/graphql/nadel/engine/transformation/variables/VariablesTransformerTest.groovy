@@ -9,12 +9,14 @@ class VariablesTransformerTest extends Specification {
 
     def sdl = '''
         
+        directive @directive1 on ARGUMENT_DEFINITION | FIELD_DEFINITION
+
         enum RGB {
             red, blue,green
         }
         
         input ComplexInputType {
-            stringField : String
+            stringField : String @directive1
             intField : Int
             enumField : RGB
             nonNullField : Boolean!
@@ -126,6 +128,28 @@ class VariablesTransformerTest extends Specification {
         then:
         newVariables["arg"]["stringField"] == "ABC"
         newVariables["leaveMeAlone"]["stringField"] == "abc"
+    }
+
+    def "grabs directive containers as they whizz past"() {
+        InputValueTransform transformFunction = new InputValueTransform() {
+            @Override
+            Object transformValue(Object value, InputValueTree inputTypeTree) {
+                if (inputTypeTree.name == "stringField") {
+                    assert inputTypeTree.directivesContainer.getDirective("directive1") != null
+                }
+                return value
+            }
+        }
+
+        def variables = [
+                arg: [stringField: "abc", intField: 666, nonNullField: true, enumField: "red",]
+        ]
+
+        when:
+        def newVariables = VariablesTransformer.transform([arg], variables, transformFunction)
+
+        then:
+        newVariables["arg"]["stringField"] == "abc"
     }
 
     def "leaves map with empty arg values alone"() {
