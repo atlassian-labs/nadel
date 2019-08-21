@@ -49,7 +49,6 @@ public class InputValueTree {
                 "parent=" + parent +
                 ", name='" + name + '\'' +
                 ", inputType=" + inputType +
-                ", directivesContainer=" + directivesContainer +
                 '}';
     }
 }
