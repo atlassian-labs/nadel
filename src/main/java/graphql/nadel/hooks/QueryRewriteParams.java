@@ -1,6 +1,5 @@
 package graphql.nadel.hooks;
 
-import graphql.Internal;
 import graphql.PublicApi;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
@@ -81,7 +80,17 @@ public class QueryRewriteParams {
         private Document document;
         private Map<String, Object> variables;
 
-        @Internal
+        public Builder from(QueryRewriteParams other) {
+            this.service = other.service;
+            this.executionStepInfo = other.executionStepInfo;
+            this.executionId = other.executionId;
+            this.schema = other.schema;
+            this.nadelContext = other.nadelContext;
+            this.document = other.document;
+            this.variables = other.variables;
+            return this;
+        }
+
         public Builder from(ExecutionContext executionContext) {
             this.executionId = executionContext.getExecutionId();
             this.schema = executionContext.getGraphQLSchema();
