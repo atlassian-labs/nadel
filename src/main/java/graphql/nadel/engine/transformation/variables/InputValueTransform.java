@@ -1,11 +1,11 @@
 package graphql.nadel.engine.transformation.variables;
 
-import graphql.PublicApi;
+import graphql.PublicSpi;
 
 /**
  * Called to transform input type values from {@link graphql.nadel.engine.transformation.variables.VariablesTransformer}
  */
-@PublicApi
+@PublicSpi
 public interface InputValueTransform {
     /**
      * The callback method given a value and its input type information
