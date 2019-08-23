@@ -1,11 +1,13 @@
 package graphql.nadel.util;
 
 import graphql.Internal;
+import graphql.execution.MissingRootTypeException;
 import graphql.language.Definition;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.InputObjectTypeDefinition;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.OperationDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.UnionTypeDefinition;
@@ -25,9 +27,15 @@ import graphql.schema.GraphQLInterfaceType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
+import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.GraphQLUnionType;
+
+import static graphql.Assert.assertShouldNeverHappen;
+import static graphql.language.OperationDefinition.Operation.MUTATION;
+import static graphql.language.OperationDefinition.Operation.QUERY;
+import static graphql.language.OperationDefinition.Operation.SUBSCRIPTION;
 
 @Internal
 public class Util {
@@ -96,4 +104,29 @@ public class Util {
         return typeMappingDefinition;
     }
 
+
+    public static GraphQLObjectType getOperationRootType(GraphQLSchema graphQLSchema, OperationDefinition operationDefinition) {
+        OperationDefinition.Operation operation = operationDefinition.getOperation();
+        if (operation == MUTATION) {
+            GraphQLObjectType mutationType = graphQLSchema.getMutationType();
+            if (mutationType == null) {
+                throw new MissingRootTypeException("Schema is not configured for mutations.", operationDefinition.getSourceLocation());
+            }
+            return mutationType;
+        } else if (operation == QUERY) {
+            GraphQLObjectType queryType = graphQLSchema.getQueryType();
+            if (queryType == null) {
+                throw new MissingRootTypeException("Schema does not define the required query root type.", operationDefinition.getSourceLocation());
+            }
+            return queryType;
+        } else if (operation == SUBSCRIPTION) {
+            GraphQLObjectType subscriptionType = graphQLSchema.getSubscriptionType();
+            if (subscriptionType == null) {
+                throw new MissingRootTypeException("Schema is not configured for subscriptions.", operationDefinition.getSourceLocation());
+            }
+            return subscriptionType;
+        } else {
+            return assertShouldNeverHappen("Unhandled case.  An extra operation enum has been added without code support");
+        }
+    }
 }

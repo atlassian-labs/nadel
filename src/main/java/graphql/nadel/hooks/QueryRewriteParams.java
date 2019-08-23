@@ -5,8 +5,11 @@ import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionStepInfo;
 import graphql.language.Document;
+import graphql.language.FragmentDefinition;
 import graphql.nadel.Service;
 import graphql.nadel.engine.NadelContext;
+import graphql.nadel.util.Util;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 
 import java.util.Map;
@@ -21,6 +24,8 @@ public class QueryRewriteParams {
     private final Object serviceContext;
     private final Document document;
     private final Map<String, Object> variables;
+    private final Map<String, FragmentDefinition> fragmentsByName;
+    private final GraphQLObjectType operationRootType;
 
 
     private QueryRewriteParams(Builder builder) {
@@ -32,6 +37,8 @@ public class QueryRewriteParams {
         this.serviceContext = builder.serviceContext;
         this.document = builder.document;
         this.variables = builder.variables;
+        this.fragmentsByName = builder.fragmentsByName;
+        this.operationRootType = builder.operationRootType;
     }
 
     public Service getService() {
@@ -66,6 +73,14 @@ public class QueryRewriteParams {
         return variables;
     }
 
+    public Map<String, FragmentDefinition> getFragmentsByName() {
+        return fragmentsByName;
+    }
+
+    public GraphQLObjectType getOperationRootType() {
+        return operationRootType;
+    }
+
     public static Builder newParameters() {
         return new Builder();
     }
@@ -79,6 +94,8 @@ public class QueryRewriteParams {
         private NadelContext nadelContext;
         private Document document;
         private Map<String, Object> variables;
+        private Map<String, FragmentDefinition> fragmentsByName;
+        private GraphQLObjectType operationRootType;
 
         public Builder from(QueryRewriteParams other) {
             this.service = other.service;
@@ -88,6 +105,8 @@ public class QueryRewriteParams {
             this.nadelContext = other.nadelContext;
             this.document = other.document;
             this.variables = other.variables;
+            this.fragmentsByName = other.fragmentsByName;
+            this.operationRootType = other.operationRootType;
             return this;
         }
 
@@ -95,6 +114,23 @@ public class QueryRewriteParams {
             this.executionId = executionContext.getExecutionId();
             this.schema = executionContext.getGraphQLSchema();
             this.nadelContext = (NadelContext) executionContext.getContext();
+            this.fragmentsByName = executionContext.getFragmentsByName();
+            this.operationRootType = Util.getOperationRootType(executionContext.getGraphQLSchema(), executionContext.getOperationDefinition());
+            return this;
+        }
+
+        public Builder schema(GraphQLSchema schema) {
+            this.schema = schema;
+            return this;
+        }
+
+        public Builder fragmentsByName(Map<String, FragmentDefinition> fragmentsByName) {
+            this.fragmentsByName = fragmentsByName;
+            return this;
+        }
+
+        public Builder operationRootType(GraphQLObjectType operationRootType) {
+            this.operationRootType = operationRootType;
             return this;
         }
 
