@@ -1,8 +1,8 @@
 package graphql.nadel.engine.transformation.variables;
 
 import graphql.PublicApi;
-import graphql.schema.GraphQLDirectiveContainer;
 import graphql.schema.GraphQLInputType;
+import graphql.schema.GraphQLInputValueDefinition;
 import graphql.schema.GraphQLTypeUtil;
 
 /**
@@ -11,20 +11,31 @@ import graphql.schema.GraphQLTypeUtil;
  */
 @PublicApi
 public class InputValueTree {
-    private final InputValueTree parent;
     private final String name;
     private final GraphQLInputType inputType;
-    private final GraphQLDirectiveContainer directivesContainer;
+    private final GraphQLInputValueDefinition valueDefinition;
+    private final InputValueTree parent;
 
-    public InputValueTree(InputValueTree parent, String name, GraphQLInputType inputType, GraphQLDirectiveContainer directivesContainer) {
+    public InputValueTree(InputValueTree parent, String name, GraphQLInputType inputType, GraphQLInputValueDefinition valueDefinition) {
         this.parent = parent;
-        this.directivesContainer = directivesContainer;
+        this.valueDefinition = valueDefinition;
         this.inputType = inputType;
         this.name = name;
     }
 
     public InputValueTree unwrapOne() {
-        return new InputValueTree(parent, name, (GraphQLInputType) GraphQLTypeUtil.unwrapOne(inputType), directivesContainer);
+        return new InputValueTree(parent, name, (GraphQLInputType) GraphQLTypeUtil.unwrapOne(inputType), valueDefinition);
+    }
+
+    /**
+     * @return the top level tree item, that is the one with no parent aka the root of the tree
+     */
+    public InputValueTree getTopLevel() {
+        InputValueTree tree = this;
+        while (tree.parent != null) {
+            tree = tree.parent;
+        }
+        return tree;
     }
 
     public String getName() {
@@ -39,16 +50,17 @@ public class InputValueTree {
         return inputType;
     }
 
-    public GraphQLDirectiveContainer getDirectivesContainer() {
-        return directivesContainer;
+    public GraphQLInputValueDefinition getValueDefinition() {
+        return valueDefinition;
     }
 
     @Override
     public String toString() {
         return "InputValueTree{" +
-                "parent=" + parent +
-                ", name='" + name + '\'' +
+                "name='" + name + '\'' +
                 ", inputType=" + inputType +
+                ", valueDefinition=" + valueDefinition +
+                ", parent=" + parent +
                 '}';
     }
 }
