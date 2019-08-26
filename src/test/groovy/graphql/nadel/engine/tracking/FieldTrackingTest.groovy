@@ -7,6 +7,7 @@ import graphql.execution.nextgen.result.ExecutionResultNode
 import graphql.nadel.engine.NadelContext
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -49,6 +50,7 @@ class FieldTrackingTest extends Specification {
         }
     }
 
+    @Ignore
     def "can dispatch and complete fields only once"() {
         def instrumentation = new TestInstrumentation()
         def fieldTracking = new FieldTracking(instrumentation, executionContext)
@@ -81,6 +83,7 @@ class FieldTrackingTest extends Specification {
         instrumentation.completed == ["/a": 1, "/b": 1]
     }
 
+    @Ignore
     def "will dispatch if it was not previously dispatched"() {
         def instrumentation = new TestInstrumentation()
         def fieldTracking = new FieldTracking(instrumentation, executionContext)

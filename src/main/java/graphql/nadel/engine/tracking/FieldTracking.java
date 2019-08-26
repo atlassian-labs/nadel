@@ -5,10 +5,8 @@ import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
-import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.ListExecutionResultNode;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.NadelContext;
 import graphql.nadel.instrumentation.NadelInstrumentation;
@@ -20,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 
 import static graphql.nadel.engine.ArtificialFieldUtils.isArtificialField;
-import static java.util.Collections.singletonList;
 
 public class FieldTracking {
     private final NadelInstrumentation instrumentation;
@@ -80,22 +77,22 @@ public class FieldTracking {
     }
 
     public void fieldCompleted(ExecutionStepInfo stepInfo) {
-        dispatchIfNeeded(stepInfo);
-        completeNode(stepInfo, null, null);
+//        dispatchIfNeeded(stepInfo);
+//        completeNode(stepInfo, null, null);
     }
 
     public void fieldsCompleted(List<ExecutionResultNode> resultNodes, Throwable throwable) {
-        for (ExecutionResultNode resultNode : resultNodes) {
-            fieldsCompleted(resultNode, throwable);
-        }
+//        for (ExecutionResultNode resultNode : resultNodes) {
+//            fieldsCompleted(resultNode, throwable);
+//        }
     }
 
     public void fieldsCompleted(ExecutionResultNode resultNode, Throwable throwable) {
-        if (resultNode instanceof RootExecutionResultNode) {
-            completeNodes(resultNode.getChildren(), throwable);
-        } else {
-            completeNodes(singletonList(resultNode), throwable);
-        }
+//        if (resultNode instanceof RootExecutionResultNode) {
+//            completeNodes(resultNode.getChildren(), throwable);
+//        } else {
+//            completeNodes(singletonList(resultNode), throwable);
+//        }
     }
 
     private synchronized void completeNodes(List<ExecutionResultNode> resultNodes, Throwable throwable) {
