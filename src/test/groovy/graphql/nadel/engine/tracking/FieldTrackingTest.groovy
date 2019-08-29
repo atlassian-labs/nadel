@@ -95,6 +95,7 @@ class FieldTrackingTest extends Specification {
         instrumentation.completed == ["/a": 1, "/b": 1]
     }
 
+    @Ignore
     def "will ignore list only paths"() {
         def instrumentation = new TestInstrumentation()
         def fieldTracking = new FieldTracking(instrumentation, executionContext)

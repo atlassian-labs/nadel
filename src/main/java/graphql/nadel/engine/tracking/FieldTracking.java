@@ -38,9 +38,9 @@ public class FieldTracking {
 
 
     public void fieldsDispatched(List<ExecutionStepInfo> stepInfos) {
-        for (ExecutionStepInfo stepInfo : stepInfos) {
-            dispatchIfNeeded(stepInfo);
-        }
+//        for (ExecutionStepInfo stepInfo : stepInfos) {
+//            dispatchIfNeeded(stepInfo);
+//        }
     }
 
     private synchronized void dispatchIfNeeded(ExecutionStepInfo stepInfo) {
