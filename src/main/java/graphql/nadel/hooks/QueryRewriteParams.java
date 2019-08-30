@@ -1,14 +1,12 @@
 package graphql.nadel.hooks;
 
 import graphql.PublicApi;
-import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionStepInfo;
 import graphql.language.Document;
 import graphql.language.FragmentDefinition;
 import graphql.nadel.Service;
 import graphql.nadel.engine.NadelContext;
-import graphql.nadel.util.Util;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 
@@ -110,12 +108,13 @@ public class QueryRewriteParams {
             return this;
         }
 
-        public Builder from(ExecutionContext executionContext) {
-            this.executionId = executionContext.getExecutionId();
-            this.schema = executionContext.getGraphQLSchema();
-            this.nadelContext = (NadelContext) executionContext.getContext();
-            this.fragmentsByName = executionContext.getFragmentsByName();
-            this.operationRootType = Util.getOperationRootType(executionContext.getGraphQLSchema(), executionContext.getOperationDefinition());
+        public Builder executionId(ExecutionId executionId) {
+            this.executionId = executionId;
+            return this;
+        }
+
+        public Builder nadelContext(NadelContext nadelContext) {
+            this.nadelContext = nadelContext;
             return this;
         }
 

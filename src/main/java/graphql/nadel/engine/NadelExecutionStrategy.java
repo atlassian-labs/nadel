@@ -27,7 +27,9 @@ import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.util.Data;
+import graphql.nadel.util.Util;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,12 +127,19 @@ public class NadelExecutionStrategy {
             QueryTransformationResult queryTransformInitial = queryTransformer
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField));
 
+            Document initialTransformDoc = queryTransformInitial.getDocument();
+            GraphQLObjectType operationRootType = Util.getOperationRootType(underlyingSchema, executionContext.getOperationDefinition());
+
 
             Map<String, Object> variables = serviceExecutor.buildReferencedVariables(executionContext, queryTransformInitial);
             QueryRewriteParams rewriteParams = QueryRewriteParams.newParameters()
-                    .from(executionContext)
+                    .executionId(executionContext.getExecutionId())
+                    .nadelContext((NadelContext) executionContext.getContext())
+                    .schema(underlyingSchema)
+                    .fragmentsByName(queryTransformInitial.getTransformedFragments())
+                    .operationRootType(operationRootType)
                     .serviceContext(serviceContext).service(service).executionStepInfo(stepInfo)
-                    .document(queryTransformInitial.getDocument()).variables(variables)
+                    .document(initialTransformDoc).variables(variables)
                     .build();
 
             CompletableFuture<QueryRewriteResult> rewriteResult = serviceExecutionHooks.queryRewrite(rewriteParams);
@@ -139,9 +148,12 @@ public class NadelExecutionStrategy {
                 if (queryRewriteResult != null) {
                     //
                     //  we need to re-transform the query because they changed it
-                    MergedField newMergedField = getTopLevelFieldFromDoc(queryRewriteResult.getDocument());
+                    Document rewrittenDoc = queryRewriteResult.getDocument();
+                    Map<String, Object> newVariables = queryRewriteResult.getVariables();
+
+                    MergedField newMergedField = getTopLevelFieldFromDoc(rewrittenDoc);
                     ExecutionStepInfo newESI = executionStepInfoFactory.newExecutionStepInfoForSubField(executionContext, mergedField, rootExecutionStepInfo);
-                    ExecutionContext newExecutionCtx = buildServiceVariableOverrides(executionContext, queryRewriteResult.getVariables());
+                    ExecutionContext newExecutionCtx = buildServiceVariableOverrides(executionContext, newVariables);
 
                     queryTransformNew = queryTransformer.transformMergedFields(newExecutionCtx, underlyingSchema, operationName, operation, singletonList(newMergedField));
                     return Data.of(queryTransformNew, newExecutionCtx, newESI);
