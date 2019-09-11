@@ -411,6 +411,7 @@ class NadelE2ETest extends Specification {
 
         then:
         1 * serviceExecution.execute({ params ->
+            println printAstCompact(params.query)
             printAstCompact(params.query) == "query nadel_2_IssueService {issue {detail {detailName}}}"
         }) >> completedFuture(serviceExecutionResult)
         result.join().data == [issue: [name: "My Issue"]]

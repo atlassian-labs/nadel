@@ -73,7 +73,7 @@ public class NadelExecutionStrategy {
         this.fieldInfos = fieldInfos;
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.serviceExecutor = new ServiceExecutor(overallSchema, instrumentation);
-        this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor);
+        this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks);
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
@@ -105,7 +105,7 @@ public class NadelExecutionStrategy {
                         long elapsedTime = System.currentTimeMillis() - startTime;
                         log.debug("NadelExecutionStrategy time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
                     });
-        });
+        }).whenComplete(this::possiblyLogException);
 
 
     }
@@ -125,7 +125,7 @@ public class NadelExecutionStrategy {
             //
             GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
             QueryTransformationResult queryTransformInitial = queryTransformer
-                    .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField));
+                    .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks);
 
             Document initialTransformDoc = queryTransformInitial.getDocument();
             GraphQLObjectType operationRootType = Util.getOperationRootType(underlyingSchema, executionContext.getOperationDefinition());
@@ -138,8 +138,11 @@ public class NadelExecutionStrategy {
                     .schema(underlyingSchema)
                     .fragmentsByName(queryTransformInitial.getTransformedFragments())
                     .operationRootType(operationRootType)
-                    .serviceContext(serviceContext).service(service).executionStepInfo(stepInfo)
-                    .document(initialTransformDoc).variables(variables)
+                    .serviceContext(serviceContext)
+                    .service(service)
+                    .executionStepInfo(stepInfo)
+                    .document(initialTransformDoc)
+                    .variables(variables)
                     .build();
 
             CompletableFuture<QueryRewriteResult> rewriteResult = serviceExecutionHooks.queryRewrite(rewriteParams);
@@ -155,7 +158,7 @@ public class NadelExecutionStrategy {
                     ExecutionStepInfo newESI = executionStepInfoFactory.newExecutionStepInfoForSubField(executionContext, mergedField, rootExecutionStepInfo);
                     ExecutionContext newExecutionCtx = buildServiceVariableOverrides(executionContext, newVariables);
 
-                    queryTransformNew = queryTransformer.transformMergedFields(newExecutionCtx, underlyingSchema, operationName, operation, singletonList(newMergedField));
+                    queryTransformNew = queryTransformer.transformMergedFields(newExecutionCtx, underlyingSchema, operationName, operation, singletonList(newMergedField), serviceExecutionHooks);
                     return Data.of(queryTransformNew, newExecutionCtx, newESI);
 
                 } else {
@@ -182,9 +185,13 @@ public class NadelExecutionStrategy {
 
                 CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
                         .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
-                                .convert(runExecutionCtx.getExecutionId(), nadelContext.getForkJoinPool(),
-                                        resultNode, overallSchema, rootExecutionStepInfo,
-                                        transformationByResultField, typeRenameMappings));
+                                .convert(runExecutionCtx.getExecutionId(),
+                                        nadelContext.getForkJoinPool(),
+                                        resultNode,
+                                        overallSchema,
+                                        rootExecutionStepInfo,
+                                        transformationByResultField,
+                                        typeRenameMappings));
 
                 //
                 // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call

@@ -24,12 +24,10 @@ public class FieldMetadataUtil {
     private static class FieldMetadata implements Serializable {
         private final String id;
         private final boolean rootOfTransformation;
-        private final boolean skipTraversing;
 
-        public FieldMetadata(String id, boolean rootOfTransformation, boolean skipTraversing) {
+        public FieldMetadata(String id, boolean rootOfTransformation) {
             this.id = id;
             this.rootOfTransformation = rootOfTransformation;
-            this.skipTraversing = skipTraversing;
         }
 
         public String getId() {
@@ -40,9 +38,6 @@ public class FieldMetadataUtil {
             return rootOfTransformation;
         }
 
-        public boolean isSkipTraversing() {
-            return skipTraversing;
-        }
     }
 
     public static List<String> getRootOfTransformationIds(Field field) {
@@ -55,14 +50,14 @@ public class FieldMetadataUtil {
         return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getId);
     }
 
-    public static boolean skipTraversing(Field field) {
-        String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
-        if (serialized == null) {
-            return false;
-        }
-        List<FieldMetadata> fieldMetadata = readMetadata(serialized);
-        return fieldMetadata.stream().anyMatch(FieldMetadata::isSkipTraversing);
-    }
+//    public static boolean skipTraversing(Field field) {
+//        String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
+//        if (serialized == null) {
+//            return false;
+//        }
+//        List<FieldMetadata> fieldMetadata = readMetadata(serialized);
+//        return fieldMetadata.stream().anyMatch(FieldMetadata::isSkipTraversing);
+//    }
 
     public static List<String> getFieldIds(Field field) {
         String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
@@ -73,7 +68,7 @@ public class FieldMetadataUtil {
         return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getId);
     }
 
-    public static Field addFieldMetadata(Field field, String id, boolean rootOfTransformation, boolean skipTraversing) {
+    public static Field addFieldMetadata(Field field, String id, boolean rootOfTransformation) {
         assertNotNull(id);
         String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
         List<FieldMetadata> fieldMetadata = new ArrayList<>();
@@ -81,7 +76,7 @@ public class FieldMetadataUtil {
             fieldMetadata = readMetadata(serialized);
         }
 
-        FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation, skipTraversing);
+        FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation);
         fieldMetadata.add(newFieldMetadata);
         String newSerializedValue = writeMetadata(fieldMetadata);
         return field.transform(builder -> builder.additionalData(NADEL_FIELD_METADATA, newSerializedValue));
@@ -95,11 +90,11 @@ public class FieldMetadataUtil {
         return rootFieldMetadata.get(0).id;
     }
 
-    public static void setFieldMetadata(Field.Builder builder, String id, boolean rootOfTransformation, boolean skipTraversing) {
+    public static void setFieldMetadata(Field.Builder builder, String id, boolean rootOfTransformation) {
         assertNotNull(id);
         List<FieldMetadata> fieldMetadata = new ArrayList<>();
 
-        FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation, skipTraversing);
+        FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation);
         fieldMetadata.add(newFieldMetadata);
         String newSerializedValue = writeMetadata(fieldMetadata);
         builder.additionalData(NADEL_FIELD_METADATA, newSerializedValue);

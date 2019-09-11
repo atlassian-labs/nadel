@@ -9,6 +9,12 @@ import graphql.language.Node;
 import graphql.language.NodeVisitorStub;
 import graphql.language.SelectionSet;
 import graphql.nadel.engine.FieldMetadataUtil;
+import graphql.schema.GraphQLCompositeType;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLFieldsContainer;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLTypeUtil;
+import graphql.schema.GraphQLUnmodifiedType;
 import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -41,7 +47,7 @@ public final class FieldUtils {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
             Field.Builder newField = Field.newField();
-            FieldMetadataUtil.setFieldMetadata(newField, nadelFieldId, ix == 0 && firstRootOfTransformation, true);
+            FieldMetadataUtil.setFieldMetadata(newField, nadelFieldId, ix == 0 && firstRootOfTransformation);
             if (ix == path.size() - 1 && lastSelectionSet != null) {
                 newField.selectionSet(lastSelectionSet);
             }
@@ -52,6 +58,18 @@ public final class FieldUtils {
             curField = newField.build();
         }
         return curField;
+    }
+
+    public static GraphQLCompositeType parentForListField(List<String> path, GraphQLOutputType firstParentField) {
+        assertTrue(path.size() > 0);
+        GraphQLOutputType currentParentType = firstParentField;
+        for (int i = 0; i < path.size() - 1; i++) {
+            GraphQLUnmodifiedType unwrappedType = GraphQLTypeUtil.unwrapAll(firstParentField);
+            GraphQLFieldsContainer fieldsContainer = (GraphQLFieldsContainer) unwrappedType;
+            GraphQLFieldDefinition fieldDefinition = fieldsContainer.getFieldDefinition(path.get(i));
+            currentParentType = fieldDefinition.getType();
+        }
+        return (GraphQLCompositeType) currentParentType;
     }
 
     public static LeafExecutionResultNode geFirstLeafNode(ExecutionResultNode executionResultNode) {
@@ -86,7 +104,7 @@ public final class FieldUtils {
 
             @Override
             public TraversalControl visitField(Field field, TraverserContext<Node> context) {
-                return TreeTransformerUtil.changeNode(context, FieldMetadataUtil.addFieldMetadata(field, id, false, false));
+                return TreeTransformerUtil.changeNode(context, FieldMetadataUtil.addFieldMetadata(field, id, false));
             }
         });
         return field.transform(builder -> builder.selectionSet(selectionSet));

@@ -6,6 +6,7 @@ import graphql.execution.nextgen.FieldSubSelection
 import graphql.language.AstPrinter
 import graphql.language.Document
 import graphql.nadel.Operation
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
@@ -209,7 +210,7 @@ class OverallQueryTransformerTest extends Specification {
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
         def transformer = new OverallQueryTransformer()
-        def transformationResult = transformer.transformMergedFields(executionContext, schema, null, Operation.QUERY, fields)
+        def transformationResult = transformer.transformMergedFields(executionContext, schema, null, Operation.QUERY, fields, Mock(ServiceExecutionHooks))
         when:
         def document = transformationResult.document
 
@@ -227,7 +228,8 @@ class OverallQueryTransformerTest extends Specification {
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
         def transformer = new OverallQueryTransformer()
-        def transformationResult = transformer.transformMergedFields(executionContext, schema, operationName, operation, fields)
+        def hooks = new ServiceExecutionHooks() {}
+        def transformationResult = transformer.transformMergedFields(executionContext, schema, operationName, operation, fields, hooks)
         return transformationResult.document
     }
 }

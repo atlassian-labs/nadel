@@ -12,13 +12,19 @@ import java.util.Map;
 public class QueryTransformationResult {
 
     private final Document document;
+    // will be provided to the ServiceExecution
     private final OperationDefinition operationDefinition;
-
-    private final List<MergedField> transformedMergedFields;
+    // will be provided to the ServiceExecution
+    private final Map<String, FragmentDefinition> transformedFragments;
+    // used to only pass down the references variables to ServiceExecution
     private final List<String> referencedVariables;
 
+    // used when the underlying raw result is converted into a tree
+    private final List<MergedField> transformedMergedFields;
+
+    // needed when the underlying result tree is mapped back
     private final Map<String, FieldTransformation> transformationByResultField;
-    private final Map<String, FragmentDefinition> transformedFragments;
+    // needed when the underlying result tree is mapped back
     private final Map<String, String> typeRenameMappings;
 
     public QueryTransformationResult(Document document,

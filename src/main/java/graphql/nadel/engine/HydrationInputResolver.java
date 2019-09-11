@@ -24,6 +24,7 @@ import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
+import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.util.ExecutionPathUtils;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
@@ -69,13 +70,16 @@ public class HydrationInputResolver {
     private final List<Service> services;
     private final GraphQLSchema overallSchema;
     private final ServiceExecutor serviceExecutor;
+    private final ServiceExecutionHooks serviceExecutionHooks;
 
     public HydrationInputResolver(List<Service> services,
                                   GraphQLSchema overallSchema,
-                                  ServiceExecutor serviceExecutor) {
+                                  ServiceExecutor serviceExecutor,
+                                  ServiceExecutionHooks serviceExecutionHooks) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.serviceExecutor = serviceExecutor;
+        this.serviceExecutionHooks = serviceExecutionHooks;
     }
 
 
@@ -193,7 +197,7 @@ public class HydrationInputResolver {
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
         QueryTransformationResult queryTransformationResult = queryTransformer
-                .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType);
+                .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType, serviceExecutionHooks);
 
 
         fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
@@ -264,7 +268,7 @@ public class HydrationInputResolver {
 
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
         QueryTransformationResult queryTransformationResult = queryTransformer
-                .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType);
+                .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType, serviceExecutionHooks);
 
 
         List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, ExecutionResultNode::getExecutionStepInfo);

@@ -2,6 +2,8 @@ package graphql.nadel.hooks;
 
 import graphql.PublicSpi;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
+import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
+import graphql.util.TraversalControl;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -33,6 +35,12 @@ public interface ServiceExecutionHooks {
     default CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
         return CompletableFuture.completedFuture(null);
     }
+
+
+    default TraversalControl visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
+        return TraversalControl.CONTINUE;
+    }
+
 
     /**
      * Called to allow a service to post process the service result in some fashion.

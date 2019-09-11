@@ -7,16 +7,18 @@ import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
-import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.schema.GraphQLCompositeType;
 import graphql.util.TraversalControl;
 
 import java.util.List;
 
 import static graphql.language.SelectionSet.newSelectionSet;
+import static graphql.nadel.engine.FieldMetadataUtil.addFieldMetadata;
 import static graphql.nadel.engine.transformation.FieldUtils.addFieldIdToChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.getSubTree;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
+import static graphql.nadel.engine.transformation.FieldUtils.parentForListField;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
@@ -36,20 +38,24 @@ public class FieldRenameTransformation extends FieldTransformation {
     }
 
     @Override
-    public TraversalControl apply(ApplyEnvironment environment) {
-        super.apply(environment);
+    public ApplyResult apply(ApplyEnvironment environment) {
+        setEnvironment(environment);
         List<String> path = mappingDefinition.getInputPath();
         Field changedNode = environment.getField().transform(builder -> builder.name(mappingDefinition.getInputPath().get(0)));
-        changedNode = FieldMetadataUtil.addFieldMetadata(changedNode, getFieldId(), true, false);
-        SelectionSet selectionSetWithIds = addFieldIdToChildren(environment.getField(), getFieldId()).getSelectionSet();
+        changedNode = addFieldMetadata(changedNode, getFieldId(), true);
+        Field fieldWithIds = addFieldIdToChildren(environment.getField(), getFieldId());
+        SelectionSet selectionSetWithIds = fieldWithIds.getSelectionSet();
+        GraphQLCompositeType newParentType;
         if (path.size() > 1) {
             Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), false, selectionSetWithIds);
+            newParentType = parentForListField(path.subList(1, path.size()), environment.getFieldsContainer());
             changedNode = changedNode.transform(builder -> builder.selectionSet(newSelectionSet().selection(firstChildField).build()));
         } else {
+            newParentType = environment.getFieldsContainer();
             changedNode = changedNode.transform(builder -> builder.selectionSet(selectionSetWithIds));
         }
-        return changeNode(environment.getTraverserContext(), changedNode);
-
+        changeNode(environment.getTraverserContext(), changedNode);
+        return new ApplyResult(TraversalControl.CONTINUE, newParentType);
     }
 
 

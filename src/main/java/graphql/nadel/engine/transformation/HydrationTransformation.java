@@ -46,8 +46,8 @@ public class HydrationTransformation extends FieldTransformation {
     }
 
     @Override
-    public TraversalControl apply(ApplyEnvironment environment) {
-        super.apply(environment);
+    public ApplyResult apply(ApplyEnvironment environment) {
+        setEnvironment(environment);
 
         TraverserContext<Node> context = environment.getTraverserContext();
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
@@ -62,7 +62,7 @@ public class HydrationTransformation extends FieldTransformation {
 
         Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), true);
         changeNode(context, newField);
-        return TraversalControl.ABORT;
+        return new ApplyResult(TraversalControl.ABORT, null);
     }
 
     public UnderlyingServiceHydration getUnderlyingServiceHydration() {
