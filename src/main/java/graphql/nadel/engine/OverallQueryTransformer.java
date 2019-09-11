@@ -449,41 +449,40 @@ public class OverallQueryTransformer {
             }
 
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
-            ApplyEnvironment applyEnvironment = createApplyEnvironment(field, typeContext, context);
+            if (typeContext.getOutputTypeOverall() != null) {
+                GraphQLFieldsContainer parentFieldsContainerOverall = (GraphQLFieldsContainer) typeContext.getOutputTypeOverall();
+                GraphQLFieldDefinition fieldDefinitionOverall = parentFieldsContainerOverall.getFieldDefinition(field.getName());
+                GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
 
-            GraphQLOutputType fieldOutputType = applyEnvironment.getFieldDefinition().getType();
-            GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldOutputType);
-
-            TypeMappingDefinition typeMappingDefinition = typeTransformation(executionContext, fieldType.getName());
-            if (typeMappingDefinition != null) {
-                recordTypeRename(typeMappingDefinition);
-            }
-
-
-            FieldTransformation transformation = typeContext.getFieldDefinitionOverall() != null ?
-                    createTransformation(typeContext.getFieldDefinitionOverall()) : null;
-            if (transformation != null) {
-                //
-                // major side effect alert - we are relying on transformation to call TreeTransformerUtil.changeNode
-                // inside itself here
-                //
-                ApplyResult applyResult = transformation.apply(applyEnvironment);
-                Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
-
-
-                String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField);
-                transformationByResultField.put(fieldId, transformation);
-
-                if (transformation instanceof FieldRenameTransformation) {
-                    maybeAddUnderscoreTypeName(applyEnvironment, changedField, fieldType);
+                TypeMappingDefinition typeMappingDefinition = typeTransformation(executionContext, fieldType.getName());
+                if (typeMappingDefinition != null) {
+                    recordTypeRename(typeMappingDefinition);
                 }
-                if (applyResult.getTraversalControl() == TraversalControl.CONTINUE) {
-                    updateTypeContext(context, applyResult.getNewParentTypeUnderlying(), null);
-                }
-                return applyResult.getTraversalControl();
+                FieldTransformation transformation = createTransformation(fieldDefinitionOverall);
+                if (transformation != null) {
+                    //
+                    // major side effect alert - we are relying on transformation to call TreeTransformerUtil.changeNode
+                    // inside itself here
+                    //
+                    ApplyEnvironment applyEnvironment = createApplyEnvironment(field, typeContext, context);
+                    ApplyResult applyResult = transformation.apply(applyEnvironment);
+                    Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
 
-            } else {
-                maybeAddUnderscoreTypeName(applyEnvironment, field, fieldType);
+
+                    String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField);
+                    transformationByResultField.put(fieldId, transformation);
+
+                    if (transformation instanceof FieldRenameTransformation) {
+                        maybeAddUnderscoreTypeName(context, changedField, fieldType);
+                    }
+                    if (applyResult.getTraversalControl() == TraversalControl.CONTINUE) {
+                        updateTypeContext(context, typeContext.getOutputTypeUnderlying(), null);
+                    }
+                    return applyResult.getTraversalControl();
+
+                } else {
+                    maybeAddUnderscoreTypeName(context, field, fieldType);
+                }
             }
 
 
@@ -527,10 +526,10 @@ public class OverallQueryTransformer {
         }
 
 
-        private void maybeAddUnderscoreTypeName(ApplyEnvironment environment, Field field, GraphQLOutputType fieldType) {
+        private void maybeAddUnderscoreTypeName(TraverserContext<Node> traverserContext, Field field, GraphQLOutputType fieldType) {
             Field changedNode = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, field, fieldType);
             if (changedNode != field) {
-                TreeTransformerUtil.changeNode(environment.getTraverserContext(), changedNode);
+                TreeTransformerUtil.changeNode(traverserContext, changedNode);
             }
         }
 
