@@ -22,7 +22,6 @@ import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.QueryRewriteParams;
-import graphql.nadel.hooks.QueryRewriteResult;
 import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
@@ -145,29 +144,10 @@ public class NadelExecutionStrategy {
                     .variables(variables)
                     .build();
 
-            CompletableFuture<QueryRewriteResult> rewriteResult = serviceExecutionHooks.queryRewrite(rewriteParams);
-            CompletableFuture<Data> reTransformCF = rewriteResult.thenApply(queryRewriteResult -> {
-                QueryTransformationResult queryTransformNew;
-                if (queryRewriteResult != null) {
-                    //
-                    //  we need to re-transform the query because they changed it
-                    Document rewrittenDoc = queryRewriteResult.getDocument();
-                    Map<String, Object> newVariables = queryRewriteResult.getVariables();
-
-                    MergedField newMergedField = getTopLevelFieldFromDoc(rewrittenDoc);
-                    ExecutionStepInfo newESI = executionStepInfoFactory.newExecutionStepInfoForSubField(executionContext, mergedField, rootExecutionStepInfo);
-                    ExecutionContext newExecutionCtx = buildServiceVariableOverrides(executionContext, newVariables);
-
-                    queryTransformNew = queryTransformer.transformMergedFields(newExecutionCtx, underlyingSchema, operationName, operation, singletonList(newMergedField), serviceExecutionHooks);
-                    return Data.of(queryTransformNew, newExecutionCtx, newESI);
-
-                } else {
-                    return Data.of(queryTransformInitial, executionContext, stepInfo);
-                }
-            });
+            CompletableFuture<Data> dataCF = CompletableFuture.completedFuture(Data.of(queryTransformInitial, executionContext, stepInfo));
 
 
-            CompletableFuture<RootExecutionResultNode> serviceResult = reTransformCF.thenCompose(data -> {
+            CompletableFuture<RootExecutionResultNode> serviceResult = dataCF.thenCompose(data -> {
                 ExecutionContext runExecutionCtx = data.get(ExecutionContext.class);
                 ExecutionStepInfo esi = data.get(ExecutionStepInfo.class);
                 QueryTransformationResult queryTransform = data.get(QueryTransformationResult.class);

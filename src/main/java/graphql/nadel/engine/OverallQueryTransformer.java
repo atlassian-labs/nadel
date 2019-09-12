@@ -450,7 +450,7 @@ public class OverallQueryTransformer {
 
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
             if (typeContext.getOutputTypeOverall() != null) {
-                GraphQLFieldsContainer parentFieldsContainerOverall = (GraphQLFieldsContainer) typeContext.getOutputTypeOverall();
+                GraphQLFieldsContainer parentFieldsContainerOverall = (GraphQLFieldsContainer) unwrapAll(typeContext.getOutputTypeOverall());
                 GraphQLFieldDefinition fieldDefinitionOverall = parentFieldsContainerOverall.getFieldDefinition(field.getName());
                 GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
 
@@ -537,58 +537,67 @@ public class OverallQueryTransformer {
         @Override
         public TraversalControl visitInlineFragment(InlineFragment inlineFragment, TraverserContext<Node> context) {
             // inline fragments are allowed not have type conditions, if so the parent type counts
-            updateTypeContextForInlineFragment(inlineFragment, context);
 
             TypeName typeCondition = inlineFragment.getTypeCondition();
+            if (typeCondition == null) {
+                return TraversalControl.CONTINUE;
+            }
 
             TypeMappingDefinition typeMappingDefinition = typeTransformationForFragment(executionContext, typeCondition);
+            String underlyingTypeName = typeCondition.getName();
             if (typeMappingDefinition != null) {
                 recordTypeRename(typeMappingDefinition);
                 InlineFragment changedFragment = inlineFragment.transform(f -> {
                     TypeName newTypeName = newTypeName(typeMappingDefinition.getUnderlyingName()).build();
                     f.typeCondition(newTypeName);
                 });
+                underlyingTypeName = typeMappingDefinition.getUnderlyingName();
                 changeNode(context, changedFragment);
             }
+            updateTypeContextForInlineFragment(typeCondition.getName(), underlyingTypeName, context);
             //TODO: what if all fields inside inline fragment get deleted? we should recheck it on LEAVING the node
             //(after transformations are applied); So we can see what happened. Alternative would be  to do second pass
             return TraversalControl.CONTINUE;
         }
 
 
-        private void updateTypeContextForInlineFragment(InlineFragment inlineFragment, TraverserContext<Node> context) {
+        private void updateTypeContextForInlineFragment(String overallType, String underlyingType, TraverserContext<Node> context) {
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
-            GraphQLCompositeType fragmentCondition;
-            if (inlineFragment.getTypeCondition() != null) {
-                TypeName typeCondition = inlineFragment.getTypeCondition();
-                fragmentCondition = (GraphQLCompositeType) executionContext.getGraphQLSchema().getType(typeCondition.getName());
-            } else {
-                fragmentCondition = (GraphQLCompositeType) unwrapAll(typeContext.getOutputTypeUnderlying());
-            }
-            context.setVar(NodeTypeContext.class, typeContext.transform(builder -> builder.outputTypeUnderlying(fragmentCondition)));
+            GraphQLCompositeType fragmentConditionOverall = (GraphQLCompositeType) executionContext.getGraphQLSchema().getType(overallType);
+            GraphQLCompositeType fragmentConditionUnderlying = (GraphQLCompositeType) underlyingSchema.getType(underlyingType);
+            context.setVar(NodeTypeContext.class, typeContext.transform(builder -> builder
+                    .outputTypeUnderlying(fragmentConditionUnderlying)
+                    .outputTypeOverall(fragmentConditionOverall)));
         }
 
         @Override
         public TraversalControl visitFragmentDefinition(FragmentDefinition fragment, TraverserContext<Node> context) {
             TypeName typeName = fragment.getTypeCondition();
-            updateTypeContextForFragmentDefinition(fragment, context);
             TypeMappingDefinition typeMappingDefinition = typeTransformationForFragment(executionContext, typeName);
+            String underlyingTypeName = typeName.getName();
             if (typeMappingDefinition != null) {
                 recordTypeRename(typeMappingDefinition);
                 FragmentDefinition changedFragment = fragment.transform(f -> {
                     TypeName newTypeName = newTypeName(typeMappingDefinition.getUnderlyingName()).build();
                     f.typeCondition(newTypeName);
                 });
+                underlyingTypeName = typeMappingDefinition.getUnderlyingName();
                 changeNode(context, changedFragment);
             }
+
+            updateTypeContextForFragmentDefinition(fragment, underlyingTypeName, context);
             return TraversalControl.CONTINUE;
         }
 
-        private void updateTypeContextForFragmentDefinition(FragmentDefinition fragmentDefinition, TraverserContext<Node> context) {
+        private void updateTypeContextForFragmentDefinition(FragmentDefinition fragmentDefinition, String underlyingTypeName, TraverserContext<Node> context) {
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
             TypeName typeCondition = fragmentDefinition.getTypeCondition();
-            GraphQLCompositeType fragmentCondition = (GraphQLCompositeType) executionContext.getGraphQLSchema().getType(typeCondition.getName());
-            context.setVar(NodeTypeContext.class, typeContext.transform(builder -> builder.outputTypeUnderlying(fragmentCondition)));
+            GraphQLCompositeType fragmentConditionOverall = (GraphQLCompositeType) executionContext.getGraphQLSchema().getType(typeCondition.getName());
+            GraphQLCompositeType fragmentConditionUnderlying = (GraphQLCompositeType) underlyingSchema.getType(underlyingTypeName);
+
+            context.setVar(NodeTypeContext.class, typeContext.transform(builder -> builder
+                    .outputTypeOverall(fragmentConditionOverall)
+                    .outputTypeUnderlying(fragmentConditionUnderlying)));
         }
 
 
