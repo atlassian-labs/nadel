@@ -16,13 +16,13 @@ public class NodeTypeContext {
 
     // always available, at the beginning it is the Query type
     private final GraphQLOutputType outputTypeUnderlying;
-    private final GraphQLOutputType outputTypeOverall;
+    //    private final GraphQLOutputType outputTypeOverall;
     // the current field, is null for the root field
     private final Field field;
     private final GraphQLFieldDefinition fieldDefinitionUnderlying;
-    private final GraphQLFieldDefinition fieldDefinitionOverall;
+    //    private final GraphQLFieldDefinition fieldDefinitionOverall;
     private final GraphQLFieldsContainer fieldsContainerUnderlying;
-    private final GraphQLFieldsContainer fieldsContainerOverall;
+    //    private final GraphQLFieldsContainer fieldsContainerOverall;
     private final Map<String, Object> fieldArgumentValues;
 
     private final Object argumentValue;
@@ -32,29 +32,29 @@ public class NodeTypeContext {
 
     public NodeTypeContext(Builder builder) {
         this.outputTypeUnderlying = builder.outputTypeUnderlying;
-        this.outputTypeOverall = builder.outputTypeOverall;
+//        this.outputTypeOverall = builder.outputTypeOverall;
         this.field = builder.field;
         this.fieldDefinitionUnderlying = builder.fieldDefinitionUnderlying;
-        this.fieldDefinitionOverall = builder.fieldDefinitionOverall;
+//        this.fieldDefinitionOverall = builder.fieldDefinitionOverall;
         this.fieldsContainerUnderlying = builder.fieldsContainerUnderlying;
-        this.fieldsContainerOverall = builder.fieldsContainerOverall;
+//        this.fieldsContainerOverall = builder.fieldsContainerOverall;
         this.fieldArgumentValues = builder.fieldArgumentValues;
         this.argumentValue = builder.argumentValue;
         this.argumentDefinitionUnderlying = builder.argumentDefinitionUnderlying;
         this.inputValueDefinitionUnderlying = builder.inputValueDefinitionUnderlying;
     }
-
-    public GraphQLOutputType getOutputTypeOverall() {
-        return outputTypeOverall;
-    }
-
-    public GraphQLFieldDefinition getFieldDefinitionOverall() {
-        return fieldDefinitionOverall;
-    }
-
-    public GraphQLFieldsContainer getFieldsContainerOverall() {
-        return fieldsContainerOverall;
-    }
+//
+//    public GraphQLOutputType getOutputTypeOverall() {
+//        return outputTypeOverall;
+//    }
+//
+//    public GraphQLFieldDefinition getFieldDefinitionOverall() {
+//        return fieldDefinitionOverall;
+//    }
+//
+//    public GraphQLFieldsContainer getFieldsContainerOverall() {
+//        return fieldsContainerOverall;
+//    }
 
     public Map<String, Object> getFieldArgumentValues() {
         return fieldArgumentValues;
@@ -101,12 +101,12 @@ public class NodeTypeContext {
     public static class Builder {
 
         GraphQLOutputType outputTypeUnderlying;
-        GraphQLOutputType outputTypeOverall;
+        //        GraphQLOutputType outputTypeOverall;
         Field field;
         GraphQLFieldDefinition fieldDefinitionUnderlying;
-        GraphQLFieldDefinition fieldDefinitionOverall;
+        //        GraphQLFieldDefinition fieldDefinitionOverall;
         GraphQLFieldsContainer fieldsContainerUnderlying;
-        GraphQLFieldsContainer fieldsContainerOverall;
+        //        GraphQLFieldsContainer fieldsContainerOverall;
         Map<String, Object> fieldArgumentValues;
         Object argumentValue;
         GraphQLArgument argumentDefinitionUnderlying;
@@ -118,12 +118,12 @@ public class NodeTypeContext {
 
         public Builder(NodeTypeContext other) {
             this.outputTypeUnderlying = other.outputTypeUnderlying;
-            this.outputTypeOverall = other.outputTypeOverall;
+//            this.outputTypeOverall = other.outputTypeOverall;
             this.field = other.field;
             this.fieldDefinitionUnderlying = other.fieldDefinitionUnderlying;
-            this.fieldDefinitionOverall = other.fieldDefinitionOverall;
+//            this.fieldDefinitionOverall = other.fieldDefinitionOverall;
             this.fieldsContainerUnderlying = other.fieldsContainerUnderlying;
-            this.fieldsContainerOverall = other.fieldsContainerOverall;
+//            this.fieldsContainerOverall = other.fieldsContainerOverall;
             this.fieldArgumentValues = other.fieldArgumentValues;
             this.argumentValue = other.argumentValue;
             this.argumentDefinitionUnderlying = other.argumentDefinitionUnderlying;
@@ -140,21 +140,22 @@ public class NodeTypeContext {
             return this;
         }
 
-        public Builder fieldsContainerOverall(GraphQLFieldsContainer fieldsContainer) {
-            this.fieldsContainerOverall = fieldsContainer;
-            return this;
-        }
+//        public Builder fieldsContainerOverall(GraphQLFieldsContainer fieldsContainer) {
+//            this.fieldsContainerOverall = fieldsContainer;
+//            return this;
+//        }
 
         public Builder outputTypeUnderlying(GraphQLOutputType graphQLOutputType) {
             this.outputTypeUnderlying = graphQLOutputType;
             return this;
         }
 
-        public Builder outputTypeOverall(GraphQLOutputType graphQLOutputType) {
-            this.outputTypeOverall = graphQLOutputType;
-            return this;
-        }
-
+        //
+//        public Builder outputTypeOverall(GraphQLOutputType graphQLOutputType) {
+//            this.outputTypeOverall = graphQLOutputType;
+//            return this;
+//        }
+//
         public Builder field(Field field) {
             this.field = field;
             return this;
@@ -165,11 +166,11 @@ public class NodeTypeContext {
             return this;
         }
 
-        public Builder fieldDefinitionOverall(GraphQLFieldDefinition graphQLFieldDefinition) {
-            this.fieldDefinitionOverall = graphQLFieldDefinition;
-            return this;
-        }
-
+        //        public Builder fieldDefinitionOverall(GraphQLFieldDefinition graphQLFieldDefinition) {
+//            this.fieldDefinitionOverall = graphQLFieldDefinition;
+//            return this;
+//        }
+//
         public Builder argumentValue(Object argumentValue) {
             this.argumentValue = argumentValue;
             return this;

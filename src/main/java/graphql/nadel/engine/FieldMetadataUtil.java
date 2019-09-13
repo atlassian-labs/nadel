@@ -20,6 +20,7 @@ import static graphql.nadel.util.FpKit.filter;
 public class FieldMetadataUtil {
 
     private static final String NADEL_FIELD_METADATA = "NADEL_FIELD_METADATA";
+    private static final String OVERALL_TYPE_INFO = "OVERALL_TYPE_INFO";
 
     private static class FieldMetadata implements Serializable {
         private final String id;
@@ -37,6 +38,7 @@ public class FieldMetadataUtil {
         public boolean isRootOfTransformation() {
             return rootOfTransformation;
         }
+
 
     }
 
@@ -123,5 +125,13 @@ public class FieldMetadataUtil {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Field setOverallTypeInfoId(Field field, String id) {
+        return field.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+    }
+
+    public static String getOverallTypeInfoId(Field field) {
+        return field.getAdditionalData().get(OVERALL_TYPE_INFO);
     }
 }

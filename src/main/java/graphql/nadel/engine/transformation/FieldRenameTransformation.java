@@ -8,7 +8,6 @@ import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.UnapplyEnvironment;
-import graphql.schema.GraphQLCompositeType;
 import graphql.util.TraversalControl;
 
 import java.util.List;
@@ -18,7 +17,6 @@ import static graphql.nadel.engine.FieldMetadataUtil.addFieldMetadata;
 import static graphql.nadel.engine.transformation.FieldUtils.addFieldIdToChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.getSubTree;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
-import static graphql.nadel.engine.transformation.FieldUtils.parentForListField;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
@@ -45,17 +43,14 @@ public class FieldRenameTransformation extends FieldTransformation {
         changedNode = addFieldMetadata(changedNode, getFieldId(), true);
         Field fieldWithIds = addFieldIdToChildren(environment.getField(), getFieldId());
         SelectionSet selectionSetWithIds = fieldWithIds.getSelectionSet();
-        GraphQLCompositeType newParentType;
         if (path.size() > 1) {
             Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), false, selectionSetWithIds);
-            newParentType = parentForListField(path.subList(1, path.size()), environment.getFieldsContainer());
             changedNode = changedNode.transform(builder -> builder.selectionSet(newSelectionSet().selection(firstChildField).build()));
         } else {
-            newParentType = environment.getFieldsContainer();
             changedNode = changedNode.transform(builder -> builder.selectionSet(selectionSetWithIds));
         }
         changeNode(environment.getTraverserContext(), changedNode);
-        return new ApplyResult(TraversalControl.CONTINUE, newParentType);
+        return new ApplyResult(TraversalControl.CONTINUE);
     }
 
 

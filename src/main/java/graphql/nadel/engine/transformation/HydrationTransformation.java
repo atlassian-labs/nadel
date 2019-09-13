@@ -62,7 +62,7 @@ public class HydrationTransformation extends FieldTransformation {
 
         Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), true);
         changeNode(context, newField);
-        return new ApplyResult(TraversalControl.ABORT, null);
+        return new ApplyResult(TraversalControl.ABORT);
     }
 
     public UnderlyingServiceHydration getUnderlyingServiceHydration() {

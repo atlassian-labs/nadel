@@ -3,16 +3,8 @@ package graphql.nadel.engine
 import graphql.ExecutionInput
 import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.execution.nextgen.result.ExecutionResultNode
-import graphql.execution.nextgen.result.LeafExecutionResultNode
 import graphql.execution.nextgen.result.ResultNodesUtil
 import graphql.execution.nextgen.result.RootExecutionResultNode
-import graphql.language.Argument
-import graphql.language.AstTransformer
-import graphql.language.Field
-import graphql.language.Node
-import graphql.language.NodeVisitorStub
-import graphql.language.StringValue
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
@@ -21,19 +13,11 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
-import graphql.nadel.hooks.CreateServiceContextParams
-import graphql.nadel.hooks.QueryRewriteParams
-import graphql.nadel.hooks.QueryRewriteResult
-import graphql.nadel.hooks.ResultRewriteParams
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
-import graphql.util.TraversalControl
-import graphql.util.TraverserContext
-import graphql.util.TraverserVisitor
-import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -1285,8 +1269,8 @@ class NadelExecutionStrategyTest extends Specification {
             name: Name 
         }
         type Name {
-            firstName: String
-            lastName: String
+            fName: String
+            lName: String
         }
         """)
 
@@ -1300,8 +1284,8 @@ class NadelExecutionStrategyTest extends Specification {
                 authorName: Name => renamed from authorDetails.name
             }
             type Name {
-                firstName: String
-                lastName: String
+                firstName: String => renamed from fName
+                lastName: String => renamed from lName
             }
         }
         ''')
@@ -1314,9 +1298,9 @@ class NadelExecutionStrategyTest extends Specification {
 
         def query = "{issues {id authorName {firstName lastName}}}"
 
-        def expectedQuery1 = "query nadel_2_Issues {issues {id authorDetails {name {firstName lastName}}}}"
-        def issue1 = [id: "ISSUE-1", authorDetails: [name: [firstName: "George", lastName: "Smith"]]]
-        def issue2 = [id: "ISSUE-2", authorDetails: [name: [firstName: "Elizabeth", lastName: "Windsor"]]]
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorDetails {name {fName lName}}}}"
+        def issue1 = [id: "ISSUE-1", authorDetails: [name: [fName: "George", lName: "Smith"]]]
+        def issue2 = [id: "ISSUE-2", authorDetails: [name: [fName: "Elizabeth", lName: "Windsor"]]]
         def response1 = new ServiceExecutionResult([issues: [issue1, issue2]])
 
 
