@@ -30,6 +30,7 @@ import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.engine.transformation.RecordTypeInformation;
+import graphql.nadel.hooks.NewVariableValue;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLArgument;
@@ -100,6 +101,7 @@ public class OverallQueryTransformer {
         Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
+        Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
 
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
 
@@ -113,7 +115,8 @@ public class OverallQueryTransformer {
                 referencedFragmentNames,
                 referencedVariables,
                 nadelContext,
-                serviceExecutionHooks);
+                serviceExecutionHooks,
+                variableValues);
 
         Field transformedTopLevelField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
@@ -129,7 +132,8 @@ public class OverallQueryTransformer {
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
-                serviceExecutionHooks);
+                serviceExecutionHooks,
+                variableValues);
 
         SelectionSet newOperationSelectionSet = newSelectionSet().selection(transformedTopLevelField).build();
         OperationDefinition operationDefinition = newOperationDefinition()
@@ -157,7 +161,8 @@ public class OverallQueryTransformer {
                 typeRenameMappings,
                 referencedVariableNames,
                 transformationByResultField,
-                transformedFragments);
+                transformedFragments,
+                variableValues);
 
     }
 
@@ -174,6 +179,7 @@ public class OverallQueryTransformer {
         Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
+        Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
 
         List<MergedField> transformedMergedFields = new ArrayList<>();
         List<Field> transformedFields = new ArrayList<>();
@@ -193,7 +199,8 @@ public class OverallQueryTransformer {
                         referencedFragmentNames,
                         referencedVariables,
                         nadelContext,
-                        serviceExecutionHooks);
+                        serviceExecutionHooks,
+                        variableValues);
 
                 GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
                 newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
@@ -225,7 +232,8 @@ public class OverallQueryTransformer {
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
-                serviceExecutionHooks);
+                serviceExecutionHooks,
+                variableValues);
 
         Document.Builder newDocumentBuilder = Document.newDocument();
         newDocumentBuilder.definition(operationDefinition);
@@ -243,8 +251,8 @@ public class OverallQueryTransformer {
                 transformedMergedFields,
                 typeRenameMappings, referencedVariableNames,
                 transformationByResultField,
-                transformedFragments
-        );
+                transformedFragments,
+                variableValues);
     }
 
 
@@ -255,7 +263,8 @@ public class OverallQueryTransformer {
                                                                Map<String, String> typeRenameMappings,
                                                                Set<String> referencedFragmentNames,
                                                                Map<String, VariableDefinition> referencedVariables,
-                                                               ServiceExecutionHooks serviceExecutionHooks) {
+                                                               ServiceExecutionHooks serviceExecutionHooks,
+                                                               Map<String, Object> variableValues) {
         return fragments.values().stream()
                 .map(fragment -> transformFragmentDefinition(
                         executionContext,
@@ -265,7 +274,8 @@ public class OverallQueryTransformer {
                         typeRenameMappings,
                         referencedFragmentNames,
                         referencedVariables,
-                        serviceExecutionHooks))
+                        serviceExecutionHooks,
+                        variableValues))
                 .collect(toMapCollector(FragmentDefinition::getName, identity()));
     }
 
@@ -276,7 +286,8 @@ public class OverallQueryTransformer {
                                                            Map<String, String> typeRenameMappings,
                                                            Set<String> referencedFragmentNames,
                                                            Map<String, VariableDefinition> referencedVariables,
-                                                           ServiceExecutionHooks serviceExecutionHooks) {
+                                                           ServiceExecutionHooks serviceExecutionHooks,
+                                                           Map<String, Object> variableValues) {
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
 
         RecordTypeInformation.OverallTypeInformation<FragmentDefinition> overallTypeInformation = recordTypeInformation.recordOverallTypes(
@@ -294,7 +305,8 @@ public class OverallQueryTransformer {
                 referencedVariables,
                 nadelContext,
                 serviceExecutionHooks,
-                overallTypeInformation);
+                overallTypeInformation,
+                variableValues);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         rootVars.put(NodeTypeContext.class, newNodeTypeContext().build());
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
@@ -340,7 +352,8 @@ public class OverallQueryTransformer {
                                              Set<String> referencedFragmentNames,
                                              Map<String, VariableDefinition> referencedVariables,
                                              NadelContext nadelContext,
-                                             ServiceExecutionHooks serviceExecutionHooks) {
+                                             ServiceExecutionHooks serviceExecutionHooks,
+                                             Map<String, Object> variableValues) {
         RecordTypeInformation.OverallTypeInformation<T> overallTypeInformation = recordTypeInformation.recordOverallTypes
                 (nodeWithoutTypeInfo,
                         executionContext.getGraphQLSchema(),
@@ -355,7 +368,8 @@ public class OverallQueryTransformer {
                 referencedVariables,
                 nadelContext,
                 serviceExecutionHooks,
-                overallTypeInformation);
+                overallTypeInformation,
+                variableValues);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(parentType.getName());
         rootVars.put(NodeTypeContext.class, newNodeTypeContext()
@@ -387,6 +401,7 @@ public class OverallQueryTransformer {
         private final Map<String, VariableDefinition> variableDefinitions;
         final ServiceExecutionHooks serviceExecutionHooks;
         private RecordTypeInformation.OverallTypeInformation<?> overallTypeInformation;
+        private Map<String, Object> variableValues;
 
         Transformer(ExecutionContext executionContext,
                     GraphQLSchema underlyingSchema,
@@ -396,7 +411,8 @@ public class OverallQueryTransformer {
                     Map<String, VariableDefinition> referencedVariables,
                     NadelContext nadelContext,
                     ServiceExecutionHooks serviceExecutionHooks,
-                    RecordTypeInformation.OverallTypeInformation overallTypeInformation) {
+                    RecordTypeInformation.OverallTypeInformation overallTypeInformation,
+                    Map<String, Object> variableValues) {
             this.executionContext = executionContext;
             this.underlyingSchema = underlyingSchema;
             this.transformationByResultField = transformationByResultField;
@@ -408,14 +424,15 @@ public class OverallQueryTransformer {
             this.overallTypeInformation = overallTypeInformation;
             OperationDefinition operationDefinition = executionContext.getOperationDefinition();
             this.variableDefinitions = FpKit.getByName(operationDefinition.getVariableDefinitions(), VariableDefinition::getName);
-            this.overallTypeInformation = overallTypeInformation;
+
+            this.variableValues = variableValues;
         }
 
         @Override
         public TraversalControl visitVariableReference(VariableReference variableReference, TraverserContext<Node> context) {
             VariableDefinition variableDefinition = variableDefinitions.get(variableReference.getName());
             referencedVariables.put(variableDefinition.getName(), variableDefinition);
-            return TraversalControl.CONTINUE;
+            return super.visitVariableReference(variableReference, context);
         }
 
         @Override
@@ -460,7 +477,12 @@ public class OverallQueryTransformer {
 
             HooksVisitArgumentValueEnvironmentImpl hooksVisitArgumentValueEnvironment = new HooksVisitArgumentValueEnvironmentImpl(inputValueDefinition, context);
 
-            return serviceExecutionHooks.visitArgumentValueInQuery(hooksVisitArgumentValueEnvironment);
+            NewVariableValue newVariableValue = serviceExecutionHooks.visitArgumentValueInQuery(hooksVisitArgumentValueEnvironment);
+            if (newVariableValue != null) {
+                variableValues.put(newVariableValue.getName(), newVariableValue.getValue());
+            }
+
+            return TraversalControl.CONTINUE;
         }
 
 

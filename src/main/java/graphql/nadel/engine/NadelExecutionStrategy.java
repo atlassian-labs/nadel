@@ -21,14 +21,11 @@ import graphql.nadel.Service;
 import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.hooks.CreateServiceContextParams;
-import graphql.nadel.hooks.QueryRewriteParams;
 import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.util.Data;
-import graphql.nadel.util.Util;
 import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,24 +123,6 @@ public class NadelExecutionStrategy {
             QueryTransformationResult queryTransformInitial = queryTransformer
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks);
 
-            Document initialTransformDoc = queryTransformInitial.getDocument();
-            GraphQLObjectType operationRootType = Util.getOperationRootType(underlyingSchema, executionContext.getOperationDefinition());
-
-
-            Map<String, Object> variables = serviceExecutor.buildReferencedVariables(executionContext, queryTransformInitial);
-            QueryRewriteParams rewriteParams = QueryRewriteParams.newParameters()
-                    .executionId(executionContext.getExecutionId())
-                    .nadelContext((NadelContext) executionContext.getContext())
-                    .schema(underlyingSchema)
-                    .fragmentsByName(queryTransformInitial.getTransformedFragments())
-                    .operationRootType(operationRootType)
-                    .serviceContext(serviceContext)
-                    .service(service)
-                    .executionStepInfo(stepInfo)
-                    .document(initialTransformDoc)
-                    .variables(variables)
-                    .build();
-
             CompletableFuture<Data> dataCF = CompletableFuture.completedFuture(Data.of(queryTransformInitial, executionContext, stepInfo));
 
 
@@ -155,17 +134,19 @@ public class NadelExecutionStrategy {
                 Map<String, FieldTransformation> transformationByResultField = queryTransform.getTransformationByResultField();
                 Map<String, String> typeRenameMappings = queryTransform.getTypeRenameMappings();
 
+                ExecutionContext newExecutionContext = buildServiceVariableOverrides(runExecutionCtx, queryTransform.getVariableValues());
+
                 //
                 // say the fields are dispatched
                 fieldTracking.fieldsDispatched(singletonList(esi));
                 //
                 // now call put to the service with the new query
                 CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
-                        .execute(runExecutionCtx, queryTransform, service, operation, serviceContext);
+                        .execute(newExecutionContext, queryTransform, service, operation, serviceContext);
 
                 CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
                         .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
-                                .convert(runExecutionCtx.getExecutionId(),
+                                .convert(newExecutionContext.getExecutionId(),
                                         nadelContext.getForkJoinPool(),
                                         resultNode,
                                         overallSchema,

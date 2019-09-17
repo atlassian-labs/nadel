@@ -27,13 +27,16 @@ public class QueryTransformationResult {
     // needed when the underlying result tree is mapped back
     private final Map<String, String> typeRenameMappings;
 
+    private final Map<String, Object> variableValues;
+
     public QueryTransformationResult(Document document,
                                      OperationDefinition operationDefinition,
                                      List<MergedField> transformedMergedFields,
                                      Map<String, String> typeRenameMappings,
                                      List<String> referencedVariables,
                                      Map<String, FieldTransformation> transformationByResultField,
-                                     Map<String, FragmentDefinition> transformedFragments) {
+                                     Map<String, FragmentDefinition> transformedFragments,
+                                     Map<String, Object> variableValues) {
         this.document = document;
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
@@ -41,6 +44,7 @@ public class QueryTransformationResult {
         this.transformationByResultField = transformationByResultField;
         this.transformedFragments = transformedFragments;
         this.typeRenameMappings = typeRenameMappings;
+        this.variableValues = variableValues;
     }
 
     public Document getDocument() {
@@ -69,6 +73,10 @@ public class QueryTransformationResult {
 
     public Map<String, String> getTypeRenameMappings() {
         return typeRenameMappings;
+    }
+
+    public Map<String, Object> getVariableValues() {
+        return variableValues;
     }
 }
 

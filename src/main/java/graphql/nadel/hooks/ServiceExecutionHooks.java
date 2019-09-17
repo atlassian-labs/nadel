@@ -3,7 +3,6 @@ package graphql.nadel.hooks;
 import graphql.PublicSpi;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
-import graphql.util.TraversalControl;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -25,8 +24,8 @@ public interface ServiceExecutionHooks {
         return CompletableFuture.completedFuture(null);
     }
 
-    default TraversalControl visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
-        return TraversalControl.CONTINUE;
+    default NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
+        return null;
     }
 
 

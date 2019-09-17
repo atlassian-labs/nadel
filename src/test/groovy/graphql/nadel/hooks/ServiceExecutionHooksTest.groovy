@@ -112,12 +112,12 @@ class ServiceExecutionHooksTest extends Specification {
             }
 
             @Override
-            TraversalControl visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
+            NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
                 if (env.getInputValueDefinition().getName() == "id") {
                     StringValue newValue = StringValue.newStringValue().value("modified").build()
-                    return TreeTransformerUtil.changeNode(env.getContext(), newValue);
+                    TreeTransformerUtil.changeNode(env.getContext(), newValue);
                 }
-                return TraversalControl.CONTINUE;
+                return null;
             }
 
             CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
@@ -182,14 +182,12 @@ class ServiceExecutionHooksTest extends Specification {
                 return completedFuture(serviceContext)
             }
 
-//            @Override
-//            CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
-//
-//                def rewriteResult = QueryRewriteResult.newResult().from(params)
-//                        .variables(["variable": "123", "extra": "present"])
-//                        .build()
-//                return completedFuture(rewriteResult)
-//            }
+            @Override
+            NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
+                NewVariableValue newVariableValue = new NewVariableValue("variable", "123")
+                return newVariableValue
+            }
+
         }
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
 
