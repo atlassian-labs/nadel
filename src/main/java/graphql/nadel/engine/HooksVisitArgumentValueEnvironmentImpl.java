@@ -16,14 +16,17 @@ public class HooksVisitArgumentValueEnvironmentImpl implements HooksVisitArgumen
     private final Map<String, Object> variables;
     private final Service service;
     private final Object serviceContext;
+    private final GraphQLArgument graphQLArgument;
 
     public HooksVisitArgumentValueEnvironmentImpl(GraphQLInputValueDefinition inputValueDefinition,
+                                                  GraphQLArgument graphQLArgument,
                                                   TraverserContext traverserContext,
                                                   Value value,
                                                   Map<String, Object> variables,
                                                   Service service,
                                                   Object serviceContext) {
         this.inputValueDefinition = inputValueDefinition;
+        this.graphQLArgument = graphQLArgument;
         this.traverserContext = traverserContext;
         this.value = value;
         this.variables = variables;
@@ -38,7 +41,7 @@ public class HooksVisitArgumentValueEnvironmentImpl implements HooksVisitArgumen
 
     @Override
     public GraphQLArgument getGraphQLArgument() {
-        return null;
+        return graphQLArgument;
     }
 
 

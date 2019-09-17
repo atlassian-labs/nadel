@@ -507,6 +507,7 @@ public class OverallQueryTransformer {
 
             HooksVisitArgumentValueEnvironmentImpl hooksVisitArgumentValueEnvironment = new HooksVisitArgumentValueEnvironmentImpl(
                     inputValueDefinition,
+                    typeContext.getArgumentDefinitionUnderlying(),
                     context,
                     value,
                     variableValues,
