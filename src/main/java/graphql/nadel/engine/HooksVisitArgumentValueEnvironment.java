@@ -1,7 +1,9 @@
 package graphql.nadel.engine;
 
+import graphql.language.Node;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLInputValueDefinition;
+import graphql.util.TraverserContext;
 
 public interface HooksVisitArgumentValueEnvironment {
 
@@ -9,5 +11,6 @@ public interface HooksVisitArgumentValueEnvironment {
 
     GraphQLArgument getGraphQLArgument();
 
+    TraverserContext<Node> getContext();
 
 }

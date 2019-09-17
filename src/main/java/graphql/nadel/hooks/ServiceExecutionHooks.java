@@ -25,18 +25,6 @@ public interface ServiceExecutionHooks {
         return CompletableFuture.completedFuture(null);
     }
 
-    /**
-     * Called to possibly change the arguments and runtime variables that are passed onto a called service
-     *
-     * @param params the parameters to this call
-     *
-     * @return an async null to indicate NO change needed or an async new document and variables
-     */
-    default CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
-        return CompletableFuture.completedFuture(null);
-    }
-
-
     default TraversalControl visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
         return TraversalControl.CONTINUE;
     }

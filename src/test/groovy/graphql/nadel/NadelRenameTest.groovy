@@ -1,12 +1,8 @@
 package graphql.nadel
 
-import graphql.analysis.QueryTransformer
-import graphql.analysis.QueryVisitorFieldEnvironment
-import graphql.analysis.QueryVisitorStub
+
 import graphql.execution.nextgen.result.RootExecutionResultNode
 import graphql.nadel.hooks.CreateServiceContextParams
-import graphql.nadel.hooks.QueryRewriteParams
-import graphql.nadel.hooks.QueryRewriteResult
 import graphql.nadel.hooks.ResultRewriteParams
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.testutils.TestUtil
@@ -119,25 +115,6 @@ class NadelRenameTest extends Specification {
         @Override
         CompletableFuture<Object> createServiceContext(CreateServiceContextParams params) {
             return completedFuture(null)
-        }
-        @Override
-        CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
-
-            QueryTransformer queryTransformer = QueryTransformer.newQueryTransformer()
-                    .schema(params.schema).variables(params.variables)
-                    .fragmentsByName(params.fragmentsByName)
-                    .rootParentType(params.operationRootType)
-                    .root(params.getDocument())
-                    .build()
-
-            def transformedDoc = queryTransformer.transform(new QueryVisitorStub() {
-                @Override
-                void visitField(QueryVisitorFieldEnvironment queryVisitorFieldEnvironment) {
-                    super.visitField(queryVisitorFieldEnvironment)
-                }
-            })
-            def result = QueryRewriteResult.newResult().document(transformedDoc).build();
-            return completedFuture(result)
         }
 
         @Override

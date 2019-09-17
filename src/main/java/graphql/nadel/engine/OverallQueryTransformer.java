@@ -458,7 +458,7 @@ public class OverallQueryTransformer {
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
             GraphQLInputValueDefinition inputValueDefinition = typeContext.getInputValueDefinitionUnderlying();
 
-            HooksVisitArgumentValueEnvironmentImpl hooksVisitArgumentValueEnvironment = new HooksVisitArgumentValueEnvironmentImpl(inputValueDefinition);
+            HooksVisitArgumentValueEnvironmentImpl hooksVisitArgumentValueEnvironment = new HooksVisitArgumentValueEnvironmentImpl(inputValueDefinition, context);
 
             return serviceExecutionHooks.visitArgumentValueInQuery(hooksVisitArgumentValueEnvironment);
         }
