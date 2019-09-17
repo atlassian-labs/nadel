@@ -121,7 +121,7 @@ public class NadelExecutionStrategy {
             //
             GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
             QueryTransformationResult queryTransformInitial = queryTransformer
-                    .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks);
+                    .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
             CompletableFuture<Data> dataCF = CompletableFuture.completedFuture(Data.of(queryTransformInitial, executionContext, stepInfo));
 

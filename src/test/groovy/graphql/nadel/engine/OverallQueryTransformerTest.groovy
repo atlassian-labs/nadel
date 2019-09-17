@@ -7,6 +7,7 @@ import graphql.execution.nextgen.FieldSubSelection
 import graphql.language.AstPrinter
 import graphql.language.Document
 import graphql.nadel.Operation
+import graphql.nadel.Service
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
@@ -75,6 +76,8 @@ class OverallQueryTransformerTest extends Specification {
                 id: ID!
             }
         """)
+
+    def serviceMock = Mock(Service)
 
     def "transforms query to delegate with field rename"() {
         def query = TestUtil.parseQuery(
@@ -243,7 +246,7 @@ class OverallQueryTransformerTest extends Specification {
 
         def transformer = new OverallQueryTransformer()
         def serviceExecutionHooks = new ServiceExecutionHooks() {}
-        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchemaExampleService, null, Operation.QUERY, fields, serviceExecutionHooks)
+        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchemaExampleService, null, Operation.QUERY, fields, serviceExecutionHooks, null, null)
         when:
         def document = transformationResult.document
 
@@ -266,7 +269,8 @@ class OverallQueryTransformerTest extends Specification {
 
         def transformer = new OverallQueryTransformer()
         def hooks = new ServiceExecutionHooks() {}
-        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchema, operationName, operation, fields, hooks)
+        Object serviceContext = new Object();
+        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchema, operationName, operation, fields, hooks, null, serviceContext)
         return transformationResult.document
     }
 }

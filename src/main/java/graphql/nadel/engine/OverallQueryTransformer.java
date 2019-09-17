@@ -22,6 +22,7 @@ import graphql.language.Value;
 import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
 import graphql.nadel.Operation;
+import graphql.nadel.Service;
 import graphql.nadel.dsl.FieldDefinitionWithTransformation;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.engine.transformation.ApplyEnvironment;
@@ -94,7 +95,9 @@ public class OverallQueryTransformer {
             Operation operation,
             Field topLevelField,
             GraphQLCompositeType topLevelFieldType,
-            ServiceExecutionHooks serviceExecutionHooks
+            ServiceExecutionHooks serviceExecutionHooks,
+            Service service,
+            Object serviceContext
     ) {
         long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
@@ -116,7 +119,9 @@ public class OverallQueryTransformer {
                 referencedVariables,
                 nadelContext,
                 serviceExecutionHooks,
-                variableValues);
+                variableValues,
+                service,
+                serviceContext);
 
         Field transformedTopLevelField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
@@ -133,7 +138,9 @@ public class OverallQueryTransformer {
                 referencedFragmentNames,
                 referencedVariables,
                 serviceExecutionHooks,
-                variableValues);
+                variableValues,
+                service,
+                serviceContext);
 
         SelectionSet newOperationSelectionSet = newSelectionSet().selection(transformedTopLevelField).build();
         OperationDefinition operationDefinition = newOperationDefinition()
@@ -171,7 +178,9 @@ public class OverallQueryTransformer {
             GraphQLSchema underlyingSchema,
             String operationName, Operation operation,
             List<MergedField> mergedFields,
-            ServiceExecutionHooks serviceExecutionHooks
+            ServiceExecutionHooks serviceExecutionHooks,
+            Service service,
+            Object serviceContext
     ) {
         long startTime = System.currentTimeMillis();
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
@@ -200,7 +209,9 @@ public class OverallQueryTransformer {
                         referencedVariables,
                         nadelContext,
                         serviceExecutionHooks,
-                        variableValues);
+                        variableValues,
+                        service,
+                        serviceContext);
 
                 GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
                 newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
@@ -233,7 +244,9 @@ public class OverallQueryTransformer {
                 referencedFragmentNames,
                 referencedVariables,
                 serviceExecutionHooks,
-                variableValues);
+                variableValues,
+                service,
+                serviceContext);
 
         Document.Builder newDocumentBuilder = Document.newDocument();
         newDocumentBuilder.definition(operationDefinition);
@@ -264,7 +277,9 @@ public class OverallQueryTransformer {
                                                                Set<String> referencedFragmentNames,
                                                                Map<String, VariableDefinition> referencedVariables,
                                                                ServiceExecutionHooks serviceExecutionHooks,
-                                                               Map<String, Object> variableValues) {
+                                                               Map<String, Object> variableValues,
+                                                               Service service,
+                                                               Object serviceContext) {
         return fragments.values().stream()
                 .map(fragment -> transformFragmentDefinition(
                         executionContext,
@@ -275,7 +290,9 @@ public class OverallQueryTransformer {
                         referencedFragmentNames,
                         referencedVariables,
                         serviceExecutionHooks,
-                        variableValues))
+                        variableValues,
+                        service,
+                        serviceContext))
                 .collect(toMapCollector(FragmentDefinition::getName, identity()));
     }
 
@@ -287,7 +304,9 @@ public class OverallQueryTransformer {
                                                            Set<String> referencedFragmentNames,
                                                            Map<String, VariableDefinition> referencedVariables,
                                                            ServiceExecutionHooks serviceExecutionHooks,
-                                                           Map<String, Object> variableValues) {
+                                                           Map<String, Object> variableValues,
+                                                           Service service,
+                                                           Object serviceContext) {
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
 
         RecordTypeInformation.OverallTypeInformation<FragmentDefinition> overallTypeInformation = recordTypeInformation.recordOverallTypes(
@@ -306,7 +325,9 @@ public class OverallQueryTransformer {
                 nadelContext,
                 serviceExecutionHooks,
                 overallTypeInformation,
-                variableValues);
+                variableValues,
+                service,
+                serviceContext);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         rootVars.put(NodeTypeContext.class, newNodeTypeContext().build());
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
@@ -353,7 +374,9 @@ public class OverallQueryTransformer {
                                              Map<String, VariableDefinition> referencedVariables,
                                              NadelContext nadelContext,
                                              ServiceExecutionHooks serviceExecutionHooks,
-                                             Map<String, Object> variableValues) {
+                                             Map<String, Object> variableValues,
+                                             Service service,
+                                             Object serviceContext) {
         RecordTypeInformation.OverallTypeInformation<T> overallTypeInformation = recordTypeInformation.recordOverallTypes
                 (nodeWithoutTypeInfo,
                         executionContext.getGraphQLSchema(),
@@ -369,7 +392,9 @@ public class OverallQueryTransformer {
                 nadelContext,
                 serviceExecutionHooks,
                 overallTypeInformation,
-                variableValues);
+                variableValues,
+                service,
+                serviceContext);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(parentType.getName());
         rootVars.put(NodeTypeContext.class, newNodeTypeContext()
@@ -401,6 +426,8 @@ public class OverallQueryTransformer {
         private final Map<String, VariableDefinition> variableDefinitions;
         final ServiceExecutionHooks serviceExecutionHooks;
         private RecordTypeInformation.OverallTypeInformation<?> overallTypeInformation;
+        private Service service;
+        private Object serviceContext;
         private Map<String, Object> variableValues;
 
         Transformer(ExecutionContext executionContext,
@@ -412,7 +439,9 @@ public class OverallQueryTransformer {
                     NadelContext nadelContext,
                     ServiceExecutionHooks serviceExecutionHooks,
                     RecordTypeInformation.OverallTypeInformation overallTypeInformation,
-                    Map<String, Object> variableValues) {
+                    Map<String, Object> variableValues,
+                    Service service,
+                    Object serviceContext) {
             this.executionContext = executionContext;
             this.underlyingSchema = underlyingSchema;
             this.transformationByResultField = transformationByResultField;
@@ -424,8 +453,9 @@ public class OverallQueryTransformer {
             this.overallTypeInformation = overallTypeInformation;
             OperationDefinition operationDefinition = executionContext.getOperationDefinition();
             this.variableDefinitions = FpKit.getByName(operationDefinition.getVariableDefinitions(), VariableDefinition::getName);
-
             this.variableValues = variableValues;
+            this.service = service;
+            this.serviceContext = serviceContext;
         }
 
         @Override
@@ -475,7 +505,13 @@ public class OverallQueryTransformer {
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
             GraphQLInputValueDefinition inputValueDefinition = typeContext.getInputValueDefinitionUnderlying();
 
-            HooksVisitArgumentValueEnvironmentImpl hooksVisitArgumentValueEnvironment = new HooksVisitArgumentValueEnvironmentImpl(inputValueDefinition, context);
+            HooksVisitArgumentValueEnvironmentImpl hooksVisitArgumentValueEnvironment = new HooksVisitArgumentValueEnvironmentImpl(
+                    inputValueDefinition,
+                    context,
+                    value,
+                    variableValues,
+                    service,
+                    serviceContext);
 
             NewVariableValue newVariableValue = serviceExecutionHooks.visitArgumentValueInQuery(hooksVisitArgumentValueEnvironment);
             if (newVariableValue != null) {
