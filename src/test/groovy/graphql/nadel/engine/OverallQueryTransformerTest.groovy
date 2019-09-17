@@ -1,5 +1,6 @@
 package graphql.nadel.engine
 
+
 import graphql.execution.ExecutionContext
 import graphql.execution.MergedField
 import graphql.execution.nextgen.FieldSubSelection
@@ -44,6 +45,37 @@ class OverallQueryTransformerTest extends Specification {
         }
          ''')
 
+    def underlyingSchemaExampleService = TestUtil.schema("""
+            type Query { 
+                helloWorld: String 
+                foo(id: ID!): Foo
+                bar(id: ID!): Baz
+            }
+            type Mutation {
+                hello: String
+            }
+            
+            type Foo {
+                id: ID!
+                bazId: String 
+                qux: String!
+                anotherSourceId: ID
+            }
+            
+            type Baz {
+                id: ID!
+            }
+        """)
+
+    def underlyingSchemaAnotherService = TestUtil.schema("""
+            type Query { 
+                topLevel(id:ID): AnotherFoo
+            }
+            type AnotherFoo {
+                id: ID!
+            }
+        """)
+
     def "transforms query to delegate with field rename"() {
         def query = TestUtil.parseQuery(
                 '''
@@ -57,7 +89,7 @@ class OverallQueryTransformerTest extends Specification {
             ''')
 
         when:
-        def delegateQuery = doTransform(schema, query)
+        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query)
 
         then:
         AstPrinter.printAstCompact(delegateQuery) == "query {hAlias:helloWorld foo(id:\"1\") {fooId:id bazId}}"
@@ -72,7 +104,7 @@ class OverallQueryTransformerTest extends Specification {
             ''')
 
         when:
-        def delegateQuery = doTransform(schema, query, Operation.MUTATION, "M")
+        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query, Operation.MUTATION, "M")
 
         then:
         AstPrinter.printAstCompact(delegateQuery) == "mutation M {hAlias:hello}"
@@ -102,7 +134,7 @@ class OverallQueryTransformerTest extends Specification {
             ''')
 
         when:
-        def delegateQuery = doTransform(schema, query)
+        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query)
 
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
@@ -120,7 +152,7 @@ class OverallQueryTransformerTest extends Specification {
             ''')
 
         when:
-        def delegateQuery = doTransform(schema, query)
+        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query)
 
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
@@ -157,7 +189,7 @@ class OverallQueryTransformerTest extends Specification {
             ''')
 
         when:
-        def delegateQuery = doTransform(schema, query)
+        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query)
 
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
@@ -182,7 +214,7 @@ class OverallQueryTransformerTest extends Specification {
         //TODO: add test case without type condition, currently getting NPE due to AstPrinter bug
 
         when:
-        def delegateQuery = doTransform(schema, query)
+        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query)
 
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
@@ -197,7 +229,7 @@ class OverallQueryTransformerTest extends Specification {
             {
                 foo(id: "12") {
                     anotherFoo {
-                        name
+                        id
                     }
                 }
             }
@@ -210,7 +242,8 @@ class OverallQueryTransformerTest extends Specification {
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
         def transformer = new OverallQueryTransformer()
-        def transformationResult = transformer.transformMergedFields(executionContext, schema, null, Operation.QUERY, fields, Mock(ServiceExecutionHooks))
+        def serviceExecutionHooks = new ServiceExecutionHooks() {}
+        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchemaExampleService, null, Operation.QUERY, fields, serviceExecutionHooks)
         when:
         def document = transformationResult.document
 
@@ -220,16 +253,20 @@ class OverallQueryTransformerTest extends Specification {
     }
 
 
-    private static Document doTransform(GraphQLSchema schema, Document query, Operation operation = Operation.QUERY, String operationName = null) {
+    private static Document doTransform(GraphQLSchema overallSchema,
+                                        GraphQLSchema underlyingSchema,
+                                        Document query,
+                                        Operation operation = Operation.QUERY,
+                                        String operationName = null) {
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
-        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        (executionContext, fieldSubSelection) = TestUtil.executionData(overallSchema, query)
 
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
         def transformer = new OverallQueryTransformer()
         def hooks = new ServiceExecutionHooks() {}
-        def transformationResult = transformer.transformMergedFields(executionContext, schema, operationName, operation, fields, hooks)
+        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchema, operationName, operation, fields, hooks)
         return transformationResult.document
     }
 }
