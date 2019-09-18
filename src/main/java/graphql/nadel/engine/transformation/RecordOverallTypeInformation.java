@@ -25,51 +25,8 @@ import static graphql.Assert.assertNotNull;
 import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 
-public class RecordTypeInformation {
+public class RecordOverallTypeInformation {
 
-    public static class OverallTypeInformation<T extends Node> {
-        T node;
-        Map<String, FieldTypeInfo> fieldInfoById = new LinkedHashMap<>();
-
-        public OverallTypeInformation(T node, Map<String, FieldTypeInfo> fieldInfoById) {
-            this.node = node;
-            this.fieldInfoById = fieldInfoById;
-        }
-
-        public T getNode() {
-            return node;
-        }
-
-        public Map<String, FieldTypeInfo> getFieldInfoById() {
-            return fieldInfoById;
-        }
-    }
-
-    public static class FieldTypeInfo {
-        GraphQLFieldsContainer fieldsContainer;
-        GraphQLFieldDefinition fieldDefinition;
-
-        public FieldTypeInfo(GraphQLFieldsContainer fieldsContainer, GraphQLFieldDefinition fieldDefinition) {
-            this.fieldsContainer = fieldsContainer;
-            this.fieldDefinition = fieldDefinition;
-        }
-
-        public GraphQLFieldsContainer getFieldsContainer() {
-            return fieldsContainer;
-        }
-
-        public void setFieldsContainer(GraphQLFieldsContainer fieldsContainer) {
-            this.fieldsContainer = fieldsContainer;
-        }
-
-        public GraphQLFieldDefinition getFieldDefinition() {
-            return fieldDefinition;
-        }
-
-        public void setFieldDefinition(GraphQLFieldDefinition fieldDefinition) {
-            this.fieldDefinition = fieldDefinition;
-        }
-    }
 
     public <T extends Node> OverallTypeInformation<T> recordOverallTypes(T node, GraphQLSchema graphQLSchema, GraphQLOutputType rootOutputType) {
 

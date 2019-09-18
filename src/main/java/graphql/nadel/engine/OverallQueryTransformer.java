@@ -29,8 +29,10 @@ import graphql.nadel.engine.transformation.ApplyEnvironment;
 import graphql.nadel.engine.transformation.ApplyResult;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.FieldTypeInfo;
 import graphql.nadel.engine.transformation.HydrationTransformation;
-import graphql.nadel.engine.transformation.RecordTypeInformation;
+import graphql.nadel.engine.transformation.OverallTypeInformation;
+import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
 import graphql.nadel.hooks.NewVariableValue;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.util.FpKit;
@@ -86,7 +88,7 @@ public class OverallQueryTransformer {
     private static final Logger log = LoggerFactory.getLogger(OverallQueryTransformer.class);
 
     private final ValuesResolver valuesResolver = new ValuesResolver();
-    private final RecordTypeInformation recordTypeInformation = new RecordTypeInformation();
+    private final RecordOverallTypeInformation recordOverallTypeInformation = new RecordOverallTypeInformation();
 
     QueryTransformationResult transformHydratedTopLevelField(
             ExecutionContext executionContext,
@@ -309,7 +311,7 @@ public class OverallQueryTransformer {
                                                            Object serviceContext) {
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
 
-        RecordTypeInformation.OverallTypeInformation<FragmentDefinition> overallTypeInformation = recordTypeInformation.recordOverallTypes(
+        OverallTypeInformation<FragmentDefinition> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
                 fragmentDefinitionWithoutTypeInfo,
                 executionContext.getGraphQLSchema(),
                 null);
@@ -377,7 +379,7 @@ public class OverallQueryTransformer {
                                              Map<String, Object> variableValues,
                                              Service service,
                                              Object serviceContext) {
-        RecordTypeInformation.OverallTypeInformation<T> overallTypeInformation = recordTypeInformation.recordOverallTypes
+        OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes
                 (nodeWithoutTypeInfo,
                         executionContext.getGraphQLSchema(),
                         parentType);
@@ -425,7 +427,7 @@ public class OverallQueryTransformer {
         final NadelContext nadelContext;
         private final Map<String, VariableDefinition> variableDefinitions;
         final ServiceExecutionHooks serviceExecutionHooks;
-        private RecordTypeInformation.OverallTypeInformation<?> overallTypeInformation;
+        private OverallTypeInformation<?> overallTypeInformation;
         private Service service;
         private Object serviceContext;
         private Map<String, Object> variableValues;
@@ -438,7 +440,7 @@ public class OverallQueryTransformer {
                     Map<String, VariableDefinition> referencedVariables,
                     NadelContext nadelContext,
                     ServiceExecutionHooks serviceExecutionHooks,
-                    RecordTypeInformation.OverallTypeInformation overallTypeInformation,
+                    OverallTypeInformation overallTypeInformation,
                     Map<String, Object> variableValues,
                     Service service,
                     Object serviceContext) {
@@ -531,7 +533,7 @@ public class OverallQueryTransformer {
             }
 
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
-            RecordTypeInformation.FieldTypeInfo fieldTypeInfo = getFieldTypeInfo(field);
+            FieldTypeInfo fieldTypeInfo = getFieldTypeInfo(field);
             if (fieldTypeInfo != null) {
                 GraphQLFieldDefinition fieldDefinitionOverall = fieldTypeInfo.getFieldDefinition();
                 GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
@@ -571,7 +573,7 @@ public class OverallQueryTransformer {
             return TraversalControl.CONTINUE;
         }
 
-        private RecordTypeInformation.FieldTypeInfo getFieldTypeInfo(Field field) {
+        private FieldTypeInfo getFieldTypeInfo(Field field) {
             String id = FieldMetadataUtil.getOverallTypeInfoId(field);
             return overallTypeInformation.getFieldInfoById().get(id);
         }
@@ -594,7 +596,7 @@ public class OverallQueryTransformer {
 
         }
 
-        ApplyEnvironment createApplyEnvironment(Field field, TraverserContext<Node> context, RecordTypeInformation.FieldTypeInfo fieldTypeInfo) {
+        ApplyEnvironment createApplyEnvironment(Field field, TraverserContext<Node> context, FieldTypeInfo fieldTypeInfo) {
             return new ApplyEnvironment(field, fieldTypeInfo.getFieldDefinition(), fieldTypeInfo.getFieldsContainer(), context);
         }
 
