@@ -1,6 +1,5 @@
 package graphql.nadel.engine;
 
-import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.Async;
@@ -11,9 +10,6 @@ import graphql.execution.MergedField;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
-import graphql.language.Document;
-import graphql.language.Field;
-import graphql.language.OperationDefinition;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
@@ -24,7 +20,6 @@ import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
-import graphql.nadel.util.Data;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
@@ -108,89 +103,67 @@ public class NadelExecutionStrategy {
 
     private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(ExecutionContext executionContext, ExecutionStepInfo rootExecutionStepInfo, NadelContext nadelContext, FieldTracking fieldTracking, Operation operation, List<OneServiceExecution> oneServiceExecutions) {
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
+
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
             Service service = oneServiceExecution.service;
-            ExecutionStepInfo stepInfo = oneServiceExecution.stepInfo;
+            ExecutionStepInfo esi = oneServiceExecution.stepInfo;
             Object serviceContext = oneServiceExecution.serviceContext;
 
             String operationName = buildOperationName(service, executionContext);
-            MergedField mergedField = stepInfo.getField();
+            MergedField mergedField = esi.getField();
 
             //
             // take the original query and transform it into the underlying query needed for that top level field
             //
             GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
-            QueryTransformationResult queryTransformInitial = queryTransformer
+            QueryTransformationResult queryTransform = queryTransformer
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
-            CompletableFuture<Data> dataCF = CompletableFuture.completedFuture(Data.of(queryTransformInitial, executionContext, stepInfo));
 
+            Map<String, FieldTransformation> transformationByResultField = queryTransform.getTransformationByResultField();
+            Map<String, String> typeRenameMappings = queryTransform.getTypeRenameMappings();
 
-            CompletableFuture<RootExecutionResultNode> serviceResult = dataCF.thenCompose(data -> {
-                ExecutionContext runExecutionCtx = data.get(ExecutionContext.class);
-                ExecutionStepInfo esi = data.get(ExecutionStepInfo.class);
-                QueryTransformationResult queryTransform = data.get(QueryTransformationResult.class);
+            ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, queryTransform.getVariableValues());
 
-                Map<String, FieldTransformation> transformationByResultField = queryTransform.getTransformationByResultField();
-                Map<String, String> typeRenameMappings = queryTransform.getTypeRenameMappings();
+            fieldTracking.fieldsDispatched(singletonList(esi));
+            CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
+                    .execute(newExecutionContext, queryTransform, service, operation, serviceContext);
 
-                ExecutionContext newExecutionContext = buildServiceVariableOverrides(runExecutionCtx, queryTransform.getVariableValues());
+            CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
+                    .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
+                            .convert(newExecutionContext.getExecutionId(),
+                                    nadelContext.getForkJoinPool(),
+                                    resultNode,
+                                    overallSchema,
+                                    rootExecutionStepInfo,
+                                    transformationByResultField,
+                                    typeRenameMappings));
 
-                //
-                // say the fields are dispatched
-                fieldTracking.fieldsDispatched(singletonList(esi));
-                //
-                // now call put to the service with the new query
-                CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
-                        .execute(newExecutionContext, queryTransform, service, operation, serviceContext);
+            //
+            // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
+            convertedResult = convertedResult
+                    .whenComplete(fieldTracking::fieldsCompleted);
 
-                CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
-                        .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
-                                .convert(newExecutionContext.getExecutionId(),
-                                        nadelContext.getForkJoinPool(),
-                                        resultNode,
-                                        overallSchema,
-                                        rootExecutionStepInfo,
-                                        transformationByResultField,
-                                        typeRenameMappings));
-
-                //
-                // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
-                convertedResult = convertedResult
-                        .whenComplete(fieldTracking::fieldsCompleted);
-
-                return convertedResult
-                        .thenCompose(rootResultNode -> {
-                            ResultRewriteParams resultRewriteParams = ResultRewriteParams.newParameters()
-                                    .from(runExecutionCtx)
-                                    .service(service)
-                                    .serviceContext(serviceContext)
-                                    .executionStepInfo(esi)
-                                    .resultNode(rootResultNode)
-                                    .build();
-                            return serviceExecutionHooks.resultRewrite(resultRewriteParams);
-                        });
-            });
-
+            CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult
+                    .thenCompose(rootResultNode -> {
+                        ResultRewriteParams resultRewriteParams = ResultRewriteParams.newParameters()
+                                .from(executionContext)
+                                .service(service)
+                                .serviceContext(serviceContext)
+                                .executionStepInfo(esi)
+                                .resultNode(rootResultNode)
+                                .build();
+                        return serviceExecutionHooks.resultRewrite(resultRewriteParams);
+                    });
 
             resultNodes.add(serviceResult);
         }
         return resultNodes;
     }
 
-    private MergedField getTopLevelFieldFromDoc(Document document) {
-        OperationDefinition operationDefinition = document.getDefinitionsOfType(OperationDefinition.class).get(0);
-        Assert.assertNotNull(operationDefinition);
-
-        Field field = operationDefinition.getSelectionSet().getSelectionsOfType(Field.class).get(0);
-        Assert.assertNotNull(field);
-        return MergedField.newMergedField(field).build();
-    }
-
     private RootExecutionResultNode removeArtificialFieldsFromRoot(ExecutionResultNode resultNode, NadelContext nadelContext) {
         return (RootExecutionResultNode) removeArtificialFields(nadelContext, resultNode);
     }
-
 
     @SuppressWarnings("unused")
     private <T> void possiblyLogException(T result, Throwable exception) {
