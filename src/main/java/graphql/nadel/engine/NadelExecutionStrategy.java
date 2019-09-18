@@ -78,6 +78,7 @@ public class NadelExecutionStrategy {
 
         CompletableFuture<List<OneServiceExecution>> oneServiceExecutionsCF = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
         return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
+            Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
             List<CompletableFuture<RootExecutionResultNode>> resultNodes =
                     executeTopLevelFields(executionContext, rootExecutionStepInfo, nadelContext, fieldTracking, operation, oneServiceExecutions);
 
@@ -88,7 +89,7 @@ public class NadelExecutionStrategy {
                             //
                             // all the nodes that are hydrated need to make new service calls to get their eventual value
                             //
-                            rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode)
+                            rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode, serviceContextsByService)
                                     //
                                     .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext)))
                     .whenComplete((resultNode, throwable) -> {
@@ -100,6 +101,34 @@ public class NadelExecutionStrategy {
 
 
     }
+
+    private Map<Service, Object> serviceContextsByService(List<OneServiceExecution> oneServiceExecutions) {
+        Map<Service, Object> result = new LinkedHashMap<>();
+        for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
+            result.put(oneServiceExecution.service, oneServiceExecution.serviceContext);
+        }
+        return result;
+    }
+
+    private CompletableFuture<List<OneServiceExecution>> prepareServiceExecution(ExecutionContext executionCtx, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
+        List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
+        for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
+            ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
+            Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+
+            CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
+                    .from(executionCtx)
+                    .service(service)
+                    .executionStepInfo(fieldExecutionStepInfo)
+                    .build();
+
+            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
+            CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo));
+            result.add(serviceCF);
+        }
+        return Async.each(result);
+    }
+
 
     private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(ExecutionContext executionContext, ExecutionStepInfo rootExecutionStepInfo, NadelContext nadelContext, FieldTracking fieldTracking, Operation operation, List<OneServiceExecution> oneServiceExecutions) {
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
@@ -207,25 +236,6 @@ public class NadelExecutionStrategy {
         final Service service;
         final Object serviceContext;
         final ExecutionStepInfo stepInfo;
-    }
-
-    private CompletableFuture<List<OneServiceExecution>> prepareServiceExecution(ExecutionContext executionCtx, FieldSubSelection fieldSubSelection, ExecutionStepInfo rootExecutionStepInfo) {
-        List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
-        for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
-            ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
-            Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
-
-            CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
-                    .from(executionCtx)
-                    .service(service)
-                    .executionStepInfo(fieldExecutionStepInfo)
-                    .build();
-
-            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
-            CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo));
-            result.add(serviceCF);
-        }
-        return Async.each(result);
     }
 
 
