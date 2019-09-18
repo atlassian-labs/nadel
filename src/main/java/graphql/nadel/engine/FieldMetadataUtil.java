@@ -52,15 +52,6 @@ public class FieldMetadataUtil {
         return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getId);
     }
 
-//    public static boolean skipTraversing(Field field) {
-//        String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
-//        if (serialized == null) {
-//            return false;
-//        }
-//        List<FieldMetadata> fieldMetadata = readMetadata(serialized);
-//        return fieldMetadata.stream().anyMatch(FieldMetadata::isSkipTraversing);
-//    }
-
     public static List<String> getFieldIds(Field field) {
         String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
         if (serialized == null) {
