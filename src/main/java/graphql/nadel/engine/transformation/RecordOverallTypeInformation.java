@@ -25,6 +25,10 @@ import static graphql.Assert.assertNotNull;
 import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 
+/**
+ * Traverses a query and saves type information while doing it.
+ * Ever field gets an additionalData entry pointing to an {@link FieldTypeInfo}
+ */
 public class RecordOverallTypeInformation {
 
 
