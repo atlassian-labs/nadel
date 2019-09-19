@@ -113,7 +113,7 @@ class ServiceExecutionHooksTest extends Specification {
 
             @Override
             NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
-                if (env.getInputValueDefinition().getName() == "id") {
+                if (env.getUnderlyingInputValueDefinition().getName() == "id") {
                     StringValue newValue = StringValue.newStringValue().value("modified").build()
                     TreeTransformerUtil.changeNode(env.getTraverserContext(), newValue);
                 }
