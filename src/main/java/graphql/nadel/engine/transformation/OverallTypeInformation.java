@@ -6,18 +6,18 @@ import java.util.Map;
 
 public class OverallTypeInformation<T extends Node> {
     private final T node;
-    private final Map<String, FieldTypeInfo> fieldInfoById;
+    private final Map<String, OverallTypeInfo> overallInfoById;
 
-    public OverallTypeInformation(T node, Map<String, FieldTypeInfo> fieldInfoById) {
+    public OverallTypeInformation(T node, Map<String, OverallTypeInfo> overallInfoById) {
         this.node = node;
-        this.fieldInfoById = fieldInfoById;
+        this.overallInfoById = overallInfoById;
     }
 
     public T getNode() {
         return node;
     }
 
-    public Map<String, FieldTypeInfo> getFieldInfoById() {
-        return fieldInfoById;
+    public Map<String, OverallTypeInfo> getOverallInfoById() {
+        return overallInfoById;
     }
 }

@@ -1,6 +1,19 @@
 package graphql.nadel.engine;
 
+import graphql.Assert;
+import graphql.language.Argument;
+import graphql.language.ArrayValue;
+import graphql.language.BooleanValue;
+import graphql.language.EnumValue;
 import graphql.language.Field;
+import graphql.language.FloatValue;
+import graphql.language.IntValue;
+import graphql.language.Node;
+import graphql.language.NullValue;
+import graphql.language.ObjectValue;
+import graphql.language.StringValue;
+import graphql.language.Value;
+import graphql.language.VariableReference;
 import graphql.nadel.util.FpKit;
 
 import java.io.ByteArrayInputStream;
@@ -122,7 +135,51 @@ public class FieldMetadataUtil {
         return field.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
     }
 
-    public static String getOverallTypeInfoId(Field field) {
-        return field.getAdditionalData().get(OVERALL_TYPE_INFO);
+    public static Argument setOverallTypeInfoId(Argument argument, String id) {
+        return argument.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+    }
+
+    public static Value setOverallTypeInfoId(Value node, String id) {
+        if (node instanceof VariableReference) {
+            VariableReference value = (VariableReference) node;
+            return value.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+        }
+        if (node instanceof StringValue) {
+            StringValue value = (StringValue) node;
+            return value.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+        }
+        if (node instanceof NullValue) {
+            NullValue value = (NullValue) node;
+            return value.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+        }
+        if (node instanceof ObjectValue) {
+            ObjectValue value = (ObjectValue) node;
+            return value.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+        }
+        if (node instanceof ArrayValue) {
+            ArrayValue value = (ArrayValue) node;
+            return value.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+        }
+        if (node instanceof EnumValue) {
+            EnumValue value = (EnumValue) node;
+            return value.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+        }
+        if (node instanceof BooleanValue) {
+            BooleanValue value = (BooleanValue) node;
+            return value.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+        }
+        if (node instanceof FloatValue) {
+            FloatValue value = (FloatValue) node;
+            return value.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+        }
+        if (node instanceof IntValue) {
+            IntValue value = (IntValue) node;
+            return value.transform(builder -> builder.additionalData(OVERALL_TYPE_INFO, id));
+        }
+        return Assert.assertShouldNeverHappen();
+    }
+
+    public static String getOverallTypeInfoId(Node<?> node) {
+        return node.getAdditionalData().get(OVERALL_TYPE_INFO);
     }
 }

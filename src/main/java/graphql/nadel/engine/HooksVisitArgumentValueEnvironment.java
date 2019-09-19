@@ -15,9 +15,19 @@ public interface HooksVisitArgumentValueEnvironment {
 
     Object getServiceContext();
 
-    GraphQLInputValueDefinition getInputValueDefinition();
+    GraphQLInputValueDefinition getUnderlyingInputValueDefinition();
 
-    GraphQLArgument getGraphQLArgument();
+    /**
+     * @return this can be null if there is no corresponding overall input value definition
+     */
+    GraphQLInputValueDefinition getOverallInputValueDefinition();
+
+    GraphQLArgument getUnderlyingGraphQLArgument();
+
+    /**
+     * @return this can be null if there is no corresponding overall argument
+     */
+    GraphQLArgument getOverallGraphQLArgument();
 
     TraverserContext<Node> getTraverserContext();
 

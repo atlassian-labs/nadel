@@ -29,8 +29,8 @@ import graphql.nadel.engine.transformation.ApplyEnvironment;
 import graphql.nadel.engine.transformation.ApplyResult;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
-import graphql.nadel.engine.transformation.FieldTypeInfo;
 import graphql.nadel.engine.transformation.HydrationTransformation;
+import graphql.nadel.engine.transformation.OverallTypeInfo;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
 import graphql.nadel.hooks.NewVariableValue;
@@ -488,7 +488,6 @@ public class OverallQueryTransformer {
 
             NodeTypeContext nodeTypeContext = context.getVarFromParents(NodeTypeContext.class);
 
-
             GraphQLFieldDefinition fieldDefinition = nodeTypeContext.getFieldDefinitionUnderlying();
             GraphQLArgument graphQLArgument = fieldDefinition.getArgument(argument.getName());
             String argumentName = graphQLArgument.getName();
@@ -507,9 +506,13 @@ public class OverallQueryTransformer {
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
             GraphQLInputValueDefinition inputValueDefinition = typeContext.getInputValueDefinitionUnderlying();
 
+            OverallTypeInfo overallTypeInfo = getOverallTypeInfo(value);
+
             HooksVisitArgumentValueEnvironmentImpl hooksVisitArgumentValueEnvironment = new HooksVisitArgumentValueEnvironmentImpl(
                     inputValueDefinition,
+                    overallTypeInfo.getGraphQLInputValueDefinition(),
                     typeContext.getArgumentDefinitionUnderlying(),
+                    overallTypeInfo.getGraphQLArgument(),
                     context,
                     value,
                     variableValues,
@@ -533,9 +536,9 @@ public class OverallQueryTransformer {
             }
 
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
-            FieldTypeInfo fieldTypeInfo = getFieldTypeInfo(field);
-            if (fieldTypeInfo != null) {
-                GraphQLFieldDefinition fieldDefinitionOverall = fieldTypeInfo.getFieldDefinition();
+            OverallTypeInfo overallTypeInfo = getOverallTypeInfo(field);
+            if (overallTypeInfo != null) {
+                GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
                 GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
 
                 TypeMappingDefinition typeMappingDefinition = typeTransformation(executionContext, fieldType.getName());
@@ -548,7 +551,7 @@ public class OverallQueryTransformer {
                     // major side effect alert - we are relying on transformation to call TreeTransformerUtil.changeNode
                     // inside itself here
                     //
-                    ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, fieldTypeInfo);
+                    ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, overallTypeInfo);
                     ApplyResult applyResult = transformation.apply(applyEnvironment);
                     Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
 
@@ -573,10 +576,11 @@ public class OverallQueryTransformer {
             return TraversalControl.CONTINUE;
         }
 
-        private FieldTypeInfo getFieldTypeInfo(Field field) {
-            String id = FieldMetadataUtil.getOverallTypeInfoId(field);
-            return overallTypeInformation.getFieldInfoById().get(id);
+        private OverallTypeInfo getOverallTypeInfo(Node node) {
+            String id = FieldMetadataUtil.getOverallTypeInfoId(node);
+            return overallTypeInformation.getOverallInfoById().get(id);
         }
+
 
         private void updateTypeContext(TraverserContext<Node> context, GraphQLOutputType currentOutputTypeUnderlying) {
             Field newField = (Field) context.thisNode();
@@ -596,8 +600,8 @@ public class OverallQueryTransformer {
 
         }
 
-        ApplyEnvironment createApplyEnvironment(Field field, TraverserContext<Node> context, FieldTypeInfo fieldTypeInfo) {
-            return new ApplyEnvironment(field, fieldTypeInfo.getFieldDefinition(), fieldTypeInfo.getFieldsContainer(), context);
+        ApplyEnvironment createApplyEnvironment(Field field, TraverserContext<Node> context, OverallTypeInfo overallTypeInfo) {
+            return new ApplyEnvironment(field, overallTypeInfo.getFieldDefinition(), overallTypeInfo.getFieldsContainer(), context);
         }
 
 

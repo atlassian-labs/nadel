@@ -10,23 +10,29 @@ import java.util.Map;
 
 public class HooksVisitArgumentValueEnvironmentImpl implements HooksVisitArgumentValueEnvironment {
 
-    private final GraphQLInputValueDefinition inputValueDefinition;
+    private final GraphQLInputValueDefinition underlyingInputValueDefinition;
+    private final GraphQLInputValueDefinition overallInputValueDefinition;
     private final TraverserContext traverserContext;
     private final Value value;
     private final Map<String, Object> variables;
     private final Service service;
     private final Object serviceContext;
-    private final GraphQLArgument graphQLArgument;
+    private final GraphQLArgument underlyingGraphQLArgument;
+    private final GraphQLArgument overallGraphQLArgument;
 
-    public HooksVisitArgumentValueEnvironmentImpl(GraphQLInputValueDefinition inputValueDefinition,
-                                                  GraphQLArgument graphQLArgument,
+    public HooksVisitArgumentValueEnvironmentImpl(GraphQLInputValueDefinition underlyingInputValueDefinition,
+                                                  GraphQLInputValueDefinition overallInputValueDefinition,
+                                                  GraphQLArgument underlyingGraphQLArgument,
+                                                  GraphQLArgument overallGraphQLArgument,
                                                   TraverserContext traverserContext,
                                                   Value value,
                                                   Map<String, Object> variables,
                                                   Service service,
                                                   Object serviceContext) {
-        this.inputValueDefinition = inputValueDefinition;
-        this.graphQLArgument = graphQLArgument;
+        this.underlyingInputValueDefinition = underlyingInputValueDefinition;
+        this.overallInputValueDefinition = overallInputValueDefinition;
+        this.underlyingGraphQLArgument = underlyingGraphQLArgument;
+        this.overallGraphQLArgument = overallGraphQLArgument;
         this.traverserContext = traverserContext;
         this.value = value;
         this.variables = variables;
@@ -35,13 +41,23 @@ public class HooksVisitArgumentValueEnvironmentImpl implements HooksVisitArgumen
     }
 
     @Override
-    public GraphQLInputValueDefinition getInputValueDefinition() {
-        return inputValueDefinition;
+    public GraphQLInputValueDefinition getUnderlyingInputValueDefinition() {
+        return underlyingInputValueDefinition;
     }
 
     @Override
-    public GraphQLArgument getGraphQLArgument() {
-        return graphQLArgument;
+    public GraphQLInputValueDefinition getOverallInputValueDefinition() {
+        return overallInputValueDefinition;
+    }
+
+    @Override
+    public GraphQLArgument getUnderlyingGraphQLArgument() {
+        return overallGraphQLArgument;
+    }
+
+    @Override
+    public GraphQLArgument getOverallGraphQLArgument() {
+        return overallGraphQLArgument;
     }
 
 
