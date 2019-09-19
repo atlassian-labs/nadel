@@ -2,6 +2,7 @@ package graphql.nadel.hooks;
 
 import graphql.PublicSpi;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
+import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -23,16 +24,10 @@ public interface ServiceExecutionHooks {
         return CompletableFuture.completedFuture(null);
     }
 
-    /**
-     * Called to possibly change the arguments and runtime variables that are passed onto a called service
-     *
-     * @param params the parameters to this call
-     *
-     * @return an async null to indicate NO change needed or an async new document and variables
-     */
-    default CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
-        return CompletableFuture.completedFuture(null);
+    default NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
+        return null;
     }
+
 
     /**
      * Called to allow a service to post process the service result in some fashion.

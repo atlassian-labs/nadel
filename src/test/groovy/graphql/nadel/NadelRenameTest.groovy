@@ -1,7 +1,14 @@
 package graphql.nadel
 
+
+import graphql.execution.nextgen.result.RootExecutionResultNode
+import graphql.nadel.hooks.CreateServiceContextParams
+import graphql.nadel.hooks.ResultRewriteParams
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
+
+import java.util.concurrent.CompletableFuture
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
@@ -104,9 +111,22 @@ class NadelRenameTest extends Specification {
     def delegatedExecution = Mock(ServiceExecution)
     def serviceFactory = TestUtil.serviceFactory(delegatedExecution, simpleUnderlyingSchema)
 
+    ServiceExecutionHooks traversingExecutionHooks = new ServiceExecutionHooks() {
+        @Override
+        CompletableFuture<Object> createServiceContext(CreateServiceContextParams params) {
+            return completedFuture(null)
+        }
+
+        @Override
+        CompletableFuture<RootExecutionResultNode> resultRewrite(ResultRewriteParams params) {
+            return completedFuture(params.getResultNode());
+        }
+    }
+
     def nadel = newNadel()
             .dsl(simpleNDSL)
             .serviceExecutionFactory(serviceFactory)
+            .serviceExecutionHooks(traversingExecutionHooks)
             .build()
 
     def "simple type rename and field rename works as expected"() {
@@ -320,6 +340,5 @@ class NadelRenameTest extends Specification {
         }
         result.errors.isEmpty()
         result.data == [renameString: "hello"]
-
     }
 }

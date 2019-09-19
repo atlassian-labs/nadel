@@ -20,6 +20,7 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
+import graphql.nadel.engine.HooksVisitArgumentValueEnvironment
 import graphql.nadel.engine.NadelContext
 import graphql.nadel.engine.NadelExecutionStrategy
 import graphql.nadel.engine.ResultNodesTransformer
@@ -111,6 +112,14 @@ class ServiceExecutionHooksTest extends Specification {
             }
 
             @Override
+            NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
+                if (env.getInputValueDefinition().getName() == "id") {
+                    StringValue newValue = StringValue.newStringValue().value("modified").build()
+                    TreeTransformerUtil.changeNode(env.getTraverserContext(), newValue);
+                }
+                return null;
+            }
+
             CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
 
                 def newDoc = new AstTransformer().transformParallel(params.getDocument(), new NodeVisitorStub() {
@@ -174,13 +183,11 @@ class ServiceExecutionHooksTest extends Specification {
             }
 
             @Override
-            CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
-
-                def rewriteResult = QueryRewriteResult.newResult().from(params)
-                        .variables(["variable": "123", "extra": "present"])
-                        .build()
-                return completedFuture(rewriteResult)
+            NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
+                NewVariableValue newVariableValue = new NewVariableValue("variable", "123")
+                return newVariableValue
             }
+
         }
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
 

@@ -5,14 +5,11 @@ import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
-import graphql.language.Node;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
-import graphql.util.TraversalControl;
-import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,62 +20,10 @@ import static graphql.Assert.assertTrue;
 public abstract class FieldTransformation {
 
 
-    public static class UnapplyResult {
-
-        private final ExecutionResultNode node;
-        private final TraversalControl traversalControl;
-
-        public UnapplyResult(ExecutionResultNode node, TraversalControl traversalControl) {
-            this.node = node;
-            this.traversalControl = traversalControl;
-        }
-
-        public ExecutionResultNode getNode() {
-            return node;
-        }
-
-        public TraversalControl getTraversalControl() {
-            return traversalControl;
-        }
-    }
-
-    public static class ApplyEnvironment {
-        private final Field field;
-        private final GraphQLFieldDefinition fieldDefinition;
-        private final GraphQLFieldsContainer fieldsContainer;
-        private final TraverserContext<Node> traverserContext;
-
-        public ApplyEnvironment(Field field, GraphQLFieldDefinition fieldDefinition, GraphQLFieldsContainer fieldsContainer, TraverserContext<Node> traverserContext) {
-            this.field = field;
-            this.fieldDefinition = fieldDefinition;
-            this.fieldsContainer = fieldsContainer;
-            this.traverserContext = traverserContext;
-        }
-
-        public Field getField() {
-            return field;
-        }
-
-        public GraphQLFieldDefinition getFieldDefinition() {
-            return fieldDefinition;
-        }
-
-        public GraphQLFieldsContainer getFieldsContainer() {
-            return fieldsContainer;
-        }
-
-        public TraverserContext<Node> getTraverserContext() {
-            return traverserContext;
-        }
-    }
-
     private ApplyEnvironment environment;
     private String fieldId = UUID.randomUUID().toString();
 
-    public TraversalControl apply(ApplyEnvironment environment) {
-        this.environment = environment;
-        return TraversalControl.CONTINUE;
-    }
+    public abstract ApplyResult apply(ApplyEnvironment environment);
 
     /*
      * This is a bit strange method because n FieldTransformations map to one unapply method and we don't know the mapping until
@@ -94,9 +39,14 @@ public abstract class FieldTransformation {
         return fieldId;
     }
 
+    public void setEnvironment(ApplyEnvironment environment) {
+        this.environment = environment;
+    }
+
     public ApplyEnvironment getApplyEnvironment() {
         return environment;
     }
+
 
     public Field getOriginalField() {
         return getApplyEnvironment().getField();

@@ -41,7 +41,7 @@ public final class FieldUtils {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
             Field.Builder newField = Field.newField();
-            FieldMetadataUtil.setFieldMetadata(newField, nadelFieldId, ix == 0 && firstRootOfTransformation, true);
+            FieldMetadataUtil.setFieldMetadata(newField, nadelFieldId, ix == 0 && firstRootOfTransformation);
             if (ix == path.size() - 1 && lastSelectionSet != null) {
                 newField.selectionSet(lastSelectionSet);
             }
@@ -82,11 +82,11 @@ public final class FieldUtils {
         if (field.getSelectionSet() == null) {
             return field;
         }
-        SelectionSet selectionSet = (SelectionSet) new AstTransformer().transformParallel(field.getSelectionSet(), new NodeVisitorStub() {
+        SelectionSet selectionSet = (SelectionSet) new AstTransformer().transform(field.getSelectionSet(), new NodeVisitorStub() {
 
             @Override
             public TraversalControl visitField(Field field, TraverserContext<Node> context) {
-                return TreeTransformerUtil.changeNode(context, FieldMetadataUtil.addFieldMetadata(field, id, false, false));
+                return TreeTransformerUtil.changeNode(context, FieldMetadataUtil.addFieldMetadata(field, id, false));
             }
         });
         return field.transform(builder -> builder.selectionSet(selectionSet));

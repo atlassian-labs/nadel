@@ -12,14 +12,22 @@ import java.util.Map;
 public class QueryTransformationResult {
 
     private final Document document;
+    // will be provided to the ServiceExecution
     private final OperationDefinition operationDefinition;
-
-    private final List<MergedField> transformedMergedFields;
+    // will be provided to the ServiceExecution
+    private final Map<String, FragmentDefinition> transformedFragments;
+    // used to only pass down the references variables to ServiceExecution
     private final List<String> referencedVariables;
 
+    // used when the underlying raw result is converted into a tree
+    private final List<MergedField> transformedMergedFields;
+
+    // needed when the underlying result tree is mapped back
     private final Map<String, FieldTransformation> transformationByResultField;
-    private final Map<String, FragmentDefinition> transformedFragments;
+    // needed when the underlying result tree is mapped back
     private final Map<String, String> typeRenameMappings;
+
+    private final Map<String, Object> variableValues;
 
     public QueryTransformationResult(Document document,
                                      OperationDefinition operationDefinition,
@@ -27,7 +35,8 @@ public class QueryTransformationResult {
                                      Map<String, String> typeRenameMappings,
                                      List<String> referencedVariables,
                                      Map<String, FieldTransformation> transformationByResultField,
-                                     Map<String, FragmentDefinition> transformedFragments) {
+                                     Map<String, FragmentDefinition> transformedFragments,
+                                     Map<String, Object> variableValues) {
         this.document = document;
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
@@ -35,6 +44,7 @@ public class QueryTransformationResult {
         this.transformationByResultField = transformationByResultField;
         this.transformedFragments = transformedFragments;
         this.typeRenameMappings = typeRenameMappings;
+        this.variableValues = variableValues;
     }
 
     public Document getDocument() {
@@ -63,6 +73,10 @@ public class QueryTransformationResult {
 
     public Map<String, String> getTypeRenameMappings() {
         return typeRenameMappings;
+    }
+
+    public Map<String, Object> getVariableValues() {
+        return variableValues;
     }
 }
 

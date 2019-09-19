@@ -14,6 +14,7 @@ import graphql.nadel.TuplesTwo;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
+import graphql.nadel.engine.transformation.UnapplyResult;
 import graphql.schema.GraphQLSchema;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -172,10 +173,10 @@ public class ServiceResultNodesToOverallResult {
         ExecutionResultNode notTransformedTree = splittedNodes.getT1();
         Map<AbstractNode, ExecutionResultNode> nodesWithTransformedFields = splittedNodes.getT2();
 
-        List<FieldTransformation.UnapplyResult> unapplyResults = new ArrayList<>();
+        List<UnapplyResult> unapplyResults = new ArrayList<>();
         for (AbstractNode definition : nodesWithTransformedFields.keySet()) {
             List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
-            FieldTransformation.UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
+            UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
             unapplyResults.add(unapplyResult);
         }
 
@@ -195,7 +196,7 @@ public class ServiceResultNodesToOverallResult {
             first = false;
         }
 
-        for (FieldTransformation.UnapplyResult unapplyResult : unapplyResults) {
+        for (UnapplyResult unapplyResult : unapplyResults) {
             ExecutionResultNode transformedResult;
             if (unapplyResult.getTraversalControl() != TraversalControl.CONTINUE) {
                 transformedResult = unapplyResult.getNode();
@@ -233,7 +234,7 @@ public class ServiceResultNodesToOverallResult {
         assertTrue(splittedNodes.getT2().size() == 1, "only one split tree expected atm");
         ExecutionResultNode nodesWithTransformedFields = graphql.nadel.util.FpKit.getSingleMapValue(splittedNodes.getT2());
 
-        FieldTransformation.UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);
+        UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);
 
         if (withoutTransformedFields != null) {
             mapAndChangeNode(withoutTransformedFields, unapplyEnvironment, context);
