@@ -151,13 +151,7 @@ public class OverallQueryTransformer {
                 .variableDefinitions(variableDefinitions)
                 .build();
 
-        Document.Builder newDocumentBuilder = Document.newDocument();
-        newDocumentBuilder.definition(operationDefinition);
-        for (String referencedFragmentName : referencedFragmentNames) {
-            FragmentDefinition fragmentDefinition = transformedFragments.get(referencedFragmentName);
-            newDocumentBuilder.definition(fragmentDefinition);
-        }
-        Document newDocument = newDocumentBuilder.build();
+        Document newDocument = newDocument(operationDefinition, transformedFragments);
 
         MergedField transformedMergedField = MergedField.newMergedField(transformedTopLevelField).build();
         long elapsedTime = System.currentTimeMillis() - startTime;
@@ -249,13 +243,8 @@ public class OverallQueryTransformer {
                 service,
                 serviceContext);
 
-        Document.Builder newDocumentBuilder = Document.newDocument();
-        newDocumentBuilder.definition(operationDefinition);
-        for (FragmentDefinition transformedFragment : transformedFragments.values()) {
-            newDocumentBuilder.definition(transformedFragment);
-        }
+        Document newDocument = newDocument(operationDefinition, transformedFragments);
 
-        Document newDocument = newDocumentBuilder.build();
         long elapsedTime = System.currentTimeMillis() - startTime;
         log.debug("OverallQueryTransformer.transformMergedFields time: {}, executionId: {}", elapsedTime, executionContext.getExecutionId());
         return new QueryTransformationResult(
@@ -266,6 +255,15 @@ public class OverallQueryTransformer {
                 transformationByResultField,
                 transformedFragments,
                 variableValues);
+    }
+
+    private Document newDocument(OperationDefinition operationDefinition, Map<String, FragmentDefinition> transformedFragments) {
+        Document.Builder newDocumentBuilder = Document.newDocument();
+        newDocumentBuilder.definition(operationDefinition);
+        for (FragmentDefinition transformedFragment : transformedFragments.values()) {
+            newDocumentBuilder.definition(transformedFragment);
+        }
+        return newDocumentBuilder.build();
     }
 
 
@@ -282,7 +280,6 @@ public class OverallQueryTransformer {
                                                                Object serviceContext) {
 
         Set<String> fragmentsToTransform = new LinkedHashSet<>(referencedFragmentNames);
-//        Set<String> alreadyTransformedFragments = new LinkedHashSet<>();
         List<FragmentDefinition> transformedFragments = new ArrayList<>();
         while (!fragmentsToTransform.isEmpty()) {
             String fragmentName = fragmentsToTransform.iterator().next();
