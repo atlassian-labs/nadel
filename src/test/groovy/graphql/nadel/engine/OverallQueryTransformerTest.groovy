@@ -168,6 +168,7 @@ class OverallQueryTransformerTest extends Specification {
             {
              foo(id: "1") {
                 ...frag1
+                ...frag2
              }
              
              bar(id: "1") {
@@ -177,15 +178,16 @@ class OverallQueryTransformerTest extends Specification {
             fragment frag1 on Foo {
                 id
                 ...frag2
+                ...frag3
             }
             fragment frag2 on Foo {
                 barId
+                ...frag3
                 ...frag3
             }
             fragment frag3 on Foo {
                 qux
             }
-            
             fragment barFrag on Bar {
                 barId: id
             }
@@ -196,10 +198,10 @@ class OverallQueryTransformerTest extends Specification {
 
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
-                'query {foo(id:"1") {...frag1} bar(id:"1") {...barFrag}} ' +
-                'fragment frag1 on Foo {id ...frag2} ' +
+                'query {foo(id:"1") {...frag1 ...frag2} bar(id:"1") {...barFrag}} ' +
+                'fragment frag1 on Foo {id ...frag2 ...frag3} ' +
+                'fragment frag2 on Foo {bazId ...frag3 ...frag3} ' +
                 'fragment barFrag on Baz {barId:id} ' +
-                'fragment frag2 on Foo {bazId ...frag3} ' +
                 'fragment frag3 on Foo {qux}'
     }
 

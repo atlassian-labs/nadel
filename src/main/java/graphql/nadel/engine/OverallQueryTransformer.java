@@ -76,12 +76,11 @@ import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.language.TypeName.newTypeName;
 import static graphql.nadel.engine.NodeTypeContext.newNodeTypeContext;
-import static graphql.nadel.util.FpKit.toMapCollector;
 import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
+import static graphql.util.FpKit.groupingByUniqueKey;
 import static graphql.util.FpKit.map;
 import static graphql.util.TreeTransformerUtil.changeNode;
-import static java.util.function.Function.identity;
 
 public class OverallQueryTransformer {
 
@@ -152,13 +151,7 @@ public class OverallQueryTransformer {
                 .variableDefinitions(variableDefinitions)
                 .build();
 
-        Document.Builder newDocumentBuilder = Document.newDocument();
-        newDocumentBuilder.definition(operationDefinition);
-        for (String referencedFragmentName : referencedFragmentNames) {
-            FragmentDefinition fragmentDefinition = transformedFragments.get(referencedFragmentName);
-            newDocumentBuilder.definition(fragmentDefinition);
-        }
-        Document newDocument = newDocumentBuilder.build();
+        Document newDocument = newDocument(operationDefinition, transformedFragments);
 
         MergedField transformedMergedField = MergedField.newMergedField(transformedTopLevelField).build();
         long elapsedTime = System.currentTimeMillis() - startTime;
@@ -186,7 +179,7 @@ public class OverallQueryTransformer {
     ) {
         long startTime = System.currentTimeMillis();
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
-        Set<String> referencedFragmentNames = new LinkedHashSet<>();
+        Set<String> fragmentsDirectlyReferenced = new LinkedHashSet<>();
         Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
@@ -207,7 +200,7 @@ public class OverallQueryTransformer {
                         rootType,
                         transformationByResultField,
                         typeRenameMappings,
-                        referencedFragmentNames,
+                        fragmentsDirectlyReferenced,
                         referencedVariables,
                         nadelContext,
                         serviceExecutionHooks,
@@ -243,21 +236,15 @@ public class OverallQueryTransformer {
                 executionContext.getFragmentsByName(),
                 transformationByResultField,
                 typeRenameMappings,
-                referencedFragmentNames,
+                fragmentsDirectlyReferenced,
                 referencedVariables,
                 serviceExecutionHooks,
                 variableValues,
                 service,
                 serviceContext);
 
-        Document.Builder newDocumentBuilder = Document.newDocument();
-        newDocumentBuilder.definition(operationDefinition);
-        for (String referencedFragmentName : referencedFragmentNames) {
-            FragmentDefinition fragmentDefinition = transformedFragments.get(referencedFragmentName);
-            newDocumentBuilder.definition(fragmentDefinition);
-        }
+        Document newDocument = newDocument(operationDefinition, transformedFragments);
 
-        Document newDocument = newDocumentBuilder.build();
         long elapsedTime = System.currentTimeMillis() - startTime;
         log.debug("OverallQueryTransformer.transformMergedFields time: {}, executionId: {}", elapsedTime, executionContext.getExecutionId());
         return new QueryTransformationResult(
@@ -268,6 +255,15 @@ public class OverallQueryTransformer {
                 transformationByResultField,
                 transformedFragments,
                 variableValues);
+    }
+
+    private Document newDocument(OperationDefinition operationDefinition, Map<String, FragmentDefinition> transformedFragments) {
+        Document.Builder newDocumentBuilder = Document.newDocument();
+        newDocumentBuilder.definition(operationDefinition);
+        for (FragmentDefinition transformedFragment : transformedFragments.values()) {
+            newDocumentBuilder.definition(transformedFragment);
+        }
+        return newDocumentBuilder.build();
     }
 
 
@@ -282,20 +278,29 @@ public class OverallQueryTransformer {
                                                                Map<String, Object> variableValues,
                                                                Service service,
                                                                Object serviceContext) {
-        return fragments.values().stream()
-                .map(fragment -> transformFragmentDefinition(
-                        executionContext,
-                        underlyingSchema,
-                        fragment,
-                        transformationByResultField,
-                        typeRenameMappings,
-                        referencedFragmentNames,
-                        referencedVariables,
-                        serviceExecutionHooks,
-                        variableValues,
-                        service,
-                        serviceContext))
-                .collect(toMapCollector(FragmentDefinition::getName, identity()));
+
+        Set<String> fragmentsToTransform = new LinkedHashSet<>(referencedFragmentNames);
+        List<FragmentDefinition> transformedFragments = new ArrayList<>();
+        while (!fragmentsToTransform.isEmpty()) {
+            String fragmentName = fragmentsToTransform.iterator().next();
+            Set<String> newReferencedFragments = new LinkedHashSet<>();
+            FragmentDefinition transformedFragment = transformFragmentDefinition(
+                    executionContext,
+                    underlyingSchema,
+                    fragments.get(fragmentName),
+                    transformationByResultField,
+                    typeRenameMappings,
+                    newReferencedFragments,
+                    referencedVariables,
+                    serviceExecutionHooks,
+                    variableValues,
+                    service,
+                    serviceContext);
+            transformedFragments.add(transformedFragment);
+            fragmentsToTransform.addAll(newReferencedFragments);
+            fragmentsToTransform.remove(fragmentName);
+        }
+        return groupingByUniqueKey(transformedFragments, FragmentDefinition::getName);
     }
 
     private FragmentDefinition transformFragmentDefinition(ExecutionContext executionContext,
