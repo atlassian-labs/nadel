@@ -40,11 +40,9 @@ public class ServiceExecutor {
 
     private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
 
-    private final GraphQLSchema overallSchema;
     private final NadelInstrumentation instrumentation;
 
-    public ServiceExecutor(GraphQLSchema overallSchema, NadelInstrumentation instrumentation) {
-        this.overallSchema = overallSchema;
+    public ServiceExecutor(NadelInstrumentation instrumentation) {
         this.instrumentation = instrumentation;
     }
 
@@ -76,41 +74,46 @@ public class ServiceExecutor {
         serviceExecution = instrumentation.instrumentServiceExecution(serviceExecution, instrumentationParams);
 
         try {
-            log.debug("service {} invocation started", service.getName());
+            log.debug("service {} invocation started - executionId '{}'", service.getName(), executionContext.getExecutionId());
             CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters);
             Assert.assertNotNull(result, "service execution returned null");
-            log.debug("service {} invocation finished ", service.getName());
+            log.debug("service {} invocation finished  - executionId '{}' ", service.getName(), executionContext.getExecutionId());
             //
             // if they return an exceptional CF then we turn that into graphql errors as well
-            return result.handle(handleServiceException(service, executionStepInfo));
+            return result.handle(handleServiceException(service, executionContext, executionStepInfo));
         } catch (Exception e) {
-            return completedFuture(mkExceptionResult(service, executionStepInfo, e));
+            return completedFuture(mkExceptionResult(service, executionContext, executionStepInfo, e));
         }
     }
 
-    private BiFunction<ServiceExecutionResult, Throwable, ServiceExecutionResult> handleServiceException(Service service, ExecutionStepInfo executionStepInfo) {
+    private BiFunction<ServiceExecutionResult, Throwable, ServiceExecutionResult> handleServiceException(Service service, ExecutionContext executionContext, ExecutionStepInfo executionStepInfo) {
         return (serviceCallResult, throwable) -> {
             if (throwable != null) {
-                return mkExceptionResult(service, executionStepInfo, throwable);
+                return mkExceptionResult(service, executionContext, executionStepInfo, throwable);
             } else {
                 return serviceCallResult;
             }
         };
     }
 
-    private ServiceExecutionResult mkExceptionResult(Service service, ExecutionStepInfo executionStepInfo, Throwable e) {
-        String errorText = format("An exception occurred invoking the service '%s' : '%s'", service.getName(), e.getMessage());
-        logNotSafe.error(errorText, e);
+    private ServiceExecutionResult mkExceptionResult(Service service, ExecutionContext executionContext, ExecutionStepInfo executionStepInfo, Throwable throwable) {
+        String errorText = format("An exception occurred invoking the service '%s' : '%s' - executionId '%s'", service.getName(), throwable.getMessage(), executionContext.getExecutionId());
+        logNotSafe.error(errorText, throwable);
 
         GraphqlErrorBuilder errorBuilder = GraphqlErrorBuilder.newError();
         MergedField field = executionStepInfo.getField();
         if (field != null) {
             errorBuilder.location(field.getSingleField().getSourceLocation());
         }
+
+        Map<String, Object> extensions = new LinkedHashMap<>();
+        extensions.put(java.lang.Throwable.class.getName(), throwable);
+
         GraphQLError error = errorBuilder
                 .message(errorText)
                 .path(executionStepInfo.getPath())
                 .errorType(ErrorType.DataFetchingException)
+                .extensions(extensions)
                 .build();
 
         Map<String, Object> errorMap = error.toSpecification();

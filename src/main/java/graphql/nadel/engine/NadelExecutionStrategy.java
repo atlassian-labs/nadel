@@ -63,7 +63,7 @@ public class NadelExecutionStrategy {
         assertNotEmpty(services);
         this.fieldInfos = fieldInfos;
         this.serviceExecutionHooks = serviceExecutionHooks;
-        this.serviceExecutor = new ServiceExecutor(overallSchema, instrumentation);
+        this.serviceExecutor = new ServiceExecutor(instrumentation);
         this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks);
     }
 

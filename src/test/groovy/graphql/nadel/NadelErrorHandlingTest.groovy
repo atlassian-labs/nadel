@@ -1,5 +1,6 @@
 package graphql.nadel
 
+
 import graphql.nadel.testutils.MockServiceExecution
 import spock.lang.Specification
 
@@ -223,7 +224,12 @@ class NadelErrorHandlingTest extends Specification {
         then:
         er.data == [hello: null]
         !er.errors.isEmpty()
-        er.errors[0].message.contains("Pop goes the weasel")
+        def gqlError = er.errors[0]
+        gqlError.message.contains("Pop goes the weasel")
+        Throwable throwable = gqlError.getExtensions().get(Throwable.class.getName())
+        throwable != null
+        throwable instanceof RuntimeException
+        throwable.getMessage() == "Pop goes the weasel"
 
     }
 
