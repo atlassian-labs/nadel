@@ -60,7 +60,7 @@ public class HydrationTransformation extends FieldTransformation {
         RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
-        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), true);
+        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), new ArrayList<>(), true);
         changeNode(context, newField);
         return new ApplyResult(TraversalControl.ABORT);
     }
@@ -140,7 +140,7 @@ public class HydrationTransformation extends FieldTransformation {
     private ExecutionStepInfo mapToOriginalFields(ExecutionStepInfo esi,
                                                   List<FieldTransformation> allTransformations,
                                                   UnapplyEnvironment environment) {
-        esi = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, environment.parentExecutionStepInfo);
+        esi = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, null);
         return executionStepInfoMapper.mapExecutionStepInfo(esi, environment);
     }
 }
