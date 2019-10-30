@@ -2002,4 +2002,112 @@ class NadelExecutionStrategyTest extends Specification {
 
     }
 
+    def "hydration call over itself with renamed types"() {
+        given:
+        def testingSchema = TestUtil.schema("""
+        type Query {
+            testing: Testing
+            characters(ids: [ID!]!): [Character]
+        }
+
+        type Testing {
+            movies: [Movie]
+        }
+
+        type Character {
+            id: ID!
+            name: String
+        }
+
+        type Movie {
+            id: ID!
+            name: String
+            characterIds: [ID]
+        }
+        """)
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service testing {
+            type Query {
+                testing: Testing
+            }
+
+            type Testing {
+                movies: [TestingMovie]
+            }
+            type TestingCharacter => renamed from Character  {
+                id: ID!
+                name: String
+            }
+
+            type TestingMovie => renamed from Movie {
+                id: ID!
+                name: String
+                characters: [TestingCharacter] => hydrated from testing.characters(ids: $source.characterIds) object identified by id, batch size  3
+
+            }
+        }
+        ''')
+        def testingFieldDefinition = overallSchema.getQueryType().getFieldDefinition("testing")
+
+        def testingService = new Service("testing", testingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        FieldInfo fieldInfo1 = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, testingService, testingFieldDefinition)
+        def fieldInfos = new FieldInfos([(testingFieldDefinition): fieldInfo1])
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([testingService], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = """
+{
+  testing {
+    movies {
+      id
+      name
+       characters {
+         id
+         name
+       }
+    }
+  }
+}
+        """
+
+        def expectedQuery1 = "query nadel_2_testing {testing {movies {id name characterIds}}}"
+        def movies = [[id: "M1", name: "Movie 1", characterIds: ["C1", "C2"]], [id: "M2", name: "Movie 2", characterIds: ["C1", "C2", "C3"]]]
+        def response1 = new ServiceExecutionResult([testing: [movies: movies]])
+
+        def expectedQuery2 = "query nadel_2_testing {characters(ids:[\"C1\",\"C2\",\"C1\"]) {id name object_identifier__UUID:id}}"
+        def characters1 = [[id: "C1", name: "Luke", object_identifier__UUID: "C1"], [id: "C2", name: "Leia", object_identifier__UUID: "C2"], [id: "C1", name: "Luke", object_identifier__UUID: "C1"]]
+        def response2 = new ServiceExecutionResult([characters: characters1])
+
+
+        def expectedQuery3 = "query nadel_2_testing {characters(ids:[\"C2\",\"C3\"]) {id name object_identifier__UUID:id}}"
+        def characters2 = [[id: "C2", name: "Leia", object_identifier__UUID: "C2"], [id: "C3", name: "Anakin", object_identifier__UUID: "C3"]]
+        def response3 = new ServiceExecutionResult([characters: characters2])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery3
+        }) >> completedFuture(response3)
+
+        def result = [movies: [[id: "M1", name: "Movie 1", characters: [[id: "C1", name: "Luke"], [id: "C2", name: "Leia"]]], [id: "M2", name: "Movie 2", characters: [[id: "C1", name: "Luke"], [id: "C2", name: "Leia"], [id: "C3", name: "Anakin"]]]]]
+        resultData(response) == [testing: result]
+
+    }
 }

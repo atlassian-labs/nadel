@@ -95,7 +95,7 @@ public class OverallQueryTransformer {
             String operationName,
             Operation operation,
             Field topLevelField,
-            GraphQLCompositeType topLevelFieldType,
+            GraphQLCompositeType topLevelFieldTypeOverall,
             ServiceExecutionHooks serviceExecutionHooks,
             Service service,
             Object serviceContext
@@ -113,7 +113,7 @@ public class OverallQueryTransformer {
                 executionContext,
                 underlyingSchema,
                 topLevelField.getSelectionSet(),
-                topLevelFieldType,
+                topLevelFieldTypeOverall,
                 transformationByResultField,
                 typeRenameMappings,
                 referencedFragmentNames,
@@ -126,7 +126,7 @@ public class OverallQueryTransformer {
 
         Field transformedTopLevelField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
-        transformedTopLevelField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedTopLevelField, topLevelFieldType);
+        transformedTopLevelField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedTopLevelField, topLevelFieldTypeOverall);
 
         List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
         List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
@@ -374,7 +374,7 @@ public class OverallQueryTransformer {
     private <T extends Node> T transformNode(ExecutionContext executionContext,
                                              GraphQLSchema underlyingSchema,
                                              T nodeWithoutTypeInfo,
-                                             GraphQLCompositeType parentType,
+                                             GraphQLCompositeType parentTypeOverall,
                                              Map<String, FieldTransformation> transformationByResultField,
                                              Map<String, String> typeRenameMappings,
                                              Set<String> referencedFragmentNames,
@@ -387,7 +387,7 @@ public class OverallQueryTransformer {
         OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes
                 (nodeWithoutTypeInfo,
                         executionContext.getGraphQLSchema(),
-                        parentType);
+                        parentTypeOverall);
 
 
         Transformer transformer = new Transformer(executionContext,
@@ -403,7 +403,13 @@ public class OverallQueryTransformer {
                 service,
                 serviceContext);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
-        GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(parentType.getName());
+        TypeMappingDefinition mappingDefinition = getTypeMappingDefinitionFor(parentTypeOverall);
+        String underlyingParentName = parentTypeOverall.getName();
+        if (mappingDefinition != null) {
+            typeRenameMappings.put(mappingDefinition.getUnderlyingName(), mappingDefinition.getOverallName());
+            underlyingParentName = mappingDefinition.getUnderlyingName();
+        }
+        GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(underlyingParentName);
         rootVars.put(NodeTypeContext.class, newNodeTypeContext()
                 .outputTypeUnderlying(underlyingSchemaParent)
                 .build());
