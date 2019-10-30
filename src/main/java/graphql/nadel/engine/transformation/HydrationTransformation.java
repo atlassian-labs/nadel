@@ -18,6 +18,7 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static graphql.Assert.assertShouldNeverHappen;
@@ -60,7 +61,7 @@ public class HydrationTransformation extends FieldTransformation {
         RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
-        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), new ArrayList<>(), true);
+        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), Collections.emptyList(), true);
         changeNode(context, newField);
         return new ApplyResult(TraversalControl.ABORT);
     }
