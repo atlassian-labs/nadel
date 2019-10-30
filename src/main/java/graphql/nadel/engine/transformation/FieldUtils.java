@@ -33,15 +33,15 @@ public final class FieldUtils {
         return field.getAlias() != null ? field.getAlias() : field.getName();
     }
 
-    public static Field pathToFields(List<String> path, String nadelFieldId, boolean firstRootOfTransformation) {
-        return pathToFields(path, nadelFieldId, firstRootOfTransformation, null);
+    public static Field pathToFields(List<String> path, String nadelFieldId, List<String> additionalIds, boolean firstRootOfTransformation) {
+        return pathToFields(path, nadelFieldId, additionalIds, firstRootOfTransformation, null);
     }
 
-    public static Field pathToFields(List<String> path, String nadelFieldId, boolean firstRootOfTransformation, SelectionSet lastSelectionSet) {
+    public static Field pathToFields(List<String> path, String nadelFieldId, List<String> additionalIds, boolean firstRootOfTransformation, SelectionSet lastSelectionSet) {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
             Field.Builder newField = Field.newField();
-            FieldMetadataUtil.setFieldMetadata(newField, nadelFieldId, ix == 0 && firstRootOfTransformation);
+            FieldMetadataUtil.setFieldMetadata(newField, nadelFieldId, additionalIds, ix == 0 && firstRootOfTransformation);
             if (ix == path.size() - 1 && lastSelectionSet != null) {
                 newField.selectionSet(lastSelectionSet);
             }

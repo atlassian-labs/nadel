@@ -1924,4 +1924,82 @@ class NadelExecutionStrategyTest extends Specification {
 
     }
 
+    def "deep rename inside another rename of type List"() {
+
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            boardScope: BoardScope
+        }
+        type BoardScope {
+            board: Board
+        }
+        type Board {
+            id: ID
+            issueChildren: [Card]
+        }
+        type Card {
+            id: ID
+            issue: Issue 
+        }
+        type Issue {
+            id: ID
+            key: String 
+            summary: String
+        }
+        """)
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                boardScope: BoardScope
+            }
+            type BoardScope {
+                board: SoftwareBoard
+            }
+            type SoftwareBoard => renamed from Board{
+                cardChildren: [SoftwareCard] => renamed from issueChildren
+            }
+            type SoftwareCard => renamed from Card {
+                id: ID 
+                key: String => renamed from issue.key
+                summary: String => renamed from issue.summary
+            }
+        }
+        ''')
+        def boardScopeDefinition = overallSchema.getQueryType().getFieldDefinition("boardScope")
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(boardScopeDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = """
+          { boardScope {
+            board{
+              cardChildren{
+                id
+                key
+                summary
+              }
+            }
+          }
+         }"""
+        def expectedQuery1 = "query nadel_2_Issues {boardScope {board {issueChildren {id issue {key} issue {summary}}}}}"
+
+        def response1 = new ServiceExecutionResult([boardScope: [board: [issueChildren: [[id: "1234", issue: [key: "abc", summary: "Summary 1"]], [id: "456", issue: [key: "def", summary: "Summary 2"]]]]]])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        resultData(response) == [boardScope: [board: [cardChildren: [[id: "1234", key: "abc", summary: "Summary 1"], [id: "456", key: "def", summary: "Summary 2"]]]]]
+
+    }
+
 }

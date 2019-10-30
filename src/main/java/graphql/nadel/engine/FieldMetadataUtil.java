@@ -35,6 +35,7 @@ public class FieldMetadataUtil {
     private static final String NADEL_FIELD_METADATA = "NADEL_FIELD_METADATA";
     private static final String OVERALL_TYPE_INFO = "OVERALL_TYPE_INFO";
 
+
     private static class FieldMetadata implements Serializable {
         private final String id;
         private final boolean rootOfTransformation;
@@ -96,12 +97,15 @@ public class FieldMetadataUtil {
         return rootFieldMetadata.get(0).id;
     }
 
-    public static void setFieldMetadata(Field.Builder builder, String id, boolean rootOfTransformation) {
+    public static void setFieldMetadata(Field.Builder builder, String id, List<String> additionalIds, boolean rootOfTransformation) {
         assertNotNull(id);
         List<FieldMetadata> fieldMetadata = new ArrayList<>();
 
         FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation);
         fieldMetadata.add(newFieldMetadata);
+        for (String additionalId : additionalIds) {
+            fieldMetadata.add(new FieldMetadata(additionalId, false));
+        }
         String newSerializedValue = writeMetadata(fieldMetadata);
         builder.additionalData(NADEL_FIELD_METADATA, newSerializedValue);
 

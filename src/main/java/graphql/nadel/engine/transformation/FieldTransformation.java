@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static graphql.Assert.assertTrue;
+import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 
 public abstract class FieldTransformation {
 
@@ -83,8 +84,8 @@ public abstract class FieldTransformation {
                             .field(newMergedField)
                             .fieldDefinition(allTransformations.get(0).getOriginalFieldDefinition())
                             .type(originalFieldType);
-                    if (parentEsi.getType() instanceof GraphQLObjectType) {
-                        builder.fieldContainer((GraphQLObjectType) parentEsi.getType());
+            if (parentEsi != null && unwrapAll(parentEsi.getType()) instanceof GraphQLObjectType) {
+                builder.fieldContainer((GraphQLObjectType) unwrapAll(parentEsi.getType()));
                     }
                 }
 

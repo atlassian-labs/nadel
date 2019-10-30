@@ -7,6 +7,7 @@ import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
+import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.util.TraversalControl;
 
@@ -39,12 +40,13 @@ public class FieldRenameTransformation extends FieldTransformation {
     public ApplyResult apply(ApplyEnvironment environment) {
         setEnvironment(environment);
         List<String> path = mappingDefinition.getInputPath();
+        List<String> existingIds = FieldMetadataUtil.getFieldIds(environment.getField());
         Field changedNode = environment.getField().transform(builder -> builder.name(mappingDefinition.getInputPath().get(0)));
         changedNode = addFieldMetadata(changedNode, getFieldId(), true);
         Field fieldWithIds = addFieldIdToChildren(environment.getField(), getFieldId());
         SelectionSet selectionSetWithIds = fieldWithIds.getSelectionSet();
         if (path.size() > 1) {
-            Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), false, selectionSetWithIds);
+            Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), existingIds, false, selectionSetWithIds);
             changedNode = changedNode.transform(builder -> builder.selectionSet(newSelectionSet().selection(firstChildField).build()));
         } else {
             changedNode = changedNode.transform(builder -> builder.selectionSet(selectionSetWithIds));
