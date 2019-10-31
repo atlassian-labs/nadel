@@ -361,7 +361,6 @@ public class OverallQueryTransformer {
             TypeMappingDefinition mappingDefinition = getTypeMappingDefinitionFor(type);
             if (mappingDefinition != null) {
                 typeRenameMappings.put(mappingDefinition.getUnderlyingName(), mappingDefinition.getOverallName());
-
                 String newName = mappingDefinition.getUnderlyingName();
                 TypeInfo newTypeInfo = typeInfo.renameAs(newName);
                 vd = vd.transform(builder -> builder.type(newTypeInfo.getRawType()));
@@ -403,12 +402,7 @@ public class OverallQueryTransformer {
                 service,
                 serviceContext);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
-        TypeMappingDefinition mappingDefinition = getTypeMappingDefinitionFor(parentTypeOverall);
-        String underlyingParentName = parentTypeOverall.getName();
-        if (mappingDefinition != null) {
-            typeRenameMappings.put(mappingDefinition.getUnderlyingName(), mappingDefinition.getOverallName());
-            underlyingParentName = mappingDefinition.getUnderlyingName();
-        }
+        String underlyingParentName = getUnderlyingTypeNameAndRecordMapping(parentTypeOverall, typeRenameMappings);
         GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(underlyingParentName);
         rootVars.put(NodeTypeContext.class, newNodeTypeContext()
                 .outputTypeUnderlying(underlyingSchemaParent)
@@ -425,6 +419,15 @@ public class OverallQueryTransformer {
 
         //noinspection unchecked
         return (T) newNode;
+    }
+
+    private String getUnderlyingTypeNameAndRecordMapping(GraphQLCompositeType typeOverall, Map<String, String> typeRenameMappings) {
+        TypeMappingDefinition mappingDefinition = getTypeMappingDefinitionFor(typeOverall);
+        if (mappingDefinition == null) {
+            return typeOverall.getName();
+        }
+        typeRenameMappings.put(mappingDefinition.getUnderlyingName(), mappingDefinition.getOverallName());
+        return mappingDefinition.getUnderlyingName();
     }
 
     private class Transformer extends NodeVisitorStub {
@@ -552,7 +555,7 @@ public class OverallQueryTransformer {
                 GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
                 GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
 
-                extractAndRecordTypeMappingDefinition(executionContext, fieldType.getName());
+                extractAndRecordTypeMappingDefinition(fieldType.getName());
                 FieldTransformation transformation = createTransformation(fieldDefinitionOverall);
                 if (transformation != null) {
                     //
@@ -704,7 +707,7 @@ public class OverallQueryTransformer {
 
 
         @SuppressWarnings("ConstantConditions")
-        private TypeMappingDefinition extractAndRecordTypeMappingDefinition(ExecutionContext executionContext, String typeNameOverall) {
+        private TypeMappingDefinition extractAndRecordTypeMappingDefinition(String typeNameOverall) {
             GraphQLType type = executionContext.getGraphQLSchema().getType(typeNameOverall);
             return extractAndRecordTypeMappingDefinition(executionContext.getGraphQLSchema(), type);
         }
