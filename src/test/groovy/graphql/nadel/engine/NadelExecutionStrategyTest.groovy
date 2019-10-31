@@ -2065,12 +2065,16 @@ class NadelExecutionStrategyTest extends Specification {
          id
          name
        }
+       ...F1
     }
   }
 }
+fragment F1 on TestingCharacter {
+   name 
+}
         """
 
-        def expectedQuery1 = "query nadel_2_testing {testing {movies {id name characterIds}}}"
+        def expectedQuery1 = "query nadel_2_testing {testing {movies {id name characterIds ...F1}}} fragment F1 on Character {name}"
         def movies = [[id: "M1", name: "Movie 1", characterIds: ["C1", "C2"]], [id: "M2", name: "Movie 2", characterIds: ["C1", "C2", "C3"]]]
         def response1 = new ServiceExecutionResult([testing: [movies: movies]])
 
