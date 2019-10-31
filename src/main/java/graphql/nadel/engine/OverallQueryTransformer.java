@@ -95,7 +95,7 @@ public class OverallQueryTransformer {
             String operationName,
             Operation operation,
             Field topLevelField,
-            GraphQLCompositeType topLevelFieldType,
+            GraphQLCompositeType topLevelFieldTypeOverall,
             ServiceExecutionHooks serviceExecutionHooks,
             Service service,
             Object serviceContext
@@ -113,7 +113,7 @@ public class OverallQueryTransformer {
                 executionContext,
                 underlyingSchema,
                 topLevelField.getSelectionSet(),
-                topLevelFieldType,
+                topLevelFieldTypeOverall,
                 transformationByResultField,
                 typeRenameMappings,
                 referencedFragmentNames,
@@ -126,7 +126,7 @@ public class OverallQueryTransformer {
 
         Field transformedTopLevelField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
-        transformedTopLevelField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedTopLevelField, topLevelFieldType);
+        transformedTopLevelField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedTopLevelField, topLevelFieldTypeOverall);
 
         List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
         List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
@@ -361,7 +361,6 @@ public class OverallQueryTransformer {
             TypeMappingDefinition mappingDefinition = getTypeMappingDefinitionFor(type);
             if (mappingDefinition != null) {
                 typeRenameMappings.put(mappingDefinition.getUnderlyingName(), mappingDefinition.getOverallName());
-
                 String newName = mappingDefinition.getUnderlyingName();
                 TypeInfo newTypeInfo = typeInfo.renameAs(newName);
                 vd = vd.transform(builder -> builder.type(newTypeInfo.getRawType()));
@@ -374,7 +373,7 @@ public class OverallQueryTransformer {
     private <T extends Node> T transformNode(ExecutionContext executionContext,
                                              GraphQLSchema underlyingSchema,
                                              T nodeWithoutTypeInfo,
-                                             GraphQLCompositeType parentType,
+                                             GraphQLCompositeType parentTypeOverall,
                                              Map<String, FieldTransformation> transformationByResultField,
                                              Map<String, String> typeRenameMappings,
                                              Set<String> referencedFragmentNames,
@@ -387,7 +386,7 @@ public class OverallQueryTransformer {
         OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes
                 (nodeWithoutTypeInfo,
                         executionContext.getGraphQLSchema(),
-                        parentType);
+                        parentTypeOverall);
 
 
         Transformer transformer = new Transformer(executionContext,
@@ -403,7 +402,8 @@ public class OverallQueryTransformer {
                 service,
                 serviceContext);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
-        GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(parentType.getName());
+        String underlyingParentName = getUnderlyingTypeNameAndRecordMapping(parentTypeOverall, typeRenameMappings);
+        GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(underlyingParentName);
         rootVars.put(NodeTypeContext.class, newNodeTypeContext()
                 .outputTypeUnderlying(underlyingSchemaParent)
                 .build());
@@ -419,6 +419,15 @@ public class OverallQueryTransformer {
 
         //noinspection unchecked
         return (T) newNode;
+    }
+
+    private String getUnderlyingTypeNameAndRecordMapping(GraphQLCompositeType typeOverall, Map<String, String> typeRenameMappings) {
+        TypeMappingDefinition mappingDefinition = getTypeMappingDefinitionFor(typeOverall);
+        if (mappingDefinition == null) {
+            return typeOverall.getName();
+        }
+        typeRenameMappings.put(mappingDefinition.getUnderlyingName(), mappingDefinition.getOverallName());
+        return mappingDefinition.getUnderlyingName();
     }
 
     private class Transformer extends NodeVisitorStub {
@@ -544,12 +553,9 @@ public class OverallQueryTransformer {
             OverallTypeInfo overallTypeInfo = getOverallTypeInfo(field);
             if (overallTypeInfo != null) {
                 GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
-                GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
+                GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
 
-                TypeMappingDefinition typeMappingDefinition = typeTransformation(executionContext, fieldType.getName());
-                if (typeMappingDefinition != null) {
-                    recordTypeRename(typeMappingDefinition);
-                }
+                extractAndRecordTypeMappingDefinition(fieldTypeOverall.getName());
                 FieldTransformation transformation = createTransformation(fieldDefinitionOverall);
                 if (transformation != null) {
                     //
@@ -565,7 +571,7 @@ public class OverallQueryTransformer {
                     transformationByResultField.put(fieldId, transformation);
 
                     if (transformation instanceof FieldRenameTransformation) {
-                        maybeAddUnderscoreTypeName(context, changedField, fieldType);
+                        maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);
                     }
                     if (applyResult.getTraversalControl() == TraversalControl.CONTINUE) {
                         updateTypeContext(context, typeContext.getOutputTypeUnderlying());
@@ -573,7 +579,7 @@ public class OverallQueryTransformer {
                     return applyResult.getTraversalControl();
 
                 } else {
-                    maybeAddUnderscoreTypeName(context, field, fieldType);
+                    maybeAddUnderscoreTypeName(context, field, fieldTypeOverall);
                 }
             }
 
@@ -693,16 +699,16 @@ public class OverallQueryTransformer {
         }
 
         @SuppressWarnings("ConstantConditions")
-        private TypeMappingDefinition typeTransformationForFragment(ExecutionContext executionContext, TypeName typeName) {
-            GraphQLType type = executionContext.getGraphQLSchema().getType(typeName.getName());
-            assertTrue(type instanceof GraphQLFieldsContainer, "Expected type '%s' to be an field container type", typeName);
+        private TypeMappingDefinition typeTransformationForFragment(ExecutionContext executionContext, TypeName typeNameOverall) {
+            GraphQLType type = executionContext.getGraphQLSchema().getType(typeNameOverall.getName());
+            assertTrue(type instanceof GraphQLFieldsContainer, "Expected type '%s' to be an field container type", typeNameOverall);
             return extractAndRecordTypeMappingDefinition(executionContext.getGraphQLSchema(), type);
         }
 
 
         @SuppressWarnings("ConstantConditions")
-        private TypeMappingDefinition typeTransformation(ExecutionContext executionContext, String typeName) {
-            GraphQLType type = executionContext.getGraphQLSchema().getType(typeName);
+        private TypeMappingDefinition extractAndRecordTypeMappingDefinition(String typeNameOverall) {
+            GraphQLType type = executionContext.getGraphQLSchema().getType(typeNameOverall);
             return extractAndRecordTypeMappingDefinition(executionContext.getGraphQLSchema(), type);
         }
 
@@ -716,15 +722,13 @@ public class OverallQueryTransformer {
                 GraphQLInterfaceType interfaceType = (GraphQLInterfaceType) type;
 
                 graphQLSchema.getImplementations(interfaceType).forEach(objectType -> {
-                    TypeMappingDefinition definition = extractAndRecordTypeMappingDefinition(graphQLSchema, objectType);
-                    recordTypeRename(definition);
+                    extractAndRecordTypeMappingDefinition(graphQLSchema, objectType);
                 });
             }
             if (type instanceof GraphQLUnionType) {
                 GraphQLUnionType unionType = (GraphQLUnionType) type;
                 unionType.getTypes().forEach(typeMember -> {
-                    TypeMappingDefinition definition = extractAndRecordTypeMappingDefinition(graphQLSchema, typeMember);
-                    recordTypeRename(definition);
+                    extractAndRecordTypeMappingDefinition(graphQLSchema, typeMember);
                 });
             }
             return typeMappingDefinition;
