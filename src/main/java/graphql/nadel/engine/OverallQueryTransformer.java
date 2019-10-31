@@ -553,9 +553,9 @@ public class OverallQueryTransformer {
             OverallTypeInfo overallTypeInfo = getOverallTypeInfo(field);
             if (overallTypeInfo != null) {
                 GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
-                GraphQLNamedOutputType fieldType = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
+                GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
 
-                extractAndRecordTypeMappingDefinition(fieldType.getName());
+                extractAndRecordTypeMappingDefinition(fieldTypeOverall.getName());
                 FieldTransformation transformation = createTransformation(fieldDefinitionOverall);
                 if (transformation != null) {
                     //
@@ -571,7 +571,7 @@ public class OverallQueryTransformer {
                     transformationByResultField.put(fieldId, transformation);
 
                     if (transformation instanceof FieldRenameTransformation) {
-                        maybeAddUnderscoreTypeName(context, changedField, fieldType);
+                        maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);
                     }
                     if (applyResult.getTraversalControl() == TraversalControl.CONTINUE) {
                         updateTypeContext(context, typeContext.getOutputTypeUnderlying());
@@ -579,7 +579,7 @@ public class OverallQueryTransformer {
                     return applyResult.getTraversalControl();
 
                 } else {
-                    maybeAddUnderscoreTypeName(context, field, fieldType);
+                    maybeAddUnderscoreTypeName(context, field, fieldTypeOverall);
                 }
             }
 
