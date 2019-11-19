@@ -2114,4 +2114,150 @@ fragment F1 on TestingCharacter {
         resultData(response) == [testing: result]
 
     }
+
+    def "hydration input is empty list"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIds(ids: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) object identified by id, batch size 2
+            }
+        }
+        service UserService {
+            type Query {
+                usersByIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+        def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
+
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service("UserService", userServiceSchema, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
+        def issue1 = [id: "ISSUE-1", authorIds: []]
+        def response1 = new ServiceExecutionResult([issues: [issue1]])
+
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        def issue1Result = [id: "ISSUE-1", authors: []]
+        resultData(response) == [issues: [issue1Result]]
+
+    }
+
+    def "hydration input is null"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIds(ids: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) object identified by id, batch size 2
+            }
+        }
+        service UserService {
+            type Query {
+                usersByIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+        def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
+
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service("UserService", userServiceSchema, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
+        def issue1 = [id: "ISSUE-1", authorIds: null]
+        def response1 = new ServiceExecutionResult([issues: [issue1]])
+
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        def issue1Result = [id: "ISSUE-1", authors: null]
+        resultData(response) == [issues: [issue1Result]]
+
+    }
+
+
 }

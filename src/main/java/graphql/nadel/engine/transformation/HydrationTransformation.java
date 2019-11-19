@@ -76,6 +76,9 @@ public class HydrationTransformation extends FieldTransformation {
         // we can have a list of hydration inputs. E.g.: $source.userIds (this is a list of leafs)
         // or we can have a list of things inside the path: e.g.: $source.issues.userIds (this is a list of objects)
         if (transformedNode instanceof ListExecutionResultNode) {
+            if (transformedNode.getChildren().size() == 0) {
+                return handleEmptyList((ListExecutionResultNode) transformedNode, allTransformations, environment);
+            }
             ExecutionResultNode child = transformedNode.getChildren().get(0);
             if (child instanceof LeafExecutionResultNode) {
                 return handleListOfLeafs((ListExecutionResultNode) transformedNode, allTransformations, environment);
@@ -89,6 +92,11 @@ public class HydrationTransformation extends FieldTransformation {
         LeafExecutionResultNode leafNode = geFirstLeafNode(transformedNode);
         LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getExecutionStepInfo(), leafNode, allTransformations, environment);
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
+    }
+
+    private UnapplyResult handleEmptyList(ListExecutionResultNode listNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+        ListExecutionResultNode changedList = changeFieldInResultNode(listNode, getOriginalField());
+        return new UnapplyResult(changedList, TraversalControl.ABORT);
     }
 
     private UnapplyResult handleListOfObjects(ListExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
