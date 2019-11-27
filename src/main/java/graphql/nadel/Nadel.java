@@ -28,6 +28,7 @@ import graphql.nadel.introspection.DefaultIntrospectionRunner;
 import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.schema.NeverWiringFactory;
 import graphql.nadel.schema.OverallSchemaGenerator;
+import graphql.nadel.schema.SchemaTransformation;
 import graphql.nadel.schema.UnderlyingSchemaGenerator;
 import graphql.nadel.util.LogKit;
 import graphql.parser.InvalidSyntaxException;
@@ -74,6 +75,7 @@ public class Nadel {
     private final DefinitionRegistry commonTypes;
     private final WiringFactory overallWiringFactory;
     private final WiringFactory underlyingWiringFactory;
+    private final SchemaTransformation schemaTransformation;
     private final OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
 
     private Nadel(Reader nsdl,
@@ -84,12 +86,14 @@ public class Nadel {
                   IntrospectionRunner introspectionRunner,
                   ServiceExecutionHooks serviceExecutionHooks,
                   WiringFactory overallWiringFactory,
-                  WiringFactory underlyingWiringFactory) {
+                  WiringFactory underlyingWiringFactory,
+                  SchemaTransformation schemaTransformation) {
         this.serviceExecutionFactory = serviceExecutionFactory;
         this.instrumentation = instrumentation;
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.preparsedDocumentProvider = preparsedDocumentProvider;
         this.executionIdProvider = executionIdProvider;
+        this.schemaTransformation = schemaTransformation;
 
         this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
         this.introspectionRunner = introspectionRunner;
@@ -133,10 +137,14 @@ public class Nadel {
                 .map(Service::getDefinitionRegistry)
                 .collect(toList());
         GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory);
+
+        // apply transformations
+        GraphQLSchema newSchema = schemaTransformation.apply(schema);
+
         //
         // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
         // make direct use of them, we still have to map between them
-        return schema.transform(builder -> ScalarInfo.STANDARD_SCALARS.forEach(builder::additionalType));
+        return newSchema.transform(builder -> ScalarInfo.STANDARD_SCALARS.forEach(builder::additionalType));
     }
 
     public List<Service> getServices() {
@@ -306,6 +314,7 @@ public class Nadel {
         private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
         private WiringFactory overallWiringFactory = new NeverWiringFactory();
         private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
+        private SchemaTransformation schemaTransformation = new SchemaTransformation() {};
 
 
         public Builder dsl(Reader nsdl) {
@@ -357,6 +366,11 @@ public class Nadel {
             return this;
         }
 
+        public Builder schemaTransformation(SchemaTransformation transformation) {
+            this.schemaTransformation = transformation;
+            return this;
+        }
+
         public Nadel build() {
             return new Nadel(
                     nsdl,
@@ -367,7 +381,8 @@ public class Nadel {
                     introspectionRunner,
                     serviceExecutionHooks,
                     overallWiringFactory,
-                    underlyingWiringFactory);
+                    underlyingWiringFactory,
+                    schemaTransformation);
         }
     }
 }

@@ -4,13 +4,23 @@ import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
+import graphql.nadel.schema.SchemaTransformation
 import graphql.nadel.testutils.TestUtil
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLSchemaElement
+import graphql.schema.GraphQLTypeVisitorStub
+import graphql.schema.SchemaTransformer
+import graphql.util.TraversalControl
+import graphql.util.TraverserContext
 import spock.lang.Specification
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import static graphql.nadel.testutils.TestUtil.typeDefinitions
+import static graphql.util.TreeTransformerUtil.changeNode
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
@@ -474,6 +484,73 @@ class NadelE2ETest extends Specification {
             assert params.executionId == ExecutionId.from("fromProvider")
             completedFuture(new ServiceExecutionResult([:]))
         }
+    }
+
+    def "schema transformation is applied"() {
+        given:
+        def transformer = new SchemaTransformation() {
+            @Override
+            GraphQLSchema apply(GraphQLSchema originalSchema) {
+                return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {
+                    @Override
+                    TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext<GraphQLSchemaElement> context) {
+                        if ((context.getParentNode() as GraphQLObjectType).name == 'World' && node.name == "name") {
+                            def changedNode = node.transform({ builder -> builder.name("nameChanged") })
+                            return changeNode(context, changedNode)
+                        }
+
+                        return TraversalControl.CONTINUE
+                    }
+                })
+            }
+        }
+
+        def underlyingSchemaChanged = typeDefinitions('''
+            type Query{
+                hello: World  
+            } 
+            type World {
+                id: ID
+                nameChanged: String
+            }
+            type Mutation{
+                hello: String  
+            } 
+        ''')
+        def query = '''
+        query OpName { hello {nameChanged} }
+        '''
+
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(TestUtil.serviceFactory(delegatedExecution, underlyingSchemaChanged))
+                .schemaTransformation(transformer)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .variables(["var1": "val1"])
+                .context("contextObj")
+                .operationName("OpName")
+                .build()
+        def data = [hello: [nameChanged: "earth"]]
+
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            assert printAstCompact(params.query) == "query nadel_2_MyService_OpName {hello {nameChanged}}"
+            assert params.context == "contextObj"
+            assert params.operationDefinition.name == "nadel_2_MyService_OpName"
+            completedFuture(new ServiceExecutionResult(data))
+        }
+        result.join().data == data
+
+
+
+
     }
 
 }
