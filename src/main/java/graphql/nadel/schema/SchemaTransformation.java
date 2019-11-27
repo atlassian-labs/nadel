@@ -10,10 +10,10 @@ import graphql.schema.GraphQLSchema;
  * <p>Example usage, to delete a field:
  * <code>
  *     SchemaTransformation transformation = new SchemaTransformation() {
- *         @Override
+ *         {@literal @}Override
  *         GraphQLSchema apply(GraphQLSchema originalSchema) {
  *             return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {
- *                  @Override
+ *                  {@literal @}Override
  *                  TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext<GraphQLSchemaElement> context) {
  *                      if (node.getName() == "secretField") {
  *                          return TreeTransformerUtil.deleteNode(node);
