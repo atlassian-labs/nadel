@@ -14,7 +14,7 @@ import graphql.schema.GraphQLSchema;
  *         GraphQLSchema apply(GraphQLSchema originalSchema) {
  *             return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {
  *                  {@literal @}Override
- *                  TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext<GraphQLSchemaElement> context) {
+ *                  TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext{@literal <}GraphQLSchemaElement{@literal >} context) {
  *                      if (node.getName() == "secretField") {
  *                          return TreeTransformerUtil.deleteNode(node);
  *                      }
