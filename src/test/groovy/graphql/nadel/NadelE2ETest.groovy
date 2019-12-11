@@ -486,6 +486,9 @@ class NadelE2ETest extends Specification {
             type Root {
                 id: ID
             }
+            extend type Root {
+                name: String
+            }
          }
          service Service2 {
             # Nadel currently requires a Query object
@@ -498,6 +501,7 @@ class NadelE2ETest extends Specification {
             }
             type Extension {
                 id: ID
+                name: String
             }
          }
         '''
@@ -509,6 +513,9 @@ class NadelE2ETest extends Specification {
             type Root {
                 id: ID
             }
+            extend type Root {
+                name: String
+            }
         ''')
         def underlyingSchema2 = typeDefinitions('''
             type Query{
@@ -516,6 +523,7 @@ class NadelE2ETest extends Specification {
             } 
             type Extension {
                 id: ID
+                name: String
             }
         ''')
 
@@ -555,8 +563,10 @@ class NadelE2ETest extends Specification {
         def query = """
         { root {
             id
+            name
             extension {
                 id
+                name
             }
         }}
         """
@@ -566,8 +576,8 @@ class NadelE2ETest extends Specification {
                 .build()
 
 
-        def service1Data = [root: [id: "rootId"]]
-        def service2Data = [extension: [id: "rootId"]]
+        def service1Data = [root: [id: "rootId", name: "rootName"]]
+        def service2Data = [lookup: [id: "rootId", name: "extensionName"]]
         when:
         def result = nadel.execute(nadelExecutionInput).join()
 
@@ -575,17 +585,17 @@ class NadelE2ETest extends Specification {
         1 * execution1.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
             println printAstCompact(params.getQuery())
-            assert printAstCompact(params.getQuery()) == "query nadel_2_Service1 {root {id id}}"
+            assert printAstCompact(params.getQuery()) == "query nadel_2_Service1 {root {id name id}}"
             completedFuture(new ServiceExecutionResult(service1Data))
         }
         1 * execution2.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
             println printAstCompact(params.getQuery())
-            assert printAstCompact(params.getQuery()) == "query nadel_2_Service2 {lookup(id:\"rootId\") {id}}"
+            assert printAstCompact(params.getQuery()) == "query nadel_2_Service2 {lookup(id:\"rootId\") {id name}}"
             completedFuture(new ServiceExecutionResult(service2Data))
         }
 
-        result.data == [root: [id: "rootId", extension: [id: "rootId"]]]
+        result.data == [root: [id: "rootId", name: "rootName", extension: [id: "rootId", name: "extensionName"]]]
 
     }
 
