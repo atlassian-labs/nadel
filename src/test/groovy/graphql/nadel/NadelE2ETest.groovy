@@ -488,6 +488,11 @@ class NadelE2ETest extends Specification {
             }
          }
          service Service1 {
+            # Nadel currently requires a Query object
+            type Query { 
+                dummy: String
+            } 
+            
             extend type Root {
                 extension: Extension => hydrated from Service1.lookup(id: $source.id) object identified by id 
             }
@@ -499,6 +504,7 @@ class NadelE2ETest extends Specification {
         def underlyingSchema1 = typeDefinitions('''
             type Query{
                 root: Root  
+                dummy:String
             } 
             type Root {
                 id: ID
@@ -561,7 +567,7 @@ class NadelE2ETest extends Specification {
 
 
         def service1Data = [root: [id: ["rootId"]]]
-        def queryService1 = "{root{id}}"
+        def queryService1 = "query nadel_2_Service1 {root {id id}}"
         def service2Data = [extension: [id: "extensionId"]]
         def queryService2 = '{lookup(id: "rootId"){id}}'
         when:
