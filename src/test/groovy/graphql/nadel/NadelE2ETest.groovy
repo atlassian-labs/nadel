@@ -566,7 +566,7 @@ class NadelE2ETest extends Specification {
                 .build()
 
 
-        def service1Data = [root: [id: ["rootId"]]]
+        def service1Data = [root: [id: "rootId"]]
         def queryService1 = "query nadel_2_Service1 {root {id id}}"
         def service2Data = [extension: [id: "extensionId"]]
         def queryService2 = '{lookup(id: "rootId"){id}}'
