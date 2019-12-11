@@ -487,14 +487,14 @@ class NadelE2ETest extends Specification {
                 id: ID
             }
          }
-         service Service1 {
+         service Service2 {
             # Nadel currently requires a Query object
             type Query { 
                 dummy: String
             } 
             
             extend type Root {
-                extension: Extension => hydrated from Service1.lookup(id: $source.id) object identified by id 
+                extension: Extension => hydrated from Service2.lookup(id: $source.id) object identified by id 
             }
             type Extension {
                 id: ID
@@ -567,9 +567,7 @@ class NadelE2ETest extends Specification {
 
 
         def service1Data = [root: [id: "rootId"]]
-        def queryService1 = "query nadel_2_Service1 {root {id id}}"
-        def service2Data = [extension: [id: "extensionId"]]
-        def queryService2 = '{lookup(id: "rootId"){id}}'
+        def service2Data = [extension: [id: "rootId"]]
         when:
         def result = nadel.execute(nadelExecutionInput).join()
 
@@ -577,15 +575,17 @@ class NadelE2ETest extends Specification {
         1 * execution1.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
             println printAstCompact(params.getQuery())
+            assert printAstCompact(params.getQuery()) == "query nadel_2_Service1 {root {id id}}"
             completedFuture(new ServiceExecutionResult(service1Data))
         }
         1 * execution2.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
             println printAstCompact(params.getQuery())
+            assert printAstCompact(params.getQuery()) == "query nadel_2_Service2 {lookup(id:\"rootId\") {id}}"
             completedFuture(new ServiceExecutionResult(service2Data))
         }
 
-        result.data == [root: [id: "rootRot", extension: [id: "extensionId"]]]
+        result.data == [root: [id: "rootId", extension: [id: "rootId"]]]
 
     }
 
