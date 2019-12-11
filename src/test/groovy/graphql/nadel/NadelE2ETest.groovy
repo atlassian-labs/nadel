@@ -4,7 +4,7 @@ import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
-import graphql.nadel.schema.SchemaTransformation
+import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
@@ -488,7 +488,7 @@ class NadelE2ETest extends Specification {
 
     def "schema transformation is applied"() {
         given:
-        def transformer = new SchemaTransformation() {
+        def transformer = new SchemaTransformationHook() {
             @Override
             GraphQLSchema apply(GraphQLSchema originalSchema) {
                 return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {

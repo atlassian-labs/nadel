@@ -30,7 +30,7 @@ import graphql.schema.GraphQLSchema;
  * @see graphql.schema.GraphQLTypeVisitorStub
  */
 @PublicSpi
-public interface SchemaTransformation {
+public interface SchemaTransformationHook {
 
     /**
      * Apply a transformation to a schema object, returning the new schema.

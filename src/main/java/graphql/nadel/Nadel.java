@@ -28,7 +28,7 @@ import graphql.nadel.introspection.DefaultIntrospectionRunner;
 import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.schema.NeverWiringFactory;
 import graphql.nadel.schema.OverallSchemaGenerator;
-import graphql.nadel.schema.SchemaTransformation;
+import graphql.nadel.schema.SchemaTransformationHook;
 import graphql.nadel.schema.UnderlyingSchemaGenerator;
 import graphql.nadel.util.LogKit;
 import graphql.parser.InvalidSyntaxException;
@@ -75,7 +75,7 @@ public class Nadel {
     private final DefinitionRegistry commonTypes;
     private final WiringFactory overallWiringFactory;
     private final WiringFactory underlyingWiringFactory;
-    private final SchemaTransformation schemaTransformation;
+    private final SchemaTransformationHook schemaTransformationHook;
     private final OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
 
     private Nadel(Reader nsdl,
@@ -87,13 +87,13 @@ public class Nadel {
                   ServiceExecutionHooks serviceExecutionHooks,
                   WiringFactory overallWiringFactory,
                   WiringFactory underlyingWiringFactory,
-                  SchemaTransformation schemaTransformation) {
+                  SchemaTransformationHook schemaTransformationHook) {
         this.serviceExecutionFactory = serviceExecutionFactory;
         this.instrumentation = instrumentation;
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.preparsedDocumentProvider = preparsedDocumentProvider;
         this.executionIdProvider = executionIdProvider;
-        this.schemaTransformation = schemaTransformation;
+        this.schemaTransformationHook = schemaTransformationHook;
 
         this.stitchingDsl = this.NSDLParser.parseDSL(nsdl);
         this.introspectionRunner = introspectionRunner;
@@ -139,7 +139,7 @@ public class Nadel {
         GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory);
 
         // apply transformations
-        GraphQLSchema newSchema = schemaTransformation.apply(schema);
+        GraphQLSchema newSchema = schemaTransformationHook.apply(schema);
 
         //
         // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
@@ -314,7 +314,7 @@ public class Nadel {
         private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
         private WiringFactory overallWiringFactory = new NeverWiringFactory();
         private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
-        private SchemaTransformation schemaTransformation = new SchemaTransformation() {};
+        private SchemaTransformationHook schemaTransformationHook = new SchemaTransformationHook() {};
 
 
         public Builder dsl(Reader nsdl) {
@@ -366,8 +366,8 @@ public class Nadel {
             return this;
         }
 
-        public Builder schemaTransformation(SchemaTransformation transformation) {
-            this.schemaTransformation = transformation;
+        public Builder schemaTransformation(SchemaTransformationHook transformation) {
+            this.schemaTransformationHook = transformation;
             return this;
         }
 
@@ -382,7 +382,7 @@ public class Nadel {
                     serviceExecutionHooks,
                     overallWiringFactory,
                     underlyingWiringFactory,
-                    schemaTransformation);
+                    schemaTransformationHook);
         }
     }
 }
