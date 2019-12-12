@@ -366,8 +366,8 @@ public class Nadel {
             return this;
         }
 
-        public Builder schemaTransformation(SchemaTransformationHook transformation) {
-            this.schemaTransformationHook = transformation;
+        public Builder schemaTransformationHook(SchemaTransformationHook hook) {
+            this.schemaTransformationHook = hook;
             return this;
         }
 

@@ -524,7 +524,7 @@ class NadelE2ETest extends Specification {
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
                 .serviceExecutionFactory(TestUtil.serviceFactory(delegatedExecution, underlyingSchemaChanged))
-                .schemaTransformation(transformer)
+                .schemaTransformationHook(transformer)
                 .build()
 
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
