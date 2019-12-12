@@ -480,7 +480,7 @@ class NadelE2ETest extends Specification {
     def "extending types from another service is possible"() {
         def ndsl = '''
          service Service1 {
-            type Query{
+            extend type Query{
                 root: Root  
             } 
             extend type Query {
@@ -494,11 +494,6 @@ class NadelE2ETest extends Specification {
             }
          }
          service Service2 {
-            # Nadel currently requires a Query object
-            type Query { 
-                dummy: String
-            } 
-            
             extend type Root {
                 extension: Extension => hydrated from Service2.lookup(id: $source.id) object identified by id 
             }
@@ -511,7 +506,6 @@ class NadelE2ETest extends Specification {
         def underlyingSchema1 = typeDefinitions('''
             type Query{
                 root: Root  
-                dummy:String
             } 
             extend type Query {
                 anotherRoot: String

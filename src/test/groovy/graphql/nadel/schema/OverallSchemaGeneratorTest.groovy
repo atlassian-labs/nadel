@@ -255,4 +255,26 @@ class OverallSchemaGeneratorTest extends Specification {
         } == ['x', 'y', 'z']
 
     }
+
+    def "only extend Query works"() {
+        when:
+        def schema = TestUtil.schemaFromNdsl("""
+        service S1 {
+            extend type Query {
+                a: String
+            }
+            extend type Query {
+                b: String
+            }
+        } 
+        service S2 {
+            extend type Query {
+                c: String
+            }
+        }
+        """)
+        then:
+        schema.getQueryType().fieldDefinitions.collect { it.name } == ['a', 'b', 'c']
+
+    }
 }

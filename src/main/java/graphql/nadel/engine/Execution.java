@@ -104,12 +104,14 @@ public class Execution {
 
         for (Service service : services) {
             List<ObjectTypeDefinition> queryType = service.getDefinitionRegistry().getQueryType();
-            GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
-            for (ObjectTypeDefinition objectTypeDefinition : queryType) {
-                for (FieldDefinition fieldDefinition : objectTypeDefinition.getFieldDefinitions()) {
-                    GraphQLFieldDefinition graphQLFieldDefinition = schemaQueryType.getFieldDefinition(fieldDefinition.getName());
-                    FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
-                    fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+            if (queryType != null) {
+                GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
+                for (ObjectTypeDefinition objectTypeDefinition : queryType) {
+                    for (FieldDefinition fieldDefinition : objectTypeDefinition.getFieldDefinitions()) {
+                        GraphQLFieldDefinition graphQLFieldDefinition = schemaQueryType.getFieldDefinition(fieldDefinition.getName());
+                        FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
+                        fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+                    }
                 }
             }
             List<ObjectTypeDefinition> mutationTypeDefinitions = service.getDefinitionRegistry().getMutationType();
