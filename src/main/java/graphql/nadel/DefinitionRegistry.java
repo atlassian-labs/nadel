@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Internal
@@ -44,19 +45,19 @@ public class DefinitionRegistry {
         return (SchemaDefinition) definitionsByClass.get(SchemaDefinition.class).get(0);
     }
 
-    public Map<Operation, ObjectTypeDefinition> getOperationMap() {
+    public Map<Operation, List<ObjectTypeDefinition>> getOperationMap() {
         return Stream.of(Operation.values()).collect(HashMap::new, (m, v) -> m.put(v, getOpsDefinitions(v.getName(), v.getDisplayName())), HashMap::putAll);
     }
 
-    public ObjectTypeDefinition getQueryType() {
+    public List<ObjectTypeDefinition> getQueryType() {
         return getOpsDefinitions(Operation.QUERY.getName(), Operation.QUERY.getDisplayName());
     }
 
-    public ObjectTypeDefinition getMutationType() {
+    public List<ObjectTypeDefinition> getMutationType() {
         return getOpsDefinitions(Operation.MUTATION.getName(), Operation.MUTATION.getDisplayName());
     }
 
-    private ObjectTypeDefinition getOpsDefinitions(String typeName, String typeDisplay) {
+    private List<ObjectTypeDefinition> getOpsDefinitions(String typeName, String typeDisplay) {
         SchemaDefinition schemaDefinition = getSchemaDefinition();
         if (schemaDefinition != null) {
             Optional<OperationTypeDefinition> opDefinitionsOp = schemaDefinition.getOperationTypeDefinitions().stream()
@@ -70,13 +71,13 @@ public class DefinitionRegistry {
         return getDefinition(typeDisplay, ObjectTypeDefinition.class);
     }
 
-    private <T extends SDLDefinition> T getDefinition(String name, Class<? extends T> clazz) {
+    private <T extends SDLDefinition> List<T> getDefinition(String name, Class<? extends T> clazz) {
         List<SDLDefinition> sdlDefinitions = definitionsByName.get(name);
         if (sdlDefinitions == null) {
             return null;
         }
-        Optional<SDLDefinition> result = sdlDefinitions.stream().filter(clazz::isInstance).findFirst();
-        return (T) result.orElse(null);
+        List<SDLDefinition> result = sdlDefinitions.stream().filter(clazz::isInstance).collect(Collectors.toList());
+        return (List<T>) result;
     }
 
     public List<SDLDefinition> getDefinitions() {

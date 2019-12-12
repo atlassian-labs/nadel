@@ -57,11 +57,13 @@ public class OverallSchemaGenerator {
     }
 
     private void collectTypes(Map<Operation, List<FieldDefinition>> fieldsMapByType, List<SDLDefinition> allDefinitions, DefinitionRegistry definitionRegistry) {
-        Map<Operation, ObjectTypeDefinition> opsTypes = definitionRegistry.getOperationMap();
+        Map<Operation, List<ObjectTypeDefinition>> opsTypes = definitionRegistry.getOperationMap();
         opsTypes.keySet().forEach(opsType -> {
-            ObjectTypeDefinition opsDefinitions = opsTypes.get(opsType);
+            List<ObjectTypeDefinition> opsDefinitions = opsTypes.get(opsType);
             if (opsDefinitions != null) {
-                fieldsMapByType.get(opsType).addAll(opsDefinitions.getFieldDefinitions());
+                for (ObjectTypeDefinition objectTypeDefinition : opsDefinitions) {
+                    fieldsMapByType.get(opsType).addAll(objectTypeDefinition.getFieldDefinitions());
+                }
             }
             definitionRegistry
                     .getDefinitions()

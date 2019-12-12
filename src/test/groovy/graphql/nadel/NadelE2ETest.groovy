@@ -483,6 +483,9 @@ class NadelE2ETest extends Specification {
             type Query{
                 root: Root  
             } 
+            extend type Query {
+                anotherRoot: String
+            }
             type Root {
                 id: ID
             }
@@ -510,6 +513,9 @@ class NadelE2ETest extends Specification {
                 root: Root  
                 dummy:String
             } 
+            extend type Query {
+                anotherRoot: String
+            }
             type Root {
                 id: ID
             }
@@ -568,7 +574,8 @@ class NadelE2ETest extends Specification {
                 id
                 name
             }
-        }}
+        }
+        anotherRoot}
         """
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
@@ -576,7 +583,8 @@ class NadelE2ETest extends Specification {
                 .build()
 
 
-        def service1Data = [root: [id: "rootId", name: "rootName"]]
+        def service1Data1 = [root: [id: "rootId", name: "rootName"]]
+        def service1Data2 = [anotherRoot: "anotherRoot"];
         def service2Data = [lookup: [id: "rootId", name: "extensionName"]]
         when:
         def result = nadel.execute(nadelExecutionInput).join()
@@ -586,7 +594,13 @@ class NadelE2ETest extends Specification {
             ServiceExecutionParameters params = args[0]
             println printAstCompact(params.getQuery())
             assert printAstCompact(params.getQuery()) == "query nadel_2_Service1 {root {id name id}}"
-            completedFuture(new ServiceExecutionResult(service1Data))
+            completedFuture(new ServiceExecutionResult(service1Data1))
+        }
+        1 * execution1.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            println printAstCompact(params.getQuery())
+            assert printAstCompact(params.getQuery()) == "query nadel_2_Service1 {anotherRoot}"
+            completedFuture(new ServiceExecutionResult(service1Data2))
         }
         1 * execution2.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
@@ -595,7 +609,7 @@ class NadelE2ETest extends Specification {
             completedFuture(new ServiceExecutionResult(service2Data))
         }
 
-        result.data == [root: [id: "rootId", name: "rootName", extension: [id: "rootId", name: "extensionName"]]]
+        result.data == [anotherRoot: "anotherRoot", root: [id: "rootId", name: "rootName", extension: [id: "rootId", name: "extensionName"]]]
 
     }
 
