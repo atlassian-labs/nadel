@@ -14,6 +14,7 @@ import graphql.schema.GraphQLTypeVisitorStub
 import graphql.schema.SchemaTransformer
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
+import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 
 import static graphql.language.AstPrinter.printAstCompact
@@ -547,9 +548,135 @@ class NadelE2ETest extends Specification {
             completedFuture(new ServiceExecutionResult(data))
         }
         result.join().data == data
+    }
+
+    def "extending types from another service is possible"() {
+        def ndsl = '''
+         service Service1 {
+            extend type Query{
+                root: Root  
+            } 
+            extend type Query {
+                anotherRoot: String
+            }
+            type Root {
+                id: ID
+            }
+            extend type Root {
+                name: String
+            }
+         }
+         service Service2 {
+            extend type Root {
+                extension: Extension => hydrated from Service2.lookup(id: $source.id) object identified by id 
+            }
+            type Extension {
+                id: ID
+                name: String
+            }
+         }
+        '''
+        def underlyingSchema1 = typeDefinitions('''
+            type Query{
+                root: Root  
+            } 
+            extend type Query {
+                anotherRoot: String
+            }
+            type Root {
+                id: ID
+            }
+            extend type Root {
+                name: String
+            }
+        ''')
+        def underlyingSchema2 = typeDefinitions('''
+            type Query{
+                lookup(id:ID): Extension
+            } 
+            type Extension {
+                id: ID
+                name: String
+            }
+        ''')
+
+        def execution1 = Mock(ServiceExecution)
+        def execution2 = Mock(ServiceExecution)
+        def serviceFactory = new ServiceExecutionFactory() {
+            @Override
+            ServiceExecution getServiceExecution(String serviceName) {
+                switch (serviceName) {
+                    case "Service1":
+                        return execution1
+                    case "Service2":
+                        return execution2
+                    default:
+                        throw new RuntimeException()
+                }
+            }
+
+            @Override
+            TypeDefinitionRegistry getUnderlyingTypeDefinitions(String serviceName) {
+                switch (serviceName) {
+                    case "Service1":
+                        return underlyingSchema1
+                    case "Service2":
+                        return underlyingSchema2
+                    default:
+                        throw new RuntimeException()
+                }
+            }
+        }
+        Nadel nadel = newNadel()
+                .dsl(ndsl)
+                .serviceExecutionFactory(serviceFactory)
+                .executionIdProvider(idProvider)
+                .build()
+
+        def query = """
+        { root {
+            id
+            name
+            extension {
+                id
+                name
+            }
+        }
+        anotherRoot}
+        """
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .executionId(ExecutionId.from("fromInput"))
+                .build()
 
 
+        def service1Data1 = [root: [id: "rootId", name: "rootName"]]
+        def service1Data2 = [anotherRoot: "anotherRoot"];
+        def service2Data = [lookup: [id: "rootId", name: "extensionName"]]
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
 
+        then:
+        1 * execution1.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            println printAstCompact(params.getQuery())
+            assert printAstCompact(params.getQuery()) == "query nadel_2_Service1 {root {id name id}}"
+            completedFuture(new ServiceExecutionResult(service1Data1))
+        }
+        1 * execution1.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            println printAstCompact(params.getQuery())
+            assert printAstCompact(params.getQuery()) == "query nadel_2_Service1 {anotherRoot}"
+            completedFuture(new ServiceExecutionResult(service1Data2))
+        }
+        1 * execution2.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            println printAstCompact(params.getQuery())
+            assert printAstCompact(params.getQuery()) == "query nadel_2_Service2 {lookup(id:\"rootId\") {id name}}"
+            completedFuture(new ServiceExecutionResult(service2Data))
+        }
+
+        result.data == [anotherRoot: "anotherRoot", root: [id: "rootId", name: "rootName", extension: [id: "rootId", name: "extensionName"]]]
 
     }
 

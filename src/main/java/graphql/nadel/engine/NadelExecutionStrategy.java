@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
+import static graphql.Assert.assertNotNull;
 import static graphql.nadel.engine.ArtificialFieldUtils.removeArtificialFields;
 import static graphql.util.FpKit.map;
 import static java.lang.String.format;
@@ -240,7 +241,7 @@ public class NadelExecutionStrategy {
 
 
     private Service getServiceForFieldDefinition(GraphQLFieldDefinition fieldDefinition) {
-        FieldInfo info = fieldInfos.getInfo(fieldDefinition);
+        FieldInfo info = assertNotNull(fieldInfos.getInfo(fieldDefinition), "no field info for field %s", fieldDefinition.getName());
         return info.getService();
     }
 

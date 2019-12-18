@@ -103,20 +103,26 @@ public class Execution {
         Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition = new LinkedHashMap<>();
 
         for (Service service : services) {
-            ObjectTypeDefinition queryType = service.getDefinitionRegistry().getQueryType();
-            GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
-            for (FieldDefinition fieldDefinition : queryType.getFieldDefinitions()) {
-                GraphQLFieldDefinition graphQLFieldDefinition = schemaQueryType.getFieldDefinition(fieldDefinition.getName());
-                FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
-                fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+            List<ObjectTypeDefinition> queryType = service.getDefinitionRegistry().getQueryType();
+            if (queryType != null) {
+                GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
+                for (ObjectTypeDefinition objectTypeDefinition : queryType) {
+                    for (FieldDefinition fieldDefinition : objectTypeDefinition.getFieldDefinitions()) {
+                        GraphQLFieldDefinition graphQLFieldDefinition = schemaQueryType.getFieldDefinition(fieldDefinition.getName());
+                        FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
+                        fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+                    }
+                }
             }
-            ObjectTypeDefinition mutationType = service.getDefinitionRegistry().getMutationType();
-            if (mutationType != null) {
-                GraphQLObjectType schemaMutationType = overallSchema.getMutationType();
-                for (FieldDefinition fieldDefinition : mutationType.getFieldDefinitions()) {
-                    GraphQLFieldDefinition graphQLFieldDefinition = schemaMutationType.getFieldDefinition(fieldDefinition.getName());
-                    FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
-                    fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+            List<ObjectTypeDefinition> mutationTypeDefinitions = service.getDefinitionRegistry().getMutationType();
+            if (mutationTypeDefinitions != null) {
+                for (ObjectTypeDefinition mutationTypeDefinition : mutationTypeDefinitions) {
+                    GraphQLObjectType schemaMutationType = overallSchema.getMutationType();
+                    for (FieldDefinition fieldDefinition : mutationTypeDefinition.getFieldDefinitions()) {
+                        GraphQLFieldDefinition graphQLFieldDefinition = schemaMutationType.getFieldDefinition(fieldDefinition.getName());
+                        FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
+                        fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+                    }
                 }
             }
         }

@@ -2,6 +2,7 @@ package graphql.nadel.schema
 
 import graphql.nadel.Operation
 import graphql.nadel.testutils.TestUtil
+import graphql.schema.GraphQLObjectType
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -215,6 +216,65 @@ class OverallSchemaGeneratorTest extends Specification {
 
         then:
         schema.getSubscriptionType() == null
+
+    }
+
+    def "extend types works"() {
+        when:
+        def schema = TestUtil.schemaFromNdsl("""
+        service S1 {
+            type Query {
+                a: String
+            }
+            extend type Query {
+                b: String
+            }
+            type A {
+                x: String
+            }
+            extend type A {
+                y: String
+            }
+        } 
+        service S2 {
+            type Query {
+                c: String
+            }
+            extend type Query {
+                d: String
+            }
+            extend type A {
+                z: String 
+            }
+        }
+        """)
+        then:
+        schema.getQueryType().fieldDefinitions.collect { it.name } == ['a', 'b', 'c', 'd']
+        (schema.getType("A") as GraphQLObjectType).fieldDefinitions.collect {
+            it.name
+        } == ['x', 'y', 'z']
+
+    }
+
+    def "only extend Query works"() {
+        when:
+        def schema = TestUtil.schemaFromNdsl("""
+        service S1 {
+            extend type Query {
+                a: String
+            }
+            extend type Query {
+                b: String
+            }
+        } 
+        service S2 {
+            extend type Query {
+                c: String
+            }
+        }
+        """)
+        then:
+        schema.getQueryType().fieldDefinitions.collect { it.name } == ['a', 'b', 'c']
 
     }
 }
