@@ -314,7 +314,7 @@ public class Nadel {
         private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
         private WiringFactory overallWiringFactory = new NeverWiringFactory();
         private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
-        private SchemaTransformationHook schemaTransformationHook = new SchemaTransformationHook() {};
+        private SchemaTransformationHook schemaTransformationHook = SchemaTransformationHook.IDENTITY;
 
 
         public Builder dsl(Reader nsdl) {

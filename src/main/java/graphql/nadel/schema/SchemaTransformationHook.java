@@ -9,7 +9,7 @@ import graphql.schema.GraphQLSchema;
  *
  * <p>Example usage, to delete a field:
  * <code>
- *     SchemaTransformation transformation = new SchemaTransformation() {
+ *     SchemaTransformation transformation = originalSchema -> {
  *         {@literal @}Override
  *         GraphQLSchema apply(GraphQLSchema originalSchema) {
  *             return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {
@@ -30,7 +30,10 @@ import graphql.schema.GraphQLSchema;
  * @see graphql.schema.GraphQLTypeVisitorStub
  */
 @PublicSpi
+@FunctionalInterface
 public interface SchemaTransformationHook {
+
+    SchemaTransformationHook IDENTITY = originalSchema -> originalSchema; // no-op
 
     /**
      * Apply a transformation to a schema object, returning the new schema.
@@ -38,8 +41,6 @@ public interface SchemaTransformationHook {
      * @param originalSchema input schema
      * @return transformed schema
      */
-    default GraphQLSchema apply(GraphQLSchema originalSchema) {
-        return originalSchema; // no-op
-    }
+    GraphQLSchema apply(GraphQLSchema originalSchema);
 
 }
