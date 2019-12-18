@@ -14,3 +14,4 @@ docs/_build/
 \.project
 \.settings/
 src/main/antlr/Graphql*.g4
+.DS_STORE
