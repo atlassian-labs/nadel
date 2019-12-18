@@ -138,7 +138,6 @@ public class Nadel {
                 .collect(toList());
         GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory);
 
-        // apply transformations
         GraphQLSchema newSchema = schemaTransformationHook.apply(schema);
 
         //

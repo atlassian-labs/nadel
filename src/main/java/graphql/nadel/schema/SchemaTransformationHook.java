@@ -4,8 +4,8 @@ import graphql.PublicSpi;
 import graphql.schema.GraphQLSchema;
 
 /**
- * High level representation of a a graphql schema transformation. Warning: the schema resulting from the transformation
- * is not validated by Nadel, so may produce unpredictable results if incorrect.
+ * High level representation of a transformation for an overall (not underlying) schema. Warning: the schema resulting
+ * from the transformation is not validated by Nadel, so may produce unpredictable results if incorrect.
  *
  * <p>Example usage, to delete a field:
  * <code>
