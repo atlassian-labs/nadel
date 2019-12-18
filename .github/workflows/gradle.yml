@@ -1,6 +1,9 @@
-name: Java CI
+name: Build and push to Bintray
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -14,4 +17,7 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Gradle
-      run: ./gradlew build
+      env:
+        BINTRAY_USER: ${{secrets.BINTRAY_USER}}
+        BINTRAY_API_KEY: ${{secrets.BINTRAY_API_KEY}}
+      run: ./build-master.sh
