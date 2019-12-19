@@ -156,6 +156,16 @@ allprojects {
 }
 
 publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/graphql-java/nadel")
+            credentials {
+                username = 'andimarek'
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 
     publications {
 

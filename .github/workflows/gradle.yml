@@ -20,4 +20,5 @@ jobs:
       env:
         BINTRAY_USER: ${{secrets.BINTRAY_USER}}
         BINTRAY_API_KEY: ${{secrets.BINTRAY_API_KEY}}
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
       run: ./build-master.sh
