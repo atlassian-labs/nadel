@@ -1,4 +1,4 @@
-name: Build and push to Bintray
+name: Build and publish
 
 on:
   push:
@@ -20,5 +20,6 @@ jobs:
       env:
         BINTRAY_USER: ${{secrets.BINTRAY_USER}}
         BINTRAY_API_KEY: ${{secrets.BINTRAY_API_KEY}}
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        USER_TOKEN: ${{ secrets.USER_TOKEN }}
       run: ./build-master.sh

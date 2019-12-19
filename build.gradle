@@ -162,7 +162,7 @@ publishing {
             url = uri("https://maven.pkg.github.com/graphql-java/nadel")
             credentials {
                 username = 'andimarek'
-                password = System.getenv("GITHUB_TOKEN")
+                password = System.getenv("USER_TOKEN")
             }
         }
     }
