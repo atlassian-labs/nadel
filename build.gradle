@@ -156,16 +156,16 @@ allprojects {
 }
 
 publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/graphql-java/nadel")
-            credentials {
-                username = 'andimarek'
-                password = System.getenv("GITHUB_TOKEN")
-            }
-        }
-    }
+//    repositories {
+//        maven {
+//            name = "GitHubPackages"
+//            url = uri("https://maven.pkg.github.com/graphql-java/nadel")
+//            credentials {
+//                username = 'andimarek'
+//                password = System.getenv("GITHUB_TOKEN")
+//            }
+//        }
+//    }
 
     publications {
 
@@ -239,12 +239,12 @@ bintray {
             gpg {
                 sign = true
             }
-//            mavenCentralSync {
-//                sync = true
-//                user = System.env.MAVEN_CENTRAL_USER
-//                password = System.env.MAVEN_CENTRAL_PASSWORD
-//                close = '1'
-//            }
+            mavenCentralSync {
+                sync = true
+                user = System.env.MAVEN_CENTRAL_USER
+                password = System.env.MAVEN_CENTRAL_PASSWORD
+                close = '1'
+            }
         }
     }
 }
