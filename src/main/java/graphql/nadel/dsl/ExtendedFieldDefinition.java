@@ -16,27 +16,34 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class FieldDefinitionWithTransformation extends FieldDefinition {
+public class ExtendedFieldDefinition extends FieldDefinition {
 
     private final FieldTransformation fieldTransformation;
 
+    private Integer defaultBatchSize;
 
-    protected FieldDefinitionWithTransformation(String name,
-                                                Type type,
-                                                List<InputValueDefinition> inputValueDefinitions,
-                                                List<Directive> directives,
-                                                Description description,
-                                                FieldTransformation fieldTransformation, SourceLocation sourceLocation,
-                                                List<Comment> comments) {
+    protected ExtendedFieldDefinition(String name,
+                                      Type type,
+                                      List<InputValueDefinition> inputValueDefinitions,
+                                      List<Directive> directives,
+                                      Description description,
+                                      FieldTransformation fieldTransformation, SourceLocation sourceLocation,
+                                      List<Comment> comments,
+                                      Integer defaultBatchSize) {
         super(name, type, inputValueDefinitions, directives, description, sourceLocation, comments, IgnoredChars.EMPTY, Collections.emptyMap());
         this.fieldTransformation = fieldTransformation;
+        this.defaultBatchSize = defaultBatchSize;
     }
 
     public FieldTransformation getFieldTransformation() {
         return fieldTransformation;
     }
 
-    public static Builder newFieldDefinitionWithTransformation(FieldDefinition copyFrom) {
+    public Integer getDefaultBatchSize() {
+        return defaultBatchSize;
+    }
+
+    public static Builder newExtendedFieldDefinition(FieldDefinition copyFrom) {
         return new Builder(copyFrom);
     }
 
@@ -49,6 +56,7 @@ public class FieldDefinitionWithTransformation extends FieldDefinition {
         private List<InputValueDefinition> inputValueDefinitions = new ArrayList<>();
         private List<Directive> directives = new ArrayList<>();
         private FieldTransformation fieldTransformation;
+        private Integer defaultBatchSize;
 
         private Builder() {
         }
@@ -129,15 +137,21 @@ public class FieldDefinitionWithTransformation extends FieldDefinition {
             return this;
         }
 
-        public FieldDefinitionWithTransformation build() {
-            FieldDefinitionWithTransformation fieldDefinition = new FieldDefinitionWithTransformation(name,
+        public Builder defaultBatchSize(Integer defaultBatchSize) {
+            this.defaultBatchSize = defaultBatchSize;
+            return this;
+        }
+
+        public ExtendedFieldDefinition build() {
+            ExtendedFieldDefinition fieldDefinition = new ExtendedFieldDefinition(name,
                     type,
                     inputValueDefinitions,
                     directives,
                     description,
                     fieldTransformation,
                     sourceLocation,
-                    comments);
+                    comments,
+                    defaultBatchSize);
             return fieldDefinition;
         }
     }

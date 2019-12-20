@@ -14,10 +14,12 @@ import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Argument;
 import graphql.language.ArrayValue;
 import graphql.language.Field;
+import graphql.language.FieldDefinition;
 import graphql.language.StringValue;
 import graphql.language.Value;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
+import graphql.nadel.dsl.ExtendedFieldDefinition;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
@@ -139,9 +141,27 @@ public class HydrationInputResolver {
         }
     }
 
+    private Integer getDefaultBatchSize(UnderlyingServiceHydration underlyingServiceHydration) {
+        String topLevelField = underlyingServiceHydration.getTopLevelField();
+
+        GraphQLFieldDefinition graphQLFieldDefinition = overallSchema.getQueryType().getFieldDefinition(topLevelField);
+        // the field we use to hydrate doesn't need to be exposed, therefore can be null
+        if (graphQLFieldDefinition == null) {
+            return null;
+        }
+        FieldDefinition fieldDefinition = graphQLFieldDefinition.getDefinition();
+        if (!(fieldDefinition instanceof ExtendedFieldDefinition)) {
+            return null;
+        }
+        return ((ExtendedFieldDefinition) fieldDefinition).getDefaultBatchSize();
+    }
+
     private List<NodeMultiZipper<ExecutionResultNode>> groupIntoCorrectBatchSizes(NodeMultiZipper<ExecutionResultNode> batch) {
         HydrationInputNode node = (HydrationInputNode) batch.getZippers().get(0).getCurNode();
         Integer batchSize = node.getHydrationTransformation().getUnderlyingServiceHydration().getBatchSize();
+        if (batchSize == null) {
+            batchSize = getDefaultBatchSize(node.getHydrationTransformation().getUnderlyingServiceHydration());
+        }
         if (batchSize == null) {
             return singletonList(batch);
         }
