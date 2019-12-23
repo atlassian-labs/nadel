@@ -23,7 +23,7 @@ import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
-import graphql.nadel.dsl.FieldDefinitionWithTransformation;
+import graphql.nadel.dsl.ExtendedFieldDefinition;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.engine.transformation.ApplyEnvironment;
 import graphql.nadel.engine.transformation.ApplyResult;
@@ -737,8 +737,8 @@ public class OverallQueryTransformer {
 
 
     private graphql.nadel.dsl.FieldTransformation transformationDefinitionForField(FieldDefinition definition) {
-        if (definition instanceof FieldDefinitionWithTransformation) {
-            return ((FieldDefinitionWithTransformation) definition).getFieldTransformation();
+        if (definition instanceof ExtendedFieldDefinition) {
+            return ((ExtendedFieldDefinition) definition).getFieldTransformation();
         }
         return null;
     }
