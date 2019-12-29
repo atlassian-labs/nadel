@@ -943,11 +943,13 @@ class NadelExecutionStrategyTest extends Specification {
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery1
+            !sep.hydrationCall
         }) >> completedFuture(response1)
 
         then:
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
+            sep.hydrationCall
         }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [[name: "Bar1"], [name: "Bar2"], [name: "Bar3"]]]]

@@ -16,7 +16,7 @@ class ServiceExecutionParametersTest extends Specification {
         def context = [some: "Context"]
         def variables = [variables: "okPresent"]
         def executionId = ExecutionId.generate()
-        def cacheControl = CacheControl.newCacheControl();
+        def cacheControl = CacheControl.newCacheControl()
 
         when:
         def parameters = ServiceExecutionParameters.newServiceExecutionParameters()
@@ -26,6 +26,7 @@ class ServiceExecutionParametersTest extends Specification {
                 .variables(variables)
                 .executionId(executionId)
                 .cacheControl(cacheControl)
+                .hydrationCall(true)
                 .build()
 
         then:
@@ -34,5 +35,6 @@ class ServiceExecutionParametersTest extends Specification {
         parameters.variables == variables
         parameters.executionId == executionId
         parameters.cacheControl == cacheControl
+        parameters.hydrationCall
     }
 }
