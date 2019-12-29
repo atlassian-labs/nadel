@@ -241,7 +241,8 @@ public class HydrationInputResolver {
         fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
 
         CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
-                .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service));
+                .execute(executionContext, queryTransformationResult, service, operation,
+                        serviceContexts.get(service), true);
 
         ForkJoinPool forkJoinPool = getNadelContext(executionContext).getForkJoinPool();
         return serviceResult
@@ -313,7 +314,7 @@ public class HydrationInputResolver {
         List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, ExecutionResultNode::getExecutionStepInfo);
         fieldTracking.fieldsDispatched(hydratedFieldStepInfos);
         return serviceExecutor
-                .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service))
+                .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), true)
                 .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, fieldTracking, hydrationInputs, resultNode, queryTransformationResult))
                 .thenApply(resultNode -> ArtificialFieldUtils.removeArtificialFields(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
