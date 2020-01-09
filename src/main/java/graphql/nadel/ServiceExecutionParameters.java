@@ -24,23 +24,18 @@ public class ServiceExecutionParameters {
     private final ExecutionId executionId;
     private final CacheControl cacheControl;
     private final Object serviceContext;
+    private final boolean hydrationCall;
 
-    private ServiceExecutionParameters(Document query,
-                                       Object context,
-                                       Map<String, Object> variables,
-                                       Map<String, FragmentDefinition> fragments,
-                                       OperationDefinition operationDefinition,
-                                       ExecutionId executionId,
-                                       CacheControl cacheControl,
-                                       Object serviceContext) {
-        this.query = assertNotNull(query);
-        this.variables = assertNotNull(variables);
-        this.fragments = assertNotNull(fragments);
-        this.operationDefinition = assertNotNull(operationDefinition);
-        this.context = context;
-        this.executionId = executionId;
-        this.cacheControl = cacheControl;
-        this.serviceContext = serviceContext;
+    private ServiceExecutionParameters(Builder builder) {
+        this.query = assertNotNull(builder.query);
+        this.variables = assertNotNull(builder.variables);
+        this.fragments = assertNotNull(builder.fragments);
+        this.operationDefinition = assertNotNull(builder.operationDefinition);
+        this.context = builder.context;
+        this.executionId = builder.executionId;
+        this.cacheControl = builder.cacheControl;
+        this.serviceContext = builder.serviceContext;
+        this.hydrationCall = builder.hydrationCall;
     }
 
     public Document getQuery() {
@@ -79,6 +74,10 @@ public class ServiceExecutionParameters {
         return (T) serviceContext;
     }
 
+    public boolean isHydrationCall() {
+        return hydrationCall;
+    }
+
     public static Builder newServiceExecutionParameters() {
         return new Builder();
     }
@@ -92,6 +91,7 @@ public class ServiceExecutionParameters {
         private ExecutionId executionId;
         private CacheControl cacheControl;
         private Object serviceContext;
+        private boolean hydrationCall;
 
         private Builder() {
         }
@@ -136,8 +136,13 @@ public class ServiceExecutionParameters {
             return this;
         }
 
+        public Builder hydrationCall(boolean isHydrationCall) {
+            this.hydrationCall = isHydrationCall;
+            return this;
+        }
+
         public ServiceExecutionParameters build() {
-            return new ServiceExecutionParameters(query, context, variables, fragments, operationDefinition, executionId, cacheControl, serviceContext);
+            return new ServiceExecutionParameters(this);
         }
     }
 }

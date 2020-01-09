@@ -50,14 +50,15 @@ public class ServiceExecutor {
                                                               QueryTransformationResult queryTransformerResult,
                                                               Service service,
                                                               Operation operation,
-                                                              Object serviceContext) {
+                                                              Object serviceContext,
+                                                              boolean isHydrationCall) {
 
         List<MergedField> transformedMergedFields = queryTransformerResult.getTransformedMergedFields();
 
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
 
-        ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformerResult, serviceContext);
+        ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformerResult, serviceContext, isHydrationCall);
         ExecutionContext executionContextForService = buildServiceExecutionContext(executionContext, underlyingSchema, serviceExecutionParameters);
 
         ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
@@ -121,7 +122,7 @@ public class ServiceExecutor {
     }
 
 
-    private ServiceExecutionParameters buildServiceExecutionParameters(ExecutionContext executionContext, QueryTransformationResult queryTransformerResult, Object serviceContext) {
+    private ServiceExecutionParameters buildServiceExecutionParameters(ExecutionContext executionContext, QueryTransformationResult queryTransformerResult, Object serviceContext, boolean isHydrationCall) {
 
         // only pass down variables that are referenced in the transformed query
         Map<String, Object> variables = buildReferencedVariables(executionContext, queryTransformerResult);
@@ -141,6 +142,7 @@ public class ServiceExecutor {
                 .executionId(executionContext.getExecutionId())
                 .cacheControl(executionContext.getCacheControl())
                 .serviceContext(serviceContext)
+                .hydrationCall(isHydrationCall)
                 .build();
     }
 

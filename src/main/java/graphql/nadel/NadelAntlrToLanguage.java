@@ -11,7 +11,7 @@ import graphql.language.ScalarTypeDefinition;
 import graphql.language.UnionTypeDefinition;
 import graphql.nadel.dsl.CommonDefinition;
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation;
-import graphql.nadel.dsl.FieldDefinitionWithTransformation;
+import graphql.nadel.dsl.ExtendedFieldDefinition;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InputObjectTypeDefinitionWithTransformation;
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
-import static graphql.nadel.dsl.FieldDefinitionWithTransformation.newFieldDefinitionWithTransformation;
+import static graphql.nadel.dsl.ExtendedFieldDefinition.newExtendedFieldDefinition;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.CONTEXT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
@@ -86,11 +86,16 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     @Override
     protected FieldDefinition createFieldDefinition(StitchingDSLParser.FieldDefinitionContext ctx) {
         FieldDefinition fieldDefinition = super.createFieldDefinition(ctx);
-        if (ctx.fieldTransformation() == null) {
+        if (ctx.fieldTransformation() == null && ctx.addFieldInfo() == null) {
             return fieldDefinition;
         }
-        FieldDefinitionWithTransformation.Builder builder = newFieldDefinitionWithTransformation(fieldDefinition);
-        builder.fieldTransformation(createFieldTransformation(ctx.fieldTransformation()));
+        ExtendedFieldDefinition.Builder builder = newExtendedFieldDefinition(fieldDefinition);
+        if (ctx.fieldTransformation() != null) {
+            builder.fieldTransformation(createFieldTransformation(ctx.fieldTransformation()));
+        }
+        if (ctx.addFieldInfo() != null) {
+            builder.defaultBatchSize(Integer.parseInt(ctx.addFieldInfo().defaultBatchSize().intValue().getText()));
+        }
         return builder.build();
     }
 

@@ -157,7 +157,7 @@ public class NadelExecutionStrategy {
 
             fieldTracking.fieldsDispatched(singletonList(esi));
             CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
-                    .execute(newExecutionContext, queryTransform, service, operation, serviceContext);
+                    .execute(newExecutionContext, queryTransform, service, operation, serviceContext, false);
 
             CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
                     .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult

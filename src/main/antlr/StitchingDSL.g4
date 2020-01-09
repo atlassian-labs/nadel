@@ -26,8 +26,9 @@ enumTypeDefinition : description? ENUM name directives? typeTransformation? enum
 scalarTypeDefinition : description? SCALAR name directives? typeTransformation?;
 
 
-fieldDefinition : description? name argumentsDefinition? ':' type directives? fieldTransformation?;
-
+fieldDefinition : description? name argumentsDefinition? ':' type directives? addFieldInfo? fieldTransformation?;
+addFieldInfo: defaultBatchSize;
+defaultBatchSize:'default batch size' intValue;
 fieldTransformation : '=>' (fieldMappingDefinition | underlyingServiceHydration);
 
 typeTransformation : '=>' typeMappingDefinition;
