@@ -63,10 +63,12 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     private CommonDefinition createCommonDefinition(StitchingDSLParser.CommonDefinitionContext commonDefinitionContext) {
         CommonDefinition.Builder builder = CommonDefinition.newCommonDefinition();
-        List<SDLDefinition> definitions = createTypeSystemDefinitions(commonDefinitionContext.typeSystemDefinition());
         builder.sourceLocation(getSourceLocation(commonDefinitionContext));
         builder.comments(getComments(commonDefinitionContext));
+        List<SDLDefinition> definitions = createTypeSystemDefinitions(commonDefinitionContext.typeSystemDefinition());
         builder.typeDefinitions(definitions);
+        List<SDLDefinition> extensions = createTypeSystemExtensions(commonDefinitionContext.typeSystemExtension());
+        builder.addTypeDefinitions(extensions);
         return builder.build();
     }
 
@@ -75,12 +77,18 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         builder.name(serviceDefinitionContext.name().getText());
         List<SDLDefinition> definitions = createTypeSystemDefinitions(serviceDefinitionContext.typeSystemDefinition());
         builder.definitions(definitions);
+        List<SDLDefinition> extensions = createTypeSystemExtensions(serviceDefinitionContext.typeSystemExtension());
+        builder.addDefinitions(extensions);
         return builder.build();
     }
 
 
     private List<SDLDefinition> createTypeSystemDefinitions(List<StitchingDSLParser.TypeSystemDefinitionContext> typeSystemDefinitionContexts) {
         return typeSystemDefinitionContexts.stream().map(this::createTypeSystemDefinition).collect(Collectors.toList());
+    }
+
+    private List<SDLDefinition> createTypeSystemExtensions(List<StitchingDSLParser.TypeSystemExtensionContext> typeSystemExtensionContexts) {
+        return typeSystemExtensionContexts.stream().map(this::createTypeSystemExtension).collect(Collectors.toList());
     }
 
     @Override

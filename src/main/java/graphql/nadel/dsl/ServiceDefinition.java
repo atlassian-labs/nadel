@@ -116,7 +116,13 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
         }
 
         public Builder definitions(List<SDLDefinition> definitions) {
-            this.definitions = definitions;
+            this.definitions.clear();
+            this.definitions.addAll(definitions);
+            return this;
+        }
+
+        public Builder addDefinitions(List<SDLDefinition> definitions) {
+            this.definitions.addAll(definitions);
             return this;
         }
 

@@ -23,6 +23,6 @@ class UnderlyingSchemaGeneratorTest extends Specification {
 
         serviceSchemaProblem.getServiceName() == 'serviceX'
         serviceSchemaProblem.getMessage().contains("There was a problem building the schema for 'serviceX'")
-        serviceSchemaProblem.getMessage().contains("There is no top level schema object defined")
+        serviceSchemaProblem.getMessage().contains("A schema MUST have a 'query' operation defined")
     }
 }

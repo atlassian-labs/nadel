@@ -8,10 +8,10 @@ import GraphqlSDL;
 stitchingDSL:
    commonDefinition? serviceDefinition+ ;
 
-commonDefinition: 'common' '{' typeSystemDefinition* '}';
+commonDefinition: 'common' '{' (typeSystemDefinition|typeSystemExtension)* '}';
 
 serviceDefinition:
-   'service' name '{' typeSystemDefinition* '}' ;
+   'service' name '{' (typeSystemDefinition|typeSystemExtension)* '}' ;
 
 objectTypeDefinition : description? TYPE name implementsInterfaces? directives? typeTransformation?  fieldsDefinition? ;
 
