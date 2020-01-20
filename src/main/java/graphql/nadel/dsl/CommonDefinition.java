@@ -13,7 +13,6 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -102,7 +101,13 @@ public class CommonDefinition extends AbstractNode<CommonDefinition> {
         }
 
         public Builder typeDefinitions(List<SDLDefinition> typeDefinitions) {
-            this.typeDefinitions = typeDefinitions;
+            this.typeDefinitions.clear();
+            this.typeDefinitions.addAll(typeDefinitions);
+            return this;
+        }
+
+        public Builder addTypeDefinitions(List<SDLDefinition> typeDefinitions) {
+            this.typeDefinitions.addAll(typeDefinitions);
             return this;
         }
 
