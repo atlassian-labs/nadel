@@ -143,7 +143,7 @@ public class Nadel {
         //
         // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
         // make direct use of them, we still have to map between them
-        return newSchema.transform(builder -> ScalarInfo.STANDARD_SCALARS.forEach(builder::additionalType));
+        return newSchema.transform(builder -> ScalarInfo.GRAPHQL_SPECIFICATION_SCALARS.forEach(builder::additionalType));
     }
 
     public List<Service> getServices() {

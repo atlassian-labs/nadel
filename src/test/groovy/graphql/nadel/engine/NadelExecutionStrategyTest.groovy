@@ -15,9 +15,14 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.schema.UnderlyingWiringFactory
+import graphql.nadel.testutils.MockedWiringFactory
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
+import graphql.schema.idl.RuntimeWiring
+import graphql.schema.idl.SchemaGenerator
+import graphql.schema.idl.SchemaParser
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -2348,6 +2353,73 @@ fragment F1 on TestingCharacter {
         def issue2Result = [id: "ISSUE-2", authors: [[id: "USER-3"]]]
         def issue3Result = [id: "ISSUE-3", authors: [[id: "USER-2"], [id: "USER-4"], [id: "USER-5"]]]
         resultData(response) == [issues: [issue1Result, issue2Result, issue3Result]]
+
+    }
+
+
+    GraphQLSchema underlyingSchema(String sdl) {
+        def registry = new SchemaParser().parse(sdl)
+        def options = SchemaGenerator.Options.defaultOptions()
+        def runtimeWiring = RuntimeWiring.newRuntimeWiring().wiringFactory(new UnderlyingWiringFactory(new MockedWiringFactory())).build()
+        return new SchemaGenerator().makeExecutableSchema(options, registry, runtimeWiring)
+    }
+
+    def "__typename is correctly passed on and artificial typename is removed"() {
+        given:
+        def issueSchema = underlyingSchema("""
+        type Query {
+            issues : [AbstractIssue]
+        }
+        interface AbstractIssue {
+            id: ID
+        }
+        type Issue implements AbstractIssue{
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues : [AbstractIssue]
+            }
+            interface AbstractIssue {
+                id: ID
+            }
+            type Issue implements AbstractIssue{
+                id: ID
+                authorIds: [ID]
+            }
+        }
+        ''')
+        def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
+
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = "{issues {__typename id ... on Issue {authorIds}}}"
+        def expectedQuery1 = "query nadel_2_Issues {issues {__typename id ... on Issue {authorIds} typename__UUID:__typename}}"
+        def issue1 = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"], __typename: "Issue", typename__UUID: "Issue"]
+        def issue2 = [id: "ISSUE-2", authorIds: ["USER-3"], __typename: "Issue", typename__UUID: "Issue"]
+        def response1 = new ServiceExecutionResult([issues: [issue1, issue2]])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        def issue1Result = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"], __typename: "Issue"]
+        def issue2Result = [id: "ISSUE-2", authorIds: ["USER-3"], __typename: "Issue"]
+        resultData(response) == [issues: [issue1Result, issue2Result]]
 
     }
 

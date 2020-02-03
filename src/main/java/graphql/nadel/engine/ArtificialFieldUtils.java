@@ -1,21 +1,14 @@
 package graphql.nadel.engine;
 
 import graphql.execution.MergedField;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.util.Util;
 import graphql.schema.GraphQLOutputType;
-import graphql.util.TraversalControl;
-import graphql.util.TraverserContext;
-import graphql.util.TraverserVisitorStub;
-import graphql.util.TreeTransformerUtil;
 
 import java.util.List;
 
 import static graphql.Assert.assertNotNull;
-import static graphql.util.FpKit.map;
 
 /**
  * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side
@@ -56,33 +49,6 @@ public class ArtificialFieldUtils {
         Field idField = Field.newField().alias(nadelContext.getObjectIdentifierAlias()).name(objectIdentifier).build();
         SelectionSet selectionSet = field.getSelectionSet().transform(builder -> builder.selection(idField));
         return field.transform(builder -> builder.selectionSet(selectionSet));
-    }
-
-    @SuppressWarnings("UnnecessaryLocalVariable")
-    public static List<ExecutionResultNode> removeArtificialFields(NadelContext nadelContext, List<ExecutionResultNode> resultNodes) {
-        return map(resultNodes, resultNode -> removeArtificialFields(nadelContext, resultNode));
-
-    }
-
-    @SuppressWarnings("UnnecessaryLocalVariable")
-    public static ExecutionResultNode removeArtificialFields(NadelContext nadelContext, ExecutionResultNode resultNode) {
-        ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
-        ExecutionResultNode newNode = resultNodesTransformer.transformParallel(nadelContext.getForkJoinPool(), resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
-            @Override
-            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-                ExecutionResultNode node = context.thisNode();
-                if (node instanceof LeafExecutionResultNode) {
-                    LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
-                    MergedField mergedField = leaf.getMergedField();
-
-                    if (isArtificialField(nadelContext, mergedField)) {
-                        return TreeTransformerUtil.deleteNode(context);
-                    }
-                }
-                return TraversalControl.CONTINUE;
-            }
-        });
-        return newNode;
     }
 
     public static boolean isArtificialField(NadelContext nadelContext, MergedField mergedField) {

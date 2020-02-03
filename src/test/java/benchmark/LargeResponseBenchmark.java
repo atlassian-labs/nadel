@@ -16,14 +16,18 @@ import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OperationsPerInvocation;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
@@ -38,88 +42,58 @@ import java.util.concurrent.TimeUnit;
 
 public class LargeResponseBenchmark {
 
-    static ObjectMapper objectMapper = new ObjectMapper();
-    static Nadel nadel;
-    static String query;
 
-    static {
-        try {
-            init();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
+    @State(Scope.Benchmark)
+    public static class NadelInstance {
+        Nadel nadel;
+        String query;
+
+        @Setup
+        public void setup() throws IOException {
+            ObjectMapper objectMapper = new ObjectMapper();
+            String schemaString = readFromClasspath("large_response_benchmark_schema.graphqls");
+            TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(schemaString);
+
+            String responseString = readFromClasspath("large_underlying_service_result.json");
+            Map responseMap = objectMapper.readValue(responseString, Map.class);
+            ServiceExecutionResult serviceExecutionResult = new ServiceExecutionResult((Map<String, Object>) responseMap.get("data"));
+            ServiceExecution serviceExecution = serviceExecutionParameters -> CompletableFuture.completedFuture(serviceExecutionResult);
+            ServiceExecutionFactory serviceExecutionFactory = new ServiceExecutionFactory() {
+                @Override
+                public ServiceExecution getServiceExecution(String serviceName) {
+                    return serviceExecution;
+                }
+
+                @Override
+                public TypeDefinitionRegistry getUnderlyingTypeDefinitions(String serviceName) {
+                    return typeDefinitionRegistry;
+                }
+            };
+            String nsdl = "service activity{" + schemaString + "}";
+            nadel = Nadel.newNadel().dsl(nsdl).serviceExecutionFactory(serviceExecutionFactory).build();
+            query = readFromClasspath("large_response_benchmark_query.graphql");
         }
-    }
 
-    @Benchmark
-    @Warmup(iterations = 2, time = 5, batchSize = 1)
-    @Measurement(iterations = 3, time = 10)
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @OperationsPerInvocation()
-    public void benchMarkAvgTime() {
-        executeQuery();
-    }
-
-//    public static void main(String[] args) {
-//        for (int i = 0; i < 10000; i++) {
-//            executeQuery();
-//        }
-//    }
-
-    public static ExecutionResult executeQuery() {
-        try {
-            long t = System.currentTimeMillis();
-
-            NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
-                    .forkJoinPool(ForkJoinPool.commonPool())
-                    .query(query)
-                    .build();
-            ExecutionResult executionResult = nadel.execute(nadelExecutionInput).get();
-//            System.out.println("TOTAL: " + (System.currentTimeMillis() - t));
-            return executionResult;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
-    }
-
-    static void init() throws IOException {
-
-        String schemaString = readFromClasspath("large_response_benchmark_schema.graphqls");
-        TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(schemaString);
-
-        String responseString = readFromClasspath("large_underlying_service_result.json");
-        Map responseMap = objectMapper.readValue(responseString, Map.class);
-        ServiceExecutionResult serviceExecutionResult = new ServiceExecutionResult((Map<String, Object>) responseMap.get("data"));
-        ServiceExecution serviceExecution = serviceExecutionParameters -> CompletableFuture.completedFuture(serviceExecutionResult);
-        ServiceExecutionFactory serviceExecutionFactory = new ServiceExecutionFactory() {
-            @Override
-            public ServiceExecution getServiceExecution(String serviceName) {
-                return serviceExecution;
-            }
-
-            @Override
-            public TypeDefinitionRegistry getUnderlyingTypeDefinitions(String serviceName) {
-                return typeDefinitionRegistry;
-            }
-        };
-        String nsdl = "service activity{" + schemaString + "}";
-        nadel = Nadel.newNadel().dsl(nsdl).serviceExecutionFactory(serviceExecutionFactory).build();
-
-        query = readFromClasspath("large_response_benchmark_query.graphql");
-
-    }
-
-
-    private static String readFromClasspath(String file) {
-        try {
+        private String readFromClasspath(String file) throws IOException {
             URL url = Resources.getResource(file);
             return Resources.toString(url, Charsets.UTF_8);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
         }
+    }
+
+
+    @Benchmark
+    @Warmup(iterations = 2)
+    @Measurement(iterations = 3)
+    @Threads(Threads.MAX)
+    @BenchmarkMode(Mode.AverageTime)
+    @OutputTimeUnit(TimeUnit.MILLISECONDS)
+    public ExecutionResult benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
+        NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
+                .forkJoinPool(ForkJoinPool.commonPool())
+                .query(nadelInstance.query)
+                .build();
+        ExecutionResult executionResult = nadelInstance.nadel.execute(nadelExecutionInput).get();
+        return executionResult;
     }
 
 
