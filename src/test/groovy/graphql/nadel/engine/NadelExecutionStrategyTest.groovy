@@ -5,6 +5,8 @@ import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
 import graphql.execution.nextgen.result.ResultNodesUtil
 import graphql.execution.nextgen.result.RootExecutionResultNode
+import graphql.language.AstPrinter
+import graphql.language.Field
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
@@ -146,21 +148,21 @@ class NadelExecutionStrategyTest extends Specification {
     def overallHydrationSchema = TestUtil.schemaFromNdsl('''
         service service1 {
             type Query {
-                foo(id : ID): Foo
+                foo(id : ID): Foo   
             }
             type Foo {
                 id: ID
-                bar: Bar => hydrated from service2.barById(id: $source.barId)
-                barLongerInput: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)
+                bar: Bar => hydrated from service2.barById(id: $source.barId)  
+                barLongerInput: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)  
             }
         }
         service service2 {
             type Query {
-                barById(id: ID): Bar
+                barById(id: ID): Bar 
             }
             type Bar {
-                id: ID
-                name: String
+                id: ID  
+                name: String  
             }
         }
         ''')
@@ -2349,6 +2351,111 @@ fragment F1 on TestingCharacter {
         def issue3Result = [id: "ISSUE-3", authors: [[id: "USER-2"], [id: "USER-4"], [id: "USER-5"]]]
         resultData(response) == [issues: [issue1Result, issue2Result, issue3Result]]
 
+    }
+
+    def "deletes a field in the query"() {
+        def removedField = "toRemove"
+        ServiceExecutionHooks hooks = createServiceExecutionHooksWithFieldRemoval(removedField)
+        def underlyingSchema = TestUtil.schema("""
+        type Query {
+            testing: Testing 
+        }
+        
+        type Testing {
+            foo: String
+            ${removedField}: Int
+        }
+        """)
+
+        def overallSchema = TestUtil.schema("""
+        type Query {
+            testing: Testing 
+        }
+        
+        type Testing {
+            foo: String
+            ${removedField}: Int
+        }
+        """)
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("testing")
+
+        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, hooks)
+
+        def query = "{testing {foo ${removedField}}}"
+        def executionData = createExecutionData(query, overallSchema)
+
+        def expectedQuery = "query nadel_2_service {testing {foo}}"
+
+        when:
+        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({
+            printAstCompact(it.query) == expectedQuery
+        } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
+
+    }
+
+    def "deletes the only field in query"() {
+        def removedField = "toRemove"
+        ServiceExecutionHooks hooks = createServiceExecutionHooksWithFieldRemoval(removedField)
+        def underlyingSchema = TestUtil.schema("""
+        type Query {
+            testing: Testing 
+        }
+        
+        type Testing {
+            foo: String
+            ${removedField}: Int
+        }
+        """)
+
+        def overallSchema = TestUtil.schema("""
+        type Query {
+            testing: Testing 
+        }
+        
+        type Testing {
+            foo: String
+            ${removedField}: Int
+        }
+        """)
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("testing")
+
+        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, hooks)
+
+        def query = "{testing {${removedField}}}"
+        def executionData = createExecutionData(query, overallSchema)
+
+        def expectedQuery = "query nadel_2_service {testing {}}"
+
+        when:
+        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+
+        then:
+        1 * service1Execution.execute({
+            printAstCompact(it.query) == expectedQuery
+        } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
+
+    }
+
+
+    ServiceExecutionHooks createServiceExecutionHooksWithFieldRemoval(String fieldToRemove) {
+        return new ServiceExecutionHooks() {
+            @Override
+            boolean isFieldAllowed(Field field, Object userSuppliedContext) {
+                if (fieldToRemove == field.getName()) {
+                    return false;
+                }
+                return true;
+            }
+        }
     }
 
 }

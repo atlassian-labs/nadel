@@ -2,6 +2,7 @@ package graphql.nadel.hooks;
 
 import graphql.PublicSpi;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
+import graphql.language.Field;
 import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
 
 import java.util.concurrent.CompletableFuture;
@@ -28,6 +29,9 @@ public interface ServiceExecutionHooks {
         return null;
     }
 
+    default boolean isFieldAllowed(Field field, Object userSuppliedContext) {
+        return true;
+    }
 
     /**
      * Called to allow a service to post process the service result in some fashion.

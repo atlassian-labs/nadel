@@ -549,6 +549,12 @@ public class OverallQueryTransformer {
                 return TraversalControl.CONTINUE;
             }
 
+            Object userSuppliedContext = nadelContext.getUserSuppliedContext();
+            boolean isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, userSuppliedContext);
+            if(!isFieldAllowed) {
+                return TreeTransformerUtil.deleteNode(context);
+            }
+
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
             OverallTypeInfo overallTypeInfo = getOverallTypeInfo(field);
             if (overallTypeInfo != null) {
