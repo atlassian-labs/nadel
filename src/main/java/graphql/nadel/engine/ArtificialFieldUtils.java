@@ -1,6 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.execution.MergedField;
+import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.util.Util;
@@ -15,7 +16,7 @@ import static graphql.Assert.assertNotNull;
  */
 public class ArtificialFieldUtils {
 
-    private static final String UNDERSCORE_TYPENAME = "__typename";
+    private static final String UNDERSCORE_TYPENAME = Introspection.TypeNameMetaFieldDef.getName();
 
     public static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
         if (!Util.isInterfaceOrUnionField(fieldType)) {
