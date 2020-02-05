@@ -366,9 +366,14 @@ public class HydrationInputResolver {
             // we only expect a null value here
             assertTrue(rootResultNode.getChildren().get(0).getResolvedValue().isNullValue());
             List<ExecutionResultNode> result = new ArrayList<>();
+            boolean first = true;
             for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
                 ExecutionStepInfo executionStepInfo = hydrationInputNode.getExecutionStepInfo();
                 ExecutionResultNode resultNode = createNullValue(executionStepInfo);
+                if (first) {
+                    resultNode = resultNode.withNewErrors(rootResultNode.getErrors());
+                    first = false;
+                }
                 result.add(resultNode);
             }
             return result;
