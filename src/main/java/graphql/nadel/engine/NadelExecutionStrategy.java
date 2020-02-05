@@ -33,7 +33,6 @@ import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
-import static graphql.nadel.engine.ArtificialFieldUtils.removeArtificialFields;
 import static graphql.util.FpKit.map;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
@@ -85,14 +84,12 @@ public class NadelExecutionStrategy {
 
             CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
             return rootResult
-                    .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext))
                     .thenCompose(
                             //
                             // all the nodes that are hydrated need to make new service calls to get their eventual value
                             //
                             rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode, serviceContextsByService)
-                                    //
-                                    .thenApply(resultNode -> removeArtificialFieldsFromRoot(resultNode, nadelContext)))
+                                    .thenApply(resultNode -> (RootExecutionResultNode) resultNode))
                     .whenComplete((resultNode, throwable) -> {
                         possiblyLogException(resultNode, throwable);
                         long elapsedTime = System.currentTimeMillis() - startTime;
@@ -167,7 +164,8 @@ public class NadelExecutionStrategy {
                                     overallSchema,
                                     rootExecutionStepInfo,
                                     transformationByResultField,
-                                    typeRenameMappings));
+                                    typeRenameMappings,
+                                    nadelContext));
 
             //
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
@@ -191,9 +189,6 @@ public class NadelExecutionStrategy {
         return resultNodes;
     }
 
-    private RootExecutionResultNode removeArtificialFieldsFromRoot(ExecutionResultNode resultNode, NadelContext nadelContext) {
-        return (RootExecutionResultNode) removeArtificialFields(nadelContext, resultNode);
-    }
 
     @SuppressWarnings("unused")
     private <T> void possiblyLogException(T result, Throwable exception) {
