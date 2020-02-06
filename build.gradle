@@ -21,7 +21,7 @@ def getDevelopmentVersion() {
         throw new IllegalStateException("git hash could not be determined")
     }
     def version = new SimpleDateFormat('yyyy-MM-dd\'T\'HH-mm-ss').format(new Date()) + "-" + gitHash
-    println "created development version: $version"
+//    println "created development version: $version"
     version
 }
 
@@ -254,6 +254,9 @@ tasks.withType(PublishToMavenRepository) {
     dependsOn build
 }
 
+task printTestClasspath << {
+    println configurations.testRuntime.asPath
+}
 
 task myWrapper(type: Wrapper) {
     gradleVersion = '4.10.2'
