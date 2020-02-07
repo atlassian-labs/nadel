@@ -10,30 +10,31 @@ import graphql.execution.MergedSelectionSet;
 import graphql.execution.nextgen.ExecutionStrategyUtil;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
-import graphql.execution.nextgen.ResultNodesCreator;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResolvedValue;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
-import graphql.execution.nextgen.result.UnresolvedObjectResultNode;
 import graphql.nadel.ServiceExecutionResult;
+import graphql.nadel.execution.ExecutionResultNode;
+import graphql.nadel.execution.ObjectExecutionResultNode;
+import graphql.nadel.execution.ResultNodeTraverser;
+import graphql.nadel.execution.ResultNodesCreator;
+import graphql.nadel.execution.RootExecutionResultNode;
+import graphql.nadel.execution.UnresolvedObjectResultNode;
 import graphql.nadel.util.ErrorUtil;
 import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
+import graphql.util.TraverserVisitor;
 import graphql.util.TraverserVisitorStub;
-import graphql.util.TreeTransformerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static graphql.util.FpKit.map;
 
-public class ServiceResultToResultNodes {
+
+public class ServiceResultToResultNodesMutable {
 
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ServiceExecutionResultAnalyzer fetchedValueAnalyzer = new ServiceExecutionResultAnalyzer();
@@ -41,7 +42,7 @@ public class ServiceResultToResultNodes {
     private final ExecutionStrategyUtil util = new ExecutionStrategyUtil();
     ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
-    private static final Logger log = LoggerFactory.getLogger(ServiceResultToResultNodes.class);
+    private static final Logger log = LoggerFactory.getLogger(ServiceResultToResultNodesMutable.class);
 
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
                                                       ExecutionStepInfo executionStepInfo,
@@ -51,13 +52,13 @@ public class ServiceResultToResultNodes {
 
         List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
         RootExecutionResultNode rootNode = new RootExecutionResultNode(Collections.emptyList(), errors);
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
 
-        AtomicInteger nodeCounter = new AtomicInteger();
-        RootExecutionResultNode result = (RootExecutionResultNode) resultNodesTransformer.transform(rootNode, new TraverserVisitorStub<ExecutionResultNode>() {
+        final int[] nodeCounter = {0};
+        ResultNodeTraverser resultNodeTraverser = ResultNodeTraverser.depthFirst();
+        TraverserVisitor<ExecutionResultNode> traverserVisitor = new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-                nodeCounter.incrementAndGet();
+                nodeCounter[0]++;
                 ExecutionResultNode node = context.thisNode();
                 if (node instanceof RootExecutionResultNode) {
                     changeRootNode(context, (RootExecutionResultNode) node, executionContext, executionStepInfo, mergedFields, serviceExecutionResult);
@@ -71,12 +72,19 @@ public class ServiceResultToResultNodes {
                 ExecutionStepInfo esi = unresolvedNode.getExecutionStepInfo();
                 FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, esi, resolvedValue);
                 List<ExecutionResultNode> children = fetchSubSelection(executionContext, fieldSubSelection);
-                TreeTransformerUtil.changeNode(context, new ObjectExecutionResultNode(esi, resolvedValue, children));
+                ObjectExecutionResultNode objectExecutionResultNode = new ObjectExecutionResultNode(esi, resolvedValue, children);
+
+                ExecutionResultNode parent = context.getParentNode();
+                int index = context.getBreadcrumbs().get(0).getLocation().getIndex();
+                parent.replaceChild(index, objectExecutionResultNode);
+                context.changeNode(objectExecutionResultNode);
                 return TraversalControl.CONTINUE;
             }
-        });
-//        System.out.println("node counter1:" + nodeCounter.get());
-        return result;
+        };
+        resultNodeTraverser.noCycleDetection();
+        resultNodeTraverser.traverse(traverserVisitor, rootNode);
+//        System.out.println("node counter2: " + nodeCounter[0]);
+        return rootNode;
     }
 
     private void changeRootNode(TraverserContext<ExecutionResultNode> context,
@@ -96,8 +104,8 @@ public class ServiceResultToResultNodes {
                 .build();
 
         List<ExecutionResultNode> subNodes = fetchSubSelection(executionContext, fieldSubSelectionWithData);
-        TreeTransformerUtil.changeNode(context, rootNode.withNewChildren(subNodes));
-
+        rootNode.setChildren(subNodes);
+        context.changeNode(rootNode);
     }
 
     private List<ExecutionResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {

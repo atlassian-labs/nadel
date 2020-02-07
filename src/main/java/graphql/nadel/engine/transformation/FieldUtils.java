@@ -78,6 +78,19 @@ public final class FieldUtils {
         return curNode;
     }
 
+    public static graphql.nadel.execution.ExecutionResultNode getSubTreeMutable(graphql.nadel.execution.ExecutionResultNode executionResultNode, int levels) {
+        graphql.nadel.execution.ExecutionResultNode curNode = executionResultNode;
+        int curLevel = 0;
+        while (curNode.getChildren().size() > 0 && curLevel++ < levels) {
+            assertTrue(curNode.getChildren().size() == 1, "expecting one child ");
+            curNode = curNode.getChildren().get(0);
+            if (curNode instanceof graphql.nadel.execution.LeafExecutionResultNode) {
+                return curNode;
+            }
+        }
+        return curNode;
+    }
+
     public static Field addFieldIdToChildren(Field field, String id) {
         if (field.getSelectionSet() == null) {
             return field;
@@ -98,5 +111,4 @@ public final class FieldUtils {
         List<ExecutionResultNode> newChildren = FpKit.map(executionResultNode.getChildren(), mapper);
         return executionResultNode.withNewChildren(newChildren);
     }
-
 }

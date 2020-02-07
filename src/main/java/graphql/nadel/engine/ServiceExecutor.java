@@ -39,6 +39,7 @@ public class ServiceExecutor {
     private final Logger logNotSafe = LogKit.getNotPrivacySafeLogger(ServiceExecutor.class);
 
     private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
+    private final ServiceResultToResultNodesMutable resultToResultNodesMutable = new ServiceResultToResultNodesMutable();
 
     private final NadelInstrumentation instrumentation;
 
@@ -165,8 +166,32 @@ public class ServiceExecutor {
         );
     }
 
+    public static class DebugContext {
+
+        public ExecutionContext executionContextForService;
+        public ExecutionStepInfo underlyingRootStepInfo;
+        public List<MergedField> transformedMergedFields;
+        public ServiceExecutionResult serviceExecutionResult;
+
+    }
+
     private RootExecutionResultNode serviceExecutionResultToResultNode(ExecutionContext executionContextForService, ExecutionStepInfo underlyingRootStepInfo, List<MergedField> transformedMergedFields, ServiceExecutionResult executionResult) {
-        return resultToResultNode.resultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, executionResult);
+        NadelContext nadelContext = executionContextForService.getContext();
+        DebugContext debugContext = (DebugContext) nadelContext.getUserSuppliedContext();
+        debugContext.executionContextForService = executionContextForService;
+        debugContext.underlyingRootStepInfo = underlyingRootStepInfo;
+        debugContext.transformedMergedFields = transformedMergedFields;
+        debugContext.serviceExecutionResult = executionResult;
+
+        long t = System.currentTimeMillis();
+        RootExecutionResultNode rootExecutionResultNode = resultToResultNode.resultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, executionResult);
+//        System.out.println("time: " + (System.currentTimeMillis() - t));
+        t = System.currentTimeMillis();
+//        graphql.nadel.execution.RootExecutionResultNode rootExecutionResultNode2 = resultToResultNodesMutable.resultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, executionResult);
+//        if (rootExecutionResultNode2 != null) {
+//            System.out.println("time2: " + (System.currentTimeMillis() - t));
+//        }
+        return rootExecutionResultNode;
     }
 
 }

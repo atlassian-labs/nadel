@@ -84,6 +84,11 @@ public class StrategyUtil {
         return (T) changeFieldInResultNode(executionResultNode, mergedField);
     }
 
+    public static <T extends graphql.nadel.execution.ExecutionResultNode> void changeFieldInResultNodeMutable(T executionResultNode, Field newField) {
+        MergedField mergedField = MergedField.newMergedField(newField).build();
+        changeFieldInResultNodeMutable(executionResultNode, mergedField);
+    }
+
     public static <T extends ExecutionResultNode> T changeEsiInResultNode(T executionResultNode, ExecutionStepInfo newEsi) {
         return (T) executionResultNode.withNewExecutionStepInfo(newEsi);
     }
@@ -93,4 +98,8 @@ public class StrategyUtil {
         return (T) executionResultNode.withNewExecutionStepInfo(newStepInfo);
     }
 
+    public static <T extends graphql.nadel.execution.ExecutionResultNode> void changeFieldInResultNodeMutable(T executionResultNode, MergedField mergedField) {
+        ExecutionStepInfo newStepInfo = executionResultNode.getExecutionStepInfo().transform(builder -> builder.field(mergedField));
+        executionResultNode.setExecutionStepInfo(newStepInfo);
+    }
 }

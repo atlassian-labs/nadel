@@ -1,6 +1,5 @@
 package benchmark;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -10,10 +9,15 @@ import graphql.nadel.NadelExecutionInput;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.ServiceExecutionFactory;
 import graphql.nadel.ServiceExecutionResult;
+import graphql.nadel.engine.ServiceExecutor;
+import graphql.nadel.engine.ServiceResultToResultNodes;
+import graphql.nadel.engine.ServiceResultToResultNodesMutable;
+import graphql.nadel.execution.RootExecutionResultNode;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
@@ -31,17 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
-/**
- * See http://hg.openjdk.java.net/code-tools/jmh/file/tip/jmh-samples/src/main/java/org/openjdk/jmh/samples/ for more samples
- * on what you can do with JMH
- *
- * You MUST have the JMH plugin for IDEA in place for this to work :  https://github.com/artyushov/idea-jmh-plugin
- *
- * Install it and then just hit "Run" on a certain benchmark method
- */
-
-public class LargeResponseBenchmark {
-
+public class ServiceResultToResultNodesBenchmark {
 
     @State(Scope.Benchmark)
     public static class NadelInstance {
@@ -49,9 +43,13 @@ public class LargeResponseBenchmark {
         String query;
         String json;
         ObjectMapper objectMapper;
+        ServiceExecutor.DebugContext debugContext;
+
+        ServiceResultToResultNodes serviceResultToResultNodes = new ServiceResultToResultNodes();
+        ServiceResultToResultNodesMutable serviceResultToResultNodesMutable = new ServiceResultToResultNodesMutable();
 
         @Setup
-        public void setup() throws IOException {
+        public void setup() throws IOException, ExecutionException, InterruptedException {
 
             objectMapper = new ObjectMapper();
             String schemaString = readFromClasspath("large_response_benchmark_schema.graphqls");
@@ -81,6 +79,14 @@ public class LargeResponseBenchmark {
             String nsdl = "service activity{" + schemaString + "}";
             nadel = Nadel.newNadel().dsl(nsdl).serviceExecutionFactory(serviceExecutionFactory).build();
             query = readFromClasspath("large_response_benchmark_query.graphql");
+            debugContext = new ServiceExecutor.DebugContext();
+            NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
+                    .forkJoinPool(ForkJoinPool.commonPool())
+                    .context(debugContext)
+                    .query(query)
+                    .build();
+            ExecutionResult executionResult = nadel.execute(nadelExecutionInput).get();
+
         }
 
         private String readFromClasspath(String file) throws IOException {
@@ -93,27 +99,34 @@ public class LargeResponseBenchmark {
     @Benchmark
     @Warmup(iterations = 2)
     @Measurement(iterations = 3)
+    @Fork(3)
     @Threads(1)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public ExecutionResult benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
-        NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
-                .forkJoinPool(ForkJoinPool.commonPool())
-                .query(nadelInstance.query)
-                .build();
-        ExecutionResult executionResult = nadelInstance.nadel.execute(nadelExecutionInput).get();
-        return executionResult;
+    public RootExecutionResultNode benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
+        ServiceExecutor.DebugContext debugContext = nadelInstance.debugContext;
+        graphql.nadel.execution.RootExecutionResultNode rootExecutionResultNode = nadelInstance.serviceResultToResultNodesMutable.resultToResultNode(
+                debugContext.executionContextForService,
+                debugContext.underlyingRootStepInfo,
+                debugContext.transformedMergedFields,
+                debugContext.serviceExecutionResult);
+        return rootExecutionResultNode;
     }
 
-    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
         NadelInstance nadelInstance = new NadelInstance();
         nadelInstance.setup();
-        NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
-                .forkJoinPool(ForkJoinPool.commonPool())
-                .query(nadelInstance.query)
-                .build();
-        ExecutionResult executionResult = nadelInstance.nadel.execute(nadelExecutionInput).get();
-        System.out.println(executionResult);
+        ServiceExecutor.DebugContext debugContext = nadelInstance.debugContext;
+        long hashValue = 0;
+        for (int i = 0; i < 100000000; i++) {
+            graphql.nadel.execution.RootExecutionResultNode rootExecutionResultNode = nadelInstance.serviceResultToResultNodesMutable.resultToResultNode(
+                    debugContext.executionContextForService,
+                    debugContext.underlyingRootStepInfo,
+                    debugContext.transformedMergedFields,
+                    debugContext.serviceExecutionResult);
+            hashValue = hashValue - rootExecutionResultNode.hashCode();
+        }
+        System.out.println(hashValue);
     }
 
 
