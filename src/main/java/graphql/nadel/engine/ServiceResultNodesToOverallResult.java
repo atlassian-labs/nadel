@@ -6,6 +6,7 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
+import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
@@ -44,6 +45,8 @@ import static java.util.Collections.singletonMap;
 public class ServiceResultNodesToOverallResult {
 
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
+
+    ResolvedValueMapper resolvedValueMapper = new ResolvedValueMapper();
 
     ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
@@ -327,9 +330,9 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
-
         ExecutionStepInfo mappedEsi = executionStepInfoMapper.mapExecutionStepInfo(node.getExecutionStepInfo(), environment);
-        return node.withNewExecutionStepInfo(mappedEsi);
+        ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node, environment);
+        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue);
     }
 
     private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
