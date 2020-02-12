@@ -3,12 +3,14 @@ package graphql.nadel.engine
 import graphql.execution.ExecutionContext
 import graphql.execution.nextgen.FieldSubSelection
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.result.ElapsedTime
 import graphql.nadel.result.ResultNodesUtil
 import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
 
 class ServiceResultToResultNodesTest extends Specification {
 
+    def elapsedTime = ElapsedTime.newElapsedTime().build();
 
     def "simple query"() {
 
@@ -26,7 +28,8 @@ class ServiceResultToResultNodesTest extends Specification {
         def node = resultToNodes.resultToResultNode(executionContext,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                delegatedResult
+                delegatedResult,
+                elapsedTime
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -52,7 +55,8 @@ class ServiceResultToResultNodesTest extends Specification {
         def node = resultToNodes.resultToResultNode(executionContext,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                delegatedResult
+                delegatedResult,
+                elapsedTime
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -102,7 +106,8 @@ class ServiceResultToResultNodesTest extends Specification {
         def node = resultToNodes.resultToResultNode(executionContext,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                delegatedResult
+                delegatedResult,
+                elapsedTime
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -127,7 +132,8 @@ class ServiceResultToResultNodesTest extends Specification {
         def node = resultToNodes.resultToResultNode(executionContext,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                delegatedResult
+                delegatedResult,
+                elapsedTime
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -152,7 +158,8 @@ class ServiceResultToResultNodesTest extends Specification {
         def node = resultToNodes.resultToResultNode(executionContext,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                delegatedResult
+                delegatedResult,
+                elapsedTime
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -177,7 +184,8 @@ class ServiceResultToResultNodesTest extends Specification {
         def node = resultToNodes.resultToResultNode(executionContext,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                delegatedResult
+                delegatedResult,
+                elapsedTime
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -202,7 +210,8 @@ class ServiceResultToResultNodesTest extends Specification {
         def node = resultToNodes.resultToResultNode(executionContext,
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
-                delegatedResult
+                delegatedResult,
+                elapsedTime
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
