@@ -1,10 +1,8 @@
 package graphql.nadel.engine;
 
 import graphql.execution.ExecutionStepInfo;
-import graphql.language.Field;
 import graphql.schema.GraphQLSchema;
 
-import java.util.List;
 import java.util.Map;
 
 public class UnapplyEnvironment {
@@ -14,7 +12,8 @@ public class UnapplyEnvironment {
                               boolean isHydrationTransformation,
                               boolean batched,
                               Map<String, String> typeRenameMappings,
-                              GraphQLSchema overallSchema) {
+                              GraphQLSchema overallSchema
+    ) {
         this.parentExecutionStepInfo = parentExecutionStepInfo;
         this.isHydrationTransformation = isHydrationTransformation;
         this.batched = batched;

@@ -217,7 +217,7 @@ public class NadelExecutionStrategy {
             List<GraphQLError> errors = new ArrayList<>();
             map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
             map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
-            return new RootExecutionResultNode(mergedChildren, errors);
+            return new RootExecutionResultNode(mergedChildren, errors, null);
         });
     }
 

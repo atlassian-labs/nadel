@@ -24,7 +24,15 @@ public class LeafExecutionResultNode extends ExecutionResultNode {
                                    ResolvedValue resolvedValue,
                                    NonNullableFieldWasNullException nonNullableFieldWasNullException,
                                    List<GraphQLError> errors) {
-        super(executionStepInfo, resolvedValue, nonNullableFieldWasNullException, Collections.emptyList(), errors);
+        super(executionStepInfo, resolvedValue, nonNullableFieldWasNullException, Collections.emptyList(), errors, null);
+    }
+
+    public LeafExecutionResultNode(ExecutionStepInfo executionStepInfo,
+                                   ResolvedValue resolvedValue,
+                                   NonNullableFieldWasNullException nonNullableFieldWasNullException,
+                                   List<GraphQLError> errors,
+                                   ElapsedTime elapsedTime) {
+        super(executionStepInfo, resolvedValue, nonNullableFieldWasNullException, Collections.emptyList(), errors, elapsedTime);
     }
 
 
@@ -39,16 +47,21 @@ public class LeafExecutionResultNode extends ExecutionResultNode {
 
     @Override
     public ExecutionResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo) {
-        return new LeafExecutionResultNode(executionStepInfo, getResolvedValue(), getNonNullableFieldWasNullException(), getErrors());
+        return new LeafExecutionResultNode(executionStepInfo, getResolvedValue(), getNonNullableFieldWasNullException(), getErrors(), getElapsedTime());
     }
 
     @Override
     public ExecutionResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
-        return new LeafExecutionResultNode(getExecutionStepInfo(), resolvedValue, getNonNullableFieldWasNullException(), getErrors());
+        return new LeafExecutionResultNode(getExecutionStepInfo(), resolvedValue, getNonNullableFieldWasNullException(), getErrors(), getElapsedTime());
     }
 
     @Override
     public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
-        return new LeafExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), getNonNullableFieldWasNullException(), new ArrayList<>(errors));
+        return new LeafExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), getNonNullableFieldWasNullException(), new ArrayList<>(errors), getElapsedTime());
+    }
+
+    @Override
+    public ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime) {
+        return new LeafExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), getNonNullableFieldWasNullException(), getErrors(), elapsedTime);
     }
 }

@@ -23,6 +23,7 @@ public abstract class ExecutionResultNode {
     private final NonNullableFieldWasNullException nonNullableFieldWasNullException;
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
+    private final ElapsedTime elapsedTime;
 
     /*
      * we are trusting here the the children list is not modified on the outside (no defensive copy)
@@ -31,13 +32,19 @@ public abstract class ExecutionResultNode {
                                   ResolvedValue resolvedValue,
                                   NonNullableFieldWasNullException nonNullableFieldWasNullException,
                                   List<ExecutionResultNode> children,
-                                  List<GraphQLError> errors) {
+                                  List<GraphQLError> errors,
+                                  ElapsedTime elapsedTime) {
         this.resolvedValue = resolvedValue;
         this.executionStepInfo = executionStepInfo;
         this.nonNullableFieldWasNullException = nonNullableFieldWasNullException;
         this.children = Collections.unmodifiableList(assertNotNull(children));
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(errors);
+        this.elapsedTime = elapsedTime;
+    }
+
+    public ElapsedTime getElapsedTime() {
+        return elapsedTime;
     }
 
     public List<GraphQLError> getErrors() {
@@ -97,6 +104,8 @@ public abstract class ExecutionResultNode {
      */
     public abstract ExecutionResultNode withNewErrors(List<GraphQLError> errors);
 
+    public abstract ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime);
+
 
     @Override
     public String toString() {
@@ -107,5 +116,15 @@ public abstract class ExecutionResultNode {
                 ", children=" + children +
                 ", errors=" + errors +
                 '}';
+    }
+
+    public abstract class Builder {
+        protected ExecutionStepInfo executionStepInfo;
+        protected ResolvedValue resolvedValue;
+        protected NonNullableFieldWasNullException nonNullableFieldWasNullException;
+        protected List<ExecutionResultNode> children;
+        protected List<GraphQLError> errors;
+        protected ElapsedTime elapsedTime;
+
     }
 }

@@ -61,7 +61,8 @@ public class ServiceResultNodesToOverallResult {
                                        ExecutionStepInfo rootStepInfo,
                                        Map<String, FieldTransformation> transformationMap,
                                        Map<String, String> typeRenameMappings,
-                                       NadelContext nadelContext) {
+                                       NadelContext nadelContext
+    ) {
         return convertImpl(executionId, forkJoinPool, resultNode, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false, nadelContext);
     }
 
@@ -74,7 +75,8 @@ public class ServiceResultNodesToOverallResult {
                                                boolean batched,
                                                Map<String, FieldTransformation> transformationMap,
                                                Map<String, String> typeRenameMappings,
-                                               NadelContext nadelContext) {
+                                               NadelContext nadelContext
+    ) {
         return convertImpl(executionId, forkJoinPool, root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext);
     }
 
@@ -88,11 +90,12 @@ public class ServiceResultNodesToOverallResult {
                                             Map<String, FieldTransformation> transformationMapInput,
                                             Map<String, String> typeRenameMappings,
                                             boolean onlyChildren,
-                                            NadelContext nadelContext) {
+                                            NadelContext nadelContext
+    ) {
 
         ConcurrentHashMap<String, FieldTransformation> transformationMap = new ConcurrentHashMap<>(transformationMapInput);
 
-        long startTime = System.currentTimeMillis();
+//        long startTime = System.currentTimeMillis();
         final AtomicInteger nodeCount = new AtomicInteger();
         Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
         ExecutionResultNode newRoot = resultNodesTransformer.transformParallel(forkJoinPool, root, new TraverserVisitorStub<ExecutionResultNode>() {
@@ -146,8 +149,8 @@ public class ServiceResultNodesToOverallResult {
             }
 
         }, rootVars);
-        long elapsedTime = System.currentTimeMillis() - startTime;
-        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
+//        long elapsedTime = System.currentTimeMillis() - startTime;
+//        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
         return newRoot;
 
     }
@@ -209,7 +212,8 @@ public class ServiceResultNodesToOverallResult {
                     unapplyEnvironment.batched,
                     transformationMap,
                     unapplyEnvironment.typeRenameMappings,
-                    nadelContext);
+                    nadelContext
+            );
             TreeTransformerUtil.changeNode(context, mappedNode);
             first = false;
         }
@@ -229,7 +233,8 @@ public class ServiceResultNodesToOverallResult {
                         unapplyEnvironment.batched,
                         transformationMap,
                         unapplyEnvironment.typeRenameMappings,
-                        nadelContext);
+                        nadelContext
+                );
             }
             if (first) {
                 TreeTransformerUtil.changeNode(context, transformedResult);
@@ -364,7 +369,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private RootExecutionResultNode mapRootResultNode(RootExecutionResultNode resultNode) {
-        return new RootExecutionResultNode(resultNode.getChildren(), resultNode.getErrors());
+        return new RootExecutionResultNode(resultNode.getChildren(), resultNode.getErrors(), resultNode.getElapsedTime());
     }
 
 

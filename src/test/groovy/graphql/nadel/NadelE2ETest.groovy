@@ -12,9 +12,9 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLSchemaElement
 import graphql.schema.GraphQLTypeVisitorStub
 import graphql.schema.SchemaTransformer
+import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
-import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 
 import static graphql.language.AstPrinter.printAstCompact
@@ -679,5 +679,118 @@ class NadelE2ETest extends Specification {
         result.data == [anotherRoot: "anotherRoot", root: [id: "rootId", name: "rootName", extension: [id: "rootId", name: "extensionName"]]]
 
     }
+
+    def "makes timing metrics available"() {
+        def nsdl = '''
+         service service1 {
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                id: ID
+                bar: Bar => hydrated from service2.barById(id: $source.barId)
+            }
+        }
+        service service2 {
+            type Query {
+                barById(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+                name: String
+            }
+        }
+        '''
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            foo : Foo
+        }
+        type Foo {
+            id: ID
+            barId: ID
+        }
+        """)
+
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            barById(id: ID): Bar
+        }
+        type Bar {
+            id: ID
+            name : String
+        }
+        """)
+
+        def execution1 = Mock(ServiceExecution)
+        def execution2 = Mock(ServiceExecution)
+        def serviceFactory = new ServiceExecutionFactory() {
+            @Override
+            ServiceExecution getServiceExecution(String serviceName) {
+                switch (serviceName) {
+                    case "service1":
+                        return execution1
+                    case "service2":
+                        return execution2
+                    default:
+                        throw new RuntimeException()
+                }
+            }
+
+            @Override
+            TypeDefinitionRegistry getUnderlyingTypeDefinitions(String serviceName) {
+                switch (serviceName) {
+                    case "service1":
+                        return underlyingSchema1
+                    case "service2":
+                        return underlyingSchema2
+                    default:
+                        throw new RuntimeException()
+                }
+            }
+        }
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .executionIdProvider(idProvider)
+                .build()
+
+        def query = """
+        { 
+            foo {
+                bar { 
+                    name
+                }
+            }
+        }
+        """
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        def expectedQuery1 = "query nadel_2_service1 {foo {barId}}"
+        def response1 = new ServiceExecutionResult([foo: [barId: "barId1"]])
+
+        def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId1\") {name}}"
+        def response2 = new ServiceExecutionResult([barById: [name: "bar name"]])
+
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        result.data == [foo: [bar: [name: "bar name"]]]
+        1 * execution1.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        1 * execution2.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+
+    }
+
 
 }

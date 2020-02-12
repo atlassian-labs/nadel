@@ -13,8 +13,8 @@ import static graphql.Assert.assertShouldNeverHappen;
 public class RootExecutionResultNode extends ObjectExecutionResultNode {
 
 
-    public RootExecutionResultNode(List<ExecutionResultNode> children, List<GraphQLError> errors) {
-        super(null, null, children, errors);
+    public RootExecutionResultNode(List<ExecutionResultNode> children, List<GraphQLError> errors, ElapsedTime elapsedTime) {
+        super(null, null, children, errors, elapsedTime);
     }
 
     public RootExecutionResultNode(List<ExecutionResultNode> children) {
@@ -33,7 +33,7 @@ public class RootExecutionResultNode extends ObjectExecutionResultNode {
 
     @Override
     public RootExecutionResultNode withNewChildren(List<ExecutionResultNode> children) {
-        return new RootExecutionResultNode(children, getErrors());
+        return new RootExecutionResultNode(children, getErrors(), getElapsedTime());
     }
 
     @Override
@@ -48,6 +48,11 @@ public class RootExecutionResultNode extends ObjectExecutionResultNode {
 
     @Override
     public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
-        return new RootExecutionResultNode(getChildren(), new ArrayList<>(errors));
+        return new RootExecutionResultNode(getChildren(), new ArrayList<>(errors), getElapsedTime());
+    }
+
+    @Override
+    public ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime) {
+        return new RootExecutionResultNode(getChildren(), getErrors(), elapsedTime);
     }
 }
