@@ -1,6 +1,7 @@
 package graphql.nadel.engine
 
 import graphql.ExecutionInput
+import graphql.GraphQLError
 import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
 import graphql.execution.nextgen.result.ResultNodesUtil
@@ -17,9 +18,14 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.schema.UnderlyingWiringFactory
+import graphql.nadel.testutils.MockedWiringFactory
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
+import graphql.schema.idl.RuntimeWiring
+import graphql.schema.idl.SchemaGenerator
+import graphql.schema.idl.SchemaParser
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -148,21 +154,21 @@ class NadelExecutionStrategyTest extends Specification {
     def overallHydrationSchema = TestUtil.schemaFromNdsl('''
         service service1 {
             type Query {
-                foo(id : ID): Foo   
+                foo(id : ID): Foo
             }
             type Foo {
                 id: ID
-                bar: Bar => hydrated from service2.barById(id: $source.barId)  
-                barLongerInput: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)  
+                bar: Bar => hydrated from service2.barById(id: $source.barId)
+                barLongerInput: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)
             }
         }
         service service2 {
             type Query {
-                barById(id: ID): Bar 
+                barById(id: ID): Bar
             }
             type Bar {
-                id: ID  
-                name: String  
+                id: ID
+                name: String
             }
         }
         ''')
@@ -1133,6 +1139,9 @@ class NadelExecutionStrategyTest extends Specification {
         ResultNodesUtil.toExecutionResult(response.get()).data
     }
 
+    List<GraphQLError> resultErrors(CompletableFuture<RootExecutionResultNode> response) {
+        ResultNodesUtil.toExecutionResult(response.get()).errors
+    }
 
     def "two deep renames"() {
         given:
@@ -2351,6 +2360,225 @@ fragment F1 on TestingCharacter {
         def issue3Result = [id: "ISSUE-3", authors: [[id: "USER-2"], [id: "USER-4"], [id: "USER-5"]]]
         resultData(response) == [issues: [issue1Result, issue2Result, issue3Result]]
 
+    }
+
+
+    GraphQLSchema underlyingSchema(String sdl) {
+        def registry = new SchemaParser().parse(sdl)
+        def options = SchemaGenerator.Options.defaultOptions()
+        def runtimeWiring = RuntimeWiring.newRuntimeWiring().wiringFactory(new UnderlyingWiringFactory(new MockedWiringFactory())).build()
+        return new SchemaGenerator().makeExecutableSchema(options, registry, runtimeWiring)
+    }
+
+    def "__typename is correctly passed on and artificial typename is removed"() {
+        given:
+        def issueSchema = underlyingSchema("""
+        type Query {
+            issues : [AbstractIssue]
+        }
+        interface AbstractIssue {
+            id: ID
+        }
+        type Issue implements AbstractIssue{
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues : [AbstractIssue]
+            }
+            interface AbstractIssue {
+                id: ID
+            }
+            type Issue implements AbstractIssue{
+                id: ID
+                authorIds: [ID]
+            }
+        }
+        ''')
+        def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
+
+        def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = "{issues {__typename id ... on Issue {authorIds}}}"
+        def expectedQuery1 = "query nadel_2_Issues {issues {__typename id ... on Issue {authorIds} typename__UUID:__typename}}"
+        def issue1 = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"], __typename: "Issue", typename__UUID: "Issue"]
+        def issue2 = [id: "ISSUE-2", authorIds: ["USER-3"], __typename: "Issue", typename__UUID: "Issue"]
+        def response1 = new ServiceExecutionResult([issues: [issue1, issue2]])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+        then:
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        def issue1Result = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"], __typename: "Issue"]
+        def issue2Result = [id: "ISSUE-2", authorIds: ["USER-3"], __typename: "Issue"]
+        resultData(response) == [issues: [issue1Result, issue2Result]]
+    }
+
+    def "hydration call forwards error"() {
+        given:
+        def underlyingSchema1 = TestUtil.schema("""
+        type Query {
+            foo : Foo
+        }
+        type Foo {
+            id: ID
+            barId: ID
+        }
+        """)
+        def underlyingSchema2 = TestUtil.schema("""
+        type Query {
+            barById(id: ID): Bar
+        }
+        type Bar {
+            id: ID
+            name : String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service service1 {
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                id: ID
+                bar: Bar => hydrated from service2.barById(id: $source.barId)
+            }
+        }
+        service service2 {
+            type Query {
+                barById(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
+
+        def service1 = new Service("service1", underlyingSchema1, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service("service2", underlyingSchema2, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = "{foo {bar{ name}}}"
+        def expectedQuery1 = "query nadel_2_service1 {foo {barId}}"
+        def response1 = new ServiceExecutionResult([foo: [barId: "barId1"]])
+
+        def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId1\") {name}}"
+        def response2 = new ServiceExecutionResult(null, [[message: "Some error occurred"]])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        then:
+        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        def errors = resultErrors(response)
+        errors.size() == 1
+        errors[0].message == "Some error occurred"
+    }
+
+
+    def "hydration list with batching forwards error"() {
+        given:
+        def underlyingSchema1 = TestUtil.schema("""
+        type Query {
+            foo : Foo
+        }
+        type Foo {
+            id: ID
+            barId: [ID]
+        }
+        """)
+        def underlyingSchema2 = TestUtil.schema("""
+        type Query {
+            barsById(id: [ID]): [Bar]
+        }
+        type Bar {
+            id: ID
+            name : String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service service1 {
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                id: ID
+                bar: [Bar] => hydrated from service2.barsById(id: $source.barId)
+            }
+        }
+        service service2 {
+            type Query {
+                barsById(id: [ID]): [Bar]
+            }
+            type Bar {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
+
+        def service1 = new Service("service1", underlyingSchema1, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service("service2", underlyingSchema2, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def query = "{foo {bar{ name}}}"
+        def expectedQuery1 = "query nadel_2_service1 {foo {barId}}"
+        def response1 = new ServiceExecutionResult([foo: [barId: ["barId1", "barId2", "barId3"]]])
+
+        def expectedQuery2 = "query nadel_2_service2 {barsById(id:[\"barId1\",\"barId2\",\"barId3\"]) {name object_identifier__UUID:id}}"
+        def response2 = new ServiceExecutionResult(null, [[message: "Some error occurred"]])
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        then:
+        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        def errors = resultErrors(response)
+        errors.size() == 1
+        errors[0].message == "Some error occurred"
     }
 
     def "deletes a field in the query"() {

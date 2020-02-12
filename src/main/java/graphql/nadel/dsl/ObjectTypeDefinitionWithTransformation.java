@@ -11,9 +11,11 @@ import graphql.language.SourceLocation;
 import graphql.language.Type;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
 
 public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition {
 
@@ -27,8 +29,9 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
                                                      Description description,
                                                      SourceLocation sourceLocation,
                                                      List<Comment> comments,
-                                                     IgnoredChars ignoredChars) {
-        super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments, ignoredChars, Collections.emptyMap());
+                                                     IgnoredChars ignoredChars,
+                                                     Map<String, String> additionalData) {
+        super(name, implementz, directives, fieldDefinitions, description, sourceLocation, comments, ignoredChars, additionalData);
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -50,6 +53,7 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         private List<FieldDefinition> fieldDefinitions = new ArrayList<>();
         private TypeMappingDefinition typeMappingDefinition;
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
+        private Map<String, String> additionalData = new LinkedHashMap<>();
 
         private Builder() {
         }
@@ -85,14 +89,14 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
             return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(Map<String, String> additionalData) {
-            return null;
+        public Builder additionalData(Map<String, String> additionalData) {
+            this.additionalData = assertNotNull(additionalData);
+            return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(String key, String value) {
-            return null;
+        public Builder additionalData(String key, String value) {
+            this.additionalData.put(key, value);
+            return this;
         }
 
         public Builder name(String name) {
@@ -144,7 +148,8 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
                     description,
                     sourceLocation,
                     comments,
-                    ignoredChars);
+                    ignoredChars,
+                    additionalData);
         }
     }
 }

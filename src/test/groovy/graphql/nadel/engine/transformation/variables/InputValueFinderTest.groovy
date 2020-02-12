@@ -10,7 +10,7 @@ class InputValueFinderTest extends Specification {
 
     def sdl = '''
         
-        directive @directive1 on ARGUMENT_DEFINITION | FIELD_DEFINITION
+        directive @directive1 on ARGUMENT_DEFINITION | FIELD_DEFINITION | INPUT_FIELD_DEFINITION
         directive @argDirective on ARGUMENT_DEFINITION
 
         enum RGB {

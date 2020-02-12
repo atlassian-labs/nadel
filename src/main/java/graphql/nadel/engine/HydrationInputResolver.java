@@ -46,7 +46,6 @@ import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.Field.newField;
 import static graphql.nadel.engine.ArtificialFieldUtils.addObjectIdentifier;
-import static graphql.nadel.engine.ArtificialFieldUtils.removeArtificialFields;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
 import static graphql.nadel.engine.StrategyUtil.changeEsiInResultNode;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
@@ -246,8 +245,7 @@ public class HydrationInputResolver {
 
         ForkJoinPool forkJoinPool = getNadelContext(executionContext).getForkJoinPool();
         return serviceResult
-                .thenApply(resultNode -> removeArtificialFieldsFromRoot(executionContext, resultNode))
-                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(), forkJoinPool, fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult))
+                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(), forkJoinPool, fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult, getNadelContext(executionContext)))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
@@ -274,14 +272,15 @@ public class HydrationInputResolver {
                                                                               ExecutionStepInfo hydratedFieldStepInfo,
                                                                               HydrationTransformation hydrationTransformation,
                                                                               RootExecutionResultNode rootResultNode,
-                                                                              QueryTransformationResult queryTransformationResult) {
+                                                                              QueryTransformationResult queryTransformationResult,
+                                                                              NadelContext nadelContext) {
 
         synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
 
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
-                .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings);
+                .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings, nadelContext);
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
 
@@ -316,7 +315,6 @@ public class HydrationInputResolver {
         return serviceExecutor
                 .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), true)
                 .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, fieldTracking, hydrationInputs, resultNode, queryTransformationResult))
-                .thenApply(resultNode -> ArtificialFieldUtils.removeArtificialFields(getNadelContext(executionContext), resultNode))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
@@ -368,9 +366,14 @@ public class HydrationInputResolver {
             // we only expect a null value here
             assertTrue(rootResultNode.getChildren().get(0).getResolvedValue().isNullValue());
             List<ExecutionResultNode> result = new ArrayList<>();
+            boolean first = true;
             for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
                 ExecutionStepInfo executionStepInfo = hydrationInputNode.getExecutionStepInfo();
                 ExecutionResultNode resultNode = createNullValue(executionStepInfo);
+                if (first) {
+                    resultNode = resultNode.withNewErrors(rootResultNode.getErrors());
+                    first = false;
+                }
                 result.add(resultNode);
             }
             return result;
@@ -399,7 +402,8 @@ public class HydrationInputResolver {
                         true,
                         true,
                         transformationByResultField,
-                        typeRenameMappings);
+                        typeRenameMappings,
+                        getNadelContext(executionContext));
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);
             } else {
@@ -439,9 +443,6 @@ public class HydrationInputResolver {
         return null;
     }
 
-    private RootExecutionResultNode removeArtificialFieldsFromRoot(ExecutionContext executionContext, RootExecutionResultNode root) {
-        return (RootExecutionResultNode) removeArtificialFields(getNadelContext(executionContext), root);
-    }
 
     private LeafExecutionResultNode getFieldByResultKey(ObjectExecutionResultNode node, String resultKey) {
         return (LeafExecutionResultNode) findOneOrNull(node.getChildren(), child -> child.getMergedField().getResultKey().equals(resultKey));

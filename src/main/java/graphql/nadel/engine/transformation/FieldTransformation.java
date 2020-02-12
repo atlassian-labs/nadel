@@ -84,8 +84,8 @@ public abstract class FieldTransformation {
                             .field(newMergedField)
                             .fieldDefinition(allTransformations.get(0).getOriginalFieldDefinition())
                             .type(originalFieldType);
-            if (parentEsi != null && unwrapAll(parentEsi.getType()) instanceof GraphQLObjectType) {
-                builder.fieldContainer((GraphQLObjectType) unwrapAll(parentEsi.getType()));
+                    if (parentEsi != null && unwrapAll(parentEsi.getType()) instanceof GraphQLObjectType) {
+                        builder.fieldContainer((GraphQLObjectType) unwrapAll(parentEsi.getType()));
                     }
                 }
 

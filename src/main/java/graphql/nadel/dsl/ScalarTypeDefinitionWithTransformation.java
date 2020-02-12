@@ -9,16 +9,18 @@ import graphql.language.ScalarTypeDefinition;
 import graphql.language.SourceLocation;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
 
 public class ScalarTypeDefinitionWithTransformation extends ScalarTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
 
-    protected ScalarTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition, String name, List<Directive> directives, Description description, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
-        super(name, directives, description, sourceLocation, comments, ignoredChars, Collections.emptyMap());
+    protected ScalarTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition, String name, List<Directive> directives, Description description, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars, Map<String, String> additionalData) {
+        super(name, directives, description, sourceLocation, comments, ignoredChars, additionalData);
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -38,6 +40,7 @@ public class ScalarTypeDefinitionWithTransformation extends ScalarTypeDefinition
         private List<Directive> directives = new ArrayList<>();
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
         private TypeMappingDefinition typeMappingDefinition;
+        private Map<String, String> additionalData = new LinkedHashMap<>();
 
         private Builder() {
         }
@@ -92,14 +95,15 @@ public class ScalarTypeDefinitionWithTransformation extends ScalarTypeDefinition
             return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(Map<String, String> additionalData) {
-            return null;
+
+        public Builder additionalData(Map<String, String> additionalData) {
+            this.additionalData = assertNotNull(additionalData);
+            return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(String key, String value) {
-            return null;
+        public Builder additionalData(String key, String value) {
+            this.additionalData.put(key, value);
+            return this;
         }
 
         public ScalarTypeDefinition build() {
@@ -109,7 +113,9 @@ public class ScalarTypeDefinitionWithTransformation extends ScalarTypeDefinition
                     description,
                     sourceLocation,
                     comments,
-                    ignoredChars);
+                    ignoredChars,
+                    additionalData
+            );
         }
     }
 }

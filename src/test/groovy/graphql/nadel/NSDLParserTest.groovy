@@ -1,5 +1,7 @@
 package graphql.nadel
 
+import graphql.language.Node
+import graphql.nadel.dsl.NodeId
 import graphql.parser.InvalidSyntaxException
 import org.antlr.v4.runtime.misc.ParseCancellationException
 import spock.lang.Specification
@@ -43,7 +45,7 @@ class NSDLParserTest extends Specification {
 
         then:
         astAsMap(stitchingDSL) == expectedJson("service-definition.json")
-
+        assertNodesHaveIds(stitchingDSL.children)
     }
 
     def "two services"() {
@@ -66,8 +68,9 @@ class NSDLParserTest extends Specification {
 
         then:
         astAsMap(stitchingDSL) == expectedJson("two-services.json")
-
+        assertNodesHaveIds(stitchingDSL.children)
     }
+
 
     def "parse error"() {
         given:
@@ -120,6 +123,7 @@ class NSDLParserTest extends Specification {
 
         then:
         astAsMap(stitchingDSL) == expectedJson("field-mapping.json")
+        assertNodesHaveIds(stitchingDSL.children)
 
     }
 
@@ -144,6 +148,7 @@ class NSDLParserTest extends Specification {
         def stitchingDSL = parser.parseDSL(dsl)
         then:
         astAsMap(stitchingDSL) == expectedJson("hydration.json")
+        assertNodesHaveIds(stitchingDSL.children)
     }
 
 
@@ -166,6 +171,7 @@ class NSDLParserTest extends Specification {
         def stitchingDSL = parser.parseDSL(dsl)
         then:
         astAsMap(stitchingDSL) == expectedJson("object-type-transformation.json")
+        assertNodesHaveIds(stitchingDSL.children)
     }
 
     def "parse interface type transformation"() {
@@ -187,6 +193,7 @@ class NSDLParserTest extends Specification {
         def stitchingDSL = parser.parseDSL(dsl)
         then:
         astAsMap(stitchingDSL) == expectedJson("interface-type-transformation.json")
+        assertNodesHaveIds(stitchingDSL.children)
     }
 
     def "parse union type transformation"() {
@@ -206,6 +213,7 @@ class NSDLParserTest extends Specification {
         def stitchingDSL = parser.parseDSL(dsl)
         then:
         astAsMap(stitchingDSL) == expectedJson("union-type-transformation.json")
+        assertNodesHaveIds(stitchingDSL.children)
     }
 
     def "parse directives to wrong place for field transformation"() {
@@ -252,6 +260,18 @@ class NSDLParserTest extends Specification {
 
         then:
         astAsMap(stitchingDSL).size() > 0
+    }
+
+    boolean assertNodesHaveIds(List<Node> nodes) {
+        if (nodes == null || nodes.isEmpty()) {
+            return true
+        }
+        nodes.forEach({ node ->
+            assert node.getAdditionalData().get(NodeId.ID), "Bad node has no id ${node.class.name}"
+            // recursive
+            assert assertNodesHaveIds(node.children)
+        })
+        true
     }
 }
 

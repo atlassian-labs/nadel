@@ -24,7 +24,7 @@ public class NeverWiringFactory implements WiringFactory {
     @Override
     public boolean providesScalar(ScalarWiringEnvironment environment) {
         final String scalarName = environment.getScalarTypeDefinition().getName();
-        return !(ScalarInfo.isStandardScalar(scalarName) || ScalarInfo.isGraphqlSpecifiedScalar(scalarName));
+        return !(ScalarInfo.isGraphqlSpecifiedScalar(scalarName));
     }
 
     @Override

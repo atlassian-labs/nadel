@@ -1,8 +1,15 @@
 package graphql.nadel.engine
 
+import graphql.execution.MergedField
+import graphql.execution.nextgen.result.ExecutionResultNode
+import graphql.execution.nextgen.result.LeafExecutionResultNode
 import graphql.language.AstPrinter
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
+import graphql.util.TraversalControl
+import graphql.util.TraverserContext
+import graphql.util.TraverserVisitorStub
+import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
 import java.util.concurrent.ForkJoinPool
@@ -90,7 +97,7 @@ class ArtificialFieldUtilsTest extends Specification {
         ])
 
         when:
-        def newNode = ArtificialFieldUtils.removeArtificialFields(context, startingNode)
+        def newNode = removeArtificialFields(context, startingNode)
         def data = toData(newNode)
         then:
         data == [
@@ -131,10 +138,31 @@ class ArtificialFieldUtilsTest extends Specification {
         ])
 
         when:
-        def newNode = ArtificialFieldUtils.removeArtificialFields(context, startingNode)
+        def newNode = removeArtificialFields(context, startingNode)
         then:
         // zippers allow for no change to objects if there is no change
         newNode == startingNode
     }
+
+    static ExecutionResultNode removeArtificialFields(NadelContext nadelContext, ExecutionResultNode resultNode) {
+        ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
+        ExecutionResultNode newNode = resultNodesTransformer.transformParallel(nadelContext.getForkJoinPool(), resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+            @Override
+            TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
+                ExecutionResultNode node = context.thisNode()
+                if (node instanceof LeafExecutionResultNode) {
+                    LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
+                    MergedField mergedField = leaf.getMergedField();
+
+                    if (ArtificialFieldUtils.isArtificialField(nadelContext, mergedField)) {
+                        return TreeTransformerUtil.deleteNode(context);
+                    }
+                }
+                return TraversalControl.CONTINUE;
+            }
+        });
+        return newNode;
+    }
+
 
 }

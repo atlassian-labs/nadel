@@ -1,5 +1,6 @@
 package graphql.nadel.dsl;
 
+import graphql.Assert;
 import graphql.language.Comment;
 import graphql.language.Description;
 import graphql.language.Directive;
@@ -10,7 +11,7 @@ import graphql.language.NodeBuilder;
 import graphql.language.SourceLocation;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,8 +19,8 @@ public class EnumTypeDefinitionWithTransformation extends EnumTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
 
-    protected EnumTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition, String name, List<EnumValueDefinition> enumValueDefinitions, List<Directive> directives, Description description, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
-        super(name, enumValueDefinitions, directives, description, sourceLocation, comments, ignoredChars, Collections.emptyMap());
+    protected EnumTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition, String name, List<EnumValueDefinition> enumValueDefinitions, List<Directive> directives, Description description, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars, Map<String, String> additionalData) {
+        super(name, enumValueDefinitions, directives, description, sourceLocation, comments, ignoredChars, additionalData);
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -40,6 +41,7 @@ public class EnumTypeDefinitionWithTransformation extends EnumTypeDefinition {
         private List<Directive> directives = new ArrayList<>();
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
         private TypeMappingDefinition typeMappingDefinition;
+        private Map<String, String> additionalData = new LinkedHashMap<>();
 
         private Builder() {
         }
@@ -53,6 +55,17 @@ public class EnumTypeDefinitionWithTransformation extends EnumTypeDefinition {
             this.enumValueDefinitions = existing.getEnumValueDefinitions();
             this.ignoredChars = existing.getIgnoredChars();
         }
+
+        public Builder additionalData(Map<String, String> additionalData) {
+            this.additionalData = Assert.assertNotNull(additionalData);
+            return this;
+        }
+
+        public Builder additionalData(String key, String value) {
+            this.additionalData.put(key, value);
+            return this;
+        }
+
 
         public Builder typeMappingDefinition(TypeMappingDefinition typeMappingDefinition) {
             this.typeMappingDefinition = typeMappingDefinition;
@@ -104,18 +117,8 @@ public class EnumTypeDefinitionWithTransformation extends EnumTypeDefinition {
             return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(Map<String, String> additionalData) {
-            return null;
-        }
-
-        @Override
-        public NodeBuilder additionalData(String key, String value) {
-            return null;
-        }
-
         public EnumTypeDefinitionWithTransformation build() {
-            return new EnumTypeDefinitionWithTransformation(typeMappingDefinition, name, enumValueDefinitions, directives, description, sourceLocation, comments, ignoredChars);
+            return new EnumTypeDefinitionWithTransformation(typeMappingDefinition, name, enumValueDefinitions, directives, description, sourceLocation, comments, ignoredChars, additionalData);
         }
     }
 }

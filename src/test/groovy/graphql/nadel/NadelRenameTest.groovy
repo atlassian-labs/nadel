@@ -21,13 +21,14 @@ class NadelRenameTest extends Specification {
     def simpleNDSL = '''
          service MyService {
             type Query{
-                hello: World  
+                hello : World
                 renameObject : ObjectOverall => renamed from renameObjectUnderlying   # the field is renamed
                 renameInterface : InterfaceOverall => renamed from renameInterfaceUnderlying
                 renameUnion : UnionOverall => renamed from renameUnionUnderlying
                 renameInput(arg1 : InputOverall!, arg2 : URL, arg3 : EnumOverall) : String
-                renameString : String => renamed from renameStringUnderlying 
-            } 
+                renameString : String => renamed from renameStringUnderlying
+                typenameTest : TypenameTest
+            }
             
             type World {
                 id: ID
@@ -62,18 +63,23 @@ class NadelRenameTest extends Specification {
             enum EnumOverall => renamed from EnumUnderlying {
                 X,Y
             }
-                
+
+            type TypenameTest {
+                object : ObjectOverall
+                objects : [ObjectOverall]
+            }
          }
         '''
 
     def simpleUnderlyingSchema = typeDefinitions('''
-            type Query{
+            type Query {
                 hello: World  
                 renameObjectUnderlying : ObjectUnderlying
                 renameInterfaceUnderlying : InterfaceUnderlying
                 renameUnionUnderlying : UnionUnderlying
                 renameInput(arg1 : InputUnderlying!, arg2 : String, arg3 : EnumUnderlying) : String
                 renameStringUnderlying: String
+                typenameTest : TypenameTest
             } 
             type World {
                 id: ID
@@ -105,7 +111,11 @@ class NadelRenameTest extends Specification {
             enum EnumUnderlying {
                 X,Y
             }
-
+            
+            type TypenameTest {
+                object : ObjectUnderlying
+                objects : [ObjectUnderlying]
+            }
         ''')
 
     def delegatedExecution = Mock(ServiceExecution)
@@ -341,4 +351,63 @@ class NadelRenameTest extends Specification {
         result.errors.isEmpty()
         result.data == [renameString: "hello"]
     }
+
+    def "correct __typename is returned"() {
+        def query = '''
+        { 
+            typenameTest {
+                __typename
+                object {
+                    __typename
+                }
+                objects {
+                    __typename
+                }
+            }
+        }
+        '''
+
+        given:
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("xxx")
+                .build()
+
+        def data = [
+                typenameTest: [
+                        __typename: "TypenameTest",
+                        object    : [
+                                __typename: "ObjectUnderlying",
+                        ],
+                        objects   : [
+                                [__typename: "ObjectUnderlying"],
+                                [__typename: "ObjectUnderlying"],
+                        ],
+                ]
+        ]
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            def q = printAstCompact(params.query)
+            assert q == "query nadel_2_MyService {typenameTest {__typename object {__typename} objects {__typename}}}", "Unexpected query: $q"
+            completedFuture(new ServiceExecutionResult(data))
+        }
+        result.errors.isEmpty()
+        result.data == [
+                typenameTest: [
+                        __typename: "TypenameTest",
+                        object    : [
+                                __typename: "ObjectOverall",
+                        ],
+                        objects   : [
+                                [__typename: "ObjectOverall",],
+                                [__typename: "ObjectOverall",],
+                        ],
+                ],
+        ]
+    }
+
 }
