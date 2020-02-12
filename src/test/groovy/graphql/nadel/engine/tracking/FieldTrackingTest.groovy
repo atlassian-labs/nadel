@@ -1,12 +1,11 @@
 package graphql.nadel.engine.tracking
 
-
 import graphql.execution.ExecutionContext
 import graphql.execution.instrumentation.InstrumentationContext
-import graphql.execution.nextgen.result.ExecutionResultNode
 import graphql.nadel.engine.NadelContext
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters
+import graphql.nadel.result.ExecutionResultNode
 import spock.lang.Ignore
 import spock.lang.Specification
 

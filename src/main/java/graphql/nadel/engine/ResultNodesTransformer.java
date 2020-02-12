@@ -1,7 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.Internal;
-import graphql.execution.nextgen.result.ExecutionResultNode;
+import graphql.nadel.result.ExecutionResultNode;
 import graphql.util.TraverserVisitor;
 import graphql.util.TreeParallelTransformer;
 import graphql.util.TreeTransformer;
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 
 import static graphql.Assert.assertNotNull;
-import static graphql.execution.nextgen.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
+import static graphql.nadel.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 
 @Internal
 public class ResultNodesTransformer {

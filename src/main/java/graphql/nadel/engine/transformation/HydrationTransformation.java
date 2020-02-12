@@ -1,10 +1,6 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.LeafExecutionResultNode;
-import graphql.execution.nextgen.result.ListExecutionResultNode;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
@@ -14,6 +10,10 @@ import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.LeafExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
+import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 

@@ -2,10 +2,9 @@ package graphql.nadel.engine;
 
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.NonNullableFieldWasNullException;
-import graphql.execution.nextgen.FetchedValueAnalysis;
-import graphql.execution.nextgen.result.LeafExecutionResultNode;
 import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.nadel.engine.transformation.HydrationTransformation;
+import graphql.nadel.result.LeafExecutionResultNode;
 
 public class HydrationInputNode extends LeafExecutionResultNode {
 

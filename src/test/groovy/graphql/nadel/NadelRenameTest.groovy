@@ -1,10 +1,9 @@
 package graphql.nadel
 
-
-import graphql.execution.nextgen.result.RootExecutionResultNode
 import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.ResultRewriteParams
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
 

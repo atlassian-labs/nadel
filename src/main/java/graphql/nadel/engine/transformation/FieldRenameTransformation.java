@@ -1,14 +1,14 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.ListExecutionResultNode;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
 import graphql.util.TraversalControl;
 
 import java.util.List;

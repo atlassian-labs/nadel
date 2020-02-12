@@ -10,13 +10,13 @@ import graphql.execution.MergedSelectionSet;
 import graphql.execution.nextgen.ExecutionStrategyUtil;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
-import graphql.execution.nextgen.ResultNodesCreator;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResolvedValue;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
-import graphql.execution.nextgen.result.UnresolvedObjectResultNode;
 import graphql.nadel.ServiceExecutionResult;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.ObjectExecutionResultNode;
+import graphql.nadel.result.ResultNodesCreator;
+import graphql.nadel.result.RootExecutionResultNode;
+import graphql.nadel.result.UnresolvedObjectResultNode;
 import graphql.nadel.util.ErrorUtil;
 import graphql.util.FpKit;
 import graphql.util.TraversalControl;
@@ -36,7 +36,7 @@ public class ServiceResultToResultNodes {
 
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ServiceExecutionResultAnalyzer fetchedValueAnalyzer = new ServiceExecutionResultAnalyzer();
-    private final ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
+    private final graphql.nadel.result.ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
     private final ExecutionStrategyUtil util = new ExecutionStrategyUtil();
     ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 

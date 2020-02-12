@@ -2,9 +2,9 @@ package graphql.nadel.engine
 
 import graphql.execution.ExecutionStepInfo
 import graphql.execution.MergedField
-import graphql.execution.nextgen.result.ExecutionResultNode
 import graphql.execution.nextgen.result.ResolvedValue
 import graphql.introspection.Introspection
+import graphql.nadel.result.ExecutionResultNode
 import graphql.schema.GraphQLSchema
 import spock.lang.Specification
 

@@ -1,8 +1,8 @@
 package graphql.nadel.hooks;
 
 import graphql.PublicSpi;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
+import graphql.nadel.result.RootExecutionResultNode;
 
 import java.util.concurrent.CompletableFuture;
 

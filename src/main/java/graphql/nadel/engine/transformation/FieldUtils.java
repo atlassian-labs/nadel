@@ -1,14 +1,14 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.LeafExecutionResultNode;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.language.AstTransformer;
 import graphql.language.Field;
 import graphql.language.Node;
 import graphql.language.NodeVisitorStub;
 import graphql.language.SelectionSet;
 import graphql.nadel.engine.FieldMetadataUtil;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.LeafExecutionResultNode;
+import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;

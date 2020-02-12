@@ -1,8 +1,8 @@
 package graphql.nadel.engine;
 
-import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.introspection.Introspection;
+import graphql.nadel.result.ExecutionResultNode;
 
 public class ResolvedValueMapper {
 

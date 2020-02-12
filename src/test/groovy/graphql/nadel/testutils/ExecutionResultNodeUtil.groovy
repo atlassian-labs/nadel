@@ -1,26 +1,22 @@
 package graphql.nadel.testutils
 
-
 import graphql.execution.ExecutionPath
 import graphql.execution.ExecutionStepInfo
-import graphql.execution.nextgen.FetchedValueAnalysis
-import graphql.execution.nextgen.result.ExecutionResultNode
-import graphql.execution.nextgen.result.LeafExecutionResultNode
-import graphql.execution.nextgen.result.ListExecutionResultNode
-import graphql.execution.nextgen.result.ObjectExecutionResultNode
 import graphql.execution.nextgen.result.ResolvedValue
-import graphql.execution.nextgen.result.ResultNodesUtil
-import graphql.execution.nextgen.result.RootExecutionResultNode
+import graphql.nadel.result.ExecutionResultNode
+import graphql.nadel.result.LeafExecutionResultNode
+import graphql.nadel.result.ListExecutionResultNode
+import graphql.nadel.result.ObjectExecutionResultNode
+import graphql.nadel.result.ResultNodesUtil
+import graphql.nadel.result.RootExecutionResultNode
 
 import static graphql.Scalars.GraphQLString
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo
-import static graphql.execution.FetchedValue.newFetchedValue
 import static graphql.execution.MergedField.newMergedField
-import static graphql.execution.nextgen.FetchedValueAnalysis.newFetchedValueAnalysis
 import static graphql.language.Field.newField
 
 /**
- * A helper for tests around {@link graphql.execution.nextgen.result.ExecutionResultNode}s
+ * A helper for tests around {@link graphql.nadel.result.ExecutionResultNode}s
  *
  * The convention is that the field name is the field value with "Val" appended
  *

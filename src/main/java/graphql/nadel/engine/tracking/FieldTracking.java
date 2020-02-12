@@ -5,12 +5,12 @@ import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.ListExecutionResultNode;
 import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.NadelContext;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
 import graphql.nadel.util.ExecutionPathUtils;
 
 import java.util.HashMap;

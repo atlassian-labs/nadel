@@ -7,15 +7,16 @@ import graphql.GraphqlErrorBuilder;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.FragmentDefinition;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.ServiceExecutionParameters;
 import graphql.nadel.ServiceExecutionResult;
+import graphql.nadel.Stopwatch;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.nadel.util.LogKit;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
@@ -76,7 +77,11 @@ public class ServiceExecutor {
 
         try {
             log.debug("service {} invocation started - executionId '{}'", service.getName(), executionContext.getExecutionId());
-            CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters);
+            Stopwatch stopwatch = Stopwatch.createStarted();
+            CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters)
+                    .whenComplete((serviceExecutionResult, throwable) -> {
+                        stopwatch.stop();
+                    });
             Assert.assertNotNull(result, "service execution returned null");
             log.debug("service {} invocation finished  - executionId '{}' ", service.getName(), executionContext.getExecutionId());
             //
