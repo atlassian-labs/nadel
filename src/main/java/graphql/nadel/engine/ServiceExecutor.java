@@ -13,7 +13,6 @@ import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.ServiceExecutionParameters;
 import graphql.nadel.ServiceExecutionResult;
-import graphql.nadel.Stopwatch;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
 import graphql.nadel.result.RootExecutionResultNode;
@@ -77,11 +76,7 @@ public class ServiceExecutor {
 
         try {
             log.debug("service {} invocation started - executionId '{}'", service.getName(), executionContext.getExecutionId());
-            Stopwatch stopwatch = Stopwatch.createStarted();
-            CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters)
-                    .whenComplete((serviceExecutionResult, throwable) -> {
-                        stopwatch.stop();
-                    });
+            CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters);
             Assert.assertNotNull(result, "service execution returned null");
             log.debug("service {} invocation finished  - executionId '{}' ", service.getName(), executionContext.getExecutionId());
             //
