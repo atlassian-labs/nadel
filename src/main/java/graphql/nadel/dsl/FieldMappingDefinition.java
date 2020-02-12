@@ -12,13 +12,14 @@ import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class FieldMappingDefinition extends AbstractNode<FieldMappingDefinition> {
 
     private final List<String> inputPath;
 
-    public FieldMappingDefinition(List<String> inputPath, SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments, IgnoredChars.EMPTY);
+    public FieldMappingDefinition(List<String> inputPath, SourceLocation sourceLocation, List<Comment> comments, Map<String, String> additionalData) {
+        super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
         this.inputPath = inputPath;
     }
 

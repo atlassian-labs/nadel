@@ -13,8 +13,11 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
 
 public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
@@ -25,8 +28,9 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     private StitchingDsl(List<ServiceDefinition> serviceDefinitions,
                          CommonDefinition commonDefinition, SourceLocation sourceLocation,
                          List<Comment> comments,
-                         IgnoredChars ignoredChars) {
-        super(sourceLocation, comments, ignoredChars);
+                         IgnoredChars ignoredChars,
+                         Map<String, String> additionalData) {
+        super(sourceLocation, comments, ignoredChars, additionalData);
         this.serviceDefinitions = serviceDefinitions;
         this.commonDefinition = commonDefinition;
     }
@@ -83,6 +87,7 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
         private List<ServiceDefinition> serviceDefinitions = new ArrayList<>();
         private CommonDefinition commonDefinition;
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
+        private Map<String, String> additionalData = new LinkedHashMap<>();
 
         private Builder() {
 
@@ -99,14 +104,14 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
             return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(Map<String, String> additionalData) {
-            return null;
+        public Builder additionalData(Map<String, String> additionalData) {
+            this.additionalData = assertNotNull(additionalData);
+            return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(String key, String value) {
-            return null;
+        public Builder additionalData(String key, String value) {
+            this.additionalData.put(key, value);
+            return this;
         }
 
         public Builder sourceLocation(SourceLocation sourceLocation) {
@@ -126,7 +131,7 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
 
         public StitchingDsl build() {
-            return new StitchingDsl(serviceDefinitions, commonDefinition, sourceLocation, comments, ignoredChars);
+            return new StitchingDsl(serviceDefinitions, commonDefinition, sourceLocation, comments, ignoredChars, additionalData);
         }
 
     }

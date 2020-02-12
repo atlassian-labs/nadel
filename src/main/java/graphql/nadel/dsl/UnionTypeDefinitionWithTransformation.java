@@ -10,9 +10,11 @@ import graphql.language.Type;
 import graphql.language.UnionTypeDefinition;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
 
 public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
 
@@ -25,8 +27,9 @@ public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
                                                     Description description,
                                                     SourceLocation sourceLocation,
                                                     List<Comment> comments,
-                                                    IgnoredChars ignoredChars) {
-        super(name, directives, memberTypes, description, sourceLocation, comments, ignoredChars, Collections.emptyMap());
+                                                    IgnoredChars ignoredChars,
+                                                    Map<String, String> additionalData) {
+        super(name, directives, memberTypes, description, sourceLocation, comments, ignoredChars, additionalData);
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -46,7 +49,7 @@ public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
         private List<Directive> directives;
         private List<Type> memberTypes;
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
-
+        private Map<String, String> additionalData = new LinkedHashMap<>();
         private TypeMappingDefinition typeMappingDefinition;
 
         private Builder() {
@@ -82,14 +85,14 @@ public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
             return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(Map<String, String> additionalData) {
-            return null;
+        public Builder additionalData(Map<String, String> additionalData) {
+            this.additionalData = assertNotNull(additionalData);
+            return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(String key, String value) {
-            return null;
+        public Builder additionalData(String key, String value) {
+            this.additionalData.put(key, value);
+            return this;
         }
 
         public Builder name(String name) {
@@ -132,7 +135,8 @@ public class UnionTypeDefinitionWithTransformation extends UnionTypeDefinition {
                     description,
                     sourceLocation,
                     comments,
-                    ignoredChars
+                    ignoredChars,
+                    additionalData
             );
         }
     }

@@ -1,5 +1,6 @@
 package graphql.nadel.dsl;
 
+import graphql.Assert;
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
 import graphql.language.IgnoredChars;
@@ -13,6 +14,7 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,8 +22,8 @@ public class CommonDefinition extends AbstractNode<CommonDefinition> {
 
     private List<SDLDefinition> typeDefinitions;
 
-    private CommonDefinition(List<SDLDefinition> typeDefinitions, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
-        super(sourceLocation, comments, ignoredChars);
+    private CommonDefinition(List<SDLDefinition> typeDefinitions, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars, Map<String, String> additionalData) {
+        super(sourceLocation, comments, ignoredChars, additionalData);
         this.typeDefinitions = typeDefinitions;
     }
 
@@ -69,6 +71,7 @@ public class CommonDefinition extends AbstractNode<CommonDefinition> {
         private SourceLocation sourceLocation;
         private List<SDLDefinition> typeDefinitions = new ArrayList<>();
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
+        private Map<String, String> additionalData = new LinkedHashMap<>();
 
         private Builder() {
 
@@ -83,16 +86,6 @@ public class CommonDefinition extends AbstractNode<CommonDefinition> {
         public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
             this.ignoredChars = ignoredChars;
             return this;
-        }
-
-        @Override
-        public NodeBuilder additionalData(Map<String, String> additionalData) {
-            return null;
-        }
-
-        @Override
-        public NodeBuilder additionalData(String key, String value) {
-            return null;
         }
 
         public Builder sourceLocation(SourceLocation sourceLocation) {
@@ -111,9 +104,18 @@ public class CommonDefinition extends AbstractNode<CommonDefinition> {
             return this;
         }
 
+        public Builder additionalData(Map<String, String> additionalData) {
+            this.additionalData = Assert.assertNotNull(additionalData);
+            return this;
+        }
+
+        public Builder additionalData(String key, String value) {
+            this.additionalData.put(key, value);
+            return this;
+        }
 
         public CommonDefinition build() {
-            return new CommonDefinition(typeDefinitions, sourceLocation, comments, ignoredChars);
+            return new CommonDefinition(typeDefinitions, sourceLocation, comments, ignoredChars, additionalData);
         }
     }
 }
