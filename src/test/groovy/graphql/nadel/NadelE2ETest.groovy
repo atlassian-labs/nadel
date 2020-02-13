@@ -4,6 +4,8 @@ import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
+import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
@@ -16,6 +18,8 @@ import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
 import spock.lang.Specification
+
+import java.util.concurrent.CompletableFuture
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
@@ -748,10 +752,17 @@ class NadelE2ETest extends Specification {
                 }
             }
         }
+        RootExecutionResultNode rootResultNode
         Nadel nadel = newNadel()
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
                 .executionIdProvider(idProvider)
+                .instrumentation(new NadelInstrumentation() {
+                    @Override
+                    void executionFinished(RootExecutionResultNode rootExecutionResultNode) {
+                        rootResultNode = rootExecutionResultNode
+                    }
+                })
                 .build()
 
         def query = """
@@ -773,23 +784,31 @@ class NadelE2ETest extends Specification {
         def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId1\") {name}}"
         def response2 = new ServiceExecutionResult([barById: [name: "bar name"]])
 
-
-        when:
-        def result = nadel.execute(nadelExecutionInput).join()
-
-        then:
-        result.data == [foo: [bar: [name: "bar name"]]]
-        1 * execution1.execute({ ServiceExecutionParameters sep ->
+        execution1.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery1
         }) >> completedFuture(response1)
 
-        1 * execution2.execute({ ServiceExecutionParameters sep ->
+        execution2.execute({ ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery2
-        }) >> completedFuture(response2)
+        }) >> {
+            def cf = new CompletableFuture();
+            new Thread({
+                Thread.sleep(251)
+                cf.complete(response2)
+            }).start()
+            return cf
+        }
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
 
 
+        then:
+        result.data == [foo: [bar: [name: "bar name"]]]
+        rootResultNode.getChildren()[0].elapsedTime.duration.toMillis() < 250
+        rootResultNode.getChildren()[0].getChildren()[0].elapsedTime.duration.toMillis() > 250
     }
 
 

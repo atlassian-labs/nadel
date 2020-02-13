@@ -14,6 +14,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
 import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.validation.ValidationError;
 
 import java.util.List;
@@ -149,6 +150,10 @@ public interface NadelInstrumentation {
      */
     default ServiceExecution instrumentServiceExecution(ServiceExecution serviceExecution, NadelInstrumentationServiceExecutionParameters parameters) {
         return serviceExecution;
+    }
+
+    default void executionFinished(RootExecutionResultNode rootExecutionResultNode) {
+
     }
 
 }

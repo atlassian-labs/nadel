@@ -90,7 +90,10 @@ public class Execution {
             result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
         } else {
             CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection);
-            result = resultNodes.thenApply(ResultNodesUtil::toExecutionResult);
+            result = resultNodes.thenApply(rootResultNode -> {
+                instrumentation.executionFinished(rootResultNode);
+                return ResultNodesUtil.toExecutionResult(rootResultNode);
+            });
         }
 
         // note this happens NOW - not when the result completes

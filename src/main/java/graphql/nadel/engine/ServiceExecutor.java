@@ -15,7 +15,9 @@ import graphql.nadel.ServiceExecutionParameters;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
+import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.RootExecutionResultNode;
+import graphql.nadel.util.Data;
 import graphql.nadel.util.LogKit;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
@@ -46,6 +48,7 @@ public class ServiceExecutor {
         this.instrumentation = instrumentation;
     }
 
+
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext,
                                                               QueryTransformationResult queryTransformerResult,
                                                               Service service,
@@ -63,36 +66,44 @@ public class ServiceExecutor {
 
         ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
 
-        CompletableFuture<ServiceExecutionResult> result = executeImpl(service, serviceExecution, serviceExecutionParameters, underlyingRootStepInfo, executionContext);
+        CompletableFuture<Data> result = executeImpl(service, serviceExecution, serviceExecutionParameters, underlyingRootStepInfo, executionContext);
         return result
-                .thenApply(executionResult -> serviceExecutionResultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, executionResult));
+                .thenApply(data -> serviceExecutionResultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, data));
     }
 
 
-    private CompletableFuture<ServiceExecutionResult> executeImpl(Service service, ServiceExecution serviceExecution, ServiceExecutionParameters serviceExecutionParameters, ExecutionStepInfo executionStepInfo, ExecutionContext executionContext) {
+    private CompletableFuture<Data> executeImpl(Service service, ServiceExecution serviceExecution, ServiceExecutionParameters serviceExecutionParameters, ExecutionStepInfo executionStepInfo, ExecutionContext executionContext) {
 
         NadelInstrumentationServiceExecutionParameters instrumentationParams = new NadelInstrumentationServiceExecutionParameters(service, executionContext, executionContext.getInstrumentationState());
         serviceExecution = instrumentation.instrumentServiceExecution(serviceExecution, instrumentationParams);
 
         try {
             log.debug("service {} invocation started - executionId '{}'", service.getName(), executionContext.getExecutionId());
-            CompletableFuture<ServiceExecutionResult> result = serviceExecution.execute(serviceExecutionParameters);
-            Assert.assertNotNull(result, "service execution returned null");
+            ElapsedTime.Builder elapsedTimeBuilder = ElapsedTime.newElapsedTime().start();
+            CompletableFuture<ServiceExecutionResult> executeReturnValue = serviceExecution.execute(serviceExecutionParameters);
+            Assert.assertNotNull(executeReturnValue, "service execution returned null");
+
+            CompletableFuture<Data> result = executeReturnValue
+                    .thenApply((serviceExecutionResult) -> {
+                        ElapsedTime elapsedTime = elapsedTimeBuilder.stop().build();
+                        return Data.newData().set(ElapsedTime.class, elapsedTime).set(ServiceExecutionResult.class, serviceExecutionResult).build();
+                    });
             log.debug("service {} invocation finished  - executionId '{}' ", service.getName(), executionContext.getExecutionId());
             //
             // if they return an exceptional CF then we turn that into graphql errors as well
             return result.handle(handleServiceException(service, executionContext, executionStepInfo));
         } catch (Exception e) {
-            return completedFuture(mkExceptionResult(service, executionContext, executionStepInfo, e));
+            ServiceExecutionResult exceptionResult = mkExceptionResult(service, executionContext, executionStepInfo, e);
+            return completedFuture(Data.newData().set(ServiceExecutionResult.class, exceptionResult).build());
         }
     }
 
-    private BiFunction<ServiceExecutionResult, Throwable, ServiceExecutionResult> handleServiceException(Service service, ExecutionContext executionContext, ExecutionStepInfo executionStepInfo) {
-        return (serviceCallResult, throwable) -> {
+    private BiFunction<Data, Throwable, Data> handleServiceException(Service service, ExecutionContext executionContext, ExecutionStepInfo executionStepInfo) {
+        return (data, throwable) -> {
             if (throwable != null) {
-                return mkExceptionResult(service, executionContext, executionStepInfo, throwable);
+                return Data.newData().set(ServiceExecutionResult.class, mkExceptionResult(service, executionContext, executionStepInfo, throwable)).build();
             } else {
-                return serviceCallResult;
+                return data;
             }
         };
     }
@@ -165,8 +176,14 @@ public class ServiceExecutor {
         );
     }
 
-    private RootExecutionResultNode serviceExecutionResultToResultNode(ExecutionContext executionContextForService, ExecutionStepInfo underlyingRootStepInfo, List<MergedField> transformedMergedFields, ServiceExecutionResult executionResult) {
-        return resultToResultNode.resultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, executionResult, null);
+    private RootExecutionResultNode serviceExecutionResultToResultNode(
+            ExecutionContext executionContextForService,
+            ExecutionStepInfo underlyingRootStepInfo,
+            List<MergedField> transformedMergedFields,
+            Data data) {
+        ServiceExecutionResult serviceExecutionResult = data.get(ServiceExecutionResult.class);
+        ElapsedTime elapsedTime = data.get(ElapsedTime.class);
+        return resultToResultNode.resultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, serviceExecutionResult, elapsedTime);
     }
 
 }

@@ -7,29 +7,29 @@ import java.time.OffsetDateTime;
 public class ElapsedTime {
 
     private final OffsetDateTime startTime;
-    private final long elapsedNanos;
+    private final Duration duration;
 
-    public ElapsedTime(OffsetDateTime startTime, long elapsedNanos) {
+    public ElapsedTime(OffsetDateTime startTime, Duration duration) {
         this.startTime = startTime;
-        this.elapsedNanos = elapsedNanos;
+        this.duration = duration;
     }
 
     public OffsetDateTime getStartTime() {
         return startTime;
     }
 
-    public long getElapsedNanos() {
-        return elapsedNanos;
-    }
-
     public static Builder newElapsedTime() {
         return new Builder();
+    }
+
+    public Duration getDuration() {
+        return duration;
     }
 
     public static class Builder {
 
         private OffsetDateTime start;
-        private long elapsedNanos;
+        private Duration duration;
 
         public synchronized Builder start() {
             start = OffsetDateTime.now();
@@ -38,12 +38,12 @@ public class ElapsedTime {
 
         public synchronized Builder stop() {
             OffsetDateTime stop = OffsetDateTime.now();
-            elapsedNanos = Duration.between(start, stop).toNanos();
+            duration = Duration.between(start, stop);
             return this;
         }
 
         public synchronized ElapsedTime build() {
-            return new ElapsedTime(start, elapsedNanos);
+            return new ElapsedTime(start, duration);
         }
     }
 }
