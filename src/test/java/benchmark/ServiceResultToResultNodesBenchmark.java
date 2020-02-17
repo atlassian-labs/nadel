@@ -12,7 +12,6 @@ import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.engine.ServiceExecutor;
 import graphql.nadel.engine.ServiceResultToResultNodes;
 import graphql.nadel.engine.ServiceResultToResultNodesMutable;
-import graphql.nadel.execution.RootExecutionResultNode;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -101,11 +100,11 @@ public class ServiceResultToResultNodesBenchmark {
     @Measurement(iterations = 3)
     @Fork(3)
     @Threads(1)
-    @BenchmarkMode(Mode.AverageTime)
+    @BenchmarkMode(Mode.Throughput)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public RootExecutionResultNode benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
+    public graphql.execution.nextgen.result.RootExecutionResultNode benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
         ServiceExecutor.DebugContext debugContext = nadelInstance.debugContext;
-        graphql.nadel.execution.RootExecutionResultNode rootExecutionResultNode = nadelInstance.serviceResultToResultNodesMutable.resultToResultNode(
+        graphql.execution.nextgen.result.RootExecutionResultNode rootExecutionResultNode = nadelInstance.serviceResultToResultNodes.resultToResultNode(
                 debugContext.executionContextForService,
                 debugContext.underlyingRootStepInfo,
                 debugContext.transformedMergedFields,

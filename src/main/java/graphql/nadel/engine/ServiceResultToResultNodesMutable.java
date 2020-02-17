@@ -81,7 +81,6 @@ public class ServiceResultToResultNodesMutable {
                 return TraversalControl.CONTINUE;
             }
         };
-        resultNodeTraverser.noCycleDetection();
         resultNodeTraverser.traverse(traverserVisitor, rootNode);
 //        System.out.println("node counter2: " + nodeCounter[0]);
         return rootNode;

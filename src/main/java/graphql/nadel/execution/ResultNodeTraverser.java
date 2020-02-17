@@ -19,10 +19,6 @@ public class ResultNodeTraverser {
         return new ResultNodeTraverser(Traverser.depthFirst(ExecutionResultNode::getChildren, null, null));
     }
 
-    public void noCycleDetection() {
-        traverser.noCycleDetection();
-    }
-
     public void traverse(TraverserVisitor<ExecutionResultNode> visitor, ExecutionResultNode root) {
         traverser.traverse(root, visitor);
     }
