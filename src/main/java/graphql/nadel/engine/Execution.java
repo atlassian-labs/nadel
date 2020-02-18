@@ -20,6 +20,7 @@ import graphql.nadel.NadelExecutionParams;
 import graphql.nadel.Service;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
+import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.result.ResultNodesUtil;
@@ -91,7 +92,7 @@ public class Execution {
         } else {
             CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection);
             result = resultNodes.thenApply(rootResultNode -> {
-                instrumentation.executionFinished(rootResultNode);
+                rootResultNode = instrumentation.instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
                 return ResultNodesUtil.toExecutionResult(rootResultNode);
             });
         }

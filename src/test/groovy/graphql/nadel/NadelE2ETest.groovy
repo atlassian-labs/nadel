@@ -2,9 +2,14 @@ package graphql.nadel
 
 import graphql.ErrorType
 import graphql.GraphQLError
+import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
+import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
+import graphql.nadel.result.ResultNodesUtil
 import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.testutils.TestUtil
@@ -32,30 +37,30 @@ class NadelE2ETest extends Specification {
 
     def simpleNDSL = '''
          service MyService {
-            type Query{
-                hello: World  
-            } 
+            type Query {
+                hello: World
+            }
             type World {
                 id: ID
                 name: String
             }
-            type Mutation{
+            type Mutation {
                 hello: String  
-            } 
+            }
          }
         '''
 
     def simpleUnderlyingSchema = typeDefinitions('''
-            type Query{
-                hello: World  
-            } 
+            type Query {
+                hello: World
+            }
             type World {
                 id: ID
                 name: String
             }
-            type Mutation{
-                hello: String  
-            } 
+            type Mutation {
+                hello: String
+            }
         ''')
 
     def delegatedExecution = Mock(ServiceExecution)
@@ -759,8 +764,9 @@ class NadelE2ETest extends Specification {
                 .executionIdProvider(idProvider)
                 .instrumentation(new NadelInstrumentation() {
                     @Override
-                    void executionFinished(RootExecutionResultNode rootExecutionResultNode) {
+                    RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
                         rootResultNode = rootExecutionResultNode
+                        return rootExecutionResultNode
                     }
                 })
                 .build()
@@ -811,5 +817,67 @@ class NadelE2ETest extends Specification {
         rootResultNode.getChildren()[0].getChildren()[0].elapsedTime.duration.toMillis() > 250
     }
 
+    def "can instrument root execution result"() {
+        given:
+        def query = """
+        query OpName {
+            hello {
+                name
+            }
+        }
+        """
+        RootExecutionResultNode originalExecutionResult
+        NadelInstrumentRootExecutionResultParameters instrumentationParams
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .instrumentation(new NadelInstrumentation() {
+                    @Override
+                    InstrumentationState createState(NadelInstrumentationCreateStateParameters parameters) {
+                        return new InstrumentationState() {
+                            @Override
+                            int hashCode() {
+                                return "test-instrumentation-state".hashCode()
+                            }
+                        }
+                    }
+
+                    @Override
+                    RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
+                        originalExecutionResult = rootExecutionResultNode
+                        instrumentationParams = parameters
+                        return rootExecutionResultNode.withNewErrors([
+                                GraphqlErrorException.newErrorException().message("instrumented-error").build()
+                        ])
+                    }
+                })
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .operationName("OpName")
+                .build()
+
+        def data = [hello: null]
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            def params = args[0] as ServiceExecutionParameters
+            assert printAstCompact(params.query) == "query nadel_2_MyService_OpName {hello {name}}"
+            assert params.operationDefinition.name == "nadel_2_MyService_OpName"
+            completedFuture(new ServiceExecutionResult(data))
+        }
+
+        then:
+        result.errors[0].message == "instrumented-error"
+        instrumentationParams != null
+        instrumentationParams.instrumentationState.hashCode() == "test-instrumentation-state".hashCode()
+        instrumentationParams.executionContext.operationDefinition.name == "OpName"
+        originalExecutionResult != null
+        ResultNodesUtil.toExecutionResult(originalExecutionResult).errors.isEmpty()
+    }
 
 }

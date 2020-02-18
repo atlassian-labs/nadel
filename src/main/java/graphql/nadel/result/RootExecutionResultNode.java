@@ -47,12 +47,12 @@ public class RootExecutionResultNode extends ObjectExecutionResultNode {
     }
 
     @Override
-    public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
+    public RootExecutionResultNode withNewErrors(List<GraphQLError> errors) {
         return new RootExecutionResultNode(getChildren(), new ArrayList<>(errors), getElapsedTime());
     }
 
     @Override
-    public ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime) {
+    public RootExecutionResultNode withElapsedTime(ElapsedTime elapsedTime) {
         return new RootExecutionResultNode(getChildren(), getErrors(), elapsedTime);
     }
 }

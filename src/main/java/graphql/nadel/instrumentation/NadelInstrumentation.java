@@ -7,6 +7,7 @@ import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
 import graphql.language.Document;
 import graphql.nadel.ServiceExecution;
+import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters;
@@ -152,8 +153,8 @@ public interface NadelInstrumentation {
         return serviceExecution;
     }
 
-    default void executionFinished(RootExecutionResultNode rootExecutionResultNode) {
-
+    default RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
+        return rootExecutionResultNode;
     }
 
 }
