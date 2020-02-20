@@ -1,11 +1,14 @@
 package graphql.nadel.engine;
 
 import graphql.Assert;
+import graphql.GraphQLError;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.execution.nextgen.result.LeafExecutionResultNode;
+import graphql.execution.nextgen.result.ListExecutionResultNode;
+import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.AbstractNode;
@@ -15,6 +18,7 @@ import graphql.nadel.TuplesTwo;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
+import graphql.nadel.engine.transformation.RemovedFieldData;
 import graphql.nadel.engine.transformation.UnapplyResult;
 import graphql.schema.GraphQLSchema;
 import graphql.util.TraversalControl;
@@ -25,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -61,8 +66,9 @@ public class ServiceResultNodesToOverallResult {
                                        ExecutionStepInfo rootStepInfo,
                                        Map<String, FieldTransformation> transformationMap,
                                        Map<String, String> typeRenameMappings,
-                                       NadelContext nadelContext) {
-        return convertImpl(executionId, forkJoinPool, resultNode, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false, nadelContext);
+                                       NadelContext nadelContext,
+                                       Map<String, List<RemovedFieldData>> removedFields) {
+        return convertImpl(executionId, forkJoinPool, resultNode, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false, nadelContext, removedFields);
     }
 
     public ExecutionResultNode convertChildren(ExecutionId executionId,
@@ -134,9 +140,9 @@ public class ServiceResultNodesToOverallResult {
                         overallSchema
                 );
                 if (transformations.size() == 0) {
-                    mapAndChangeNode(node, unapplyEnvironment, context);
+                    mapAndChangeNode(node, unapplyEnvironment, context, areRemovedFieldsAdded);
                 } else {
-                    traversalControl = unapplyTransformations(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context, nadelContext);
+                    traversalControl = unapplyTransformations(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context, nadelContext, removedFields);
                 }
                 ExecutionResultNode convertedNode = context.thisNode();
                 if (!(convertedNode instanceof LeafExecutionResultNode)) {
@@ -150,6 +156,29 @@ public class ServiceResultNodesToOverallResult {
         log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
         return newRoot;
 
+    }
+
+    private List<ExecutionResultNode> constructRemovedNodes(List<RemovedFieldData> removedFieldDataList) {
+        List<ExecutionResultNode> executionResultNodes = new ArrayList<>();
+        for (RemovedFieldData removedField : removedFieldDataList) {
+            ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
+                    .localContext(null)
+                    .nullValue(true)
+                    .build();
+
+            MergedField field = MergedField.newMergedField(removedField.getField()).build();
+
+            ExecutionStepInfo esi = ExecutionStepInfo.newExecutionStepInfo()
+                    .path(removedField.getExecutionPath())
+                    .type(removedField.getOutputType())
+                    .field(field)
+                    .fieldContainer(removedField.getFieldContainer())
+                    .build();
+
+            LeafExecutionResultNode removedNode = new LeafExecutionResultNode(esi, resolvedValue, null , Collections.singletonList(removedField.getGraphQLError()));
+            executionResultNodes.add((ExecutionResultNode) removedNode);
+        }
+        return executionResultNodes;
     }
 
 
@@ -199,7 +228,7 @@ public class ServiceResultNodesToOverallResult {
 
         boolean first = true;
         if (notTransformedTree != null) {
-            ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, context);
+            ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, context, false);
             mappedNode = convertChildren(executionId,
                     forkJoinPool,
                     mappedNode,
@@ -256,7 +285,7 @@ public class ServiceResultNodesToOverallResult {
         UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);
 
         if (withoutTransformedFields != null) {
-            mapAndChangeNode(withoutTransformedFields, unapplyEnvironment, context);
+            mapAndChangeNode(withoutTransformedFields, unapplyEnvironment, context, false);
             TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
             return TraversalControl.CONTINUE;
         } else {
@@ -329,14 +358,27 @@ public class ServiceResultNodesToOverallResult {
         }).collect(Collectors.toList());
     }
 
-    private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
+    private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context, boolean areRemovedFieldsAdded) {
         ExecutionStepInfo mappedEsi = executionStepInfoMapper.mapExecutionStepInfo(node.getExecutionStepInfo(), environment);
         ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node, environment);
-        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue);
+        if (!areRemovedFieldsAdded) {
+            return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue);
+        }
+
+        List<GraphQLError> errors = context.thisNode().getErrors();
+
+        if (node instanceof LeafExecutionResultNode) {
+            return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue)
+                    .withNewErrors(errors);
+        }
+
+        List<ExecutionResultNode> children = context.thisNode().getChildren();
+        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue)
+                    .withNewChildren(children);
     }
 
-    private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
-        ExecutionResultNode mappedNode = mapNode(node, environment, context);
+    private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context, boolean areRemovedFieldsAdded) {
+        ExecutionResultNode mappedNode = mapNode(node, environment, context, areRemovedFieldsAdded);
         TreeTransformerUtil.changeNode(context, mappedNode);
     }
 

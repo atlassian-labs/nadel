@@ -2,10 +2,13 @@ package graphql.nadel.engine
 
 
 import graphql.execution.ExecutionContext
+import graphql.execution.ExecutionPath
+import graphql.execution.ExecutionStepInfo
 import graphql.execution.MergedField
 import graphql.execution.nextgen.FieldSubSelection
 import graphql.language.AstPrinter
 import graphql.language.Document
+import graphql.language.Field
 import graphql.nadel.Operation
 import graphql.nadel.Service
 import graphql.nadel.hooks.ServiceExecutionHooks
@@ -67,6 +70,20 @@ class OverallQueryTransformerTest extends Specification {
                 id: ID!
             }
         """)
+
+    def static esi
+
+    void setup() {
+        Field field = Field.newField().build()
+        MergedField mergedField = Mock(MergedField)
+        ExecutionPath exPath = Mock(ExecutionPath)
+        esi = Mock(ExecutionStepInfo)
+
+        esi.getField() >> mergedField
+        esi.getField().getSingleField() >> field
+        esi.getField().getSingleField().getAdditionalData().getOrDefault(*_) >> "1"
+        esi.getPath() >> exPath
+    }
 
     def underlyingSchemaAnotherService = TestUtil.schema("""
             type Query { 

@@ -549,10 +549,19 @@ public class OverallQueryTransformer {
                 return TraversalControl.CONTINUE;
             }
 
-            Object userSuppliedContext = nadelContext.getUserSuppliedContext();
-            boolean isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, userSuppliedContext);
-            if(!isFieldAllowed) {
-                return TreeTransformerUtil.deleteNode(context);
+            // ExecutionPath is needed when reconstructing removed fields
+            ExecutionPath parentExecutionPath = context.getVarFromParents(ExecutionPath.class);
+            if (context.getParentContext().isRootContext()) {
+                // The highest level field in the query has no parentExecutionPath
+                context.setVar(ExecutionPath.class, esi.getPath());
+            } else if (parentExecutionPath == null) {
+                // This field is hydrated and executionPath must be set from
+                ExecutionPath curExecutionPath = esi.getPath().segment(field.getName());
+                context.setVar(ExecutionPath.class, curExecutionPath);
+            } else {
+                //field isn't hydrated
+                ExecutionPath curExecutionPath = parentExecutionPath.segment(field.getName());
+                context.setVar(ExecutionPath.class, curExecutionPath);
             }
 
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
@@ -739,6 +748,10 @@ public class OverallQueryTransformer {
             }
             return typeMappingDefinition;
         }
+    }
+    private void addFieldToRemovedMap(Field field, ExecutionPath executionPath, GraphQLOutputType type, GraphQLObjectType fieldContainer, GraphQLError graphQLError, String id) {
+        RemovedFieldData removedFieldData = new RemovedFieldData(field, executionPath,type, fieldContainer, graphQLError);
+        removedFieldMap.computeIfAbsent(id, k -> new ArrayList<RemovedFieldData>()).add(removedFieldData);
     }
 
 

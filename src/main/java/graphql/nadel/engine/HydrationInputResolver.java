@@ -223,6 +223,7 @@ public class HydrationInputResolver {
         Operation operation = Operation.QUERY;
         String operationName = buildOperationName(service, executionContext);
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
+        ExecutionStepInfo esi = hydrationInputNode.getExecutionStepInfo();
 
         QueryTransformationResult queryTransformationResult = queryTransformer
                 .transformHydratedTopLevelField(
@@ -234,7 +235,8 @@ public class HydrationInputResolver {
                         topLevelFieldType,
                         serviceExecutionHooks,
                         service,
-                        serviceContexts.get(service));
+                        serviceContexts.get(service),
+                        esi);
 
 
         fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
@@ -245,7 +247,7 @@ public class HydrationInputResolver {
 
         ForkJoinPool forkJoinPool = getNadelContext(executionContext).getForkJoinPool();
         return serviceResult
-                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(), forkJoinPool, fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult, getNadelContext(executionContext)))
+                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(), forkJoinPool, fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult, getNadelContext(executionContext), queryTransformer.getRemovedFieldMap()))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
@@ -307,7 +309,7 @@ public class HydrationInputResolver {
 
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
         QueryTransformationResult queryTransformationResult = queryTransformer
-                .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType, serviceExecutionHooks, service, serviceContexts.get(service));
+                .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType, serviceExecutionHooks, service, serviceContexts.get(service), hydrationInputs.get(0).getExecutionStepInfo());
 
 
         List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, ExecutionResultNode::getExecutionStepInfo);

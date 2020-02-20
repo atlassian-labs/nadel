@@ -15,7 +15,9 @@ import graphql.execution.preparsed.NoOpPreparsedDocumentProvider;
 import graphql.execution.preparsed.PreparsedDocumentEntry;
 import graphql.execution.preparsed.PreparsedDocumentProvider;
 import graphql.language.Document;
+import graphql.language.NodeBuilder;
 import graphql.nadel.dsl.CommonDefinition;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.engine.Execution;
@@ -31,7 +33,9 @@ import graphql.nadel.schema.OverallSchemaGenerator;
 import graphql.nadel.schema.SchemaTransformationHook;
 import graphql.nadel.schema.UnderlyingSchemaGenerator;
 import graphql.nadel.util.LogKit;
+import graphql.parser.GraphqlAntlrToLanguage;
 import graphql.parser.InvalidSyntaxException;
+import graphql.parser.MultiSourceReader;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.ScalarInfo;
@@ -39,13 +43,17 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.WiringFactory;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -248,7 +256,26 @@ public class Nadel {
         NadelInstrumentationQueryExecutionParameters parameters = new NadelInstrumentationQueryExecutionParameters(executionInput, graphQLSchema, instrumentationState);
         InstrumentationContext<Document> parseInstrumentation = instrumentation.beginParse(parameters);
 
-        Parser parser = new Parser();
+        Parser parser = new Parser() {
+            @Override
+            protected GraphqlAntlrToLanguage getAntlrToLanguage(CommonTokenStream tokens, MultiSourceReader multiSourceReader) {
+                return new GraphqlAntlrToLanguage(tokens,multiSourceReader) {
+                    private int idCounter = 1;
+                    @Override
+                    protected void addCommonData(NodeBuilder nodeBuilder, ParserRuleContext parserRuleContext) {
+                        super.addCommonData(nodeBuilder, parserRuleContext);
+                        nodeBuilder.additionalData(additionalIdData());
+                    }
+
+                    private Map<String, String> additionalIdData() {
+                        Map<String, String> additionalData = new LinkedHashMap<>();
+                        String nodeIdVal = String.valueOf(idCounter++);
+                        additionalData.put(NodeId.ID, nodeIdVal);
+                        return additionalData;
+                    }
+                };
+            }
+        };
         Document document;
         DocumentAndVariables documentAndVariables;
         try {
