@@ -80,8 +80,8 @@ public class ServiceResultNodesToOverallResult {
                                                boolean batched,
                                                Map<String, FieldTransformation> transformationMap,
                                                Map<String, String> typeRenameMappings,
-                                               NadelContext nadelContext) {
-        return convertImpl(executionId, forkJoinPool, root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext);
+                                               NadelContext nadelContext, Map<String, List<RemovedFieldData>> removedFields) {
+        return convertImpl(executionId, forkJoinPool, root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, removedFields);
     }
 
     private ExecutionResultNode convertImpl(ExecutionId executionId,
@@ -94,7 +94,8 @@ public class ServiceResultNodesToOverallResult {
                                             Map<String, FieldTransformation> transformationMapInput,
                                             Map<String, String> typeRenameMappings,
                                             boolean onlyChildren,
-                                            NadelContext nadelContext) {
+                                            NadelContext nadelContext,
+                                            Map<String, List<RemovedFieldData>> removedFields) {
 
         ConcurrentHashMap<String, FieldTransformation> transformationMap = new ConcurrentHashMap<>(transformationMapInput);
 
@@ -121,6 +122,84 @@ public class ServiceResultNodesToOverallResult {
 
                     if (ArtificialFieldUtils.isArtificialField(nadelContext, mergedField)) {
                         return TreeTransformerUtil.deleteNode(context);
+                    }
+                }
+
+                boolean areRemovedFieldsAdded = false;
+
+                MergedField parentField = parentStepInfo.getField();
+                if (parentField != null && parentField.getSingleField() != null && removedFields.size() > 0) {
+                    // When the current field is hydrated and it has removed sibling nodes
+                    // Adds removedNodes as siblings to the current Node
+                    String hydratedParentId = parentField.getSingleField().getAdditionalData().getOrDefault("id", null);
+
+                    List<RemovedFieldData> removedFieldDataList = new ArrayList<>();
+                    if (hydratedParentId != null) {
+                        removedFieldDataList = removedFields.getOrDefault(hydratedParentId, null);
+                    }
+
+                    if (removedFieldDataList != null && !removedFieldDataList.isEmpty()) {
+                        List<ExecutionResultNode> removedNodes = constructRemovedNodes(removedFieldDataList);
+                        removedNodes.stream().forEach(removedNode -> TreeTransformerUtil.insertAfter(context, removedNode));
+
+                        removedFields.remove(hydratedParentId);
+                        areRemovedFieldsAdded = true;
+                    }
+                }
+
+                MergedField curField = node.getExecutionStepInfo().getField();
+                if (curField != null && removedFields.size() > 0) {
+                    String id = (String) curField.getSingleField().getAdditionalData().getOrDefault("id", null);
+                    List<RemovedFieldData> removedFieldDataList = new ArrayList<>();
+                    if (id != null) {
+                        removedFieldDataList = removedFields.getOrDefault(id, null);
+                    }
+
+                    if (removedFieldDataList != null && !removedFieldDataList.isEmpty()) {
+
+                        String removedFieldExecutionPath = removedFieldDataList.get(0).getExecutionPath().toString();
+                        String curExecutionPath = context.thisNode().getExecutionStepInfo().getPath().toString();
+
+                        if (removedFieldExecutionPath.equals(curExecutionPath)) {
+                            // Edge case: When the current field is hydrated and has been removed, We need to include the removed errors otherwise they are not added to the overallResult
+                            List<GraphQLError> errors = context.thisNode().getErrors();
+                            errors.add(removedFieldDataList.get(0).getGraphQLError());
+                            TreeTransformerUtil.changeNode(context, context.thisNode().withNewErrors(errors));
+                        } else {
+                            // Case: when the current field is parent of removed fields
+                            if (node instanceof ListExecutionResultNode) {
+                                // When the query is batched together
+                                List<ExecutionResultNode> newNodeChildren = new ArrayList<>();
+
+                                for (ExecutionResultNode resultNode : node.getChildren()) {
+                                    List<ExecutionResultNode> childrenAndRemovedNodes = new ArrayList<>();
+                                    childrenAndRemovedNodes.addAll(resultNode.getChildren());
+                                    childrenAndRemovedNodes.addAll(constructRemovedNodes(removedFieldDataList));
+
+                                    ExecutionStepInfo esi = resultNode.getExecutionStepInfo();
+                                    ResolvedValue value = resultNode.getResolvedValue();
+                                    List<GraphQLError> errors = resultNode.getErrors();
+
+                                    ObjectExecutionResultNode changedNode = new ObjectExecutionResultNode(esi, value, childrenAndRemovedNodes, errors);
+                                    newNodeChildren.add(changedNode);
+                                }
+
+                                TreeTransformerUtil.changeNode(context, node.withNewChildren(newNodeChildren));
+                            } else {
+                                List<ExecutionResultNode> childrenAndRemovedNodes = new ArrayList<>();
+                                childrenAndRemovedNodes.addAll(context.thisNode().getChildren());
+                                childrenAndRemovedNodes.addAll(constructRemovedNodes(removedFieldDataList));
+
+                                ExecutionStepInfo esi = context.thisNode().getExecutionStepInfo();
+                                ResolvedValue value = context.thisNode().getResolvedValue();
+                                List<GraphQLError> errors = context.thisNode().getErrors();
+
+                                ObjectExecutionResultNode changedNode = new ObjectExecutionResultNode(esi, value, childrenAndRemovedNodes, errors);
+                                TreeTransformerUtil.changeNode(context, (ExecutionResultNode) changedNode);
+                            }
+                        }
+                        removedFields.remove(id);
+                        areRemovedFieldsAdded = true;
                     }
                 }
 
@@ -189,7 +268,8 @@ public class ServiceResultNodesToOverallResult {
                                                     UnapplyEnvironment unapplyEnvironment,
                                                     Map<String, FieldTransformation> transformationMap,
                                                     TraverserContext<ExecutionResultNode> context,
-                                                    NadelContext nadelContext) {
+                                                    NadelContext nadelContext,
+                                                    Map<String, List<RemovedFieldData>> removedFields) {
 
         TraversalControl traversalControl;
 
@@ -198,7 +278,7 @@ public class ServiceResultNodesToOverallResult {
         if (transformation instanceof HydrationTransformation) {
             traversalControl = unapplyHydration(node, transformations, unapplyEnvironment, transformationMap, transformation, context);
         } else if (transformation instanceof FieldRenameTransformation) {
-            traversalControl = unapplyFieldRename(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context, nadelContext);
+            traversalControl = unapplyFieldRename(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context, nadelContext, removedFields);
         } else {
             return Assert.assertShouldNeverHappen("Unexpected transformation type " + transformation);
         }
@@ -212,7 +292,8 @@ public class ServiceResultNodesToOverallResult {
                                                 UnapplyEnvironment unapplyEnvironment,
                                                 Map<String, FieldTransformation> transformationMap,
                                                 TraverserContext<ExecutionResultNode> context,
-                                                NadelContext nadelContext) {
+                                                NadelContext nadelContext,
+                                                Map<String, List<RemovedFieldData>> removedFields) {
         Map<AbstractNode, List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
 
         TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, transformationMap);
@@ -238,7 +319,7 @@ public class ServiceResultNodesToOverallResult {
                     unapplyEnvironment.batched,
                     transformationMap,
                     unapplyEnvironment.typeRenameMappings,
-                    nadelContext);
+                    nadelContext, removedFields);
             TreeTransformerUtil.changeNode(context, mappedNode);
             first = false;
         }
@@ -258,7 +339,7 @@ public class ServiceResultNodesToOverallResult {
                         unapplyEnvironment.batched,
                         transformationMap,
                         unapplyEnvironment.typeRenameMappings,
-                        nadelContext);
+                        nadelContext, removedFields);
             }
             if (first) {
                 TreeTransformerUtil.changeNode(context, transformedResult);

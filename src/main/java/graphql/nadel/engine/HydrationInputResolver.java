@@ -26,6 +26,7 @@ import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
+import graphql.nadel.engine.transformation.RemovedFieldData;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.util.ExecutionPathUtils;
 import graphql.schema.GraphQLCompositeType;
@@ -275,14 +276,14 @@ public class HydrationInputResolver {
                                                                               HydrationTransformation hydrationTransformation,
                                                                               RootExecutionResultNode rootResultNode,
                                                                               QueryTransformationResult queryTransformationResult,
-                                                                              NadelContext nadelContext) {
+                                                                              NadelContext nadelContext, Map<String, List<RemovedFieldData>> removedFields) {
 
         synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
 
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
-                .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings, nadelContext);
+                .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings, nadelContext, removedFields);
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
 
@@ -405,7 +406,8 @@ public class HydrationInputResolver {
                         true,
                         transformationByResultField,
                         typeRenameMappings,
-                        getNadelContext(executionContext));
+                        getNadelContext(executionContext),
+                        queryTransformer.getRemovedFieldMap());
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);
             } else {

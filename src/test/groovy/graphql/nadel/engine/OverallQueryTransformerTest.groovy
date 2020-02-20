@@ -262,10 +262,9 @@ class OverallQueryTransformerTest extends Specification {
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
 
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
-
         def transformer = new OverallQueryTransformer()
         def serviceExecutionHooks = new ServiceExecutionHooks() {}
-        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchemaExampleService, null, Operation.QUERY, fields, serviceExecutionHooks, null, null)
+        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchemaExampleService, null, Operation.QUERY, fields, serviceExecutionHooks, null, null, esi)
         when:
         def document = transformationResult.document
 
@@ -289,7 +288,7 @@ class OverallQueryTransformerTest extends Specification {
         def transformer = new OverallQueryTransformer()
         def hooks = new ServiceExecutionHooks() {}
         Object serviceContext = new Object();
-        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchema, operationName, operation, fields, hooks, null, serviceContext)
+        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchema, operationName, operation, fields, hooks, null, serviceContext, esi)
         return transformationResult.document
     }
 }

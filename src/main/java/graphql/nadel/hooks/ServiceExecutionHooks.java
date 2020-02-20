@@ -1,10 +1,13 @@
 package graphql.nadel.hooks;
 
+import graphql.GraphQLError;
 import graphql.PublicSpi;
 import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Field;
 import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
+import graphql.schema.GraphQLFieldDefinition;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -29,8 +32,8 @@ public interface ServiceExecutionHooks {
         return null;
     }
 
-    default boolean isFieldAllowed(Field field, Object userSuppliedContext) {
-        return true;
+    default Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinition, Object userSuppliedContext) {
+        return Optional.empty();
     }
 
     /**

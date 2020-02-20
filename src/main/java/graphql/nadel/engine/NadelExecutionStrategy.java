@@ -144,7 +144,7 @@ public class NadelExecutionStrategy {
             //
             GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
             QueryTransformationResult queryTransform = queryTransformer
-                    .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
+                    .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext, esi);
 
 
             Map<String, FieldTransformation> transformationByResultField = queryTransform.getTransformationByResultField();
@@ -165,7 +165,8 @@ public class NadelExecutionStrategy {
                                     rootExecutionStepInfo,
                                     transformationByResultField,
                                     typeRenameMappings,
-                                    nadelContext));
+                                    nadelContext,
+                                    queryTransformer.getRemovedFieldMap()));
 
             //
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call

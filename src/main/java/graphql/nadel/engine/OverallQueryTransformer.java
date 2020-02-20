@@ -1,6 +1,10 @@
 package graphql.nadel.engine;
 
+import graphql.GraphQLError;
+import graphql.execution.AbortExecutionException;
 import graphql.execution.ExecutionContext;
+import graphql.execution.ExecutionPath;
+import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.ValuesResolver;
 import graphql.introspection.Introspection;
@@ -33,6 +37,7 @@ import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.engine.transformation.OverallTypeInfo;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
+import graphql.nadel.engine.transformation.RemovedFieldData;
 import graphql.nadel.hooks.NewVariableValue;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.util.FpKit;
@@ -63,10 +68,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static graphql.Assert.assertShouldNeverHappen;
@@ -89,6 +96,12 @@ public class OverallQueryTransformer {
     private final ValuesResolver valuesResolver = new ValuesResolver();
     private final RecordOverallTypeInformation recordOverallTypeInformation = new RecordOverallTypeInformation();
 
+    private final Map<String, List<RemovedFieldData>> removedFieldMap = new HashMap<>();
+
+    public Map<String, List<RemovedFieldData>> getRemovedFieldMap() {
+        return removedFieldMap;
+    }
+
     QueryTransformationResult transformHydratedTopLevelField(
             ExecutionContext executionContext,
             GraphQLSchema underlyingSchema,
@@ -98,8 +111,8 @@ public class OverallQueryTransformer {
             GraphQLCompositeType topLevelFieldTypeOverall,
             ServiceExecutionHooks serviceExecutionHooks,
             Service service,
-            Object serviceContext
-    ) {
+            Object serviceContext,
+            ExecutionStepInfo hydratedFieldStepInfo) {
         long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
@@ -122,7 +135,8 @@ public class OverallQueryTransformer {
                 serviceExecutionHooks,
                 variableValues,
                 service,
-                serviceContext);
+                serviceContext,
+                hydratedFieldStepInfo);
 
         Field transformedTopLevelField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
@@ -141,7 +155,8 @@ public class OverallQueryTransformer {
                 serviceExecutionHooks,
                 variableValues,
                 service,
-                serviceContext);
+                serviceContext,
+                hydratedFieldStepInfo);
 
         SelectionSet newOperationSelectionSet = newSelectionSet().selection(transformedTopLevelField).build();
         OperationDefinition operationDefinition = newOperationDefinition()
@@ -175,8 +190,8 @@ public class OverallQueryTransformer {
             List<MergedField> mergedFields,
             ServiceExecutionHooks serviceExecutionHooks,
             Service service,
-            Object serviceContext
-    ) {
+            Object serviceContext,
+            ExecutionStepInfo esi) {
         long startTime = System.currentTimeMillis();
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
         Set<String> fragmentsDirectlyReferenced = new LinkedHashSet<>();
@@ -206,7 +221,12 @@ public class OverallQueryTransformer {
                         serviceExecutionHooks,
                         variableValues,
                         service,
-                        serviceContext);
+                        serviceContext, esi);
+                // Case happens when the high level field is removed
+                if (newField == null) {
+                    newField = field.transform(builder -> builder.selectionSet(SelectionSet.newSelectionSet().build()));
+                }
+                // if all child fields of the high level field are removed then the top-level field is nulled
 
                 GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
                 newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
@@ -241,7 +261,7 @@ public class OverallQueryTransformer {
                 serviceExecutionHooks,
                 variableValues,
                 service,
-                serviceContext);
+                serviceContext, esi);
 
         Document newDocument = newDocument(operationDefinition, transformedFragments);
 
@@ -277,7 +297,7 @@ public class OverallQueryTransformer {
                                                                ServiceExecutionHooks serviceExecutionHooks,
                                                                Map<String, Object> variableValues,
                                                                Service service,
-                                                               Object serviceContext) {
+                                                               Object serviceContext, ExecutionStepInfo esi) {
 
         Set<String> fragmentsToTransform = new LinkedHashSet<>(referencedFragmentNames);
         List<FragmentDefinition> transformedFragments = new ArrayList<>();
@@ -295,7 +315,8 @@ public class OverallQueryTransformer {
                     serviceExecutionHooks,
                     variableValues,
                     service,
-                    serviceContext);
+                    serviceContext,
+                    esi);
             transformedFragments.add(transformedFragment);
             fragmentsToTransform.addAll(newReferencedFragments);
             fragmentsToTransform.remove(fragmentName);
@@ -313,7 +334,7 @@ public class OverallQueryTransformer {
                                                            ServiceExecutionHooks serviceExecutionHooks,
                                                            Map<String, Object> variableValues,
                                                            Service service,
-                                                           Object serviceContext) {
+                                                           Object serviceContext, ExecutionStepInfo esi) {
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
 
         OverallTypeInformation<FragmentDefinition> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
@@ -334,7 +355,8 @@ public class OverallQueryTransformer {
                 overallTypeInformation,
                 variableValues,
                 service,
-                serviceContext);
+                serviceContext,
+                esi);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         rootVars.put(NodeTypeContext.class, newNodeTypeContext().build());
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
@@ -382,7 +404,7 @@ public class OverallQueryTransformer {
                                              ServiceExecutionHooks serviceExecutionHooks,
                                              Map<String, Object> variableValues,
                                              Service service,
-                                             Object serviceContext) {
+                                             Object serviceContext, ExecutionStepInfo esi) {
         OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes
                 (nodeWithoutTypeInfo,
                         executionContext.getGraphQLSchema(),
@@ -400,7 +422,7 @@ public class OverallQueryTransformer {
                 overallTypeInformation,
                 variableValues,
                 service,
-                serviceContext);
+                serviceContext, esi);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         String underlyingParentName = getUnderlyingTypeNameAndRecordMapping(parentTypeOverall, typeRenameMappings);
         GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(underlyingParentName);
@@ -445,6 +467,7 @@ public class OverallQueryTransformer {
         private Service service;
         private Object serviceContext;
         private Map<String, Object> variableValues;
+        private ExecutionStepInfo esi;
 
         Transformer(ExecutionContext executionContext,
                     GraphQLSchema underlyingSchema,
@@ -457,7 +480,7 @@ public class OverallQueryTransformer {
                     OverallTypeInformation overallTypeInformation,
                     Map<String, Object> variableValues,
                     Service service,
-                    Object serviceContext) {
+                    Object serviceContext, ExecutionStepInfo esi) {
             this.executionContext = executionContext;
             this.underlyingSchema = underlyingSchema;
             this.transformationByResultField = transformationByResultField;
@@ -472,6 +495,7 @@ public class OverallQueryTransformer {
             this.variableValues = variableValues;
             this.service = service;
             this.serviceContext = serviceContext;
+            this.esi = esi;
         }
 
         @Override
@@ -569,6 +593,28 @@ public class OverallQueryTransformer {
             if (overallTypeInfo != null) {
                 GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
                 GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
+
+                Optional<Node> parentNode = context.getParentNodes().stream().filter(t -> t instanceof Field).findFirst();
+                Field parentField = esi.getField().getSingleField();
+
+                String id = null;
+                if (parentNode.isPresent()) {
+                    id = (String) parentNode.get().getAdditionalData().getOrDefault("id", null);
+                } else if (parentField != null) {
+                    // When current field is hydrated and parentNode is not accessible
+                    id = (String) parentField.getAdditionalData().getOrDefault("id", null);
+                }
+
+                Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
+                if ((isFieldAllowed.isPresent() && id != null)) {
+                    GraphQLObjectType fieldContainer = null;
+                    if (esi != null && unwrapAll(esi.getType()) instanceof GraphQLObjectType) {
+                        fieldContainer = (GraphQLObjectType) unwrapAll(esi.getType());
+                    }
+
+                    addFieldToRemovedMap(field, context.getVar(ExecutionPath.class), fieldDefinitionOverall.getType(), fieldContainer, isFieldAllowed.get(), id);
+                    return TreeTransformerUtil.deleteNode(context);
+                }
 
                 extractAndRecordTypeMappingDefinition(fieldTypeOverall.getName());
                 FieldTransformation transformation = createTransformation(fieldDefinitionOverall);
