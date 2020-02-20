@@ -161,7 +161,7 @@ class IssuesCommentsUsersHarness {
         DataFetcher issuesDF = { env ->
             return issueData
         }
-        DataFetcher issuesByIdDF = { env ->
+        DataFetcher issueByIdDF = { env ->
             def id = env.getArgument("id")
             def issue = issueData.find({ it.id == id })
             issue
@@ -169,7 +169,7 @@ class IssuesCommentsUsersHarness {
         def runtimeWiring = newRuntimeWiring()
                 .type(newTypeWiring("Query")
                 .dataFetcher("issues", issuesDF)
-                .dataFetcher("issuesById", issuesByIdDF))
+                .dataFetcher("issueById", issueByIdDF))
                 .build()
         def graphQLSchema = schema(ISSUES_SDL, runtimeWiring)
         return GraphQL.newGraphQL(graphQLSchema).build()
@@ -311,6 +311,9 @@ class IssuesCommentsUsersHarness {
         println er.data
 
         er = buildUsersImpl().execute('{ userById(id : "zed") { userId, displayName, avatarUrl} } ')
+        println er.data
+
+        er = buildIssuesImpl().execute('{ issueById(id : "I1") { id, key, summary, description} } ')
         println er.data
     }
 
