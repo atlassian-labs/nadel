@@ -12,6 +12,7 @@ import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
+import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.util.TraversalControl;
@@ -62,6 +63,10 @@ public class HydrationTransformation extends FieldTransformation {
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
         Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), Collections.emptyList(), true);
+
+        // Add back the IDs from the original field e.g. an ID tied to a rename transformation
+        newField = FieldMetadataUtil.copyFieldMetadata(environment.getField(), newField);
+
         changeNode(context, newField);
         return new ApplyResult(TraversalControl.ABORT);
     }

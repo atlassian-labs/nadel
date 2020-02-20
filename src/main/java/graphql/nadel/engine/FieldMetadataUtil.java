@@ -35,7 +35,6 @@ public class FieldMetadataUtil {
     private static final String NADEL_FIELD_METADATA = "NADEL_FIELD_METADATA";
     private static final String OVERALL_TYPE_INFO = "OVERALL_TYPE_INFO";
 
-
     private static class FieldMetadata implements Serializable {
         private final String id;
         private final boolean rootOfTransformation;
@@ -53,45 +52,51 @@ public class FieldMetadataUtil {
             return rootOfTransformation;
         }
 
-
     }
 
     public static List<String> getRootOfTransformationIds(Field field) {
-        String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
-        if (serialized == null) {
+        List<FieldMetadata> fieldMetadata = readMetadata(field);
+        if (fieldMetadata == null) {
             return Collections.emptyList();
         }
-        List<FieldMetadata> fieldMetadata = readMetadata(serialized);
 
         return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getId);
     }
 
     public static List<String> getFieldIds(Field field) {
-        String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
-        if (serialized == null) {
+        List<FieldMetadata> fieldMetadata = readMetadata(field);
+        if (fieldMetadata == null) {
             return Collections.emptyList();
         }
-        List<FieldMetadata> fieldMetadata = readMetadata(serialized);
         return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getId);
     }
 
     public static Field addFieldMetadata(Field field, String id, boolean rootOfTransformation) {
-        assertNotNull(id);
-        String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
-        List<FieldMetadata> fieldMetadata = new ArrayList<>();
-        if (serialized != null) {
-            fieldMetadata = readMetadata(serialized);
+        List<FieldMetadata> fieldMetadata = readMetadata(field);
+        if (fieldMetadata == null) {
+            fieldMetadata = new ArrayList<>();
         }
 
         FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation);
         fieldMetadata.add(newFieldMetadata);
-        String newSerializedValue = writeMetadata(fieldMetadata);
-        return field.transform(builder -> builder.additionalData(NADEL_FIELD_METADATA, newSerializedValue));
+        return writeMetadata(field, fieldMetadata);
+    }
+
+    public static Field copyFieldMetadata(Field from, Field to) {
+        List<FieldMetadata> fromMetadata = readMetadata(from);
+        if (fromMetadata == null || fromMetadata.isEmpty()) {
+            return to;
+        }
+        List<FieldMetadata> toMetadata = readMetadata(to);
+        if (toMetadata == null) {
+            toMetadata = new ArrayList<>();
+        }
+        toMetadata.addAll(fromMetadata);
+        return writeMetadata(to, toMetadata);
     }
 
     public static String getUniqueRootFieldId(Field field) {
-        String serialized = assertNotNull(field.getAdditionalData().get(NADEL_FIELD_METADATA), "nadel field id expected");
-        List<FieldMetadata> fieldMetadata = readMetadata(serialized);
+        List<FieldMetadata> fieldMetadata = assertNotNull(readMetadata(field), "nadel field id expected");
         List<FieldMetadata> rootFieldMetadata = filter(fieldMetadata, FieldMetadata::isRootOfTransformation);
         assertTrue(rootFieldMetadata.size() == 1, "exactly one root nadel infos expected");
         return rootFieldMetadata.get(0).id;
@@ -106,9 +111,7 @@ public class FieldMetadataUtil {
         for (String additionalId : additionalIds) {
             fieldMetadata.add(new FieldMetadata(additionalId, false));
         }
-        String newSerializedValue = writeMetadata(fieldMetadata);
-        builder.additionalData(NADEL_FIELD_METADATA, newSerializedValue);
-
+        writeMetadata(builder, fieldMetadata);
     }
 
     private static String writeMetadata(List<FieldMetadata> fieldMetadata) {
@@ -133,6 +136,20 @@ public class FieldMetadataUtil {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static Field writeMetadata(Field field, List<FieldMetadata> newMetadata) {
+        return field.transform(builder -> writeMetadata(builder, newMetadata));
+    }
+
+    private static Field.Builder writeMetadata(Field.Builder builder, List<FieldMetadata> newMetadata) {
+        String newSerializedValue = writeMetadata(newMetadata);
+        return builder.additionalData(NADEL_FIELD_METADATA, newSerializedValue);
+    }
+
+    private static List<FieldMetadata> readMetadata(Field field) {
+        String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
+        return serialized != null ? readMetadata(serialized) : null;
     }
 
     public static Field setOverallTypeInfoId(Field field, String id) {

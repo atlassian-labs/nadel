@@ -12,9 +12,9 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLSchemaElement
 import graphql.schema.GraphQLTypeVisitorStub
 import graphql.schema.SchemaTransformer
+import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
-import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 
 import static graphql.language.AstPrinter.printAstCompact
@@ -678,6 +678,86 @@ class NadelE2ETest extends Specification {
 
         result.data == [anotherRoot: "anotherRoot", root: [id: "rootId", name: "rootName", extension: [id: "rootId", name: "extensionName"]]]
 
+    }
+
+    def "test hydration inside a renamed field"() {
+        given:
+        def nsdl = """
+            service Foo {
+                type Query {
+                    foo: Foo => renamed from fooOriginal
+                }
+                type Foo {
+                    id: ID!
+                    fooBar: Bar => hydrated from Bar.barById(id: \$source.fooBarId)
+                }
+            }
+            service Bar {
+                type Query {
+                    barById(id: ID!): Bar
+                }
+                type Bar {
+                    id: ID!
+                }
+            }
+        """
+        def underlyingSchema1 = typeDefinitions("""
+            type Query {
+                fooOriginal: Foo
+            }
+            type Foo {
+                id: ID!
+                fooBarId: ID
+            }
+        """)
+        def underlyingSchema2 = typeDefinitions("""
+            type Query {
+                barById(id: ID!): Bar
+            }
+            type Bar {
+                id: ID
+            }
+        """)
+        def query = """
+            {
+                foo {
+                    id
+                    fooBar {
+                        id
+                    }
+                }
+            }
+        """
+
+        def delegatedExecution1 = Mock(ServiceExecution)
+        def delegatedExecution2 = Mock(ServiceExecution)
+
+        def serviceFactory = TestUtil.serviceFactory([
+                Foo: new Tuple2(delegatedExecution1, underlyingSchema1),
+                Bar: new Tuple2(delegatedExecution2, underlyingSchema2),
+        ])
+
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        def data1 = [fooOriginal: [id: "Foo", fooBarId: "Bar"]]
+        def data2 = [bar: [id: "Bar"]]
+        def delegatedExecutionResult1 = new ServiceExecutionResult(data1)
+        def delegatedExecutionResult2 = new ServiceExecutionResult(data2)
+
+        when:
+        nadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
+        // The {delegatedExecution2} service is not hit if hydration doesn't go through
+        1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
     }
 
 }
