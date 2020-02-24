@@ -2579,4 +2579,82 @@ fragment F1 on TestingCharacter {
         errors[0].message == "Some error occurred"
     }
 
+    def "hydration inside a renamed field"() {
+        given:
+        def underlyingFooSchema = TestUtil.schema("""
+            type Query {
+                fooOriginal: Foo
+            }
+            type Foo {
+                id: ID!
+                fooBarId: ID
+            }
+        """)
+        def underlyingBarSchema = TestUtil.schema("""
+            type Query {
+                barById(id: ID!): Bar
+            }
+            type Bar {
+                id: ID
+            }
+        """)
+        def overallSchema = TestUtil.schemaFromNdsl("""
+            service Foo {
+                type Query {
+                    foo: Foo => renamed from fooOriginal
+                }
+                type Foo {
+                    id: ID!
+                    fooBar: Bar => hydrated from Bar.barById(id: \$source.fooBarId)
+                }
+            }
+            service Bar {
+                type Query {
+                    barById(id: ID!): Bar
+                }
+                type Bar {
+                    id: ID!
+                }
+            }
+        """)
+        def query = """
+            {
+                foo {
+                    id
+                    fooBar {
+                        id
+                    }
+                }
+            }
+        """
+
+        def expectedQuery1 = "query nadel_2_Foo {fooOriginal {id fooBarId}}"
+        def expectedQuery2 = "query nadel_2_Bar {barById(id:\"hydrated-bar\") {id}}"
+
+        def data1 = [fooOriginal: [id: "Foo", fooBarId: "hydrated-bar"]]
+        def data2 = [bar: [id: "hydrated-bar"]]
+        def delegatedExecutionResult1 = new ServiceExecutionResult(data1)
+        def delegatedExecutionResult2 = new ServiceExecutionResult(data2)
+
+        def fooField = overallSchema.getQueryType().getFieldDefinition("foo")
+        def fooService = new Service("Foo", underlyingFooSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def barService = new Service("Bar", underlyingBarSchema, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooField, fooService)
+
+        def nadelExecutionStrategy = new NadelExecutionStrategy([fooService, barService], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection).join()
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(delegatedExecutionResult1)
+        // The {service2Execution} service is not hit if hydration doesn't go through
+        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(delegatedExecutionResult2)
+    }
+
 }
