@@ -5,6 +5,7 @@ import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.InputObjectTypeDefinition;
 import graphql.language.InterfaceTypeDefinition;
+import graphql.language.NodeBuilder;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.ScalarTypeDefinition;
@@ -16,6 +17,7 @@ import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.FieldTransformation;
 import graphql.nadel.dsl.InputObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
@@ -29,10 +31,13 @@ import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
 import graphql.parser.MultiSourceReader;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
@@ -45,24 +50,41 @@ import static graphql.util.FpKit.map;
 @Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
+    private int idCounter = 1;
+
     public NadelAntlrToLanguage(CommonTokenStream tokens, MultiSourceReader multiSourceReader) {
         super(tokens, multiSourceReader);
     }
 
+    @Override
+    protected void addCommonData(NodeBuilder nodeBuilder, ParserRuleContext parserRuleContext) {
+        super.addCommonData(nodeBuilder, parserRuleContext);
+        nodeBuilder.additionalData(additionalIdData());
+    }
+
+    private Map<String, String> additionalIdData() {
+        Map<String, String> additionalData = new LinkedHashMap<>();
+        String nodeIdVal = String.valueOf(idCounter++);
+        additionalData.put(NodeId.ID, nodeIdVal);
+        return additionalData;
+    }
+
     public StitchingDsl createStitchingDsl(StitchingDSLParser.StitchingDSLContext ctx) {
-        StitchingDsl.Builder stitchingDsl = StitchingDsl.newStitchingDSL();
-        List<ServiceDefinition> serviceDefintions = ctx.serviceDefinition().stream()
+        StitchingDsl.Builder builder = StitchingDsl.newStitchingDSL();
+        addCommonData(builder, ctx);
+        List<ServiceDefinition> serviceDefinitions = ctx.serviceDefinition().stream()
                 .map(this::createServiceDefinition)
                 .collect(Collectors.toList());
-        stitchingDsl.serviceDefinitions(serviceDefintions);
+        builder.serviceDefinitions(serviceDefinitions);
         if (ctx.commonDefinition() != null) {
-            stitchingDsl.commonDefinition(createCommonDefinition(ctx.commonDefinition()));
+            builder.commonDefinition(createCommonDefinition(ctx.commonDefinition()));
         }
-        return stitchingDsl.build();
+        return builder.build();
     }
 
     private CommonDefinition createCommonDefinition(StitchingDSLParser.CommonDefinitionContext commonDefinitionContext) {
         CommonDefinition.Builder builder = CommonDefinition.newCommonDefinition();
+        addCommonData(builder, commonDefinitionContext);
         builder.sourceLocation(getSourceLocation(commonDefinitionContext));
         builder.comments(getComments(commonDefinitionContext));
         List<SDLDefinition> definitions = createTypeSystemDefinitions(commonDefinitionContext.typeSystemDefinition());
@@ -74,6 +96,8 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     private ServiceDefinition createServiceDefinition(StitchingDSLParser.ServiceDefinitionContext serviceDefinitionContext) {
         ServiceDefinition.Builder builder = ServiceDefinition.newServiceDefinition();
+        addCommonData(builder, serviceDefinitionContext);
+
         builder.name(serviceDefinitionContext.name().getText());
         List<SDLDefinition> definitions = createTypeSystemDefinitions(serviceDefinitionContext.typeSystemDefinition());
         builder.definitions(definitions);
@@ -98,6 +122,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             return fieldDefinition;
         }
         ExtendedFieldDefinition.Builder builder = newExtendedFieldDefinition(fieldDefinition);
+        addCommonData(builder, ctx);
         if (ctx.fieldTransformation() != null) {
             builder.fieldTransformation(createFieldTransformation(ctx.fieldTransformation()));
         }
@@ -110,10 +135,10 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     private FieldTransformation createFieldTransformation(StitchingDSLParser.FieldTransformationContext ctx) {
         if (ctx.fieldMappingDefinition() != null) {
             return new FieldTransformation(createFieldMappingDefinition(ctx.fieldMappingDefinition()),
-                    getSourceLocation(ctx), new ArrayList<>());
+                    getSourceLocation(ctx), new ArrayList<>(), additionalIdData());
         } else if (ctx.underlyingServiceHydration() != null) {
             return new FieldTransformation(createUnderlyingServiceHydration(ctx.underlyingServiceHydration()),
-                    getSourceLocation(ctx), new ArrayList<>());
+                    getSourceLocation(ctx), new ArrayList<>(), additionalIdData());
         } else {
             return assertShouldNeverHappen();
         }
@@ -121,7 +146,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     private FieldMappingDefinition createFieldMappingDefinition(StitchingDSLParser.FieldMappingDefinitionContext ctx) {
         List<String> path = map(ctx.name(), RuleContext::getText);
-        return new FieldMappingDefinition(path, getSourceLocation(ctx), new ArrayList<>());
+        return new FieldMappingDefinition(path, getSourceLocation(ctx), new ArrayList<>(), additionalIdData());
     }
 
 
@@ -144,7 +169,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             batchSize = Integer.parseInt(ctx.batchSize().intValue().getText());
         }
         return new UnderlyingServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField,
-                remoteArguments, objectIdentifier, batchSize);
+                remoteArguments, objectIdentifier, batchSize, additionalIdData());
     }
 
     @Override
@@ -154,7 +179,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             return objectTypeDefinition;
         }
         TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
-        return ObjectTypeDefinitionWithTransformation.newObjectTypeDefinitionWithTransformation(objectTypeDefinition)
+        ObjectTypeDefinitionWithTransformation.Builder builder = ObjectTypeDefinitionWithTransformation.newObjectTypeDefinitionWithTransformation(objectTypeDefinition);
+        addCommonData(builder, ctx);
+        return builder
                 .typeMappingDefinition(typeMappingDefinition)
                 .build();
     }
@@ -166,7 +193,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             return unionTypeDefinition;
         }
         TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
-        return UnionTypeDefinitionWithTransformation.newUnionTypeDefinitionWithTransformation(unionTypeDefinition)
+        UnionTypeDefinitionWithTransformation.Builder builder = UnionTypeDefinitionWithTransformation.newUnionTypeDefinitionWithTransformation(unionTypeDefinition);
+        addCommonData(builder, ctx);
+        return builder
                 .typeMappingDefinition(typeMappingDefinition)
                 .build();
     }
@@ -178,7 +207,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             return interfaceTypeDefinition;
         }
         TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
-        return InterfaceTypeDefinitionWithTransformation.newInterfaceTypeDefinitionWithTransformation(interfaceTypeDefinition)
+        InterfaceTypeDefinitionWithTransformation.Builder builder = InterfaceTypeDefinitionWithTransformation.newInterfaceTypeDefinitionWithTransformation(interfaceTypeDefinition);
+        addCommonData(builder, ctx);
+        return builder
                 .typeMappingDefinition(typeMappingDefinition)
                 .build();
     }
@@ -190,7 +221,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             return inputObjectTypeDefinition;
         }
         TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
-        return InputObjectTypeDefinitionWithTransformation.newInputObjectTypeDefinitionWithTransformation(inputObjectTypeDefinition)
+        InputObjectTypeDefinitionWithTransformation.Builder builder = InputObjectTypeDefinitionWithTransformation.newInputObjectTypeDefinitionWithTransformation(inputObjectTypeDefinition);
+        addCommonData(builder, ctx);
+        return builder
                 .typeMappingDefinition(typeMappingDefinition)
                 .build();
     }
@@ -202,7 +235,9 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             return enumTypeDefinition;
         }
         TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
-        return EnumTypeDefinitionWithTransformation.newEnumTypeDefinitionWithTransformation(enumTypeDefinition)
+        EnumTypeDefinitionWithTransformation.Builder builder = EnumTypeDefinitionWithTransformation.newEnumTypeDefinitionWithTransformation(enumTypeDefinition);
+        addCommonData(builder, ctx);
+        return builder
                 .typeMappingDefinition(typeMappingDefinition)
                 .build();
     }
@@ -214,14 +249,16 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             return scalarTypeDefinition;
         }
         TypeMappingDefinition typeMappingDefinition = createTypeMappingDef(ctx.typeTransformation(), ctx.name());
-        return ScalarTypeDefinitionWithTransformation.newScalarTypeDefinitionWithTransformation(scalarTypeDefinition)
+        ScalarTypeDefinitionWithTransformation.Builder builder = ScalarTypeDefinitionWithTransformation.newScalarTypeDefinitionWithTransformation(scalarTypeDefinition);
+        addCommonData(builder, ctx);
+        return builder
                 .typeMappingDefinition(typeMappingDefinition)
                 .build();
     }
 
 
     private TypeMappingDefinition createTypeMappingDef(StitchingDSLParser.TypeTransformationContext typeTransformationContext, StitchingDSLParser.NameContext name) {
-        TypeMappingDefinition typeMappingDefinition = new TypeMappingDefinition(null, new ArrayList<>());
+        TypeMappingDefinition typeMappingDefinition = new TypeMappingDefinition(null, new ArrayList<>(), additionalIdData());
         typeMappingDefinition.setUnderlyingName(typeTransformationContext.typeMappingDefinition().name().getText());
         typeMappingDefinition.setOverallName(name.getText());
         return typeMappingDefinition;
@@ -231,7 +268,8 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
                                                                             remoteArgumentPairContext) {
         return new RemoteArgumentDefinition(remoteArgumentPairContext.name().getText(),
                 createRemoteArgumentSource(remoteArgumentPairContext.remoteArgumentSource()),
-                getSourceLocation(remoteArgumentPairContext));
+                getSourceLocation(remoteArgumentPairContext),
+                additionalIdData());
     }
 
     private RemoteArgumentSource createRemoteArgumentSource(StitchingDSLParser.RemoteArgumentSourceContext ctx) {
@@ -252,6 +290,6 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
             assertShouldNeverHappen();
         }
 
-        return new RemoteArgumentSource(argumentName, path, argumentType, getSourceLocation(ctx));
+        return new RemoteArgumentSource(argumentName, path, argumentType, getSourceLocation(ctx), additionalIdData());
     }
 }

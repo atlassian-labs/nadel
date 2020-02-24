@@ -12,9 +12,11 @@ import graphql.language.SourceLocation;
 import graphql.language.Type;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
 
 public class ExtendedFieldDefinition extends FieldDefinition {
 
@@ -29,8 +31,9 @@ public class ExtendedFieldDefinition extends FieldDefinition {
                                       Description description,
                                       FieldTransformation fieldTransformation, SourceLocation sourceLocation,
                                       List<Comment> comments,
-                                      Integer defaultBatchSize) {
-        super(name, type, inputValueDefinitions, directives, description, sourceLocation, comments, IgnoredChars.EMPTY, Collections.emptyMap());
+                                      Integer defaultBatchSize,
+                                      Map<String, String> additionalData) {
+        super(name, type, inputValueDefinitions, directives, description, sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
         this.fieldTransformation = fieldTransformation;
         this.defaultBatchSize = defaultBatchSize;
     }
@@ -57,6 +60,7 @@ public class ExtendedFieldDefinition extends FieldDefinition {
         private List<Directive> directives = new ArrayList<>();
         private FieldTransformation fieldTransformation;
         private Integer defaultBatchSize;
+        private Map<String, String> additionalData = new LinkedHashMap<>();
 
         private Builder() {
         }
@@ -92,14 +96,15 @@ public class ExtendedFieldDefinition extends FieldDefinition {
             return null;
         }
 
-        @Override
-        public NodeBuilder additionalData(Map<String, String> additionalData) {
-            return null;
+
+        public Builder additionalData(Map<String, String> additionalData) {
+            this.additionalData = assertNotNull(additionalData);
+            return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(String key, String value) {
-            return null;
+        public Builder additionalData(String key, String value) {
+            this.additionalData.put(key, value);
+            return this;
         }
 
         public Builder type(Type type) {
@@ -151,7 +156,8 @@ public class ExtendedFieldDefinition extends FieldDefinition {
                     fieldTransformation,
                     sourceLocation,
                     comments,
-                    defaultBatchSize);
+                    defaultBatchSize,
+                    additionalData);
             return fieldDefinition;
         }
     }

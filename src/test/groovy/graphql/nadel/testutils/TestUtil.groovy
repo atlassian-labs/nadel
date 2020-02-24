@@ -62,7 +62,7 @@ class TestUtil {
 
     private static String printAstAsJson(Node node) {
         String[] ignoredProperties = [
-                "sourceLocation", "children", "ignoredChars", "namedChildren", "directivesByName"
+                "sourceLocation", "children", "ignoredChars", "namedChildren", "directivesByName", "additionalData"
         ]
         SimpleBeanPropertyFilter theFilter = SimpleBeanPropertyFilter
                 .serializeAllExcept(ignoredProperties) as SimpleBeanPropertyFilter

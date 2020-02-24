@@ -12,20 +12,21 @@ import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     private final FieldMappingDefinition fieldMappingDefinition;
     private final UnderlyingServiceHydration underlyingServiceHydration;
 
-    public FieldTransformation(FieldMappingDefinition fieldMappingDefinition, SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments, IgnoredChars.EMPTY);
+    public FieldTransformation(FieldMappingDefinition fieldMappingDefinition, SourceLocation sourceLocation, List<Comment> comments, Map<String, String> additionalData) {
+        super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
         this.fieldMappingDefinition = fieldMappingDefinition;
         this.underlyingServiceHydration = null;
     }
 
-    public FieldTransformation(UnderlyingServiceHydration underlyingServiceHydration, SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments, IgnoredChars.EMPTY);
+    public FieldTransformation(UnderlyingServiceHydration underlyingServiceHydration, SourceLocation sourceLocation, List<Comment> comments, Map<String, String> additionalData) {
+        super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
         this.fieldMappingDefinition = null;
         this.underlyingServiceHydration = underlyingServiceHydration;
     }

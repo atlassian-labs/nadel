@@ -11,6 +11,7 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
 import java.util.List;
+import java.util.Map;
 
 public class TypeMappingDefinition extends AbstractNode<TypeMappingDefinition> {
 
@@ -18,8 +19,8 @@ public class TypeMappingDefinition extends AbstractNode<TypeMappingDefinition> {
     private String overallName;
 
 
-    public TypeMappingDefinition(SourceLocation sourceLocation, List<Comment> comments) {
-        super(sourceLocation, comments, IgnoredChars.EMPTY);
+    public TypeMappingDefinition(SourceLocation sourceLocation, List<Comment> comments, Map<String, String> additionalData) {
+        super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
     }
 
     public String getUnderlyingName() {

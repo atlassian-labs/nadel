@@ -14,8 +14,11 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
 
 public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
 
@@ -23,8 +26,8 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
 
     private List<SDLDefinition> typeDefinitions;
 
-    private ServiceDefinition(String name, List<SDLDefinition> definitions, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars) {
-        super(sourceLocation, comments, ignoredChars);
+    private ServiceDefinition(String name, List<SDLDefinition> definitions, SourceLocation sourceLocation, List<Comment> comments, IgnoredChars ignoredChars, Map<String, String> additionalData) {
+        super(sourceLocation, comments, ignoredChars, additionalData);
         this.name = name;
         this.typeDefinitions = new ArrayList<>();
         this.typeDefinitions = definitions;
@@ -79,6 +82,7 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
         private String name;
         private List<SDLDefinition> definitions = new ArrayList<>();
         private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
+        private Map<String, String> additionalData = new LinkedHashMap<>();
 
         private Builder() {
 
@@ -95,14 +99,14 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
             return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(Map<String, String> additionalData) {
-            return null;
+        public Builder additionalData(Map<String, String> additionalData) {
+            this.additionalData = assertNotNull(additionalData);
+            return this;
         }
 
-        @Override
-        public NodeBuilder additionalData(String key, String value) {
-            return null;
+        public Builder additionalData(String key, String value) {
+            this.additionalData.put(key, value);
+            return this;
         }
 
         public Builder sourceLocation(SourceLocation sourceLocation) {
@@ -128,7 +132,7 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
 
 
         public ServiceDefinition build() {
-            return new ServiceDefinition(name, definitions, sourceLocation, comments, ignoredChars);
+            return new ServiceDefinition(name, definitions, sourceLocation, comments, ignoredChars, additionalData);
 
         }
 

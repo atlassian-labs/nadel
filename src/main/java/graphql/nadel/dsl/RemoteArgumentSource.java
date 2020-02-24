@@ -11,6 +11,7 @@ import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
@@ -23,8 +24,8 @@ public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
 
     private final SourceType sourceType;
 
-    public RemoteArgumentSource(String name, List<String> path, SourceType sourceType, SourceLocation sourceLocation) {
-        super(sourceLocation, emptyList(), IgnoredChars.EMPTY);
+    public RemoteArgumentSource(String name, List<String> path, SourceType sourceType, SourceLocation sourceLocation, Map<String, String> additionalData) {
+        super(sourceLocation, emptyList(), IgnoredChars.EMPTY, additionalData);
         this.name = name;
         this.path = path;
         this.sourceType = sourceType;

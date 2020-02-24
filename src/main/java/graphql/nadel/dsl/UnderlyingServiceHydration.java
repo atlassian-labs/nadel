@@ -12,6 +12,7 @@ import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHydration> {
 
@@ -27,9 +28,10 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
                                       String topLevelField,
                                       List<RemoteArgumentDefinition> arguments,
                                       String objectIdentifier,
-                                      Integer batchSize
+                                      Integer batchSize,
+                                      Map<String, String> additionalData
     ) {
-        super(sourceLocation, comments, IgnoredChars.EMPTY);
+        super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
         this.serviceName = serviceName;
         this.topLevelField = topLevelField;
         this.arguments = arguments;

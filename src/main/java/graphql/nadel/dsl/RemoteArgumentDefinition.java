@@ -11,6 +11,7 @@ import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
@@ -19,9 +20,11 @@ public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinit
     private final String name;
     private final RemoteArgumentSource remoteArgumentSource;
 
-    public RemoteArgumentDefinition(String name, RemoteArgumentSource remoteArgumentSource,
-                                    SourceLocation sourceLocation) {
-        super(sourceLocation, emptyList(), IgnoredChars.EMPTY);
+    public RemoteArgumentDefinition(String name,
+                                    RemoteArgumentSource remoteArgumentSource,
+                                    SourceLocation sourceLocation,
+                                    Map<String, String> additionalData) {
+        super(sourceLocation, emptyList(), IgnoredChars.EMPTY, additionalData);
         this.name = name;
         this.remoteArgumentSource = remoteArgumentSource;
     }
