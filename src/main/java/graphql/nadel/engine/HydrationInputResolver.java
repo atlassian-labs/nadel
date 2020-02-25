@@ -22,6 +22,7 @@ import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.hooks.ServiceExecutionHooks;
+import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.ListExecutionResultNode;
@@ -36,6 +37,7 @@ import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -369,7 +371,7 @@ public class HydrationInputResolver {
             boolean first = true;
             for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
                 ExecutionStepInfo executionStepInfo = hydrationInputNode.getExecutionStepInfo();
-                ExecutionResultNode resultNode = createNullValue(executionStepInfo);
+                ExecutionResultNode resultNode = createNullValue(hydrationInputNode);
                 if (first) {
                     resultNode = resultNode.withNewErrors(rootResultNode.getErrors());
                     first = false;
@@ -407,7 +409,7 @@ public class HydrationInputResolver {
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);
             } else {
-                resultNode = createNullValue(executionStepInfo);
+                resultNode = createNullValue(hydrationInputNode);
             }
             if (first) {
                 resultNode = resultNode.withNewErrors(rootResultNode.getErrors());
@@ -419,12 +421,14 @@ public class HydrationInputResolver {
 
     }
 
-    private LeafExecutionResultNode createNullValue(ExecutionStepInfo executionStepInfo) {
+    private LeafExecutionResultNode createNullValue(HydrationInputNode inputNode) {
+        ExecutionStepInfo executionStepInfo = inputNode.getExecutionStepInfo();
+        ElapsedTime elapsedTime = inputNode.getElapsedTime();
         ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
                 .localContext(null)
                 .nullValue(true)
                 .build();
-        return new LeafExecutionResultNode(executionStepInfo, resolvedValue, null);
+        return new LeafExecutionResultNode(executionStepInfo, resolvedValue, null, Collections.emptyList(), elapsedTime);
     }
 
     private ObjectExecutionResultNode findMatchingResolvedNode(ExecutionContext executionContext, HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
