@@ -2632,7 +2632,7 @@ fragment F1 on TestingCharacter {
         def expectedQuery2 = "query nadel_2_Bar {barById(id:\"hydrated-bar\") {id}}"
 
         def data1 = [fooOriginal: [id: "Foo", fooBarId: "hydrated-bar"]]
-        def data2 = [bar: [id: "hydrated-bar"]]
+        def data2 = [barById: [id: "hydrated-bar"]]
         def delegatedExecutionResult1 = new ServiceExecutionResult(data1)
         def delegatedExecutionResult2 = new ServiceExecutionResult(data2)
 
@@ -2645,7 +2645,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection).join()
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -2655,6 +2655,15 @@ fragment F1 on TestingCharacter {
         1 * service2Execution.execute({ ServiceExecutionParameters sep ->
             printAstCompact(sep.query) == expectedQuery2
         }) >> completedFuture(delegatedExecutionResult2)
+
+        resultData(response) == [
+                foo: [
+                        id    : "Foo",
+                        fooBar: [
+                                id: "hydrated-bar",
+                        ],
+                ],
+        ]
     }
 
 }
