@@ -12,9 +12,9 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLSchemaElement
 import graphql.schema.GraphQLTypeVisitorStub
 import graphql.schema.SchemaTransformer
+import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
-import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 
 import static graphql.language.AstPrinter.printAstCompact
