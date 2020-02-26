@@ -1,6 +1,6 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.execution.nextgen.result.ExecutionResultNode;
+import graphql.nadel.result.ExecutionResultNode;
 import graphql.util.TraversalControl;
 
 public class UnapplyResult {

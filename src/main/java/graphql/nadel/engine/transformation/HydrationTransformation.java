@@ -1,10 +1,6 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.LeafExecutionResultNode;
-import graphql.execution.nextgen.result.ListExecutionResultNode;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
@@ -12,8 +8,13 @@ import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
+import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.LeafExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
+import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
@@ -62,6 +63,10 @@ public class HydrationTransformation extends FieldTransformation {
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
         Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), Collections.emptyList(), true);
+
+        // Add back the IDs from the original field e.g. an ID tied to a rename transformation
+        newField = FieldMetadataUtil.copyFieldMetadata(environment.getField(), newField);
+
         changeNode(context, newField);
         return new ApplyResult(TraversalControl.ABORT);
     }
@@ -142,7 +147,7 @@ public class HydrationTransformation extends FieldTransformation {
             // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
             return changeFieldInResultNode(leafNode, getOriginalField());
         } else {
-            return new HydrationInputNode(this, correctESI, leafNode.getResolvedValue(), null);
+            return new HydrationInputNode(this, correctESI, leafNode.getResolvedValue(), null, Collections.emptyList(), leafNode.getElapsedTime());
         }
     }
 

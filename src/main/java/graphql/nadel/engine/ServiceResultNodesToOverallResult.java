@@ -6,12 +6,7 @@ import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.LeafExecutionResultNode;
-import graphql.execution.nextgen.result.ListExecutionResultNode;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResolvedValue;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.nadel.Tuples;
@@ -21,6 +16,11 @@ import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.engine.transformation.RemovedFieldData;
 import graphql.nadel.engine.transformation.UnapplyResult;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.LeafExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
+import graphql.nadel.result.ObjectExecutionResultNode;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -81,7 +81,8 @@ public class ServiceResultNodesToOverallResult {
                                                boolean batched,
                                                Map<String, FieldTransformation> transformationMap,
                                                Map<String, String> typeRenameMappings,
-                                               NadelContext nadelContext, Map<String, List<RemovedFieldData>> removedFields) {
+                                               NadelContext nadelContext,
+                                               Map<String, List<RemovedFieldData>> removedFields) {
         return convertImpl(executionId, forkJoinPool, root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, removedFields);
     }
 
@@ -100,7 +101,7 @@ public class ServiceResultNodesToOverallResult {
 
         ConcurrentHashMap<String, FieldTransformation> transformationMap = new ConcurrentHashMap<>(transformationMapInput);
 
-        long startTime = System.currentTimeMillis();
+//        long startTime = System.currentTimeMillis();
         final AtomicInteger nodeCount = new AtomicInteger();
         Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
         ExecutionResultNode newRoot = resultNodesTransformer.transformParallel(forkJoinPool, root, new TraverserVisitorStub<ExecutionResultNode>() {
@@ -233,8 +234,8 @@ public class ServiceResultNodesToOverallResult {
             }
 
         }, rootVars);
-        long elapsedTime = System.currentTimeMillis() - startTime;
-        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
+//        long elapsedTime = System.currentTimeMillis() - startTime;
+//        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
         return newRoot;
 
     }
@@ -341,7 +342,8 @@ public class ServiceResultNodesToOverallResult {
                         unapplyEnvironment.batched,
                         transformationMap,
                         unapplyEnvironment.typeRenameMappings,
-                        nadelContext, removedFields);
+                        nadelContext,
+                        removedFields);
             }
             if (first) {
                 TreeTransformerUtil.changeNode(context, transformedResult);
@@ -489,7 +491,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private RootExecutionResultNode mapRootResultNode(RootExecutionResultNode resultNode) {
-        return new RootExecutionResultNode(resultNode.getChildren(), resultNode.getErrors());
+        return new RootExecutionResultNode(resultNode.getChildren(), resultNode.getErrors(), resultNode.getElapsedTime());
     }
 
 

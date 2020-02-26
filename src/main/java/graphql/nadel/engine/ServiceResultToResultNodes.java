@@ -10,13 +10,14 @@ import graphql.execution.MergedSelectionSet;
 import graphql.execution.nextgen.ExecutionStrategyUtil;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
-import graphql.execution.nextgen.ResultNodesCreator;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.ObjectExecutionResultNode;
 import graphql.execution.nextgen.result.ResolvedValue;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
-import graphql.execution.nextgen.result.UnresolvedObjectResultNode;
 import graphql.nadel.ServiceExecutionResult;
+import graphql.nadel.result.ElapsedTime;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.ObjectExecutionResultNode;
+import graphql.nadel.result.ResultNodesCreator;
+import graphql.nadel.result.RootExecutionResultNode;
+import graphql.nadel.result.UnresolvedObjectResultNode;
 import graphql.nadel.util.ErrorUtil;
 import graphql.util.FpKit;
 import graphql.util.TraversalControl;
@@ -36,7 +37,7 @@ public class ServiceResultToResultNodes {
 
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ServiceExecutionResultAnalyzer fetchedValueAnalyzer = new ServiceExecutionResultAnalyzer();
-    private final ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
+    private final graphql.nadel.result.ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
     private final ExecutionStrategyUtil util = new ExecutionStrategyUtil();
     ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
@@ -45,11 +46,13 @@ public class ServiceResultToResultNodes {
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
                                                       ExecutionStepInfo executionStepInfo,
                                                       List<MergedField> mergedFields,
-                                                      ServiceExecutionResult serviceExecutionResult) {
+                                                      ServiceExecutionResult serviceExecutionResult,
+                                                      ElapsedTime elapsedTimeForServiceCall
+    ) {
         long startTime = System.currentTimeMillis();
 
         List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
-        RootExecutionResultNode rootNode = new RootExecutionResultNode(Collections.emptyList(), errors);
+        RootExecutionResultNode rootNode = new RootExecutionResultNode(Collections.emptyList(), errors, elapsedTimeForServiceCall);
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
 
         RootExecutionResultNode result = (RootExecutionResultNode) resultNodesTransformer.transformParallel(nadelContext.getForkJoinPool(), rootNode, new TraverserVisitorStub<ExecutionResultNode>() {
@@ -57,7 +60,7 @@ public class ServiceResultToResultNodes {
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 ExecutionResultNode node = context.thisNode();
                 if (node instanceof RootExecutionResultNode) {
-                    changeRootNode(context, (RootExecutionResultNode) node, executionContext, executionStepInfo, mergedFields, serviceExecutionResult);
+                    changeRootNode(context, (RootExecutionResultNode) node, executionContext, executionStepInfo, mergedFields, serviceExecutionResult, elapsedTimeForServiceCall);
                     return TraversalControl.CONTINUE;
                 }
                 if (!(node instanceof UnresolvedObjectResultNode)) {
@@ -67,8 +70,8 @@ public class ServiceResultToResultNodes {
                 ResolvedValue resolvedValue = unresolvedNode.getResolvedValue();
                 ExecutionStepInfo esi = unresolvedNode.getExecutionStepInfo();
                 FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, esi, resolvedValue);
-                List<ExecutionResultNode> children = fetchSubSelection(executionContext, fieldSubSelection);
-                TreeTransformerUtil.changeNode(context, new ObjectExecutionResultNode(esi, resolvedValue, children));
+                List<ExecutionResultNode> children = fetchSubSelection(executionContext, fieldSubSelection, elapsedTimeForServiceCall);
+                TreeTransformerUtil.changeNode(context, new ObjectExecutionResultNode(esi, resolvedValue, children, elapsedTimeForServiceCall));
                 return TraversalControl.CONTINUE;
             }
         });
@@ -82,7 +85,8 @@ public class ServiceResultToResultNodes {
                                 ExecutionContext executionContext,
                                 ExecutionStepInfo executionStepInfo,
                                 List<MergedField> mergedFields,
-                                ServiceExecutionResult serviceExecutionResult) {
+                                ServiceExecutionResult serviceExecutionResult,
+                                ElapsedTime elapsedTime) {
         Map<String, MergedField> subFields = FpKit.getByName(mergedFields, MergedField::getResultKey);
         MergedSelectionSet mergedSelectionSet = MergedSelectionSet.newMergedSelectionSet()
                 .subFields(subFields).build();
@@ -93,14 +97,14 @@ public class ServiceResultToResultNodes {
                 .mergedSelectionSet(mergedSelectionSet)
                 .build();
 
-        List<ExecutionResultNode> subNodes = fetchSubSelection(executionContext, fieldSubSelectionWithData);
+        List<ExecutionResultNode> subNodes = fetchSubSelection(executionContext, fieldSubSelectionWithData, elapsedTime);
         TreeTransformerUtil.changeNode(context, rootNode.withNewChildren(subNodes));
 
     }
 
-    private List<ExecutionResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection) {
+    private List<ExecutionResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection, ElapsedTime elapsedTime) {
         List<FetchedValueAnalysis> fetchedValueAnalysisList = fetchAndAnalyze(executionContext, fieldSubSelection);
-        return fetchedValueAnalysisToNodes(executionContext, fetchedValueAnalysisList);
+        return fetchedValueAnalysisToNodes(executionContext, fetchedValueAnalysisList, elapsedTime);
     }
 
     private List<FetchedValueAnalysis> fetchAndAnalyze(ExecutionContext context, FieldSubSelection fieldSubSelection) {
@@ -139,8 +143,8 @@ public class ServiceResultToResultNodes {
         return fetchedValueAnalyzer.analyzeFetchedValue(executionContext, fetchedValue, executionInfo);
     }
 
-    private List<ExecutionResultNode> fetchedValueAnalysisToNodes(ExecutionContext executionContext, List<FetchedValueAnalysis> fetchedValueAnalysisList) {
-        return map(fetchedValueAnalysisList, resultNodesCreator::createResultNode);
+    private List<ExecutionResultNode> fetchedValueAnalysisToNodes(ExecutionContext executionContext, List<FetchedValueAnalysis> fetchedValueAnalysisList, ElapsedTime elapsedTime) {
+        return map(fetchedValueAnalysisList, fetchedValue -> resultNodesCreator.createResultNode(fetchedValue).withElapsedTime(elapsedTime));
     }
 
 

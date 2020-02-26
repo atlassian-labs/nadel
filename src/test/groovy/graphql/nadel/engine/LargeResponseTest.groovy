@@ -3,8 +3,6 @@ package graphql.nadel.engine
 import graphql.ExecutionInput
 import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.execution.nextgen.result.ResultNodesUtil
-import graphql.execution.nextgen.result.RootExecutionResultNode
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
@@ -14,6 +12,8 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.result.ResultNodesUtil
+import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema

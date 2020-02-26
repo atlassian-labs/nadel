@@ -5,9 +5,9 @@ import graphql.PublicApi;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.Service;
 import graphql.nadel.engine.NadelContext;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 
 @PublicApi

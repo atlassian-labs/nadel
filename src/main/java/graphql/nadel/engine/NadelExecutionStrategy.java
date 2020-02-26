@@ -8,8 +8,6 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.FieldSubSelection;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
@@ -20,6 +18,8 @@ import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
@@ -218,7 +218,7 @@ public class NadelExecutionStrategy {
             List<GraphQLError> errors = new ArrayList<>();
             map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
             map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
-            return new RootExecutionResultNode(mergedChildren, errors);
+            return new RootExecutionResultNode(mergedChildren, errors, null);
         });
     }
 

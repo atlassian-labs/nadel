@@ -2,8 +2,15 @@ package graphql.nadel
 
 import graphql.ErrorType
 import graphql.GraphQLError
+import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
+import graphql.execution.instrumentation.InstrumentationState
+import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
+import graphql.nadel.result.ResultNodesUtil
+import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
@@ -12,10 +19,12 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLSchemaElement
 import graphql.schema.GraphQLTypeVisitorStub
 import graphql.schema.SchemaTransformer
+import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
-import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
+
+import java.util.concurrent.CompletableFuture
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
@@ -28,30 +37,30 @@ class NadelE2ETest extends Specification {
 
     def simpleNDSL = '''
          service MyService {
-            type Query{
-                hello: World  
-            } 
+            type Query {
+                hello: World
+            }
             type World {
                 id: ID
                 name: String
             }
-            type Mutation{
+            type Mutation {
                 hello: String  
-            } 
+            }
          }
         '''
 
     def simpleUnderlyingSchema = typeDefinitions('''
-            type Query{
-                hello: World  
-            } 
+            type Query {
+                hello: World
+            }
             type World {
                 id: ID
                 name: String
             }
-            type Mutation{
-                hello: String  
-            } 
+            type Mutation {
+                hello: String
+            }
         ''')
 
     def delegatedExecution = Mock(ServiceExecution)
@@ -678,6 +687,197 @@ class NadelE2ETest extends Specification {
 
         result.data == [anotherRoot: "anotherRoot", root: [id: "rootId", name: "rootName", extension: [id: "rootId", name: "extensionName"]]]
 
+    }
+
+    def "makes timing metrics available"() {
+        def nsdl = '''
+         service service1 {
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                id: ID
+                bar: Bar => hydrated from service2.barById(id: $source.barId)
+            }
+        }
+        service service2 {
+            type Query {
+                barById(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+                name: String
+            }
+        }
+        '''
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            foo : Foo
+        }
+        type Foo {
+            id: ID
+            barId: ID
+        }
+        """)
+
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            barById(id: ID): Bar
+        }
+        type Bar {
+            id: ID
+            name : String
+        }
+        """)
+
+        def execution1 = Mock(ServiceExecution)
+        def execution2 = Mock(ServiceExecution)
+        def serviceFactory = new ServiceExecutionFactory() {
+            @Override
+            ServiceExecution getServiceExecution(String serviceName) {
+                switch (serviceName) {
+                    case "service1":
+                        return execution1
+                    case "service2":
+                        return execution2
+                    default:
+                        throw new RuntimeException()
+                }
+            }
+
+            @Override
+            TypeDefinitionRegistry getUnderlyingTypeDefinitions(String serviceName) {
+                switch (serviceName) {
+                    case "service1":
+                        return underlyingSchema1
+                    case "service2":
+                        return underlyingSchema2
+                    default:
+                        throw new RuntimeException()
+                }
+            }
+        }
+        RootExecutionResultNode rootResultNode
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .executionIdProvider(idProvider)
+                .instrumentation(new NadelInstrumentation() {
+                    @Override
+                    RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
+                        rootResultNode = rootExecutionResultNode
+                        return rootExecutionResultNode
+                    }
+                })
+                .build()
+
+        def query = """
+        { 
+            foo {
+                bar { 
+                    name
+                }
+            }
+        }
+        """
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        def expectedQuery1 = "query nadel_2_service1 {foo {barId}}"
+        def response1 = new ServiceExecutionResult([foo: [barId: "barId1"]])
+
+        def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId1\") {name}}"
+        def response2 = new ServiceExecutionResult([barById: [name: "bar name"]])
+
+        execution1.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        execution2.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> {
+            def cf = new CompletableFuture();
+            new Thread({
+                Thread.sleep(251)
+                cf.complete(response2)
+            }).start()
+            return cf
+        }
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+
+        then:
+        result.data == [foo: [bar: [name: "bar name"]]]
+        rootResultNode.getChildren()[0].elapsedTime.duration.toMillis() < 250
+        rootResultNode.getChildren()[0].getChildren()[0].elapsedTime.duration.toMillis() > 250
+    }
+
+    def "can instrument root execution result"() {
+        given:
+        def query = """
+        query OpName {
+            hello {
+                name
+            }
+        }
+        """
+        RootExecutionResultNode originalExecutionResult
+        NadelInstrumentRootExecutionResultParameters instrumentationParams
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .instrumentation(new NadelInstrumentation() {
+                    @Override
+                    InstrumentationState createState(NadelInstrumentationCreateStateParameters parameters) {
+                        return new InstrumentationState() {
+                            @Override
+                            int hashCode() {
+                                return "test-instrumentation-state".hashCode()
+                            }
+                        }
+                    }
+
+                    @Override
+                    RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
+                        originalExecutionResult = rootExecutionResultNode
+                        instrumentationParams = parameters
+                        return rootExecutionResultNode.withNewErrors([
+                                GraphqlErrorException.newErrorException().message("instrumented-error").build()
+                        ])
+                    }
+                })
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .operationName("OpName")
+                .build()
+
+        def data = [hello: null]
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            def params = args[0] as ServiceExecutionParameters
+            assert printAstCompact(params.query) == "query nadel_2_MyService_OpName {hello {name}}"
+            assert params.operationDefinition.name == "nadel_2_MyService_OpName"
+            completedFuture(new ServiceExecutionResult(data))
+        }
+
+        then:
+        result.errors[0].message == "instrumented-error"
+        instrumentationParams != null
+        instrumentationParams.instrumentationState.hashCode() == "test-instrumentation-state".hashCode()
+        instrumentationParams.executionContext.operationDefinition.name == "OpName"
+        originalExecutionResult != null
+        ResultNodesUtil.toExecutionResult(originalExecutionResult).errors.isEmpty()
     }
 
 }

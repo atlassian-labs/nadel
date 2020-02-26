@@ -3,9 +3,6 @@ package graphql.nadel.hooks
 import graphql.ExecutionInput
 import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.execution.nextgen.result.ExecutionResultNode
-import graphql.execution.nextgen.result.LeafExecutionResultNode
-import graphql.execution.nextgen.result.RootExecutionResultNode
 import graphql.language.Argument
 import graphql.language.AstTransformer
 import graphql.language.Field
@@ -25,6 +22,9 @@ import graphql.nadel.engine.NadelContext
 import graphql.nadel.engine.NadelExecutionStrategy
 import graphql.nadel.engine.ResultNodesTransformer
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.result.ExecutionResultNode
+import graphql.nadel.result.LeafExecutionResultNode
+import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.testutils.ExecutionResultNodeUtil
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition

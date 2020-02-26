@@ -11,8 +11,6 @@ import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
 import graphql.execution.nextgen.ExecutionHelper;
 import graphql.execution.nextgen.FieldSubSelection;
-import graphql.execution.nextgen.result.ResultNodesUtil;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Document;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
@@ -22,8 +20,11 @@ import graphql.nadel.NadelExecutionParams;
 import graphql.nadel.Service;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
+import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.introspection.IntrospectionRunner;
+import graphql.nadel.result.ResultNodesUtil;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
@@ -90,7 +91,10 @@ public class Execution {
             result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
         } else {
             CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection);
-            result = resultNodes.thenApply(ResultNodesUtil::toExecutionResult);
+            result = resultNodes.thenApply(rootResultNode -> {
+                rootResultNode = instrumentation.instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
+                return ResultNodesUtil.toExecutionResult(rootResultNode);
+            });
         }
 
         // note this happens NOW - not when the result completes

@@ -2,10 +2,11 @@ package graphql.nadel.hooks;
 
 import graphql.GraphQLError;
 import graphql.PublicSpi;
-import graphql.execution.nextgen.result.RootExecutionResultNode;
 import graphql.language.Field;
 import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
