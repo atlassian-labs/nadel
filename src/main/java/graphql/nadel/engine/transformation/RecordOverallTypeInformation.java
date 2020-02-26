@@ -1,11 +1,11 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.language.Argument;
-import graphql.language.AstNodeAdapter;
 import graphql.language.Field;
 import graphql.language.FragmentDefinition;
 import graphql.language.InlineFragment;
 import graphql.language.Node;
+import graphql.language.NodeTraverser;
 import graphql.language.NodeVisitorStub;
 import graphql.language.ObjectField;
 import graphql.language.Value;
@@ -20,8 +20,6 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLUnmodifiedType;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
-import graphql.util.TraverserVisitorStub;
-import graphql.util.TreeTransformer;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -116,20 +114,13 @@ public class RecordOverallTypeInformation {
                 return TraversalControl.CONTINUE;
             }
         };
-        TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         if (rootOutputType != null) {
             rootVars.put(GraphQLOutputType.class, rootOutputType);
         }
-        Node newNode = treeTransformer.transform(node, new TraverserVisitorStub<Node>() {
-                    @Override
-                    public TraversalControl enter(TraverserContext<Node> context) {
-                        return context.thisNode().accept(context, recordTypeInfos);
-                    }
-                },
-                rootVars
-        );
-        return new OverallTypeInformation<>((T) newNode, overallTypeInfoMap);
+        NodeTraverser nodeTraverser = new NodeTraverser(rootVars, Node::getChildren);
+        nodeTraverser.depthFirst(recordTypeInfos, node);
+        return new OverallTypeInformation<>((T) node, overallTypeInfoMap);
     }
 
 }
