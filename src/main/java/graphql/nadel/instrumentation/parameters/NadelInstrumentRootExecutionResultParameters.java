@@ -2,7 +2,6 @@ package graphql.nadel.instrumentation.parameters;
 
 import graphql.execution.ExecutionContext;
 import graphql.execution.instrumentation.InstrumentationState;
-import graphql.nadel.Service;
 
 /**
  * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
