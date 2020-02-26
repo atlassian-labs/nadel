@@ -6,7 +6,6 @@ import graphql.language.Field;
 import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
-import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
