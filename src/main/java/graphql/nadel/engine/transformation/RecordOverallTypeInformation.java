@@ -9,7 +9,6 @@ import graphql.language.Node;
 import graphql.language.NodeVisitorStub;
 import graphql.language.ObjectField;
 import graphql.language.Value;
-import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
@@ -23,14 +22,13 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
 import graphql.util.TreeTransformer;
-import graphql.util.TreeTransformerUtil;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
+import static graphql.nadel.dsl.NodeId.getId;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 
 /**
@@ -52,11 +50,9 @@ public class RecordOverallTypeInformation {
                 GraphQLArgument graphQLArgument = fieldDefinition.getArgument(argument.getName());
                 context.setVar(GraphQLArgument.class, graphQLArgument);
                 context.setVar(GraphQLInputValueDefinition.class, graphQLArgument);
-                String id = UUID.randomUUID().toString();
                 OverallTypeInfo overallTypeInfo = new OverallTypeInfo(null, fieldDefinition, graphQLArgument, null);
-                overallTypeInfoMap.put(id, overallTypeInfo);
-                Argument changedArgument = FieldMetadataUtil.setOverallTypeInfoId(argument, id);
-                return TreeTransformerUtil.changeNode(context, changedArgument);
+                overallTypeInfoMap.put(getId(argument), overallTypeInfo);
+                return TraversalControl.CONTINUE;
             }
 
             @Override
@@ -77,15 +73,13 @@ public class RecordOverallTypeInformation {
             protected TraversalControl visitValue(Value<?> value, TraverserContext<Node> context) {
                 GraphQLArgument graphQLArgument = context.getVarFromParents(GraphQLArgument.class);
                 GraphQLInputValueDefinition graphQLInputValueDefinition = context.getVarFromParents(GraphQLInputValueDefinition.class);
-                String id = UUID.randomUUID().toString();
                 OverallTypeInfo overallTypeInfo = new OverallTypeInfo(
                         null,
                         null,
                         graphQLArgument,
                         graphQLInputValueDefinition);
-                overallTypeInfoMap.put(id, overallTypeInfo);
-                Value changedValue = FieldMetadataUtil.setOverallTypeInfoId(value, id);
-                return TreeTransformerUtil.changeNode(context, changedValue);
+                overallTypeInfoMap.put(getId(value), overallTypeInfo);
+                return TraversalControl.CONTINUE;
             }
 
             @Override
@@ -116,12 +110,10 @@ public class RecordOverallTypeInformation {
                 GraphQLOutputType newOutputType = fieldDefinition.getType();
                 context.setVar(GraphQLOutputType.class, newOutputType);
 
-                String id = UUID.randomUUID().toString();
                 OverallTypeInfo overallTypeInfo = new OverallTypeInfo(fieldsContainer, fieldDefinition, null, null);
-                overallTypeInfoMap.put(id, overallTypeInfo);
-                Field changedField = FieldMetadataUtil.setOverallTypeInfoId(field, id);
+                overallTypeInfoMap.put(getId(field), overallTypeInfo);
 
-                return TreeTransformerUtil.changeNode(context, changedField);
+                return TraversalControl.CONTINUE;
             }
         };
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);

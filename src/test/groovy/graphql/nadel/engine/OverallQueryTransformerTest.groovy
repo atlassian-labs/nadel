@@ -11,6 +11,7 @@ import graphql.language.Document
 import graphql.language.Field
 import graphql.nadel.Operation
 import graphql.nadel.Service
+import graphql.nadel.dsl.NodeId
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
@@ -74,7 +75,7 @@ class OverallQueryTransformerTest extends Specification {
     def static esi
 
     void setup() {
-        Field field = Field.newField().build()
+        Field field = Field.newField().additionalData(NodeId.ID, UUID.randomUUID().toString()).build()
         MergedField mergedField = Mock(MergedField)
         ExecutionPath exPath = Mock(ExecutionPath)
         esi = Mock(ExecutionStepInfo)

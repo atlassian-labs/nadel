@@ -25,6 +25,7 @@ import graphql.language.ScalarTypeDefinition
 import graphql.language.SelectionSet
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.NSDLParser
+import graphql.nadel.NadelGraphQLParser
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
@@ -34,7 +35,6 @@ import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.OverallSchemaGenerator
 import graphql.nadel.util.FpKit
 import graphql.nadel.util.Util
-import graphql.parser.Parser
 import graphql.schema.Coercing
 import graphql.schema.DataFetcher
 import graphql.schema.GraphQLDirective
@@ -92,7 +92,7 @@ class TestUtil {
 
     static Field mkField(String fieldText) {
         def q = "{ $fieldText }"
-        def parser = new Parser()
+        def parser = new NadelGraphQLParser()
         def document = parser.parseDocument(q)
         def definition = document.getDefinitions()[0] as OperationDefinition
         def selectionSet = definition.getChildren()[0] as SelectionSet
@@ -101,7 +101,7 @@ class TestUtil {
     }
 
     static Map<String, FragmentDefinition> mkFragments(String fragmentText) {
-        def parser = new Parser()
+        def parser = new NadelGraphQLParser()
         def document = parser.parseDocument(fragmentText)
         def frags = document.getDefinitions().findAll({ it instanceof FragmentDefinition })
         def map = FpKit.getByName(frags, { (it as FragmentDefinition).name })
@@ -294,7 +294,7 @@ class TestUtil {
 
 
     static Document parseQuery(String query) {
-        new Parser().parseDocument(query)
+        new NadelGraphQLParser().parseDocument(query)
     }
 
     static Field parseField(String sdlField) {

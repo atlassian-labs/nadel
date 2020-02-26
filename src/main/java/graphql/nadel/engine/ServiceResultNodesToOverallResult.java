@@ -251,9 +251,9 @@ public class ServiceResultNodesToOverallResult {
 
             ExecutionStepInfo esi = ExecutionStepInfo.newExecutionStepInfo()
                     .path(executionPath)
-                    .type(removedField.getOutputType())
+                    .type(removedField.getOutputTypeOverall())
                     .field(field)
-                    .fieldContainer(removedField.getFieldContainer())
+                    .fieldContainer(removedField.getFieldContainerOverall())
                     .build();
 
             LeafExecutionResultNode removedNode = new LeafExecutionResultNode(esi, resolvedValue, null, Collections.singletonList(removedField.getGraphQLError()));

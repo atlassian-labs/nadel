@@ -6,20 +6,20 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 
 public class RemovedFieldData {
-    private final GraphQLObjectType fieldContainer;
+    private final GraphQLObjectType fieldContainerOverall;
     private Field field;
     private GraphQLError graphQLError;
-    private GraphQLOutputType outputType;
+    private GraphQLOutputType outputTypeOverall;
 
-    public RemovedFieldData(Field field, GraphQLOutputType type, GraphQLObjectType fieldContainer, GraphQLError graphQLError) {
+    public RemovedFieldData(Field field, GraphQLOutputType outputTypeOverall, GraphQLObjectType fieldContainerOverall, GraphQLError graphQLError) {
         this.field = field;
         this.graphQLError = graphQLError;
-        this.outputType = type;
-        this.fieldContainer = fieldContainer;
+        this.outputTypeOverall = outputTypeOverall;
+        this.fieldContainerOverall = fieldContainerOverall;
     }
 
-    public GraphQLObjectType getFieldContainer() {
-        return fieldContainer;
+    public GraphQLObjectType getFieldContainerOverall() {
+        return fieldContainerOverall;
     }
 
     public Field getField() {
@@ -31,7 +31,7 @@ public class RemovedFieldData {
         return graphQLError;
     }
 
-    public GraphQLOutputType getOutputType() {
-        return outputType;
+    public GraphQLOutputType getOutputTypeOverall() {
+        return outputTypeOverall;
     }
 }

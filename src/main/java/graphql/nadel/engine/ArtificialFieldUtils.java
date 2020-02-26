@@ -4,12 +4,15 @@ import graphql.execution.MergedField;
 import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.util.Util;
 import graphql.schema.GraphQLOutputType;
 
 import java.util.List;
+import java.util.UUID;
 
 import static graphql.Assert.assertNotNull;
+import static graphql.language.Field.newField;
 
 /**
  * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side
@@ -35,7 +38,7 @@ public class ArtificialFieldUtils {
             }
         }
 
-        Field underscoreTypeNameAliasField = Field.newField(UNDERSCORE_TYPENAME).alias(underscoreTypeNameAlias).build();
+        Field underscoreTypeNameAliasField = newField(UNDERSCORE_TYPENAME).alias(underscoreTypeNameAlias).build();
         if (selectionSet == null) {
             selectionSet = SelectionSet.newSelectionSet().selection(underscoreTypeNameAliasField).build();
         } else {
@@ -47,7 +50,11 @@ public class ArtificialFieldUtils {
     }
 
     public static Field addObjectIdentifier(NadelContext nadelContext, Field field, String objectIdentifier) {
-        Field idField = Field.newField().alias(nadelContext.getObjectIdentifierAlias()).name(objectIdentifier).build();
+        Field idField = newField()
+                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .alias(nadelContext.getObjectIdentifierAlias())
+                .name(objectIdentifier)
+                .build();
         SelectionSet selectionSet = field.getSelectionSet().transform(builder -> builder.selection(idField));
         return field.transform(builder -> builder.selectionSet(selectionSet));
     }

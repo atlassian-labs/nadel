@@ -8,6 +8,7 @@ import graphql.language.Field;
 import graphql.language.Node;
 import graphql.language.NodeVisitorStub;
 import graphql.language.SelectionSet;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.util.FpKit;
 import graphql.util.TraversalControl;
@@ -15,6 +16,7 @@ import graphql.util.TraverserContext;
 import graphql.util.TreeTransformerUtil;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 import static graphql.Assert.assertTrue;
@@ -41,6 +43,7 @@ public final class FieldUtils {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
             Field.Builder newField = Field.newField();
+            newField.additionalData(NodeId.ID, UUID.randomUUID().toString());
             FieldMetadataUtil.setFieldMetadata(newField, nadelFieldId, additionalIds, ix == 0 && firstRootOfTransformation);
             if (ix == path.size() - 1 && lastSelectionSet != null) {
                 newField.selectionSet(lastSelectionSet);

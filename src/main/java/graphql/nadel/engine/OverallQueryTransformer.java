@@ -80,6 +80,7 @@ import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.language.TypeName.newTypeName;
+import static graphql.nadel.dsl.NodeId.getId;
 import static graphql.nadel.engine.NodeTypeContext.newNodeTypeContext;
 import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
@@ -582,10 +583,10 @@ public class OverallQueryTransformer {
 
                 String id = null;
                 if (parentNode.isPresent()) {
-                    id = (String) parentNode.get().getAdditionalData().get("id");
+                    id = getId(parentNode.get());
                 } else if (parentField != null) {
                     // When current field is hydrated and parentNode is not accessible
-                    id = parentField.getAdditionalData().get("id");
+                    id = getId(parentField);
                 }
 
                 Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
@@ -632,8 +633,7 @@ public class OverallQueryTransformer {
         }
 
         private OverallTypeInfo getOverallTypeInfo(Node node) {
-            String id = FieldMetadataUtil.getOverallTypeInfoId(node);
-            return overallTypeInformation.getOverallInfoById().get(id);
+            return overallTypeInformation.getOverallInfoById().get(getId(node));
         }
 
 
