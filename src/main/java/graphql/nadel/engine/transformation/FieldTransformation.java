@@ -2,10 +2,10 @@ package graphql.nadel.engine.transformation;
 
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
-import graphql.execution.nextgen.result.ExecutionResultNode;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.nadel.result.ExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLObjectType;

@@ -1,9 +1,9 @@
 package graphql.nadel.engine
 
 import graphql.execution.MergedField
-import graphql.execution.nextgen.result.ExecutionResultNode
-import graphql.execution.nextgen.result.LeafExecutionResultNode
 import graphql.language.AstPrinter
+import graphql.nadel.result.ExecutionResultNode
+import graphql.nadel.result.LeafExecutionResultNode
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
 import graphql.util.TraversalControl

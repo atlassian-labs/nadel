@@ -1,13 +1,12 @@
 package graphql.nadel
 
-
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.SimpleInstrumentationContext
-import graphql.execution.nextgen.result.ExecutionResultNode
 import graphql.nadel.instrumentation.ChainedNadelInstrumentation
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.TracingInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters
+import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
 import spock.lang.Specification
 

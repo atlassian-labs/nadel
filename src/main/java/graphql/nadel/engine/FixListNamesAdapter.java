@@ -1,8 +1,8 @@
 package graphql.nadel.engine;
 
 import graphql.Assert;
-import graphql.execution.nextgen.result.ExecutionResultNode;
-import graphql.execution.nextgen.result.ListExecutionResultNode;
+import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
 import graphql.util.NodeAdapter;
 import graphql.util.NodeLocation;
 
