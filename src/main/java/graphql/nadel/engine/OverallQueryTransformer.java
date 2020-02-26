@@ -1,9 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.GraphQLError;
-import graphql.execution.AbortExecutionException;
 import graphql.execution.ExecutionContext;
-import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.ValuesResolver;
@@ -573,21 +571,6 @@ public class OverallQueryTransformer {
                 return TraversalControl.CONTINUE;
             }
 
-            // ExecutionPath is needed when reconstructing removed fields
-            ExecutionPath parentExecutionPath = context.getVarFromParents(ExecutionPath.class);
-            if (context.getParentContext().isRootContext()) {
-                // The highest level field in the query has no parentExecutionPath
-                context.setVar(ExecutionPath.class, esi.getPath());
-            } else if (parentExecutionPath == null) {
-                // This field is hydrated and executionPath must be set from
-                ExecutionPath curExecutionPath = esi.getPath().segment(field.getName());
-                context.setVar(ExecutionPath.class, curExecutionPath);
-            } else {
-                //field isn't hydrated
-                ExecutionPath curExecutionPath = parentExecutionPath.segment(field.getName());
-                context.setVar(ExecutionPath.class, curExecutionPath);
-            }
-
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
             OverallTypeInfo overallTypeInfo = getOverallTypeInfo(field);
             if (overallTypeInfo != null) {
@@ -599,10 +582,10 @@ public class OverallQueryTransformer {
 
                 String id = null;
                 if (parentNode.isPresent()) {
-                    id = (String) parentNode.get().getAdditionalData().getOrDefault("id", null);
+                    id = (String) parentNode.get().getAdditionalData().get("id");
                 } else if (parentField != null) {
                     // When current field is hydrated and parentNode is not accessible
-                    id = (String) parentField.getAdditionalData().getOrDefault("id", null);
+                    id = parentField.getAdditionalData().get("id");
                 }
 
                 Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
@@ -612,7 +595,7 @@ public class OverallQueryTransformer {
                         fieldContainer = (GraphQLObjectType) unwrapAll(esi.getType());
                     }
 
-                    addFieldToRemovedMap(field, context.getVar(ExecutionPath.class), fieldDefinitionOverall.getType(), fieldContainer, isFieldAllowed.get(), id);
+                    addFieldToRemovedMap(field, fieldDefinitionOverall.getType(), fieldContainer, isFieldAllowed.get(), id);
                     return TreeTransformerUtil.deleteNode(context);
                 }
 
@@ -795,9 +778,10 @@ public class OverallQueryTransformer {
             return typeMappingDefinition;
         }
     }
-    private void addFieldToRemovedMap(Field field, ExecutionPath executionPath, GraphQLOutputType type, GraphQLObjectType fieldContainer, GraphQLError graphQLError, String id) {
-        RemovedFieldData removedFieldData = new RemovedFieldData(field, executionPath,type, fieldContainer, graphQLError);
-        removedFieldMap.computeIfAbsent(id, k -> new ArrayList<RemovedFieldData>()).add(removedFieldData);
+
+    private void addFieldToRemovedMap(Field field, GraphQLOutputType type, GraphQLObjectType fieldContainer, GraphQLError graphQLError, String id) {
+        RemovedFieldData removedFieldData = new RemovedFieldData(field, type, fieldContainer, graphQLError);
+        removedFieldMap.computeIfAbsent(id, k -> new ArrayList<>()).add(removedFieldData);
     }
 
 
