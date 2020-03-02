@@ -5,19 +5,17 @@ import graphql.language.Node;
 import java.util.Map;
 
 public class OverallTypeInformation<T extends Node> {
-    private final T node;
     private final Map<String, OverallTypeInfo> overallInfoById;
 
-    public OverallTypeInformation(T node, Map<String, OverallTypeInfo> overallInfoById) {
-        this.node = node;
+    public OverallTypeInformation(Map<String, OverallTypeInfo> overallInfoById) {
         this.overallInfoById = overallInfoById;
-    }
-
-    public T getNode() {
-        return node;
     }
 
     public Map<String, OverallTypeInfo> getOverallInfoById() {
         return overallInfoById;
+    }
+
+    public OverallTypeInfo getOverallTypeInfo(String id) {
+        return overallInfoById.get(id);
     }
 }

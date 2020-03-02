@@ -31,7 +31,6 @@ import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 
 /**
  * Traverses a query and saves type information while doing it.
- * Ever field gets an additionalData entry pointing to an {@link OverallTypeInfo}
  */
 public class RecordOverallTypeInformation {
 
@@ -120,7 +119,7 @@ public class RecordOverallTypeInformation {
         }
         NodeTraverser nodeTraverser = new NodeTraverser(rootVars, Node::getChildren);
         nodeTraverser.depthFirst(recordTypeInfos, node);
-        return new OverallTypeInformation<>((T) node, overallTypeInfoMap);
+        return new OverallTypeInformation<>(overallTypeInfoMap);
     }
 
 }

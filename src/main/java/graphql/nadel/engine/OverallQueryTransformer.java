@@ -359,7 +359,7 @@ public class OverallQueryTransformer {
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         rootVars.put(NodeTypeContext.class, newNodeTypeContext().build());
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
-        Node newNode = treeTransformer.transform(overallTypeInformation.getNode(), new TraverserVisitorStub<Node>() {
+        Node newNode = treeTransformer.transform(fragmentDefinitionWithoutTypeInfo, new TraverserVisitorStub<Node>() {
                     @Override
                     public TraversalControl enter(TraverserContext<Node> context) {
                         return context.thisNode().accept(context, transformer);
@@ -404,10 +404,10 @@ public class OverallQueryTransformer {
                                              Map<String, Object> variableValues,
                                              Service service,
                                              Object serviceContext, ExecutionStepInfo esi) {
-        OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes
-                (nodeWithoutTypeInfo,
-                        executionContext.getGraphQLSchema(),
-                        parentTypeOverall);
+        OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
+                nodeWithoutTypeInfo,
+                executionContext.getGraphQLSchema(),
+                parentTypeOverall);
 
 
         Transformer transformer = new Transformer(executionContext,
@@ -429,7 +429,7 @@ public class OverallQueryTransformer {
                 .outputTypeUnderlying(underlyingSchemaParent)
                 .build());
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
-        Node newNode = treeTransformer.transform(overallTypeInformation.getNode(), new TraverserVisitorStub<Node>() {
+        Node newNode = treeTransformer.transform(nodeWithoutTypeInfo, new TraverserVisitorStub<Node>() {
                     @Override
                     public TraversalControl enter(TraverserContext<Node> context) {
                         return context.thisNode().accept(context, transformer);
@@ -543,7 +543,7 @@ public class OverallQueryTransformer {
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
             GraphQLInputValueDefinition inputValueDefinition = typeContext.getInputValueDefinitionUnderlying();
 
-            OverallTypeInfo overallTypeInfo = getOverallTypeInfo(value);
+            OverallTypeInfo overallTypeInfo = overallTypeInformation.getOverallTypeInfo(getId(value));
 
             HooksVisitArgumentValueEnvironmentImpl hooksVisitArgumentValueEnvironment = new HooksVisitArgumentValueEnvironmentImpl(
                     inputValueDefinition,
@@ -573,67 +573,65 @@ public class OverallQueryTransformer {
             }
 
             NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
-            OverallTypeInfo overallTypeInfo = getOverallTypeInfo(field);
-            if (overallTypeInfo != null) {
-                GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
-                GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
+            OverallTypeInfo overallTypeInfo = overallTypeInformation.getOverallTypeInfo(getId(field));
+            if (overallTypeInfo == null) {
+                // this means we have a new field which was added by a transformation and we don't have overall type info about it
+                updateTypeContext(context, typeContext.getOutputTypeUnderlying());
+                return TraversalControl.CONTINUE;
+            }
+            GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
+            GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
 
-                Optional<Node> parentNode = context.getParentNodes().stream().filter(t -> t instanceof Field).findFirst();
-                Field parentField = esi.getField().getSingleField();
+            Optional<Node> parentNode = context.getParentNodes().stream().filter(t -> t instanceof Field).findFirst();
+            Field parentField = esi.getField().getSingleField();
 
-                String id = null;
-                if (parentNode.isPresent()) {
-                    id = getId(parentNode.get());
-                } else if (parentField != null) {
-                    // When current field is hydrated and parentNode is not accessible
-                    id = getId(parentField);
-                }
-
-                Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
-                if ((isFieldAllowed.isPresent() && id != null)) {
-                    GraphQLObjectType fieldContainer = null;
-                    if (esi != null && unwrapAll(esi.getType()) instanceof GraphQLObjectType) {
-                        fieldContainer = (GraphQLObjectType) unwrapAll(esi.getType());
-                    }
-
-                    addFieldToRemovedMap(field, fieldDefinitionOverall.getType(), fieldContainer, isFieldAllowed.get(), id);
-                    return TreeTransformerUtil.deleteNode(context);
-                }
-
-                extractAndRecordTypeMappingDefinition(fieldTypeOverall.getName());
-                FieldTransformation transformation = createTransformation(fieldDefinitionOverall);
-                if (transformation != null) {
-                    //
-                    // major side effect alert - we are relying on transformation to call TreeTransformerUtil.changeNode
-                    // inside itself here
-                    //
-                    ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, overallTypeInfo);
-                    ApplyResult applyResult = transformation.apply(applyEnvironment);
-                    Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
-
-
-                    String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField);
-                    transformationByResultField.put(fieldId, transformation);
-
-                    if (transformation instanceof FieldRenameTransformation) {
-                        maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);
-                    }
-                    if (applyResult.getTraversalControl() == TraversalControl.CONTINUE) {
-                        updateTypeContext(context, typeContext.getOutputTypeUnderlying());
-                    }
-                    return applyResult.getTraversalControl();
-
-                } else {
-                    maybeAddUnderscoreTypeName(context, field, fieldTypeOverall);
-                }
+            String id = null;
+            if (parentNode.isPresent()) {
+                id = getId(parentNode.get());
+            } else if (parentField != null) {
+                // When current field is hydrated and parentNode is not accessible
+                id = getId(parentField);
             }
 
+            Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
+            if ((isFieldAllowed.isPresent() && id != null)) {
+                GraphQLObjectType fieldContainer = null;
+                if (esi != null && unwrapAll(esi.getType()) instanceof GraphQLObjectType) {
+                    fieldContainer = (GraphQLObjectType) unwrapAll(esi.getType());
+                }
+
+                addFieldToRemovedMap(field, fieldDefinitionOverall.getType(), fieldContainer, isFieldAllowed.get(), id);
+                return TreeTransformerUtil.deleteNode(context);
+            }
+
+            extractAndRecordTypeMappingDefinition(fieldTypeOverall.getName());
+            FieldTransformation transformation = createTransformation(fieldDefinitionOverall);
+            if (transformation != null) {
+                //
+                // major side effect alert - we are relying on transformation to call TreeTransformerUtil.changeNode
+                // inside itself here
+                //
+                ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, overallTypeInfo);
+                ApplyResult applyResult = transformation.apply(applyEnvironment);
+                Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
+
+
+                String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField);
+                transformationByResultField.put(fieldId, transformation);
+
+                if (transformation instanceof FieldRenameTransformation) {
+                    maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);
+                }
+                if (applyResult.getTraversalControl() == TraversalControl.CONTINUE) {
+                    updateTypeContext(context, typeContext.getOutputTypeUnderlying());
+                }
+                return applyResult.getTraversalControl();
+
+            } else {
+                maybeAddUnderscoreTypeName(context, field, fieldTypeOverall);
+            }
             updateTypeContext(context, typeContext.getOutputTypeUnderlying());
             return TraversalControl.CONTINUE;
-        }
-
-        private OverallTypeInfo getOverallTypeInfo(Node node) {
-            return overallTypeInformation.getOverallInfoById().get(getId(node));
         }
 
 
