@@ -32,7 +32,7 @@ public interface ServiceExecutionHooks {
         return null;
     }
 
-    default Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinition, Object userSuppliedContext) {
+    default Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
         return Optional.empty();
     }
 

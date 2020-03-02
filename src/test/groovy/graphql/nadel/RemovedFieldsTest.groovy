@@ -240,7 +240,7 @@ class RemovedFieldsTest extends Specification {
 
         return new ServiceExecutionHooks() {
             @Override
-            Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinition, Object userSuppliedContext) {
+            Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
                 if (fieldsToRemove.contains(field.getName())) {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return Optional.of(new AbortExecutionException("removed field"))
