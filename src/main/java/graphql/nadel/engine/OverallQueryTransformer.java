@@ -81,7 +81,7 @@ import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.language.TypeName.newTypeName;
 import static graphql.nadel.dsl.NodeId.getId;
-import static graphql.nadel.engine.NodeTypeContext.newNodeTypeContext;
+import static graphql.nadel.engine.UnderlyingTypeContext.newUnderlyingTypeContext;
 import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import static graphql.util.FpKit.groupingByUniqueKey;
@@ -357,7 +357,7 @@ public class OverallQueryTransformer {
                 serviceContext,
                 esi);
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
-        rootVars.put(NodeTypeContext.class, newNodeTypeContext().build());
+        rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext().build());
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
         Node newNode = treeTransformer.transform(fragmentDefinitionWithoutTypeInfo, new TraverserVisitorStub<Node>() {
                     @Override
@@ -425,7 +425,7 @@ public class OverallQueryTransformer {
         Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
         String underlyingParentName = getUnderlyingTypeNameAndRecordMapping(parentTypeOverall, typeRenameMappings);
         GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(underlyingParentName);
-        rootVars.put(NodeTypeContext.class, newNodeTypeContext()
+        rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext()
                 .outputTypeUnderlying(underlyingSchemaParent)
                 .build());
         TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
@@ -507,15 +507,15 @@ public class OverallQueryTransformer {
         @Override
         public TraversalControl visitObjectField(ObjectField node, TraverserContext<Node> context) {
 
-            NodeTypeContext nodeTypeContext = context.getVarFromParents(NodeTypeContext.class);
-            GraphQLUnmodifiedType unmodifiedType = unwrapAll(nodeTypeContext.getInputValueDefinitionUnderlying().getType());
+            UnderlyingTypeContext underlyingTypeContext = context.getVarFromParents(UnderlyingTypeContext.class);
+            GraphQLUnmodifiedType unmodifiedType = unwrapAll(underlyingTypeContext.getInputValueDefinitionUnderlying().getType());
             //
             // technically a scalar type can have an AST object field - eg field( arg : Json) -> field(arg : { ast : "here" })
             if (unmodifiedType instanceof GraphQLInputObjectType) {
                 GraphQLInputObjectType inputObjectType = (GraphQLInputObjectType) unmodifiedType;
                 GraphQLInputObjectField inputObjectTypeField = inputObjectType.getField(node.getName());
-                nodeTypeContext = nodeTypeContext.transform(builder -> builder.inputValueDefinitionUnderlying(inputObjectTypeField));
-                context.setVar(NodeTypeContext.class, nodeTypeContext);
+                underlyingTypeContext = underlyingTypeContext.transform(builder -> builder.inputValueDefinitionUnderlying(inputObjectTypeField));
+                context.setVar(UnderlyingTypeContext.class, underlyingTypeContext);
             }
             return TraversalControl.CONTINUE;
         }
@@ -523,24 +523,24 @@ public class OverallQueryTransformer {
         @Override
         public TraversalControl visitArgument(Argument argument, TraverserContext<Node> context) {
 
-            NodeTypeContext nodeTypeContext = context.getVarFromParents(NodeTypeContext.class);
+            UnderlyingTypeContext underlyingTypeContext = context.getVarFromParents(UnderlyingTypeContext.class);
 
-            GraphQLFieldDefinition fieldDefinition = nodeTypeContext.getFieldDefinitionUnderlying();
+            GraphQLFieldDefinition fieldDefinition = underlyingTypeContext.getFieldDefinitionUnderlying();
             GraphQLArgument graphQLArgument = fieldDefinition.getArgument(argument.getName());
             String argumentName = graphQLArgument.getName();
-            Object argumentValue = nodeTypeContext.getFieldArgumentValues().getOrDefault(argumentName, null);
+            Object argumentValue = underlyingTypeContext.getFieldArgumentValues().getOrDefault(argumentName, null);
 
-            NodeTypeContext newContext = nodeTypeContext.transform(builder -> builder
+            UnderlyingTypeContext newContext = underlyingTypeContext.transform(builder -> builder
                     .argumentValue(argumentValue)
                     .argumentDefinitionUnderlying(graphQLArgument)
                     .inputValueDefinitionUnderlying(graphQLArgument));
-            context.setVar(NodeTypeContext.class, newContext);
+            context.setVar(UnderlyingTypeContext.class, newContext);
             return TraversalControl.CONTINUE;
         }
 
         @Override
         protected TraversalControl visitValue(Value<?> value, TraverserContext<Node> context) {
-            NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
+            UnderlyingTypeContext typeContext = context.getVarFromParents(UnderlyingTypeContext.class);
             GraphQLInputValueDefinition inputValueDefinition = typeContext.getInputValueDefinitionUnderlying();
 
             OverallTypeInfo overallTypeInfo = overallTypeInformation.getOverallTypeInfo(getId(value));
@@ -572,7 +572,7 @@ public class OverallQueryTransformer {
                 return TraversalControl.CONTINUE;
             }
 
-            NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
+            UnderlyingTypeContext typeContext = context.getVarFromParents(UnderlyingTypeContext.class);
             OverallTypeInfo overallTypeInfo = overallTypeInformation.getOverallTypeInfo(getId(field));
             if (overallTypeInfo == null) {
                 // this means we have a new field which was added by a transformation and we don't have overall type info about it
@@ -643,13 +643,13 @@ public class OverallQueryTransformer {
 
 
             Map<String, Object> argumentValues = valuesResolver.getArgumentValues(underlyingSchema.getCodeRegistry(), fieldDefinitionUnderlying.getArguments(), newField.getArguments(), executionContext.getVariables());
-            NodeTypeContext.Builder newTypeContext = newNodeTypeContext()
+            UnderlyingTypeContext.Builder newTypeContext = newUnderlyingTypeContext()
                     .field(newField)
                     .outputTypeUnderlying(newOutputTypeUnderlying)
                     .fieldsContainerUnderlying(fieldsContainerUnderlying)
                     .fieldDefinitionUnderlying(fieldDefinitionUnderlying)
                     .fieldArgumentValues(argumentValues);
-            context.setVar(NodeTypeContext.class, newTypeContext.build());
+            context.setVar(UnderlyingTypeContext.class, newTypeContext.build());
 
         }
 
@@ -694,9 +694,9 @@ public class OverallQueryTransformer {
 
 
         private void updateTypeContextForInlineFragment(String underlyingType, TraverserContext<Node> context) {
-            NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
+            UnderlyingTypeContext typeContext = context.getVarFromParents(UnderlyingTypeContext.class);
             GraphQLCompositeType fragmentConditionUnderlying = (GraphQLCompositeType) underlyingSchema.getType(underlyingType);
-            context.setVar(NodeTypeContext.class, typeContext.transform(builder -> builder
+            context.setVar(UnderlyingTypeContext.class, typeContext.transform(builder -> builder
                     .outputTypeUnderlying(fragmentConditionUnderlying)));
         }
 
@@ -720,9 +720,9 @@ public class OverallQueryTransformer {
         }
 
         private void updateTypeContextForFragmentDefinition(FragmentDefinition fragmentDefinition, String underlyingTypeName, TraverserContext<Node> context) {
-            NodeTypeContext typeContext = context.getVarFromParents(NodeTypeContext.class);
+            UnderlyingTypeContext typeContext = context.getVarFromParents(UnderlyingTypeContext.class);
             GraphQLCompositeType fragmentConditionUnderlying = (GraphQLCompositeType) underlyingSchema.getType(underlyingTypeName);
-            context.setVar(NodeTypeContext.class, typeContext.transform(builder -> builder
+            context.setVar(UnderlyingTypeContext.class, typeContext.transform(builder -> builder
                     .outputTypeUnderlying(fragmentConditionUnderlying)));
         }
 

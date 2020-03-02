@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 @Internal
-public class NodeTypeContext {
+public class UnderlyingTypeContext {
 
     // always available, at the beginning it is the Query type
     private final GraphQLOutputType outputTypeUnderlying;
@@ -27,7 +27,7 @@ public class NodeTypeContext {
     private final GraphQLInputValueDefinition inputValueDefinitionUnderlying;
 
 
-    public NodeTypeContext(Builder builder) {
+    public UnderlyingTypeContext(Builder builder) {
         this.outputTypeUnderlying = builder.outputTypeUnderlying;
         this.field = builder.field;
         this.fieldDefinitionUnderlying = builder.fieldDefinitionUnderlying;
@@ -58,7 +58,7 @@ public class NodeTypeContext {
         return fieldsContainerUnderlying;
     }
 
-    public static Builder newNodeTypeContext() {
+    public static Builder newUnderlyingTypeContext() {
         return new Builder();
     }
 
@@ -74,7 +74,7 @@ public class NodeTypeContext {
         return inputValueDefinitionUnderlying;
     }
 
-    public NodeTypeContext transform(Consumer<Builder> builderConsumer) {
+    public UnderlyingTypeContext transform(Consumer<Builder> builderConsumer) {
         Builder builder = new Builder(this);
         builderConsumer.accept(builder);
         return builder.build();
@@ -95,7 +95,7 @@ public class NodeTypeContext {
 
         }
 
-        public Builder(NodeTypeContext other) {
+        public Builder(UnderlyingTypeContext other) {
             this.outputTypeUnderlying = other.outputTypeUnderlying;
             this.field = other.field;
             this.fieldDefinitionUnderlying = other.fieldDefinitionUnderlying;
@@ -146,8 +146,8 @@ public class NodeTypeContext {
             return this;
         }
 
-        public NodeTypeContext build() {
-            return new NodeTypeContext(this);
+        public UnderlyingTypeContext build() {
+            return new UnderlyingTypeContext(this);
         }
 
     }
