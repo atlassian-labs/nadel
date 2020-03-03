@@ -166,7 +166,7 @@ public class NadelExecutionStrategy {
                                     transformationByResultField,
                                     typeRenameMappings,
                                     nadelContext,
-                                    queryTransformer.getRemovedFieldMap()));
+                                    queryTransform.getRemovedFieldMap()));
 
             //
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call

@@ -5,6 +5,7 @@ import graphql.language.Document;
 import graphql.language.FragmentDefinition;
 import graphql.language.OperationDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.RemovedFieldData;
 
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,8 @@ public class QueryTransformationResult {
 
     private final Map<String, Object> variableValues;
 
+    private final Map<String, List<RemovedFieldData>> removedFieldMap;
+
     public QueryTransformationResult(Document document,
                                      OperationDefinition operationDefinition,
                                      List<MergedField> transformedMergedFields,
@@ -36,7 +39,8 @@ public class QueryTransformationResult {
                                      List<String> referencedVariables,
                                      Map<String, FieldTransformation> transformationByResultField,
                                      Map<String, FragmentDefinition> transformedFragments,
-                                     Map<String, Object> variableValues) {
+                                     Map<String, Object> variableValues,
+                                     Map<String, List<RemovedFieldData>> removedFieldMap) {
         this.document = document;
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
@@ -45,6 +49,7 @@ public class QueryTransformationResult {
         this.transformedFragments = transformedFragments;
         this.typeRenameMappings = typeRenameMappings;
         this.variableValues = variableValues;
+        this.removedFieldMap = removedFieldMap;
     }
 
     public Document getDocument() {
@@ -77,6 +82,10 @@ public class QueryTransformationResult {
 
     public Map<String, Object> getVariableValues() {
         return variableValues;
+    }
+
+    public Map<String, List<RemovedFieldData>> getRemovedFieldMap() {
+        return removedFieldMap;
     }
 }
 
