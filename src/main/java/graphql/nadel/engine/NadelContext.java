@@ -21,7 +21,7 @@ public class NadelContext {
     private final String originalOperationName;
     private final String objectIdentifierAlias;
     private final ForkJoinPool forkJoinPool;
-    private final NormalizedQuery normalizedQuery;
+    private final NormalizedQuery normalizedOverallQuery;
 
     private NadelContext(Object userSuppliedContext,
                          String underscoreTypeNameAlias,
@@ -34,7 +34,7 @@ public class NadelContext {
         this.originalOperationName = originalOperationName;
         this.objectIdentifierAlias = objectIdentifierAlias;
         this.forkJoinPool = forkJoinPool;
-        this.normalizedQuery = normalizedOverallQuery;
+        this.normalizedOverallQuery = normalizedOverallQuery;
     }
 
     public Object getUserSuppliedContext() {
@@ -70,8 +70,8 @@ public class NadelContext {
         return String.format("object_identifier__%s", uuid);
     }
 
-    public NormalizedQuery getNormalizedQuery() {
-        return normalizedQuery;
+    public NormalizedQuery getNormalizedOverallQuery() {
+        return normalizedOverallQuery;
     }
 
     public static class Builder {

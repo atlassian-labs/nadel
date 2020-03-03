@@ -1,6 +1,5 @@
 package graphql.nadel.engine;
 
-import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ValuesResolver;
@@ -32,6 +31,8 @@ import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RemovedFieldData;
 import graphql.nadel.hooks.NewVariableValue;
 import graphql.nadel.hooks.ServiceExecutionHooks;
+import graphql.nadel.normalized.NormalizedQuery;
+import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLCompositeType;
@@ -42,7 +43,6 @@ import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLInputValueDefinition;
 import graphql.schema.GraphQLInterfaceType;
 import graphql.schema.GraphQLNamedOutputType;
-import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
@@ -208,26 +208,33 @@ public class Transformer extends NodeVisitorStub {
         GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
 
 
+        NormalizedQuery normalizedOverallQuery = nadelContext.getNormalizedOverallQuery();
+
         Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
         if ((isFieldAllowed.isPresent())) {
-            Optional<Node> parentNode = context.getParentNodes().stream().filter(t -> t instanceof Field).findFirst();
-//                Field parentField = esi.getField().getSingleField();
-            String id = null;
-            if (parentNode.isPresent()) {
-                id = getId(parentNode.get());
-//                } else if (parentField != null) {
-//                    // When current field is hydrated and parentNode is not accessible
-//                    id = getId(parentField);
-//                }
-            } else {
-                return Assert.assertShouldNeverHappen();
+            List<NormalizedQueryField> normalizedFields = normalizedOverallQuery.getNormalizedFieldsByFieldId(getId(field));
+            for (NormalizedQueryField normalizedField : normalizedFields) {
+                NormalizedQueryField parent = normalizedField.getParent();
+//                parent.getMergedField().getFields()
+//                addFieldToRemovedMap(field, isFieldAllowed.get(), normalizedFieldsByFieldId);
             }
+//            Optional<Node> parentNode = context.getParentNodes().stream().filter(t -> t instanceof Field).findFirst();
+////                Field parentField = esi.getField().getSingleField();
+//            String id = null;
+//            if (parentNode.isPresent()) {
+//                id = getId(parentNode.get());
+////                } else if (parentField != null) {
+////                    // When current field is hydrated and parentNode is not accessible
+////                    id = getId(parentField);
+////                }
+//            } else {
+//                return Assert.assertShouldNeverHappen();
+//            }
 //                GraphQLObjectType fieldContainer = null;
 //                if (esi != null && unwrapAll(esi.getType()) instanceof GraphQLObjectType) {
 //                    fieldContainer = (GraphQLObjectType) unwrapAll(esi.getType());
 //                }
 
-            addFieldToRemovedMap(field, fieldDefinitionOverall.getType(), (GraphQLObjectType) overallTypeInfo.getFieldsContainer(), isFieldAllowed.get(), id);
             return TreeTransformerUtil.deleteNode(context);
         }
 
@@ -403,9 +410,9 @@ public class Transformer extends NodeVisitorStub {
         return typeMappingDefinition;
     }
 
-    private void addFieldToRemovedMap(Field field, GraphQLOutputType type, GraphQLObjectType fieldContainer, GraphQLError graphQLError, String id) {
-        RemovedFieldData removedFieldData = new RemovedFieldData(field, type, fieldContainer, graphQLError);
-        removedFieldMap.computeIfAbsent(id, k -> new ArrayList<>()).add(removedFieldData);
+    private void addFieldToRemovedMap(Field parentField, GraphQLError graphQLError, List<NormalizedQueryField> normalizedQueryFields) {
+        RemovedFieldData removedFieldData = new RemovedFieldData(parentField, graphQLError, normalizedQueryFields);
+        removedFieldMap.computeIfAbsent(getId(parentField), k -> new ArrayList<>()).add(removedFieldData);
     }
 
 

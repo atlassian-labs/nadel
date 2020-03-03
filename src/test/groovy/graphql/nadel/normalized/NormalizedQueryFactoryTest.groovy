@@ -100,9 +100,9 @@ type Dog implements Animal{
                         'otherName: Bird.name: String (conditional: true)',
                         'otherName: Cat.name: String (conditional: true)',
                         'otherName: Dog.name: String (conditional: true)',
-                        'Cat.friends: [Friend] (conditional: false)',
+                        'Cat.friends: [Friend] (conditional: true)',
                         'Friend.isCatOwner: Boolean (conditional: false)',
-                        'Bird.friends: [Friend] (conditional: false)',
+                        'Bird.friends: [Friend] (conditional: true)',
                         'Friend.isBirdOwner: Boolean (conditional: false)',
                         'Friend.name: String (conditional: false)']
 
@@ -186,11 +186,11 @@ type Dog implements Animal{
                         'myAlias: A2.b: B (conditional: true)',
                         'B1.leaf: String (conditional: true)',
                         'B2.leaf: String (conditional: true)',
-                        'A1.b: B (conditional: false)',
-                        'B1.leaf: String (conditional: false)',
-                        'B2.leaf: String (conditional: false)',
-                        'A2.b: B (conditional: false)',
-                        'B2.leaf: String (conditional: false)']
+                        'A1.b: B (conditional: true)',
+                        'B1.leaf: String (conditional: true)',
+                        'B2.leaf: String (conditional: true)',
+                        'A2.b: B (conditional: true)',
+                        'B2.leaf: String (conditional: true)']
     }
 
     def "test3"() {
@@ -264,7 +264,7 @@ type Dog implements Animal{
         printedTree == ['Query.object: Object (conditional: false)',
                         'Object.someValue: String (conditional: false)',
                         'Query.a: [A] (conditional: false)',
-                        'A1.b: B (conditional: false)',
+                        'A1.b: B (conditional: true)',
                         'B1.leaf: String (conditional: true)',
                         'B2.leaf: String (conditional: true)']
 
@@ -357,8 +357,56 @@ type Dog implements Animal{
         expect:
         //TODO: this is not really correct: should be conditional
         printedTree == ['Query.pets: [CatOrDog] (conditional: false)',
-                        'Cat.catName: String (conditional: false)',
-                        'Dog.dogName: String (conditional: false)']
+                        'Cat.catName: String (conditional: true)',
+                        'Dog.dogName: String (conditional: true)']
+
+    }
+
+    def "query with interface"() {
+
+        String schema = """
+        type Query{ 
+            pets: [Pet]
+        }
+        interface Pet {
+            id: ID
+        }
+        type Cat implements Pet{
+            id: ID
+            catName: String
+        }
+        type Dog implements Pet{
+            id: ID
+            dogName: String
+        }
+        """
+        GraphQLSchema graphQLSchema = TestUtil.schema(schema)
+
+        String query = """
+        {
+            pets {
+                ... on Cat {
+                    catName 
+                }  
+                ... on Dog {
+                    dogName
+                }
+            }
+        }
+        
+        """
+        assertValidQuery(graphQLSchema, query)
+
+        Document document = TestUtil.parseQuery(query)
+
+        NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
+        def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
+        def printedTree = printTree(tree)
+
+        expect:
+        printedTree == ['Query.pets: [Pet] (conditional: false)',
+                        'Cat.catName: String (conditional: true)',
+                        'Dog.dogName: String (conditional: true)']
 
     }
 
@@ -422,9 +470,9 @@ type Dog implements Animal{
                         'A1.b: String (conditional: true)',
                         'A2.b: String (conditional: true)',
                         'A3.b: String (conditional: true)',
-                        'A2.otherField: A (conditional: false)',
-                        'A2.b: String (conditional: false)',
-                        'A3.b: String (conditional: false)']
+                        'A2.otherField: A (conditional: true)',
+                        'A2.b: String (conditional: true)',
+                        'A3.b: String (conditional: true)']
 
     }
 

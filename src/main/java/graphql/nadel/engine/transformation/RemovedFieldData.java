@@ -2,36 +2,30 @@ package graphql.nadel.engine.transformation;
 
 import graphql.GraphQLError;
 import graphql.language.Field;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
+import graphql.nadel.normalized.NormalizedQueryField;
+
+import java.util.List;
 
 public class RemovedFieldData {
-    private final GraphQLObjectType fieldContainerOverall;
-    private Field field;
-    private GraphQLError graphQLError;
-    private GraphQLOutputType outputTypeOverall;
+    private final Field field;
+    private final GraphQLError graphQLError;
+    private final List<NormalizedQueryField> normalizedQueryFields;
 
-    public RemovedFieldData(Field field, GraphQLOutputType outputTypeOverall, GraphQLObjectType fieldContainerOverall, GraphQLError graphQLError) {
+    public RemovedFieldData(Field field, GraphQLError graphQLError, List<NormalizedQueryField> normalizedQueryFields) {
         this.field = field;
         this.graphQLError = graphQLError;
-        this.outputTypeOverall = outputTypeOverall;
-        this.fieldContainerOverall = fieldContainerOverall;
-    }
-
-    public GraphQLObjectType getFieldContainerOverall() {
-        return fieldContainerOverall;
+        this.normalizedQueryFields = normalizedQueryFields;
     }
 
     public Field getField() {
         return field;
     }
 
-
     public GraphQLError getGraphQLError() {
         return graphQLError;
     }
 
-    public GraphQLOutputType getOutputTypeOverall() {
-        return outputTypeOverall;
+    public List<NormalizedQueryField> getNormalizedQueryFields() {
+        return normalizedQueryFields;
     }
 }

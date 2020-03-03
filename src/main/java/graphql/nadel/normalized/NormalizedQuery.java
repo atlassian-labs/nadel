@@ -30,6 +30,10 @@ public class NormalizedQuery {
         return normalizedFieldsByFieldId;
     }
 
+    public List<NormalizedQueryField> getNormalizedFieldsByFieldId(String astFieldId) {
+        return normalizedFieldsByFieldId.get(astFieldId);
+    }
+
     public String printOriginalQuery() {
         List<Field> rootAstFields = flatList(map(rootFields, rootField -> rootField.getMergedField().getFields()));
         SelectionSet selectionSet = SelectionSet.newSelectionSet().selections(rootAstFields).build();

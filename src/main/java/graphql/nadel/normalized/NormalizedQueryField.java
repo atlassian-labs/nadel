@@ -7,7 +7,8 @@ import graphql.language.Field;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLTypeUtil;
+import graphql.schema.GraphQLUnmodifiedType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,22 +23,28 @@ public class NormalizedQueryField {
     private final MergedField mergedField;
     private final GraphQLObjectType objectType;
     private final GraphQLFieldDefinition fieldDefinition;
-    private final GraphQLOutputType parentType;
     // this is the unwrapped parent type: can be object or interface
     private final GraphQLFieldsContainer fieldsContainer;
     private final List<NormalizedQueryField> children;
     private final boolean isConditional;
     private final int level;
+    private NormalizedQueryField parent;
 
     private NormalizedQueryField(Builder builder) {
         this.mergedField = builder.mergedField;
         this.objectType = builder.objectType;
         this.fieldDefinition = assertNotNull(builder.fieldDefinition);
         this.fieldsContainer = assertNotNull(builder.fieldsContainer);
-        this.parentType = assertNotNull(builder.parentType);
         this.children = builder.children;
-        this.isConditional = objectType != fieldsContainer;
         this.level = builder.level;
+        this.parent = builder.parent;
+        // can be null for the top level fields
+        if (parent == null) {
+            this.isConditional = false;
+        } else {
+            GraphQLUnmodifiedType parentType = GraphQLTypeUtil.unwrapAll(parent.getFieldDefinition().getType());
+            this.isConditional = parentType != this.objectType;
+        }
     }
 
     /**
@@ -118,9 +125,6 @@ public class NormalizedQueryField {
         return fieldsContainer;
     }
 
-    public GraphQLOutputType getParentType() {
-        return parentType;
-    }
 
     public String print() {
         StringBuilder result = new StringBuilder();
@@ -140,13 +144,16 @@ public class NormalizedQueryField {
         return level;
     }
 
+    public NormalizedQueryField getParent() {
+        return parent;
+    }
+
     @Override
     public String toString() {
         return "QueryExecutionField{" +
                 "mergedField" + mergedField +
                 ", objectType=" + objectType +
                 ", fieldDefinition=" + fieldDefinition +
-                ", parentType=" + parentType +
                 ", fieldsContainer=" + fieldsContainer +
                 ", children=" + children +
                 ", isConditional=" + isConditional +
@@ -158,9 +165,9 @@ public class NormalizedQueryField {
         private GraphQLObjectType objectType;
         private GraphQLFieldDefinition fieldDefinition;
         private GraphQLFieldsContainer fieldsContainer;
-        private GraphQLOutputType parentType;
         private List<NormalizedQueryField> children = new ArrayList<>();
         private int level;
+        private NormalizedQueryField parent;
 
         private Builder() {
 
@@ -171,9 +178,9 @@ public class NormalizedQueryField {
             this.objectType = existing.getObjectType();
             this.fieldDefinition = existing.getFieldDefinition();
             this.fieldsContainer = existing.getFieldsContainer();
-            this.parentType = existing.getParentType();
             this.children = existing.getChildren();
             this.level = existing.getLevel();
+            this.parent = existing.getParent();
         }
 
 
@@ -197,10 +204,6 @@ public class NormalizedQueryField {
             return this;
         }
 
-        public Builder parentType(GraphQLOutputType parentType) {
-            this.parentType = parentType;
-            return this;
-        }
 
         public Builder children(List<NormalizedQueryField> children) {
             this.children.clear();
@@ -210,6 +213,11 @@ public class NormalizedQueryField {
 
         public Builder level(int level) {
             this.level = level;
+            return this;
+        }
+
+        public Builder parent(NormalizedQueryField parent) {
+            this.parent = parent;
             return this;
         }
 
