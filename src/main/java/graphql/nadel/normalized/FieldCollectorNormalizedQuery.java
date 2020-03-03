@@ -5,6 +5,7 @@ import graphql.Assert;
 import graphql.Internal;
 import graphql.execution.ConditionalNodes;
 import graphql.execution.MergedField;
+import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.FragmentDefinition;
 import graphql.language.FragmentSpread;
@@ -162,6 +163,11 @@ public class FieldCollectorNormalizedQuery {
                               GraphQLOutputType parentType,
                               int level) {
         if (!conditionalNodes.shouldInclude(parameters.getVariables(), field.getDirectives())) {
+            return;
+        }
+        if (field.getName().equals(TypeNameMetaFieldDef.getName()) ||
+                field.getName().equals(Introspection.SchemaMetaFieldDef.getName()) ||
+                field.getName().equals(Introspection.TypeMetaFieldDef.getName())) {
             return;
         }
         String name = getFieldEntryKey(field);

@@ -316,6 +316,52 @@ type Dog implements Animal{
 
     }
 
+    def "query with unions and __typename"() {
+
+        String schema = """
+        type Query{ 
+            pets: [CatOrDog]
+        }
+        type Cat {
+            catName: String
+        }
+        type Dog {
+            dogName: String
+        }
+        union CatOrDog = Cat | Dog
+        """
+        GraphQLSchema graphQLSchema = TestUtil.schema(schema)
+
+        String query = """
+        {
+            pets {
+                __typename
+                ... on Cat {
+                    catName 
+                }  
+                ... on Dog {
+                    dogName
+                }
+            }
+        }
+        
+        """
+        assertValidQuery(graphQLSchema, query)
+
+        Document document = TestUtil.parseQuery(query)
+
+        NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
+        def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
+        def printedTree = printTree(tree)
+
+        expect:
+        //TODO: this is not really correct: should be conditional
+        printedTree == ['Query.pets: [CatOrDog] (conditional: false)',
+                        'Cat.catName: String (conditional: false)',
+                        'Dog.dogName: String (conditional: false)']
+
+    }
+
     def "test5"() {
         String schema = """
         type Query{ 

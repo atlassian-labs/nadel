@@ -198,8 +198,8 @@ public class Transformer extends NodeVisitorStub {
 
         UnderlyingTypeContext typeContext = context.getVarFromParents(UnderlyingTypeContext.class);
         OverallTypeInfo overallTypeInfo = overallTypeInformation.getOverallTypeInfo(getId(field));
+        // this means we have a new field which was added by a transformation and we don't have overall type info about it
         if (overallTypeInfo == null) {
-            // this means we have a new field which was added by a transformation and we don't have overall type info about it
             updateTypeContext(context, typeContext.getOutputTypeUnderlying());
             return TraversalControl.CONTINUE;
         }

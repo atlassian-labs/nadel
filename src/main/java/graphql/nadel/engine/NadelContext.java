@@ -3,6 +3,7 @@ package graphql.nadel.engine;
 import graphql.Internal;
 import graphql.language.Document;
 import graphql.language.OperationDefinition;
+import graphql.nadel.normalized.NormalizedQuery;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -20,18 +21,20 @@ public class NadelContext {
     private final String originalOperationName;
     private final String objectIdentifierAlias;
     private final ForkJoinPool forkJoinPool;
-
+    private final NormalizedQuery normalizedQuery;
 
     private NadelContext(Object userSuppliedContext,
                          String underscoreTypeNameAlias,
                          String originalOperationName,
                          String objectIdentifierAlias,
-                         ForkJoinPool forkJoinPool) {
+                         ForkJoinPool forkJoinPool,
+                         NormalizedQuery normalizedOverallQuery) {
         this.userSuppliedContext = userSuppliedContext;
         this.underscoreTypeNameAlias = underscoreTypeNameAlias;
         this.originalOperationName = originalOperationName;
         this.objectIdentifierAlias = objectIdentifierAlias;
         this.forkJoinPool = forkJoinPool;
+        this.normalizedQuery = normalizedOverallQuery;
     }
 
     public Object getUserSuppliedContext() {
@@ -67,13 +70,22 @@ public class NadelContext {
         return String.format("object_identifier__%s", uuid);
     }
 
+    public NormalizedQuery getNormalizedQuery() {
+        return normalizedQuery;
+    }
 
     public static class Builder {
         private Object userSuppliedContext;
         private String originalOperationName;
         private String artificialFieldsUUID;
         private ForkJoinPool forkJoinPool;
+        private NormalizedQuery normalizedOverallQuery;
 
+
+        public Builder normalizedOverallQuery(NormalizedQuery normalizedQuery) {
+            this.normalizedOverallQuery = normalizedQuery;
+            return this;
+        }
 
         public Builder userSuppliedContext(Object userSuppliedContext) {
             this.userSuppliedContext = userSuppliedContext;
@@ -104,7 +116,7 @@ public class NadelContext {
 
         public NadelContext build() {
             String uuid = artificialFieldsUUID != null ? artificialFieldsUUID : UUID.randomUUID().toString().replaceAll("-", "_");
-            return new NadelContext(userSuppliedContext, mkUnderscoreTypeNameAlias(uuid), originalOperationName, createObjectIdentifierAlias(uuid), forkJoinPool);
+            return new NadelContext(userSuppliedContext, mkUnderscoreTypeNameAlias(uuid), originalOperationName, createObjectIdentifierAlias(uuid), forkJoinPool, normalizedOverallQuery);
         }
     }
 }

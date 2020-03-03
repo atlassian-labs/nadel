@@ -23,6 +23,8 @@ import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.introspection.IntrospectionRunner;
+import graphql.nadel.normalized.NormalizedQuery;
+import graphql.nadel.normalized.NormalizedQueryFactory;
 import graphql.nadel.result.ResultNodesUtil;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
@@ -46,6 +48,8 @@ public class Execution {
     private final ExecutionHelper executionHelper = new ExecutionHelper();
     private final NadelExecutionStrategy nadelExecutionStrategy;
 
+    private NormalizedQueryFactory normalizedQueryFactory = new NormalizedQueryFactory();
+
     public Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner, ServiceExecutionHooks serviceExecutionHooks) {
         this.services = services;
         this.overallSchema = overallSchema;
@@ -60,11 +64,14 @@ public class Execution {
                                                       InstrumentationState instrumentationState,
                                                       NadelExecutionParams nadelExecutionParams) {
 
+        NormalizedQuery normalizedQuery = normalizedQueryFactory.createNormalizedQuery(overallSchema, document, executionInput.getOperationName(), executionInput.getVariables());
+
         NadelContext nadelContext = NadelContext.newContext()
                 .userSuppliedContext(executionInput.getContext())
                 .originalOperationName(document, executionInput.getOperationName())
                 .artificialFieldsUUID(nadelExecutionParams.getArtificialFieldsUUID())
                 .forkJoinPool(nadelExecutionParams.getForkJoinPool())
+                .normalizedOverallQuery(normalizedQuery)
                 .build();
 
         executionInput = executionInput.transform(builder -> builder.context(nadelContext));
@@ -132,4 +139,5 @@ public class Execution {
         }
         return new FieldInfos(fieldInfoByDefinition);
     }
+
 }
