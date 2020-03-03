@@ -41,7 +41,7 @@ public class FieldCollectorNormalizedQuery {
 
     private final ConditionalNodes conditionalNodes = new ConditionalNodes();
 
-    public List<NormalizedQueryField> collectFields(FieldCollectorNormalizedQueryParams parameters, NormalizedQueryField normalizedQueryField) {
+    public List<NormalizedQueryField> collectFields(FieldCollectorNormalizedQueryParams parameters, NormalizedQueryField normalizedQueryField, int level) {
         GraphQLUnmodifiedType fieldType = GraphQLTypeUtil.unwrapAll(normalizedQueryField.getFieldDefinition().getType());
         // if not composite we don't have any selectionSet because it is a Scalar or enum
         if (!(fieldType instanceof GraphQLCompositeType)) {
@@ -61,7 +61,8 @@ public class FieldCollectorNormalizedQuery {
                     visitedFragments,
                     subFields,
                     possibleObjects,
-                    normalizedQueryField.getFieldDefinition().getType());
+                    normalizedQueryField.getFieldDefinition().getType(),
+                    level);
         }
         List<NormalizedQueryField> result = new ArrayList<>();
         subFields.values().forEach(setMergedFieldWTCMap -> {
@@ -77,7 +78,7 @@ public class FieldCollectorNormalizedQuery {
         List<String> visitedFragments = new ArrayList<>();
         Set<GraphQLObjectType> possibleObjects = new LinkedHashSet<>();
         possibleObjects.add(rootType);
-        this.collectFields(parameters, operationDefinition.getSelectionSet(), visitedFragments, subFields, possibleObjects, rootType);
+        this.collectFields(parameters, operationDefinition.getSelectionSet(), visitedFragments, subFields, possibleObjects, rootType, 1);
         List<NormalizedQueryField> result = new ArrayList<>();
         subFields.values().forEach(setMergedFieldWTCMap -> {
             result.addAll(setMergedFieldWTCMap.values());
@@ -91,15 +92,16 @@ public class FieldCollectorNormalizedQuery {
                                List<String> visitedFragments,
                                Map<String, Map<GraphQLObjectType, NormalizedQueryField>> result,
                                Set<GraphQLObjectType> possibleObjects,
-                               GraphQLOutputType parentType) {
+                               GraphQLOutputType parentType,
+                               int level) {
 
         for (Selection selection : selectionSet.getSelections()) {
             if (selection instanceof Field) {
-                collectField(parameters, result, (Field) selection, possibleObjects, parentType);
+                collectField(parameters, result, (Field) selection, possibleObjects, parentType, level);
             } else if (selection instanceof InlineFragment) {
-                collectInlineFragment(parameters, visitedFragments, result, (InlineFragment) selection, possibleObjects, parentType);
+                collectInlineFragment(parameters, visitedFragments, result, (InlineFragment) selection, possibleObjects, parentType, level);
             } else if (selection instanceof FragmentSpread) {
-                collectFragmentSpread(parameters, visitedFragments, result, (FragmentSpread) selection, possibleObjects, parentType);
+                collectFragmentSpread(parameters, visitedFragments, result, (FragmentSpread) selection, possibleObjects, parentType, level);
             }
         }
     }
@@ -109,7 +111,8 @@ public class FieldCollectorNormalizedQuery {
                                        Map<String, Map<GraphQLObjectType, NormalizedQueryField>> result,
                                        FragmentSpread fragmentSpread,
                                        Set<GraphQLObjectType> possibleObjects,
-                                       GraphQLOutputType parentType) {
+                                       GraphQLOutputType parentType,
+                                       int level) {
         if (visitedFragments.contains(fragmentSpread.getName())) {
             return;
         }
@@ -126,7 +129,7 @@ public class FieldCollectorNormalizedQuery {
         Set<GraphQLObjectType> newConditions = narrowDownPossibleObjects(possibleObjects, newCondition, parameters.getGraphQLSchema());
         GraphQLCompositeType newParentType = (GraphQLCompositeType)
                 Assert.assertNotNull(parameters.getGraphQLSchema().getType(fragmentDefinition.getTypeCondition().getName()));
-        collectFields(parameters, fragmentDefinition.getSelectionSet(), visitedFragments, result, newConditions, newParentType);
+        collectFields(parameters, fragmentDefinition.getSelectionSet(), visitedFragments, result, newConditions, newParentType, level);
     }
 
     private void collectInlineFragment(FieldCollectorNormalizedQueryParams parameters,
@@ -134,7 +137,8 @@ public class FieldCollectorNormalizedQuery {
                                        Map<String, Map<GraphQLObjectType, NormalizedQueryField>> result,
                                        InlineFragment inlineFragment,
                                        Set<GraphQLObjectType> possibleObjects,
-                                       GraphQLOutputType parentType) {
+                                       GraphQLOutputType parentType,
+                                       int level) {
         if (!conditionalNodes.shouldInclude(parameters.getVariables(), inlineFragment.getDirectives())) {
             return;
         }
@@ -148,14 +152,15 @@ public class FieldCollectorNormalizedQuery {
                     Assert.assertNotNull(parameters.getGraphQLSchema().getType(inlineFragment.getTypeCondition().getName()));
 
         }
-        collectFields(parameters, inlineFragment.getSelectionSet(), visitedFragments, result, newPossibleOjects, newParentType);
+        collectFields(parameters, inlineFragment.getSelectionSet(), visitedFragments, result, newPossibleOjects, newParentType, level);
     }
 
     private void collectField(FieldCollectorNormalizedQueryParams parameters,
                               Map<String, Map<GraphQLObjectType, NormalizedQueryField>> result,
                               Field field,
                               Set<GraphQLObjectType> objectTypes,
-                              GraphQLOutputType parentType) {
+                              GraphQLOutputType parentType,
+                              int level) {
         if (!conditionalNodes.shouldInclude(parameters.getVariables(), field.getDirectives())) {
             return;
         }
@@ -176,6 +181,7 @@ public class FieldCollectorNormalizedQuery {
                         .fieldDefinition(getFieldDefinition(fieldsContainer, field.getName()))
                         .fieldsContainer(fieldsContainer)
                         .parentType(parentType)
+                        .level(level)
                         .build();
                 existingFieldWTC.put(objectType, newFieldWTC);
             }

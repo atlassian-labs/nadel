@@ -6,6 +6,7 @@ import graphql.language.Field;
 import graphql.language.SelectionSet;
 
 import java.util.List;
+import java.util.Map;
 
 import static graphql.util.FpKit.flatList;
 import static graphql.util.FpKit.map;
@@ -14,13 +15,19 @@ import static graphql.util.FpKit.map;
 public class NormalizedQuery {
 
     private final List<NormalizedQueryField> rootFields;
+    private final Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId;
 
-    public NormalizedQuery(List<NormalizedQueryField> rootFields) {
+    public NormalizedQuery(List<NormalizedQueryField> rootFields, Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId) {
         this.rootFields = rootFields;
+        this.normalizedFieldsByFieldId = normalizedFieldsByFieldId;
     }
 
     public List<NormalizedQueryField> getRootFields() {
         return rootFields;
+    }
+
+    public Map<String, List<NormalizedQueryField>> getNormalizedFieldsByFieldId() {
+        return normalizedFieldsByFieldId;
     }
 
     public String printOriginalQuery() {

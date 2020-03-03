@@ -2,14 +2,17 @@ package graphql.nadel.normalized
 
 import graphql.GraphQL
 import graphql.language.Document
+import graphql.language.Field
+import graphql.language.FragmentDefinition
 import graphql.nadel.testutils.TestUtil
-import graphql.parser.Parser
 import graphql.schema.GraphQLSchema
 import graphql.util.TraversalControl
 import graphql.util.Traverser
 import graphql.util.TraverserContext
 import graphql.util.TraverserVisitorStub
 import spock.lang.Specification
+
+import static graphql.nadel.dsl.NodeId.getId
 
 class NormalizedQueryFactoryTest extends Specification {
 
@@ -81,10 +84,9 @@ type Dog implements Animal{
         
         """
 
-        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
-        assert graphQL.execute(query).errors.size() == 0
+        assertValidQuery(graphQLSchema, query)
 
-        Document document = new Parser().parseDocument(query)
+        Document document = TestUtil.parseQuery(query)
 
         NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
         def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
@@ -168,10 +170,9 @@ type Dog implements Animal{
         
         """
 
-        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
-        assert graphQL.execute(query).errors.size() == 0
+        assertValidQuery(graphQLSchema, query)
 
-        Document document = new Parser().parseDocument(query)
+        Document document = TestUtil.parseQuery(query)
 
         NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
         def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
@@ -251,10 +252,9 @@ type Dog implements Animal{
         }
         """
 
-        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
-        assert graphQL.execute(query).errors.size() == 0
+        assertValidQuery(graphQLSchema, query)
 
-        Document document = new Parser().parseDocument(query)
+        Document document = TestUtil.parseQuery(query)
 
         NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
         def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
@@ -303,10 +303,9 @@ type Dog implements Animal{
         }
         
         """
-        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
-        assert graphQL.execute(query).errors.size() == 0
+        assertValidQuery(graphQLSchema, query)
 
-        Document document = new Parser().parseDocument(query)
+        Document document = TestUtil.parseQuery(query)
 
         NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
         def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
@@ -364,10 +363,9 @@ type Dog implements Animal{
         
         """
 
-        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
-        assert graphQL.execute(query).errors.size() == 0
+        assertValidQuery(graphQLSchema, query)
 
-        Document document = new Parser().parseDocument(query)
+        Document document = TestUtil.parseQuery(query)
 
         NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
         def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
@@ -413,10 +411,9 @@ type Dog implements Animal{
                 }}
                 """
 
-        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
-        assert graphQL.execute(query).errors.size() == 0
+        assertValidQuery(graphQLSchema, query)
 
-        Document document = new Parser().parseDocument(query)
+        Document document = TestUtil.parseQuery(query)
 
         NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
         def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
@@ -458,10 +455,9 @@ type Dog implements Animal{
                 }}
                 """
 
-        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
-        assert graphQL.execute(query).errors.size() == 0
+        assertValidQuery(graphQLSchema, query)
 
-        Document document = new Parser().parseDocument(query)
+        Document document = TestUtil.parseQuery(query)
 
         NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
         def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
@@ -489,10 +485,9 @@ type Dog implements Animal{
         def query = """
             {foo { ...fooData moreFoos { ...fooData }}} fragment fooData on Foo { subFoo }
             """
-        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
-        assert graphQL.execute(query).errors.size() == 0
+        assertValidQuery(graphQLSchema, query)
 
-        Document document = new Parser().parseDocument(query)
+        Document document = TestUtil.parseQuery(query)
 
         NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
         def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
@@ -550,10 +545,9 @@ type Dog implements Animal{
             }
                 """
 
-        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
-        assert graphQL.execute(query).errors.size() == 0
+        assertValidQuery(graphQLSchema, query)
 
-        Document document = new Parser().parseDocument(query)
+        Document document = TestUtil.parseQuery(query)
 
         NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
         def normalizedQuery = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
@@ -602,5 +596,40 @@ type Dog implements Animal{
             }
         });
         result
+    }
+
+    def "normalized fields map by field id is build"() {
+        def graphQLSchema = TestUtil.schema("""
+            type Query{
+                foo: Foo
+            }
+            type Foo {
+                subFoo: String  
+                moreFoos: Foo
+            }
+        """)
+        def query = """
+            {foo { ...fooData moreFoos { ...fooData }}} fragment fooData on Foo { subFoo }
+            """
+        assertValidQuery(graphQLSchema, query)
+
+        Document document = TestUtil.parseQuery(query)
+        def subFooField = (document.getDefinitions()[1] as FragmentDefinition).getSelectionSet().getSelections()[0] as Field
+        def subFooFieldId = getId(subFooField)
+
+        NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
+        def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
+        def normalizedFieldsByFieldId = tree.getNormalizedFieldsByFieldId()
+
+        expect:
+        normalizedFieldsByFieldId.size() == 3
+        normalizedFieldsByFieldId.get(subFooFieldId).size() == 2
+        normalizedFieldsByFieldId.get(subFooFieldId)[0].level == 2
+        normalizedFieldsByFieldId.get(subFooFieldId)[1].level == 3
+    }
+
+    private void assertValidQuery(GraphQLSchema graphQLSchema, String query) {
+        GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();
+        assert graphQL.execute(query).errors.size() == 0
     }
 }

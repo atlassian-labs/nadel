@@ -27,6 +27,7 @@ public class NormalizedQueryField {
     private final GraphQLFieldsContainer fieldsContainer;
     private final List<NormalizedQueryField> children;
     private final boolean isConditional;
+    private final int level;
 
     private NormalizedQueryField(Builder builder) {
         this.mergedField = builder.mergedField;
@@ -36,6 +37,7 @@ public class NormalizedQueryField {
         this.parentType = assertNotNull(builder.parentType);
         this.children = builder.children;
         this.isConditional = objectType != fieldsContainer;
+        this.level = builder.level;
     }
 
     /**
@@ -134,6 +136,10 @@ public class NormalizedQueryField {
         return children;
     }
 
+    public int getLevel() {
+        return level;
+    }
+
     @Override
     public String toString() {
         return "QueryExecutionField{" +
@@ -154,6 +160,7 @@ public class NormalizedQueryField {
         private GraphQLFieldsContainer fieldsContainer;
         private GraphQLOutputType parentType;
         private List<NormalizedQueryField> children = new ArrayList<>();
+        private int level;
 
         private Builder() {
 
@@ -165,6 +172,8 @@ public class NormalizedQueryField {
             this.fieldDefinition = existing.getFieldDefinition();
             this.fieldsContainer = existing.getFieldsContainer();
             this.parentType = existing.getParentType();
+            this.children = existing.getChildren();
+            this.level = existing.getLevel();
         }
 
 
@@ -196,6 +205,11 @@ public class NormalizedQueryField {
         public Builder children(List<NormalizedQueryField> children) {
             this.children.clear();
             this.children.addAll(children);
+            return this;
+        }
+
+        public Builder level(int level) {
+            this.level = level;
             return this;
         }
 
