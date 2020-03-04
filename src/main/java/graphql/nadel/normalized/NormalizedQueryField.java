@@ -23,7 +23,6 @@ public class NormalizedQueryField {
     private final MergedField mergedField;
     private final GraphQLObjectType objectType;
     private final GraphQLFieldDefinition fieldDefinition;
-    private final GraphQLFieldsContainer fieldsContainer;
     private final List<NormalizedQueryField> children;
     private final boolean isConditional;
     private final int level;
@@ -34,7 +33,6 @@ public class NormalizedQueryField {
         this.mergedField = builder.mergedField;
         this.objectType = builder.objectType;
         this.fieldDefinition = assertNotNull(builder.fieldDefinition);
-        this.fieldsContainer = assertNotNull(builder.fieldsContainer);
         this.children = builder.children;
         this.level = builder.level;
         this.parent = builder.parent;
@@ -121,10 +119,6 @@ public class NormalizedQueryField {
         return objectType;
     }
 
-    public GraphQLFieldsContainer getFieldsContainer() {
-        return fieldsContainer;
-    }
-
 
     public String print() {
         StringBuilder result = new StringBuilder();
@@ -154,7 +148,6 @@ public class NormalizedQueryField {
                 "mergedField" + mergedField +
                 ", objectType=" + objectType +
                 ", fieldDefinition=" + fieldDefinition +
-                ", fieldsContainer=" + fieldsContainer +
                 ", children=" + children +
                 ", isConditional=" + isConditional +
                 '}';
@@ -177,7 +170,6 @@ public class NormalizedQueryField {
             this.mergedField = existing.getMergedField();
             this.objectType = existing.getObjectType();
             this.fieldDefinition = existing.getFieldDefinition();
-            this.fieldsContainer = existing.getFieldsContainer();
             this.children = existing.getChildren();
             this.level = existing.getLevel();
             this.parent = existing.getParent();
@@ -196,11 +188,6 @@ public class NormalizedQueryField {
 
         public Builder fieldDefinition(GraphQLFieldDefinition fieldDefinition) {
             this.fieldDefinition = fieldDefinition;
-            return this;
-        }
-
-        public Builder fieldsContainer(GraphQLFieldsContainer fieldsContainer) {
-            this.fieldsContainer = fieldsContainer;
             return this;
         }
 
