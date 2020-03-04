@@ -101,6 +101,9 @@ public class ServiceResultNodesToOverallResult {
         ExecutionResultNode newRoot = resultNodesTransformer.transformParallel(forkJoinPool, root, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
+                //root.getResultNodeCounter().incrementResultNodeCount();
+                //resultNodeCounter.incrementServiceNodeCount(context.thisNode().getExecutionStepInfo().getField().toString());
+                //context.thisNode().getExecutionStepInfo().getField().toString() ??
                 nodeCount.incrementAndGet();
                 ExecutionResultNode node = context.thisNode();
                 if (onlyChildren && node == root) {
@@ -151,6 +154,8 @@ public class ServiceResultNodesToOverallResult {
         }, rootVars);
 //        long elapsedTime = System.currentTimeMillis() - startTime;
 //        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
+        newRoot.setNodeCount(nodeCount);
+        log.debug("ServiceResultNodesToOverallResult nodeCount: {}, executionId: {}",newRoot.getResultNodeCount(),executionId);
         return newRoot;
 
     }

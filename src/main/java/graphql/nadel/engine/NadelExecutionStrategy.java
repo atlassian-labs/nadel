@@ -19,6 +19,7 @@ import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.ResultComplexityAggregator;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
@@ -30,6 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
@@ -43,6 +45,8 @@ public class NadelExecutionStrategy {
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
     private final OverallQueryTransformer queryTransformer = new OverallQueryTransformer();
+    private final ResultComplexityAggregator topLevelComplexityAggregator = new ResultComplexityAggregator(new AtomicInteger(0),new LinkedHashMap<>());
+    private ResultComplexityAggregator resultComplexityAggregator;
 
     private final FieldInfos fieldInfos;
     private final GraphQLSchema overallSchema;
@@ -83,18 +87,23 @@ public class NadelExecutionStrategy {
                     executeTopLevelFields(executionContext, rootExecutionStepInfo, nadelContext, fieldTracking, operation, oneServiceExecutions);
 
             CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
-            return rootResult
-                    .thenCompose(
-                            //
-                            // all the nodes that are hydrated need to make new service calls to get their eventual value
-                            //
-                            rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode, serviceContextsByService)
-                                    .thenApply(resultNode -> (RootExecutionResultNode) resultNode))
-                    .whenComplete((resultNode, throwable) -> {
-                        possiblyLogException(resultNode, throwable);
-                        long elapsedTime = System.currentTimeMillis() - startTime;
-                        log.debug("NadelExecutionStrategy time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
+            rootResult.thenCompose(
+                    //
+                    // all the nodes that are hydrated need to make new service calls to get their eventual value
+                    //
+                    rootExecutionResultNode -> {
+                        CompletableFuture<RootExecutionResultNode> hydratedRootExecutionResultCF = hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode, serviceContextsByService)
+                                .thenApply(resultNode -> (RootExecutionResultNode) resultNode);
+                        // get the node counts from hydrated nodes and merge it with node counts from top level fields
+                        hydratedRootExecutionResultCF.thenRun(this::buildResultComplexityAggregator);
+                        return hydratedRootExecutionResultCF;
                     });
+
+            return rootResult.whenComplete((resultNode, throwable) -> {
+                possiblyLogException(resultNode, throwable);
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                log.debug("NadelExecutionStrategy time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
+            });
         }).whenComplete(this::possiblyLogException);
 
 
@@ -130,7 +139,6 @@ public class NadelExecutionStrategy {
 
     private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(ExecutionContext executionContext, ExecutionStepInfo rootExecutionStepInfo, NadelContext nadelContext, FieldTracking fieldTracking, Operation operation, List<OneServiceExecution> oneServiceExecutions) {
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
-
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
             Service service = oneServiceExecution.service;
             ExecutionStepInfo esi = oneServiceExecution.stepInfo;
@@ -167,7 +175,9 @@ public class NadelExecutionStrategy {
                                     typeRenameMappings,
                                     nadelContext));
 
-            //
+            //set the result node count for this service
+            convertedResult.thenAccept( rootExecutionResultNode -> topLevelComplexityAggregator.setServiceNodeCount(service.getName(), rootExecutionResultNode.getResultNodeCount()));
+
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
             convertedResult = convertedResult
                     .whenComplete(fieldTracking::fieldsCompleted);
@@ -184,7 +194,10 @@ public class NadelExecutionStrategy {
                         return serviceExecutionHooks.resultRewrite(resultRewriteParams);
                     });
 
+
+
             resultNodes.add(serviceResult);
+
         }
         return resultNodes;
     }
@@ -219,6 +232,16 @@ public class NadelExecutionStrategy {
             map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
             return new RootExecutionResultNode(mergedChildren, errors, null);
         });
+    }
+
+    private void buildResultComplexityAggregator() {
+        ResultComplexityAggregator hydrationComplexityAggregator = hydrationInputResolver.getHydrationComplexityAggregator();
+        AtomicInteger mergedTotalNodeCount = new AtomicInteger(topLevelComplexityAggregator.getTotalNodeCount() + hydrationComplexityAggregator.getTotalNodeCount());
+        LinkedHashMap<String, AtomicInteger> mergedMap = new LinkedHashMap<>(topLevelComplexityAggregator.getServiceNodeCountsMap());
+
+        hydrationComplexityAggregator.getServiceNodeCountsMap().forEach(   //incase there are duplicate services -> add the node counts (??? need to confirm if hydrated fields can overlap with top level fields??)
+                (key, value) -> mergedMap.merge(key, value, (v1, v2) -> new AtomicInteger(v1.get() + v2.get())));
+        resultComplexityAggregator = new ResultComplexityAggregator(mergedTotalNodeCount, mergedMap);
     }
 
     private static class OneServiceExecution {

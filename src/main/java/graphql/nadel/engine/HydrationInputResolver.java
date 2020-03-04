@@ -27,6 +27,7 @@ import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.ListExecutionResultNode;
 import graphql.nadel.result.ObjectExecutionResultNode;
+import graphql.nadel.result.ResultComplexityAggregator;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.nadel.util.ExecutionPathUtils;
 import graphql.schema.GraphQLCompositeType;
@@ -38,11 +39,13 @@ import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
@@ -68,6 +71,7 @@ public class HydrationInputResolver {
     private final OverallQueryTransformer queryTransformer = new OverallQueryTransformer();
 
     private final ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
+    private ResultComplexityAggregator hydrationComplexityAggregator = new ResultComplexityAggregator(new AtomicInteger(0), new LinkedHashMap<>());
 
 
     private final List<Service> services;
@@ -283,6 +287,7 @@ public class HydrationInputResolver {
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
                 .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings, nadelContext);
+        hydrationComplexityAggregator.setServiceNodeCount(hydrationTransformation.getUnderlyingServiceHydration().getServiceName(), firstTopLevelResultNode.getResultNodeCount());
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
 
@@ -406,6 +411,7 @@ public class HydrationInputResolver {
                         transformationByResultField,
                         typeRenameMappings,
                         getNadelContext(executionContext));
+                hydrationComplexityAggregator.setServiceNodeCount(hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName(),overallResultNode.getResultNodeCount());
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);
             } else {
@@ -498,4 +504,9 @@ public class HydrationInputResolver {
     private NadelContext getNadelContext(ExecutionContext executionContext) {
         return (NadelContext) executionContext.getContext();
     }
+
+    ResultComplexityAggregator getHydrationComplexityAggregator() {
+        return hydrationComplexityAggregator;
+    }
+
 }
