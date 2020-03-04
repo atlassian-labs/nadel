@@ -49,6 +49,13 @@ public class ObjectExecutionResultNode extends ExecutionResultNode {
         return new ObjectExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), children, getErrors(), getElapsedTime());
     }
 
+    public ObjectExecutionResultNode addChild(ExecutionResultNode child) {
+        List<ExecutionResultNode> newChildren = new ArrayList<>(getChildren());
+        newChildren.add(child);
+        return withNewChildren(newChildren);
+    }
+
+
     @Override
     public ExecutionResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
         return new ObjectExecutionResultNode(getExecutionStepInfo(), resolvedValue, getChildren(), getErrors(), getElapsedTime());

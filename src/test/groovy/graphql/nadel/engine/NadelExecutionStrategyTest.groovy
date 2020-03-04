@@ -4,7 +4,6 @@ import graphql.ExecutionInput
 import graphql.GraphQLError
 import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.language.Field
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
@@ -31,6 +30,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
 
 import static graphql.language.AstPrinter.printAstCompact
+import static graphql.nadel.testutils.TestUtil.createNormalizedQuery
 import static graphql.nadel.testutils.TestUtil.parseQuery
 import static java.util.concurrent.CompletableFuture.completedFuture
 
@@ -238,9 +238,8 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId\") {id name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
-        def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()) build()
-        def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
+
+        def executionData = createExecutionData(query, overallHydrationSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
@@ -277,9 +276,8 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId\") {name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
-        def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()) build()
-        def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
+
+        def executionData = createExecutionData(query, overallHydrationSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
@@ -316,9 +314,7 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId\") {name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
-        def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()) build()
-        def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
+        def executionData = createExecutionData(query, overallHydrationSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
@@ -1123,8 +1119,13 @@ class NadelExecutionStrategyTest extends Specification {
 
     ExecutionHelper.ExecutionData createExecutionData(String query, Map<String, Object> variables, GraphQLSchema overallSchema) {
         def document = parseQuery(query)
+        def normalizedQuery = createNormalizedQuery(overallSchema, document)
 
-        def nadelContext = NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).artificialFieldsUUID("UUID").build()
+        def nadelContext = NadelContext.newContext()
+                .forkJoinPool(ForkJoinPool.commonPool())
+                .artificialFieldsUUID("UUID")
+                .normalizedOverallQuery(normalizedQuery)
+                .build()
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(query)
                 .variables(variables)

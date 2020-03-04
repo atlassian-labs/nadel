@@ -23,6 +23,7 @@ import spock.lang.Specification
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ForkJoinPool
 
+import static graphql.nadel.testutils.TestUtil.createNormalizedQuery
 import static graphql.nadel.testutils.TestUtil.parseQuery
 
 class LargeResponseTest extends Specification {
@@ -194,8 +195,11 @@ type ActivityUser {
 
     private ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema) {
         def document = parseQuery(query)
+        def normalizedQuery = createNormalizedQuery(overallSchema, document)
 
-        def nadelContext = NadelContext.newContext().artificialFieldsUUID("UUID").forkJoinPool(ForkJoinPool.commonPool()).build()
+        def nadelContext = NadelContext.newContext().artificialFieldsUUID("UUID").forkJoinPool(ForkJoinPool.commonPool())
+                .normalizedOverallQuery(normalizedQuery)
+                .build()
         def executionInput = ExecutionInput.newExecutionInput().query(query)
                 .context(nadelContext)
                 .build()

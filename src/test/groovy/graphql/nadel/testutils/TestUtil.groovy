@@ -31,6 +31,8 @@ import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelContext
+import graphql.nadel.normalized.NormalizedQuery
+import graphql.nadel.normalized.NormalizedQueryFactory
 import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.OverallSchemaGenerator
 import graphql.nadel.util.FpKit
@@ -295,6 +297,11 @@ class TestUtil {
 
     static Document parseQuery(String query) {
         new NadelGraphQLParser().parseDocument(query)
+    }
+
+    static NormalizedQuery createNormalizedQuery(GraphQLSchema schema, Document document) {
+        NormalizedQueryFactory normalizedQueryFactory = new NormalizedQueryFactory()
+        return normalizedQueryFactory.createNormalizedQuery(schema, document, null, [:])
     }
 
     static Field parseField(String sdlField) {

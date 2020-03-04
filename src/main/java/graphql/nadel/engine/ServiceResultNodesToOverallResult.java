@@ -3,6 +3,7 @@ package graphql.nadel.engine;
 import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.execution.ExecutionId;
+import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ResolvedValue;
@@ -10,14 +11,18 @@ import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.nadel.Tuples;
 import graphql.nadel.TuplesTwo;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.engine.transformation.RemovedFieldData;
+import graphql.nadel.engine.transformation.RemovedFieldData.NormalizedFieldAndError;
 import graphql.nadel.engine.transformation.UnapplyResult;
+import graphql.nadel.normalized.NormalizedQuery;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
+import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 import graphql.util.TraversalControl;
@@ -43,6 +48,7 @@ import static graphql.Assert.assertTrue;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.util.FpKit.groupingBy;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 public class ServiceResultNodesToOverallResult {
@@ -94,7 +100,7 @@ public class ServiceResultNodesToOverallResult {
                                             Map<String, String> typeRenameMappings,
                                             boolean onlyChildren,
                                             NadelContext nadelContext,
-                                            RemovedFieldData removedFields) {
+                                            RemovedFieldData removedFieldData) {
 
         ConcurrentHashMap<String, FieldTransformation> transformationMap = new ConcurrentHashMap<>(transformationMapInput);
 
@@ -125,8 +131,7 @@ public class ServiceResultNodesToOverallResult {
                 }
 
                 boolean areRemovedFieldsAdded = false;
-                MergedField field = node.getExecutionStepInfo().getField();
-                List<NormalizedQueryField> childsForMergedField = removedFields.getChildsForMergedField(field);
+//                MergedField field = node.getExecutionStepInfo().getField();
 
 //                removedFields.
 
@@ -227,12 +232,24 @@ public class ServiceResultNodesToOverallResult {
                 if (transformations.size() == 0) {
                     mapAndChangeNode(node, unapplyEnvironment, context, areRemovedFieldsAdded);
                 } else {
-                    traversalControl = unapplyTransformations(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context, nadelContext, removedFields);
+                    traversalControl = unapplyTransformations(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context, nadelContext, removedFieldData);
                 }
                 ExecutionResultNode convertedNode = context.thisNode();
                 if (!(convertedNode instanceof LeafExecutionResultNode)) {
                     setExecutionInfo(context, convertedNode);
                 }
+
+                if (convertedNode instanceof ObjectExecutionResultNode) {
+                    ObjectExecutionResultNode objectResultNode = (ObjectExecutionResultNode) convertedNode;
+                    NormalizedQueryField normalizedQueryField = getNormalizedQueryField(objectResultNode, nadelContext.getNormalizedOverallQuery());
+                    List<NormalizedFieldAndError> removedFields = removedFieldData.getRemovedFieldsForParent(normalizedQueryField);
+                    for (NormalizedFieldAndError normalizedFieldAndError : removedFields) {
+                        LeafExecutionResultNode newChild = createRemovedFieldResult(node, normalizedFieldAndError.getNormalizedField(), normalizedFieldAndError.getError());
+                        TreeTransformerUtil.changeNode(context, (objectResultNode).addChild(newChild));
+                    }
+                }
+
+
                 return traversalControl;
             }
 
@@ -243,28 +260,32 @@ public class ServiceResultNodesToOverallResult {
 
     }
 
-//    private List<ExecutionResultNode> createNullResultNode(ExecutionResultNode parent, NormalizedQueryField normalizedQueryField, MergedField field) {
-////        List<ExecutionResultNode> executionResultNodes = new ArrayList<>();
-////        for (RemovedFieldData removedField : removedFieldDataList) {
-//        ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
-//                .localContext(null)
-//                .nullValue(true)
-//                .build();
-//
-//        ExecutionPath path = parent.getExecutionStepInfo().getPath();
-//        ExecutionPath executionPath = path.append(ExecutionPath.parse(field.getName()));
-//
-//        ExecutionStepInfo esi = ExecutionStepInfo.newExecutionStepInfo()
-//                .path(executionPath)
-//                .type(normalizedQueryField.getFieldDefinition().getType())
-//                .field(field)
-//                .fieldContainer(normalizedQueryField.getObjectType())
-//                .build();
-//
-////        LeafExecutionResultNode removedNode = new LeafExecutionResultNode(esi, resolvedValue, null, Collections.singletonList(removedField.getGraphQLError()));
-////        executionResultNodes.add((ExecutionResultNode) removedNode);
-////        return executionResultNodes;
-//    }
+    private LeafExecutionResultNode createRemovedFieldResult(ExecutionResultNode parent,
+                                                             NormalizedQueryField normalizedQueryField,
+                                                             GraphQLError error) {
+        ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
+                .localContext(null)
+                .nullValue(true)
+                .build();
+
+        MergedField field = normalizedQueryField.getMergedField();
+        ExecutionPath parentPath = parent.getExecutionStepInfo().getPath();
+        ExecutionPath executionPath = parentPath.segment(field.getResultKey());
+
+        ExecutionStepInfo esi = ExecutionStepInfo.newExecutionStepInfo()
+                .path(executionPath)
+                .type(normalizedQueryField.getFieldDefinition().getType())
+                .field(field)
+                .fieldContainer(normalizedQueryField.getObjectType())
+                .parentInfo(parent.getExecutionStepInfo())
+                .build();
+        LeafExecutionResultNode removedNode = new LeafExecutionResultNode(
+                esi,
+                resolvedValue,
+                null,
+                singletonList(error));
+        return removedNode;
+    }
 
 
     private TraversalControl unapplyTransformations(ExecutionId executionId,
@@ -497,5 +518,16 @@ public class ServiceResultNodesToOverallResult {
         return new RootExecutionResultNode(resultNode.getChildren(), resultNode.getErrors(), resultNode.getElapsedTime());
     }
 
+    private NormalizedQueryField getNormalizedQueryField(ObjectExecutionResultNode resultNode, NormalizedQuery normalizedQuery) {
+        List<NormalizedQueryField> normalizedFields = normalizedQuery.getNormalizedFieldsByFieldId(NodeId.getId(resultNode.getMergedField().getSingleField()));
+        for (NormalizedQueryField normalizedField : normalizedFields) {
+            ExecutionStepInfo executionStepInfo = resultNode.getExecutionStepInfo();
+            if (executionStepInfo.getFieldContainer() == normalizedField.getObjectType() &&
+                    executionStepInfo.getFieldDefinition() == normalizedField.getFieldDefinition()) {
+                return normalizedField;
+            }
+        }
+        return Assert.assertShouldNeverHappen("Can't find normalized query field");
+    }
 
 }
