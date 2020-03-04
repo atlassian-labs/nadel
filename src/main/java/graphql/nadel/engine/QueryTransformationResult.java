@@ -30,7 +30,7 @@ public class QueryTransformationResult {
 
     private final Map<String, Object> variableValues;
 
-    private final Map<String, List<RemovedFieldData>> removedFieldMap;
+    private final RemovedFieldData removedFieldMap;
 
     public QueryTransformationResult(Document document,
                                      OperationDefinition operationDefinition,
@@ -40,7 +40,7 @@ public class QueryTransformationResult {
                                      Map<String, FieldTransformation> transformationByResultField,
                                      Map<String, FragmentDefinition> transformedFragments,
                                      Map<String, Object> variableValues,
-                                     Map<String, List<RemovedFieldData>> removedFieldMap) {
+                                     RemovedFieldData removedFieldMap) {
         this.document = document;
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
@@ -84,7 +84,7 @@ public class QueryTransformationResult {
         return variableValues;
     }
 
-    public Map<String, List<RemovedFieldData>> getRemovedFieldMap() {
+    public RemovedFieldData getRemovedFieldMap() {
         return removedFieldMap;
     }
 }

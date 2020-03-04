@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -72,7 +71,7 @@ public class OverallQueryTransformer {
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
-        Map<String, List<RemovedFieldData>> removedFieldMap = new HashMap<>();
+        RemovedFieldData removedFieldMap = new RemovedFieldData();
 
 
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
@@ -147,16 +146,16 @@ public class OverallQueryTransformer {
             List<MergedField> mergedFields,
             ServiceExecutionHooks serviceExecutionHooks,
             Service service,
-            Object serviceContext,
-            ExecutionStepInfo esi) {
+            Object serviceContext
+    ) {
         long startTime = System.currentTimeMillis();
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        NadelContext nadelContext = executionContext.getContext();
         Set<String> fragmentsDirectlyReferenced = new LinkedHashSet<>();
         Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
-        Map<String, List<RemovedFieldData>> removedFieldMap = new LinkedHashMap<>();
+        RemovedFieldData removedFieldMap = new RemovedFieldData();
 
         List<MergedField> transformedMergedFields = new ArrayList<>();
         List<Field> transformedFields = new ArrayList<>();
@@ -260,7 +259,7 @@ public class OverallQueryTransformer {
                                                                Map<String, Object> variableValues,
                                                                Service service,
                                                                Object serviceContext,
-                                                               Map<String, List<RemovedFieldData>> removedFieldMap) {
+                                                               RemovedFieldData removedFieldMap) {
 
         Set<String> fragmentsToTransform = new LinkedHashSet<>(referencedFragmentNames);
         List<FragmentDefinition> transformedFragments = new ArrayList<>();
@@ -299,7 +298,7 @@ public class OverallQueryTransformer {
                                                            Map<String, Object> variableValues,
                                                            Service service,
                                                            Object serviceContext,
-                                                           Map<String, List<RemovedFieldData>> removedFieldMap
+                                                           RemovedFieldData removedFieldMap
     ) {
         NadelContext nadelContext = executionContext.getContext();
 
@@ -372,7 +371,7 @@ public class OverallQueryTransformer {
                                              Map<String, Object> variableValues,
                                              Service service,
                                              Object serviceContext,
-                                             Map<String, List<RemovedFieldData>> removedFieldMap) {
+                                             RemovedFieldData removedFieldMap) {
         OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
                 nodeWithoutTypeInfo,
                 executionContext.getGraphQLSchema(),

@@ -1,31 +1,31 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.GraphQLError;
+import graphql.execution.MergedField;
 import graphql.language.Field;
 import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.nadel.util.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RemovedFieldData {
-    private final Field field;
-    private final GraphQLError graphQLError;
-    private final List<NormalizedQueryField> normalizedQueryFields;
 
-    public RemovedFieldData(Field field, GraphQLError graphQLError, List<NormalizedQueryField> normalizedQueryFields) {
-        this.field = field;
-        this.graphQLError = graphQLError;
-        this.normalizedQueryFields = normalizedQueryFields;
+    private List<Data> removedFields = new ArrayList<>();
+
+    public void add(List<NormalizedQueryField> fields, GraphQLError error) {
+        for (NormalizedQueryField field : fields) {
+            removedFields.add(Data.newData().set(error).set(field).build());
+        }
     }
 
-    public Field getField() {
-        return field;
-    }
+    public List<NormalizedQueryField> getChildsForMergedField(MergedField mergedField) {
+        for (Data data : removedFields) {
+            NormalizedQueryField normalizedQueryField = data.get(NormalizedQueryField.class);
+//            GraphQLError normalizedQueryField = data.get(NormalizedQueryField.class);
+            List<Field> fields = normalizedQueryField.getParent().getMergedField().getFields();
 
-    public GraphQLError getGraphQLError() {
-        return graphQLError;
-    }
-
-    public List<NormalizedQueryField> getNormalizedQueryFields() {
-        return normalizedQueryFields;
+        }
+        return null;
     }
 }

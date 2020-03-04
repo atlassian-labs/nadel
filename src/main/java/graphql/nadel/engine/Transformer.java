@@ -53,7 +53,6 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TreeTransformerUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -84,7 +83,7 @@ public class Transformer extends NodeVisitorStub {
     private final Map<String, VariableDefinition> variableDefinitions;
     final ServiceExecutionHooks serviceExecutionHooks;
     private OverallTypeInformation<?> overallTypeInformation;
-    private Map<String, List<RemovedFieldData>> removedFieldMap;
+    private RemovedFieldData removedFieldMap;
     private Service service;
     private Object serviceContext;
     private Map<String, Object> variableValues;
@@ -102,7 +101,7 @@ public class Transformer extends NodeVisitorStub {
                        Map<String, Object> variableValues,
                        Service service,
                        Object serviceContext,
-                       Map<String, List<RemovedFieldData>> removedFieldMap
+                       RemovedFieldData removedFieldMap
     ) {
         this.executionContext = executionContext;
         this.underlyingSchema = underlyingSchema;
@@ -213,28 +212,7 @@ public class Transformer extends NodeVisitorStub {
         Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
         if ((isFieldAllowed.isPresent())) {
             List<NormalizedQueryField> normalizedFields = normalizedOverallQuery.getNormalizedFieldsByFieldId(getId(field));
-            for (NormalizedQueryField normalizedField : normalizedFields) {
-                NormalizedQueryField parent = normalizedField.getParent();
-//                parent.getMergedField().getFields()
-//                addFieldToRemovedMap(field, isFieldAllowed.get(), normalizedFieldsByFieldId);
-            }
-//            Optional<Node> parentNode = context.getParentNodes().stream().filter(t -> t instanceof Field).findFirst();
-////                Field parentField = esi.getField().getSingleField();
-//            String id = null;
-//            if (parentNode.isPresent()) {
-//                id = getId(parentNode.get());
-////                } else if (parentField != null) {
-////                    // When current field is hydrated and parentNode is not accessible
-////                    id = getId(parentField);
-////                }
-//            } else {
-//                return Assert.assertShouldNeverHappen();
-//            }
-//                GraphQLObjectType fieldContainer = null;
-//                if (esi != null && unwrapAll(esi.getType()) instanceof GraphQLObjectType) {
-//                    fieldContainer = (GraphQLObjectType) unwrapAll(esi.getType());
-//                }
-
+            removedFieldMap.add(normalizedFields, isFieldAllowed.get());
             return TreeTransformerUtil.deleteNode(context);
         }
 
@@ -409,12 +387,6 @@ public class Transformer extends NodeVisitorStub {
         }
         return typeMappingDefinition;
     }
-
-    private void addFieldToRemovedMap(Field parentField, GraphQLError graphQLError, List<NormalizedQueryField> normalizedQueryFields) {
-        RemovedFieldData removedFieldData = new RemovedFieldData(parentField, graphQLError, normalizedQueryFields);
-        removedFieldMap.computeIfAbsent(getId(parentField), k -> new ArrayList<>()).add(removedFieldData);
-    }
-
 
     private graphql.nadel.dsl.FieldTransformation transformationDefinitionForField(FieldDefinition definition) {
         if (definition instanceof ExtendedFieldDefinition) {

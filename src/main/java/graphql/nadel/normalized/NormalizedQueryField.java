@@ -23,12 +23,12 @@ public class NormalizedQueryField {
     private final MergedField mergedField;
     private final GraphQLObjectType objectType;
     private final GraphQLFieldDefinition fieldDefinition;
-    // this is the unwrapped parent type: can be object or interface
     private final GraphQLFieldsContainer fieldsContainer;
     private final List<NormalizedQueryField> children;
     private final boolean isConditional;
     private final int level;
     private NormalizedQueryField parent;
+
 
     private NormalizedQueryField(Builder builder) {
         this.mergedField = builder.mergedField;

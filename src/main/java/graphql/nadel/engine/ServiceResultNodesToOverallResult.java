@@ -3,7 +3,6 @@ package graphql.nadel.engine;
 import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.execution.ExecutionId;
-import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ResolvedValue;
@@ -16,6 +15,7 @@ import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.engine.transformation.RemovedFieldData;
 import graphql.nadel.engine.transformation.UnapplyResult;
+import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -66,7 +65,7 @@ public class ServiceResultNodesToOverallResult {
                                        Map<String, FieldTransformation> transformationMap,
                                        Map<String, String> typeRenameMappings,
                                        NadelContext nadelContext,
-                                       Map<String, List<RemovedFieldData>> removedFields) {
+                                       RemovedFieldData removedFields) {
         return convertImpl(executionId, forkJoinPool, resultNode, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false, nadelContext, removedFields);
     }
 
@@ -80,7 +79,7 @@ public class ServiceResultNodesToOverallResult {
                                                Map<String, FieldTransformation> transformationMap,
                                                Map<String, String> typeRenameMappings,
                                                NadelContext nadelContext,
-                                               Map<String, List<RemovedFieldData>> removedFields) {
+                                               RemovedFieldData removedFields) {
         return convertImpl(executionId, forkJoinPool, root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, removedFields);
     }
 
@@ -95,7 +94,7 @@ public class ServiceResultNodesToOverallResult {
                                             Map<String, String> typeRenameMappings,
                                             boolean onlyChildren,
                                             NadelContext nadelContext,
-                                            Map<String, List<RemovedFieldData>> removedFields) {
+                                            RemovedFieldData removedFields) {
 
         ConcurrentHashMap<String, FieldTransformation> transformationMap = new ConcurrentHashMap<>(transformationMapInput);
 
@@ -126,6 +125,10 @@ public class ServiceResultNodesToOverallResult {
                 }
 
                 boolean areRemovedFieldsAdded = false;
+                MergedField field = node.getExecutionStepInfo().getField();
+                List<NormalizedQueryField> childsForMergedField = removedFields.getChildsForMergedField(field);
+
+//                removedFields.
 
 //                removedFields.get()
 
@@ -240,28 +243,28 @@ public class ServiceResultNodesToOverallResult {
 
     }
 
-    private List<ExecutionResultNode> constructRemovedNodes(List<RemovedFieldData> removedFieldDataList, ExecutionPath executionPath) {
-        List<ExecutionResultNode> executionResultNodes = new ArrayList<>();
-        for (RemovedFieldData removedField : removedFieldDataList) {
-            ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
-                    .localContext(null)
-                    .nullValue(true)
-                    .build();
-
-            MergedField field = MergedField.newMergedField(removedField.getField()).build();
-
-            ExecutionStepInfo esi = ExecutionStepInfo.newExecutionStepInfo()
-                    .path(executionPath)
-//                    .type(removedField.getOutputTypeOverall())
-                    .field(field)
-//                    .fieldContainer(removedField.getFieldContainerOverall())
-                    .build();
-
-            LeafExecutionResultNode removedNode = new LeafExecutionResultNode(esi, resolvedValue, null, Collections.singletonList(removedField.getGraphQLError()));
-            executionResultNodes.add((ExecutionResultNode) removedNode);
-        }
-        return executionResultNodes;
-    }
+//    private List<ExecutionResultNode> createNullResultNode(ExecutionResultNode parent, NormalizedQueryField normalizedQueryField, MergedField field) {
+////        List<ExecutionResultNode> executionResultNodes = new ArrayList<>();
+////        for (RemovedFieldData removedField : removedFieldDataList) {
+//        ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
+//                .localContext(null)
+//                .nullValue(true)
+//                .build();
+//
+//        ExecutionPath path = parent.getExecutionStepInfo().getPath();
+//        ExecutionPath executionPath = path.append(ExecutionPath.parse(field.getName()));
+//
+//        ExecutionStepInfo esi = ExecutionStepInfo.newExecutionStepInfo()
+//                .path(executionPath)
+//                .type(normalizedQueryField.getFieldDefinition().getType())
+//                .field(field)
+//                .fieldContainer(normalizedQueryField.getObjectType())
+//                .build();
+//
+////        LeafExecutionResultNode removedNode = new LeafExecutionResultNode(esi, resolvedValue, null, Collections.singletonList(removedField.getGraphQLError()));
+////        executionResultNodes.add((ExecutionResultNode) removedNode);
+////        return executionResultNodes;
+//    }
 
 
     private TraversalControl unapplyTransformations(ExecutionId executionId,
@@ -272,7 +275,7 @@ public class ServiceResultNodesToOverallResult {
                                                     Map<String, FieldTransformation> transformationMap,
                                                     TraverserContext<ExecutionResultNode> context,
                                                     NadelContext nadelContext,
-                                                    Map<String, List<RemovedFieldData>> removedFields) {
+                                                    RemovedFieldData removedFields) {
 
         TraversalControl traversalControl;
 
@@ -296,7 +299,7 @@ public class ServiceResultNodesToOverallResult {
                                                 Map<String, FieldTransformation> transformationMap,
                                                 TraverserContext<ExecutionResultNode> context,
                                                 NadelContext nadelContext,
-                                                Map<String, List<RemovedFieldData>> removedFields) {
+                                                RemovedFieldData removedFields) {
         Map<AbstractNode, List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
 
         TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, transformationMap);

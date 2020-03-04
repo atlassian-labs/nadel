@@ -144,7 +144,7 @@ public class NadelExecutionStrategy {
             //
             GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
             QueryTransformationResult queryTransform = queryTransformer
-                    .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext, esi);
+                    .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
 
             Map<String, FieldTransformation> transformationByResultField = queryTransform.getTransformationByResultField();

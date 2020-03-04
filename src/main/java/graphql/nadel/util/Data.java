@@ -112,6 +112,12 @@ public class Data {
             return this;
         }
 
+        public Builder set(Object value) {
+            Class<?> key = remapKey(assertNotNull(value.getClass()));
+            map.put(assertNotNull(key).getCanonicalName(), value);
+            return this;
+        }
+
         private Class<?> remapKey(Class<?> key) {
             if (List.class.isAssignableFrom(key)) {
                 return List.class;

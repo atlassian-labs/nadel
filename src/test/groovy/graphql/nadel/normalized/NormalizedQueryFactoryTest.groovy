@@ -4,6 +4,7 @@ import graphql.GraphQL
 import graphql.language.Document
 import graphql.language.Field
 import graphql.language.FragmentDefinition
+import graphql.language.OperationDefinition
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
 import graphql.util.TraversalControl
@@ -385,6 +386,7 @@ type Dog implements Animal{
         String query = """
         {
             pets {
+                id
                 ... on Cat {
                     catName 
                 }  
@@ -405,6 +407,8 @@ type Dog implements Animal{
 
         expect:
         printedTree == ['Query.pets: [Pet] (conditional: false)',
+                        'Cat.id: ID (conditional: true)',
+                        'Dog.id: ID (conditional: true)',
                         'Cat.catName: String (conditional: true)',
                         'Dog.dogName: String (conditional: true)']
 
@@ -720,6 +724,52 @@ type Dog implements Animal{
         normalizedFieldsByFieldId.get(subFooFieldId).size() == 2
         normalizedFieldsByFieldId.get(subFooFieldId)[0].level == 2
         normalizedFieldsByFieldId.get(subFooFieldId)[1].level == 3
+    }
+
+    def "normalized fields map with interfaces "() {
+
+        String schema = """
+        type Query{ 
+            pets: [Pet]
+        }
+        interface Pet {
+            id: ID
+        }
+        type Cat implements Pet{
+            id: ID
+        }
+        type Dog implements Pet{
+            id: ID
+        }
+        """
+        GraphQLSchema graphQLSchema = TestUtil.schema(schema)
+
+        String query = """
+        {
+            pets {
+                id
+            }
+        }
+        
+        """
+        assertValidQuery(graphQLSchema, query)
+
+        Document document = TestUtil.parseQuery(query)
+        def petsField = (document.getDefinitions()[0] as OperationDefinition).getSelectionSet().getSelections()[0] as Field
+        def idField = petsField.getSelectionSet().getSelections()[0] as Field
+        def idFieldId = getId(idField)
+
+        NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
+        def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
+        def normalizedFieldsByFieldId = tree.getNormalizedFieldsByFieldId()
+
+        expect:
+        normalizedFieldsByFieldId.size() == 2
+        normalizedFieldsByFieldId.get(idFieldId).size() == 2
+        normalizedFieldsByFieldId.get(idFieldId)[0].objectType.name == "Cat"
+        normalizedFieldsByFieldId.get(idFieldId)[1].objectType.name == "Dog"
+
+
     }
 
     private void assertValidQuery(GraphQLSchema graphQLSchema, String query) {
