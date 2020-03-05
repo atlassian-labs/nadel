@@ -1,9 +1,7 @@
 package graphql.nadel.normalized;
 
 import graphql.Internal;
-import graphql.execution.MergedField;
 import graphql.language.Argument;
-import graphql.language.Field;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLObjectType;
@@ -20,17 +18,19 @@ import static graphql.schema.GraphQLTypeUtil.simplePrint;
 @Internal
 public class NormalizedQueryField {
 
-    private final MergedField mergedField;
+    private final String alias;
+    private final List<Argument> arguments;
     private final GraphQLObjectType objectType;
     private final GraphQLFieldDefinition fieldDefinition;
     private final List<NormalizedQueryField> children;
     private final boolean isConditional;
     private final int level;
-    private NormalizedQueryField parent;
+    private final NormalizedQueryField parent;
 
 
     private NormalizedQueryField(Builder builder) {
-        this.mergedField = builder.mergedField;
+        this.alias = builder.alias;
+        this.arguments = builder.arguments;
         this.objectType = builder.objectType;
         this.fieldDefinition = assertNotNull(builder.fieldDefinition);
         this.children = builder.children;
@@ -53,7 +53,7 @@ public class NormalizedQueryField {
      * @return the name of of the merged fields.
      */
     public String getName() {
-        return mergedField.getName();
+        return getFieldDefinition().getName();
     }
 
     /**
@@ -63,23 +63,14 @@ public class NormalizedQueryField {
      * @return the key for this MergedFieldWithType.
      */
     public String getResultKey() {
-        Field singleField = getSingleField();
-        if (singleField.getAlias() != null) {
-            return singleField.getAlias();
+        if (alias != null) {
+            return alias;
         }
-        return singleField.getName();
+        return getName();
     }
 
-    /**
-     * The first of the merged fields.
-     *
-     * Because all fields are almost identically
-     * often only one of the merged fields are used.
-     *
-     * @return the fist of the merged Fields
-     */
-    public Field getSingleField() {
-        return mergedField.getSingleField();
+    public String getAlias() {
+        return alias;
     }
 
     /**
@@ -88,21 +79,14 @@ public class NormalizedQueryField {
      * @return the list of arguments
      */
     public List<Argument> getArguments() {
-        return getSingleField().getArguments();
+        return arguments;
     }
 
-
-    public MergedField getMergedField() {
-        return mergedField;
-    }
 
     public static Builder newQueryExecutionField() {
         return new Builder();
     }
 
-    public static Builder newQueryExecutionField(Field field) {
-        return new Builder().mergedField(MergedField.newMergedField().addField(field).build());
-    }
 
     public GraphQLFieldDefinition getFieldDefinition() {
         return fieldDefinition;
@@ -122,9 +106,8 @@ public class NormalizedQueryField {
 
     public String print() {
         StringBuilder result = new StringBuilder();
-        Field singleField = getSingleField();
-        if (singleField.getAlias() != null) {
-            result.append(singleField.getAlias()).append(": ");
+        if (getAlias() != null) {
+            result.append(getAlias()).append(": ");
         }
         return result + objectType.getName() + "." + fieldDefinition.getName() + ": " + simplePrint(fieldDefinition.getType()) +
                 " (conditional: " + this.isConditional + ")";
@@ -145,7 +128,7 @@ public class NormalizedQueryField {
     @Override
     public String toString() {
         return "QueryExecutionField{" +
-                "mergedField" + mergedField +
+                "alias" + alias +
                 ", objectType=" + objectType +
                 ", fieldDefinition=" + fieldDefinition +
                 ", children=" + children +
@@ -154,20 +137,22 @@ public class NormalizedQueryField {
     }
 
     public static class Builder {
-        private MergedField mergedField;
         private GraphQLObjectType objectType;
         private GraphQLFieldDefinition fieldDefinition;
         private GraphQLFieldsContainer fieldsContainer;
         private List<NormalizedQueryField> children = new ArrayList<>();
         private int level;
         private NormalizedQueryField parent;
+        private String alias;
+        private List<Argument> arguments = new ArrayList<>();
 
         private Builder() {
 
         }
 
         private Builder(NormalizedQueryField existing) {
-            this.mergedField = existing.getMergedField();
+            this.alias = existing.alias;
+            this.arguments = existing.arguments;
             this.objectType = existing.getObjectType();
             this.fieldDefinition = existing.getFieldDefinition();
             this.children = existing.getChildren();
@@ -181,10 +166,16 @@ public class NormalizedQueryField {
             return this;
         }
 
-        public Builder mergedField(MergedField mergedField) {
-            this.mergedField = mergedField;
+        public Builder alias(String alias) {
+            this.alias = alias;
             return this;
         }
+
+        public Builder arguments(List<Argument> arguments) {
+            this.arguments = arguments;
+            return this;
+        }
+
 
         public Builder fieldDefinition(GraphQLFieldDefinition fieldDefinition) {
             this.fieldDefinition = fieldDefinition;

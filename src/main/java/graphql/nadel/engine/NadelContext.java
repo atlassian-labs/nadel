@@ -3,7 +3,7 @@ package graphql.nadel.engine;
 import graphql.Internal;
 import graphql.language.Document;
 import graphql.language.OperationDefinition;
-import graphql.nadel.normalized.NormalizedQuery;
+import graphql.nadel.normalized.NormalizedQueryFromAst;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -21,14 +21,14 @@ public class NadelContext {
     private final String originalOperationName;
     private final String objectIdentifierAlias;
     private final ForkJoinPool forkJoinPool;
-    private final NormalizedQuery normalizedOverallQuery;
+    private final NormalizedQueryFromAst normalizedOverallQuery;
 
     private NadelContext(Object userSuppliedContext,
                          String underscoreTypeNameAlias,
                          String originalOperationName,
                          String objectIdentifierAlias,
                          ForkJoinPool forkJoinPool,
-                         NormalizedQuery normalizedOverallQuery) {
+                         NormalizedQueryFromAst normalizedOverallQuery) {
         this.userSuppliedContext = userSuppliedContext;
         this.underscoreTypeNameAlias = underscoreTypeNameAlias;
         this.originalOperationName = originalOperationName;
@@ -70,7 +70,7 @@ public class NadelContext {
         return String.format("object_identifier__%s", uuid);
     }
 
-    public NormalizedQuery getNormalizedOverallQuery() {
+    public NormalizedQueryFromAst getNormalizedOverallQuery() {
         return normalizedOverallQuery;
     }
 
@@ -79,11 +79,11 @@ public class NadelContext {
         private String originalOperationName;
         private String artificialFieldsUUID;
         private ForkJoinPool forkJoinPool;
-        private NormalizedQuery normalizedOverallQuery;
+        private NormalizedQueryFromAst normalizedOverallQuery;
 
 
-        public Builder normalizedOverallQuery(NormalizedQuery normalizedQuery) {
-            this.normalizedOverallQuery = normalizedQuery;
+        public Builder normalizedOverallQuery(NormalizedQueryFromAst normalizedQueryFromAst) {
+            this.normalizedOverallQuery = normalizedQueryFromAst;
             return this;
         }
 

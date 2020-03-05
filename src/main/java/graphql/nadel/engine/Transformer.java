@@ -31,8 +31,8 @@ import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RemovedFieldData;
 import graphql.nadel.hooks.NewVariableValue;
 import graphql.nadel.hooks.ServiceExecutionHooks;
-import graphql.nadel.normalized.NormalizedQuery;
 import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLCompositeType;
@@ -207,7 +207,7 @@ public class Transformer extends NodeVisitorStub {
         GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
 
 
-        NormalizedQuery normalizedOverallQuery = nadelContext.getNormalizedOverallQuery();
+        NormalizedQueryFromAst normalizedOverallQuery = nadelContext.getNormalizedOverallQuery();
 
         Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
         if ((isFieldAllowed.isPresent())) {

@@ -23,8 +23,8 @@ import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.introspection.IntrospectionRunner;
-import graphql.nadel.normalized.NormalizedQuery;
 import graphql.nadel.normalized.NormalizedQueryFactory;
+import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.result.ResultNodesUtil;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
@@ -64,14 +64,14 @@ public class Execution {
                                                       InstrumentationState instrumentationState,
                                                       NadelExecutionParams nadelExecutionParams) {
 
-        NormalizedQuery normalizedQuery = normalizedQueryFactory.createNormalizedQuery(overallSchema, document, executionInput.getOperationName(), executionInput.getVariables());
+        NormalizedQueryFromAst normalizedQueryFromAst = normalizedQueryFactory.createNormalizedQuery(overallSchema, document, executionInput.getOperationName(), executionInput.getVariables());
 
         NadelContext nadelContext = NadelContext.newContext()
                 .userSuppliedContext(executionInput.getContext())
                 .originalOperationName(document, executionInput.getOperationName())
                 .artificialFieldsUUID(nadelExecutionParams.getArtificialFieldsUUID())
                 .forkJoinPool(nadelExecutionParams.getForkJoinPool())
-                .normalizedOverallQuery(normalizedQuery)
+                .normalizedOverallQuery(normalizedQueryFromAst)
                 .build();
 
         executionInput = executionInput.transform(builder -> builder.context(nadelContext));

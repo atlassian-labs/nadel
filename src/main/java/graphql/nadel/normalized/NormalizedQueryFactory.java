@@ -1,10 +1,12 @@
 package graphql.nadel.normalized;
 
 import graphql.Internal;
+import graphql.execution.MergedField;
 import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.NodeUtil;
 import graphql.nadel.dsl.NodeId;
+import graphql.nadel.normalized.FieldCollectorNormalizedQuery.CollectFieldResult;
 import graphql.schema.GraphQLSchema;
 
 import java.util.ArrayList;
@@ -18,7 +20,7 @@ public class NormalizedQueryFactory {
     /**
      * Creates a new Query execution tree for the provided query
      */
-    public NormalizedQuery createNormalizedQuery(GraphQLSchema graphQLSchema, Document document, String operationName, Map<String, Object> variables) {
+    public NormalizedQueryFromAst createNormalizedQuery(GraphQLSchema graphQLSchema, Document document, String operationName, Map<String, Object> variables) {
 
         NodeUtil.GetOperationResult getOperationResult = NodeUtil.getOperation(document, operationName);
 
@@ -30,37 +32,44 @@ public class NormalizedQueryFactory {
                 .variables(variables)
                 .build();
 
-        List<NormalizedQueryField> roots = fieldCollector.collectFromOperation(parameters, getOperationResult.operationDefinition, graphQLSchema.getQueryType());
+        CollectFieldResult roots = fieldCollector.collectFromOperation(parameters, getOperationResult.operationDefinition, graphQLSchema.getQueryType());
 
         Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId = new LinkedHashMap<>();
+        Map<NormalizedQueryField, MergedField> mergedFieldsByNormalizedField = new LinkedHashMap<>();
         List<NormalizedQueryField> realRoots = new ArrayList<>();
-        for (NormalizedQueryField root : roots) {
-            updateByIdMap(root, normalizedFieldsByFieldId);
-            realRoots.add(buildFieldWithChildren(root, fieldCollector, parameters, normalizedFieldsByFieldId, 1));
+        for (NormalizedQueryField root : roots.getChildren()) {
+            MergedField mergedField = roots.getMergedFieldByNormalized().get(root);
+            updateByIdMap(root, mergedField, normalizedFieldsByFieldId);
+            realRoots.add(buildFieldWithChildren(root, mergedField, fieldCollector, parameters, normalizedFieldsByFieldId, mergedFieldsByNormalizedField, 1));
         }
 
-        return new NormalizedQuery(realRoots, normalizedFieldsByFieldId);
+        return new NormalizedQueryFromAst(realRoots, normalizedFieldsByFieldId, mergedFieldsByNormalizedField);
     }
 
 
     private NormalizedQueryField buildFieldWithChildren(NormalizedQueryField field,
+                                                        MergedField mergedField,
                                                         FieldCollectorNormalizedQuery fieldCollector,
                                                         FieldCollectorNormalizedQueryParams fieldCollectorNormalizedQueryParams,
                                                         Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId,
+                                                        Map<NormalizedQueryField, MergedField> mergedFieldsByNormalizedField,
                                                         int curLevel) {
-        List<NormalizedQueryField> fieldsWithoutChildren = fieldCollector.collectFields(fieldCollectorNormalizedQueryParams, field, curLevel + 1);
+        CollectFieldResult fieldsWithoutChildren = fieldCollector.collectFields(fieldCollectorNormalizedQueryParams, field, mergedField, curLevel + 1);
         List<NormalizedQueryField> realChildren = new ArrayList<>();
-        for (NormalizedQueryField fieldWithoutChildren : fieldsWithoutChildren) {
-            NormalizedQueryField realChild = buildFieldWithChildren(fieldWithoutChildren, fieldCollector, fieldCollectorNormalizedQueryParams, normalizedFieldsByFieldId, curLevel + 1);
+        for (NormalizedQueryField fieldWithoutChildren : fieldsWithoutChildren.getChildren()) {
+            MergedField mergedFieldForChild = fieldsWithoutChildren.getMergedFieldByNormalized().get(fieldWithoutChildren);
+            NormalizedQueryField realChild = buildFieldWithChildren(fieldWithoutChildren, mergedFieldForChild, fieldCollector, fieldCollectorNormalizedQueryParams, normalizedFieldsByFieldId, mergedFieldsByNormalizedField, curLevel + 1);
+
+            mergedFieldsByNormalizedField.put(realChild, mergedFieldForChild);
             realChildren.add(realChild);
 
-            updateByIdMap(realChild, normalizedFieldsByFieldId);
+            updateByIdMap(realChild, mergedFieldForChild, normalizedFieldsByFieldId);
         }
         return field.transform(builder -> builder.children(realChildren));
     }
 
-    private void updateByIdMap(NormalizedQueryField normalizedQueryField, Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId) {
-        for (Field astField : normalizedQueryField.getMergedField().getFields()) {
+    private void updateByIdMap(NormalizedQueryField normalizedQueryField, MergedField mergedField, Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId) {
+        for (Field astField : mergedField.getFields()) {
             String id = NodeId.getId(astField);
             normalizedFieldsByFieldId.computeIfAbsent(id, ignored -> new ArrayList<>());
             normalizedFieldsByFieldId.get(id).add(normalizedQueryField);

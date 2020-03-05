@@ -18,8 +18,8 @@ import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.engine.transformation.RemovedFieldData;
 import graphql.nadel.engine.transformation.RemovedFieldData.NormalizedFieldAndError;
 import graphql.nadel.engine.transformation.UnapplyResult;
-import graphql.nadel.normalized.NormalizedQuery;
 import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.ObjectExecutionResultNode;
@@ -244,7 +244,8 @@ public class ServiceResultNodesToOverallResult {
                     NormalizedQueryField normalizedQueryField = getNormalizedQueryField(objectResultNode, nadelContext.getNormalizedOverallQuery());
                     List<NormalizedFieldAndError> removedFields = removedFieldData.getRemovedFieldsForParent(normalizedQueryField);
                     for (NormalizedFieldAndError normalizedFieldAndError : removedFields) {
-                        LeafExecutionResultNode newChild = createRemovedFieldResult(node, normalizedFieldAndError.getNormalizedField(), normalizedFieldAndError.getError());
+                        MergedField mergedField = nadelContext.getNormalizedOverallQuery().getMergedFieldByNormalizedFields().get(normalizedFieldAndError.getNormalizedField());
+                        LeafExecutionResultNode newChild = createRemovedFieldResult(node, mergedField, normalizedFieldAndError.getNormalizedField(), normalizedFieldAndError.getError());
                         TreeTransformerUtil.changeNode(context, (objectResultNode).addChild(newChild));
                     }
                 }
@@ -261,6 +262,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private LeafExecutionResultNode createRemovedFieldResult(ExecutionResultNode parent,
+                                                             MergedField mergedField,
                                                              NormalizedQueryField normalizedQueryField,
                                                              GraphQLError error) {
         ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
@@ -268,14 +270,13 @@ public class ServiceResultNodesToOverallResult {
                 .nullValue(true)
                 .build();
 
-        MergedField field = normalizedQueryField.getMergedField();
         ExecutionPath parentPath = parent.getExecutionStepInfo().getPath();
-        ExecutionPath executionPath = parentPath.segment(field.getResultKey());
+        ExecutionPath executionPath = parentPath.segment(normalizedQueryField.getResultKey());
 
         ExecutionStepInfo esi = ExecutionStepInfo.newExecutionStepInfo()
                 .path(executionPath)
                 .type(normalizedQueryField.getFieldDefinition().getType())
-                .field(field)
+                .field(mergedField)
                 .fieldContainer(normalizedQueryField.getObjectType())
                 .parentInfo(parent.getExecutionStepInfo())
                 .build();
@@ -518,8 +519,8 @@ public class ServiceResultNodesToOverallResult {
         return new RootExecutionResultNode(resultNode.getChildren(), resultNode.getErrors(), resultNode.getElapsedTime());
     }
 
-    private NormalizedQueryField getNormalizedQueryField(ObjectExecutionResultNode resultNode, NormalizedQuery normalizedQuery) {
-        List<NormalizedQueryField> normalizedFields = normalizedQuery.getNormalizedFieldsByFieldId(NodeId.getId(resultNode.getMergedField().getSingleField()));
+    private NormalizedQueryField getNormalizedQueryField(ObjectExecutionResultNode resultNode, NormalizedQueryFromAst normalizedQueryFromAst) {
+        List<NormalizedQueryField> normalizedFields = normalizedQueryFromAst.getNormalizedFieldsByFieldId(NodeId.getId(resultNode.getMergedField().getSingleField()));
         for (NormalizedQueryField normalizedField : normalizedFields) {
             ExecutionStepInfo executionStepInfo = resultNode.getExecutionStepInfo();
             if (executionStepInfo.getFieldContainer() == normalizedField.getObjectType() &&

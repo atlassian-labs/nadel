@@ -1,25 +1,24 @@
 package graphql.nadel.normalized;
 
 import graphql.Internal;
-import graphql.language.AstPrinter;
-import graphql.language.Field;
-import graphql.language.SelectionSet;
+import graphql.execution.MergedField;
 
 import java.util.List;
 import java.util.Map;
 
-import static graphql.util.FpKit.flatList;
-import static graphql.util.FpKit.map;
-
 @Internal
-public class NormalizedQuery {
+public class NormalizedQueryFromAst {
 
     private final List<NormalizedQueryField> rootFields;
     private final Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId;
+    private final Map<NormalizedQueryField, MergedField> mergedFieldByNormalizedFields;
 
-    public NormalizedQuery(List<NormalizedQueryField> rootFields, Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId) {
+    public NormalizedQueryFromAst(List<NormalizedQueryField> rootFields,
+                                  Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId,
+                                  Map<NormalizedQueryField, MergedField> mergedFieldByNormalizedFields) {
         this.rootFields = rootFields;
         this.normalizedFieldsByFieldId = normalizedFieldsByFieldId;
+        this.mergedFieldByNormalizedFields = mergedFieldByNormalizedFields;
     }
 
     public List<NormalizedQueryField> getRootFields() {
@@ -34,9 +33,7 @@ public class NormalizedQuery {
         return normalizedFieldsByFieldId.get(astFieldId);
     }
 
-    public String printOriginalQuery() {
-        List<Field> rootAstFields = flatList(map(rootFields, rootField -> rootField.getMergedField().getFields()));
-        SelectionSet selectionSet = SelectionSet.newSelectionSet().selections(rootAstFields).build();
-        return AstPrinter.printAst(selectionSet);
+    public Map<NormalizedQueryField, MergedField> getMergedFieldByNormalizedFields() {
+        return mergedFieldByNormalizedFields;
     }
 }
