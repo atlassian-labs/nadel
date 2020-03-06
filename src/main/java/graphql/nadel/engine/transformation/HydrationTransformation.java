@@ -11,6 +11,7 @@ import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.ListExecutionResultNode;
@@ -78,6 +79,8 @@ public class HydrationTransformation extends FieldTransformation {
     @Override
     public UnapplyResult unapplyResultNode(ExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
 
+        NormalizedQueryField matchingNormalizedField = getMatchingNormalizedQueryFieldBasedOnParent(environment.parentExecutionStepInfo);
+
         // we can have a list of hydration inputs. E.g.: $source.userIds (this is a list of leafs)
         // or we can have a list of things inside the path: e.g.: $source.issues.userIds (this is a list of objects)
         if (transformedNode instanceof ListExecutionResultNode) {
@@ -86,16 +89,16 @@ public class HydrationTransformation extends FieldTransformation {
             }
             ExecutionResultNode child = transformedNode.getChildren().get(0);
             if (child instanceof LeafExecutionResultNode) {
-                return handleListOfLeafs((ListExecutionResultNode) transformedNode, allTransformations, environment);
+                return handleListOfLeafs((ListExecutionResultNode) transformedNode, allTransformations, environment, matchingNormalizedField);
             } else if (child instanceof ObjectExecutionResultNode) {
-                return handleListOfObjects((ListExecutionResultNode) transformedNode, allTransformations, environment);
+                return handleListOfObjects((ListExecutionResultNode) transformedNode, allTransformations, environment, matchingNormalizedField);
             } else {
                 return assertShouldNeverHappen("Not implemented yet");
             }
         }
 
         LeafExecutionResultNode leafNode = geFirstLeafNode(transformedNode);
-        LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getExecutionStepInfo(), leafNode, allTransformations, environment);
+        LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getExecutionStepInfo(), leafNode, allTransformations, environment, matchingNormalizedField);
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
@@ -104,7 +107,7 @@ public class HydrationTransformation extends FieldTransformation {
         return new UnapplyResult(changedList, TraversalControl.ABORT);
     }
 
-    private UnapplyResult handleListOfObjects(ListExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+    private UnapplyResult handleListOfObjects(ListExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment, NormalizedQueryField matchingNormalizedField) {
         // if we have more merged fields than transformations
         // we handle here a list of objects with each object containing one node
 
@@ -113,7 +116,7 @@ public class HydrationTransformation extends FieldTransformation {
         ExecutionResultNode changedNode = mapChildren(transformedNode, objectChild -> {
             environment.parentExecutionStepInfo = mappedEsi;
             LeafExecutionResultNode leaf = (LeafExecutionResultNode) objectChild.getChildren().get(0);
-            return unapplyLeafNode(objectChild.getExecutionStepInfo(), leaf, allTransformations, environment);
+            return unapplyLeafNode(objectChild.getExecutionStepInfo(), leaf, allTransformations, environment, matchingNormalizedField);
         });
 
         changedNode = changedNode.withNewExecutionStepInfo(mappedEsi);
@@ -121,14 +124,14 @@ public class HydrationTransformation extends FieldTransformation {
     }
 
 
-    private UnapplyResult handleListOfLeafs(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+    private UnapplyResult handleListOfLeafs(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment, NormalizedQueryField matchingNormalizedField) {
         ExecutionStepInfo mappedEsi = mapToOriginalFields(listExecutionResultNode.getExecutionStepInfo(), allTransformations, environment);
 
 
         List<ExecutionResultNode> newChildren = new ArrayList<>();
         for (ExecutionResultNode leafNode : listExecutionResultNode.getChildren()) {
             environment.parentExecutionStepInfo = mappedEsi;
-            LeafExecutionResultNode newChild = unapplyLeafNode(leafNode.getExecutionStepInfo(), (LeafExecutionResultNode) leafNode, allTransformations, environment);
+            LeafExecutionResultNode newChild = unapplyLeafNode(leafNode.getExecutionStepInfo(), (LeafExecutionResultNode) leafNode, allTransformations, environment, matchingNormalizedField);
             newChildren.add(newChild);
         }
         ExecutionResultNode changedNode = listExecutionResultNode.withNewExecutionStepInfo(mappedEsi).withNewChildren(newChildren);
@@ -136,7 +139,11 @@ public class HydrationTransformation extends FieldTransformation {
     }
 
 
-    private LeafExecutionResultNode unapplyLeafNode(ExecutionStepInfo correctESI, LeafExecutionResultNode leafNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+    private LeafExecutionResultNode unapplyLeafNode(ExecutionStepInfo correctESI,
+                                                    LeafExecutionResultNode leafNode,
+                                                    List<FieldTransformation> allTransformations,
+                                                    UnapplyEnvironment environment,
+                                                    NormalizedQueryField matchingNormalizedField) {
         ExecutionStepInfo leafESI = leafNode.getExecutionStepInfo();
 
         // we need to build a correct ESI based on the leaf node and the current node for the overall schema
@@ -147,7 +154,13 @@ public class HydrationTransformation extends FieldTransformation {
             // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
             return changeFieldInResultNode(leafNode, getOriginalField());
         } else {
-            return new HydrationInputNode(this, correctESI, leafNode.getResolvedValue(), null, Collections.emptyList(), leafNode.getElapsedTime());
+            return new HydrationInputNode(this,
+                    correctESI,
+                    leafNode.getResolvedValue(),
+                    null,
+                    Collections.emptyList(),
+                    leafNode.getElapsedTime(),
+                    matchingNormalizedField);
         }
     }
 

@@ -1,10 +1,13 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.Assert;
+import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
@@ -14,6 +17,7 @@ import graphql.schema.GraphQLOutputType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static graphql.Assert.assertTrue;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
@@ -54,17 +58,43 @@ public abstract class FieldTransformation {
     }
 
     public GraphQLOutputType getOriginalFieldType() {
-        return getApplyEnvironment().getFieldDefinition().getType();
+        return getApplyEnvironment().getFieldDefinitionOverall().getType();
     }
 
     public GraphQLFieldsContainer getOriginalFieldsContainer() {
-        return getApplyEnvironment().getFieldsContainer();
+        return getApplyEnvironment().getFieldsContainerOverall();
     }
 
     public GraphQLFieldDefinition getOriginalFieldDefinition() {
-        return getApplyEnvironment().getFieldDefinition();
+        return getApplyEnvironment().getFieldDefinitionOverall();
     }
 
+    protected NormalizedQueryField getMatchingNormalizedQueryFieldBasedOnParent(ExecutionStepInfo executionStepInfo) {
+        ExecutionPath path = executionStepInfo.getPath();
+        List<String> parentQueryPath = executionPathToQueryPath(path);
+
+        List<NormalizedQueryField> normalizedFields = getApplyEnvironment().getNormalizedQueryFieldsOverall();
+        for (NormalizedQueryField normalizedField : normalizedFields) {
+            NormalizedQueryField parentNormalizedField = normalizedField.getParent();
+            if (!parentQueryPath.equals(parentNormalizedField.getPath())) {
+                continue;
+            }
+            if (parentNormalizedField.getObjectType() == executionStepInfo.getFieldContainer() &&
+                    parentNormalizedField.getFieldDefinition() == executionStepInfo.getFieldDefinition() &&
+                    parentNormalizedField.getResultKey().equals(executionStepInfo.getField().getResultKey())) {
+                return normalizedField;
+            }
+        }
+        return Assert.assertShouldNeverHappen("could not find matching normalized field");
+    }
+
+    private List<String> executionPathToQueryPath(ExecutionPath executionPath) {
+        return executionPath.toList()
+                .stream()
+                .filter(o -> o instanceof String)
+                .map(String.class::cast)
+                .collect(Collectors.toList());
+    }
 
     protected ExecutionStepInfo replaceFieldsAndTypesWithOriginalValues(List<FieldTransformation> allTransformations, ExecutionStepInfo esi, ExecutionStepInfo parentEsi) {
         MergedField underlyingMergedField = esi.getField();

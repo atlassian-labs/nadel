@@ -60,12 +60,17 @@ public class NormalizedQueryFactory {
             MergedField mergedFieldForChild = fieldsWithoutChildren.getMergedFieldByNormalized().get(fieldWithoutChildren);
             NormalizedQueryField realChild = buildFieldWithChildren(fieldWithoutChildren, mergedFieldForChild, fieldCollector, fieldCollectorNormalizedQueryParams, normalizedFieldsByFieldId, mergedFieldsByNormalizedField, curLevel + 1);
 
+
             mergedFieldsByNormalizedField.put(realChild, mergedFieldForChild);
             realChildren.add(realChild);
 
             updateByIdMap(realChild, mergedFieldForChild, normalizedFieldsByFieldId);
         }
-        return field.transform(builder -> builder.children(realChildren));
+        NormalizedQueryField fullyBuildField = field.transform(builder -> builder.children(realChildren));
+        for (NormalizedQueryField child : fullyBuildField.getChildren()) {
+            child.replaceParent(fullyBuildField);
+        }
+        return fullyBuildField;
     }
 
     private void updateByIdMap(NormalizedQueryField normalizedQueryField, MergedField mergedField, Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId) {

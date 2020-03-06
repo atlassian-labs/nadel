@@ -15,6 +15,7 @@ import graphql.language.Value;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.ExtendedFieldDefinition;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
@@ -22,6 +23,7 @@ import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.hooks.ServiceExecutionHooks;
+import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
@@ -41,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 
@@ -237,8 +240,8 @@ public class HydrationInputResolver {
                         topLevelFieldType,
                         serviceExecutionHooks,
                         service,
-                        serviceContexts.get(service),
-                        esi);
+                        serviceContexts.get(service)
+                );
 
 
         fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
@@ -249,7 +252,15 @@ public class HydrationInputResolver {
 
         ForkJoinPool forkJoinPool = getNadelContext(executionContext).getForkJoinPool();
         return serviceResult
-                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(), forkJoinPool, fieldTracking, hydratedFieldStepInfo, hydrationTransformation, resultNode, queryTransformationResult, getNadelContext(executionContext)))
+                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
+                        forkJoinPool,
+                        fieldTracking,
+                        hydratedFieldStepInfo,
+                        hydrationTransformation,
+                        resultNode,
+                        hydrationInputNode.getNormalizedField(),
+                        queryTransformationResult,
+                        getNadelContext(executionContext)))
                 .whenComplete(fieldTracking::fieldsCompleted)
                 .whenComplete(this::possiblyLogException);
 
@@ -267,6 +278,7 @@ public class HydrationInputResolver {
         return newField(topLevelFieldName)
                 .selectionSet(originalField.getSelectionSet())
                 .arguments(singletonList(argument))
+                .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .build();
     }
 
@@ -276,6 +288,7 @@ public class HydrationInputResolver {
                                                                               ExecutionStepInfo hydratedFieldStepInfo,
                                                                               HydrationTransformation hydrationTransformation,
                                                                               RootExecutionResultNode rootResultNode,
+                                                                              NormalizedQueryField rootNormalizedField,
                                                                               QueryTransformationResult queryTransformationResult,
                                                                               NadelContext nadelContext
     ) {
@@ -285,7 +298,7 @@ public class HydrationInputResolver {
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
-                .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings, nadelContext, queryTransformationResult.getRemovedFieldMap());
+                .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), rootNormalizedField, overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings, nadelContext, queryTransformationResult.getRemovedFieldMap());
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
 
@@ -312,7 +325,7 @@ public class HydrationInputResolver {
 
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
         QueryTransformationResult queryTransformationResult = queryTransformer
-                .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType, serviceExecutionHooks, service, serviceContexts.get(service), hydrationInputs.get(0).getExecutionStepInfo());
+                .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType, serviceExecutionHooks, service, serviceContexts.get(service));
 
 
         List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, ExecutionResultNode::getExecutionStepInfo);
@@ -352,6 +365,7 @@ public class HydrationInputResolver {
 
         Field topLevelField = newField(topLevelFieldName)
                 .selectionSet(originalField.getSelectionSet())
+                .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .arguments(allArguments)
                 .build();
         return addObjectIdentifier(getNadelContext(executionContext), topLevelField, underlyingServiceHydration.getObjectIdentifier());
@@ -402,6 +416,7 @@ public class HydrationInputResolver {
                         executionContext.getExecutionId(),
                         forkJoinPool,
                         matchingResolvedNode,
+                        hydrationInputNode.getNormalizedField(),
                         overallSchema,
                         executionStepInfo,
                         true,

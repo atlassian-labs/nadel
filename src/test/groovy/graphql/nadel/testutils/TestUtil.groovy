@@ -332,10 +332,18 @@ class TestUtil {
     }
 
 
-    static def executionData(GraphQLSchema schema, Document query) {
+    static def executionData(GraphQLSchema schema, Document query, Map variables = [:]) {
+        def normalizedQuery = new NormalizedQueryFactory().createNormalizedQuery(schema, query, null, variables)
+        def nadelContext = NadelContext.newContext()
+                .forkJoinPool(ForkJoinPool.commonPool())
+                .originalOperationName(query, null)
+                .normalizedOverallQuery(normalizedQuery)
+                .artificialFieldsUUID("UUID")
+                .build()
         ExecutionInput executionInput = newExecutionInput()
                 .query(AstPrinter.printAst(query))
-                .context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).originalOperationName(query, null).build())
+                .context(nadelContext)
+                .variables(variables)
                 .build()
         ExecutionHelper executionHelper = new ExecutionHelper()
         def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput, null)

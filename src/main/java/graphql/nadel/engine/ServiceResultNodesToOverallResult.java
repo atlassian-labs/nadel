@@ -11,7 +11,6 @@ import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.nadel.Tuples;
 import graphql.nadel.TuplesTwo;
-import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
@@ -45,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
+import static graphql.nadel.dsl.NodeId.getId;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.util.FpKit.groupingBy;
 import static java.util.Collections.emptyMap;
@@ -72,12 +72,13 @@ public class ServiceResultNodesToOverallResult {
                                        Map<String, String> typeRenameMappings,
                                        NadelContext nadelContext,
                                        RemovedFieldData removedFields) {
-        return convertImpl(executionId, forkJoinPool, resultNode, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false, nadelContext, removedFields);
+        return convertImpl(executionId, forkJoinPool, resultNode, null, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false, nadelContext, removedFields);
     }
 
     public ExecutionResultNode convertChildren(ExecutionId executionId,
                                                ForkJoinPool forkJoinPool,
                                                ExecutionResultNode root,
+                                               NormalizedQueryField normalizedRootField,
                                                GraphQLSchema overallSchema,
                                                ExecutionStepInfo rootStepInfo,
                                                boolean isHydrationTransformation,
@@ -86,12 +87,13 @@ public class ServiceResultNodesToOverallResult {
                                                Map<String, String> typeRenameMappings,
                                                NadelContext nadelContext,
                                                RemovedFieldData removedFields) {
-        return convertImpl(executionId, forkJoinPool, root, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, removedFields);
+        return convertImpl(executionId, forkJoinPool, root, normalizedRootField, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, removedFields);
     }
 
     private ExecutionResultNode convertImpl(ExecutionId executionId,
                                             ForkJoinPool forkJoinPool,
                                             ExecutionResultNode root,
+                                            NormalizedQueryField normalizedRootField,
                                             GraphQLSchema overallSchema,
                                             ExecutionStepInfo rootStepInfo,
                                             boolean isHydrationTransformation,
@@ -112,7 +114,11 @@ public class ServiceResultNodesToOverallResult {
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 nodeCount.incrementAndGet();
                 ExecutionResultNode node = context.thisNode();
+
                 if (onlyChildren && node == root) {
+                    if (root instanceof ObjectExecutionResultNode) {
+                        addDeletedChilds(context, (ObjectExecutionResultNode) node, normalizedRootField, nadelContext, removedFieldData);
+                    }
                     return TraversalControl.CONTINUE;
                 }
                 ExecutionStepInfo parentStepInfo = context.getVarFromParents(ExecutionStepInfo.class);
@@ -240,14 +246,7 @@ public class ServiceResultNodesToOverallResult {
                 }
 
                 if (convertedNode instanceof ObjectExecutionResultNode) {
-                    ObjectExecutionResultNode objectResultNode = (ObjectExecutionResultNode) convertedNode;
-                    NormalizedQueryField normalizedQueryField = getNormalizedQueryField(objectResultNode, nadelContext.getNormalizedOverallQuery());
-                    List<NormalizedFieldAndError> removedFields = removedFieldData.getRemovedFieldsForParent(normalizedQueryField);
-                    for (NormalizedFieldAndError normalizedFieldAndError : removedFields) {
-                        MergedField mergedField = nadelContext.getNormalizedOverallQuery().getMergedFieldByNormalizedFields().get(normalizedFieldAndError.getNormalizedField());
-                        LeafExecutionResultNode newChild = createRemovedFieldResult(node, mergedField, normalizedFieldAndError.getNormalizedField(), normalizedFieldAndError.getError());
-                        TreeTransformerUtil.changeNode(context, (objectResultNode).addChild(newChild));
-                    }
+                    addDeletedChilds(context, (ObjectExecutionResultNode) convertedNode, null, nadelContext, removedFieldData);
                 }
 
 
@@ -259,6 +258,23 @@ public class ServiceResultNodesToOverallResult {
 //        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
         return newRoot;
 
+    }
+
+    private void addDeletedChilds(TraverserContext<ExecutionResultNode> context,
+                                  ObjectExecutionResultNode resultNode,
+                                  NormalizedQueryField normalizedQueryField,
+                                  NadelContext nadelContext,
+                                  RemovedFieldData removedFieldData
+    ) {
+        if (normalizedQueryField == null) {
+            normalizedQueryField = getNormalizedQueryFieldForResultNode(resultNode, nadelContext.getNormalizedOverallQuery());
+        }
+        List<NormalizedFieldAndError> removedFields = removedFieldData.getRemovedFieldsForParent(normalizedQueryField);
+        for (NormalizedFieldAndError normalizedFieldAndError : removedFields) {
+            MergedField mergedField = nadelContext.getNormalizedOverallQuery().getMergedFieldByNormalizedFields().get(normalizedFieldAndError.getNormalizedField());
+            LeafExecutionResultNode newChild = createRemovedFieldResult(resultNode, mergedField, normalizedFieldAndError.getNormalizedField(), normalizedFieldAndError.getError());
+            TreeTransformerUtil.changeNode(context, (resultNode).addChild(newChild));
+        }
     }
 
     private LeafExecutionResultNode createRemovedFieldResult(ExecutionResultNode parent,
@@ -280,6 +296,7 @@ public class ServiceResultNodesToOverallResult {
                 .fieldContainer(normalizedQueryField.getObjectType())
                 .parentInfo(parent.getExecutionStepInfo())
                 .build();
+
         LeafExecutionResultNode removedNode = new LeafExecutionResultNode(
                 esi,
                 resolvedValue,
@@ -341,6 +358,7 @@ public class ServiceResultNodesToOverallResult {
             mappedNode = convertChildren(executionId,
                     forkJoinPool,
                     mappedNode,
+                    null,
                     unapplyEnvironment.overallSchema,
                     unapplyEnvironment.parentExecutionStepInfo,
                     unapplyEnvironment.isHydrationTransformation,
@@ -361,6 +379,7 @@ public class ServiceResultNodesToOverallResult {
                 transformedResult = convertChildren(executionId,
                         forkJoinPool,
                         unapplyResultNode,
+                        null,
                         unapplyEnvironment.overallSchema,
                         unapplyResultNode.getExecutionStepInfo(),
                         unapplyEnvironment.isHydrationTransformation,
@@ -519,8 +538,10 @@ public class ServiceResultNodesToOverallResult {
         return new RootExecutionResultNode(resultNode.getChildren(), resultNode.getErrors(), resultNode.getElapsedTime());
     }
 
-    private NormalizedQueryField getNormalizedQueryField(ObjectExecutionResultNode resultNode, NormalizedQueryFromAst normalizedQueryFromAst) {
-        List<NormalizedQueryField> normalizedFields = normalizedQueryFromAst.getNormalizedFieldsByFieldId(NodeId.getId(resultNode.getMergedField().getSingleField()));
+    private NormalizedQueryField getNormalizedQueryFieldForResultNode(ObjectExecutionResultNode resultNode, NormalizedQueryFromAst normalizedQueryFromAst) {
+        String id = getId(resultNode.getMergedField().getSingleField());
+        List<NormalizedQueryField> normalizedFields = assertNotNull(normalizedQueryFromAst.getNormalizedFieldsByFieldId(id));
+
         for (NormalizedQueryField normalizedField : normalizedFields) {
             ExecutionStepInfo executionStepInfo = resultNode.getExecutionStepInfo();
             if (executionStepInfo.getFieldContainer() == normalizedField.getObjectType() &&

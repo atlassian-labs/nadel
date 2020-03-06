@@ -4,14 +4,14 @@ import graphql.GraphQLError
 import graphql.execution.AbortExecutionException
 import graphql.language.Field
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.testutils.TestUtil
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
 import graphql.schema.GraphQLFieldDefinition
-import spock.lang.Specification
 
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 
-class RemovedFieldsTest extends Specification {
+class RemovedFieldsTest extends StrategyTestHelper {
 
     def "hydrated field in query is removed"() {
         given:
@@ -37,7 +37,7 @@ class RemovedFieldsTest extends Specification {
         def result = nadel.execute(newNadelExecutionInput().query(query)).join()
 
         then:
-        result.data == [commentById:[author:[displayName:"Display name of fred", userId:null]]]
+        result.data == [commentById: [author: [displayName: "Display name of fred", userId: null]]]
     }
 
     def "field in non-hydrated query is removed"() {
@@ -62,7 +62,7 @@ class RemovedFieldsTest extends Specification {
         def result = nadel.execute(newNadelExecutionInput().query(query)).join()
 
         then:
-        result.data == [commentById:[created:"1969-08-08@C1",id:null]]
+        result.data == [commentById: [created: "1969-08-08@C1", id: null]]
     }
 
     def "field is removed from non-hydrated field in query"() {
@@ -95,7 +95,7 @@ class RemovedFieldsTest extends Specification {
         // [issueById:[comments:null]?
         // [issueById:null]?
         // [issueById:[comments:[[author:null], [author:null], [author:null]]]] ?
-        result.data != [issueById:[comments:[[author:null], [author:null], [author:null]]]]
+        result.data != [issueById: [comments: [[author: null], [author: null], [author: null]]]]
     }
 
     //query validation error message appears from graphql-java due to empty query
@@ -123,7 +123,7 @@ class RemovedFieldsTest extends Specification {
         def result = nadel.execute(newNadelExecutionInput().query(query)).join()
 
         then:
-        result.data == [commentById:null]
+        result.data == [commentById: null]
     }
 
     def "top level field is removed"() {
@@ -147,7 +147,7 @@ class RemovedFieldsTest extends Specification {
         def result = nadel.execute(newNadelExecutionInput().query(query)).join()
 
         then:
-        result.data == [commentById:null]
+        result.data == [commentById: null]
     }
 
     def "nested hydrated field in query is removed"() {
@@ -230,8 +230,8 @@ class RemovedFieldsTest extends Specification {
 
         then:
         result.data == [issues: [
-                [key     : "WORK-I1", comments: null],
-                [key     : "WORK-I2", comments: null]]]
+                [key: "WORK-I1", comments: null],
+                [key: "WORK-I2", comments: null]]]
 
     }
 
@@ -248,6 +248,90 @@ class RemovedFieldsTest extends Specification {
                 return Optional.empty();
             }
         }
+    }
+
+    def "restricted field inside hydration via fragments used twice"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issue: Issue
+            }
+            type Issue {
+                id: ID
+                relatedIssue: Issue                 
+                author: User => hydrated from UserService.usersById(id: $source.authorId) object identified by id
+            }
+        }
+        service UserService {
+            type Query {
+                userByIds(id: ID): User
+            }
+            type User {
+                id: ID
+                restricted: String 
+            }
+        }
+        ''')
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue : Issue
+            myIssue: Issue
+        }
+        type Issue {
+            id: ID
+            authorId: ID
+            relatedIssue: Issue                 
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersById(id: [ID]): [User]
+        }
+        type User {
+            id: ID
+            restricted: String
+        }
+        """)
+        def query = "{issue { ...IssueFragment relatedIssue { ...IssueFragment }}} fragment IssueFragment on Issue {id author {id restricted}}"
+
+        def expectedQuery1 = "query nadel_2_Issues {issue {...IssueFragment relatedIssue {...IssueFragment}}} fragment IssueFragment on Issue {id authorId}"
+        def response1 = [issue: [id: "ID1", authorId: "USER-1", relatedIssue: [id: "ID2", authorId: "USER-2"]]]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersById(id:[\"USER-1\",\"USER-2\"]) {id object_identifier__UUID:id}}"
+        def response2 = [usersById: [[id: "USER-1", object_identifier__UUID: "USER-1"], [id: "USER-2", object_identifier__UUID: "USER-2"]]]
+
+        def overallResponse = [issue: [id: "ID1", author: [id: "USER-1", restricted: null], relatedIssue: [id: "ID2", author: [id: "USER-2", restricted: null]]]]
+
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
+                if (fieldDefinitionOverall.getName() == "restricted") {
+                    //temporary GraphQLError ->  need to implement a field permissions denied error
+                    return Optional.of(new AbortExecutionException("removed field"))
+                }
+                return Optional.empty();
+            }
+        }
+
+        expect:
+        test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issue", "myIssue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                overallResponse,
+                hooks
+        )
+
+
     }
 
 }

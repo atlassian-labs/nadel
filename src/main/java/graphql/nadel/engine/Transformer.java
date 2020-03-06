@@ -208,10 +208,10 @@ public class Transformer extends NodeVisitorStub {
 
 
         NormalizedQueryFromAst normalizedOverallQuery = nadelContext.getNormalizedOverallQuery();
+        List<NormalizedQueryField> normalizedFields = normalizedOverallQuery.getNormalizedFieldsByFieldId(getId(field));
 
         Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
         if ((isFieldAllowed.isPresent())) {
-            List<NormalizedQueryField> normalizedFields = normalizedOverallQuery.getNormalizedFieldsByFieldId(getId(field));
             removedFieldMap.add(normalizedFields, isFieldAllowed.get());
             return TreeTransformerUtil.deleteNode(context);
         }
@@ -223,7 +223,7 @@ public class Transformer extends NodeVisitorStub {
             // major side effect alert - we are relying on transformation to call TreeTransformerUtil.changeNode
             // inside itself here
             //
-            ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, overallTypeInfo);
+            ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, overallTypeInfo, normalizedFields);
             ApplyResult applyResult = transformation.apply(applyEnvironment);
             Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
 
@@ -265,8 +265,8 @@ public class Transformer extends NodeVisitorStub {
 
     }
 
-    ApplyEnvironment createApplyEnvironment(Field field, TraverserContext<Node> context, OverallTypeInfo overallTypeInfo) {
-        return new ApplyEnvironment(field, overallTypeInfo.getFieldDefinition(), overallTypeInfo.getFieldsContainer(), context);
+    ApplyEnvironment createApplyEnvironment(Field field, TraverserContext<Node> context, OverallTypeInfo overallTypeInfo, List<NormalizedQueryField> normalizedQueryFields) {
+        return new ApplyEnvironment(field, overallTypeInfo.getFieldDefinition(), overallTypeInfo.getFieldsContainer(), context, normalizedQueryFields);
     }
 
 

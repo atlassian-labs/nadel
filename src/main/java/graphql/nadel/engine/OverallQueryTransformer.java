@@ -1,7 +1,6 @@
 package graphql.nadel.engine;
 
 import graphql.execution.ExecutionContext;
-import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.AstNodeAdapter;
 import graphql.language.Document;
@@ -63,8 +62,8 @@ public class OverallQueryTransformer {
             GraphQLCompositeType topLevelFieldTypeOverall,
             ServiceExecutionHooks serviceExecutionHooks,
             Service service,
-            Object serviceContext,
-            ExecutionStepInfo hydratedFieldStepInfo) {
+            Object serviceContext
+    ) {
         long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
@@ -74,7 +73,7 @@ public class OverallQueryTransformer {
         RemovedFieldData removedFieldMap = new RemovedFieldData();
 
 
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        NadelContext nadelContext = executionContext.getContext();
 
         SelectionSet topLevelFieldSelectionSet = transformNode(
                 executionContext,

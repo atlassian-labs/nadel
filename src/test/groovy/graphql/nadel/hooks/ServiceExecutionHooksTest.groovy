@@ -22,6 +22,7 @@ import graphql.nadel.engine.NadelContext
 import graphql.nadel.engine.NadelExecutionStrategy
 import graphql.nadel.engine.ResultNodesTransformer
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.normalized.NormalizedQueryFactory
 import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.result.LeafExecutionResultNode
 import graphql.nadel.result.RootExecutionResultNode
@@ -73,8 +74,13 @@ class ServiceExecutionHooksTest extends Specification {
 
     ExecutionHelper.ExecutionData createExecutionData(String query, Map<String, Object> variables, GraphQLSchema overallSchema) {
         def document = parseQuery(query)
+        def normalizedQuery = new NormalizedQueryFactory().createNormalizedQuery(overallSchema, document, null, variables)
 
-        def nadelContext = NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).artificialFieldsUUID("UUID").build()
+        def nadelContext = NadelContext.newContext()
+                .forkJoinPool(ForkJoinPool.commonPool())
+                .artificialFieldsUUID("UUID")
+        .normalizedOverallQuery(normalizedQuery)
+                .build()
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(query)
                 .variables(variables)
@@ -140,12 +146,12 @@ class ServiceExecutionHooksTest extends Specification {
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
 
         def query = "{foo(id: \"fullID\")}"
-        def executionData = createExecutionData(query, overallSchema)
+        def (executionContext, fieldSubSelection) = TestUtil.executionData(overallSchema, parseQuery(query))
 
         def expectedQuery = "query nadel_2_service {foo(id:\"modified\")}"
 
         when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        nadelExecutionStrategy.execute(executionContext, fieldSubSelection)
 
 
         then:

@@ -598,6 +598,46 @@ type Dog implements Animal{
                         'Foo.subFoo: String (conditional: false)']
     }
 
+    def "query with interface in between"() {
+        def graphQLSchema = TestUtil.schema("""
+        type Query {
+            pets: [Pet]
+        }
+        interface Pet {
+            name: String
+            friends: [Human]
+        }
+        type Human {
+            name: String
+        }
+        type Cat implements Pet {
+            name: String
+            friends: [Human]
+        }
+        type Dog implements Pet {
+            name: String
+            friends: [Human]
+        }
+        """)
+        def query = """
+            { pets { friends {name} } }
+            """
+        assertValidQuery(graphQLSchema, query)
+
+        Document document = TestUtil.parseQuery(query)
+
+        NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
+        def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
+        def printedTree = printTree(tree)
+
+        expect:
+        printedTree == ['Query.pets: [Pet] (conditional: false)',
+                        'Cat.friends: [Human] (conditional: true)',
+                        'Human.name: String (conditional: false)',
+                        'Dog.friends: [Human] (conditional: true)',
+                        'Human.name: String (conditional: false)']
+    }
+
 
     List<String> printTree(NormalizedQueryFromAst queryExecutionTree) {
         def result = []
@@ -688,6 +728,7 @@ type Dog implements Animal{
 
 
     }
+
 
     private void assertValidQuery(GraphQLSchema graphQLSchema, String query) {
         GraphQL graphQL = GraphQL.newGraphQL(graphQLSchema).build();

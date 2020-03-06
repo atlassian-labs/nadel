@@ -3,7 +3,6 @@ package graphql.nadel.normalized;
 import graphql.Internal;
 import graphql.language.Argument;
 import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.GraphQLUnmodifiedType;
@@ -14,6 +13,7 @@ import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.schema.GraphQLTypeUtil.simplePrint;
+import static java.util.Collections.singletonList;
 
 @Internal
 public class NormalizedQueryField {
@@ -25,7 +25,8 @@ public class NormalizedQueryField {
     private final List<NormalizedQueryField> children;
     private final boolean isConditional;
     private final int level;
-    private final NormalizedQueryField parent;
+    private final List<String> path;
+    private NormalizedQueryField parent;
 
 
     private NormalizedQueryField(Builder builder) {
@@ -39,9 +40,12 @@ public class NormalizedQueryField {
         // can be null for the top level fields
         if (parent == null) {
             this.isConditional = false;
+            this.path = singletonList(getResultKey());
         } else {
             GraphQLUnmodifiedType parentType = GraphQLTypeUtil.unwrapAll(parent.getFieldDefinition().getType());
             this.isConditional = parentType != this.objectType;
+            this.path = new ArrayList<>(parent.getPath());
+            this.path.add(getResultKey());
         }
     }
 
@@ -125,10 +129,18 @@ public class NormalizedQueryField {
         return parent;
     }
 
+    public void replaceParent(NormalizedQueryField newParent) {
+        this.parent = newParent;
+    }
+
+    public List<String> getPath() {
+        return path;
+    }
+
     @Override
     public String toString() {
         return "QueryExecutionField{" +
-                "alias" + alias +
+                "alias=" + alias +
                 ", objectType=" + objectType +
                 ", fieldDefinition=" + fieldDefinition +
                 ", children=" + children +
@@ -139,7 +151,6 @@ public class NormalizedQueryField {
     public static class Builder {
         private GraphQLObjectType objectType;
         private GraphQLFieldDefinition fieldDefinition;
-        private GraphQLFieldsContainer fieldsContainer;
         private List<NormalizedQueryField> children = new ArrayList<>();
         private int level;
         private NormalizedQueryField parent;
@@ -160,11 +171,11 @@ public class NormalizedQueryField {
             this.parent = existing.getParent();
         }
 
-
         public Builder objectType(GraphQLObjectType objectType) {
             this.objectType = objectType;
             return this;
         }
+
 
         public Builder alias(String alias) {
             this.alias = alias;
