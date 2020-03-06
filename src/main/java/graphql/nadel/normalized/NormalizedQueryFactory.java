@@ -37,12 +37,15 @@ public class NormalizedQueryFactory {
         Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId = new LinkedHashMap<>();
         Map<NormalizedQueryField, MergedField> mergedFieldsByNormalizedField = new LinkedHashMap<>();
         List<NormalizedQueryField> realRoots = new ArrayList<>();
+
         for (NormalizedQueryField root : roots.getChildren()) {
+
             MergedField mergedField = roots.getMergedFieldByNormalized().get(root);
-            NormalizedQueryField rootNormalizedField = buildFieldWithChildren(root, mergedField, fieldCollector, parameters, normalizedFieldsByFieldId, mergedFieldsByNormalizedField, 1);
-            fixUpParentReference(rootNormalizedField);
-            updateByIdMap(rootNormalizedField, mergedField, normalizedFieldsByFieldId);
-            realRoots.add(rootNormalizedField);
+            NormalizedQueryField realRoot = buildFieldWithChildren(root, mergedField, fieldCollector, parameters, normalizedFieldsByFieldId, mergedFieldsByNormalizedField, 1);
+            fixUpParentReference(realRoot);
+
+            updateByIdMap(realRoot, mergedField, normalizedFieldsByFieldId);
+            realRoots.add(realRoot);
         }
 
         return new NormalizedQueryFromAst(realRoots, normalizedFieldsByFieldId, mergedFieldsByNormalizedField);
