@@ -139,13 +139,17 @@ public class NormalizedQueryField {
 
     @Override
     public String toString() {
-        return "QueryExecutionField{" +
-                "alias=" + alias +
-                ", objectType=" + objectType +
-                ", fieldDefinition=" + fieldDefinition +
-                ", children=" + children +
-                ", isConditional=" + isConditional +
-                '}';
+        StringBuilder result = new StringBuilder();
+        result.append("QueryExecutionField{");
+        if (alias != null) {
+            result.append(alias).append(": ");
+        }
+        result.append(objectType.getName())
+                .append(".")
+                .append(getName())
+                .append("}");
+
+        return result.toString();
     }
 
     public static class Builder {

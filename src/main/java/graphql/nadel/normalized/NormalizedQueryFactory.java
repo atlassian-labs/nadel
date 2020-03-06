@@ -39,11 +39,19 @@ public class NormalizedQueryFactory {
         List<NormalizedQueryField> realRoots = new ArrayList<>();
         for (NormalizedQueryField root : roots.getChildren()) {
             MergedField mergedField = roots.getMergedFieldByNormalized().get(root);
-            updateByIdMap(root, mergedField, normalizedFieldsByFieldId);
-            realRoots.add(buildFieldWithChildren(root, mergedField, fieldCollector, parameters, normalizedFieldsByFieldId, mergedFieldsByNormalizedField, 1));
+            NormalizedQueryField rootNormalizedField = buildFieldWithChildren(root, mergedField, fieldCollector, parameters, normalizedFieldsByFieldId, mergedFieldsByNormalizedField, 1);
+            fixUpParentReference(rootNormalizedField);
+            updateByIdMap(rootNormalizedField, mergedField, normalizedFieldsByFieldId);
+            realRoots.add(rootNormalizedField);
         }
 
         return new NormalizedQueryFromAst(realRoots, normalizedFieldsByFieldId, mergedFieldsByNormalizedField);
+    }
+
+    private void fixUpParentReference(NormalizedQueryField rootNormalizedField) {
+        for (NormalizedQueryField child : rootNormalizedField.getChildren()) {
+            child.replaceParent(rootNormalizedField);
+        }
     }
 
 
@@ -59,18 +67,13 @@ public class NormalizedQueryFactory {
         for (NormalizedQueryField fieldWithoutChildren : fieldsWithoutChildren.getChildren()) {
             MergedField mergedFieldForChild = fieldsWithoutChildren.getMergedFieldByNormalized().get(fieldWithoutChildren);
             NormalizedQueryField realChild = buildFieldWithChildren(fieldWithoutChildren, mergedFieldForChild, fieldCollector, fieldCollectorNormalizedQueryParams, normalizedFieldsByFieldId, mergedFieldsByNormalizedField, curLevel + 1);
-
-
+            fixUpParentReference(realChild);
             mergedFieldsByNormalizedField.put(realChild, mergedFieldForChild);
             realChildren.add(realChild);
 
             updateByIdMap(realChild, mergedFieldForChild, normalizedFieldsByFieldId);
         }
-        NormalizedQueryField fullyBuildField = field.transform(builder -> builder.children(realChildren));
-        for (NormalizedQueryField child : fullyBuildField.getChildren()) {
-            child.replaceParent(fullyBuildField);
-        }
-        return fullyBuildField;
+        return field.transform(builder -> builder.children(realChildren));
     }
 
     private void updateByIdMap(NormalizedQueryField normalizedQueryField, MergedField mergedField, Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId) {
