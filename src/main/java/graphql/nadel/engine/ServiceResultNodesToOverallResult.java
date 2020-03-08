@@ -49,7 +49,6 @@ import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.util.FpKit.groupingBy;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
 
 public class ServiceResultNodesToOverallResult {
 
@@ -108,7 +107,6 @@ public class ServiceResultNodesToOverallResult {
 
 //        long startTime = System.currentTimeMillis();
         final AtomicInteger nodeCount = new AtomicInteger();
-        Map<Class<?>, Object> rootVars = singletonMap(ExecutionStepInfo.class, rootStepInfo);
         ExecutionResultNode newRoot = resultNodesTransformer.transformParallel(forkJoinPool, root, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
@@ -121,7 +119,6 @@ public class ServiceResultNodesToOverallResult {
                     }
                     return TraversalControl.CONTINUE;
                 }
-                ExecutionStepInfo parentStepInfo = context.getVarFromParents(ExecutionStepInfo.class);
 
                 if (node instanceof RootExecutionResultNode) {
                     ExecutionResultNode convertedNode = mapRootResultNode((RootExecutionResultNode) node);
@@ -137,88 +134,6 @@ public class ServiceResultNodesToOverallResult {
                 }
 
                 boolean areRemovedFieldsAdded = false;
-//                MergedField field = node.getExecutionStepInfo().getField();
-
-//                removedFields.
-
-//                removedFields.get()
-
-//                ExecutionPath path = context.thisNode().getExecutionStepInfo().getPath();
-//
-//                MergedField parentField = parentStepInfo.getField();
-//                if (parentField != null && removedFields.size() > 0) {
-//                    // When the current field is hydrated and it has removed sibling nodes
-//                    // Adds removedNodes as siblings to the current Node
-//                    String hydratedParentId = parentField.getSingleField().getAdditionalData().get("id");
-//
-//                    List<RemovedFieldData> removedFieldDataList = new ArrayList<>();
-//                    if (hydratedParentId != null) {
-//                        removedFieldDataList = removedFields.getOrDefault(hydratedParentId, null);
-//                    }
-//
-//                    if (removedFieldDataList != null && !removedFieldDataList.isEmpty()) {
-//                        List<ExecutionResultNode> removedNodes = constructRemovedNodes(removedFieldDataList, path);
-//                        removedNodes.stream().forEach(removedNode -> TreeTransformerUtil.insertAfter(context, removedNode));
-//
-//                        removedFields.remove(hydratedParentId);
-//                        areRemovedFieldsAdded = true;
-//                    }
-//                }
-//
-//                MergedField curField = node.getExecutionStepInfo().getField();
-//                if (curField != null && removedFields.size() > 0) {
-//                    String id = curField.getSingleField().getAdditionalData().get("id");
-//                    List<RemovedFieldData> removedFieldDataList = new ArrayList<>();
-//                    if (id != null) {
-//                        removedFieldDataList = removedFields.get(id);
-//                    }
-//
-//                    if (removedFieldDataList != null && !removedFieldDataList.isEmpty()) {
-//
-//                        ExecutionPath curExecutionPath = context.thisNode().getExecutionStepInfo().getPath();
-//
-////                        if (removedFieldExecutionPath.equals(curExecutionPath)) {
-////                            // Edge case: When the current field is hydrated and has been removed, We need to include the removed errors otherwise they are not added to the overallResult
-////                            List<GraphQLError> errors = context.thisNode().getErrors();
-////                            errors.add(removedFieldDataList.get(0).getGraphQLError());
-////                            TreeTransformerUtil.changeNode(context, context.thisNode().withNewErrors(errors));
-////                        } else {
-//                        // Case: when the current field is parent of removed fields
-//                        if (node instanceof ListExecutionResultNode) {
-//                            // When the query is batched together
-//                            List<ExecutionResultNode> newNodeChildren = new ArrayList<>();
-//
-//                            for (ExecutionResultNode resultNode : node.getChildren()) {
-//                                List<ExecutionResultNode> childrenAndRemovedNodes = new ArrayList<>();
-//                                childrenAndRemovedNodes.addAll(resultNode.getChildren());
-//                                childrenAndRemovedNodes.addAll(constructRemovedNodes(removedFieldDataList, curExecutionPath));
-//
-//                                ExecutionStepInfo esi = resultNode.getExecutionStepInfo();
-//                                ResolvedValue value = resultNode.getResolvedValue();
-//                                List<GraphQLError> errors = resultNode.getErrors();
-//
-//                                ObjectExecutionResultNode changedNode = new ObjectExecutionResultNode(esi, value, childrenAndRemovedNodes, errors);
-//                                newNodeChildren.add(changedNode);
-//                            }
-//
-//                            TreeTransformerUtil.changeNode(context, node.withNewChildren(newNodeChildren));
-//                        } else {
-//                            List<ExecutionResultNode> childrenAndRemovedNodes = new ArrayList<>();
-//                            childrenAndRemovedNodes.addAll(context.thisNode().getChildren());
-//                            childrenAndRemovedNodes.addAll(constructRemovedNodes(removedFieldDataList, curExecutionPath));
-//
-//                            ExecutionStepInfo esi = context.thisNode().getExecutionStepInfo();
-//                            ResolvedValue value = context.thisNode().getResolvedValue();
-//                            List<GraphQLError> errors = context.thisNode().getErrors();
-//
-//                            ObjectExecutionResultNode changedNode = new ObjectExecutionResultNode(esi, value, childrenAndRemovedNodes, errors);
-//                            TreeTransformerUtil.changeNode(context, (ExecutionResultNode) changedNode);
-//                        }
-//                    }
-//                    removedFields.remove(id);
-//                    areRemovedFieldsAdded = true;
-//                }
-//                }
 
 
                 TraversalControl traversalControl = TraversalControl.CONTINUE;
@@ -226,8 +141,9 @@ public class ServiceResultNodesToOverallResult {
                         getTransformationsAndNotTransformedFields(node.getMergedField(), transformationMap);
 
                 List<FieldTransformation> transformations = new ArrayList<>(transformationsAndNotTransformedFields.getT1());
-                List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
+//                List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
 
+                ExecutionStepInfo parentStepInfo = context.getParentContext().originalThisNode() == root ? rootStepInfo : context.getParentNode().getExecutionStepInfo();
                 UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(
                         parentStepInfo,
                         isHydrationTransformation,
@@ -241,9 +157,6 @@ public class ServiceResultNodesToOverallResult {
                     traversalControl = unapplyTransformations(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context, nadelContext, removedFieldData);
                 }
                 ExecutionResultNode convertedNode = context.thisNode();
-                if (!(convertedNode instanceof LeafExecutionResultNode)) {
-                    setExecutionInfo(context, convertedNode);
-                }
 
                 if (convertedNode instanceof ObjectExecutionResultNode) {
                     addDeletedChilds(context, (ObjectExecutionResultNode) convertedNode, null, nadelContext, removedFieldData);
@@ -253,7 +166,7 @@ public class ServiceResultNodesToOverallResult {
                 return traversalControl;
             }
 
-        }, rootVars);
+        });
 //        long elapsedTime = System.currentTimeMillis() - startTime;
 //        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
         return newRoot;
@@ -527,11 +440,6 @@ public class ServiceResultNodesToOverallResult {
             }
         }
         return Tuples.of(transformations, notTransformedFields);
-    }
-
-    private void setExecutionInfo(TraverserContext<ExecutionResultNode> context, ExecutionResultNode resultNode) {
-        ExecutionStepInfo stepInfo = resultNode.getExecutionStepInfo();
-        context.setVar(ExecutionStepInfo.class, stepInfo);
     }
 
     private RootExecutionResultNode mapRootResultNode(RootExecutionResultNode resultNode) {
