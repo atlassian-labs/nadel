@@ -38,6 +38,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [commentById: [author: [displayName: "Display name of fred", userId: null]]]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
     }
 
     def "field in non-hydrated query is removed"() {
@@ -314,22 +316,29 @@ class RemovedFieldsTest extends StrategyTestHelper {
             }
         }
 
-        expect:
-        test2Services(
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
                 overallSchema,
                 "Issues",
                 issueSchema,
                 "UserService",
                 userServiceSchema,
                 query,
-                ["issue", "myIssue"],
+                ["issue"],
                 expectedQuery1,
                 response1,
                 expectedQuery2,
                 response2,
-                overallResponse,
                 hooks
         )
+        then:
+        response == overallResponse
+        errors.size() == 2
+        errors[0].message.contains("removed field")
+        errors[1].message.contains("removed field")
 
 
     }

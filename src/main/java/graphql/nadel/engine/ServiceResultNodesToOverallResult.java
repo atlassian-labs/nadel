@@ -133,8 +133,6 @@ public class ServiceResultNodesToOverallResult {
                     }
                 }
 
-                boolean areRemovedFieldsAdded = false;
-
 
                 TraversalControl traversalControl = TraversalControl.CONTINUE;
                 TuplesTwo<Set<FieldTransformation>, List<Field>> transformationsAndNotTransformedFields =
@@ -152,7 +150,7 @@ public class ServiceResultNodesToOverallResult {
                         overallSchema
                 );
                 if (transformations.size() == 0) {
-                    mapAndChangeNode(node, unapplyEnvironment, context, areRemovedFieldsAdded);
+                    mapAndChangeNode(node, unapplyEnvironment, context);
                 } else {
                     traversalControl = unapplyTransformations(executionId, forkJoinPool, node, transformations, unapplyEnvironment, transformationMap, context, nadelContext, removedFieldData);
                 }
@@ -267,7 +265,7 @@ public class ServiceResultNodesToOverallResult {
 
         boolean first = true;
         if (notTransformedTree != null) {
-            ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, context, false);
+            ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, context);
             mappedNode = convertChildren(executionId,
                     forkJoinPool,
                     mappedNode,
@@ -327,7 +325,7 @@ public class ServiceResultNodesToOverallResult {
         UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);
 
         if (withoutTransformedFields != null) {
-            mapAndChangeNode(withoutTransformedFields, unapplyEnvironment, context, false);
+            mapAndChangeNode(withoutTransformedFields, unapplyEnvironment, context);
             TreeTransformerUtil.insertAfter(context, unapplyResult.getNode());
             return TraversalControl.CONTINUE;
         } else {
@@ -400,27 +398,25 @@ public class ServiceResultNodesToOverallResult {
         }).collect(Collectors.toList());
     }
 
-    private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context, boolean areRemovedFieldsAdded) {
+    private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
         ExecutionStepInfo mappedEsi = executionStepInfoMapper.mapExecutionStepInfo(node.getExecutionStepInfo(), environment);
         ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node, environment);
-        if (!areRemovedFieldsAdded) {
-            return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue);
-        }
+        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue);
 
-        List<GraphQLError> errors = context.thisNode().getErrors();
-
-        if (node instanceof LeafExecutionResultNode) {
-            return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue)
-                    .withNewErrors(errors);
-        }
-
-        List<ExecutionResultNode> children = context.thisNode().getChildren();
-        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue)
-                .withNewChildren(children);
+//        List<GraphQLError> errors = context.thisNode().getErrors();
+//
+//        if (node instanceof LeafExecutionResultNode) {
+//            return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue)
+//                    .withNewErrors(errors);
+//        }
+//
+//        List<ExecutionResultNode> children = context.thisNode().getChildren();
+//        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue)
+//                .withNewChildren(children);
     }
 
-    private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context, boolean areRemovedFieldsAdded) {
-        ExecutionResultNode mappedNode = mapNode(node, environment, context, areRemovedFieldsAdded);
+    private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
+        ExecutionResultNode mappedNode = mapNode(node, environment, context);
         TreeTransformerUtil.changeNode(context, mappedNode);
     }
 

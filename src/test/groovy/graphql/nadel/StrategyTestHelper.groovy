@@ -27,19 +27,18 @@ class StrategyTestHelper extends Specification {
 
     ExecutionHelper executionHelper = new ExecutionHelper()
 
-    def test2Services(GraphQLSchema overallSchema,
-                      String serviceOneName,
-                      GraphQLSchema underlyingOne,
-                      String serviceTwoName,
-                      GraphQLSchema underlyingTwo,
-                      String query,
-                      List<String> topLevelFields,
-                      String expectedQuery1,
-                      Map response1,
-                      String expectedQuery2,
-                      Map response2,
-                      Object expectedOverallResult,
-                      ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {}
+    Object[] test2Services(GraphQLSchema overallSchema,
+                           String serviceOneName,
+                           GraphQLSchema underlyingOne,
+                           String serviceTwoName,
+                           GraphQLSchema underlyingTwo,
+                           String query,
+                           List<String> topLevelFields,
+                           String expectedQuery1,
+                           Map response1,
+                           String expectedQuery2,
+                           Map response2,
+                           ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {}
     ) {
 
         def response1ServiceResult = new ServiceExecutionResult(response1)
@@ -84,9 +83,7 @@ class StrategyTestHelper extends Specification {
         assert calledService1
         assert calledService2
 
-        assert resultData(response) == expectedOverallResult
-
-        return true
+        return [resultData(response), resultErrors(response)]
     }
 
     ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema) {
