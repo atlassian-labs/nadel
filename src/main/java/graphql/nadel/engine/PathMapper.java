@@ -31,7 +31,7 @@ public class PathMapper {
     }
 
     private List<Object> patchLastFieldName(ExecutionStepInfo fieldStepInfo, MergedField mergedField) {
-        String fieldName = mergedField.getName();
+        String fieldName = mergedField.getResultKey();
         ExecutionPath fieldPath = fieldStepInfo.getPath();
         List<Object> fieldSegments = fieldPath.toList();
         for (int i = fieldSegments.size() - 1; i >= 0; i--) {
