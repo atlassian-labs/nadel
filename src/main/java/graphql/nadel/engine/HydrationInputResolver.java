@@ -287,7 +287,7 @@ public class HydrationInputResolver {
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
                 .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings, nadelContext);
-        hydrationComplexityAggregator.setServiceNodeCount(hydrationTransformation.getUnderlyingServiceHydration().getServiceName(), firstTopLevelResultNode.getResultNodeCount());
+        hydrationComplexityAggregator.addAndSetServiceNodeCount(hydrationTransformation.getUnderlyingServiceHydration().getServiceName(), firstTopLevelResultNode.getResultNodeCount());
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
 
@@ -411,7 +411,7 @@ public class HydrationInputResolver {
                         transformationByResultField,
                         typeRenameMappings,
                         getNadelContext(executionContext));
-                hydrationComplexityAggregator.setServiceNodeCount(hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName(),overallResultNode.getResultNodeCount());
+                hydrationComplexityAggregator.addAndSetServiceNodeCount(hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName(),overallResultNode.getResultNodeCount());
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);
             } else {

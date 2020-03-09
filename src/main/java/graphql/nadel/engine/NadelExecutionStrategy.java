@@ -176,7 +176,7 @@ public class NadelExecutionStrategy {
                                     nadelContext));
 
             //set the result node count for this service
-            convertedResult.thenAccept( rootExecutionResultNode -> topLevelComplexityAggregator.setServiceNodeCount(service.getName(), rootExecutionResultNode.getResultNodeCount()));
+            convertedResult.thenAccept( rootExecutionResultNode -> topLevelComplexityAggregator.addAndSetServiceNodeCount(service.getName(), rootExecutionResultNode.getResultNodeCount()));
 
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
             convertedResult = convertedResult
@@ -239,7 +239,7 @@ public class NadelExecutionStrategy {
         AtomicInteger mergedTotalNodeCount = new AtomicInteger(topLevelComplexityAggregator.getTotalNodeCount() + hydrationComplexityAggregator.getTotalNodeCount());
         LinkedHashMap<String, AtomicInteger> mergedMap = new LinkedHashMap<>(topLevelComplexityAggregator.getServiceNodeCountsMap());
 
-        hydrationComplexityAggregator.getServiceNodeCountsMap().forEach(   //incase there are duplicate services -> add the node counts (??? need to confirm if hydrated fields can overlap with top level fields??)
+        hydrationComplexityAggregator.getServiceNodeCountsMap().forEach(   //incase there are duplicate services -> add the node counts
                 (key, value) -> mergedMap.merge(key, value, (v1, v2) -> new AtomicInteger(v1.get() + v2.get())));
         resultComplexityAggregator = new ResultComplexityAggregator(mergedTotalNodeCount, mergedMap);
     }

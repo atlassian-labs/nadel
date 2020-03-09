@@ -101,9 +101,6 @@ public class ServiceResultNodesToOverallResult {
         ExecutionResultNode newRoot = resultNodesTransformer.transformParallel(forkJoinPool, root, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-                //root.getResultNodeCounter().incrementResultNodeCount();
-                //resultNodeCounter.incrementServiceNodeCount(context.thisNode().getExecutionStepInfo().getField().toString());
-                //context.thisNode().getExecutionStepInfo().getField().toString() ??
                 nodeCount.incrementAndGet();
                 ExecutionResultNode node = context.thisNode();
                 if (onlyChildren && node == root) {

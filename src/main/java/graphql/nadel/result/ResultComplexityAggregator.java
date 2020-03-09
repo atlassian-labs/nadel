@@ -21,9 +21,9 @@ public class ResultComplexityAggregator {
         return serviceNodeCountsMap;
     }
 
-    public void setServiceNodeCount(String serviceFieldName, Integer nodeCount) {
+    public void addAndSetServiceNodeCount(String serviceFieldName, Integer nodeCount) {
         serviceNodeCountsMap.putIfAbsent(serviceFieldName, new AtomicInteger());
-        serviceNodeCountsMap.get(serviceFieldName).set(nodeCount);
+        serviceNodeCountsMap.get(serviceFieldName).addAndGet(nodeCount);
         totalNodeCount.addAndGet(nodeCount);
     }
 
