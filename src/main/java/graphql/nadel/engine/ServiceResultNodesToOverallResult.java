@@ -117,6 +117,7 @@ public class ServiceResultNodesToOverallResult {
                     MergedField mergedField = leaf.getMergedField();
 
                     if (ArtificialFieldUtils.isArtificialField(nadelContext, mergedField)) {
+                        nodeCount.decrementAndGet();
                         return TreeTransformerUtil.deleteNode(context);
                     }
                 }
@@ -151,8 +152,7 @@ public class ServiceResultNodesToOverallResult {
         }, rootVars);
 //        long elapsedTime = System.currentTimeMillis() - startTime;
 //        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
-        newRoot.setNodeCount(nodeCount);
-        log.debug("ServiceResultNodesToOverallResult nodeCount: {}, executionId: {}",newRoot.getResultNodeCount(),executionId);
+        newRoot.setTotalNodeCount(nodeCount);
         return newRoot;
 
     }

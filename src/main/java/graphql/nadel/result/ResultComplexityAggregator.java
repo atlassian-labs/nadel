@@ -1,6 +1,7 @@
 package graphql.nadel.result;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ResultComplexityAggregator {
@@ -27,4 +28,20 @@ public class ResultComplexityAggregator {
         totalNodeCount.addAndGet(nodeCount);
     }
 
+    public Map<String, Object> snapshotResultComplexityData() {
+
+        Map<String, Object> resultComplexityMap = new LinkedHashMap<>();
+        resultComplexityMap.put("totalNodeCount", totalNodeCount.get());
+        resultComplexityMap.put("serviceNodeCounts", serviceNodeCountsMap);
+
+        return resultComplexityMap;
+    }
+
+    @Override
+    public String toString() {
+        return "ResultComplexityAggregator{" +
+                "totalNodeCount=" + totalNodeCount +
+                ", serviceNodeCountsMap=" + serviceNodeCountsMap +
+                '}';
+    }
 }

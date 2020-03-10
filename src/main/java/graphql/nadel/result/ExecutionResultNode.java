@@ -25,7 +25,7 @@ public abstract class ExecutionResultNode {
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
     private final ElapsedTime elapsedTime;
-    private final AtomicInteger nodeCount = new AtomicInteger(0);
+    private final AtomicInteger totalNodeCount = new AtomicInteger(0);
 
     /*
      * we are trusting here the the children list is not modified on the outside (no defensive copy)
@@ -84,11 +84,11 @@ public abstract class ExecutionResultNode {
     }
 
     public Integer getResultNodeCount() {
-        return nodeCount.get();
+        return totalNodeCount.get();
     }
 
-    public void setNodeCount(AtomicInteger newNodeCount) {
-        nodeCount.set(newNodeCount.get());
+    public void setTotalNodeCount(AtomicInteger newNodeCount) {
+        totalNodeCount.set(newNodeCount.get());
     }
 
     /**
