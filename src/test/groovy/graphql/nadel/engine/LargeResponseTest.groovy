@@ -12,6 +12,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.result.ResultNodesUtil
 import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.testutils.TestUtil
@@ -34,6 +35,7 @@ class LargeResponseTest extends Specification {
     def definitionRegistry
     def instrumentation
     def serviceExecutionHooks
+    def resultComplexityAggregator
 
     void setup() {
         executionHelper = new ExecutionHelper()
@@ -43,6 +45,7 @@ class LargeResponseTest extends Specification {
         definitionRegistry = Mock(DefinitionRegistry)
         instrumentation = new NadelInstrumentation() {}
         serviceExecutionHooks = new ServiceExecutionHooks() {}
+        resultComplexityAggregator = new ResultComplexityAggregator(0, new LinkedHashMap<String, Integer>())
     }
 
     def "one call to one service"() {
@@ -183,7 +186,7 @@ type ActivityUser {
         when:
         long time = System.currentTimeMillis();
         def response
-        response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         def data = resultData(response)

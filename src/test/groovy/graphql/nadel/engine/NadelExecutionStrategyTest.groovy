@@ -14,6 +14,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.result.ResultNodesUtil
 import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.schema.UnderlyingWiringFactory
@@ -42,6 +43,7 @@ class NadelExecutionStrategyTest extends Specification {
     def definitionRegistry
     def instrumentation
     def serviceExecutionHooks
+    def resultComplexityAggregator
 
     void setup() {
         executionHelper = new ExecutionHelper()
@@ -51,6 +53,7 @@ class NadelExecutionStrategyTest extends Specification {
         definitionRegistry = Mock(DefinitionRegistry)
         instrumentation = new NadelInstrumentation() {}
         serviceExecutionHooks = new ServiceExecutionHooks() {}
+        resultComplexityAggregator = new ResultComplexityAggregator(0, new LinkedHashMap<String, Integer>())
     }
 
     def "one call to one service"() {
@@ -78,7 +81,7 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery = "query nadel_2_service {foo}"
 
         when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -114,7 +117,7 @@ class NadelExecutionStrategyTest extends Specification {
         def serviceResultData = [foo: ["foo1", "foo2"]]
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -194,7 +197,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallHydrationSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({
@@ -242,7 +245,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -281,7 +284,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -320,7 +323,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -407,7 +410,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -493,7 +496,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -579,7 +582,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -673,7 +676,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -766,7 +769,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -824,7 +827,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -872,7 +875,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -943,7 +946,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1020,7 +1023,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1095,7 +1098,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1187,7 +1190,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1252,7 +1255,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1318,7 +1321,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1373,7 +1376,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1427,7 +1430,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1492,7 +1495,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1568,7 +1571,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1650,7 +1653,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1706,7 +1709,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1794,7 +1797,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1907,7 +1910,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2000,7 +2003,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2101,7 +2104,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2184,7 +2187,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2256,7 +2259,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2336,7 +2339,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2412,7 +2415,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         then:
@@ -2485,7 +2488,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -2562,7 +2565,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -2645,7 +2648,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
