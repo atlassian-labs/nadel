@@ -34,7 +34,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -89,7 +88,7 @@ public class Execution {
         InstrumentationContext<ExecutionResult> instrumentationCtx = instrumentation.beginExecute(new NadelInstrumentationExecuteOperationParameters(executionContext, instrumentationState));
 
         CompletableFuture<ExecutionResult> result;
-        ResultComplexityAggregator resultComplexityAggregator = new ResultComplexityAggregator(new AtomicInteger(0), new LinkedHashMap<>());
+        ResultComplexityAggregator resultComplexityAggregator = new ResultComplexityAggregator(0, new LinkedHashMap<>());
         if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
             result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
         } else {
