@@ -128,7 +128,7 @@ class NadelRenameTest extends Specification {
 
         @Override
         CompletableFuture<RootExecutionResultNode> resultRewrite(ResultRewriteParams params) {
-            return completedFuture(params.getResultNode());
+            return completedFuture(params.getResultNode())
         }
     }
 
@@ -138,23 +138,32 @@ class NadelRenameTest extends Specification {
             .serviceExecutionHooks(traversingExecutionHooks)
             .build()
 
+    void assertUnderlyingQuery(ServiceExecutionParameters parameters, expectedQuery) {
+        def q = printAstCompact(parameters.query)
+        assert q == expectedQuery, "Unexpected underlying query: $q"
+    }
+
+    NadelExecutionInput ei(String query) {
+        newNadelExecutionInput()
+                .query(query)
+                .build()
+    }
+
+
     def "simple type rename and field rename works as expected"() {
         def query = '''
         { renameObject { name } }
         '''
 
         given:
-        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
-                .query(query)
-                .build()
+
         def data = [renameObjectUnderlying: [name: "val"]]
         when:
-        def result = nadel.execute(nadelExecutionInput).join()
+        def result = nadel.execute(ei(query)).join()
 
         then:
         1 * delegatedExecution.execute(_) >> { args ->
-            ServiceExecutionParameters params = args[0]
-            assert printAstCompact(params.query) == "query nadel_2_MyService {renameObjectUnderlying {name}}"
+            assertUnderlyingQuery(args[0], "query nadel_2_MyService {renameObjectUnderlying {name}}")
             completedFuture(new ServiceExecutionResult(data))
         }
         result.data == [renameObject: [name: "val"]]
@@ -164,9 +173,6 @@ class NadelRenameTest extends Specification {
         def query = '''
         { 
             renameObject { 
-                ... on ObjectOverall {
-                    name
-                } 
                 ... FragDef
             } 
         }
@@ -177,18 +183,40 @@ class NadelRenameTest extends Specification {
         '''
 
         given:
-        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
-                .query(query)
-                .build()
         def data = [renameObjectUnderlying: [name: "val"]]
         when:
-        def result = nadel.execute(nadelExecutionInput).join()
+        def result = nadel.execute(ei(query)).join()
 
         then:
         1 * delegatedExecution.execute(_) >> { args ->
-            ServiceExecutionParameters params = args[0]
-            assert printAstCompact(params.query) ==
-                    "query nadel_2_MyService {renameObjectUnderlying {... on ObjectUnderlying {name} ...FragDef}} fragment FragDef on ObjectUnderlying {name}"
+            assertUnderlyingQuery(args[0],
+                    "query nadel_2_MyService {renameObjectUnderlying {...FragDef}} fragment FragDef on ObjectUnderlying {name}")
+            completedFuture(new ServiceExecutionResult(data))
+        }
+        result.errors.isEmpty()
+        result.data == [renameObject: [name: "val"]]
+    }
+
+    def "inline fragment type rename and field rename works as expected"() {
+        def query = '''
+        { 
+            renameObject { 
+                ... on ObjectOverall {
+                    name
+                } 
+            } 
+        }
+        '''
+
+        given:
+        def data = [renameObjectUnderlying: [name: "val"]]
+        when:
+        def result = nadel.execute(ei(query)).join()
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            assertUnderlyingQuery(args[0],
+                    "query nadel_2_MyService {renameObjectUnderlying {... on ObjectUnderlying {name}}}")
             completedFuture(new ServiceExecutionResult(data))
         }
         result.errors.isEmpty()
@@ -206,18 +234,14 @@ class NadelRenameTest extends Specification {
         '''
 
         given:
-        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
-                .query(query)
-                .build()
         def data = [renameObjectUnderlying: [name: "val"]]
         when:
-        def result = nadel.execute(nadelExecutionInput).join()
+        def result = nadel.execute(ei(query)).join()
 
         then:
         1 * delegatedExecution.execute(_) >> { args ->
-            ServiceExecutionParameters params = args[0]
-            def q = printAstCompact(params.query)
-            assert q == "query nadel_2_MyService {renameObjectUnderlying {... on InterfaceUnderlying {name}}}", "Unexpected query: $q"
+            assertUnderlyingQuery(args[0],
+                    "query nadel_2_MyService {renameObjectUnderlying {... on InterfaceUnderlying {name}}}")
             completedFuture(new ServiceExecutionResult(data))
         }
         result.errors.isEmpty()
@@ -247,9 +271,8 @@ class NadelRenameTest extends Specification {
 
         then:
         1 * delegatedExecution.execute(_) >> { args ->
-            ServiceExecutionParameters params = args[0]
-            def q = printAstCompact(params.query)
-            assert q == "query nadel_2_MyService {renameInterfaceUnderlying {name typename__xxx:__typename}}", "Unexpected query: $q"
+            assertUnderlyingQuery(args[0],
+                    "query nadel_2_MyService {renameInterfaceUnderlying {name typename__xxx:__typename}}")
             completedFuture(new ServiceExecutionResult(data))
         }
         result.errors.isEmpty()
@@ -313,10 +336,8 @@ class NadelRenameTest extends Specification {
 
         then:
         1 * delegatedExecution.execute(_) >> { args ->
-            ServiceExecutionParameters params = args[0]
-            def q = printAstCompact(params.query)
-            assert q == 'query nadel_2_MyService_X($var1:InputUnderlying!,$var2:String,$var3:EnumUnderlying) {renameInput(arg1:$var1,arg2:$var2,arg3:$var3)}',
-                    "Unexpected query: $q"
+            assertUnderlyingQuery(args[0],
+                    'query nadel_2_MyService_X($var1:InputUnderlying!,$var2:String,$var3:EnumUnderlying) {renameInput(arg1:$var1,arg2:$var2,arg3:$var3)}')
             completedFuture(new ServiceExecutionResult(data))
         }
         result.errors.isEmpty()
@@ -330,21 +351,14 @@ class NadelRenameTest extends Specification {
         '''
 
         given:
-        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
-                .query(query)
-                .build()
-
         def data = [renameStringUnderlying: "hello"]
         when:
-        def result = nadel.execute(nadelExecutionInput).join()
+        def result = nadel.execute(ei(query)).join()
 
         then:
         1 * delegatedExecution.execute(_) >> { args ->
-            ServiceExecutionParameters params = args[0]
-            def q = printAstCompact(params.query)
-            println q
-            assert q == 'query nadel_2_MyService {renameStringUnderlying}',
-                    "Unexpected query: $q"
+            assertUnderlyingQuery(args[0],
+                    'query nadel_2_MyService {renameStringUnderlying}')
             completedFuture(new ServiceExecutionResult(data))
         }
         result.errors.isEmpty()
@@ -389,9 +403,8 @@ class NadelRenameTest extends Specification {
 
         then:
         1 * delegatedExecution.execute(_) >> { args ->
-            ServiceExecutionParameters params = args[0]
-            def q = printAstCompact(params.query)
-            assert q == "query nadel_2_MyService {typenameTest {__typename object {__typename} objects {__typename}}}", "Unexpected query: $q"
+            assertUnderlyingQuery(args[0],
+                    "query nadel_2_MyService {typenameTest {__typename object {__typename} objects {__typename}}}")
             completedFuture(new ServiceExecutionResult(data))
         }
         result.errors.isEmpty()
