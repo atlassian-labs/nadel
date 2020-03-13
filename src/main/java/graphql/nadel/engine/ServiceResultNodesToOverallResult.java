@@ -298,7 +298,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private ExecutionResultNode nodesWithFieldId(ExecutionResultNode executionResultNode, Set<String> ids) {
-        return resultNodesTransformer.transform(executionResultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+        ExecutionResultNode newNode = resultNodesTransformer.transform(executionResultNode, new TraverserVisitorStub<ExecutionResultNode>() {
 
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
@@ -318,6 +318,7 @@ public class ServiceResultNodesToOverallResult {
                 return TreeTransformerUtil.changeNode(context, changedNode);
             }
         });
+        return newNode;
 
 
     }
@@ -328,7 +329,8 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private List<Field> getFieldsWithNadelId(ExecutionResultNode node, Set<String> ids) {
-        return node.getMergedField().getFields().stream().filter(field -> {
+        MergedField mergedField = node.getMergedField();
+        return mergedField.getFields().stream().filter(field -> {
             List<String> fieldIds = FieldMetadataUtil.getFieldIds(field);
             return fieldIds.containsAll(ids);
         }).collect(Collectors.toList());
