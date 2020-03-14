@@ -88,7 +88,7 @@ public class Execution {
         InstrumentationContext<ExecutionResult> instrumentationCtx = instrumentation.beginExecute(new NadelInstrumentationExecuteOperationParameters(executionContext, instrumentationState));
 
         CompletableFuture<ExecutionResult> result;
-        ResultComplexityAggregator resultComplexityAggregator = new ResultComplexityAggregator(0, new LinkedHashMap<>());
+        ResultComplexityAggregator resultComplexityAggregator = new ResultComplexityAggregator();
         if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
             result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
         } else {

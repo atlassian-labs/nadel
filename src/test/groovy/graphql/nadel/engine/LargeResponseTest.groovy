@@ -45,7 +45,7 @@ class LargeResponseTest extends Specification {
         definitionRegistry = Mock(DefinitionRegistry)
         instrumentation = new NadelInstrumentation() {}
         serviceExecutionHooks = new ServiceExecutionHooks() {}
-        resultComplexityAggregator = new ResultComplexityAggregator(0, new LinkedHashMap<String, Integer>())
+        resultComplexityAggregator = new ResultComplexityAggregator()
     }
 
     def "one call to one service"() {

@@ -62,7 +62,7 @@ class ServiceExecutionHooksTest extends Specification {
         definitionRegistry = Mock(DefinitionRegistry)
         instrumentation = new NadelInstrumentation() {}
         serviceExecutionHooks = new ServiceExecutionHooks() {}
-        resultComplexityAggregator = new ResultComplexityAggregator(0, new LinkedHashMap<String, Integer>());
+        resultComplexityAggregator = new ResultComplexityAggregator();
     }
 
     FieldInfos topLevelFieldInfo(GraphQLFieldDefinition fieldDefinition, Service service) {

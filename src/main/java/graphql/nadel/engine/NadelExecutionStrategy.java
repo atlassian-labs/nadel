@@ -165,7 +165,7 @@ public class NadelExecutionStrategy {
                                     nadelContext));
 
             //set the result node count for this service
-            convertedResult.thenAccept( rootExecutionResultNode -> resultComplexityAggregator.addAndSetServiceNodeCount(service.getName(), rootExecutionResultNode.getResultNodeCount()));
+            convertedResult.thenAccept( rootExecutionResultNode -> resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getResultNodeCount()));
 
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
             convertedResult = convertedResult
