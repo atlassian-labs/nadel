@@ -291,7 +291,7 @@ public class HydrationInputResolver {
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
                 .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings, nadelContext);
         String serviceName = hydrationTransformation.getUnderlyingServiceHydration().getServiceName();
-        resultComplexityAggregator.incrementServiceNodeCount(serviceName, firstTopLevelResultNode.getResultNodeCount());
+        resultComplexityAggregator.incrementServiceNodeCount(serviceName, firstTopLevelResultNode.getTotalNodeCount());
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
 
@@ -419,7 +419,7 @@ public class HydrationInputResolver {
                         getNadelContext(executionContext));
 
                 String serviceName = hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName();
-                resultComplexityAggregator.incrementServiceNodeCount(serviceName,overallResultNode.getResultNodeCount());
+                resultComplexityAggregator.incrementServiceNodeCount(serviceName,overallResultNode.getTotalNodeCount());
 
                 Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
                 resultNode = changeFieldInResultNode(overallResultNode, originalField);

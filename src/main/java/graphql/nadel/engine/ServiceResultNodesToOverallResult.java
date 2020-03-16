@@ -152,9 +152,7 @@ public class ServiceResultNodesToOverallResult {
         }, rootVars);
 //        long elapsedTime = System.currentTimeMillis() - startTime;
 //        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
-        newRoot.setTotalNodeCount(nodeCount);
-        return newRoot;
-
+        return newRoot.withNodeCount(nodeCount.get());
     }
 
 

@@ -32,7 +32,7 @@ public class ObjectExecutionResultNode extends ExecutionResultNode {
                                      ResolvedValue resolvedValue,
                                      List<ExecutionResultNode> children,
                                      List<GraphQLError> errors) {
-        super(executionStepInfo, resolvedValue, ResultNodesUtil.newNullableException(executionStepInfo, children), children, errors, null);
+        super(executionStepInfo, resolvedValue, ResultNodesUtil.newNullableException(executionStepInfo, children), children, errors, null, 0);
     }
 
     public ObjectExecutionResultNode(ExecutionStepInfo executionStepInfo,
@@ -40,32 +40,46 @@ public class ObjectExecutionResultNode extends ExecutionResultNode {
                                      List<ExecutionResultNode> children,
                                      List<GraphQLError> errors,
                                      ElapsedTime elapsedTime) {
-        super(executionStepInfo, resolvedValue, ResultNodesUtil.newNullableException(executionStepInfo, children), children, errors, elapsedTime);
+        super(executionStepInfo, resolvedValue, ResultNodesUtil.newNullableException(executionStepInfo, children), children, errors, elapsedTime, 0);
+    }
+
+    public ObjectExecutionResultNode(ExecutionStepInfo executionStepInfo,
+                                     ResolvedValue resolvedValue,
+                                     List<ExecutionResultNode> children,
+                                     List<GraphQLError> errors,
+                                     ElapsedTime elapsedTime,
+                                     int totalNodeCount) {
+        super(executionStepInfo, resolvedValue, ResultNodesUtil.newNullableException(executionStepInfo, children), children, errors, elapsedTime, totalNodeCount);
     }
 
 
     @Override
     public ObjectExecutionResultNode withNewChildren(List<ExecutionResultNode> children) {
-        return new ObjectExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), children, getErrors(), getElapsedTime());
+        return new ObjectExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), children, getErrors(), getElapsedTime(), getTotalNodeCount());
     }
 
     @Override
     public ExecutionResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
-        return new ObjectExecutionResultNode(getExecutionStepInfo(), resolvedValue, getChildren(), getErrors(), getElapsedTime());
+        return new ObjectExecutionResultNode(getExecutionStepInfo(), resolvedValue, getChildren(), getErrors(), getElapsedTime(), getTotalNodeCount());
     }
 
     @Override
     public ExecutionResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo) {
-        return new ObjectExecutionResultNode(executionStepInfo, getResolvedValue(), getChildren(), getErrors(), getElapsedTime());
+        return new ObjectExecutionResultNode(executionStepInfo, getResolvedValue(), getChildren(), getErrors(), getElapsedTime(), getTotalNodeCount());
     }
 
     @Override
     public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
-        return new ObjectExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), new ArrayList<>(errors), getElapsedTime());
+        return new ObjectExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), new ArrayList<>(errors), getElapsedTime(), getTotalNodeCount());
     }
 
     @Override
     public ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime) {
-        return new ObjectExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), getErrors(), elapsedTime);
+        return new ObjectExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), getErrors(), elapsedTime, getTotalNodeCount());
+    }
+
+    @Override
+    public ExecutionResultNode withNodeCount(int nodeCount) {
+        return new ObjectExecutionResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), getErrors(), getElapsedTime(), nodeCount);
     }
 }

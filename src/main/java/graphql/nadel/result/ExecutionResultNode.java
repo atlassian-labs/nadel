@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static graphql.Assert.assertNotNull;
 
@@ -25,7 +24,7 @@ public abstract class ExecutionResultNode {
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
     private final ElapsedTime elapsedTime;
-    private final AtomicInteger totalNodeCount = new AtomicInteger(0);
+    private final int totalNodeCount;
 
     /*
      * we are trusting here the the children list is not modified on the outside (no defensive copy)
@@ -35,7 +34,8 @@ public abstract class ExecutionResultNode {
                                   NonNullableFieldWasNullException nonNullableFieldWasNullException,
                                   List<ExecutionResultNode> children,
                                   List<GraphQLError> errors,
-                                  ElapsedTime elapsedTime) {
+                                  ElapsedTime elapsedTime,
+                                  int totalNodeCount) {
         this.resolvedValue = resolvedValue;
         this.executionStepInfo = executionStepInfo;
         this.nonNullableFieldWasNullException = nonNullableFieldWasNullException;
@@ -43,6 +43,7 @@ public abstract class ExecutionResultNode {
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(errors);
         this.elapsedTime = elapsedTime;
+        this.totalNodeCount = totalNodeCount;
     }
 
     public ElapsedTime getElapsedTime() {
@@ -83,12 +84,8 @@ public abstract class ExecutionResultNode {
                 .findFirst();
     }
 
-    public Integer getResultNodeCount() {
-        return totalNodeCount.get();
-    }
-
-    public void setTotalNodeCount(AtomicInteger newNodeCount) {
-        totalNodeCount.set(newNodeCount.get());
+    public int getTotalNodeCount() {
+        return totalNodeCount;
     }
 
     /**
@@ -104,7 +101,6 @@ public abstract class ExecutionResultNode {
 
     public abstract ExecutionResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo);
 
-
     /**
      * Creates a new ExecutionResultNode of the same specific type with the new error collection
      *
@@ -115,6 +111,9 @@ public abstract class ExecutionResultNode {
     public abstract ExecutionResultNode withNewErrors(List<GraphQLError> errors);
 
     public abstract ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime);
+
+    public abstract ExecutionResultNode withNodeCount(int nodeCount);
+
 
 
     @Override
