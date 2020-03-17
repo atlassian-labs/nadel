@@ -15,31 +15,42 @@ public class UnresolvedObjectResultNode extends ObjectExecutionResultNode {
     }
 
     public UnresolvedObjectResultNode(ExecutionStepInfo executionStepInfo, ResolvedValue resolvedValue, List<ExecutionResultNode> children, List<GraphQLError> errors, ElapsedTime elapsedTime) {
-        super(executionStepInfo, resolvedValue, children, errors, elapsedTime);
+        super(executionStepInfo, resolvedValue, children, errors, elapsedTime, 0);
+    }
+
+    public UnresolvedObjectResultNode(ExecutionStepInfo executionStepInfo, ResolvedValue resolvedValue, List<ExecutionResultNode> children, List<GraphQLError> errors, ElapsedTime elapsedTime, int totalNodeCount) {
+        super(executionStepInfo, resolvedValue, children, errors, elapsedTime, totalNodeCount);
     }
 
     @Override
     public UnresolvedObjectResultNode withNewChildren(List<ExecutionResultNode> children) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), children, getErrors(), getElapsedTime());
+        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), children, getErrors(), getElapsedTime(), getTotalNodeCount());
     }
 
     @Override
     public UnresolvedObjectResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), resolvedValue, getChildren(), getErrors(), getElapsedTime());
+        return new UnresolvedObjectResultNode(getExecutionStepInfo(), resolvedValue, getChildren(), getErrors(), getElapsedTime(), getTotalNodeCount());
     }
 
     @Override
     public UnresolvedObjectResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo) {
-        return new UnresolvedObjectResultNode(executionStepInfo, getResolvedValue(), getChildren(), getErrors(), getElapsedTime());
+        return new UnresolvedObjectResultNode(executionStepInfo, getResolvedValue(), getChildren(), getErrors(), getElapsedTime(), getTotalNodeCount());
     }
 
     @Override
     public UnresolvedObjectResultNode withNewErrors(List<GraphQLError> errors) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), new ArrayList<>(errors), getElapsedTime());
+        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), new ArrayList<>(errors), getElapsedTime(), getTotalNodeCount());
     }
 
     @Override
     public UnresolvedObjectResultNode withElapsedTime(ElapsedTime elapsedTime) {
         return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), getErrors(), elapsedTime);
     }
+
+    @Override
+    public UnresolvedObjectResultNode withNodeCount(int nodeCount) {
+        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), getErrors(), getElapsedTime(), nodeCount);
+    }
+
+
 }

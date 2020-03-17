@@ -24,6 +24,7 @@ public abstract class ExecutionResultNode {
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
     private final ElapsedTime elapsedTime;
+    private final int totalNodeCount;
 
     /*
      * we are trusting here the the children list is not modified on the outside (no defensive copy)
@@ -33,7 +34,8 @@ public abstract class ExecutionResultNode {
                                   NonNullableFieldWasNullException nonNullableFieldWasNullException,
                                   List<ExecutionResultNode> children,
                                   List<GraphQLError> errors,
-                                  ElapsedTime elapsedTime) {
+                                  ElapsedTime elapsedTime,
+                                  int totalNodeCount) {
         this.resolvedValue = resolvedValue;
         this.executionStepInfo = executionStepInfo;
         this.nonNullableFieldWasNullException = nonNullableFieldWasNullException;
@@ -41,6 +43,7 @@ public abstract class ExecutionResultNode {
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(errors);
         this.elapsedTime = elapsedTime;
+        this.totalNodeCount = totalNodeCount;
     }
 
     public ElapsedTime getElapsedTime() {
@@ -81,6 +84,10 @@ public abstract class ExecutionResultNode {
                 .findFirst();
     }
 
+    public int getTotalNodeCount() {
+        return totalNodeCount;
+    }
+
     /**
      * Creates a new ExecutionResultNode of the same specific type with the new set of result children
      *
@@ -94,7 +101,6 @@ public abstract class ExecutionResultNode {
 
     public abstract ExecutionResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo);
 
-
     /**
      * Creates a new ExecutionResultNode of the same specific type with the new error collection
      *
@@ -105,6 +111,16 @@ public abstract class ExecutionResultNode {
     public abstract ExecutionResultNode withNewErrors(List<GraphQLError> errors);
 
     public abstract ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime);
+
+    /**
+     * Creates a new ExecutionResultNode of the same specific type with the specified node counts
+     *
+     * @param nodeCount the node count for this node
+     *
+     * @return a new ExecutionResultNode with the nodecount
+     */
+    public abstract ExecutionResultNode withNodeCount(int nodeCount);
+
 
 
     @Override

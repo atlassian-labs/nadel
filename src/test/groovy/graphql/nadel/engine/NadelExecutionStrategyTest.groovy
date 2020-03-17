@@ -14,6 +14,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.result.ResultNodesUtil
 import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.schema.UnderlyingWiringFactory
@@ -42,6 +43,7 @@ class NadelExecutionStrategyTest extends Specification {
     def definitionRegistry
     def instrumentation
     def serviceExecutionHooks
+    def resultComplexityAggregator
 
     void setup() {
         executionHelper = new ExecutionHelper()
@@ -51,6 +53,7 @@ class NadelExecutionStrategyTest extends Specification {
         definitionRegistry = Mock(DefinitionRegistry)
         instrumentation = new NadelInstrumentation() {}
         serviceExecutionHooks = new ServiceExecutionHooks() {}
+        resultComplexityAggregator = new ResultComplexityAggregator()
     }
 
     def "one call to one service"() {
@@ -78,13 +81,17 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery = "query nadel_2_service {foo}"
 
         when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
         1 * service1Execution.execute({
             printAstCompact(it.query) == expectedQuery
         } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
+
+        resultComplexityAggregator.getTotalNodeCount() == 2
+        resultComplexityAggregator.getNodeCountsForService("service") == 2
+
     }
 
     def "one call to one service with list result"() {
@@ -114,7 +121,7 @@ class NadelExecutionStrategyTest extends Specification {
         def serviceResultData = [foo: ["foo1", "foo2"]]
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -194,7 +201,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallHydrationSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({
@@ -207,6 +214,9 @@ class NadelExecutionStrategyTest extends Specification {
         } as ServiceExecutionParameters) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [id: "barId", name: "Bar1"]]]
+        resultComplexityAggregator.getTotalNodeCount() == 6
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
+        resultComplexityAggregator.getNodeCountsForService("service2") == 3
     }
 
 
@@ -242,7 +252,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -255,6 +265,9 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [id: "barId", name: "Bar1"]]]
+        resultComplexityAggregator.getTotalNodeCount() == 6
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
+        resultComplexityAggregator.getNodeCountsForService("service2") == 3
     }
 
     def "basic hydration"() {
@@ -281,7 +294,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -294,6 +307,9 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [name: "Bar1"]]]
+        resultComplexityAggregator.getTotalNodeCount() == 5
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
+        resultComplexityAggregator.getNodeCountsForService("service2") == 2
     }
 
     def "one hydration call with input value having longer path"() {
@@ -320,7 +336,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -333,6 +349,9 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response2)
 
         resultData(response) == [foo: [barLongerInput: [name: "Bar1"]]]
+        resultComplexityAggregator.getTotalNodeCount() == 5
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
+        resultComplexityAggregator.getNodeCountsForService("service2") == 2
     }
 
 
@@ -407,7 +426,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -424,6 +443,10 @@ class NadelExecutionStrategyTest extends Specification {
 
         def issue1Result = [id: "ISSUE-1", authorDetails: [[name: "User 1"], [name: "User 2"]], authors: [[id: "USER-1"], [id: "USER-2"]]]
         resultData(response) == [issues: [issue1Result]]
+
+        resultComplexityAggregator.getTotalNodeCount() == 13
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 9
+        resultComplexityAggregator.getNodeCountsForService("UserService") == 4
 
     }
 
@@ -493,7 +516,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -510,6 +533,10 @@ class NadelExecutionStrategyTest extends Specification {
 
         def issue1Result = [id: "ISSUE-1", authors: [[id: "USER-1", name: "User 1"], [id: "USER-2", name: "User 2"]]]
         resultData(response) == [issues: [issue1Result]]
+
+        resultComplexityAggregator.getTotalNodeCount() == 11
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 5
+        resultComplexityAggregator.getNodeCountsForService("UserService") == 6
 
     }
 
@@ -579,7 +606,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -600,6 +627,9 @@ class NadelExecutionStrategyTest extends Specification {
         def issue2Result = [id: "ISSUE-2", authors: [[id: "USER-3"]]]
         def issue3Result = [id: "ISSUE-3", authors: [[id: "USER-2"], [id: "USER-4"], [id: "USER-5"]]]
         resultData(response) == [issues: [issue1Result, issue2Result, issue3Result]]
+        resultComplexityAggregator.getTotalNodeCount() == 23
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 11
+        resultComplexityAggregator.getNodeCountsForService("UserService") == 12
 
     }
 
@@ -673,7 +703,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -697,6 +727,9 @@ class NadelExecutionStrategyTest extends Specification {
         def issue2Result = [id: "ISSUE-2", authors: [[id: "USER-3"]]]
         def issue3Result = [id: "ISSUE-3", authors: [[id: "USER-2"], [id: "USER-4"], [id: "USER-5"]]]
         resultData(response) == [issues: [issue1Result, issue2Result, issue3Result]]
+        resultComplexityAggregator.getTotalNodeCount() == 23
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 11
+        resultComplexityAggregator.getNodeCountsForService("UserService") == 12
 
     }
 
@@ -766,7 +799,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -786,6 +819,9 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response4)
 
         resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar3"], [id: "barId3", name: "Bar4"]]]]
+        resultComplexityAggregator.getTotalNodeCount() == 12
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
+        resultComplexityAggregator.getNodeCountsForService("service2") == 9
     }
 
     def "rename with first path element returning null"() {
@@ -824,7 +860,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -834,6 +870,8 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response1)
 
         resultData(response) == [issue: [name: null]]
+        resultComplexityAggregator.getTotalNodeCount() == 3
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 3
     }
 
     def "rename with first last path element returning null"() {
@@ -872,7 +910,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -882,6 +920,8 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response1)
 
         resultData(response) == [issue: [name: null]]
+        resultComplexityAggregator.getTotalNodeCount() == 3
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 3
     }
 
     def "hydration list with batching"() {
@@ -943,7 +983,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -959,6 +999,9 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [[name: "Bar1"], [name: "Bar2"], [name: "Bar3"]]]]
+        resultComplexityAggregator.getTotalNodeCount() == 9
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
+        resultComplexityAggregator.getNodeCountsForService("service2") == 6
     }
 
     def "hydration batching returns null"() {
@@ -1020,7 +1063,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1034,6 +1077,8 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [null, null, null]]]
+        resultComplexityAggregator.getTotalNodeCount() == 3
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
     }
 
     def "hydration list with one element"() {
@@ -1095,7 +1140,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1109,6 +1154,9 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response2)
 
         resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"]]]]
+        resultComplexityAggregator.getTotalNodeCount() == 6
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
+        resultComplexityAggregator.getNodeCountsForService("service2") == 3
     }
 
     FieldInfos topLevelFieldInfo(GraphQLFieldDefinition fieldDefinition, Service service) {
@@ -1187,7 +1235,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1199,6 +1247,8 @@ class NadelExecutionStrategyTest extends Specification {
         def issue1Result = [id: "ISSUE-1", authorId: "USER-1", authorName: "User 1"]
         def issue2Result = [id: "ISSUE-2", authorId: "USER-2", authorName: "User 2"]
         resultData(response) == [issues: [issue1Result, issue2Result]]
+        resultComplexityAggregator.getTotalNodeCount() == 8
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 8
 
     }
 
@@ -1252,7 +1302,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1263,6 +1313,8 @@ class NadelExecutionStrategyTest extends Specification {
 
         def issue1Result = [id: "ISSUE-1", authorId: "USER-1", authorName: "User 1", details: [extra: "extra 1"]]
         resultData(response) == [issue: issue1Result]
+        resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 4
 
     }
 
@@ -1318,7 +1370,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1330,6 +1382,8 @@ class NadelExecutionStrategyTest extends Specification {
         def issue1Result = [id: "ISSUE-1", authorName: [firstName: "George", lastName: "Smith"]]
         def issue2Result = [id: "ISSUE-2", authorName: [firstName: "Elizabeth", lastName: "Windsor"]]
         resultData(response) == [issues: [issue1Result, issue2Result]]
+        resultComplexityAggregator.getTotalNodeCount() == 8
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 8
     }
 
     def "deep rename of list"() {
@@ -1373,7 +1427,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1384,6 +1438,8 @@ class NadelExecutionStrategyTest extends Specification {
 
         def detail1Result = [labels: ["label1", "label2"]]
         resultData(response) == [details: [detail1Result]]
+        resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 4
     }
 
     def "deep rename of list of list"() {
@@ -1427,7 +1483,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1438,6 +1494,8 @@ class NadelExecutionStrategyTest extends Specification {
 
         def detail1Result = [labels: [["label1", "label2"], ["label3"]]]
         resultData(response) == [details: [detail1Result]]
+        resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 4
     }
 
     def "deep rename of an object with transformations inside object"() {
@@ -1492,8 +1550,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
-
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -1504,6 +1561,8 @@ class NadelExecutionStrategyTest extends Specification {
         def issue1Result = [id: "ISSUE-1", authorName: [firstName: "George", lastName: "Smith"]]
         def issue2Result = [id: "ISSUE-2", authorName: [firstName: "Elizabeth", lastName: "Windsor"]]
         resultData(response) == [issues: [issue1Result, issue2Result]]
+        resultComplexityAggregator.getTotalNodeCount() == 8
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 8
     }
 
     def "hydration call with argument value from original field argument "() {
@@ -1568,7 +1627,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1585,7 +1644,9 @@ class NadelExecutionStrategyTest extends Specification {
 
         def issue1Result = [id: "ISSUE-1", author: [name: "User 1"]]
         resultData(response) == [issues: [issue1Result]]
-
+        resultComplexityAggregator.getTotalNodeCount() == 7
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 5
+        resultComplexityAggregator.getNodeCountsForService("UserService") == 2
     }
 
     def "hydration call with two argument values from original field arguments "() {
@@ -1650,7 +1711,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1667,6 +1728,9 @@ class NadelExecutionStrategyTest extends Specification {
 
         def issue1Result = [id: "ISSUE-1", author: [name: "User 1"]]
         resultData(response) == [issues: [issue1Result]]
+        resultComplexityAggregator.getTotalNodeCount() == 7
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 5
+        resultComplexityAggregator.getNodeCountsForService("UserService") == 2
 
     }
 
@@ -1706,7 +1770,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1717,7 +1781,8 @@ class NadelExecutionStrategyTest extends Specification {
 
 
         resultData(response) == [hello: "world"]
-
+        resultComplexityAggregator.getTotalNodeCount() == 2
+        resultComplexityAggregator.getNodeCountsForService("MyService") == 2
     }
 
     def "two top level fields with a fragment"() {
@@ -1794,7 +1859,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1810,6 +1875,9 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response2)
 
         resultData(response) == [issues: [issue1, issue2], user: user]
+        resultComplexityAggregator.getTotalNodeCount() == 10
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 6
+        resultComplexityAggregator.getNodeCountsForService("UserService") == 4
 
     }
 
@@ -1907,7 +1975,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -1930,8 +1998,11 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response3)
 
         def issue1Result = [id: "ISSUE-1", authors: [[id: "USER-1", name: "User 1"], [id: "USER-2", name: "User 2"]]]
-        resultData(response) == [issues: [issue1Result], usersByIds: [[id: "USER-1", name: "User 1"]]
-        ]
+        resultData(response) == [issues: [issue1Result], usersByIds: [[id: "USER-1", name: "User 1"]]]
+
+        resultComplexityAggregator.getTotalNodeCount() == 16
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 5
+        resultComplexityAggregator.getNodeCountsForService("UserService") == 11
 
     }
 
@@ -2000,7 +2071,7 @@ class NadelExecutionStrategyTest extends Specification {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2010,6 +2081,9 @@ class NadelExecutionStrategyTest extends Specification {
         }) >> completedFuture(response1)
 
         resultData(response) == [boardScope: [board: [cardChildren: [[id: "1234", key: "abc", summary: "Summary 1"], [id: "456", key: "def", summary: "Summary 2"]]]]]
+
+        resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 4
 
     }
 
@@ -2101,7 +2175,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2123,7 +2197,8 @@ fragment F1 on TestingCharacter {
 
         def result = [movies: [[id: "M1", name: "Movie 1", characters: [[id: "C1", name: "Luke"], [id: "C2", name: "Leia"]]], [id: "M2", name: "Movie 2", characters: [[id: "C1", name: "Luke"], [id: "C2", name: "Leia"], [id: "C3", name: "Anakin"]]]]]
         resultData(response) == [testing: result]
-
+        resultComplexityAggregator.getTotalNodeCount() == 26
+        resultComplexityAggregator.getNodeCountsForService("testing") == 26
     }
 
     def "hydration input is empty list"() {
@@ -2184,7 +2259,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2195,6 +2270,9 @@ fragment F1 on TestingCharacter {
 
         def issue1Result = [id: "ISSUE-1", authors: []]
         resultData(response) == [issues: [issue1Result]]
+
+        resultComplexityAggregator.getTotalNodeCount() == 5
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 5
 
     }
 
@@ -2256,7 +2334,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2267,6 +2345,9 @@ fragment F1 on TestingCharacter {
 
         def issue1Result = [id: "ISSUE-1", authors: null]
         resultData(response) == [issues: [issue1Result]]
+
+        resultComplexityAggregator.getTotalNodeCount() == 5
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 5
 
     }
 
@@ -2336,7 +2417,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -2357,6 +2438,10 @@ fragment F1 on TestingCharacter {
         def issue2Result = [id: "ISSUE-2", authors: [[id: "USER-3"]]]
         def issue3Result = [id: "ISSUE-3", authors: [[id: "USER-2"], [id: "USER-4"], [id: "USER-5"]]]
         resultData(response) == [issues: [issue1Result, issue2Result, issue3Result]]
+
+        resultComplexityAggregator.getTotalNodeCount() == 23
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 11
+        resultComplexityAggregator.getNodeCountsForService("UserService") == 12
 
     }
 
@@ -2412,7 +2497,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         then:
@@ -2424,6 +2509,9 @@ fragment F1 on TestingCharacter {
         def issue1Result = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"], __typename: "Issue"]
         def issue2Result = [id: "ISSUE-2", authorIds: ["USER-3"], __typename: "Issue"]
         resultData(response) == [issues: [issue1Result, issue2Result]]
+
+        resultComplexityAggregator.getTotalNodeCount() == 13
+        resultComplexityAggregator.getNodeCountsForService("Issues") == 13
     }
 
     def "hydration call forwards error"() {
@@ -2485,7 +2573,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -2500,6 +2588,11 @@ fragment F1 on TestingCharacter {
         def errors = resultErrors(response)
         errors.size() == 1
         errors[0].message == "Some error occurred"
+
+        //want to make sure we still get node counts when there's an error
+        resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
+        resultComplexityAggregator.getNodeCountsForService("service2") == 1
     }
 
 
@@ -2562,7 +2655,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -2577,6 +2670,9 @@ fragment F1 on TestingCharacter {
         def errors = resultErrors(response)
         errors.size() == 1
         errors[0].message == "Some error occurred"
+
+        resultComplexityAggregator.getTotalNodeCount() == 3
+        resultComplexityAggregator.getNodeCountsForService("service1") == 3
     }
 
     def "hydration inside a renamed field"() {
@@ -2645,7 +2741,7 @@ fragment F1 on TestingCharacter {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -2664,6 +2760,10 @@ fragment F1 on TestingCharacter {
                         ],
                 ],
         ]
+
+        resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getNodeCountsForService("Foo") == 2
+        resultComplexityAggregator.getNodeCountsForService("Bar") == 2
     }
 
 }
