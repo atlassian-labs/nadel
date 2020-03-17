@@ -78,7 +78,7 @@ class ResultComplexityAggregatorTest extends Specification {
         def complexityMap = resultComplexityAggregator.snapshotResultComplexityData()
 
         then:
-        complexityMap.toString() == "[totalNodeCount:24, serviceNodeCounts:[service1:14, service2:10]]"
+        complexityMap == [totalNodeCount:24, serviceNodeCounts:[service1:14, service2:10]]
     }
 
 

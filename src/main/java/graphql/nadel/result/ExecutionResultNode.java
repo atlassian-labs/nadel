@@ -112,6 +112,13 @@ public abstract class ExecutionResultNode {
 
     public abstract ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime);
 
+    /**
+     * Creates a new ExecutionResultNode of the same specific type with the specified node counts
+     *
+     * @param nodeCount the node count for this node
+     *
+     * @return a new ExecutionResultNode with the nodecount
+     */
     public abstract ExecutionResultNode withNodeCount(int nodeCount);
 
 

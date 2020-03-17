@@ -5,22 +5,22 @@ import java.util.Map;
 
 public class ResultComplexityAggregator {
     private int totalNodeCount = 0;
-    private LinkedHashMap serviceNodeCounts = new LinkedHashMap<String, Integer>();
+    private Map<String, Integer> serviceNodeCounts = new LinkedHashMap<>();
 
     public int getTotalNodeCount() {
         return totalNodeCount;
     }
 
-    public LinkedHashMap getServiceNodeCounts() {
+    public Map<String, Integer> getServiceNodeCounts() {
         return serviceNodeCounts;
     }
 
     public int getNodeCountsForService(String serviceName) {
-        return (int) serviceNodeCounts.get(serviceName);
+        return serviceNodeCounts.get(serviceName);
     }
 
-    public void incrementServiceNodeCount(String serviceFieldName, Integer nodeCount) {
-        serviceNodeCounts.compute(serviceFieldName, (k,v) -> (v == null) ? nodeCount : (int) v + nodeCount);
+    public void incrementServiceNodeCount(String serviceFieldName, int nodeCount) {
+        serviceNodeCounts.compute(serviceFieldName, (k,v) -> (v == null) ? nodeCount : v + nodeCount);
         totalNodeCount += nodeCount;
     }
 
