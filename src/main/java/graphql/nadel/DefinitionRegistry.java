@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,29 +45,39 @@ public class DefinitionRegistry {
     }
 
     public Map<Operation, List<ObjectTypeDefinition>> getOperationMap() {
-        return Stream.of(Operation.values()).collect(HashMap::new, (m, v) -> m.put(v, getOpsDefinitions(v.getName(), v.getDisplayName())), HashMap::putAll);
+        return Stream.of(Operation.values()).collect(HashMap::new, (m, v) -> m.put(v, getOpsDefinitions(v)), HashMap::putAll);
     }
 
     public List<ObjectTypeDefinition> getQueryType() {
-        return getOpsDefinitions(Operation.QUERY.getName(), Operation.QUERY.getDisplayName());
+        return getOpsDefinitions(Operation.QUERY);
     }
 
     public List<ObjectTypeDefinition> getMutationType() {
-        return getOpsDefinitions(Operation.MUTATION.getName(), Operation.MUTATION.getDisplayName());
+        return getOpsDefinitions(Operation.MUTATION);
     }
 
-    private List<ObjectTypeDefinition> getOpsDefinitions(String typeName, String typeDisplay) {
+    private List<ObjectTypeDefinition> getOpsDefinitions(Operation operation) {
+        String type = getOperationTypeName(operation);
+        return getDefinition(type, ObjectTypeDefinition.class);
+    }
+
+    public String getOperationTypeName(Operation operation) {
+        String operationName = operation.getName(); // e.g. query, mutation etc.
+
+        // Check the schema definition for the operation type
+        // i.e. we are trying to find MyOwnQueryType in: schema { query: MyOwnQueryType }
         SchemaDefinition schemaDefinition = getSchemaDefinition();
         if (schemaDefinition != null) {
-            Optional<OperationTypeDefinition> opDefinitionsOp = schemaDefinition.getOperationTypeDefinitions().stream()
-                    .filter(op -> typeName.equalsIgnoreCase(op.getName())).findFirst();
-            if (!opDefinitionsOp.isPresent()) {
-                return null;
+            for (OperationTypeDefinition opTypeDef : schemaDefinition.getOperationTypeDefinitions()) {
+                if (opTypeDef.getName().equalsIgnoreCase(operationName)) {
+                    return opTypeDef.getTypeName().getName();
+                }
             }
-            String operationName = opDefinitionsOp.get().getTypeName().getName();
-            return getDefinition(operationName, ObjectTypeDefinition.class);
+            return null;
         }
-        return getDefinition(typeDisplay, ObjectTypeDefinition.class);
+
+        // This is the default name if there is no schema definition
+        return operation.getDisplayName();
     }
 
     private <T extends SDLDefinition> List<T> getDefinition(String name, Class<? extends T> clazz) {

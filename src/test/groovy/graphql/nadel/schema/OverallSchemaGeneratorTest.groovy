@@ -1,5 +1,7 @@
 package graphql.nadel.schema
 
+import graphql.GraphQLException
+import graphql.language.ObjectTypeDefinition
 import graphql.nadel.Operation
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLObjectType
@@ -277,4 +279,60 @@ class OverallSchemaGeneratorTest extends Specification {
         schema.getQueryType().fieldDefinitions.collect { it.name } == ['a', 'b', 'c']
 
     }
+
+    def "services can not declare types with same names"() {
+        when:
+        TestUtil.schemaFromNdsl("""
+        service S1 {
+            type Query {
+                a: String
+            }
+            type A {
+                x: String
+            }
+        }
+        service S2 {
+            type Query {
+                c: String
+            }
+            type A {
+                x: String 
+            }
+        }
+        """)
+
+        then:
+        def parseException = thrown GraphQLException
+        parseException.message.contains("tried to redefine existing 'A' type")
+    }
+
+    def "services can declare operation types with the same names"() {
+        when:
+        def result = TestUtil.schemaFromNdsl("""
+        service S1 {
+            schema {
+                query: MyQuery
+            }
+            type MyQuery {
+                a: String
+            }
+            type A {
+                x: String
+            }
+        }
+        service S2 {
+            schema {
+                query: MyQuery
+            }
+            type MyQuery {
+                c: String
+            }
+        }
+        """)
+
+        then:
+        result.queryType.fieldDefinitions.collect { it.name } == ["a", "c"]
+        (result.typeMap["A"] as GraphQLObjectType).fieldDefinitions.collect { it.name } == ["x"]
+    }
+
 }
