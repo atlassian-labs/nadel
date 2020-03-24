@@ -46,6 +46,8 @@ public class NSDLParser {
         }
 
         StitchingDSLLexer lexer = new StitchingDSLLexer(charStream);
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(ThrowingErrorListener.INSTANCE);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         StitchingDSLParser parser = new StitchingDSLParser(tokens);
         parser.removeErrorListeners();

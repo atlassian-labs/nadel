@@ -216,6 +216,26 @@ class NSDLParserTest extends Specification {
         assertNodesHaveIds(stitchingDSL.children)
     }
 
+    def "unterminated string should not parse"() {
+        given:
+        def dsl = """
+            service FooService {
+                type Query {
+                    "this is an unterminated comment
+                    echo: String
+                }
+            }
+        """
+
+        when:
+        NSDLParser parser = new NSDLParser()
+        parser.parseDSL(dsl)
+
+        then:
+        def parseException = thrown ParseCancellationException
+        parseException.message.contains("token recognition error at: '\"this is an unterminated comment\\n'")
+    }
+
     def "parse directives to wrong place for field transformation"() {
         given:
 
