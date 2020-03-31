@@ -1,79 +1,60 @@
 package graphql.nadel.engine;
 
 import graphql.language.Field;
+import graphql.nadel.engine.transformation.FieldMetadata;
 import graphql.nadel.util.FpKit;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
+import static graphql.nadel.dsl.NodeId.getId;
 import static graphql.nadel.util.FpKit.filter;
 
 public class FieldMetadataUtil {
 
-    private static final String NADEL_FIELD_METADATA = "NADEL_FIELD_METADATA";
 
-    private static class FieldMetadata implements Serializable {
-        private final String id;
-        private final boolean rootOfTransformation;
-
-        public FieldMetadata(String id, boolean rootOfTransformation) {
-            this.id = id;
-            this.rootOfTransformation = rootOfTransformation;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public boolean isRootOfTransformation() {
-            return rootOfTransformation;
-        }
-
-    }
-
-    public static List<String> getRootOfTransformationIds(Field field) {
-        List<FieldMetadata> fieldMetadata = readMetadata(field);
+    public static List<String> getRootOfTransformationIds(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
         return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getId);
     }
 
-    public static List<String> getFieldIds(Field field) {
-        List<FieldMetadata> fieldMetadata = readMetadata(field);
+    public static List<String> getFieldIds(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
         return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getId);
     }
 
-    public static Field addFieldMetadata(Field field, String id, boolean rootOfTransformation) {
-        List<FieldMetadata> fieldMetadata = readMetadata(field);
+    public static void addFieldMetadata(Field field, String id, boolean rootOfTransformation, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
         FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation);
         fieldMetadata.add(newFieldMetadata);
-        return writeMetadata(field, fieldMetadata);
+        writeMetadata(field, fieldMetadata, metadataByFieldId);
     }
 
-    public static Field copyFieldMetadata(Field from, Field to) {
-        List<FieldMetadata> fromMetadata = readMetadata(from);
+    public static void copyFieldMetadata(Field from, Field to, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        List<FieldMetadata> fromMetadata = readMetadata(from, metadataByFieldId);
         if (fromMetadata.isEmpty()) {
-            return to;
+            return;
         }
-        List<FieldMetadata> toMetadata = readMetadata(to);
+        List<FieldMetadata> toMetadata = readMetadata(to, metadataByFieldId);
         toMetadata.addAll(fromMetadata);
-        return writeMetadata(to, toMetadata);
+        writeMetadata(to, toMetadata, metadataByFieldId);
     }
 
-    public static String getUniqueRootFieldId(Field field) {
-        List<FieldMetadata> fieldMetadata = readMetadata(field);
+    public static String getUniqueRootFieldId(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
         List<FieldMetadata> rootFieldMetadata = filter(fieldMetadata, FieldMetadata::isRootOfTransformation);
         assertTrue(rootFieldMetadata.size() == 1, "exactly one root nadel infos expected");
-        return rootFieldMetadata.get(0).id;
+        return rootFieldMetadata.get(0).getId();
     }
 
-    public static void setFieldMetadata(Field.Builder builder, String id, List<String> additionalIds, boolean rootOfTransformation) {
+    public static void setFieldMetadata(Field field,
+                                        String id,
+                                        List<String> additionalIds,
+                                        boolean rootOfTransformation,
+                                        Map<String, List<FieldMetadata>> metadataByFieldId) {
         assertNotNull(id);
         List<FieldMetadata> fieldMetadata = new ArrayList<>();
 
@@ -82,45 +63,34 @@ public class FieldMetadataUtil {
         for (String additionalId : additionalIds) {
             fieldMetadata.add(new FieldMetadata(additionalId, false));
         }
-        writeMetadata(builder, fieldMetadata);
+        writeMetadata(field, fieldMetadata, metadataByFieldId);
     }
 
-    private static String writeMetadata(List<FieldMetadata> fieldMetadata) {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
-                oos.writeObject(fieldMetadata);
-                return Base64.getEncoder().encodeToString(baos.toByteArray());
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+    public static void setFieldMetadata(String fieldId,
+                                        String id,
+                                        List<String> additionalIds,
+                                        boolean rootOfTransformation,
+                                        Map<String, List<FieldMetadata>> metadataByFieldId) {
+        assertNotNull(id);
+        List<FieldMetadata> fieldMetadata = new ArrayList<>();
+
+        FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation);
+        fieldMetadata.add(newFieldMetadata);
+        for (String additionalId : additionalIds) {
+            fieldMetadata.add(new FieldMetadata(additionalId, false));
         }
+        metadataByFieldId.put(fieldId, fieldMetadata);
     }
 
-    private static List<FieldMetadata> readMetadata(String serialized) {
-        try {
-            byte[] decoded = Base64.getDecoder().decode(serialized);
-            ByteArrayInputStream bais = new ByteArrayInputStream(decoded);
-            try (ObjectInputStream ois = new ObjectInputStream(bais)) {
-                return (List<FieldMetadata>) ois.readObject();
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+
+    private static void writeMetadata(Field field, List<FieldMetadata> newMetadata, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        metadataByFieldId.put(getId(field), newMetadata);
     }
 
-    private static Field writeMetadata(Field field, List<FieldMetadata> newMetadata) {
-        return field.transform(builder -> writeMetadata(builder, newMetadata));
-    }
 
-    private static Field.Builder writeMetadata(Field.Builder builder, List<FieldMetadata> newMetadata) {
-        String newSerializedValue = writeMetadata(newMetadata);
-        return builder.additionalData(NADEL_FIELD_METADATA, newSerializedValue);
-    }
-
-    private static List<FieldMetadata> readMetadata(Field field) {
-        String serialized = field.getAdditionalData().get(NADEL_FIELD_METADATA);
-        return serialized != null ? readMetadata(serialized) : new ArrayList<>();
+    private static List<FieldMetadata> readMetadata(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        List<FieldMetadata> result = metadataByFieldId.get(getId(field));
+        return result != null ? result : new ArrayList<>();
     }
 
 

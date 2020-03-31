@@ -13,9 +13,9 @@ import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
-import graphql.util.TreeTransformerUtil;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -35,16 +35,26 @@ public final class FieldUtils {
         return field.getAlias() != null ? field.getAlias() : field.getName();
     }
 
-    public static Field pathToFields(List<String> path, String nadelFieldId, List<String> additionalIds, boolean firstRootOfTransformation) {
-        return pathToFields(path, nadelFieldId, additionalIds, firstRootOfTransformation, null);
+    public static Field pathToFields(List<String> path,
+                                     String nadelFieldId,
+                                     List<String> additionalIds,
+                                     boolean firstRootOfTransformation,
+                                     Map<String, List<FieldMetadata>> metadataByFieldId) {
+        return pathToFields(path, nadelFieldId, additionalIds, firstRootOfTransformation, null, metadataByFieldId);
     }
 
-    public static Field pathToFields(List<String> path, String nadelFieldId, List<String> additionalIds, boolean firstRootOfTransformation, SelectionSet lastSelectionSet) {
+    public static Field pathToFields(List<String> path,
+                                     String nadelFieldId,
+                                     List<String> additionalIds,
+                                     boolean firstRootOfTransformation,
+                                     SelectionSet lastSelectionSet,
+                                     Map<String, List<FieldMetadata>> metadataByFieldId) {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
             Field.Builder newField = Field.newField();
-            newField.additionalData(NodeId.ID, UUID.randomUUID().toString());
-            FieldMetadataUtil.setFieldMetadata(newField, nadelFieldId, additionalIds, ix == 0 && firstRootOfTransformation);
+            String fieldId = UUID.randomUUID().toString();
+            newField.additionalData(NodeId.ID, fieldId);
+            FieldMetadataUtil.setFieldMetadata(fieldId, nadelFieldId, additionalIds, ix == 0 && firstRootOfTransformation, metadataByFieldId);
             if (ix == path.size() - 1 && lastSelectionSet != null) {
                 newField.selectionSet(lastSelectionSet);
             }
@@ -81,18 +91,19 @@ public final class FieldUtils {
         return curNode;
     }
 
-    public static Field addFieldIdToChildren(Field field, String id) {
+    public static void addFieldIdToChildren(Field field, String id, Map<String, List<FieldMetadata>> metadataByFieldId) {
         if (field.getSelectionSet() == null) {
-            return field;
+            return;
         }
-        SelectionSet selectionSet = (SelectionSet) new AstTransformer().transform(field.getSelectionSet(), new NodeVisitorStub() {
+        //TODO: make it go down fragments
+        new AstTransformer().transform(field.getSelectionSet(), new NodeVisitorStub() {
 
             @Override
             public TraversalControl visitField(Field field, TraverserContext<Node> context) {
-                return TreeTransformerUtil.changeNode(context, FieldMetadataUtil.addFieldMetadata(field, id, false));
+                FieldMetadataUtil.addFieldMetadata(field, id, false, metadataByFieldId);
+                return TraversalControl.CONTINUE;
             }
         });
-        return field.transform(builder -> builder.selectionSet(selectionSet));
 
     }
 

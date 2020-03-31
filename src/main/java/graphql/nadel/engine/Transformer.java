@@ -26,9 +26,9 @@ import graphql.nadel.engine.transformation.ApplyResult;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
+import graphql.nadel.engine.transformation.Metadata;
 import graphql.nadel.engine.transformation.OverallTypeInfo;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
-import graphql.nadel.engine.transformation.RemovedFieldData;
 import graphql.nadel.hooks.NewVariableValue;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
@@ -83,7 +83,7 @@ public class Transformer extends NodeVisitorStub {
     private final Map<String, VariableDefinition> variableDefinitions;
     final ServiceExecutionHooks serviceExecutionHooks;
     private OverallTypeInformation<?> overallTypeInformation;
-    private RemovedFieldData removedFieldMap;
+    private Metadata metadata;
     private Service service;
     private Object serviceContext;
     private Map<String, Object> variableValues;
@@ -101,7 +101,7 @@ public class Transformer extends NodeVisitorStub {
                        Map<String, Object> variableValues,
                        Service service,
                        Object serviceContext,
-                       RemovedFieldData removedFieldMap
+                       Metadata metadata
     ) {
         this.executionContext = executionContext;
         this.underlyingSchema = underlyingSchema;
@@ -112,7 +112,7 @@ public class Transformer extends NodeVisitorStub {
         this.nadelContext = nadelContext;
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.overallTypeInformation = overallTypeInformation;
-        this.removedFieldMap = removedFieldMap;
+        this.metadata = metadata;
         OperationDefinition operationDefinition = executionContext.getOperationDefinition();
         this.variableDefinitions = FpKit.getByName(operationDefinition.getVariableDefinitions(), VariableDefinition::getName);
         this.variableValues = variableValues;
@@ -212,7 +212,7 @@ public class Transformer extends NodeVisitorStub {
 
         Optional<GraphQLError> isFieldAllowed = serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext());
         if ((isFieldAllowed.isPresent())) {
-            removedFieldMap.add(normalizedFields, isFieldAllowed.get());
+            metadata.add(normalizedFields, isFieldAllowed.get());
             return TreeTransformerUtil.deleteNode(context);
         }
 
@@ -228,7 +228,7 @@ public class Transformer extends NodeVisitorStub {
             Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
 
 
-            String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField);
+            String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField, this.metadata.getMetadataByFieldId());
             transformationByResultField.put(fieldId, transformation);
 
             if (transformation instanceof FieldRenameTransformation) {
@@ -266,7 +266,7 @@ public class Transformer extends NodeVisitorStub {
     }
 
     ApplyEnvironment createApplyEnvironment(Field field, TraverserContext<Node> context, OverallTypeInfo overallTypeInfo, List<NormalizedQueryField> normalizedQueryFields) {
-        return new ApplyEnvironment(field, overallTypeInfo.getFieldDefinition(), overallTypeInfo.getFieldsContainer(), context, normalizedQueryFields);
+        return new ApplyEnvironment(field, overallTypeInfo.getFieldDefinition(), overallTypeInfo.getFieldsContainer(), context, normalizedQueryFields, this.metadata.getMetadataByFieldId());
     }
 
 

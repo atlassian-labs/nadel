@@ -63,10 +63,10 @@ public class HydrationTransformation extends FieldTransformation {
         RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
-        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), Collections.emptyList(), true);
+        Field newField = FieldUtils.pathToFields(hydrationSourceName, getFieldId(), Collections.emptyList(), true, environment.getMetadataByFieldId());
 
         // Add back the IDs from the original field e.g. an ID tied to a rename transformation
-        newField = FieldMetadataUtil.copyFieldMetadata(environment.getField(), newField);
+        FieldMetadataUtil.copyFieldMetadata(environment.getField(), newField, environment.getMetadataByFieldId());
 
         changeNode(context, newField);
         return new ApplyResult(TraversalControl.ABORT);

@@ -40,13 +40,13 @@ public class FieldRenameTransformation extends FieldTransformation {
     public ApplyResult apply(ApplyEnvironment environment) {
         setEnvironment(environment);
         List<String> path = mappingDefinition.getInputPath();
-        List<String> existingIds = FieldMetadataUtil.getFieldIds(environment.getField());
+        List<String> existingIds = FieldMetadataUtil.getFieldIds(environment.getField(), environment.getMetadataByFieldId());
         Field changedNode = environment.getField().transform(builder -> builder.name(mappingDefinition.getInputPath().get(0)));
-        changedNode = addFieldMetadata(changedNode, getFieldId(), true);
-        Field fieldWithIds = addFieldIdToChildren(environment.getField(), getFieldId());
-        SelectionSet selectionSetWithIds = fieldWithIds.getSelectionSet();
+        addFieldMetadata(changedNode, getFieldId(), true, environment.getMetadataByFieldId());
+        addFieldIdToChildren(environment.getField(), getFieldId(), environment.getMetadataByFieldId());
+        SelectionSet selectionSetWithIds = changedNode.getSelectionSet();
         if (path.size() > 1) {
-            Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), existingIds, false, selectionSetWithIds);
+            Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), existingIds, false, selectionSetWithIds, environment.getMetadataByFieldId());
             changedNode = changedNode.transform(builder -> builder.selectionSet(newSelectionSet().selection(firstChildField).build()));
         } else {
             changedNode = changedNode.transform(builder -> builder.selectionSet(selectionSetWithIds));

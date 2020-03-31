@@ -8,6 +8,7 @@ import graphql.schema.GraphQLFieldsContainer;
 import graphql.util.TraverserContext;
 
 import java.util.List;
+import java.util.Map;
 
 public class ApplyEnvironment {
     private final Field field;
@@ -15,17 +16,20 @@ public class ApplyEnvironment {
     private final GraphQLFieldsContainer fieldsContainerOverall;
     private final TraverserContext<Node> traverserContext;
     private List<NormalizedQueryField> normalizedQueryFieldsOverall;
+    private final Map<String, List<FieldMetadata>> metadataByFieldId;
 
     public ApplyEnvironment(Field field,
                             GraphQLFieldDefinition fieldDefinitionOverall,
                             GraphQLFieldsContainer fieldsContainerOverall,
                             TraverserContext<Node> traverserContext,
-                            List<NormalizedQueryField> normalizedQueryFieldsOverall) {
+                            List<NormalizedQueryField> normalizedQueryFieldsOverall,
+                            Map<String, List<FieldMetadata>> metadataByFieldId) {
         this.field = field;
         this.fieldDefinitionOverall = fieldDefinitionOverall;
         this.fieldsContainerOverall = fieldsContainerOverall;
         this.traverserContext = traverserContext;
         this.normalizedQueryFieldsOverall = normalizedQueryFieldsOverall;
+        this.metadataByFieldId = metadataByFieldId;
     }
 
     public Field getField() {
@@ -46,5 +50,9 @@ public class ApplyEnvironment {
 
     public List<NormalizedQueryField> getNormalizedQueryFieldsOverall() {
         return normalizedQueryFieldsOverall;
+    }
+
+    public Map<String, List<FieldMetadata>> getMetadataByFieldId() {
+        return metadataByFieldId;
     }
 }
