@@ -7,21 +7,6 @@ import java.util.function.Consumer;
 @Internal
 public class ListExecutionResultNode extends ExecutionResultNode {
 
-//    public ListExecutionResultNode(ExecutionStepInfo executionStepInfo,
-//                                   ResolvedValue resolvedValue,
-//                                   List<ExecutionResultNode> children,
-//                                   List<GraphQLError> errors) {
-//        super(executionStepInfo, resolvedValue, ResultNodesUtil.newNullableException(executionStepInfo, children), children, errors, null);
-//    }
-//
-//    public ListExecutionResultNode(ExecutionStepInfo executionStepInfo,
-//                                   ResolvedValue resolvedValue,
-//                                   List<ExecutionResultNode> children,
-//                                   List<GraphQLError> errors,
-//                                   ElapsedTime elapsedTime) {
-//        super(executionStepInfo, resolvedValue, ResultNodesUtil.newNullableException(executionStepInfo, children), children, errors, elapsedTime);
-//    }
-
     private ListExecutionResultNode(Builder builder) {
         super(builder);
     }

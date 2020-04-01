@@ -32,11 +32,16 @@ public abstract class ExecutionResultNode {
     protected ExecutionResultNode(BuilderBase builderBase) {
         this.resolvedValue = builderBase.resolvedValue;
         this.executionStepInfo = builderBase.executionStepInfo;
-        this.nonNullableFieldWasNullException = builderBase.nonNullableFieldWasNullException;
         this.children = Collections.unmodifiableList(assertNotNull(builderBase.children));
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(builderBase.errors);
         this.elapsedTime = builderBase.elapsedTime;
+
+        if (builderBase.nonNullableFieldWasNullException == null) {
+            this.nonNullableFieldWasNullException = ResultNodesUtil.newNullableException(executionStepInfo, getChildren());
+        } else {
+            this.nonNullableFieldWasNullException = builderBase.nonNullableFieldWasNullException;
+        }
     }
 
     public ElapsedTime getElapsedTime() {
@@ -100,7 +105,6 @@ public abstract class ExecutionResultNode {
         return transform(builder -> builder.errors(errors));
     }
 
-    //
     public ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime) {
         return transform(builder -> builder.elapsedTime(elapsedTime));
     }
