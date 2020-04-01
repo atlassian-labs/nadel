@@ -38,7 +38,10 @@ public class ArtificialFieldUtils {
             }
         }
 
-        Field underscoreTypeNameAliasField = newField(UNDERSCORE_TYPENAME).alias(underscoreTypeNameAlias).build();
+        Field underscoreTypeNameAliasField = newField(UNDERSCORE_TYPENAME)
+                .alias(underscoreTypeNameAlias)
+                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .build();
         if (selectionSet == null) {
             selectionSet = SelectionSet.newSelectionSet().selection(underscoreTypeNameAliasField).build();
         } else {
