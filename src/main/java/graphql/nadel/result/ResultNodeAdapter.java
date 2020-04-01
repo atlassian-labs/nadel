@@ -31,7 +31,7 @@ public class ResultNodeAdapter implements NodeAdapter<ExecutionResultNode> {
         assertTrue(newChildren.size() == 1);
         List<ExecutionResultNode> childrenList = newChildren.get(null);
         assertNotNull(childrenList);
-        return parentNode.withNewChildren(childrenList);
+        return parentNode.transform(t -> t.children(childrenList));
     }
 
     @Override
@@ -40,6 +40,6 @@ public class ResultNodeAdapter implements NodeAdapter<ExecutionResultNode> {
         List<ExecutionResultNode> childrenList = new ArrayList<>(parentNode.getChildren());
         assertTrue(index >= 0 && index < childrenList.size(), "The remove index MUST be within the range of the children");
         childrenList.remove(index);
-        return parentNode.withNewChildren(childrenList);
+        return parentNode.transform(builder -> builder.children(childrenList));
     }
 }

@@ -1,45 +1,38 @@
 package graphql.nadel.result;
 
-import graphql.GraphQLError;
-import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.result.ResolvedValue;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Consumer;
 
 public class UnresolvedObjectResultNode extends ObjectExecutionResultNode {
 
-    public UnresolvedObjectResultNode(ExecutionStepInfo executionStepInfo, ResolvedValue resolvedValue) {
-        super(executionStepInfo, resolvedValue, Collections.emptyList(), Collections.emptyList());
+    private UnresolvedObjectResultNode(Builder builder) {
+        super(builder, null);
     }
 
-    public UnresolvedObjectResultNode(ExecutionStepInfo executionStepInfo, ResolvedValue resolvedValue, List<ExecutionResultNode> children, List<GraphQLError> errors, ElapsedTime elapsedTime) {
-        super(executionStepInfo, resolvedValue, children, errors, elapsedTime);
-    }
-
-    @Override
-    public UnresolvedObjectResultNode withNewChildren(List<ExecutionResultNode> children) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), children, getErrors(), getElapsedTime());
+    public static Builder newUnresolvedExecutionResultNode() {
+        return new Builder();
     }
 
     @Override
-    public UnresolvedObjectResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), resolvedValue, getChildren(), getErrors(), getElapsedTime());
+    public <T extends BuilderBase<T>> UnresolvedObjectResultNode transform(Consumer<T> builderConsumer) {
+        Builder builder = new Builder(this);
+        builderConsumer.accept((T) builder);
+        return builder.build();
     }
 
-    @Override
-    public UnresolvedObjectResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo) {
-        return new UnresolvedObjectResultNode(executionStepInfo, getResolvedValue(), getChildren(), getErrors(), getElapsedTime());
+    public static class Builder extends BuilderBase<Builder> {
+
+        public Builder() {
+
+        }
+
+        public Builder(UnresolvedObjectResultNode existing) {
+            super(existing);
+        }
+
+        @Override
+        public UnresolvedObjectResultNode build() {
+            return new UnresolvedObjectResultNode(this);
+        }
     }
 
-    @Override
-    public UnresolvedObjectResultNode withNewErrors(List<GraphQLError> errors) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), new ArrayList<>(errors), getElapsedTime());
-    }
-
-    @Override
-    public UnresolvedObjectResultNode withElapsedTime(ElapsedTime elapsedTime) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), getErrors(), elapsedTime);
-    }
 }

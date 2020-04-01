@@ -33,6 +33,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
+import static graphql.nadel.result.RootExecutionResultNode.newRootExecutionResultNode;
 import static graphql.util.FpKit.map;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
@@ -218,7 +219,10 @@ public class NadelExecutionStrategy {
             List<GraphQLError> errors = new ArrayList<>();
             map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
             map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
-            return new RootExecutionResultNode(mergedChildren, errors, null);
+            return newRootExecutionResultNode()
+                    .children(mergedChildren)
+                    .errors(errors)
+                    .build();
         });
     }
 

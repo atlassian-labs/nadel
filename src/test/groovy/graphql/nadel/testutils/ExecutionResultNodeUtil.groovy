@@ -14,6 +14,9 @@ import static graphql.Scalars.GraphQLString
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo
 import static graphql.execution.MergedField.newMergedField
 import static graphql.language.Field.newField
+import static graphql.nadel.result.LeafExecutionResultNode.newLeafExecutionResultNode
+import static graphql.nadel.result.ListExecutionResultNode.newListExecutionResultNode
+import static graphql.nadel.result.ObjectExecutionResultNode.newObjectExecutionResultNode
 
 /**
  * A helper for tests around {@link graphql.nadel.result.ExecutionResultNode}s
@@ -49,23 +52,23 @@ class ExecutionResultNodeUtil {
     }
 
     static LeafExecutionResultNode leaf(String name, String alias) {
-        new LeafExecutionResultNode(esi(name, alias), resolvedValue(name + "Val"), null)
+        newLeafExecutionResultNode().executionStepInfo(esi(name, alias)).resolvedValue(resolvedValue(name + "Val")).build()
     }
 
     static LeafExecutionResultNode leaf(String name) {
-        new LeafExecutionResultNode(esi(name), resolvedValue(name + "Val"), null)
+        newLeafExecutionResultNode().executionStepInfo(esi(name)).resolvedValue(resolvedValue(name + "Val")).build()
     }
 
     static ObjectExecutionResultNode object(String name, List<ExecutionResultNode> children) {
-        new ObjectExecutionResultNode(esi(name), resolvedValue(name + "Val"), children)
+        newObjectExecutionResultNode().executionStepInfo(esi(name)).resolvedValue(resolvedValue(name + "Val")).children(children).build()
     }
 
     static ListExecutionResultNode list(String name, List<ExecutionResultNode> children) {
-        new ListExecutionResultNode(esi(name), resolvedValue(name + "Val"), children)
+        newListExecutionResultNode().executionStepInfo(esi(name)).resolvedValue(resolvedValue(name + "Val")).children(children).build()
     }
 
     static RootExecutionResultNode root(List<ExecutionResultNode> children) {
-        new RootExecutionResultNode(children)
+        RootExecutionResultNode.newRootExecutionResultNode().children(children).build()
     }
 
     static Map toData(ExecutionResultNode resultNode) {

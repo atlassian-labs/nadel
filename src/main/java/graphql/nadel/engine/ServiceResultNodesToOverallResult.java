@@ -136,7 +136,7 @@ public class ServiceResultNodesToOverallResult {
 
                 TraversalControl traversalControl = TraversalControl.CONTINUE;
                 TuplesTwo<Set<FieldTransformation>, List<Field>> transformationsAndNotTransformedFields =
-                        getTransformationsAndNotTransformedFields(node.getMergedField(), transformationMap, metadata);
+                        getTransformationsAndNotTransformedFields(node, transformationMap, metadata);
 
                 List<FieldTransformation> transformations = new ArrayList<>(transformationsAndNotTransformedFields.getT1());
 //                List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
@@ -184,7 +184,7 @@ public class ServiceResultNodesToOverallResult {
         for (NormalizedFieldAndError normalizedFieldAndError : removedFields) {
             MergedField mergedField = nadelContext.getNormalizedOverallQuery().getMergedFieldByNormalizedFields().get(normalizedFieldAndError.getNormalizedField());
             LeafExecutionResultNode newChild = createRemovedFieldResult(resultNode, mergedField, normalizedFieldAndError.getNormalizedField(), normalizedFieldAndError.getError());
-            TreeTransformerUtil.changeNode(context, (resultNode).addChild(newChild));
+            TreeTransformerUtil.changeNode(context, resultNode.transform(b -> b.addChild(newChild)));
         }
     }
 
@@ -208,11 +208,11 @@ public class ServiceResultNodesToOverallResult {
                 .parentInfo(parent.getExecutionStepInfo())
                 .build();
 
-        LeafExecutionResultNode removedNode = new LeafExecutionResultNode(
-                esi,
-                resolvedValue,
-                null,
-                singletonList(error));
+        LeafExecutionResultNode removedNode = LeafExecutionResultNode.newLeafExecutionResultNode()
+                .executionStepInfo(esi)
+                .resolvedValue(resolvedValue)
+                .errors(singletonList(error))
+                .build();
         return removedNode;
     }
 
@@ -425,21 +425,23 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private TuplesTwo<Set<FieldTransformation>, List<Field>> getTransformationsAndNotTransformedFields(
-            MergedField mergedField,
+            ExecutionResultNode node,
             Map<String, FieldTransformation> transformationMap,
-            Metadata metadata) {
+            Metadata metadata
+    ) {
         Set<FieldTransformation> transformations = new LinkedHashSet<>();
         List<Field> notTransformedFields = new ArrayList<>();
-        for (Field field : mergedField.getFields()) {
-//            if (metadata.isTransformationProcessed(field)) {
+        for (Field field : node.getMergedField().getFields()) {
+            if (metadata.isTransformationProcessed(node.getExecutionStepInfo().getPath())) {
 //                continue;
-//            }
+//                System.out.println(getId(field) + "  already processed");
+            }
             List<String> fieldIds = FieldMetadataUtil.getRootOfTransformationIds(field, metadata.getMetadataByFieldId());
             if (fieldIds.size() == 0) {
                 notTransformedFields.add(field);
                 continue;
             }
-//            metadata.addProcessedTransformation(field);
+            metadata.addProcessedTransformation(node.getExecutionStepInfo().getPath());
             for (String fieldId : fieldIds) {
                 FieldTransformation fieldTransformation = transformationMap.get(fieldId);
                 transformations.add(fieldTransformation);
@@ -449,7 +451,11 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private RootExecutionResultNode mapRootResultNode(RootExecutionResultNode resultNode) {
-        return new RootExecutionResultNode(resultNode.getChildren(), resultNode.getErrors(), resultNode.getElapsedTime());
+        return RootExecutionResultNode.newRootExecutionResultNode()
+                .children(resultNode.getChildren())
+                .errors(resultNode.getErrors())
+                .elapsedTime(resultNode.getElapsedTime())
+                .build();
     }
 
     private NormalizedQueryField getNormalizedQueryFieldForResultNode(ObjectExecutionResultNode resultNode, NormalizedQueryFromAst normalizedQueryFromAst) {

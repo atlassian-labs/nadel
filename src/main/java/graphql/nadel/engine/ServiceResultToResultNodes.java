@@ -14,7 +14,6 @@ import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.ExecutionResultNode;
-import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.nadel.result.ResultNodesCreator;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.nadel.result.UnresolvedObjectResultNode;
@@ -31,6 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static graphql.nadel.result.ObjectExecutionResultNode.newObjectExecutionResultNode;
 import static graphql.util.FpKit.map;
 
 public class ServiceResultToResultNodes {
@@ -52,7 +52,7 @@ public class ServiceResultToResultNodes {
         long startTime = System.currentTimeMillis();
 
         List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
-        RootExecutionResultNode rootNode = new RootExecutionResultNode(Collections.emptyList(), errors, elapsedTimeForServiceCall);
+        RootExecutionResultNode rootNode = RootExecutionResultNode.newRootExecutionResultNode().errors(errors).elapsedTime(elapsedTimeForServiceCall).build();
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
 
         RootExecutionResultNode result = (RootExecutionResultNode) resultNodesTransformer.transformParallel(nadelContext.getForkJoinPool(), rootNode, new TraverserVisitorStub<ExecutionResultNode>() {
@@ -71,7 +71,11 @@ public class ServiceResultToResultNodes {
                 ExecutionStepInfo esi = unresolvedNode.getExecutionStepInfo();
                 FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, esi, resolvedValue);
                 List<ExecutionResultNode> children = fetchSubSelection(executionContext, fieldSubSelection, elapsedTimeForServiceCall);
-                TreeTransformerUtil.changeNode(context, new ObjectExecutionResultNode(esi, resolvedValue, children, elapsedTimeForServiceCall));
+                TreeTransformerUtil.changeNode(context, newObjectExecutionResultNode().executionStepInfo(esi)
+                        .resolvedValue(resolvedValue)
+                        .children(children)
+                        .elapsedTime(elapsedTimeForServiceCall)
+                        .build());
                 return TraversalControl.CONTINUE;
             }
         });

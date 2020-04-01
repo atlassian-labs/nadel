@@ -154,13 +154,12 @@ public class HydrationTransformation extends FieldTransformation {
             // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
             return changeFieldInResultNode(leafNode, getOriginalField());
         } else {
-            return new HydrationInputNode(this,
-                    correctESI,
-                    leafNode.getResolvedValue(),
-                    null,
-                    Collections.emptyList(),
-                    leafNode.getElapsedTime(),
-                    matchingNormalizedField);
+            return HydrationInputNode.newHydrationInputNode().hydrationTransformation(this)
+                    .executionStepInfo(correctESI)
+                    .resolvedValue(leafNode.getResolvedValue())
+                    .elapsedTime(leafNode.getElapsedTime())
+                    .normalizedField(matchingNormalizedField)
+                    .build();
         }
     }
 

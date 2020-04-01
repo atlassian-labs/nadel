@@ -1,58 +1,50 @@
 package graphql.nadel.result;
 
-import graphql.GraphQLError;
-import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.result.ResolvedValue;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static graphql.Assert.assertShouldNeverHappen;
+import java.util.function.Consumer;
 
 public class RootExecutionResultNode extends ObjectExecutionResultNode {
 
 
-    public RootExecutionResultNode(List<ExecutionResultNode> children, List<GraphQLError> errors, ElapsedTime elapsedTime) {
-        super(null, null, children, errors, elapsedTime);
+    private RootExecutionResultNode(Builder builder) {
+        super(builder, null);
     }
 
-    public RootExecutionResultNode(List<ExecutionResultNode> children) {
-        super(null, null, children, Collections.emptyList());
-    }
-
-    @Override
-    public ExecutionStepInfo getExecutionStepInfo() {
-        return assertShouldNeverHappen("not supported at root node");
+    public static Builder newRootExecutionResultNode() {
+        return new Builder();
     }
 
     @Override
-    public ResolvedValue getResolvedValue() {
-        return assertShouldNeverHappen("not supported at root node");
+    public <T extends BuilderBase<T>> RootExecutionResultNode transform(Consumer<T> builderConsumer) {
+        Builder builder = new Builder(this);
+        builderConsumer.accept((T) builder);
+        return builder.build();
     }
 
-    @Override
-    public RootExecutionResultNode withNewChildren(List<ExecutionResultNode> children) {
-        return new RootExecutionResultNode(children, getErrors(), getElapsedTime());
+    public static class Builder extends BuilderBase<Builder> {
+
+        public Builder() {
+
+        }
+
+        public Builder(RootExecutionResultNode existing) {
+            super(existing);
+        }
+
+        @Override
+        public RootExecutionResultNode build() {
+            return new RootExecutionResultNode(this);
+        }
     }
 
-    @Override
-    public ExecutionResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
-        return assertShouldNeverHappen("not supported at root node");
-    }
 
-    @Override
-    public ExecutionResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo) {
-        return assertShouldNeverHappen("not supported at root node");
-    }
-
-    @Override
-    public RootExecutionResultNode withNewErrors(List<GraphQLError> errors) {
-        return new RootExecutionResultNode(getChildren(), new ArrayList<>(errors), getElapsedTime());
-    }
-
-    @Override
-    public RootExecutionResultNode withElapsedTime(ElapsedTime elapsedTime) {
-        return new RootExecutionResultNode(getChildren(), getErrors(), elapsedTime);
-    }
+//    @Override
+//    public ExecutionStepInfo getExecutionStepInfo() {
+//        return assertShouldNeverHappen("not supported at root node");
+//    }
+//
+//    @Override
+//    public ResolvedValue getResolvedValue() {
+//        return assertShouldNeverHappen("not supported at root node");
+//    }
+//
 }

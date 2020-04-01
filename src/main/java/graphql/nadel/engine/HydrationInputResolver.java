@@ -39,7 +39,6 @@ import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -447,7 +446,11 @@ public class HydrationInputResolver {
                 .localContext(null)
                 .nullValue(true)
                 .build();
-        return new LeafExecutionResultNode(executionStepInfo, resolvedValue, null, Collections.emptyList(), elapsedTime);
+        return LeafExecutionResultNode.newLeafExecutionResultNode()
+                .executionStepInfo(executionStepInfo)
+                .resolvedValue(resolvedValue)
+                .elapsedTime(elapsedTime)
+                .build();
     }
 
     private ObjectExecutionResultNode findMatchingResolvedNode(ExecutionContext executionContext, HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {

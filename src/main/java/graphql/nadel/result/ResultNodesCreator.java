@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static graphql.nadel.result.LeafExecutionResultNode.newLeafExecutionResultNode;
+import static graphql.nadel.result.UnresolvedObjectResultNode.newUnresolvedExecutionResultNode;
 import static java.util.stream.Collectors.toList;
 
 @Internal
@@ -22,10 +24,18 @@ public class ResultNodesCreator {
         if (fetchedValueAnalysis.isNullValue() && executionStepInfo.isNonNullType()) {
             NonNullableFieldWasNullException nonNullableFieldWasNullException = new NonNullableFieldWasNullException(executionStepInfo, executionStepInfo.getPath());
 
-            return new LeafExecutionResultNode(executionStepInfo, resolvedValue, nonNullableFieldWasNullException);
+            return newLeafExecutionResultNode()
+                    .executionStepInfo(executionStepInfo)
+                    .resolvedValue(resolvedValue)
+                    .nonNullableFieldWasNullException(nonNullableFieldWasNullException)
+                    .build();
         }
         if (fetchedValueAnalysis.isNullValue()) {
-            return new LeafExecutionResultNode(executionStepInfo, resolvedValue, null);
+            return newLeafExecutionResultNode()
+                    .executionStepInfo(executionStepInfo)
+                    .resolvedValue(resolvedValue)
+                    .nonNullableFieldWasNullException(null)
+                    .build();
         }
         if (fetchedValueAnalysis.getValueType() == FetchedValueAnalysis.FetchedValueType.OBJECT) {
             return createUnresolvedNode(fetchedValueAnalysis);
@@ -33,11 +43,18 @@ public class ResultNodesCreator {
         if (fetchedValueAnalysis.getValueType() == FetchedValueAnalysis.FetchedValueType.LIST) {
             return createListResultNode(fetchedValueAnalysis);
         }
-        return new LeafExecutionResultNode(executionStepInfo, resolvedValue, null);
+        return newLeafExecutionResultNode()
+                .executionStepInfo(executionStepInfo)
+                .resolvedValue(resolvedValue)
+                .nonNullableFieldWasNullException(null)
+                .build();
     }
 
     private ExecutionResultNode createUnresolvedNode(FetchedValueAnalysis fetchedValueAnalysis) {
-        return new UnresolvedObjectResultNode(fetchedValueAnalysis.getExecutionStepInfo(), createResolvedValue(fetchedValueAnalysis));
+        return newUnresolvedExecutionResultNode()
+                .executionStepInfo(fetchedValueAnalysis.getExecutionStepInfo())
+                .resolvedValue(createResolvedValue(fetchedValueAnalysis))
+                .build();
     }
 
     private ResolvedValue createResolvedValue(FetchedValueAnalysis fetchedValueAnalysis) {
@@ -62,6 +79,10 @@ public class ResultNodesCreator {
                 .stream()
                 .map(this::createResultNode)
                 .collect(toList());
-        return new ListExecutionResultNode(fetchedValueAnalysis.getExecutionStepInfo(), createResolvedValue(fetchedValueAnalysis), executionResultNodes);
+        return ListExecutionResultNode.newListExecutionResultNode()
+                .executionStepInfo(fetchedValueAnalysis.getExecutionStepInfo())
+                .resolvedValue(createResolvedValue(fetchedValueAnalysis))
+                .children(executionResultNodes)
+                .build();
     }
 }
