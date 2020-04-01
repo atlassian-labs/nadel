@@ -1,5 +1,7 @@
 package graphql.nadel.result;
 
+import graphql.execution.ExecutionPath;
+
 import java.util.function.Consumer;
 
 public class RootExecutionResultNode extends ObjectExecutionResultNode {
@@ -32,19 +34,8 @@ public class RootExecutionResultNode extends ObjectExecutionResultNode {
 
         @Override
         public RootExecutionResultNode build() {
+            super.executionPath(ExecutionPath.rootPath());
             return new RootExecutionResultNode(this);
         }
     }
-
-
-//    @Override
-//    public ExecutionStepInfo getExecutionStepInfo() {
-//        return assertShouldNeverHappen("not supported at root node");
-//    }
-//
-//    @Override
-//    public ResolvedValue getResolvedValue() {
-//        return assertShouldNeverHappen("not supported at root node");
-//    }
-//
 }

@@ -3,6 +3,7 @@ package graphql.nadel.result;
 import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
+import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.NonNullableFieldWasNullException;
@@ -25,6 +26,7 @@ public abstract class ExecutionResultNode {
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
     private final ElapsedTime elapsedTime;
+    private final ExecutionPath executionPath;
 
     /*
      * we are trusting here the the children list is not modified on the outside (no defensive copy)
@@ -36,6 +38,7 @@ public abstract class ExecutionResultNode {
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(builderBase.errors);
         this.elapsedTime = builderBase.elapsedTime;
+        this.executionPath = Assert.assertNotNull(builderBase.executionPath);
 
         if (builderBase.nonNullableFieldWasNullException == null) {
             this.nonNullableFieldWasNullException = ResultNodesUtil.newNullableException(executionStepInfo, getChildren());
@@ -86,6 +89,9 @@ public abstract class ExecutionResultNode {
         return getResolvedValue().getCompletedValue();
     }
 
+    public ExecutionPath getExecutionPath() {
+        return executionPath;
+    }
 
     public ExecutionResultNode withNewChildren(List<ExecutionResultNode> children) {
         return transform(builder -> builder.children(children));
@@ -115,7 +121,8 @@ public abstract class ExecutionResultNode {
     @Override
     public String toString() {
         return "ExecutionResultNode{" +
-                "executionStepInfo=" + executionStepInfo +
+                "path=" + executionPath +
+                ", executionStepInfo=" + executionStepInfo +
                 ", resolvedValue=" + resolvedValue +
                 ", nonNullableFieldWasNullException=" + nonNullableFieldWasNullException +
                 ", children=" + children +
@@ -130,6 +137,7 @@ public abstract class ExecutionResultNode {
         protected List<ExecutionResultNode> children = new ArrayList<>();
         protected List<GraphQLError> errors = new ArrayList<>();
         protected ElapsedTime elapsedTime;
+        protected ExecutionPath executionPath;
 
         public BuilderBase() {
 
@@ -142,6 +150,7 @@ public abstract class ExecutionResultNode {
             this.children.addAll(existing.getChildren());
             this.errors.addAll(existing.getErrors());
             this.elapsedTime = existing.getElapsedTime();
+            this.executionPath = existing.getExecutionPath();
         }
 
         public abstract ExecutionResultNode build();
@@ -179,6 +188,11 @@ public abstract class ExecutionResultNode {
 
         public T elapsedTime(ElapsedTime elapsedTime) {
             this.elapsedTime = elapsedTime;
+            return (T) this;
+        }
+
+        public T executionPath(ExecutionPath executionPath) {
+            this.executionPath = executionPath;
             return (T) this;
         }
 

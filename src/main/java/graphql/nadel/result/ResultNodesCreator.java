@@ -26,6 +26,7 @@ public class ResultNodesCreator {
 
             return newLeafExecutionResultNode()
                     .executionStepInfo(executionStepInfo)
+                    .executionPath(executionStepInfo.getPath())
                     .resolvedValue(resolvedValue)
                     .nonNullableFieldWasNullException(nonNullableFieldWasNullException)
                     .build();
@@ -33,8 +34,8 @@ public class ResultNodesCreator {
         if (fetchedValueAnalysis.isNullValue()) {
             return newLeafExecutionResultNode()
                     .executionStepInfo(executionStepInfo)
+                    .executionPath(executionStepInfo.getPath())
                     .resolvedValue(resolvedValue)
-                    .nonNullableFieldWasNullException(null)
                     .build();
         }
         if (fetchedValueAnalysis.getValueType() == FetchedValueAnalysis.FetchedValueType.OBJECT) {
@@ -45,14 +46,15 @@ public class ResultNodesCreator {
         }
         return newLeafExecutionResultNode()
                 .executionStepInfo(executionStepInfo)
+                .executionPath(executionStepInfo.getPath())
                 .resolvedValue(resolvedValue)
-                .nonNullableFieldWasNullException(null)
                 .build();
     }
 
     private ExecutionResultNode createUnresolvedNode(FetchedValueAnalysis fetchedValueAnalysis) {
         return newUnresolvedExecutionResultNode()
                 .executionStepInfo(fetchedValueAnalysis.getExecutionStepInfo())
+                .executionPath(fetchedValueAnalysis.getExecutionStepInfo().getPath())
                 .resolvedValue(createResolvedValue(fetchedValueAnalysis))
                 .build();
     }
@@ -81,6 +83,7 @@ public class ResultNodesCreator {
                 .collect(toList());
         return ListExecutionResultNode.newListExecutionResultNode()
                 .executionStepInfo(fetchedValueAnalysis.getExecutionStepInfo())
+                .executionPath(fetchedValueAnalysis.getExecutionStepInfo().getPath())
                 .resolvedValue(createResolvedValue(fetchedValueAnalysis))
                 .children(executionResultNodes)
                 .build();

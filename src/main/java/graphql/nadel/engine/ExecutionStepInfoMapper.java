@@ -36,7 +36,7 @@ public class ExecutionStepInfoMapper {
         ExecutionStepInfo parentExecutionStepInfo = environment.parentExecutionStepInfo;
 
         GraphQLOutputType mappedType = mapFieldType(executionStepInfo, typeRenameMappings, overallSchema);
-        ExecutionPath mappedPath = pathMapper.mapPath(executionStepInfo, executionStepInfo.getField(), environment);
+        ExecutionPath mappedPath = pathMapper.mapPath(executionStepInfo.getPath(), executionStepInfo.getField(), environment);
 
         GraphQLObjectType mappedFieldContainer = mapFieldContainer(executionStepInfo, typeRenameMappings, overallSchema);
         GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedFieldContainer, executionStepInfo.getField().getName());

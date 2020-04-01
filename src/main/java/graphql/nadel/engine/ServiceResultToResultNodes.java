@@ -69,9 +69,12 @@ public class ServiceResultToResultNodes {
                 UnresolvedObjectResultNode unresolvedNode = (UnresolvedObjectResultNode) node;
                 ResolvedValue resolvedValue = unresolvedNode.getResolvedValue();
                 ExecutionStepInfo esi = unresolvedNode.getExecutionStepInfo();
+
                 FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, esi, resolvedValue);
                 List<ExecutionResultNode> children = fetchSubSelection(executionContext, fieldSubSelection, elapsedTimeForServiceCall);
-                TreeTransformerUtil.changeNode(context, newObjectExecutionResultNode().executionStepInfo(esi)
+                TreeTransformerUtil.changeNode(context, newObjectExecutionResultNode()
+                        .executionStepInfo(esi)
+                        .executionPath(unresolvedNode.getExecutionPath())
                         .resolvedValue(resolvedValue)
                         .children(children)
                         .elapsedTime(elapsedTimeForServiceCall)
@@ -106,7 +109,9 @@ public class ServiceResultToResultNodes {
 
     }
 
-    private List<ExecutionResultNode> fetchSubSelection(ExecutionContext executionContext, FieldSubSelection fieldSubSelection, ElapsedTime elapsedTime) {
+    private List<ExecutionResultNode> fetchSubSelection(ExecutionContext executionContext,
+                                                        FieldSubSelection fieldSubSelection,
+                                                        ElapsedTime elapsedTime) {
         List<FetchedValueAnalysis> fetchedValueAnalysisList = fetchAndAnalyze(executionContext, fieldSubSelection);
         return fetchedValueAnalysisToNodes(executionContext, fetchedValueAnalysisList, elapsedTime);
     }
@@ -121,6 +126,7 @@ public class ServiceResultToResultNodes {
                                                       MergedField mergedField,
                                                       ExecutionStepInfo executionStepInfo) {
         ExecutionStepInfo newExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(context, mergedField, executionStepInfo);
+
         FetchedValue fetchedValue = fetchValue(source, mergedField);
         return analyseValue(context, fetchedValue, newExecutionStepInfo);
     }

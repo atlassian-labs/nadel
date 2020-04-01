@@ -52,19 +52,23 @@ class ExecutionResultNodeUtil {
     }
 
     static LeafExecutionResultNode leaf(String name, String alias) {
-        newLeafExecutionResultNode().executionStepInfo(esi(name, alias)).resolvedValue(resolvedValue(name + "Val")).build()
+        def info = esi(name, alias)
+        newLeafExecutionResultNode().executionStepInfo(info).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).build()
     }
 
     static LeafExecutionResultNode leaf(String name) {
-        newLeafExecutionResultNode().executionStepInfo(esi(name)).resolvedValue(resolvedValue(name + "Val")).build()
+        def info = esi(name)
+        newLeafExecutionResultNode().executionStepInfo(info).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).build()
     }
 
     static ObjectExecutionResultNode object(String name, List<ExecutionResultNode> children) {
-        newObjectExecutionResultNode().executionStepInfo(esi(name)).resolvedValue(resolvedValue(name + "Val")).children(children).build()
+        def info = esi(name)
+        newObjectExecutionResultNode().executionStepInfo(info).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).children(children).build()
     }
 
     static ListExecutionResultNode list(String name, List<ExecutionResultNode> children) {
-        newListExecutionResultNode().executionStepInfo(esi(name)).resolvedValue(resolvedValue(name + "Val")).children(children).build()
+        def info = esi(name)
+        newListExecutionResultNode().executionStepInfo(info).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).children(children).build()
     }
 
     static RootExecutionResultNode root(List<ExecutionResultNode> children) {

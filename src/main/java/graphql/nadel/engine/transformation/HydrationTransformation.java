@@ -9,7 +9,6 @@ import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
-import graphql.nadel.engine.HydrationInputNode;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
@@ -25,6 +24,7 @@ import java.util.List;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
+import static graphql.nadel.engine.HydrationInputNode.newHydrationInputNode;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
@@ -154,8 +154,10 @@ public class HydrationTransformation extends FieldTransformation {
             // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
             return changeFieldInResultNode(leafNode, getOriginalField());
         } else {
-            return HydrationInputNode.newHydrationInputNode().hydrationTransformation(this)
+            return newHydrationInputNode()
+                    .hydrationTransformation(this)
                     .executionStepInfo(correctESI)
+                    .executionPath(correctESI.getPath())
                     .resolvedValue(leafNode.getResolvedValue())
                     .elapsedTime(leafNode.getElapsedTime())
                     .normalizedField(matchingNormalizedField)

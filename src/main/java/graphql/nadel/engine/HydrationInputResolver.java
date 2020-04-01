@@ -448,6 +448,7 @@ public class HydrationInputResolver {
                 .build();
         return LeafExecutionResultNode.newLeafExecutionResultNode()
                 .executionStepInfo(executionStepInfo)
+                .executionPath(executionStepInfo.getPath())
                 .resolvedValue(resolvedValue)
                 .elapsedTime(elapsedTime)
                 .build();

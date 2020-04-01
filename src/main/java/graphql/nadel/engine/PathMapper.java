@@ -9,8 +9,8 @@ import java.util.List;
 
 public class PathMapper {
 
-    public ExecutionPath mapPath(ExecutionStepInfo executionStepInfo, MergedField mergedField, UnapplyEnvironment environment) {
-        List<Object> fieldSegments = patchLastFieldName(executionStepInfo, mergedField);
+    public ExecutionPath mapPath(ExecutionPath executionPath, MergedField mergedField, UnapplyEnvironment environment) {
+        List<Object> fieldSegments = patchLastFieldName(executionPath, mergedField);
 
         ExecutionStepInfo parentExecutionStepInfo = environment.parentExecutionStepInfo;
         ExecutionPath parentPath = parentExecutionStepInfo.getPath();
@@ -30,10 +30,9 @@ public class PathMapper {
         return ExecutionPath.fromList(fieldSegments);
     }
 
-    private List<Object> patchLastFieldName(ExecutionStepInfo fieldStepInfo, MergedField mergedField) {
+    private List<Object> patchLastFieldName(ExecutionPath executionPath, MergedField mergedField) {
         String fieldName = mergedField.getResultKey();
-        ExecutionPath fieldPath = fieldStepInfo.getPath();
-        List<Object> fieldSegments = fieldPath.toList();
+        List<Object> fieldSegments = executionPath.toList();
         for (int i = fieldSegments.size() - 1; i >= 0; i--) {
             Object segment = fieldSegments.get(i);
             if (segment instanceof String) {

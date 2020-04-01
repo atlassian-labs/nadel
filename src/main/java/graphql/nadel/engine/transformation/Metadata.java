@@ -59,11 +59,12 @@ public class Metadata {
     }
 
     public void addProcessedTransformation(ExecutionPath executionPath) {
-//        System.out.println("field: " + AstPrinter.printAst(field) + " with id: " + NodeId.getId(field));
+//        System.out.println("processed path: " + executionPath);
         processedTransformation.add(executionPath);
     }
 
     public boolean isTransformationProcessed(ExecutionPath path) {
+//        System.out.println(" checking : " + path);
         return processedTransformation.contains(path);
     }
 }

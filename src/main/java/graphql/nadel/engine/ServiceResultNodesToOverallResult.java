@@ -53,6 +53,7 @@ import static java.util.Collections.singletonList;
 public class ServiceResultNodesToOverallResult {
 
     ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
+    PathMapper pathMapper = new PathMapper();
 
     ResolvedValueMapper resolvedValueMapper = new ResolvedValueMapper();
 
@@ -210,6 +211,7 @@ public class ServiceResultNodesToOverallResult {
 
         LeafExecutionResultNode removedNode = LeafExecutionResultNode.newLeafExecutionResultNode()
                 .executionStepInfo(esi)
+                .executionPath(esi.getPath())
                 .resolvedValue(resolvedValue)
                 .errors(singletonList(error))
                 .build();
@@ -406,17 +408,6 @@ public class ServiceResultNodesToOverallResult {
         ExecutionStepInfo mappedEsi = executionStepInfoMapper.mapExecutionStepInfo(node.getExecutionStepInfo(), environment);
         ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node, environment);
         return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue);
-
-//        List<GraphQLError> errors = context.thisNode().getErrors();
-//
-//        if (node instanceof LeafExecutionResultNode) {
-//            return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue)
-//                    .withNewErrors(errors);
-//        }
-//
-//        List<ExecutionResultNode> children = context.thisNode().getChildren();
-//        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue)
-//                .withNewChildren(children);
     }
 
     private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
@@ -432,16 +423,19 @@ public class ServiceResultNodesToOverallResult {
         Set<FieldTransformation> transformations = new LinkedHashSet<>();
         List<Field> notTransformedFields = new ArrayList<>();
         for (Field field : node.getMergedField().getFields()) {
-            if (metadata.isTransformationProcessed(node.getExecutionStepInfo().getPath())) {
-//                continue;
-//                System.out.println(getId(field) + "  already processed");
+//            System.out.println("processing " + node.getExecutionPath());
+//            System.out.println("field id: " + getId(field) + " field: " + field.getName());
+
+            if (node.getExecutionPath().isListSegment()) {
+                notTransformedFields.add(field);
+                continue;
             }
+
             List<String> fieldIds = FieldMetadataUtil.getRootOfTransformationIds(field, metadata.getMetadataByFieldId());
             if (fieldIds.size() == 0) {
                 notTransformedFields.add(field);
                 continue;
             }
-            metadata.addProcessedTransformation(node.getExecutionStepInfo().getPath());
             for (String fieldId : fieldIds) {
                 FieldTransformation fieldTransformation = transformationMap.get(fieldId);
                 transformations.add(fieldTransformation);
