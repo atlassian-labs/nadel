@@ -25,7 +25,9 @@ public class ResultNodesCreator {
             NonNullableFieldWasNullException nonNullableFieldWasNullException = new NonNullableFieldWasNullException(executionStepInfo, executionStepInfo.getPath());
 
             return newLeafExecutionResultNode()
-                    .executionStepInfo(executionStepInfo)
+                    .field(executionStepInfo.getField())
+                    .objectType(executionStepInfo.getFieldContainer())
+                    .fieldDefinition(executionStepInfo.getFieldDefinition())
                     .executionPath(executionStepInfo.getPath())
                     .resolvedValue(resolvedValue)
                     .nonNullableFieldWasNullException(nonNullableFieldWasNullException)
@@ -33,7 +35,9 @@ public class ResultNodesCreator {
         }
         if (fetchedValueAnalysis.isNullValue()) {
             return newLeafExecutionResultNode()
-                    .executionStepInfo(executionStepInfo)
+                    .field(executionStepInfo.getField())
+                    .objectType(executionStepInfo.getFieldContainer())
+                    .fieldDefinition(executionStepInfo.getFieldDefinition())
                     .executionPath(executionStepInfo.getPath())
                     .resolvedValue(resolvedValue)
                     .build();
@@ -45,7 +49,9 @@ public class ResultNodesCreator {
             return createListResultNode(fetchedValueAnalysis);
         }
         return newLeafExecutionResultNode()
-                .executionStepInfo(executionStepInfo)
+                .field(executionStepInfo.getField())
+                .objectType(executionStepInfo.getFieldContainer())
+                .fieldDefinition(executionStepInfo.getFieldDefinition())
                 .executionPath(executionStepInfo.getPath())
                 .resolvedValue(resolvedValue)
                 .build();
@@ -81,9 +87,12 @@ public class ResultNodesCreator {
                 .stream()
                 .map(this::createResultNode)
                 .collect(toList());
+        ExecutionStepInfo executionStepInfo = fetchedValueAnalysis.getExecutionStepInfo();
         return ListExecutionResultNode.newListExecutionResultNode()
-                .executionStepInfo(fetchedValueAnalysis.getExecutionStepInfo())
-                .executionPath(fetchedValueAnalysis.getExecutionStepInfo().getPath())
+                .field(executionStepInfo.getField())
+                .objectType(executionStepInfo.getFieldContainer())
+                .fieldDefinition(executionStepInfo.getFieldDefinition())
+                .executionPath(executionStepInfo.getPath())
                 .resolvedValue(createResolvedValue(fetchedValueAnalysis))
                 .children(executionResultNodes)
                 .build();

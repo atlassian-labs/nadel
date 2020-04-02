@@ -6,6 +6,8 @@ import graphql.nadel.result.LeafExecutionResultNode;
 
 import java.util.function.Consumer;
 
+import static graphql.Assert.assertNotNull;
+
 public class HydrationInputNode extends LeafExecutionResultNode {
 
     private final HydrationTransformation hydrationTransformation;
@@ -16,6 +18,7 @@ public class HydrationInputNode extends LeafExecutionResultNode {
         super(builder, null);
         this.hydrationTransformation = builder.hydrationTransformation;
         this.normalizedField = builder.normalizedField;
+        assertNotNull(getField());
     }
 
     public static Builder newHydrationInputNode() {

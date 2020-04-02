@@ -3,8 +3,6 @@ package graphql.nadel.engine;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
-import graphql.execution.ExecutionPath;
-import graphql.execution.ExecutionStepInfo;
 import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.language.Argument;
 import graphql.language.ArrayValue;
@@ -30,7 +28,6 @@ import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.ListExecutionResultNode;
 import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
-import graphql.nadel.util.ExecutionPathUtils;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
@@ -51,8 +48,8 @@ import static graphql.Assert.assertTrue;
 import static graphql.language.Field.newField;
 import static graphql.nadel.engine.ArtificialFieldUtils.addObjectIdentifier;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
-import static graphql.nadel.engine.StrategyUtil.changeEsiInResultNode;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
+import static graphql.nadel.engine.StrategyUtil.copyTypeInformation;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
 import static graphql.nadel.engine.StrategyUtil.groupNodesIntoBatchesByField;
 import static graphql.nadel.util.FpKit.filter;
@@ -214,7 +211,6 @@ public class HydrationInputResolver {
                                                                                HydrationInputNode hydrationInputNode,
                                                                                Map<Service, Object> serviceContexts) {
         HydrationTransformation hydrationTransformation = hydrationInputNode.getHydrationTransformation();
-        ExecutionStepInfo hydratedFieldStepInfo = hydrationInputNode.getExecutionStepInfo();
 
         Field originalField = hydrationTransformation.getOriginalField();
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
@@ -227,7 +223,6 @@ public class HydrationInputResolver {
         Operation operation = Operation.QUERY;
         String operationName = buildOperationName(service, executionContext);
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
-        ExecutionStepInfo esi = hydrationInputNode.getExecutionStepInfo();
 
         QueryTransformationResult queryTransformationResult = queryTransformer
                 .transformHydratedTopLevelField(
@@ -243,7 +238,7 @@ public class HydrationInputResolver {
                 );
 
 
-        fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
+//        fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
 
         CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
                 .execute(executionContext, queryTransformationResult, service, operation,
@@ -254,7 +249,7 @@ public class HydrationInputResolver {
                 .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
                         forkJoinPool,
                         fieldTracking,
-                        hydratedFieldStepInfo,
+                        hydrationInputNode,
                         hydrationTransformation,
                         resultNode,
                         hydrationInputNode.getNormalizedField(),
@@ -284,7 +279,7 @@ public class HydrationInputResolver {
     private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(ExecutionId executionId,
                                                                               ForkJoinPool forkJoinPool,
                                                                               FieldTracking fieldTracking,
-                                                                              ExecutionStepInfo hydratedFieldStepInfo,
+                                                                              HydrationInputNode hydrationInputNode,
                                                                               HydrationTransformation hydrationTransformation,
                                                                               RootExecutionResultNode rootResultNode,
                                                                               NormalizedQueryField rootNormalizedField,
@@ -292,14 +287,25 @@ public class HydrationInputResolver {
                                                                               NadelContext nadelContext
     ) {
 
-        synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
+//        synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
 
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformationByResultField();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
-                .convertChildren(executionId, forkJoinPool, rootResultNode.getChildren().get(0), rootNormalizedField, overallSchema, hydratedFieldStepInfo, true, false, transformationByResultField, typeRenameMappings, nadelContext, queryTransformationResult.getRemovedFieldMap());
+                .convertChildren(executionId,
+                        forkJoinPool,
+                        rootResultNode.getChildren().get(0),
+                        rootNormalizedField,
+                        overallSchema,
+                        hydrationInputNode,
+                        true,
+                        false,
+                        transformationByResultField,
+                        typeRenameMappings,
+                        nadelContext,
+                        queryTransformationResult.getRemovedFieldMap());
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
-        firstTopLevelResultNode = changeEsiInResultNode(firstTopLevelResultNode, hydratedFieldStepInfo);
+        firstTopLevelResultNode = copyTypeInformation(hydrationInputNode, firstTopLevelResultNode);
 
         return changeFieldInResultNode(firstTopLevelResultNode, hydrationTransformation.getOriginalField());
     }
@@ -327,8 +333,6 @@ public class HydrationInputResolver {
                 .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType, serviceExecutionHooks, service, serviceContexts.get(service));
 
 
-        List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputs, ExecutionResultNode::getExecutionStepInfo);
-        fieldTracking.fieldsDispatched(hydratedFieldStepInfos);
         return serviceExecutor
                 .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), true)
                 .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, fieldTracking, hydrationInputs, resultNode, queryTransformationResult))
@@ -377,8 +381,6 @@ public class HydrationInputResolver {
                                                                                    RootExecutionResultNode rootResultNode,
                                                                                    QueryTransformationResult queryTransformationResult) {
 
-        List<ExecutionStepInfo> hydratedFieldStepInfos = map(hydrationInputNodes, ExecutionResultNode::getExecutionStepInfo);
-        synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfos);
 
         if (rootResultNode.getChildren().get(0) instanceof LeafExecutionResultNode) {
             // we only expect a null value here
@@ -386,7 +388,6 @@ public class HydrationInputResolver {
             List<ExecutionResultNode> result = new ArrayList<>();
             boolean first = true;
             for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
-                ExecutionStepInfo executionStepInfo = hydrationInputNode.getExecutionStepInfo();
                 ExecutionResultNode resultNode = createNullValue(hydrationInputNode);
                 if (first) {
                     resultNode = resultNode.withNewErrors(rootResultNode.getErrors());
@@ -407,7 +408,6 @@ public class HydrationInputResolver {
         boolean first = true;
         ForkJoinPool forkJoinPool = getNadelContext(executionContext).getForkJoinPool();
         for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
-            ExecutionStepInfo executionStepInfo = hydrationInputNode.getExecutionStepInfo();
             ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
@@ -417,7 +417,7 @@ public class HydrationInputResolver {
                         matchingResolvedNode,
                         hydrationInputNode.getNormalizedField(),
                         overallSchema,
-                        executionStepInfo,
+                        hydrationInputNode,
                         true,
                         true,
                         transformationByResultField,
@@ -440,15 +440,16 @@ public class HydrationInputResolver {
     }
 
     private LeafExecutionResultNode createNullValue(HydrationInputNode inputNode) {
-        ExecutionStepInfo executionStepInfo = inputNode.getExecutionStepInfo();
         ElapsedTime elapsedTime = inputNode.getElapsedTime();
         ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
                 .localContext(null)
                 .nullValue(true)
                 .build();
         return LeafExecutionResultNode.newLeafExecutionResultNode()
-                .executionStepInfo(executionStepInfo)
-                .executionPath(executionStepInfo.getPath())
+                .objectType(inputNode.getObjectType())
+                .field(inputNode.getField())
+                .executionPath(inputNode.getExecutionPath())
+                .fieldDefinition(inputNode.getFieldDefinition())
                 .resolvedValue(resolvedValue)
                 .elapsedTime(elapsedTime)
                 .build();
@@ -476,24 +477,24 @@ public class HydrationInputResolver {
     }
 
 
-    private void synthesizeHydratedParentIfNeeded(FieldTracking fieldTracking, List<ExecutionStepInfo> hydratedFieldStepInfos) {
-        for (ExecutionStepInfo hydratedFieldStepInfo : hydratedFieldStepInfos) {
-            synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
-        }
-    }
+//    private void synthesizeHydratedParentIfNeeded(FieldTracking fieldTracking, List<ExecutionStepInfo> hydratedFieldStepInfos) {
+//        for (ExecutionStepInfo hydratedFieldStepInfo : hydratedFieldStepInfos) {
+//            synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
+//        }
+//    }
 
-    private void synthesizeHydratedParentIfNeeded(FieldTracking fieldTracking, ExecutionStepInfo hydratedFieldStepInfo) {
-        ExecutionPath path = hydratedFieldStepInfo.getPath();
-        if (ExecutionPathUtils.isListEndingPath(path)) {
-            //
-            // a path like /issues/comments[0] wont ever have had a /issues/comments path completed but the tracing spec needs
-            // one so we make one
-            ExecutionPath newPath = ExecutionPathUtils.removeLastSegment(path);
-            ExecutionStepInfo newStepInfo = hydratedFieldStepInfo.transform(builder -> builder.path(newPath));
-            fieldTracking.fieldCompleted(newStepInfo);
-        }
-
-    }
+//    private void synthesizeHydratedParentIfNeeded(FieldTracking fieldTracking, ExecutionStepInfo hydratedFieldStepInfo) {
+//        ExecutionPath path = hydratedFieldStepInfo.getPath();
+//        if (ExecutionPathUtils.isListEndingPath(path)) {
+//            //
+//            // a path like /issues/comments[0] wont ever have had a /issues/comments path completed but the tracing spec needs
+//            // one so we make one
+//            ExecutionPath newPath = ExecutionPathUtils.removeLastSegment(path);
+//            ExecutionStepInfo newStepInfo = hydratedFieldStepInfo.transform(builder -> builder.path(newPath));
+//            fieldTracking.fieldCompleted(newStepInfo);
+//        }
+//
+//    }
 
 
     @SuppressWarnings("unused")

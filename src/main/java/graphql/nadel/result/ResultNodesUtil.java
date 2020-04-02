@@ -5,9 +5,10 @@ import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
 import graphql.GraphQLError;
 import graphql.Internal;
-import graphql.execution.ExecutionStepInfo;
 import graphql.execution.NonNullableFieldWasNullError;
 import graphql.execution.NonNullableFieldWasNullException;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLTypeUtil;
 import graphql.util.NodeLocation;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
@@ -91,8 +92,7 @@ public class ResultNodesUtil {
         }
 
         if (root instanceof UnresolvedObjectResultNode) {
-            ExecutionStepInfo executionStepInfo = root.getExecutionStepInfo();
-            return data("Not resolved : " + executionStepInfo.getPath() + " with field " + executionStepInfo.getField(), emptyList());
+            return data("Not resolved : " + root.getExecutionPath() + " with field " + root.getField(), emptyList());
         }
         if (root instanceof ObjectExecutionResultNode) {
             Optional<NonNullableFieldWasNullException> childrenNonNullableException = root.getChildNonNullableException();
@@ -132,13 +132,13 @@ public class ResultNodesUtil {
 //        return result;
 //    }
 
-    public static NonNullableFieldWasNullException newNullableException(ExecutionStepInfo executionStepInfo, Collection<ExecutionResultNode> children) {
+    public static NonNullableFieldWasNullException newNullableException(GraphQLFieldDefinition fieldDefinition, Collection<ExecutionResultNode> children) {
         // can only happen for the root node
-        if (executionStepInfo == null) {
+        if (fieldDefinition == null) {
             return null;
         }
         Assert.assertNotNull(children);
-        boolean listIsNonNull = executionStepInfo.isNonNullType();
+        boolean listIsNonNull = GraphQLTypeUtil.isNonNull(fieldDefinition.getType());
         if (listIsNonNull) {
             Optional<NonNullableFieldWasNullException> firstNonNullableException = getFirstNonNullableException(children);
             if (firstNonNullableException.isPresent()) {

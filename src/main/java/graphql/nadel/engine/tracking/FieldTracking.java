@@ -96,27 +96,26 @@ public class FieldTracking {
     }
 
     private synchronized void completeNodes(List<ExecutionResultNode> resultNodes, Throwable throwable) {
-        for (ExecutionResultNode resultNode : resultNodes) {
-
-            ExecutionStepInfo stepInfo = resultNode.getExecutionStepInfo();
-
-            // the reason we dispatch during completion is because sub fields are not visited
-            // during the initial service call and hence they are never seen until we complete
-            // the parent top level field
-            dispatchIfNeeded(stepInfo);
-
-            //
-            // hydrated fields are the exception - they have started to execute but they still need to be completed
-            // we have another call back path for them
-            if (isHydration(resultNode)) {
-                continue;
-            }
-            completeNode(stepInfo, resultNode, throwable);
-
-            // and go down and complete the children
-            List<ExecutionResultNode> children = resultNode.getChildren();
-            completeNodes(children, throwable);
-        }
+//        for (ExecutionResultNode resultNode : resultNodes) {
+//
+//
+//            // the reason we dispatch during completion is because sub fields are not visited
+//            // during the initial service call and hence they are never seen until we complete
+//            // the parent top level field
+//            dispatchIfNeeded(stepInfo);
+//
+//            //
+//            // hydrated fields are the exception - they have started to execute but they still need to be completed
+//            // we have another call back path for them
+//            if (isHydration(resultNode)) {
+//                continue;
+//            }
+//            completeNode(stepInfo, resultNode, throwable);
+//
+//            // and go down and complete the children
+//            List<ExecutionResultNode> children = resultNode.getChildren();
+//            completeNodes(children, throwable);
+//        }
     }
 
     private synchronized void completeNode(ExecutionStepInfo stepInfo, ExecutionResultNode resultNode, Throwable throwable) {

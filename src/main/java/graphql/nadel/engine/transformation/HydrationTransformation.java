@@ -1,13 +1,12 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.execution.ExecutionStepInfo;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
-import graphql.nadel.engine.ExecutionStepInfoMapper;
+import graphql.nadel.engine.ExecutionResultNodeMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
@@ -24,6 +23,7 @@ import java.util.List;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
+import static graphql.execution.MergedField.newMergedField;
 import static graphql.nadel.engine.HydrationInputNode.newHydrationInputNode;
 import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
@@ -36,7 +36,7 @@ public class HydrationTransformation extends FieldTransformation {
 
     private UnderlyingServiceHydration underlyingServiceHydration;
 
-    ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
+    ExecutionResultNodeMapper executionResultNodeMapper = new ExecutionResultNodeMapper();
 
 
     public HydrationTransformation(UnderlyingServiceHydration underlyingServiceHydration) {
@@ -77,33 +77,33 @@ public class HydrationTransformation extends FieldTransformation {
     }
 
     @Override
-    public UnapplyResult unapplyResultNode(ExecutionResultNode transformedNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+    public UnapplyResult unapplyResultNode(ExecutionResultNode node, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
 
-        NormalizedQueryField matchingNormalizedField = getMatchingNormalizedQueryFieldBasedOnParent(environment.parentExecutionStepInfo);
+        NormalizedQueryField matchingNormalizedField = getMatchingNormalizedQueryFieldBasedOnParent(environment.correctParentTypes);
 
         // we can have a list of hydration inputs. E.g.: $source.userIds (this is a list of leafs)
         // or we can have a list of things inside the path: e.g.: $source.issues.userIds (this is a list of objects)
-        if (transformedNode instanceof ListExecutionResultNode) {
-            if (transformedNode.getChildren().size() == 0) {
-                return handleEmptyList((ListExecutionResultNode) transformedNode, allTransformations, environment);
+        if (node instanceof ListExecutionResultNode) {
+            if (node.getChildren().size() == 0) {
+                return handleEmptyList((ListExecutionResultNode) node, allTransformations, environment);
             }
-            ExecutionResultNode child = transformedNode.getChildren().get(0);
+            ExecutionResultNode child = node.getChildren().get(0);
             if (child instanceof LeafExecutionResultNode) {
-                return handleListOfLeafs((ListExecutionResultNode) transformedNode, allTransformations, environment, matchingNormalizedField);
+                return handleListOfLeafs((ListExecutionResultNode) node, allTransformations, environment, matchingNormalizedField);
             } else if (child instanceof ObjectExecutionResultNode) {
-                return handleListOfObjects((ListExecutionResultNode) transformedNode, allTransformations, environment, matchingNormalizedField);
+                return handleListOfObjects((ListExecutionResultNode) node, allTransformations, environment, matchingNormalizedField);
             } else {
                 return assertShouldNeverHappen("Not implemented yet");
             }
         }
 
-        LeafExecutionResultNode leafNode = geFirstLeafNode(transformedNode);
-        LeafExecutionResultNode changedNode = unapplyLeafNode(transformedNode.getExecutionStepInfo(), leafNode, allTransformations, environment, matchingNormalizedField);
+        LeafExecutionResultNode leafNode = geFirstLeafNode(node);
+        LeafExecutionResultNode changedNode = unapplyLeafNode(leafNode, allTransformations, environment, matchingNormalizedField);
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
     private UnapplyResult handleEmptyList(ListExecutionResultNode listNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
-        ListExecutionResultNode changedList = changeFieldInResultNode(listNode, getOriginalField());
+        ListExecutionResultNode changedList = listNode.transform(builder -> builder.field(newMergedField(getOriginalField()).build()));
         return new UnapplyResult(changedList, TraversalControl.ABORT);
     }
 
@@ -111,53 +111,50 @@ public class HydrationTransformation extends FieldTransformation {
         // if we have more merged fields than transformations
         // we handle here a list of objects with each object containing one node
 
-        ExecutionStepInfo mappedEsi = mapToOriginalFields(transformedNode.getExecutionStepInfo(), allTransformations, environment);
+        // this is ListNode->ObjectNode(with exact one leaf child)->LeafNode
+
+        ExecutionResultNode mappedNode = mapToOriginalFields(transformedNode, allTransformations, environment);
 
         ExecutionResultNode changedNode = mapChildren(transformedNode, objectChild -> {
-            environment.parentExecutionStepInfo = mappedEsi;
             LeafExecutionResultNode leaf = (LeafExecutionResultNode) objectChild.getChildren().get(0);
-            return unapplyLeafNode(objectChild.getExecutionStepInfo(), leaf, allTransformations, environment, matchingNormalizedField);
+            return unapplyLeafNode(leaf, allTransformations, environment, matchingNormalizedField);
         });
 
-        changedNode = changedNode.withNewExecutionStepInfo(mappedEsi);
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
 
     private UnapplyResult handleListOfLeafs(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment, NormalizedQueryField matchingNormalizedField) {
-        ExecutionStepInfo mappedEsi = mapToOriginalFields(listExecutionResultNode.getExecutionStepInfo(), allTransformations, environment);
+        ExecutionResultNode mappedNode = mapToOriginalFields(listExecutionResultNode, allTransformations, environment);
 
 
         List<ExecutionResultNode> newChildren = new ArrayList<>();
         for (ExecutionResultNode leafNode : listExecutionResultNode.getChildren()) {
-            environment.parentExecutionStepInfo = mappedEsi;
-            LeafExecutionResultNode newChild = unapplyLeafNode(leafNode.getExecutionStepInfo(), (LeafExecutionResultNode) leafNode, allTransformations, environment, matchingNormalizedField);
+            LeafExecutionResultNode newChild = unapplyLeafNode((LeafExecutionResultNode) leafNode, allTransformations, environment, matchingNormalizedField);
             newChildren.add(newChild);
         }
-        ExecutionResultNode changedNode = listExecutionResultNode.withNewExecutionStepInfo(mappedEsi).withNewChildren(newChildren);
+        ExecutionResultNode changedNode = mappedNode.withNewChildren(newChildren);
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
 
-    private LeafExecutionResultNode unapplyLeafNode(ExecutionStepInfo correctESI,
-                                                    LeafExecutionResultNode leafNode,
+    private LeafExecutionResultNode unapplyLeafNode(LeafExecutionResultNode leafNode,
                                                     List<FieldTransformation> allTransformations,
                                                     UnapplyEnvironment environment,
                                                     NormalizedQueryField matchingNormalizedField) {
-        ExecutionStepInfo leafESI = leafNode.getExecutionStepInfo();
 
-        // we need to build a correct ESI based on the leaf node and the current node for the overall schema
-        correctESI = correctESI.transform(builder -> builder.type(leafESI.getType()));
 
-        correctESI = mapToOriginalFields(correctESI, allTransformations, environment);
+        leafNode = (LeafExecutionResultNode) mapToOriginalFields(leafNode, allTransformations, environment);
         if (leafNode.getResolvedValue().isNullValue()) {
             // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
             return changeFieldInResultNode(leafNode, getOriginalField());
         } else {
             return newHydrationInputNode()
                     .hydrationTransformation(this)
-                    .executionStepInfo(correctESI)
-                    .executionPath(correctESI.getPath())
+                    .field(leafNode.getField())
+                    .objectType(leafNode.getObjectType())
+                    .fieldDefinition(leafNode.getFieldDefinition())
+                    .executionPath(leafNode.getExecutionPath())
                     .resolvedValue(leafNode.getResolvedValue())
                     .elapsedTime(leafNode.getElapsedTime())
                     .normalizedField(matchingNormalizedField)
@@ -165,10 +162,10 @@ public class HydrationTransformation extends FieldTransformation {
         }
     }
 
-    private ExecutionStepInfo mapToOriginalFields(ExecutionStepInfo esi,
-                                                  List<FieldTransformation> allTransformations,
-                                                  UnapplyEnvironment environment) {
-        esi = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, null);
-        return executionStepInfoMapper.mapExecutionStepInfo(esi, environment);
+    private ExecutionResultNode mapToOriginalFields(ExecutionResultNode node,
+                                                    List<FieldTransformation> allTransformations,
+                                                    UnapplyEnvironment environment) {
+        node = replaceFieldWithOriginalValue(allTransformations, node);
+        return executionResultNodeMapper.mapERNFromUnderlyingToOverall(node, environment);
     }
 }

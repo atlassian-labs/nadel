@@ -12,7 +12,7 @@ import spock.lang.Specification
 
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.esi
 
-class ExecutionStepInfoMapperTest extends Specification {
+class ExecutionResultNodeMapperTest extends Specification {
 
 
     def "maps list"() {
@@ -35,10 +35,10 @@ class ExecutionStepInfoMapperTest extends Specification {
                 .path(ExecutionPath.parse("/foo"))
                 .build()
 
-        ExecutionStepInfoMapper mapper = new ExecutionStepInfoMapper()
+        ExecutionResultNodeMapper mapper = new ExecutionResultNodeMapper()
         UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(rootExecutionStepInfo, false, false, [:], overallSchema)
         when:
-        def mappedInfo = mapper.mapExecutionStepInfo(executionStepInfo, unapplyEnvironment)
+        def mappedInfo = mapper.mapERNFromUnderlyingToOverall(executionStepInfo, unapplyEnvironment)
 
 
         then:
@@ -66,10 +66,10 @@ class ExecutionStepInfoMapperTest extends Specification {
                 .path(ExecutionPath.parse("/foo"))
                 .build()
 
-        ExecutionStepInfoMapper mapper = new ExecutionStepInfoMapper()
+        ExecutionResultNodeMapper mapper = new ExecutionResultNodeMapper()
         UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(rootExecutionStepInfo, false, false, [:], overallSchema)
         when:
-        def mappedInfo = mapper.mapExecutionStepInfo(executionStepInfo, unapplyEnvironment)
+        def mappedInfo = mapper.mapERNFromUnderlyingToOverall(executionStepInfo, unapplyEnvironment)
 
 
         then:

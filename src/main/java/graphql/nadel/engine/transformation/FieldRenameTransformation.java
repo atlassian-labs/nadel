@@ -1,10 +1,9 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.execution.ExecutionStepInfo;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
-import graphql.nadel.engine.ExecutionStepInfoMapper;
+import graphql.nadel.engine.ExecutionResultNodeMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.result.ExecutionResultNode;
@@ -23,7 +22,7 @@ import static graphql.util.TreeTransformerUtil.changeNode;
 
 public class FieldRenameTransformation extends FieldTransformation {
 
-    ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
+    ExecutionResultNodeMapper executionResultNodeMapper = new ExecutionResultNodeMapper();
     private final FieldMappingDefinition mappingDefinition;
 
     public FieldRenameTransformation(FieldMappingDefinition mappingDefinition) {
@@ -60,13 +59,11 @@ public class FieldRenameTransformation extends FieldTransformation {
     public UnapplyResult unapplyResultNode(ExecutionResultNode executionResultNode,
                                            List<FieldTransformation> allTransformations,
                                            UnapplyEnvironment environment) {
-        ExecutionResultNode subTree = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
-        ExecutionStepInfo esi = subTree.getExecutionStepInfo();
+        // the result tree should be in terms of the overall schema
+        ExecutionResultNode resultNode = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
 
-        esi = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, environment.parentExecutionStepInfo);
-        esi = executionStepInfoMapper.mapExecutionStepInfo(esi, environment);
-        ExecutionResultNode resultNode = subTree.withNewExecutionStepInfo(esi);
-
+        resultNode = replaceFieldWithOriginalValue(allTransformations, resultNode);
+        resultNode = executionResultNodeMapper.mapERNFromUnderlyingToOverall(resultNode, environment);
         resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, environment);
 
         return new UnapplyResult(resultNode, TraversalControl.CONTINUE);
@@ -78,8 +75,9 @@ public class FieldRenameTransformation extends FieldTransformation {
 
         if (node instanceof ListExecutionResultNode) {
             return mapChildren(node, child -> {
-                ExecutionStepInfo newEsi = replaceFieldsAndTypesWithOriginalValues(allTransformations, child.getExecutionStepInfo(), environment.parentExecutionStepInfo);
-                return replaceFieldsAndTypesInsideList(child.withNewExecutionStepInfo(newEsi),
+                ExecutionResultNode newChild = replaceFieldWithOriginalValue(allTransformations, child);
+                newChild = executionResultNodeMapper.mapERNFromUnderlyingToOverall(newChild, environment);
+                return replaceFieldsAndTypesInsideList(newChild,
                         allTransformations,
                         environment);
             });

@@ -1,11 +1,20 @@
 package graphql.nadel.result;
 
+import graphql.execution.ExecutionStepInfo;
+
 import java.util.function.Consumer;
 
 public class UnresolvedObjectResultNode extends ObjectExecutionResultNode {
 
+    private final ExecutionStepInfo executionStepInfo;
+
     private UnresolvedObjectResultNode(Builder builder) {
         super(builder, null);
+        this.executionStepInfo = builder.executionStepInfo;
+    }
+
+    public ExecutionStepInfo getExecutionStepInfo() {
+        return executionStepInfo;
     }
 
     public static Builder newUnresolvedExecutionResultNode() {
@@ -21,12 +30,20 @@ public class UnresolvedObjectResultNode extends ObjectExecutionResultNode {
 
     public static class Builder extends BuilderBase<Builder> {
 
+        private ExecutionStepInfo executionStepInfo;
+
         public Builder() {
 
         }
 
         public Builder(UnresolvedObjectResultNode existing) {
             super(existing);
+            this.executionStepInfo = existing.getExecutionStepInfo();
+        }
+
+        public Builder executionStepInfo(ExecutionStepInfo executionStepInfo) {
+            this.executionStepInfo = executionStepInfo;
+            return this;
         }
 
         @Override

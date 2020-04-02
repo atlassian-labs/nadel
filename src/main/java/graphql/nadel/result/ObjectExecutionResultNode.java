@@ -4,12 +4,15 @@ import graphql.Internal;
 
 import java.util.function.Consumer;
 
+import static graphql.Assert.assertNotNull;
+
 @Internal
 public class ObjectExecutionResultNode extends ExecutionResultNode {
 
 
     private ObjectExecutionResultNode(Builder builder) {
         super(builder);
+        assertNotNull(getField());
     }
 
     // hack for subclasses to pass in BuilderBase instances

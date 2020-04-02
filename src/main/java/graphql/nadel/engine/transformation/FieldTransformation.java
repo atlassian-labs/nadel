@@ -2,7 +2,6 @@ package graphql.nadel.engine.transformation;
 
 import graphql.Assert;
 import graphql.execution.ExecutionPath;
-import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
@@ -11,7 +10,6 @@ import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
-import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 
 import java.util.ArrayList;
@@ -20,7 +18,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertTrue;
-import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 
 public abstract class FieldTransformation {
 
@@ -69,8 +66,8 @@ public abstract class FieldTransformation {
         return getApplyEnvironment().getFieldDefinitionOverall();
     }
 
-    protected NormalizedQueryField getMatchingNormalizedQueryFieldBasedOnParent(ExecutionStepInfo executionStepInfo) {
-        ExecutionPath path = executionStepInfo.getPath();
+    protected NormalizedQueryField getMatchingNormalizedQueryFieldBasedOnParent(ExecutionResultNode parent) {
+        ExecutionPath path = parent.getExecutionPath();
         List<String> parentQueryPath = executionPathToQueryPath(path);
 
         List<NormalizedQueryField> normalizedFields = getApplyEnvironment().getNormalizedQueryFieldsOverall();
@@ -79,9 +76,9 @@ public abstract class FieldTransformation {
             if (!parentQueryPath.equals(parentNormalizedField.getPath())) {
                 continue;
             }
-            if (parentNormalizedField.getObjectType() == executionStepInfo.getFieldContainer() &&
-                    parentNormalizedField.getFieldDefinition() == executionStepInfo.getFieldDefinition() &&
-                    parentNormalizedField.getResultKey().equals(executionStepInfo.getField().getResultKey())) {
+            if (parentNormalizedField.getObjectType() == parent.getObjectType() &&
+                    parentNormalizedField.getFieldDefinition() == parent.getFieldDefinition() &&
+                    parentNormalizedField.getResultKey().equals(parent.getField().getResultKey())) {
                 return normalizedField;
             }
         }
@@ -96,8 +93,9 @@ public abstract class FieldTransformation {
                 .collect(Collectors.toList());
     }
 
-    protected ExecutionStepInfo replaceFieldsAndTypesWithOriginalValues(List<FieldTransformation> allTransformations, ExecutionStepInfo esi, ExecutionStepInfo parentEsi) {
-        MergedField underlyingMergedField = esi.getField();
+    protected ExecutionResultNode replaceFieldWithOriginalValue(List<FieldTransformation> allTransformations,
+                                                                ExecutionResultNode executionResultNode) {
+        MergedField underlyingMergedField = executionResultNode.getField();
         List<Field> underlyingFields = underlyingMergedField.getFields();
         assertTrue(allTransformations.size() == underlyingFields.size());
 
@@ -106,22 +104,23 @@ public abstract class FieldTransformation {
             newFields.add(fieldTransformation.getOriginalField());
         }
         MergedField newMergedField = MergedField.newMergedField(newFields).build();
+
         FieldTransformation fieldTransformation = allTransformations.get(0);
         GraphQLOutputType originalFieldType = fieldTransformation.getOriginalFieldType();
 
-        ExecutionStepInfo esiWithMappedField = esi.transform(builder -> {
-                    builder
-                            .field(newMergedField)
-                            .fieldDefinition(allTransformations.get(0).getOriginalFieldDefinition())
-                            .type(originalFieldType);
-                    if (parentEsi != null && unwrapAll(parentEsi.getType()) instanceof GraphQLObjectType) {
-                        builder.fieldContainer((GraphQLObjectType) unwrapAll(parentEsi.getType()));
-                    }
-                }
-
-        );
-        return esiWithMappedField;
+//        ExecutionStepInfo esiWithMappedField = esi.transform(builder -> {
+//                    builder
+//                            .field(newMergedField)
+//                            .fieldDefinition(allTransformations.get(0).getOriginalFieldDefinition())
+//                            .type(originalFieldType);
+//                    if (parentEsi != null && unwrapAll(parentEsi.getType()) instanceof GraphQLObjectType) {
+//                        builder.fieldContainer((GraphQLObjectType) unwrapAll(parentEsi.getType()));
+//                    }
+//                }
+//
+//        );
+        return executionResultNode.transform((builder -> builder.field(newMergedField)));
     }
-
+//
 
 }

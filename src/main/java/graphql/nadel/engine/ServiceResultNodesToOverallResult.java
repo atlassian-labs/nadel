@@ -4,7 +4,6 @@ import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionPath;
-import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.language.AbstractNode;
@@ -52,7 +51,7 @@ import static java.util.Collections.singletonList;
 
 public class ServiceResultNodesToOverallResult {
 
-    ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
+    ExecutionResultNodeMapper executionResultNodeMapper = new ExecutionResultNodeMapper();
     PathMapper pathMapper = new PathMapper();
 
     ResolvedValueMapper resolvedValueMapper = new ResolvedValueMapper();
@@ -67,12 +66,12 @@ public class ServiceResultNodesToOverallResult {
                                        ForkJoinPool forkJoinPool,
                                        ExecutionResultNode resultNode,
                                        GraphQLSchema overallSchema,
-                                       ExecutionStepInfo rootStepInfo,
+                                       ExecutionResultNode correctRootParentTypes,
                                        Map<String, FieldTransformation> transformationMap,
                                        Map<String, String> typeRenameMappings,
                                        NadelContext nadelContext,
                                        Metadata metadata) {
-        return convertImpl(executionId, forkJoinPool, resultNode, null, overallSchema, rootStepInfo, false, false, transformationMap, typeRenameMappings, false, nadelContext, metadata);
+        return convertImpl(executionId, forkJoinPool, resultNode, null, overallSchema, correctRootParentTypes, false, false, transformationMap, typeRenameMappings, false, nadelContext, metadata);
     }
 
     public ExecutionResultNode convertChildren(ExecutionId executionId,
@@ -80,14 +79,14 @@ public class ServiceResultNodesToOverallResult {
                                                ExecutionResultNode root,
                                                NormalizedQueryField normalizedRootField,
                                                GraphQLSchema overallSchema,
-                                               ExecutionStepInfo rootStepInfo,
+                                               ExecutionResultNode correctRootParentTypes,
                                                boolean isHydrationTransformation,
                                                boolean batched,
                                                Map<String, FieldTransformation> transformationMap,
                                                Map<String, String> typeRenameMappings,
                                                NadelContext nadelContext,
                                                Metadata metadata) {
-        return convertImpl(executionId, forkJoinPool, root, normalizedRootField, overallSchema, rootStepInfo, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, metadata);
+        return convertImpl(executionId, forkJoinPool, root, normalizedRootField, overallSchema, correctRootParentTypes, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, metadata);
     }
 
     private ExecutionResultNode convertImpl(ExecutionId executionId,
@@ -95,7 +94,7 @@ public class ServiceResultNodesToOverallResult {
                                             ExecutionResultNode root,
                                             NormalizedQueryField normalizedRootField,
                                             GraphQLSchema overallSchema,
-                                            ExecutionStepInfo rootStepInfo,
+                                            ExecutionResultNode correctRootParentTypes,
                                             boolean isHydrationTransformation,
                                             boolean batched,
                                             Map<String, FieldTransformation> transformationMapInput,
@@ -142,9 +141,9 @@ public class ServiceResultNodesToOverallResult {
                 List<FieldTransformation> transformations = new ArrayList<>(transformationsAndNotTransformedFields.getT1());
 //                List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
 
-                ExecutionStepInfo parentStepInfo = context.getParentContext().originalThisNode() == root ? rootStepInfo : context.getParentNode().getExecutionStepInfo();
+                ExecutionResultNode correctParentTypes = context.getParentContext().originalThisNode() == root ? correctRootParentTypes : context.getParentNode();
                 UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(
-                        parentStepInfo,
+                        correctParentTypes,
                         isHydrationTransformation,
                         batched,
                         typeRenameMappings,
@@ -198,20 +197,14 @@ public class ServiceResultNodesToOverallResult {
                 .nullValue(true)
                 .build();
 
-        ExecutionPath parentPath = parent.getExecutionStepInfo().getPath();
+        ExecutionPath parentPath = parent.getExecutionPath();
         ExecutionPath executionPath = parentPath.segment(normalizedQueryField.getResultKey());
 
-        ExecutionStepInfo esi = ExecutionStepInfo.newExecutionStepInfo()
-                .path(executionPath)
-                .type(normalizedQueryField.getFieldDefinition().getType())
-                .field(mergedField)
-                .fieldContainer(normalizedQueryField.getObjectType())
-                .parentInfo(parent.getExecutionStepInfo())
-                .build();
-
         LeafExecutionResultNode removedNode = LeafExecutionResultNode.newLeafExecutionResultNode()
-                .executionStepInfo(esi)
-                .executionPath(esi.getPath())
+                .executionPath(executionPath)
+                .field(mergedField)
+                .objectType(normalizedQueryField.getObjectType())
+                .fieldDefinition(normalizedQueryField.getFieldDefinition())
                 .resolvedValue(resolvedValue)
                 .errors(singletonList(error))
                 .build();
@@ -273,7 +266,7 @@ public class ServiceResultNodesToOverallResult {
                     mappedNode,
                     null,
                     unapplyEnvironment.overallSchema,
-                    unapplyEnvironment.parentExecutionStepInfo,
+                    unapplyEnvironment.correctParentTypes,
                     unapplyEnvironment.isHydrationTransformation,
                     unapplyEnvironment.batched,
                     transformationMap,
@@ -295,7 +288,7 @@ public class ServiceResultNodesToOverallResult {
                         unapplyResultNode,
                         null,
                         unapplyEnvironment.overallSchema,
-                        unapplyResultNode.getExecutionStepInfo(),
+                        unapplyResultNode,
                         unapplyEnvironment.isHydrationTransformation,
                         unapplyEnvironment.batched,
                         transformationMap,
@@ -405,9 +398,9 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
-        ExecutionStepInfo mappedEsi = executionStepInfoMapper.mapExecutionStepInfo(node.getExecutionStepInfo(), environment);
+        ExecutionResultNode mappedNode = executionResultNodeMapper.mapERNFromUnderlyingToOverall(node, environment);
         ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node, environment);
-        return node.withNewExecutionStepInfo(mappedEsi).withNewResolvedValue(mappedResolvedValue);
+        return mappedNode.transform(builder -> builder.resolvedValue(mappedResolvedValue));
     }
 
     private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
@@ -457,9 +450,8 @@ public class ServiceResultNodesToOverallResult {
         List<NormalizedQueryField> normalizedFields = assertNotNull(normalizedQueryFromAst.getNormalizedFieldsByFieldId(id));
 
         for (NormalizedQueryField normalizedField : normalizedFields) {
-            ExecutionStepInfo executionStepInfo = resultNode.getExecutionStepInfo();
-            if (executionStepInfo.getFieldContainer() == normalizedField.getObjectType() &&
-                    executionStepInfo.getFieldDefinition() == normalizedField.getFieldDefinition()) {
+            if (resultNode.getObjectType() == normalizedField.getObjectType() &&
+                    resultNode.getFieldDefinition() == normalizedField.getFieldDefinition()) {
                 return normalizedField;
             }
         }

@@ -81,7 +81,7 @@ public class NadelExecutionStrategy {
         return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
             Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
             List<CompletableFuture<RootExecutionResultNode>> resultNodes =
-                    executeTopLevelFields(executionContext, rootExecutionStepInfo, nadelContext, fieldTracking, operation, oneServiceExecutions);
+                    executeTopLevelFields(executionContext, nadelContext, fieldTracking, operation, oneServiceExecutions);
 
             CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
             return rootResult
@@ -129,7 +129,7 @@ public class NadelExecutionStrategy {
     }
 
 
-    private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(ExecutionContext executionContext, ExecutionStepInfo rootExecutionStepInfo, NadelContext nadelContext, FieldTracking fieldTracking, Operation operation, List<OneServiceExecution> oneServiceExecutions) {
+    private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(ExecutionContext executionContext, NadelContext nadelContext, FieldTracking fieldTracking, Operation operation, List<OneServiceExecution> oneServiceExecutions) {
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
 
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
@@ -163,7 +163,7 @@ public class NadelExecutionStrategy {
                                     nadelContext.getForkJoinPool(),
                                     resultNode,
                                     overallSchema,
-                                    rootExecutionStepInfo,
+                                    resultNode,
                                     transformationByResultField,
                                     typeRenameMappings,
                                     nadelContext,

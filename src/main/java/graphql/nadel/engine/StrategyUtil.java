@@ -28,6 +28,7 @@ import java.util.concurrent.ForkJoinPool;
 
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
+import static graphql.nadel.result.ObjectExecutionResultNode.newObjectExecutionResultNode;
 import static graphql.util.FpKit.mapEntries;
 
 public class StrategyUtil {
@@ -79,18 +80,30 @@ public class StrategyUtil {
         return executionInfo;
     }
 
+    public static <T extends ExecutionResultNode> T changeFieldInResultNode(T executionResultNode, MergedField newField) {
+        return (T) executionResultNode.transform(builder -> builder.field(newField));
+    }
+
     public static <T extends ExecutionResultNode> T changeFieldInResultNode(T executionResultNode, Field newField) {
         MergedField mergedField = MergedField.newMergedField(newField).build();
-        return (T) changeFieldInResultNode(executionResultNode, mergedField);
+        return (T) executionResultNode.transform(builder -> builder.field(mergedField));
     }
 
-    public static <T extends ExecutionResultNode> T changeEsiInResultNode(T executionResultNode, ExecutionStepInfo newEsi) {
-        return (T) executionResultNode.withNewExecutionStepInfo(newEsi);
+    public static <T extends ExecutionResultNode> T copyTypeInformation(ExecutionResultNode from, T to) {
+        return (T) to.transform(builder -> builder
+                .field(from.getField())
+                .objectType(from.getObjectType())
+                .fieldDefinition(from.getFieldDefinition()));
     }
 
-    public static <T extends ExecutionResultNode> T changeFieldInResultNode(T executionResultNode, MergedField mergedField) {
-        ExecutionStepInfo newStepInfo = executionResultNode.getExecutionStepInfo().transform(builder -> builder.field(mergedField));
-        return (T) executionResultNode.withNewExecutionStepInfo(newStepInfo);
+    public static ExecutionResultNode copyTypeInformation(ExecutionStepInfo from) {
+        return newObjectExecutionResultNode()
+                .field(from.getField())
+                .objectType(from.getFieldContainer())
+                .fieldDefinition(from.getFieldDefinition())
+                .executionPath(from.getPath())
+                .build();
     }
+
 
 }

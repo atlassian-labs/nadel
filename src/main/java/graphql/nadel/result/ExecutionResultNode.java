@@ -4,10 +4,11 @@ import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.ExecutionPath;
-import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.execution.NonNullableFieldWasNullException;
 import graphql.execution.nextgen.result.ResolvedValue;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLObjectType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,7 +21,7 @@ import static graphql.Assert.assertNotNull;
 @Internal
 public abstract class ExecutionResultNode {
 
-    private final ExecutionStepInfo executionStepInfo;
+    //    private final ExecutionStepInfo executionStepInfo;
     private final ResolvedValue resolvedValue;
     private final NonNullableFieldWasNullException nonNullableFieldWasNullException;
     private final List<ExecutionResultNode> children;
@@ -28,20 +29,28 @@ public abstract class ExecutionResultNode {
     private final ElapsedTime elapsedTime;
     private final ExecutionPath executionPath;
 
+    private final MergedField field;
+    private final GraphQLFieldDefinition fieldDefinition;
+    private final GraphQLObjectType objectType;
+
+
     /*
      * we are trusting here the the children list is not modified on the outside (no defensive copy)
      */
     protected ExecutionResultNode(BuilderBase builderBase) {
         this.resolvedValue = builderBase.resolvedValue;
-        this.executionStepInfo = builderBase.executionStepInfo;
         this.children = Collections.unmodifiableList(assertNotNull(builderBase.children));
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(builderBase.errors);
         this.elapsedTime = builderBase.elapsedTime;
-        this.executionPath = Assert.assertNotNull(builderBase.executionPath);
+        this.executionPath = assertNotNull(builderBase.executionPath);
+
+        this.field = builderBase.field;
+        this.fieldDefinition = builderBase.fieldDefinition;
+        this.objectType = builderBase.objectType;
 
         if (builderBase.nonNullableFieldWasNullException == null) {
-            this.nonNullableFieldWasNullException = ResultNodesUtil.newNullableException(executionStepInfo, getChildren());
+            this.nonNullableFieldWasNullException = ResultNodesUtil.newNullableException(fieldDefinition, getChildren());
         } else {
             this.nonNullableFieldWasNullException = builderBase.nonNullableFieldWasNullException;
         }
@@ -63,11 +72,19 @@ public abstract class ExecutionResultNode {
     }
 
     public MergedField getMergedField() {
-        return executionStepInfo.getField();
+        return field;
     }
 
-    public ExecutionStepInfo getExecutionStepInfo() {
-        return executionStepInfo;
+    public MergedField getField() {
+        return field;
+    }
+
+    public GraphQLFieldDefinition getFieldDefinition() {
+        return fieldDefinition;
+    }
+
+    public GraphQLObjectType getObjectType() {
+        return objectType;
     }
 
     public NonNullableFieldWasNullException getNonNullableFieldWasNullException() {
@@ -103,10 +120,6 @@ public abstract class ExecutionResultNode {
     }
 
     //
-    public ExecutionResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo) {
-        return transform(builder -> builder.executionStepInfo(executionStepInfo));
-    }
-
     public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
         return transform(builder -> builder.errors(errors));
     }
@@ -122,7 +135,6 @@ public abstract class ExecutionResultNode {
     public String toString() {
         return "ExecutionResultNode{" +
                 "path=" + executionPath +
-                ", executionStepInfo=" + executionStepInfo +
                 ", resolvedValue=" + resolvedValue +
                 ", nonNullableFieldWasNullException=" + nonNullableFieldWasNullException +
                 ", children=" + children +
@@ -131,7 +143,6 @@ public abstract class ExecutionResultNode {
     }
 
     public abstract static class BuilderBase<T extends BuilderBase<T>> {
-        protected ExecutionStepInfo executionStepInfo;
         protected ResolvedValue resolvedValue;
         protected NonNullableFieldWasNullException nonNullableFieldWasNullException;
         protected List<ExecutionResultNode> children = new ArrayList<>();
@@ -139,18 +150,26 @@ public abstract class ExecutionResultNode {
         protected ElapsedTime elapsedTime;
         protected ExecutionPath executionPath;
 
+        private MergedField field;
+        private GraphQLFieldDefinition fieldDefinition;
+        private GraphQLObjectType objectType;
+
+
         public BuilderBase() {
 
         }
 
         public BuilderBase(ExecutionResultNode existing) {
-            this.executionStepInfo = existing.getExecutionStepInfo();
             this.resolvedValue = existing.getResolvedValue();
             this.nonNullableFieldWasNullException = existing.getNonNullableFieldWasNullException();
             this.children.addAll(existing.getChildren());
             this.errors.addAll(existing.getErrors());
             this.elapsedTime = existing.getElapsedTime();
             this.executionPath = existing.getExecutionPath();
+            this.field = existing.field;
+            this.fieldDefinition = existing.fieldDefinition;
+            this.objectType = existing.objectType;
+
         }
 
         public abstract ExecutionResultNode build();
@@ -160,13 +179,24 @@ public abstract class ExecutionResultNode {
             return (T) this;
         }
 
-        public T executionStepInfo(ExecutionStepInfo executionStepInfo) {
-            this.executionStepInfo = executionStepInfo;
-            return (T) this;
-        }
 
         public T nonNullableFieldWasNullException(NonNullableFieldWasNullException nonNullableFieldWasNullException) {
             this.nonNullableFieldWasNullException = nonNullableFieldWasNullException;
+            return (T) this;
+        }
+
+        public T objectType(GraphQLObjectType objectType) {
+            this.objectType = objectType;
+            return (T) this;
+        }
+
+        public T fieldDefinition(GraphQLFieldDefinition fieldDefinition) {
+            this.fieldDefinition = fieldDefinition;
+            return (T) this;
+        }
+
+        public T field(MergedField field) {
+            this.field = field;
             return (T) this;
         }
 

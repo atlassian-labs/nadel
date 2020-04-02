@@ -73,8 +73,10 @@ public class ServiceResultToResultNodes {
                 FieldSubSelection fieldSubSelection = util.createFieldSubSelection(executionContext, esi, resolvedValue);
                 List<ExecutionResultNode> children = fetchSubSelection(executionContext, fieldSubSelection, elapsedTimeForServiceCall);
                 TreeTransformerUtil.changeNode(context, newObjectExecutionResultNode()
-                        .executionStepInfo(esi)
                         .executionPath(unresolvedNode.getExecutionPath())
+                        .field(esi.getField())
+                        .objectType(esi.getFieldContainer())
+                        .fieldDefinition(esi.getFieldDefinition())
                         .resolvedValue(resolvedValue)
                         .children(children)
                         .elapsedTime(elapsedTimeForServiceCall)
