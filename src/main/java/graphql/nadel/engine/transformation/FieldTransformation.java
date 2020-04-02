@@ -85,7 +85,7 @@ public abstract class FieldTransformation {
         return Assert.assertShouldNeverHappen("could not find matching normalized field");
     }
 
-    private List<String> executionPathToQueryPath(ExecutionPath executionPath) {
+    private static List<String> executionPathToQueryPath(ExecutionPath executionPath) {
         return executionPath.toList()
                 .stream()
                 .filter(o -> o instanceof String)
@@ -106,21 +106,22 @@ public abstract class FieldTransformation {
         MergedField newMergedField = MergedField.newMergedField(newFields).build();
 
         FieldTransformation fieldTransformation = allTransformations.get(0);
-        GraphQLOutputType originalFieldType = fieldTransformation.getOriginalFieldType();
 
-//        ExecutionStepInfo esiWithMappedField = esi.transform(builder -> {
-//                    builder
-//                            .field(newMergedField)
-//                            .fieldDefinition(allTransformations.get(0).getOriginalFieldDefinition())
-//                            .type(originalFieldType);
-//                    if (parentEsi != null && unwrapAll(parentEsi.getType()) instanceof GraphQLObjectType) {
-//                        builder.fieldContainer((GraphQLObjectType) unwrapAll(parentEsi.getType()));
-//                    }
-//                }
-//
-//        );
         return executionResultNode.transform((builder -> builder.field(newMergedField)));
     }
-//
+
+    protected ExecutionResultNode mapToOverallFieldAndTypes(ExecutionResultNode node,
+                                                            List<FieldTransformation> allTransformations,
+                                                            NormalizedQueryField matchingNormalizedOverallField,
+                                                            UnapplyEnvironment environment) {
+        node = replaceFieldWithOriginalValue(allTransformations, node);
+        node = node.transform(builder -> builder
+                .objectType(matchingNormalizedOverallField.getObjectType())
+                .fieldDefinition(matchingNormalizedOverallField.getFieldDefinition())
+                .objectType(matchingNormalizedOverallField.getObjectType())
+        );
+        return node;
+    }
+
 
 }

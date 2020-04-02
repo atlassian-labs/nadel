@@ -27,8 +27,8 @@ public abstract class ExecutionResultNode {
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
     private final ElapsedTime elapsedTime;
-    private final ExecutionPath executionPath;
 
+    private final ExecutionPath executionPath;
     private final MergedField field;
     private final GraphQLFieldDefinition fieldDefinition;
     private final GraphQLObjectType objectType;
@@ -135,6 +135,9 @@ public abstract class ExecutionResultNode {
     public String toString() {
         return "ExecutionResultNode{" +
                 "path=" + executionPath +
+                ", objectType=" + (objectType != null ? objectType.getName() : "null") +
+                ", field=" + (field != null ? field.getName() : "null") +
+                ", fieldDefinition=" + fieldDefinition +
                 ", resolvedValue=" + resolvedValue +
                 ", nonNullableFieldWasNullException=" + nonNullableFieldWasNullException +
                 ", children=" + children +

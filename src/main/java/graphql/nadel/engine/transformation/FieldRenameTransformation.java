@@ -6,6 +6,7 @@ import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionResultNodeMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.ListExecutionResultNode;
 import graphql.util.TraversalControl;
@@ -59,26 +60,30 @@ public class FieldRenameTransformation extends FieldTransformation {
     public UnapplyResult unapplyResultNode(ExecutionResultNode executionResultNode,
                                            List<FieldTransformation> allTransformations,
                                            UnapplyEnvironment environment) {
+
+        NormalizedQueryField matchingNormalizedOverallField = getMatchingNormalizedQueryFieldBasedOnParent(environment.correctParentTypes);
         // the result tree should be in terms of the overall schema
         ExecutionResultNode resultNode = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
 
-        resultNode = replaceFieldWithOriginalValue(allTransformations, resultNode);
-        resultNode = executionResultNodeMapper.mapERNFromUnderlyingToOverall(resultNode, environment);
-        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, environment);
+        resultNode = mapToOverallFieldAndTypes(resultNode, allTransformations, matchingNormalizedOverallField, environment);
+        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, matchingNormalizedOverallField, environment);
 
         return new UnapplyResult(resultNode, TraversalControl.CONTINUE);
     }
 
     private ExecutionResultNode replaceFieldsAndTypesInsideList(ExecutionResultNode node,
                                                                 List<FieldTransformation> allTransformations,
+                                                                NormalizedQueryField normalizedQueryField,
                                                                 UnapplyEnvironment environment) {
 
         if (node instanceof ListExecutionResultNode) {
             return mapChildren(node, child -> {
-                ExecutionResultNode newChild = replaceFieldWithOriginalValue(allTransformations, child);
-                newChild = executionResultNodeMapper.mapERNFromUnderlyingToOverall(newChild, environment);
+//                ExecutionResultNode newChild = replaceFieldWithOriginalValue(allTransformations, child);
+//                newChild = executionResultNodeMapper.mapERNFromUnderlyingToOverall(newChild, environment);
+                ExecutionResultNode newChild = mapToOverallFieldAndTypes(child, allTransformations, normalizedQueryField, environment);
                 return replaceFieldsAndTypesInsideList(newChild,
                         allTransformations,
+                        normalizedQueryField,
                         environment);
             });
         }
