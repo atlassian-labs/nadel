@@ -1,10 +1,12 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.execution.ExecutionPath;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.engine.ExecutionResultNodeMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
+import graphql.nadel.engine.PathMapper;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
@@ -24,6 +26,7 @@ import static graphql.util.TreeTransformerUtil.changeNode;
 public class FieldRenameTransformation extends FieldTransformation {
 
     ExecutionResultNodeMapper executionResultNodeMapper = new ExecutionResultNodeMapper();
+    PathMapper pathMapper = new PathMapper();
     private final FieldMappingDefinition mappingDefinition;
 
     public FieldRenameTransformation(FieldMappingDefinition mappingDefinition) {
@@ -67,6 +70,8 @@ public class FieldRenameTransformation extends FieldTransformation {
 
         resultNode = mapToOverallFieldAndTypes(resultNode, allTransformations, matchingNormalizedOverallField, environment);
         resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, matchingNormalizedOverallField, environment);
+        ExecutionPath mappedPath = pathMapper.mapPath(executionResultNode.getExecutionPath(), resultNode.getMergedField(), environment);
+        resultNode = resultNode.transform(builder -> builder.executionPath(mappedPath));
 
         return new UnapplyResult(resultNode, TraversalControl.CONTINUE);
     }
