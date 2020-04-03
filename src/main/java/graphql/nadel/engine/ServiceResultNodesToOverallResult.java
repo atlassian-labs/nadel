@@ -66,12 +66,12 @@ public class ServiceResultNodesToOverallResult {
                                        ForkJoinPool forkJoinPool,
                                        ExecutionResultNode resultNode,
                                        GraphQLSchema overallSchema,
-                                       ExecutionResultNode correctRootParentTypes,
+                                       ExecutionResultNode correctRootNode,
                                        Map<String, FieldTransformation> transformationMap,
                                        Map<String, String> typeRenameMappings,
                                        NadelContext nadelContext,
                                        Metadata metadata) {
-        return convertImpl(executionId, forkJoinPool, resultNode, null, overallSchema, correctRootParentTypes, false, false, transformationMap, typeRenameMappings, false, nadelContext, metadata);
+        return convertImpl(executionId, forkJoinPool, resultNode, null, overallSchema, correctRootNode, false, false, transformationMap, typeRenameMappings, false, nadelContext, metadata);
     }
 
     public ExecutionResultNode convertChildren(ExecutionId executionId,
@@ -79,14 +79,14 @@ public class ServiceResultNodesToOverallResult {
                                                ExecutionResultNode root,
                                                NormalizedQueryField normalizedRootField,
                                                GraphQLSchema overallSchema,
-                                               ExecutionResultNode correctRootParentTypes,
+                                               ExecutionResultNode correctRootNode,
                                                boolean isHydrationTransformation,
                                                boolean batched,
                                                Map<String, FieldTransformation> transformationMap,
                                                Map<String, String> typeRenameMappings,
                                                NadelContext nadelContext,
                                                Metadata metadata) {
-        return convertImpl(executionId, forkJoinPool, root, normalizedRootField, overallSchema, correctRootParentTypes, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, metadata);
+        return convertImpl(executionId, forkJoinPool, root, normalizedRootField, overallSchema, correctRootNode, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, metadata);
     }
 
     private ExecutionResultNode convertImpl(ExecutionId executionId,
@@ -94,7 +94,7 @@ public class ServiceResultNodesToOverallResult {
                                             ExecutionResultNode root,
                                             NormalizedQueryField normalizedRootField,
                                             GraphQLSchema overallSchema,
-                                            ExecutionResultNode correctRootParentTypes,
+                                            ExecutionResultNode correctRootNode,
                                             boolean isHydrationTransformation,
                                             boolean batched,
                                             Map<String, FieldTransformation> transformationMapInput,
@@ -141,9 +141,9 @@ public class ServiceResultNodesToOverallResult {
                 List<FieldTransformation> transformations = new ArrayList<>(transformationsAndNotTransformedFields.getT1());
 //                List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
 
-                ExecutionResultNode correctParentTypes = context.getParentContext().originalThisNode() == root ? correctRootParentTypes : context.getParentNode();
+                ExecutionResultNode parentNode = context.getParentContext().originalThisNode() == root ? correctRootNode : context.getParentNode();
                 UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(
-                        correctParentTypes,
+                        parentNode,
                         isHydrationTransformation,
                         batched,
                         typeRenameMappings,
