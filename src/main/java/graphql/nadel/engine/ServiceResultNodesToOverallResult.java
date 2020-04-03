@@ -266,7 +266,7 @@ public class ServiceResultNodesToOverallResult {
                     mappedNode,
                     null,
                     unapplyEnvironment.overallSchema,
-                    unapplyEnvironment.correctParentTypes,
+                    unapplyEnvironment.parentNode,
                     unapplyEnvironment.isHydrationTransformation,
                     unapplyEnvironment.batched,
                     transformationMap,

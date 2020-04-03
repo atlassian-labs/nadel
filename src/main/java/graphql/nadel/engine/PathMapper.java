@@ -22,7 +22,7 @@ public class PathMapper {
             if (environment.batched) {
                 fieldSegments.remove(0);
             }
-            fieldSegments = FpKit.concat(environment.correctParentTypes.getExecutionPath().toList(), fieldSegments);
+            fieldSegments = FpKit.concat(environment.parentNode.getExecutionPath().toList(), fieldSegments);
         }
         return ExecutionPath.fromList(fieldSegments);
     }

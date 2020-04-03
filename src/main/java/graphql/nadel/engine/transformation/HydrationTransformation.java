@@ -86,7 +86,7 @@ public class HydrationTransformation extends FieldTransformation {
          * The goal here is to return a flat list HydrationInputNodes which then can be used to create the hydration query.
          */
 
-        NormalizedQueryField matchingNormalizedOverallField = getMatchingNormalizedQueryFieldBasedOnParent(environment.correctParentTypes);
+        NormalizedQueryField matchingNormalizedOverallField = getMatchingNormalizedQueryFieldBasedOnParent(environment.parentNode);
 
         // we can have a list of hydration inputs. E.g.: $source.userIds (this is a list of leafs)
         // or we can have a list of things inside the path: e.g.: $source.issues.userIds (this is a list of objects)

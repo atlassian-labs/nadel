@@ -64,7 +64,7 @@ public class FieldRenameTransformation extends FieldTransformation {
                                            List<FieldTransformation> allTransformations,
                                            UnapplyEnvironment environment) {
 
-        NormalizedQueryField matchingNormalizedOverallField = getMatchingNormalizedQueryFieldBasedOnParent(environment.correctParentTypes);
+        NormalizedQueryField matchingNormalizedOverallField = getMatchingNormalizedQueryFieldBasedOnParent(environment.parentNode);
         // the result tree should be in terms of the overall schema
         ExecutionResultNode resultNode = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
 

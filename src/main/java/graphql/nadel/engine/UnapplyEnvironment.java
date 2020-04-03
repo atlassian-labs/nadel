@@ -8,7 +8,7 @@ import java.util.Map;
 public class UnapplyEnvironment {
 
 
-    public UnapplyEnvironment(ExecutionResultNode correctParentTypes,
+    public UnapplyEnvironment(ExecutionResultNode parentNode,
                               boolean isHydrationTransformation,
                               boolean batched,
                               Map<String, String> typeRenameMappings,
@@ -18,10 +18,10 @@ public class UnapplyEnvironment {
         this.batched = batched;
         this.typeRenameMappings = typeRenameMappings;
         this.overallSchema = overallSchema;
-        this.correctParentTypes = correctParentTypes;
+        this.parentNode = parentNode;
     }
 
-    public ExecutionResultNode correctParentTypes;
+    public ExecutionResultNode parentNode;
     public boolean isHydrationTransformation;
     public boolean batched;
     public Map<String, String> typeRenameMappings;
