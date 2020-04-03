@@ -114,12 +114,10 @@ public abstract class ExecutionResultNode {
         return transform(builder -> builder.children(children));
     }
 
-    //
     public ExecutionResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
         return transform(builder -> builder.resolvedValue(resolvedValue));
     }
 
-    //
     public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
         return transform(builder -> builder.errors(errors));
     }
