@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.execution.ExecutionPath;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
@@ -8,6 +9,7 @@ import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.ExecutionResultNodeMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
+import graphql.nadel.engine.PathMapper;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
@@ -37,6 +39,7 @@ public class HydrationTransformation extends FieldTransformation {
     private UnderlyingServiceHydration underlyingServiceHydration;
 
     ExecutionResultNodeMapper executionResultNodeMapper = new ExecutionResultNodeMapper();
+    PathMapper pathMapper = new PathMapper();
 
 
     public HydrationTransformation(UnderlyingServiceHydration underlyingServiceHydration) {
@@ -78,6 +81,10 @@ public class HydrationTransformation extends FieldTransformation {
 
     @Override
     public UnapplyResult unapplyResultNode(ExecutionResultNode node, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
+
+        /*
+         * The goal here is to return a flat list HydrationInputNodes which then can be used to create the hydration query.
+         */
 
         NormalizedQueryField matchingNormalizedOverallField = getMatchingNormalizedQueryFieldBasedOnParent(environment.correctParentTypes);
 
@@ -145,6 +152,8 @@ public class HydrationTransformation extends FieldTransformation {
 
 
         leafNode = (LeafExecutionResultNode) mapToOverallFieldAndTypes(leafNode, allTransformations, matchingNormalizedField, environment);
+        ExecutionPath executionPath = pathMapper.mapPath(leafNode.getExecutionPath(), leafNode.getField(), environment);
+        leafNode = leafNode.transform(builder -> builder.executionPath(executionPath));
         if (leafNode.getResolvedValue().isNullValue()) {
             // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
             return changeFieldInResultNode(leafNode, getOriginalField());
@@ -158,6 +167,7 @@ public class HydrationTransformation extends FieldTransformation {
                     .resolvedValue(leafNode.getResolvedValue())
                     .elapsedTime(leafNode.getElapsedTime())
                     .normalizedField(matchingNormalizedField)
+                    .parent(environment.correctParentTypes)
                     .build();
         }
     }

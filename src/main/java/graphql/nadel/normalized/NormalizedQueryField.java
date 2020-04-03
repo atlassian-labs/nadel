@@ -144,9 +144,8 @@ public class NormalizedQueryField {
         if (alias != null) {
             result.append(alias).append(": ");
         }
+        result.append(path).append("/");
         result.append(objectType.getName())
-                .append(".")
-                .append(getName())
                 .append("}");
 
         return result.toString();

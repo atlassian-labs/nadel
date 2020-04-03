@@ -8,6 +8,7 @@ import graphql.language.Field;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLOutputType;
@@ -67,10 +68,14 @@ public abstract class FieldTransformation {
     }
 
     protected NormalizedQueryField getMatchingNormalizedQueryFieldBasedOnParent(ExecutionResultNode parent) {
+        List<NormalizedQueryField> normalizedFields = getApplyEnvironment().getNormalizedQueryFieldsOverall();
+        if (parent instanceof RootExecutionResultNode) {
+            Assert.assertTrue(normalizedFields.size() == 1, "only one normalized field expected");
+            return normalizedFields.get(0);
+        }
         ExecutionPath path = parent.getExecutionPath();
         List<String> parentQueryPath = executionPathToQueryPath(path);
 
-        List<NormalizedQueryField> normalizedFields = getApplyEnvironment().getNormalizedQueryFieldsOverall();
         for (NormalizedQueryField normalizedField : normalizedFields) {
             NormalizedQueryField parentNormalizedField = normalizedField.getParent();
             if (!parentQueryPath.equals(parentNormalizedField.getPath())) {

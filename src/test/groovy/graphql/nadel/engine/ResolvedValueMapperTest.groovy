@@ -1,6 +1,6 @@
 package graphql.nadel.engine
 
-import graphql.execution.ExecutionStepInfo
+
 import graphql.execution.MergedField
 import graphql.execution.nextgen.result.ResolvedValue
 import graphql.introspection.Introspection
@@ -16,7 +16,7 @@ class ResolvedValueMapperTest extends Specification {
     def "changes __typename field value accordingly"(String given, String expected) {
         given:
         def mapping = ["Underlying": "Exposed", "A": "B", "C": "D"]
-        def unapplyEnvironment = new UnapplyEnvironment(Mock(ExecutionStepInfo), false, false, mapping, Mock(GraphQLSchema))
+        def unapplyEnvironment = new UnapplyEnvironment(Mock(ExecutionResultNode), false, false, mapping, Mock(GraphQLSchema))
         def node = newNode { builder -> builder.completedValue(given) }
 
         when:
@@ -38,7 +38,7 @@ class ResolvedValueMapperTest extends Specification {
     def "leaves non __typename fields alone"() {
         given:
         def mapping = ["Underlying": "Exposed", "A": "B", "C": "D"]
-        def unapplyEnvironment = new UnapplyEnvironment(Mock(ExecutionStepInfo), false, false, mapping, Mock(GraphQLSchema))
+        def unapplyEnvironment = new UnapplyEnvironment(Mock(ExecutionResultNode), false, false, mapping, Mock(GraphQLSchema))
         def node = newNode({ builder -> builder.completedValue("Underlying") }, "__someField")
 
         when:

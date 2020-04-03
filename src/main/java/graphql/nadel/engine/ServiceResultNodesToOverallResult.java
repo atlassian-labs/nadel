@@ -400,7 +400,8 @@ public class ServiceResultNodesToOverallResult {
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
         ExecutionResultNode mappedNode = executionResultNodeMapper.mapERNFromUnderlyingToOverall(node, environment);
         ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node, environment);
-        return mappedNode.transform(builder -> builder.resolvedValue(mappedResolvedValue));
+        ExecutionPath executionPath = pathMapper.mapPath(node.getExecutionPath(), mappedNode.getField(), environment);
+        return mappedNode.transform(builder -> builder.resolvedValue(mappedResolvedValue).executionPath(executionPath));
     }
 
     private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {

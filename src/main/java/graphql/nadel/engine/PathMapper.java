@@ -2,6 +2,7 @@ package graphql.nadel.engine;
 
 import graphql.execution.ExecutionPath;
 import graphql.execution.MergedField;
+import graphql.nadel.util.FpKit;
 
 import java.util.List;
 
@@ -10,19 +11,19 @@ public class PathMapper {
     public ExecutionPath mapPath(ExecutionPath executionPath, MergedField mergedField, UnapplyEnvironment environment) {
         List<Object> fieldSegments = patchLastFieldName(executionPath, mergedField);
 
-//        if (environment.isHydrationTransformation) {
-//            //
-//            // Normally the parent path is all ok and hence there is nothing to add
-//            // but if we have a hydrated a field then we need to "merge" the paths not just append them
-//            // so for example
-//            //
-//            // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
-//            fieldSegments.remove(0);
-//            if (environment.batched) {
-//                fieldSegments.remove(0);
-//            }
-//            fieldSegments = FpKit.concat(parentPath.toList(), fieldSegments);
-//        }
+        if (environment.isHydrationTransformation) {
+            //
+            // Normally the parent path is all ok and hence there is nothing to add
+            // but if we have a hydrated a field then we need to "merge" the paths not just append them
+            // so for example
+            //
+            // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
+            fieldSegments.remove(0);
+            if (environment.batched) {
+                fieldSegments.remove(0);
+            }
+            fieldSegments = FpKit.concat(environment.correctParentTypes.getExecutionPath().toList(), fieldSegments);
+        }
         return ExecutionPath.fromList(fieldSegments);
     }
 
