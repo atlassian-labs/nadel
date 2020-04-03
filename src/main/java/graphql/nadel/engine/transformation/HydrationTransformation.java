@@ -167,7 +167,6 @@ public class HydrationTransformation extends FieldTransformation {
                     .resolvedValue(leafNode.getResolvedValue())
                     .elapsedTime(leafNode.getElapsedTime())
                     .normalizedField(matchingNormalizedField)
-                    .parent(environment.correctParentTypes)
                     .build();
         }
     }
