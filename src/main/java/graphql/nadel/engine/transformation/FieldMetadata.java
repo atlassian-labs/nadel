@@ -1,16 +1,16 @@
 package graphql.nadel.engine.transformation;
 
 public class FieldMetadata {
-    private final String id;
+    private final String transformationId;
     private final boolean rootOfTransformation;
 
-    public FieldMetadata(String id, boolean rootOfTransformation) {
-        this.id = id;
+    public FieldMetadata(String transformationId, boolean rootOfTransformation) {
+        this.transformationId = transformationId;
         this.rootOfTransformation = rootOfTransformation;
     }
 
-    public String getId() {
-        return id;
+    public String getTransformationId() {
+        return transformationId;
     }
 
     public boolean isRootOfTransformation() {

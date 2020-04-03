@@ -36,15 +36,15 @@ public final class FieldUtils {
     }
 
     public static Field pathToFields(List<String> path,
-                                     String nadelFieldId,
+                                     String transformationId,
                                      List<String> additionalIds,
                                      boolean firstRootOfTransformation,
                                      Map<String, List<FieldMetadata>> metadataByFieldId) {
-        return pathToFields(path, nadelFieldId, additionalIds, firstRootOfTransformation, null, metadataByFieldId);
+        return pathToFields(path, transformationId, additionalIds, firstRootOfTransformation, null, metadataByFieldId);
     }
 
     public static Field pathToFields(List<String> path,
-                                     String nadelFieldId,
+                                     String transformationId,
                                      List<String> additionalIds,
                                      boolean firstRootOfTransformation,
                                      SelectionSet lastSelectionSet,
@@ -54,7 +54,7 @@ public final class FieldUtils {
             Field.Builder newField = Field.newField();
             String fieldId = UUID.randomUUID().toString();
             newField.additionalData(NodeId.ID, fieldId);
-            FieldMetadataUtil.setFieldMetadata(fieldId, nadelFieldId, additionalIds, ix == 0 && firstRootOfTransformation, metadataByFieldId);
+            FieldMetadataUtil.setFieldMetadata(fieldId, transformationId, additionalIds, ix == 0 && firstRootOfTransformation, metadataByFieldId);
             if (ix == path.size() - 1 && lastSelectionSet != null) {
                 newField.selectionSet(lastSelectionSet);
             }
@@ -91,7 +91,7 @@ public final class FieldUtils {
         return curNode;
     }
 
-    public static void addFieldIdToChildren(Field field, String id, Map<String, List<FieldMetadata>> metadataByFieldId) {
+    public static void addTransformationIdToChildren(Field field, String transformationId, Map<String, List<FieldMetadata>> metadataByFieldId) {
         if (field.getSelectionSet() == null) {
             return;
         }
@@ -100,7 +100,7 @@ public final class FieldUtils {
 
             @Override
             public TraversalControl visitField(Field field, TraverserContext<Node> context) {
-                FieldMetadataUtil.addFieldMetadata(field, id, false, metadataByFieldId);
+                FieldMetadataUtil.addFieldMetadata(field, transformationId, false, metadataByFieldId);
                 return TraversalControl.CONTINUE;
             }
         });

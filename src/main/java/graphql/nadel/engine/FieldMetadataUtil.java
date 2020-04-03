@@ -18,17 +18,17 @@ public class FieldMetadataUtil {
 
     public static List<String> getRootOfTransformationIds(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
-        return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getId);
+        return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getTransformationId);
     }
 
     public static List<String> getFieldIds(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
-        return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getId);
+        return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getTransformationId);
     }
 
-    public static void addFieldMetadata(Field field, String id, boolean rootOfTransformation, Map<String, List<FieldMetadata>> metadataByFieldId) {
+    public static void addFieldMetadata(Field field, String transformationId, boolean rootOfTransformation, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
-        FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation);
+        FieldMetadata newFieldMetadata = new FieldMetadata(transformationId, rootOfTransformation);
         fieldMetadata.add(newFieldMetadata);
         writeMetadata(field, fieldMetadata, metadataByFieldId);
     }
@@ -46,35 +46,19 @@ public class FieldMetadataUtil {
     public static String getUniqueRootFieldId(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
         List<FieldMetadata> rootFieldMetadata = filter(fieldMetadata, FieldMetadata::isRootOfTransformation);
-        assertTrue(rootFieldMetadata.size() == 1, "exactly one root nadel infos expected");
-        return rootFieldMetadata.get(0).getId();
-    }
-
-    public static void setFieldMetadata(Field field,
-                                        String id,
-                                        List<String> additionalIds,
-                                        boolean rootOfTransformation,
-                                        Map<String, List<FieldMetadata>> metadataByFieldId) {
-        assertNotNull(id);
-        List<FieldMetadata> fieldMetadata = new ArrayList<>();
-
-        FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation);
-        fieldMetadata.add(newFieldMetadata);
-        for (String additionalId : additionalIds) {
-            fieldMetadata.add(new FieldMetadata(additionalId, false));
-        }
-        writeMetadata(field, fieldMetadata, metadataByFieldId);
+        assertTrue(rootFieldMetadata.size() == 1, "exactly one root info expected");
+        return rootFieldMetadata.get(0).getTransformationId();
     }
 
     public static void setFieldMetadata(String fieldId,
-                                        String id,
+                                        String transformationId,
                                         List<String> additionalIds,
                                         boolean rootOfTransformation,
                                         Map<String, List<FieldMetadata>> metadataByFieldId) {
-        assertNotNull(id);
+        assertNotNull(transformationId);
         List<FieldMetadata> fieldMetadata = new ArrayList<>();
 
-        FieldMetadata newFieldMetadata = new FieldMetadata(id, rootOfTransformation);
+        FieldMetadata newFieldMetadata = new FieldMetadata(transformationId, rootOfTransformation);
         fieldMetadata.add(newFieldMetadata);
         for (String additionalId : additionalIds) {
             fieldMetadata.add(new FieldMetadata(additionalId, false));

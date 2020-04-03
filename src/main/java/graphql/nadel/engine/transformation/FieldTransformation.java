@@ -24,7 +24,7 @@ public abstract class FieldTransformation {
 
 
     private ApplyEnvironment environment;
-    private String fieldId = UUID.randomUUID().toString();
+    private String transformationId = UUID.randomUUID().toString();
 
     public abstract ApplyResult apply(ApplyEnvironment environment);
 
@@ -38,8 +38,8 @@ public abstract class FieldTransformation {
 
     public abstract AbstractNode getDefinition();
 
-    public String getFieldId() {
-        return fieldId;
+    public String getTransformationId() {
+        return transformationId;
     }
 
     public void setEnvironment(ApplyEnvironment environment) {

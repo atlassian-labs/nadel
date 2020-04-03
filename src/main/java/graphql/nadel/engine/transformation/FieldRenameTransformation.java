@@ -17,7 +17,7 @@ import java.util.List;
 
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.nadel.engine.FieldMetadataUtil.addFieldMetadata;
-import static graphql.nadel.engine.transformation.FieldUtils.addFieldIdToChildren;
+import static graphql.nadel.engine.transformation.FieldUtils.addTransformationIdToChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.getSubTree;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
@@ -45,11 +45,11 @@ public class FieldRenameTransformation extends FieldTransformation {
         List<String> path = mappingDefinition.getInputPath();
         List<String> existingIds = FieldMetadataUtil.getFieldIds(environment.getField(), environment.getMetadataByFieldId());
         Field changedNode = environment.getField().transform(builder -> builder.name(mappingDefinition.getInputPath().get(0)));
-        addFieldMetadata(changedNode, getFieldId(), true, environment.getMetadataByFieldId());
-        addFieldIdToChildren(environment.getField(), getFieldId(), environment.getMetadataByFieldId());
+        addFieldMetadata(changedNode, getTransformationId(), true, environment.getMetadataByFieldId());
+        addTransformationIdToChildren(environment.getField(), getTransformationId(), environment.getMetadataByFieldId());
         SelectionSet selectionSetWithIds = changedNode.getSelectionSet();
         if (path.size() > 1) {
-            Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), existingIds, false, selectionSetWithIds, environment.getMetadataByFieldId());
+            Field firstChildField = pathToFields(path.subList(1, path.size()), getTransformationId(), existingIds, false, selectionSetWithIds, environment.getMetadataByFieldId());
             changedNode = changedNode.transform(builder -> builder.selectionSet(newSelectionSet().selection(firstChildField).build()));
         } else {
             changedNode = changedNode.transform(builder -> builder.selectionSet(selectionSetWithIds));
