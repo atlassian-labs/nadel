@@ -46,7 +46,7 @@ public class FieldRenameTransformation extends FieldTransformation {
         List<String> existingIds = FieldMetadataUtil.getFieldIds(environment.getField(), environment.getMetadataByFieldId());
         Field changedNode = environment.getField().transform(builder -> builder.name(mappingDefinition.getInputPath().get(0)));
         addFieldMetadata(changedNode, getTransformationId(), true, environment.getMetadataByFieldId());
-        addTransformationIdToChildren(environment.getField(), getTransformationId(), environment.getMetadataByFieldId());
+        addTransformationIdToChildren(environment.getField(), environment.getFragmentDefinitionMap(), getTransformationId(), environment.getMetadataByFieldId());
         SelectionSet selectionSetWithIds = changedNode.getSelectionSet();
         if (path.size() > 1) {
             Field firstChildField = pathToFields(path.subList(1, path.size()), getTransformationId(), existingIds, false, selectionSetWithIds, environment.getMetadataByFieldId());

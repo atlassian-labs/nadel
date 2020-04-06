@@ -223,7 +223,7 @@ public class Transformer extends NodeVisitorStub {
             // major side effect alert - we are relying on transformation to call TreeTransformerUtil.changeNode
             // inside itself here
             //
-            ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, overallTypeInfo, normalizedFields);
+            ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, overallTypeInfo, normalizedFields, executionContext.getFragmentsByName());
             ApplyResult applyResult = transformation.apply(applyEnvironment);
             Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
 
@@ -265,8 +265,18 @@ public class Transformer extends NodeVisitorStub {
 
     }
 
-    ApplyEnvironment createApplyEnvironment(Field field, TraverserContext<Node> context, OverallTypeInfo overallTypeInfo, List<NormalizedQueryField> normalizedQueryFields) {
-        return new ApplyEnvironment(field, overallTypeInfo.getFieldDefinition(), overallTypeInfo.getFieldsContainer(), context, normalizedQueryFields, this.metadata.getMetadataByFieldId());
+    ApplyEnvironment createApplyEnvironment(Field field,
+                                            TraverserContext<Node> context,
+                                            OverallTypeInfo overallTypeInfo,
+                                            List<NormalizedQueryField> normalizedQueryFields,
+                                            Map<String, FragmentDefinition> fragmentDefinitionMap) {
+        return new ApplyEnvironment(field,
+                overallTypeInfo.getFieldDefinition(),
+                overallTypeInfo.getFieldsContainer(),
+                context,
+                normalizedQueryFields,
+                this.metadata.getMetadataByFieldId(),
+                fragmentDefinitionMap);
     }
 
 

@@ -1,8 +1,10 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.language.AstTransformer;
 import graphql.language.Field;
+import graphql.language.FragmentDefinition;
+import graphql.language.FragmentSpread;
 import graphql.language.Node;
+import graphql.language.NodeTraverser;
 import graphql.language.NodeVisitorStub;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.NodeId;
@@ -14,11 +16,14 @@ import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
+import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.SelectionSet.newSelectionSet;
 
@@ -91,19 +96,29 @@ public final class FieldUtils {
         return curNode;
     }
 
-    public static void addTransformationIdToChildren(Field field, String transformationId, Map<String, List<FieldMetadata>> metadataByFieldId) {
+    public static void addTransformationIdToChildren(Field field, Map<String, FragmentDefinition> fragmentDefinitionMap, String transformationId, Map<String, List<FieldMetadata>> metadataByFieldId) {
         if (field.getSelectionSet() == null) {
             return;
         }
-        //TODO: make it go down fragments
-        new AstTransformer().transform(field.getSelectionSet(), new NodeVisitorStub() {
 
+        Function<? super Node, ? extends List<Node>> getChildren = node -> {
+            if (node instanceof FragmentSpread) {
+                FragmentDefinition fragmentDefinition = assertNotNull(fragmentDefinitionMap.get(((FragmentSpread) node).getName()));
+                List<Node> result = new ArrayList<>();
+                result.addAll(node.getChildren());
+                result.add(fragmentDefinition);
+                return result;
+            }
+            return node.getChildren();
+        };
+        NodeTraverser nodeTraverser = new NodeTraverser(Collections.emptyMap(), getChildren);
+        nodeTraverser.depthFirst(new NodeVisitorStub() {
             @Override
             public TraversalControl visitField(Field field, TraverserContext<Node> context) {
                 FieldMetadataUtil.addFieldMetadata(field, transformationId, false, metadataByFieldId);
                 return TraversalControl.CONTINUE;
             }
-        });
+        }, field.getSelectionSet());
 
     }
 
