@@ -9,6 +9,7 @@ import graphql.nadel.engine.NadelContext
 import graphql.nadel.engine.NadelExecutionStrategy
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.result.ResultNodesUtil
 import graphql.nadel.result.RootExecutionResultNode
 import graphql.schema.GraphQLFieldDefinition
@@ -78,7 +79,7 @@ class StrategyTestHelper extends Specification {
 
         def executionData = createExecutionData(query, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, Mock(ResultComplexityAggregator))
 
         assert calledService1
         assert calledService2

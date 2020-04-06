@@ -25,6 +25,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOpera
 import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.normalized.NormalizedQueryFactory;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.nadel.result.ResultComplexityAggregator;
 import graphql.nadel.result.ResultNodesUtil;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
@@ -94,13 +95,15 @@ public class Execution {
         InstrumentationContext<ExecutionResult> instrumentationCtx = instrumentation.beginExecute(new NadelInstrumentationExecuteOperationParameters(executionContext, instrumentationState));
 
         CompletableFuture<ExecutionResult> result;
+        ResultComplexityAggregator resultComplexityAggregator = new ResultComplexityAggregator();
         if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
             result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
         } else {
-            CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection);
+            CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection, resultComplexityAggregator);
             result = resultNodes.thenApply(rootResultNode -> {
                 rootResultNode = instrumentation.instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
-                return ResultNodesUtil.toExecutionResult(rootResultNode);
+                ExecutionResult executionResult = withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);
+                return executionResult;
             });
         }
 
@@ -140,4 +143,9 @@ public class Execution {
         return new FieldInfos(fieldInfoByDefinition);
     }
 
+    public ExecutionResult withNodeComplexity(ExecutionResult executionResult, ResultComplexityAggregator resultComplexityAggregator) {
+        return ExecutionResultImpl.newExecutionResult().from(executionResult)
+                .addExtension("resultComplexity", resultComplexityAggregator.snapshotResultComplexityData())
+                .build();
+    }
 }

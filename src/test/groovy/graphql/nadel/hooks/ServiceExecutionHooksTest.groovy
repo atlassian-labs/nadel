@@ -25,6 +25,7 @@ import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.normalized.NormalizedQueryFactory
 import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.result.LeafExecutionResultNode
+import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.testutils.ExecutionResultNodeUtil
 import graphql.nadel.testutils.TestUtil
@@ -52,6 +53,7 @@ class ServiceExecutionHooksTest extends Specification {
     def definitionRegistry
     def instrumentation
     def serviceExecutionHooks
+    def resultComplexityAggregator
 
     void setup() {
         executionHelper = new ExecutionHelper()
@@ -61,6 +63,7 @@ class ServiceExecutionHooksTest extends Specification {
         definitionRegistry = Mock(DefinitionRegistry)
         instrumentation = new NadelInstrumentation() {}
         serviceExecutionHooks = new ServiceExecutionHooks() {}
+        resultComplexityAggregator = new ResultComplexityAggregator();
     }
 
     FieldInfos topLevelFieldInfo(GraphQLFieldDefinition fieldDefinition, Service service) {
@@ -151,7 +154,7 @@ class ServiceExecutionHooksTest extends Specification {
         def expectedQuery = "query nadel_2_service {foo(id:\"modified\")}"
 
         when:
-        nadelExecutionStrategy.execute(executionContext, fieldSubSelection)
+        nadelExecutionStrategy.execute(executionContext, fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -203,7 +206,7 @@ class ServiceExecutionHooksTest extends Specification {
         def expectedQuery = 'query nadel_2_service($variable:String) {foo(id:$variable)}'
 
         when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -280,7 +283,7 @@ class ServiceExecutionHooksTest extends Specification {
         def data = [foo: "hello world"]
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
 
         then:

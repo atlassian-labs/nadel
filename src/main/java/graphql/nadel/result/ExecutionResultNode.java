@@ -27,6 +27,7 @@ public abstract class ExecutionResultNode {
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
     private final ElapsedTime elapsedTime;
+    private final int totalNodeCount;
 
     private final ExecutionPath executionPath;
     private final MergedField field;
@@ -43,6 +44,7 @@ public abstract class ExecutionResultNode {
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(builderBase.errors);
         this.elapsedTime = builderBase.elapsedTime;
+        this.totalNodeCount = builderBase.totalNodeCount;
         this.executionPath = assertNotNull(builderBase.executionPath);
 
         this.field = builderBase.field;
@@ -106,6 +108,11 @@ public abstract class ExecutionResultNode {
         return getResolvedValue().getCompletedValue();
     }
 
+    public int getTotalNodeCount() {
+        return totalNodeCount;
+    }
+
+
     public ExecutionPath getExecutionPath() {
         return executionPath;
     }
@@ -127,6 +134,10 @@ public abstract class ExecutionResultNode {
     }
 
     public abstract <B extends BuilderBase<B>> ExecutionResultNode transform(Consumer<B> builderConsumer);
+
+    public ExecutionResultNode withNodeCount(int nodeCount) {
+        return transform(builder -> builder.totalNodeCount(nodeCount));
+    }
 
 
     @Override
@@ -154,6 +165,7 @@ public abstract class ExecutionResultNode {
         private MergedField field;
         private GraphQLFieldDefinition fieldDefinition;
         private GraphQLObjectType objectType;
+        private int totalNodeCount;
 
 
         public BuilderBase() {
@@ -170,7 +182,7 @@ public abstract class ExecutionResultNode {
             this.field = existing.field;
             this.fieldDefinition = existing.fieldDefinition;
             this.objectType = existing.objectType;
-
+            this.totalNodeCount = existing.totalNodeCount;
         }
 
         public abstract ExecutionResultNode build();
@@ -224,6 +236,11 @@ public abstract class ExecutionResultNode {
 
         public T executionPath(ExecutionPath executionPath) {
             this.executionPath = executionPath;
+            return (T) this;
+        }
+
+        public T totalNodeCount(int totalNodeCount) {
+            this.totalNodeCount = totalNodeCount;
             return (T) this;
         }
 
