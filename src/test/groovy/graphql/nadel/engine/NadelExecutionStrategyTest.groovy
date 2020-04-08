@@ -2766,7 +2766,7 @@ fragment F1 on TestingCharacter {
         resultComplexityAggregator.getNodeCountsForService("Bar") == 2
     }
 
-    def "Expecting one child Error on hydrated/renamed query"() {
+    def "Expecting one child Error on extensive field argument passed to hydration"() {
         given:
         def boardSchema = TestUtil.schema("""
         type Query {
