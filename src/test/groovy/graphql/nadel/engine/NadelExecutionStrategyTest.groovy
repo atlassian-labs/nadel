@@ -2768,5 +2768,111 @@ fragment F1 on TestingCharacter {
         resultComplexityAggregator.getNodeCountsForService("Bar") == 2
     }
 
+    def "Expecting one child Error on extensive field argument passed to hydration"() {
+        given:
+        def boardSchema = TestUtil.schema("""
+        type Query {
+            board(id: ID) : Board
+        }
+        type Board {
+            id: ID
+            issueChildren: [Card]
+        }
+        type Card {
+            id: ID
+            issue: Issue
+        }
+        
+        type Issue {
+            id: ID
+            assignee: TestUser
+        }
+        
+        type TestUser {
+            accountId: String
+        }
+        """)
+
+        def identitySchema = TestUtil.schema("""
+        type Query {
+            users(accountIds: [ID]): [User] 
+        }
+        type User {
+            accountId: ID
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service TestBoard {
+            type Query {
+                board(id: ID) : SoftwareBoard
+            }
+            
+            type SoftwareBoard => renamed from Board {
+                id: ID
+                cardChildren: [SoftwareCard] => renamed from issueChildren
+            }
+            
+            type SoftwareCard => renamed from Card {
+                id: ID
+                assignee: User => hydrated from Users.users(accountIds: $source.issue.assignee.accountId) object identified by accountId, batch size 3
+            }
+        }
+       
+        service Users {
+            type Query {
+                users(accountIds: [ID]): [User]
+            }
+            type User {
+                accountId: ID
+            }
+        }
+        ''')
+
+        def query = '''{
+                        board(id:1) {
+                            id 
+                            cardChildren { 
+                                assignee { 
+                                    accountId
+                                 } 
+                            }
+                        }
+                        }'''
+
+        def expectedQuery1 = "query nadel_2_TestBoard {board(id:1) {id issueChildren {issue {assignee {accountId}}}}}"
+        def data1 = [board: [id: "1", issueChildren: [[issue: [assignee: [accountId: "1"]]], [issue: [assignee: [accountId: "2"]]], [issue: [assignee: [accountId: "3"]]]]]]
+        def response1 = new ServiceExecutionResult(data1)
+
+        def expectedQuery2 = "query nadel_2_Users {users(accountIds:[\"1\",\"2\",\"3\"]) {accountId object_identifier__UUID:accountId}}"
+        def response2 = new ServiceExecutionResult([users: [[accountId: "1", object_identifier__UUID: "1"], [accountId: "2", object_identifier__UUID: "2"], [accountId: "3", object_identifier__UUID: "3"]]])
+
+        def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("board")
+        def service1 = new Service("TestBoard", boardSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service("Users", identitySchema, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        then:
+        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        resultData(response) == [board: [id: "1", cardChildren: [[assignee: [accountId: "1"]], [assignee: [accountId: "2"]], [assignee: [accountId: "3"]]]]]
+
+    }
+
 
 }

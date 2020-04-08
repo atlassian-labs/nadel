@@ -21,7 +21,7 @@ public class FieldMetadataUtil {
         return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getTransformationId);
     }
 
-    public static List<String> getFieldIds(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
+    public static List<String> getTransformationIds(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
         return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getTransformationId);
     }

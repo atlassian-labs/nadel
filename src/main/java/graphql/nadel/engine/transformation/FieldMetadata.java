@@ -17,5 +17,13 @@ public class FieldMetadata {
         return rootOfTransformation;
     }
 
+
+    @Override
+    public String toString() {
+        return "FieldMetadata{" +
+                "transformationId='" + transformationId + '\'' +
+                ", rootOfTransformation=" + rootOfTransformation +
+                '}';
+    }
 }
 

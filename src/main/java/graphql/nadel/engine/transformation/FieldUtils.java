@@ -41,14 +41,16 @@ public final class FieldUtils {
     }
 
     public static Field pathToFields(List<String> path,
+                                     Field copyFieldMetadataFrom,
                                      String transformationId,
                                      List<String> additionalIds,
                                      boolean firstRootOfTransformation,
                                      Map<String, List<FieldMetadata>> metadataByFieldId) {
-        return pathToFields(path, transformationId, additionalIds, firstRootOfTransformation, null, metadataByFieldId);
+        return pathToFields(path, copyFieldMetadataFrom, transformationId, additionalIds, firstRootOfTransformation, null, metadataByFieldId);
     }
 
     public static Field pathToFields(List<String> path,
+                                     Field copyMetadataFrom,
                                      String transformationId,
                                      List<String> additionalIds,
                                      boolean firstRootOfTransformation,
@@ -57,7 +59,7 @@ public final class FieldUtils {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
             Field.Builder newField = Field.newField();
-            String fieldId = UUID.randomUUID().toString();
+            String fieldId = "new-field_" + path.get(ix) + "_" + UUID.randomUUID().toString();
             newField.additionalData(NodeId.ID, fieldId);
             FieldMetadataUtil.setFieldMetadata(fieldId, transformationId, additionalIds, ix == 0 && firstRootOfTransformation, metadataByFieldId);
             if (ix == path.size() - 1 && lastSelectionSet != null) {
@@ -68,6 +70,7 @@ public final class FieldUtils {
             }
             newField.name(path.get(ix));
             curField = newField.build();
+            FieldMetadataUtil.copyFieldMetadata(copyMetadataFrom, curField, metadataByFieldId);
         }
         return curField;
     }
@@ -75,7 +78,7 @@ public final class FieldUtils {
     public static LeafExecutionResultNode geFirstLeafNode(ExecutionResultNode executionResultNode) {
         ExecutionResultNode curNode = executionResultNode;
         while (curNode instanceof ObjectExecutionResultNode) {
-            assertTrue(curNode.getChildren().size() == 1, "expecting one child ");
+            assertTrue(curNode.getChildren().size() == 1, "expecting one child but got %s", curNode.getChildren().size());
             curNode = curNode.getChildren().get(0);
         }
         assertTrue(curNode instanceof LeafExecutionResultNode, "expecting only object results and at the end one leaf");
@@ -87,7 +90,7 @@ public final class FieldUtils {
         ExecutionResultNode curNode = executionResultNode;
         int curLevel = 0;
         while (curNode.getChildren().size() > 0 && curLevel++ < levels) {
-            assertTrue(curNode.getChildren().size() == 1, "expecting one child ");
+            assertTrue(curNode.getChildren().size() == 1, "expecting one child but got %s", curNode.getChildren().size());
             curNode = curNode.getChildren().get(0);
             if (curNode instanceof LeafExecutionResultNode) {
                 return curNode;

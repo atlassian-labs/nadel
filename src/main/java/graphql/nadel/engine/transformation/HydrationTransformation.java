@@ -8,7 +8,6 @@ import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.ExecutionResultNodeMapper;
-import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.PathMapper;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
@@ -66,10 +65,7 @@ public class HydrationTransformation extends FieldTransformation {
         RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
 
-        Field newField = FieldUtils.pathToFields(hydrationSourceName, getTransformationId(), Collections.emptyList(), true, environment.getMetadataByFieldId());
-
-        // Add back the IDs from the original field e.g. an ID tied to a rename transformation
-        FieldMetadataUtil.copyFieldMetadata(environment.getField(), newField, environment.getMetadataByFieldId());
+        Field newField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), getTransformationId(), Collections.emptyList(), true, environment.getMetadataByFieldId());
 
         changeNode(context, newField);
         return new ApplyResult(TraversalControl.ABORT);
@@ -104,7 +100,8 @@ public class HydrationTransformation extends FieldTransformation {
             }
         }
 
-        LeafExecutionResultNode leafNode = geFirstLeafNode(node);
+        LeafExecutionResultNode leafNode =
+                geFirstLeafNode(node);
         LeafExecutionResultNode changedNode = unapplyLeafNode(leafNode, allTransformations, environment, matchingNormalizedOverallField);
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }

@@ -15,16 +15,16 @@ import graphql.schema.GraphQLOutputType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertTrue;
+import static java.util.UUID.randomUUID;
 
 public abstract class FieldTransformation {
 
 
     private ApplyEnvironment environment;
-    private String transformationId = UUID.randomUUID().toString();
+    private String transformationId = getClass().getSimpleName() + "-" + randomUUID().toString();
 
     public abstract ApplyResult apply(ApplyEnvironment environment);
 
