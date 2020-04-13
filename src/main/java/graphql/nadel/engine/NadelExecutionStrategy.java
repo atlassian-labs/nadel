@@ -80,7 +80,7 @@ public class NadelExecutionStrategy {
         return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
             Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
             List<CompletableFuture<RootExecutionResultNode>> resultNodes =
-                    executeTopLevelFields(executionContext, nadelContext, fieldTracking, operation, oneServiceExecutions,resultComplexityAggregator);
+                    executeTopLevelFields(executionContext, nadelContext, fieldTracking, operation, oneServiceExecutions, resultComplexityAggregator);
 
             CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
             return rootResult
@@ -128,7 +128,14 @@ public class NadelExecutionStrategy {
     }
 
 
-    private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(ExecutionContext executionContext, NadelContext nadelContext, FieldTracking fieldTracking, Operation operation, List<OneServiceExecution> oneServiceExecutions, ResultComplexityAggregator resultComplexityAggregator) {
+    private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(
+            ExecutionContext executionContext,
+            NadelContext nadelContext,
+            FieldTracking fieldTracking,
+            Operation operation,
+            List<OneServiceExecution> oneServiceExecutions,
+            ResultComplexityAggregator resultComplexityAggregator) {
+
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
             Service service = oneServiceExecution.service;
@@ -146,29 +153,32 @@ public class NadelExecutionStrategy {
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
 
-            Map<String, FieldTransformation> transformationByResultField = queryTransform.getTransformationByResultField();
+            Map<String, FieldTransformation> fieldIdToTransformation = queryTransform.getFieldIdToTransformation();
             Map<String, String> typeRenameMappings = queryTransform.getTypeRenameMappings();
 
             ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, queryTransform.getVariableValues());
 
             fieldTracking.fieldsDispatched(singletonList(esi));
+
             CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
                     .execute(newExecutionContext, queryTransform, service, operation, serviceContext, false);
 
             CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
-                    .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
-                            .convert(newExecutionContext.getExecutionId(),
-                                    nadelContext.getForkJoinPool(),
-                                    resultNode,
-                                    overallSchema,
-                                    resultNode,
-                                    transformationByResultField,
-                                    typeRenameMappings,
-                                    nadelContext,
-                                    queryTransform.getRemovedFieldMap()));
+                    .thenApply(resultNode -> {
+                        return (RootExecutionResultNode) serviceResultNodesToOverallResult
+                                .convert(newExecutionContext.getExecutionId(),
+                                        nadelContext.getForkJoinPool(),
+                                        resultNode,
+                                        overallSchema,
+                                        resultNode,
+                                        fieldIdToTransformation,
+                                        typeRenameMappings,
+                                        nadelContext,
+                                        queryTransform.getRemovedFieldMap());
+                    });
 
             //set the result node count for this service
-            convertedResult.thenAccept( rootExecutionResultNode -> resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount()));
+            convertedResult.thenAccept(rootExecutionResultNode -> resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount()));
 
             // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
             convertedResult = convertedResult
@@ -185,7 +195,6 @@ public class NadelExecutionStrategy {
                                 .build();
                         return serviceExecutionHooks.resultRewrite(resultRewriteParams);
                     });
-
 
 
             resultNodes.add(serviceResult);
@@ -228,7 +237,6 @@ public class NadelExecutionStrategy {
                     .build();
         });
     }
-
 
 
     private static class OneServiceExecution {

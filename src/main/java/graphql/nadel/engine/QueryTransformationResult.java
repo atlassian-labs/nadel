@@ -24,7 +24,7 @@ public class QueryTransformationResult {
     private final List<MergedField> transformedMergedFields;
 
     // needed when the underlying result tree is mapped back
-    private final Map<String, FieldTransformation> transformationByResultField;
+    private final Map<String, FieldTransformation> fieldIdToTransformation;
     // needed when the underlying result tree is mapped back
     private final Map<String, String> typeRenameMappings;
 
@@ -37,7 +37,7 @@ public class QueryTransformationResult {
                                      List<MergedField> transformedMergedFields,
                                      Map<String, String> typeRenameMappings,
                                      List<String> referencedVariables,
-                                     Map<String, FieldTransformation> transformationByResultField,
+                                     Map<String, FieldTransformation> fieldIdToTransformation,
                                      Map<String, FragmentDefinition> transformedFragments,
                                      Map<String, Object> variableValues,
                                      Metadata removedFieldMap) {
@@ -45,7 +45,7 @@ public class QueryTransformationResult {
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
         this.referencedVariables = referencedVariables;
-        this.transformationByResultField = transformationByResultField;
+        this.fieldIdToTransformation = fieldIdToTransformation;
         this.transformedFragments = transformedFragments;
         this.typeRenameMappings = typeRenameMappings;
         this.variableValues = variableValues;
@@ -68,8 +68,8 @@ public class QueryTransformationResult {
         return referencedVariables;
     }
 
-    public Map<String, FieldTransformation> getTransformationByResultField() {
-        return transformationByResultField;
+    public Map<String, FieldTransformation> getFieldIdToTransformation() {
+        return fieldIdToTransformation;
     }
 
     public Map<String, FragmentDefinition> getTransformedFragments() {

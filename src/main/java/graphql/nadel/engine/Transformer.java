@@ -75,7 +75,7 @@ public class Transformer extends NodeVisitorStub {
 
     final ExecutionContext executionContext;
     final GraphQLSchema underlyingSchema;
-    final Map<String, FieldTransformation> transformationByResultField;
+    final Map<String, FieldTransformation> fieldIdToTransformation;
     final Map<String, String> typeRenameMappings;
     final Set<String> referencedFragmentNames;
     final Map<String, VariableDefinition> referencedVariables;
@@ -91,7 +91,7 @@ public class Transformer extends NodeVisitorStub {
 
     public Transformer(ExecutionContext executionContext,
                        GraphQLSchema underlyingSchema,
-                       Map<String, FieldTransformation> transformationByResultField,
+                       Map<String, FieldTransformation> fieldIdToTransformation,
                        Map<String, String> typeRenameMappings,
                        Set<String> referencedFragmentNames,
                        Map<String, VariableDefinition> referencedVariables,
@@ -105,7 +105,7 @@ public class Transformer extends NodeVisitorStub {
     ) {
         this.executionContext = executionContext;
         this.underlyingSchema = underlyingSchema;
-        this.transformationByResultField = transformationByResultField;
+        this.fieldIdToTransformation = fieldIdToTransformation;
         this.typeRenameMappings = typeRenameMappings;
         this.referencedFragmentNames = referencedFragmentNames;
         this.referencedVariables = referencedVariables;
@@ -229,7 +229,7 @@ public class Transformer extends NodeVisitorStub {
 
 
             String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField, this.metadata.getMetadataByFieldId());
-            transformationByResultField.put(fieldId, transformation);
+            fieldIdToTransformation.put(fieldId, transformation);
 
             if (transformation instanceof FieldRenameTransformation) {
                 maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);

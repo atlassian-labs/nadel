@@ -65,7 +65,7 @@ public abstract class ExecutionResultNode {
     }
 
     public List<GraphQLError> getErrors() {
-        return new ArrayList<>(errors);
+        return errors;
     }
 
     /*
@@ -257,6 +257,7 @@ public abstract class ExecutionResultNode {
         }
 
         public T errors(List<GraphQLError> errors) {
+            this.errors.clear();
             this.errors = errors;
             return (T) this;
         }

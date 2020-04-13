@@ -125,7 +125,6 @@ public class ServiceResultNodesToOverallResult {
                 }
                 if (node instanceof LeafExecutionResultNode) {
                     LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
-
                     if (ArtificialFieldUtils.isArtificialField(nadelContext, leaf.getAlias())) {
                         nodeCount.decrementAndGet();
                         return TreeTransformerUtil.deleteNode(context);
@@ -141,6 +140,7 @@ public class ServiceResultNodesToOverallResult {
 //                List<Field> notTransformedFields = transformationsAndNotTransformedFields.getT2();
 
                 ExecutionResultNode parentNode = context.getParentContext().originalThisNode() == root ? correctRootNode : context.getParentNode();
+
                 UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(
                         parentNode,
                         isHydrationTransformation,
@@ -164,6 +164,7 @@ public class ServiceResultNodesToOverallResult {
             }
 
         });
+//        System.out.println("node count: " + nodeCount.get());
 //        long elapsedTime = System.currentTimeMillis() - startTime;
 //        log.debug("ServiceResultNodesToOverallResult time: {} ms, nodeCount: {}, executionId: {} ", elapsedTime, nodeCount.get(), executionId);
         return newRoot.withNodeCount(nodeCount.get());

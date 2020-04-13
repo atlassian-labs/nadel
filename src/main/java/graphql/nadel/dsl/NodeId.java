@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static graphql.Assert.assertNotNull;
-import static java.lang.String.format;
 
 public class NodeId {
     /**
@@ -17,7 +16,7 @@ public class NodeId {
     public static final String ID = "id";
 
     public static String getId(Node<?> node) {
-        return assertNotNull(node.getAdditionalData().get(ID), format("expected node %s to have an id", node));
+        return assertNotNull(node.getAdditionalData().get(ID), "expected node %s to have an id", node);
     }
 
     public static List<String> getIds(Node<?> node) {

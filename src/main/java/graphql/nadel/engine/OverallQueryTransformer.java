@@ -66,7 +66,7 @@ public class OverallQueryTransformer {
     ) {
         long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
-        Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
+        Map<String, FieldTransformation> fieldIdToTransformation = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
@@ -80,7 +80,7 @@ public class OverallQueryTransformer {
                 underlyingSchema,
                 topLevelField.getSelectionSet(),
                 topLevelFieldTypeOverall,
-                transformationByResultField,
+                fieldIdToTransformation,
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
@@ -102,7 +102,7 @@ public class OverallQueryTransformer {
         Map<String, FragmentDefinition> transformedFragments = transformFragments(executionContext,
                 underlyingSchema,
                 executionContext.getFragmentsByName(),
-                transformationByResultField,
+                fieldIdToTransformation,
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
@@ -131,7 +131,7 @@ public class OverallQueryTransformer {
                 Collections.singletonList(transformedMergedField),
                 typeRenameMappings,
                 referencedVariableNames,
-                transformationByResultField,
+                fieldIdToTransformation,
                 transformedFragments,
                 variableValues,
                 removedFieldMap);
@@ -150,7 +150,7 @@ public class OverallQueryTransformer {
         long startTime = System.currentTimeMillis();
         NadelContext nadelContext = executionContext.getContext();
         Set<String> fragmentsDirectlyReferenced = new LinkedHashSet<>();
-        Map<String, FieldTransformation> transformationByResultField = new LinkedHashMap<>();
+        Map<String, FieldTransformation> fieldIdToTransformation = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
@@ -169,7 +169,7 @@ public class OverallQueryTransformer {
                         underlyingSchema,
                         field,
                         rootType,
-                        transformationByResultField,
+                        fieldIdToTransformation,
                         typeRenameMappings,
                         fragmentsDirectlyReferenced,
                         referencedVariables,
@@ -212,7 +212,7 @@ public class OverallQueryTransformer {
                 executionContext,
                 underlyingSchema,
                 executionContext.getFragmentsByName(),
-                transformationByResultField,
+                fieldIdToTransformation,
                 typeRenameMappings,
                 fragmentsDirectlyReferenced,
                 referencedVariables,
@@ -230,8 +230,9 @@ public class OverallQueryTransformer {
                 newDocument,
                 operationDefinition,
                 transformedMergedFields,
-                typeRenameMappings, referencedVariableNames,
-                transformationByResultField,
+                typeRenameMappings,
+                referencedVariableNames,
+                fieldIdToTransformation,
                 transformedFragments,
                 variableValues,
                 removedFieldMap);
@@ -361,7 +362,7 @@ public class OverallQueryTransformer {
                                              GraphQLSchema underlyingSchema,
                                              T nodeWithoutTypeInfo,
                                              GraphQLCompositeType parentTypeOverall,
-                                             Map<String, FieldTransformation> transformationByResultField,
+                                             Map<String, FieldTransformation> fieldIdToTransformation,
                                              Map<String, String> typeRenameMappings,
                                              Set<String> referencedFragmentNames,
                                              Map<String, VariableDefinition> referencedVariables,
@@ -380,7 +381,7 @@ public class OverallQueryTransformer {
         Transformer transformer = new Transformer(
                 executionContext,
                 underlyingSchema,
-                transformationByResultField,
+                fieldIdToTransformation,
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
