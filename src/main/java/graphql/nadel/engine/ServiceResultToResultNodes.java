@@ -56,7 +56,7 @@ public class ServiceResultToResultNodes {
         RootExecutionResultNode rootNode = RootExecutionResultNode.newRootExecutionResultNode().errors(errors).elapsedTime(elapsedTimeForServiceCall).build();
         NadelContext nadelContext = (NadelContext) executionContext.getContext();
 
-        RootExecutionResultNode result = (RootExecutionResultNode) resultNodesTransformer.transform(rootNode, new TraverserVisitorStub<ExecutionResultNode>() {
+        RootExecutionResultNode result = (RootExecutionResultNode) resultNodesTransformer.transformParallel(nadelContext.getForkJoinPool(), rootNode, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 ExecutionResultNode node = context.thisNode();
