@@ -5,11 +5,13 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.NonNullableFieldWasNullException;
 import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.result.ResolvedValue;
+import graphql.nadel.dsl.NodeId;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import static graphql.nadel.dsl.NodeId.getIds;
 import static graphql.nadel.result.LeafExecutionResultNode.newLeafExecutionResultNode;
 import static graphql.nadel.result.UnresolvedObjectResultNode.newUnresolvedExecutionResultNode;
 import static java.util.stream.Collectors.toList;
@@ -25,7 +27,8 @@ public class ResultNodesCreator {
             NonNullableFieldWasNullException nonNullableFieldWasNullException = new NonNullableFieldWasNullException(executionStepInfo, executionStepInfo.getPath());
 
             return newLeafExecutionResultNode()
-                    .field(executionStepInfo.getField())
+                    .alias(executionStepInfo.getField().getSingleField().getAlias())
+                    .fieldIds(getIds(executionStepInfo.getField()))
                     .objectType(executionStepInfo.getFieldContainer())
                     .fieldDefinition(executionStepInfo.getFieldDefinition())
                     .executionPath(executionStepInfo.getPath())
@@ -35,7 +38,8 @@ public class ResultNodesCreator {
         }
         if (fetchedValueAnalysis.isNullValue()) {
             return newLeafExecutionResultNode()
-                    .field(executionStepInfo.getField())
+                    .alias(executionStepInfo.getField().getSingleField().getAlias())
+                    .fieldIds(getIds(executionStepInfo.getField()))
                     .objectType(executionStepInfo.getFieldContainer())
                     .fieldDefinition(executionStepInfo.getFieldDefinition())
                     .executionPath(executionStepInfo.getPath())
@@ -49,7 +53,8 @@ public class ResultNodesCreator {
             return createListResultNode(fetchedValueAnalysis);
         }
         return newLeafExecutionResultNode()
-                .field(executionStepInfo.getField())
+                .alias(executionStepInfo.getField().getSingleField().getAlias())
+                .fieldIds(NodeId.getIds(executionStepInfo.getField()))
                 .objectType(executionStepInfo.getFieldContainer())
                 .fieldDefinition(executionStepInfo.getFieldDefinition())
                 .executionPath(executionStepInfo.getPath())
@@ -89,7 +94,8 @@ public class ResultNodesCreator {
                 .collect(toList());
         ExecutionStepInfo executionStepInfo = fetchedValueAnalysis.getExecutionStepInfo();
         return ListExecutionResultNode.newListExecutionResultNode()
-                .field(executionStepInfo.getField())
+                .alias(executionStepInfo.getField().getSingleField().getAlias())
+                .fieldIds(NodeId.getIds(executionStepInfo.getField()))
                 .objectType(executionStepInfo.getFieldContainer())
                 .fieldDefinition(executionStepInfo.getFieldDefinition())
                 .executionPath(executionStepInfo.getPath())

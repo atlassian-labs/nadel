@@ -38,7 +38,8 @@ public class FixListNamesAdapter implements NodeAdapter<ExecutionResultNode> {
     }
 
     private ExecutionResultNode fixFieldName(ListExecutionResultNode node, ExecutionResultNode childNode) {
-        return StrategyUtil.changeFieldInResultNode(node, childNode.getMergedField());
+//        return StrategyUtil.changeFieldInResultNode(node, childNode.getMergedField());
+        return node;
     }
 
     @Override

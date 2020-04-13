@@ -27,10 +27,10 @@ public class ExecutionResultNodeMapper {
 
         // maybe we need that later
 //        GraphQLOutputType mappedType = mapFieldType(executionStepInfo, typeRenameMappings, overallSchema);
-        ExecutionPath mappedPath = pathMapper.mapPath(node.getExecutionPath(), node.getField(), environment);
+        ExecutionPath mappedPath = pathMapper.mapPath(node.getExecutionPath(), node.getResultKey(), environment);
 
         GraphQLObjectType mappedObjectType = mapObjectType(node, typeRenameMappings, overallSchema);
-        GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedObjectType, node.getField().getName());
+        GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedObjectType, node.getFieldName());
 
         return node.transform(builder -> builder
                 .executionPath(mappedPath)

@@ -92,7 +92,7 @@ public class ResultNodesUtil {
         }
 
         if (root instanceof UnresolvedObjectResultNode) {
-            return data("Not resolved : " + root.getExecutionPath() + " with field " + root.getField(), emptyList());
+            return data("Not resolved : " + root.getExecutionPath() + " with field " + root.getFieldName(), emptyList());
         }
         if (root instanceof ObjectExecutionResultNode) {
             Optional<NonNullableFieldWasNullException> childrenNonNullableException = root.getChildNonNullableException();
@@ -103,7 +103,7 @@ public class ResultNodesUtil {
             List<GraphQLError> errors = new ArrayList<>();
             root.getChildren().forEach(child -> {
                 ExecutionResultData executionResultData = toDataImpl(child);
-                resultMap.put(child.getMergedField().getResultKey(), executionResultData.data);
+                resultMap.put(child.getResultKey(), executionResultData.data);
                 errors.addAll(executionResultData.errors);
             });
             errors.addAll(root.getErrors());

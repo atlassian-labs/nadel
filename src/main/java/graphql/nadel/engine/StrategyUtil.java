@@ -3,9 +3,8 @@ package graphql.nadel.engine;
 import graphql.Assert;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.MergedField;
-import graphql.language.Field;
 import graphql.nadel.Operation;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 import graphql.util.Breadcrumb;
@@ -34,8 +33,8 @@ import static graphql.util.FpKit.mapEntries;
 public class StrategyUtil {
 
     public static List<NodeMultiZipper<ExecutionResultNode>> groupNodesIntoBatchesByField(Collection<NodeZipper<ExecutionResultNode>> nodes, ExecutionResultNode root) {
-        Map<MergedField, List<NodeZipper<ExecutionResultNode>>> zipperByField = FpKit.groupingBy(nodes,
-                (executionResultZipper -> executionResultZipper.getCurNode().getMergedField()));
+        Map<List<String>, List<NodeZipper<ExecutionResultNode>>> zipperByField = FpKit.groupingBy(nodes,
+                (executionResultZipper -> executionResultZipper.getCurNode().getFieldIds()));
         return mapEntries(zipperByField, (key, value) -> new NodeMultiZipper<>(root, value, FIX_NAMES_ADAPTER));
     }
 
@@ -80,25 +79,25 @@ public class StrategyUtil {
         return executionInfo;
     }
 
-    public static <T extends ExecutionResultNode> T changeFieldInResultNode(T executionResultNode, MergedField newField) {
-        return (T) executionResultNode.transform(builder -> builder.field(newField));
+    public static <T extends ExecutionResultNode> T changeFieldIsInResultNode(T executionResultNode, List<String> fieldIds) {
+        return (T) executionResultNode.transform(builder -> builder.fieldIds(fieldIds));
     }
 
-    public static <T extends ExecutionResultNode> T changeFieldInResultNode(T executionResultNode, Field newField) {
-        MergedField mergedField = MergedField.newMergedField(newField).build();
-        return (T) executionResultNode.transform(builder -> builder.field(mergedField));
+    public static <T extends ExecutionResultNode> T changeFieldIdsInResultNode(T executionResultNode, String fieldId) {
+        return (T) executionResultNode.transform(builder -> builder.fieldId(fieldId));
     }
 
-    public static <T extends ExecutionResultNode> T copyTypeInformation(ExecutionResultNode from, T to) {
+    public static <T extends ExecutionResultNode> T copyFieldInformation(ExecutionResultNode from, T to) {
         return (T) to.transform(builder -> builder
-                .field(from.getField())
+                .fieldIds(from.getFieldIds())
+                .alias(from.getAlias())
                 .objectType(from.getObjectType())
                 .fieldDefinition(from.getFieldDefinition()));
     }
 
     public static ExecutionResultNode copyTypeInformation(ExecutionStepInfo from) {
         return newObjectExecutionResultNode()
-                .field(from.getField())
+                .fieldIds(NodeId.getIds(from.getField()))
                 .objectType(from.getFieldContainer())
                 .fieldDefinition(from.getFieldDefinition())
                 .executionPath(from.getPath())

@@ -49,14 +49,14 @@ class ResolvedValueMapperTest extends Specification {
         mapped.completedValue == "Underlying"
     }
 
-    def newNode(Consumer<ResolvedValue.Builder> valueBuilder, String name = Introspection.TypeNameMetaFieldDef.name) {
+    ExecutionResultNode newNode(Consumer<ResolvedValue.Builder> valueBuilder, String name = Introspection.TypeNameMetaFieldDef.name) {
         def node = Mock(ExecutionResultNode)
         def field = Mock(MergedField)
         def value = ResolvedValue.newResolvedValue().with({ valueBuilder.accept(it); it }).build()
 
-        (1.._) * node.resolvedValue >> value
-        (1.._) * node.mergedField >> field
-        (1.._) * field.name >> name
+        node.resolvedValue >> value
+        field.name >> name
+        node.getFieldName() >> name
 
         return node
     }

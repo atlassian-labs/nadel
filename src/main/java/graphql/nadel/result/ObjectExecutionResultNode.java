@@ -12,7 +12,7 @@ public class ObjectExecutionResultNode extends ExecutionResultNode {
 
     private ObjectExecutionResultNode(Builder builder) {
         super(builder);
-        assertNotNull(getField());
+        assertNotNull(getFieldDefinition());
     }
 
     // hack for subclasses to pass in BuilderBase instances

@@ -2,9 +2,9 @@ package graphql.nadel.engine.transformation;
 
 import graphql.Assert;
 import graphql.execution.ExecutionPath;
-import graphql.execution.MergedField;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
@@ -83,7 +83,7 @@ public abstract class FieldTransformation {
             }
             if (parentNormalizedField.getObjectType() == parent.getObjectType() &&
                     parentNormalizedField.getFieldDefinition() == parent.getFieldDefinition() &&
-                    parentNormalizedField.getResultKey().equals(parent.getField().getResultKey())) {
+                    parentNormalizedField.getResultKey().equals(parent.getResultKey())) {
                 return normalizedField;
             }
         }
@@ -98,29 +98,25 @@ public abstract class FieldTransformation {
                 .collect(Collectors.toList());
     }
 
-    protected ExecutionResultNode replaceFieldWithOriginalValue(List<FieldTransformation> allTransformations,
-                                                                ExecutionResultNode executionResultNode) {
-        MergedField underlyingMergedField = executionResultNode.getField();
-        List<Field> underlyingFields = underlyingMergedField.getFields();
-        assertTrue(allTransformations.size() == underlyingFields.size());
+    protected ExecutionResultNode replaceFieldIdsWithOriginalValue(List<FieldTransformation> allTransformations,
+                                                                   ExecutionResultNode executionResultNode) {
+        List<String> underlyingFieldIds = executionResultNode.getFieldIds();
+        assertTrue(allTransformations.size() == underlyingFieldIds.size());
 
-        List<Field> newFields = new ArrayList<>();
+        List<String> newFieldIds = new ArrayList<>();
         for (FieldTransformation fieldTransformation : allTransformations) {
-            newFields.add(fieldTransformation.getOriginalField());
+            newFieldIds.add(NodeId.getId(fieldTransformation.getOriginalField()));
         }
-        MergedField newMergedField = MergedField.newMergedField(newFields).build();
-
-        FieldTransformation fieldTransformation = allTransformations.get(0);
-
-        return executionResultNode.transform((builder -> builder.field(newMergedField)));
+        return executionResultNode.transform((builder -> builder.fieldIds(newFieldIds)));
     }
 
     protected ExecutionResultNode mapToOverallFieldAndTypes(ExecutionResultNode node,
                                                             List<FieldTransformation> allTransformations,
                                                             NormalizedQueryField matchingNormalizedOverallField,
                                                             UnapplyEnvironment environment) {
-        node = replaceFieldWithOriginalValue(allTransformations, node);
+        node = replaceFieldIdsWithOriginalValue(allTransformations, node);
         node = node.transform(builder -> builder
+                .alias(matchingNormalizedOverallField.getAlias())
                 .objectType(matchingNormalizedOverallField.getObjectType())
                 .fieldDefinition(matchingNormalizedOverallField.getFieldDefinition())
                 .objectType(matchingNormalizedOverallField.getObjectType())

@@ -1,15 +1,14 @@
 package graphql.nadel.engine;
 
 import graphql.execution.ExecutionPath;
-import graphql.execution.MergedField;
 import graphql.nadel.util.FpKit;
 
 import java.util.List;
 
 public class PathMapper {
 
-    public ExecutionPath mapPath(ExecutionPath executionPath, MergedField mergedField, UnapplyEnvironment environment) {
-        List<Object> fieldSegments = patchLastFieldName(executionPath, mergedField);
+    public ExecutionPath mapPath(ExecutionPath executionPath, String resultKey, UnapplyEnvironment environment) {
+        List<Object> fieldSegments = patchLastFieldName(executionPath, resultKey);
 
         if (environment.isHydrationTransformation) {
             //
@@ -27,13 +26,12 @@ public class PathMapper {
         return ExecutionPath.fromList(fieldSegments);
     }
 
-    private List<Object> patchLastFieldName(ExecutionPath executionPath, MergedField mergedField) {
-        String fieldName = mergedField.getResultKey();
+    private List<Object> patchLastFieldName(ExecutionPath executionPath, String resultKey) {
         List<Object> fieldSegments = executionPath.toList();
         for (int i = fieldSegments.size() - 1; i >= 0; i--) {
             Object segment = fieldSegments.get(i);
             if (segment instanceof String) {
-                fieldSegments.set(i, fieldName);
+                fieldSegments.set(i, resultKey);
                 break;
             }
         }

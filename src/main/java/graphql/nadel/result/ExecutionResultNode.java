@@ -4,7 +4,6 @@ import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.ExecutionPath;
-import graphql.execution.MergedField;
 import graphql.execution.NonNullableFieldWasNullException;
 import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.schema.GraphQLFieldDefinition;
@@ -21,7 +20,6 @@ import static graphql.Assert.assertNotNull;
 @Internal
 public abstract class ExecutionResultNode {
 
-    //    private final ExecutionStepInfo executionStepInfo;
     private final ResolvedValue resolvedValue;
     private final NonNullableFieldWasNullException nonNullableFieldWasNullException;
     private final List<ExecutionResultNode> children;
@@ -30,7 +28,10 @@ public abstract class ExecutionResultNode {
     private final int totalNodeCount;
 
     private final ExecutionPath executionPath;
-    private final MergedField field;
+
+    private final String alias;
+    private final List<String> fieldIds;
+
     private final GraphQLFieldDefinition fieldDefinition;
     private final GraphQLObjectType objectType;
 
@@ -47,7 +48,8 @@ public abstract class ExecutionResultNode {
         this.totalNodeCount = builderBase.totalNodeCount;
         this.executionPath = assertNotNull(builderBase.executionPath);
 
-        this.field = builderBase.field;
+        this.alias = builderBase.alias;
+        this.fieldIds = builderBase.fieldIds;
         this.fieldDefinition = builderBase.fieldDefinition;
         this.objectType = builderBase.objectType;
 
@@ -73,13 +75,28 @@ public abstract class ExecutionResultNode {
         return resolvedValue;
     }
 
-    public MergedField getMergedField() {
-        return field;
+    //    public MergedField getMergedField() {
+//        return field;
+//    }
+    public String getResultKey() {
+        return alias != null ? alias : fieldDefinition.getName();
     }
 
-    public MergedField getField() {
-        return field;
+    public String getAlias() {
+        return alias;
     }
+
+    public List<String> getFieldIds() {
+        return fieldIds;
+    }
+
+    public String getFieldName() {
+        return fieldDefinition.getName();
+    }
+
+//    public MergedField getField() {
+//        return field;
+//    }
 
     public GraphQLFieldDefinition getFieldDefinition() {
         return fieldDefinition;
@@ -142,10 +159,10 @@ public abstract class ExecutionResultNode {
 
     @Override
     public String toString() {
-        return "ExecutionResultNode{" +
+        return getClass().getSimpleName() + "{" +
                 "path=" + executionPath +
                 ", objectType=" + (objectType != null ? objectType.getName() : "null") +
-                ", field=" + (field != null ? field.getName() : "null") +
+                ", name=" + (fieldDefinition != null ? fieldDefinition.getName() : "null") +
                 ", fieldDefinition=" + fieldDefinition +
                 ", resolvedValue=" + resolvedValue +
                 ", nonNullableFieldWasNullException=" + nonNullableFieldWasNullException +
@@ -162,7 +179,8 @@ public abstract class ExecutionResultNode {
         protected ElapsedTime elapsedTime;
         protected ExecutionPath executionPath;
 
-        private MergedField field;
+        private String alias;
+        private List<String> fieldIds = new ArrayList<>();
         private GraphQLFieldDefinition fieldDefinition;
         private GraphQLObjectType objectType;
         private int totalNodeCount;
@@ -179,7 +197,9 @@ public abstract class ExecutionResultNode {
             this.errors.addAll(existing.getErrors());
             this.elapsedTime = existing.getElapsedTime();
             this.executionPath = existing.getExecutionPath();
-            this.field = existing.field;
+            this.alias = existing.getAlias();
+            this.fieldIds.addAll(existing.getFieldIds());
+
             this.fieldDefinition = existing.fieldDefinition;
             this.objectType = existing.objectType;
             this.totalNodeCount = existing.totalNodeCount;
@@ -208,8 +228,20 @@ public abstract class ExecutionResultNode {
             return (T) this;
         }
 
-        public T field(MergedField field) {
-            this.field = field;
+        public T alias(String alias) {
+            this.alias = alias;
+            return (T) this;
+        }
+
+        public T fieldIds(List<String> fieldIds) {
+            this.fieldIds.clear();
+            this.fieldIds.addAll(fieldIds);
+            return (T) this;
+        }
+
+        public T fieldId(String fieldId) {
+            this.fieldIds.clear();
+            this.fieldIds.add(fieldId);
             return (T) this;
         }
 

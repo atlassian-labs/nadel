@@ -1,5 +1,6 @@
 package graphql.nadel.testutils
 
+
 import graphql.execution.ExecutionPath
 import graphql.execution.ExecutionStepInfo
 import graphql.execution.nextgen.result.ResolvedValue
@@ -9,6 +10,7 @@ import graphql.nadel.result.ListExecutionResultNode
 import graphql.nadel.result.ObjectExecutionResultNode
 import graphql.nadel.result.ResultNodesUtil
 import graphql.nadel.result.RootExecutionResultNode
+import graphql.schema.GraphQLFieldDefinition
 
 import static graphql.Scalars.GraphQLString
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo
@@ -46,6 +48,13 @@ class ExecutionResultNodeUtil {
         newExecutionStepInfo().type(GraphQLString).field(field).path(path).build()
     }
 
+    static GraphQLFieldDefinition fieldDefinition(String name) {
+        GraphQLFieldDefinition.newFieldDefinition()
+                .type(GraphQLString)
+                .name(name)
+                .build()
+    }
+
 
     static ResolvedValue resolvedValue(String value) {
         return ResolvedValue.newResolvedValue().completedValue(value).build();
@@ -53,22 +62,22 @@ class ExecutionResultNodeUtil {
 
     static LeafExecutionResultNode leaf(String name, String alias) {
         def info = esi(name, alias)
-        newLeafExecutionResultNode().field(info.field).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).build()
+        newLeafExecutionResultNode().fieldDefinition(fieldDefinition(name)).alias(alias).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).build()
     }
 
     static LeafExecutionResultNode leaf(String name) {
         def info = esi(name)
-        newLeafExecutionResultNode().field(info.field).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).build()
+        newLeafExecutionResultNode().fieldDefinition(fieldDefinition(name)).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).build()
     }
 
     static ObjectExecutionResultNode object(String name, List<ExecutionResultNode> children) {
         def info = esi(name)
-        newObjectExecutionResultNode().field(info.field).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).children(children).build()
+        newObjectExecutionResultNode().fieldDefinition(fieldDefinition(name)).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).children(children).build()
     }
 
     static ListExecutionResultNode list(String name, List<ExecutionResultNode> children) {
         def info = esi(name)
-        newListExecutionResultNode().field(info.field).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).children(children).build()
+        newListExecutionResultNode().fieldDefinition(fieldDefinition(name)).executionPath(info.path).resolvedValue(resolvedValue(name + "Val")).children(children).build()
     }
 
     static RootExecutionResultNode root(List<ExecutionResultNode> children) {

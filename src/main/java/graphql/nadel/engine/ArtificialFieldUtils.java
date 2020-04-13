@@ -1,6 +1,5 @@
 package graphql.nadel.engine;
 
-import graphql.execution.MergedField;
 import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
@@ -8,7 +7,6 @@ import graphql.nadel.dsl.NodeId;
 import graphql.nadel.util.Util;
 import graphql.schema.GraphQLOutputType;
 
-import java.util.List;
 import java.util.UUID;
 
 import static graphql.Assert.assertNotNull;
@@ -62,15 +60,8 @@ public class ArtificialFieldUtils {
         return field.transform(builder -> builder.selectionSet(selectionSet));
     }
 
-    public static boolean isArtificialField(NadelContext nadelContext, MergedField mergedField) {
-        List<Field> fields = mergedField.getFields();
-        // we KNOW we put the field in as a single field with alias (not merged) and hence we can assume that on the reverse
-        if (fields.size() == 1) {
-            Field singleField = mergedField.getSingleField();
-            String alias = singleField.getAlias();
-            return nadelContext.getUnderscoreTypeNameAlias().equals(alias) || nadelContext.getObjectIdentifierAlias().equals(alias);
-        }
-        return false;
+    public static boolean isArtificialField(NadelContext nadelContext, String alias) {
+        return nadelContext.getUnderscoreTypeNameAlias().equals(alias) || nadelContext.getObjectIdentifierAlias().equals(alias);
     }
 
 }

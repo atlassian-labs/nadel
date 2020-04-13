@@ -4,6 +4,7 @@ package benchmark;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import graphql.Assert;
 import graphql.ExecutionResult;
 import graphql.nadel.Nadel;
 import graphql.nadel.NadelExecutionInput;
@@ -84,7 +85,7 @@ public class LargeResponseBenchmark {
     @Benchmark
     @Warmup(iterations = 2)
     @Measurement(iterations = 3)
-    @Threads(Threads.MAX)
+    @Threads(1)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public ExecutionResult benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
@@ -93,6 +94,7 @@ public class LargeResponseBenchmark {
                 .query(nadelInstance.query)
                 .build();
         ExecutionResult executionResult = nadelInstance.nadel.execute(nadelExecutionInput).get();
+        Assert.assertTrue(executionResult.getErrors().size() == 0);
         return executionResult;
     }
 

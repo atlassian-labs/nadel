@@ -24,9 +24,7 @@ import java.util.List;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
-import static graphql.execution.MergedField.newMergedField;
 import static graphql.nadel.engine.HydrationInputNode.newHydrationInputNode;
-import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
 import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.util.FpKit.filter;
@@ -88,7 +86,7 @@ public class HydrationTransformation extends FieldTransformation {
         // or we can have a list of things inside the path: e.g.: $source.issues.userIds (this is a list of objects)
         if (node instanceof ListExecutionResultNode) {
             if (node.getChildren().size() == 0) {
-                return handleEmptyList((ListExecutionResultNode) node, allTransformations, environment);
+                return handleEmptyList((ListExecutionResultNode) node, allTransformations, environment, matchingNormalizedOverallField);
             }
             ExecutionResultNode child = node.getChildren().get(0);
             if (child instanceof LeafExecutionResultNode) {
@@ -106,8 +104,11 @@ public class HydrationTransformation extends FieldTransformation {
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
-    private UnapplyResult handleEmptyList(ListExecutionResultNode listNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment) {
-        ListExecutionResultNode changedList = listNode.transform(builder -> builder.field(newMergedField(getOriginalField()).build()));
+    private UnapplyResult handleEmptyList(ListExecutionResultNode listNode,
+                                          List<FieldTransformation> allTransformations,
+                                          UnapplyEnvironment environment,
+                                          NormalizedQueryField matchingNormalizedOverallField) {
+        ExecutionResultNode changedList = mapToOverallFieldAndTypes(listNode, allTransformations, matchingNormalizedOverallField, environment);
         return new UnapplyResult(changedList, TraversalControl.ABORT);
     }
 
@@ -119,7 +120,7 @@ public class HydrationTransformation extends FieldTransformation {
 
         ExecutionResultNode mappedNode = mapToOverallFieldAndTypes(transformedNode, allTransformations, matchingNormalizedField, environment);
 
-        ExecutionResultNode changedNode = mapChildren(transformedNode, objectChild -> {
+        ExecutionResultNode changedNode = mapChildren(mappedNode, objectChild -> {
             LeafExecutionResultNode leaf = (LeafExecutionResultNode) objectChild.getChildren().get(0);
             return unapplyLeafNode(leaf, allTransformations, environment, matchingNormalizedField);
         });
@@ -147,17 +148,17 @@ public class HydrationTransformation extends FieldTransformation {
                                                     UnapplyEnvironment environment,
                                                     NormalizedQueryField matchingNormalizedField) {
 
-
         leafNode = (LeafExecutionResultNode) mapToOverallFieldAndTypes(leafNode, allTransformations, matchingNormalizedField, environment);
-        ExecutionPath executionPath = pathMapper.mapPath(leafNode.getExecutionPath(), leafNode.getField(), environment);
+        ExecutionPath executionPath = pathMapper.mapPath(leafNode.getExecutionPath(), leafNode.getResultKey(), environment);
         leafNode = leafNode.transform(builder -> builder.executionPath(executionPath));
+
         if (leafNode.getResolvedValue().isNullValue()) {
-            // if the field is null we don't need to create a HydrationInputNode: we only need to fix up the field name
-            return changeFieldInResultNode(leafNode, getOriginalField());
+            return leafNode;
         } else {
             return newHydrationInputNode()
                     .hydrationTransformation(this)
-                    .field(leafNode.getField())
+                    .alias(leafNode.getAlias())
+                    .fieldIds(leafNode.getFieldIds())
                     .objectType(leafNode.getObjectType())
                     .fieldDefinition(leafNode.getFieldDefinition())
                     .executionPath(leafNode.getExecutionPath())

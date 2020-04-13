@@ -70,7 +70,7 @@ public class FieldRenameTransformation extends FieldTransformation {
 
         resultNode = mapToOverallFieldAndTypes(resultNode, allTransformations, matchingNormalizedOverallField, environment);
         resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, matchingNormalizedOverallField, environment);
-        ExecutionPath mappedPath = pathMapper.mapPath(executionResultNode.getExecutionPath(), resultNode.getMergedField(), environment);
+        ExecutionPath mappedPath = pathMapper.mapPath(executionResultNode.getExecutionPath(), resultNode.getResultKey(), environment);
         resultNode = resultNode.transform(builder -> builder.executionPath(mappedPath));
 
         return new UnapplyResult(resultNode, TraversalControl.CONTINUE);

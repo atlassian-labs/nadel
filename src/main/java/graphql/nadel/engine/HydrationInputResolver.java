@@ -49,8 +49,8 @@ import static graphql.Assert.assertTrue;
 import static graphql.language.Field.newField;
 import static graphql.nadel.engine.ArtificialFieldUtils.addObjectIdentifier;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
-import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
-import static graphql.nadel.engine.StrategyUtil.copyTypeInformation;
+import static graphql.nadel.engine.StrategyUtil.changeFieldIdsInResultNode;
+import static graphql.nadel.engine.StrategyUtil.copyFieldInformation;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
 import static graphql.nadel.engine.StrategyUtil.groupNodesIntoBatchesByField;
 import static graphql.nadel.util.FpKit.filter;
@@ -314,9 +314,9 @@ public class HydrationInputResolver {
         String serviceName = hydrationTransformation.getUnderlyingServiceHydration().getServiceName();
         resultComplexityAggregator.incrementServiceNodeCount(serviceName, firstTopLevelResultNode.getTotalNodeCount());
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
-        firstTopLevelResultNode = copyTypeInformation(hydrationInputNode, firstTopLevelResultNode);
+        firstTopLevelResultNode = StrategyUtil.copyFieldInformation(hydrationInputNode, firstTopLevelResultNode);
 
-        return changeFieldInResultNode(firstTopLevelResultNode, hydrationTransformation.getOriginalField());
+        return changeFieldIdsInResultNode(firstTopLevelResultNode, NodeId.getId(hydrationTransformation.getOriginalField()));
     }
 
     private CompletableFuture<List<ExecutionResultNode>> resolveHydrationInputBatch(ExecutionContext executionContext,
@@ -439,8 +439,7 @@ public class HydrationInputResolver {
                 String serviceName = hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName();
                 resultComplexityAggregator.incrementServiceNodeCount(serviceName, overallResultNode.getTotalNodeCount());
 
-                Field originalField = hydrationInputNode.getHydrationTransformation().getOriginalField();
-                resultNode = changeFieldInResultNode(overallResultNode, originalField);
+                resultNode = copyFieldInformation(hydrationInputNode, overallResultNode);
             } else {
                 resultNode = createNullValue(hydrationInputNode);
             }
@@ -462,7 +461,8 @@ public class HydrationInputResolver {
                 .build();
         return LeafExecutionResultNode.newLeafExecutionResultNode()
                 .objectType(inputNode.getObjectType())
-                .field(inputNode.getField())
+                .alias(inputNode.getAlias())
+                .fieldIds(inputNode.getFieldIds())
                 .executionPath(inputNode.getExecutionPath())
                 .fieldDefinition(inputNode.getFieldDefinition())
                 .resolvedValue(resolvedValue)
@@ -488,7 +488,7 @@ public class HydrationInputResolver {
 
 
     private LeafExecutionResultNode getFieldByResultKey(ObjectExecutionResultNode node, String resultKey) {
-        return (LeafExecutionResultNode) findOneOrNull(node.getChildren(), child -> child.getMergedField().getResultKey().equals(resultKey));
+        return (LeafExecutionResultNode) findOneOrNull(node.getChildren(), child -> child.getResultKey().equals(resultKey));
     }
 
 

@@ -21,8 +21,18 @@ public class FieldMetadataUtil {
         return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getTransformationId);
     }
 
+    public static List<String> getRootOfTransformationIds(String fieldId, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        List<FieldMetadata> fieldMetadata = readMetadata(fieldId, metadataByFieldId);
+        return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getTransformationId);
+    }
+
     public static List<String> getTransformationIds(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
+        return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getTransformationId);
+    }
+
+    public static List<String> getTransformationIds(String fieldId, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        List<FieldMetadata> fieldMetadata = readMetadata(fieldId, metadataByFieldId);
         return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getTransformationId);
     }
 
@@ -74,6 +84,11 @@ public class FieldMetadataUtil {
 
     private static List<FieldMetadata> readMetadata(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> result = metadataByFieldId.get(getId(field));
+        return result != null ? result : new ArrayList<>();
+    }
+
+    private static List<FieldMetadata> readMetadata(String fieldId, Map<String, List<FieldMetadata>> metadataByFieldId) {
+        List<FieldMetadata> result = metadataByFieldId.get(fieldId);
         return result != null ? result : new ArrayList<>();
     }
 

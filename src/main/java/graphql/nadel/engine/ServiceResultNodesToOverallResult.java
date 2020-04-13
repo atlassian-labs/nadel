@@ -7,9 +7,9 @@ import graphql.execution.ExecutionPath;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.language.AbstractNode;
-import graphql.language.Field;
 import graphql.nadel.Tuples;
 import graphql.nadel.TuplesTwo;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
@@ -43,8 +43,7 @@ import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
-import static graphql.nadel.dsl.NodeId.getId;
-import static graphql.nadel.engine.StrategyUtil.changeFieldInResultNode;
+import static graphql.nadel.engine.StrategyUtil.changeFieldIsInResultNode;
 import static graphql.util.FpKit.groupingBy;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
@@ -126,9 +125,8 @@ public class ServiceResultNodesToOverallResult {
                 }
                 if (node instanceof LeafExecutionResultNode) {
                     LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
-                    MergedField mergedField = leaf.getMergedField();
 
-                    if (ArtificialFieldUtils.isArtificialField(nadelContext, mergedField)) {
+                    if (ArtificialFieldUtils.isArtificialField(nadelContext, leaf.getAlias())) {
                         nodeCount.decrementAndGet();
                         return TreeTransformerUtil.deleteNode(context);
                     }
@@ -136,7 +134,7 @@ public class ServiceResultNodesToOverallResult {
 
 
                 TraversalControl traversalControl = TraversalControl.CONTINUE;
-                TuplesTwo<Set<FieldTransformation>, List<Field>> transformationsAndNotTransformedFields =
+                TuplesTwo<Set<FieldTransformation>, List<String>> transformationsAndNotTransformedFields =
                         getTransformationsAndNotTransformedFields(node, transformationMap, metadata);
 
                 List<FieldTransformation> transformations = new ArrayList<>(transformationsAndNotTransformedFields.getT1());
@@ -202,7 +200,8 @@ public class ServiceResultNodesToOverallResult {
 
         LeafExecutionResultNode removedNode = LeafExecutionResultNode.newLeafExecutionResultNode()
                 .executionPath(executionPath)
-                .field(mergedField)
+                .alias(mergedField.getSingleField().getAlias())
+                .fieldIds(NodeId.getIds(mergedField))
                 .objectType(normalizedQueryField.getObjectType())
                 .fieldDefinition(normalizedQueryField.getFieldDefinition())
                 .resolvedValue(resolvedValue)
@@ -341,14 +340,14 @@ public class ServiceResultNodesToOverallResult {
         }
 
         Map<AbstractNode, Set<String>> transformationIdsByTransformationDefinition = new LinkedHashMap<>();
-        List<Field> fields = executionResultNode.getMergedField().getFields();
-        for (Field field : fields) {
-            List<String> fieldIds = FieldMetadataUtil.getRootOfTransformationIds(field, metadata.getMetadataByFieldId());
-            for (String fieldId : fieldIds) {
-                FieldTransformation fieldTransformation = assertNotNull(transformationMap.get(fieldId));
+        List<String> fieldIds = executionResultNode.getFieldIds();
+        for (String fieldId : fieldIds) {
+            List<String> transformationIds = FieldMetadataUtil.getRootOfTransformationIds(fieldId, metadata.getMetadataByFieldId());
+            for (String transformationId : transformationIds) {
+                FieldTransformation fieldTransformation = assertNotNull(transformationMap.get(transformationId));
                 AbstractNode definition = fieldTransformation.getDefinition();
                 transformationIdsByTransformationDefinition.putIfAbsent(definition, new LinkedHashSet<>());
-                transformationIdsByTransformationDefinition.get(definition).add(fieldId);
+                transformationIdsByTransformationDefinition.get(definition).add(transformationId);
             }
         }
         Map<AbstractNode, ExecutionResultNode> treesByDefinition = new LinkedHashMap<>();
@@ -366,18 +365,17 @@ public class ServiceResultNodesToOverallResult {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 ExecutionResultNode node = context.thisNode();
-                List<Field> fieldsWithId;
+                List<String> fieldIdsWithId;
                 if (transformationIds == null) {
-                    fieldsWithId = getFieldsWithoutTransformationId(node, metadata);
+                    fieldIdsWithId = getFieldIdsWithoutTransformationId(node, metadata);
                 } else {
-                    fieldsWithId = getFieldsWithTransformationIds(node, transformationIds, metadata);
+                    fieldIdsWithId = getFieldIdsWithTransformationIds(node, transformationIds, metadata);
                 }
 
-                if (fieldsWithId.size() == 0) {
+                if (fieldIdsWithId.size() == 0) {
                     return TreeTransformerUtil.deleteNode(context);
                 }
-                MergedField mergedField = MergedField.newMergedField(fieldsWithId).build();
-                ExecutionResultNode changedNode = changeFieldInResultNode(node, mergedField);
+                ExecutionResultNode changedNode = changeFieldIsInResultNode(node, fieldIdsWithId);
                 return TreeTransformerUtil.changeNode(context, changedNode);
             }
         });
@@ -386,21 +384,21 @@ public class ServiceResultNodesToOverallResult {
     }
 
 
-    private List<Field> getFieldsWithoutTransformationId(ExecutionResultNode node, Metadata metadata) {
-        return node.getMergedField().getFields().stream().filter(field -> FieldMetadataUtil.getTransformationIds(field, metadata.getMetadataByFieldId()).size() == 0).collect(Collectors.toList());
+    private List<String> getFieldIdsWithoutTransformationId(ExecutionResultNode node, Metadata metadata) {
+        return node.getFieldIds().stream().filter(fieldId -> FieldMetadataUtil.getTransformationIds(fieldId, metadata.getMetadataByFieldId()).size() == 0).collect(Collectors.toList());
     }
 
-    private List<Field> getFieldsWithTransformationIds(ExecutionResultNode node, Set<String> transformationIds, Metadata metadata) {
-        return node.getMergedField().getFields().stream().filter(field -> {
-            List<String> fieldIds = FieldMetadataUtil.getTransformationIds(field, metadata.getMetadataByFieldId());
-            return fieldIds.containsAll(transformationIds);
+    private List<String> getFieldIdsWithTransformationIds(ExecutionResultNode node, Set<String> transformationIds, Metadata metadata) {
+        return node.getFieldIds().stream().filter(fieldId -> {
+            List<String> transformationIdsForField = FieldMetadataUtil.getTransformationIds(fieldId, metadata.getMetadataByFieldId());
+            return transformationIdsForField.containsAll(transformationIds);
         }).collect(Collectors.toList());
     }
 
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
         ExecutionResultNode mappedNode = executionResultNodeMapper.mapERNFromUnderlyingToOverall(node, environment);
         ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node, environment);
-        ExecutionPath executionPath = pathMapper.mapPath(node.getExecutionPath(), mappedNode.getField(), environment);
+        ExecutionPath executionPath = pathMapper.mapPath(node.getExecutionPath(), mappedNode.getResultKey(), environment);
         return mappedNode.transform(builder -> builder.resolvedValue(mappedResolvedValue).executionPath(executionPath));
     }
 
@@ -409,29 +407,29 @@ public class ServiceResultNodesToOverallResult {
         TreeTransformerUtil.changeNode(context, mappedNode);
     }
 
-    private TuplesTwo<Set<FieldTransformation>, List<Field>> getTransformationsAndNotTransformedFields(
+    private TuplesTwo<Set<FieldTransformation>, List<String>> getTransformationsAndNotTransformedFields(
             ExecutionResultNode node,
             Map<String, FieldTransformation> transformationMap,
             Metadata metadata
     ) {
         Set<FieldTransformation> transformations = new LinkedHashSet<>();
-        List<Field> notTransformedFields = new ArrayList<>();
-        for (Field field : node.getMergedField().getFields()) {
+        List<String> notTransformedFields = new ArrayList<>();
+        for (String fieldId : node.getFieldIds()) {
 //            System.out.println("processing " + node.getExecutionPath());
 //            System.out.println("field id: " + getId(field) + " field: " + field.getName());
 
             if (node.getExecutionPath().isListSegment()) {
-                notTransformedFields.add(field);
+                notTransformedFields.add(fieldId);
                 continue;
             }
 
-            List<String> rootTransformationIds = FieldMetadataUtil.getRootOfTransformationIds(field, metadata.getMetadataByFieldId());
+            List<String> rootTransformationIds = FieldMetadataUtil.getRootOfTransformationIds(fieldId, metadata.getMetadataByFieldId());
             if (rootTransformationIds.size() == 0) {
-                notTransformedFields.add(field);
+                notTransformedFields.add(fieldId);
                 continue;
             }
-            for (String fieldId : rootTransformationIds) {
-                FieldTransformation fieldTransformation = transformationMap.get(fieldId);
+            for (String transformationId : rootTransformationIds) {
+                FieldTransformation fieldTransformation = transformationMap.get(transformationId);
                 transformations.add(fieldTransformation);
             }
         }
@@ -447,7 +445,7 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private NormalizedQueryField getNormalizedQueryFieldForResultNode(ObjectExecutionResultNode resultNode, NormalizedQueryFromAst normalizedQueryFromAst) {
-        String id = getId(resultNode.getMergedField().getSingleField());
+        String id = resultNode.getFieldIds().get(0);
         List<NormalizedQueryField> normalizedFields = assertNotNull(normalizedQueryFromAst.getNormalizedFieldsByFieldId(id));
 
         for (NormalizedQueryField normalizedField : normalizedFields) {

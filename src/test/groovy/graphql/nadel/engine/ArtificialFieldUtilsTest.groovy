@@ -1,6 +1,6 @@
 package graphql.nadel.engine
 
-import graphql.execution.MergedField
+
 import graphql.language.AstPrinter
 import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.result.LeafExecutionResultNode
@@ -82,13 +82,13 @@ class ArtificialFieldUtilsTest extends Specification {
                 object("pet", [
                         leaf("__typename"), //  <-- manually added by consumer
                         list("owners", [
-                                object("0", [
+                                object("X", [
                                         leaf("__typename"), //  <-- manually added by consumer say via Fragment Spread
                                         leaf("name"),
                                         leaf("__typename", underscoreTypeNameAlias),
                                         leaf("title"),
                                 ]),
-                                object("1", [
+                                object("Y", [
                                         leaf("name"),
                                         leaf("title"),
                                 ]),
@@ -124,12 +124,12 @@ class ArtificialFieldUtilsTest extends Specification {
                 object("pet", [
                         leaf("__typename"), //  <-- manually added by consumer
                         list("owners", [
-                                object("0", [
+                                object("X", [
                                         leaf("__typename"), //  <-- manually added by consumer say via Fragment Spread
                                         leaf("name"),
                                         leaf("title"),
                                 ]),
-                                object("1", [
+                                object("Y", [
                                         leaf("name"),
                                         leaf("title"),
                                 ]),
@@ -152,9 +152,8 @@ class ArtificialFieldUtilsTest extends Specification {
                 ExecutionResultNode node = context.thisNode()
                 if (node instanceof LeafExecutionResultNode) {
                     LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
-                    MergedField mergedField = leaf.getMergedField();
 
-                    if (ArtificialFieldUtils.isArtificialField(nadelContext, mergedField)) {
+                    if (ArtificialFieldUtils.isArtificialField(nadelContext, leaf.getAlias())) {
                         return TreeTransformerUtil.deleteNode(context);
                     }
                 }

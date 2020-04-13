@@ -20,7 +20,7 @@ public class HydrationInputNode extends LeafExecutionResultNode {
         super(builder, null);
         this.hydrationTransformation = builder.hydrationTransformation;
         this.normalizedField = builder.normalizedField;
-        assertNotNull(getField());
+        assertNotNull(getFieldDefinition());
     }
 
     public static Builder newHydrationInputNode() {

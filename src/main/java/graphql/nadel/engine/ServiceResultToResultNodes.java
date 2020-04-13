@@ -12,6 +12,7 @@ import graphql.execution.nextgen.FetchedValueAnalysis;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.nadel.ServiceExecutionResult;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.ResultNodesCreator;
@@ -74,7 +75,8 @@ public class ServiceResultToResultNodes {
                 List<ExecutionResultNode> children = fetchSubSelection(executionContext, fieldSubSelection, elapsedTimeForServiceCall);
                 TreeTransformerUtil.changeNode(context, newObjectExecutionResultNode()
                         .executionPath(unresolvedNode.getExecutionPath())
-                        .field(esi.getField())
+                        .alias(esi.getField().getSingleField().getAlias())
+                        .fieldIds(NodeId.getIds(esi.getField()))
                         .objectType(esi.getFieldContainer())
                         .fieldDefinition(esi.getFieldDefinition())
                         .resolvedValue(resolvedValue)

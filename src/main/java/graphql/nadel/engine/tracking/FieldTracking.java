@@ -64,7 +64,7 @@ public class FieldTracking {
     @SuppressWarnings("RedundantIfStatement")
     private boolean skipField(ExecutionStepInfo stepInfo) {
         ExecutionPath path = stepInfo.getPath();
-        if (isArtificialField(nadelContext, stepInfo.getField())) {
+        if (isArtificialField(nadelContext, stepInfo.getField().getSingleField().getAlias())) {
             return true;
         }
         if (ExecutionPathUtils.isListEndingPath(path)) {
