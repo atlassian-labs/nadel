@@ -5,7 +5,6 @@ import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.ExecutionPath;
 import graphql.execution.NonNullableFieldWasNullException;
-import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 
@@ -20,7 +19,7 @@ import static graphql.Assert.assertNotNull;
 @Internal
 public abstract class ExecutionResultNode {
 
-    private final ResolvedValue resolvedValue;
+    private final Object completedValue;
     private final NonNullableFieldWasNullException nonNullableFieldWasNullException;
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
@@ -40,7 +39,7 @@ public abstract class ExecutionResultNode {
      * we are trusting here the the children list is not modified on the outside (no defensive copy)
      */
     protected ExecutionResultNode(BuilderBase builderBase) {
-        this.resolvedValue = builderBase.resolvedValue;
+        this.completedValue = builderBase.completedValue;
         this.children = Collections.unmodifiableList(assertNotNull(builderBase.children));
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(builderBase.errors);
@@ -71,13 +70,14 @@ public abstract class ExecutionResultNode {
     /*
      * can be null for the RootExecutionResultNode
      */
-    public ResolvedValue getResolvedValue() {
-        return resolvedValue;
+    public Object getCompletedValue() {
+        return completedValue;
     }
 
-    //    public MergedField getMergedField() {
-//        return field;
-//    }
+    public boolean isNullValue() {
+        return completedValue == null;
+    }
+
     public String getResultKey() {
         return alias != null ? alias : fieldDefinition.getName();
     }
@@ -93,10 +93,6 @@ public abstract class ExecutionResultNode {
     public String getFieldName() {
         return fieldDefinition.getName();
     }
-
-//    public MergedField getField() {
-//        return field;
-//    }
 
     public GraphQLFieldDefinition getFieldDefinition() {
         return fieldDefinition;
@@ -121,9 +117,6 @@ public abstract class ExecutionResultNode {
                 .findFirst();
     }
 
-    public Object getValue() {
-        return getResolvedValue().getCompletedValue();
-    }
 
     public int getTotalNodeCount() {
         return totalNodeCount;
@@ -138,8 +131,8 @@ public abstract class ExecutionResultNode {
         return transform(builder -> builder.children(children));
     }
 
-    public ExecutionResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
-        return transform(builder -> builder.resolvedValue(resolvedValue));
+    public ExecutionResultNode withNewCompletedValue(Object completedValue) {
+        return transform(builder -> builder.completedValue(completedValue));
     }
 
     public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
@@ -164,7 +157,7 @@ public abstract class ExecutionResultNode {
                 ", objectType=" + (objectType != null ? objectType.getName() : "null") +
                 ", name=" + (fieldDefinition != null ? fieldDefinition.getName() : "null") +
                 ", fieldDefinition=" + fieldDefinition +
-                ", resolvedValue=" + resolvedValue +
+                ", resolvedValue=" + completedValue +
                 ", nonNullableFieldWasNullException=" + nonNullableFieldWasNullException +
                 ", children=" + children +
                 ", errors=" + errors +
@@ -172,7 +165,7 @@ public abstract class ExecutionResultNode {
     }
 
     public abstract static class BuilderBase<T extends BuilderBase<T>> {
-        protected ResolvedValue resolvedValue;
+        protected Object completedValue;
         protected NonNullableFieldWasNullException nonNullableFieldWasNullException;
         protected List<ExecutionResultNode> children = new ArrayList<>();
         protected List<GraphQLError> errors = new ArrayList<>();
@@ -191,7 +184,7 @@ public abstract class ExecutionResultNode {
         }
 
         public BuilderBase(ExecutionResultNode existing) {
-            this.resolvedValue = existing.getResolvedValue();
+            this.completedValue = existing.getCompletedValue();
             this.nonNullableFieldWasNullException = existing.getNonNullableFieldWasNullException();
             this.children.addAll(existing.getChildren());
             this.errors.addAll(existing.getErrors());
@@ -207,8 +200,8 @@ public abstract class ExecutionResultNode {
 
         public abstract ExecutionResultNode build();
 
-        public T resolvedValue(ResolvedValue resolvedValue) {
-            this.resolvedValue = resolvedValue;
+        public T completedValue(Object completedValue) {
+            this.completedValue = completedValue;
             return (T) this;
         }
 
@@ -259,6 +252,11 @@ public abstract class ExecutionResultNode {
         public T errors(List<GraphQLError> errors) {
             this.errors.clear();
             this.errors = errors;
+            return (T) this;
+        }
+
+        public T addError(GraphQLError error) {
+            this.errors.add(error);
             return (T) this;
         }
 

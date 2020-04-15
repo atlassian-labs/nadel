@@ -3,7 +3,6 @@ package graphql.nadel.engine;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
-import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.language.Argument;
 import graphql.language.ArrayValue;
 import graphql.language.Field;
@@ -269,7 +268,7 @@ public class HydrationInputResolver {
 
     private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode, Field originalField, UnderlyingServiceHydration underlyingServiceHydration, String topLevelFieldName) {
         RemoteArgumentDefinition remoteArgumentDefinition = underlyingServiceHydration.getArguments().get(0);
-        Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
+        Object value = hydrationInputNode.getCompletedValue();
         Argument argument = Argument.newArgument()
                 .name(remoteArgumentDefinition.getName())
                 .value(new StringValue(value.toString()))
@@ -362,7 +361,7 @@ public class HydrationInputResolver {
 
         List<Value> values = new ArrayList<>();
         for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
-            Object value = hydrationInputNode.getResolvedValue().getCompletedValue();
+            Object value = hydrationInputNode.getCompletedValue();
             values.add(StringValue.newStringValue(value.toString()).build());
         }
         Argument argumentAstFromSourceObject = Argument.newArgument().name(argumentFromSourceObject.getName()).value(new ArrayValue(values)).build();
@@ -395,7 +394,7 @@ public class HydrationInputResolver {
 
         if (rootResultNode.getChildren().get(0) instanceof LeafExecutionResultNode) {
             // we only expect a null value here
-            assertTrue(rootResultNode.getChildren().get(0).getResolvedValue().isNullValue());
+            assertTrue(rootResultNode.getChildren().get(0).isNullValue());
             List<ExecutionResultNode> result = new ArrayList<>();
             boolean first = true;
             for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
@@ -455,17 +454,13 @@ public class HydrationInputResolver {
 
     private LeafExecutionResultNode createNullValue(HydrationInputNode inputNode) {
         ElapsedTime elapsedTime = inputNode.getElapsedTime();
-        ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
-                .localContext(null)
-                .nullValue(true)
-                .build();
         return LeafExecutionResultNode.newLeafExecutionResultNode()
                 .objectType(inputNode.getObjectType())
                 .alias(inputNode.getAlias())
                 .fieldIds(inputNode.getFieldIds())
                 .executionPath(inputNode.getExecutionPath())
                 .fieldDefinition(inputNode.getFieldDefinition())
-                .resolvedValue(resolvedValue)
+                .completedValue(null)
                 .elapsedTime(elapsedTime)
                 .build();
     }
@@ -473,11 +468,11 @@ public class HydrationInputResolver {
     private ObjectExecutionResultNode findMatchingResolvedNode(ExecutionContext executionContext, HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
         NadelContext nadelContext = getNadelContext(executionContext);
         String objectIdentifier = nadelContext.getObjectIdentifierAlias();
-        String inputNodeId = (String) inputNode.getResolvedValue().getCompletedValue();
+        String inputNodeId = (String) inputNode.getCompletedValue();
         for (ExecutionResultNode resolvedNode : resolvedNodes) {
             LeafExecutionResultNode idNode = getFieldByResultKey((ObjectExecutionResultNode) resolvedNode, objectIdentifier);
             assertNotNull(idNode, "no value found for object identifier: " + objectIdentifier);
-            Object id = idNode.getResolvedValue().getCompletedValue();
+            Object id = idNode.getCompletedValue();
             assertNotNull(id, "object identifier is null");
             if (id.equals(inputNodeId)) {
                 return (ObjectExecutionResultNode) resolvedNode;

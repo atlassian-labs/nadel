@@ -1,25 +1,33 @@
 package graphql.nadel.engine;
 
 import graphql.GraphQLError;
+import graphql.Scalars;
+import graphql.SerializationError;
+import graphql.TypeMismatchError;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
-import graphql.execution.ExecutionStepInfoFactory;
-import graphql.execution.FetchedValue;
 import graphql.execution.MergedField;
-import graphql.execution.ResolveType;
-import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.LeafExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
 import graphql.nadel.result.ObjectExecutionResultNode;
-import graphql.nadel.result.ResultNodesCreator;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.nadel.result.UnresolvedObjectResultNode;
 import graphql.nadel.util.ErrorUtil;
+import graphql.schema.CoercingSerializeException;
+import graphql.schema.GraphQLEnumType;
+import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLScalarType;
+import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLTypeUtil;
+import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
@@ -28,22 +36,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static graphql.Assert.assertNotNull;
+import static graphql.Assert.assertTrue;
+import static graphql.nadel.result.LeafExecutionResultNode.newLeafExecutionResultNode;
 import static graphql.nadel.result.ObjectExecutionResultNode.newObjectExecutionResultNode;
+import static graphql.nadel.result.UnresolvedObjectResultNode.newUnresolvedExecutionResultNode;
+import static graphql.schema.GraphQLTypeUtil.isList;
 
 public class ServiceResultToResultNodes {
 
-    private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
-    private final FetchedValueAnalyzer fetchedValueAnalyzer = new FetchedValueAnalyzer();
-    private final ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
-    //    private final ExecutionStrategyUtil util = new ExecutionStrategyUtil();
-    ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
+//    private final FetchedValueAnalyzer fetchedValueAnalyzer = new FetchedValueAnalyzer();
+//    private final ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
 
-    ResolveType resolveType = new ResolveType();
+    ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
 
     private static final Logger log = LoggerFactory.getLogger(ServiceResultToResultNodes.class);
@@ -94,7 +104,6 @@ public class ServiceResultToResultNodes {
                                                             UnresolvedObjectResultNode unresolvedNode,
                                                             NormalizedQueryFromAst normalizedQueryFromAst,
                                                             ElapsedTime elapsedTime) {
-        ResolvedValue resolvedValue = unresolvedNode.getResolvedValue();
         NormalizedQueryField normalizedField = unresolvedNode.getNormalizedField();
         GraphQLObjectType resolvedType = unresolvedNode.getResolvedType();
         ExecutionPath executionPath = unresolvedNode.getExecutionPath();
@@ -104,10 +113,8 @@ public class ServiceResultToResultNodes {
             if (child.getObjectType() == resolvedType) {
                 ExecutionPath pathForChild = executionPath.segment(child.getResultKey());
                 List<String> fieldIds = normalizedQueryFromAst.getFieldIds(child);
-
-                FetchedValueAnalysis fetchedValueAnalysis = fetchAndAnalyzeField(context, unresolvedNode.getResolvedValue().getCompletedValue(), child, pathForChild, fieldIds);
-                ExecutionResultNode executionResultNode = resultNodesCreator.createResultNode(fetchedValueAnalysis).withElapsedTime(elapsedTime);
-                nodeChildren.add(executionResultNode);
+                ExecutionResultNode childNode = fetchAndAnalyzeField(context, unresolvedNode.getCompletedValue(), child, pathForChild, fieldIds, elapsedTime);
+                nodeChildren.add(childNode);
             }
         }
         return newObjectExecutionResultNode()
@@ -116,7 +123,7 @@ public class ServiceResultToResultNodes {
                 .fieldIds(unresolvedNode.getFieldIds())
                 .objectType(normalizedField.getObjectType())
                 .fieldDefinition(normalizedField.getFieldDefinition())
-                .resolvedValue(resolvedValue)
+                .completedValue(unresolvedNode.getCompletedValue())
                 .children(nodeChildren)
                 .elapsedTime(elapsedTime)
                 .build();
@@ -138,47 +145,286 @@ public class ServiceResultToResultNodes {
             ExecutionPath path = rootPath.segment(topLevelField.getResultKey());
             List<String> fieldIds = normalizedQueryFromAst.getFieldIds(topLevelField);
 
-            FetchedValueAnalysis fetchedValueAnalysis = fetchAndAnalyzeField(executionContext, source, topLevelField, path, fieldIds);
-            ExecutionResultNode executionResultNode = resultNodesCreator.createResultNode(fetchedValueAnalysis).withElapsedTime(elapsedTime);
+            ExecutionResultNode executionResultNode = fetchAndAnalyzeField(executionContext, source, topLevelField, path, fieldIds, elapsedTime);
             children.add(executionResultNode);
         }
         return (RootExecutionResultNode) rootNode.withNewChildren(children);
     }
 
 
-    private FetchedValueAnalysis fetchAndAnalyzeField(ExecutionContext context,
-                                                      Object source,
-                                                      NormalizedQueryField normalizedQueryField,
-                                                      ExecutionPath executionPath,
-                                                      List<String> fieldIds) {
-        FetchedValue fetchedValue = fetchValue(source, normalizedQueryField.getResultKey());
-        return analyseValue(context, fetchedValue, normalizedQueryField, executionPath, fieldIds);
+    private ExecutionResultNode fetchAndAnalyzeField(ExecutionContext context,
+                                                     Object source,
+                                                     NormalizedQueryField normalizedQueryField,
+                                                     ExecutionPath executionPath,
+                                                     List<String> fieldIds,
+                                                     ElapsedTime elapsedTime) {
+        Object fetchedValue = fetchValue(source, normalizedQueryField.getResultKey());
+        return analyseValue(context, fetchedValue, normalizedQueryField, executionPath, fieldIds, elapsedTime);
     }
 
-    private FetchedValue fetchValue(Object source, String key) {
+    private Object fetchValue(Object source, String key) {
         if (source == null) {
-            return FetchedValue.newFetchedValue()
-                    .fetchedValue(null)
-                    .rawFetchedValue(null)
-                    .errors(Collections.emptyList())
-                    .build();
+            return null;
         }
         @SuppressWarnings("unchecked")
         Map<String, Object> map = (Map<String, Object>) source;
-        Object fetchedValue = map.get(key);
-        return FetchedValue.newFetchedValue()
-                .fetchedValue(fetchedValue)
-                .rawFetchedValue(fetchedValue)
-                .errors(Collections.emptyList())
+        return map.get(key);
+    }
+
+    private ExecutionResultNode analyseValue(ExecutionContext executionContext,
+                                             Object fetchedValue,
+                                             NormalizedQueryField normalizedQueryField,
+                                             ExecutionPath executionPath,
+                                             List<String> fieldIds,
+                                             ElapsedTime elapsedTime) {
+        return analyzeFetchedValueImpl(executionContext, fetchedValue, normalizedQueryField, normalizedQueryField.getFieldDefinition().getType(), executionPath, fieldIds, elapsedTime);
+    }
+
+    private ExecutionResultNode analyzeFetchedValueImpl(ExecutionContext executionContext,
+                                                        Object toAnalyze,
+                                                        NormalizedQueryField normalizedQueryField,
+                                                        GraphQLOutputType curType,
+                                                        ExecutionPath executionPath,
+                                                        List<String> fieldIds,
+                                                        ElapsedTime elapsedTime) {
+        curType = (GraphQLOutputType) GraphQLTypeUtil.unwrapNonNull(curType);
+
+        if (isList(curType)) {
+            return analyzeList(executionContext, toAnalyze, (GraphQLList) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+        } else if (curType instanceof GraphQLScalarType) {
+            return analyzeScalarValue(toAnalyze, (GraphQLScalarType) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+        } else if (curType instanceof GraphQLEnumType) {
+            return analyzeEnumValue(toAnalyze, (GraphQLEnumType) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+        }
+
+        if (toAnalyze == null) {
+            return newLeafExecutionResultNode()
+                    .executionPath(executionPath)
+                    .alias(normalizedQueryField.getAlias())
+                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                    .objectType(normalizedQueryField.getObjectType())
+                    .completedValue(null)
+                    .fieldIds(fieldIds)
+                    .elapsedTime(elapsedTime)
+                    .build();
+
+        }
+
+        GraphQLObjectType resolvedObjectType = resolveType(executionContext, toAnalyze, curType);
+        return newUnresolvedExecutionResultNode()
+                .executionPath(executionPath)
+                .resolvedType(resolvedObjectType)
+                .fieldIds(fieldIds)
+                .normalizedField(normalizedQueryField)
+                .completedValue(toAnalyze)
                 .build();
     }
 
-    private FetchedValueAnalysis analyseValue(ExecutionContext executionContext,
-                                              FetchedValue fetchedValue,
-                                              NormalizedQueryField normalizedQueryField,
-                                              ExecutionPath executionPath,
-                                              List<String> fieldIds) {
-        return fetchedValueAnalyzer.analyzeFetchedValue(executionContext, fetchedValue, normalizedQueryField, executionPath, fieldIds);
+    private ExecutionResultNode analyzeList(ExecutionContext executionContext,
+                                            Object toAnalyze,
+                                            GraphQLList curType,
+                                            NormalizedQueryField normalizedQueryField,
+                                            ExecutionPath executionPath,
+                                            List<String> fieldIds,
+                                            ElapsedTime elapsedTime) {
+        if (toAnalyze == null) {
+            return newLeafExecutionResultNode()
+                    .executionPath(executionPath)
+                    .alias(normalizedQueryField.getAlias())
+                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                    .objectType(normalizedQueryField.getObjectType())
+                    .completedValue(null)
+                    .fieldIds(fieldIds)
+                    .elapsedTime(elapsedTime)
+                    .build();
+        }
+
+        if (toAnalyze.getClass().isArray() || toAnalyze instanceof Iterable) {
+            Collection<Object> collection = FpKit.toCollection(toAnalyze);
+            return analyzeIterable(executionContext, toAnalyze, collection, curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+        } else {
+            TypeMismatchError error = new TypeMismatchError(executionPath, curType);
+            return LeafExecutionResultNode.newLeafExecutionResultNode()
+                    .executionPath(executionPath)
+                    .alias(normalizedQueryField.getAlias())
+                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                    .objectType(normalizedQueryField.getObjectType())
+                    .completedValue(null)
+                    .fieldIds(fieldIds)
+                    .elapsedTime(elapsedTime)
+                    .addError(error)
+                    .build();
+        }
+
     }
+
+    private ExecutionResultNode analyzeIterable(ExecutionContext executionContext,
+                                                Object fetchedValue,
+                                                Iterable<Object> iterableValues,
+                                                GraphQLList currentType,
+                                                NormalizedQueryField normalizedQueryField,
+                                                ExecutionPath executionPath,
+                                                List<String> fieldIds,
+                                                ElapsedTime elapsedTime) {
+        Collection<Object> values = FpKit.toCollection(iterableValues);
+        List<ExecutionResultNode> children = new ArrayList<>();
+        int index = 0;
+        for (Object item : values) {
+            ExecutionPath indexedPath = executionPath.segment(index);
+            children.add(analyzeFetchedValueImpl(executionContext, item, normalizedQueryField, (GraphQLOutputType) GraphQLTypeUtil.unwrapOne(currentType), indexedPath, fieldIds, elapsedTime));
+            index++;
+        }
+        return ListExecutionResultNode.newListExecutionResultNode()
+                .executionPath(executionPath)
+                .alias(normalizedQueryField.getAlias())
+                .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                .objectType(normalizedQueryField.getObjectType())
+                .completedValue(fetchedValue)
+                .fieldIds(fieldIds)
+                .elapsedTime(elapsedTime)
+                .children(children)
+                .build();
+    }
+
+
+    private GraphQLObjectType resolveType(ExecutionContext executionContext, Object source, GraphQLType curType) {
+        if (curType instanceof GraphQLObjectType) {
+            return (GraphQLObjectType) curType;
+        }
+        NadelContext nadelContext = executionContext.getContext();
+        String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
+
+        assertTrue(source instanceof Map, "The Nadel result object MUST be a Map");
+
+        Map<String, Object> sourceMap = (Map<String, Object>) source;
+        assertTrue(sourceMap.containsKey(underscoreTypeNameAlias), "The Nadel result object for interfaces and unions MUST have an aliased __typename in them");
+
+        Object typeName = sourceMap.get(underscoreTypeNameAlias);
+        assertNotNull(typeName, "The Nadel result object for interfaces and unions MUST have an aliased__typename with a non null value in them");
+
+        GraphQLObjectType objectType = executionContext.getGraphQLSchema().getObjectType(typeName.toString());
+        assertNotNull(objectType, "There must be an underlying graphql object type called '%s'", typeName);
+        return objectType;
+
+
+    }
+
+
+    private ExecutionResultNode analyzeScalarValue(Object toAnalyze,
+                                                   GraphQLScalarType scalarType,
+                                                   NormalizedQueryField normalizedQueryField,
+                                                   ExecutionPath executionPath,
+                                                   List<String> fieldIds,
+                                                   ElapsedTime elapsedTime) {
+        if (toAnalyze == null) {
+            return newLeafExecutionResultNode()
+                    .executionPath(executionPath)
+                    .alias(normalizedQueryField.getAlias())
+                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                    .objectType(normalizedQueryField.getObjectType())
+                    .completedValue(null)
+                    .fieldIds(fieldIds)
+                    .elapsedTime(elapsedTime)
+                    .build();
+        }
+        Object serialized;
+        try {
+            serialized = serializeScalarValue(toAnalyze, scalarType);
+        } catch (CoercingSerializeException e) {
+            SerializationError error = new SerializationError(executionPath, e);
+            return newLeafExecutionResultNode()
+                    .executionPath(executionPath)
+                    .alias(normalizedQueryField.getAlias())
+                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                    .objectType(normalizedQueryField.getObjectType())
+                    .completedValue(null)
+                    .fieldIds(fieldIds)
+                    .elapsedTime(elapsedTime)
+                    .addError(error)
+                    .build();
+        }
+
+        // TODO: fix that: this should not be handled here
+        //6.6.1 http://facebook.github.io/graphql/#sec-Field-entries
+        if (serialized instanceof Double && ((Double) serialized).isNaN()) {
+            return newLeafExecutionResultNode()
+                    .executionPath(executionPath)
+                    .alias(normalizedQueryField.getAlias())
+                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                    .objectType(normalizedQueryField.getObjectType())
+                    .completedValue(null)
+                    .fieldIds(fieldIds)
+                    .elapsedTime(elapsedTime)
+                    .build();
+        }
+        return newLeafExecutionResultNode()
+                .executionPath(executionPath)
+                .alias(normalizedQueryField.getAlias())
+                .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                .objectType(normalizedQueryField.getObjectType())
+                .completedValue(serialized)
+                .fieldIds(fieldIds)
+                .elapsedTime(elapsedTime)
+                .build();
+
+    }
+
+    protected Object serializeScalarValue(Object toAnalyze, GraphQLScalarType scalarType) throws CoercingSerializeException {
+        if (scalarType == Scalars.GraphQLString) {
+            if (toAnalyze instanceof String) {
+                return toAnalyze;
+            } else {
+                throw new CoercingSerializeException("Unexpected value '" + toAnalyze + "'. String expected");
+            }
+        }
+        return scalarType.getCoercing().serialize(toAnalyze);
+    }
+
+    private ExecutionResultNode analyzeEnumValue(Object toAnalyze,
+                                                 GraphQLEnumType enumType,
+                                                 NormalizedQueryField normalizedQueryField,
+                                                 ExecutionPath executionPath,
+                                                 List<String> fieldIds,
+                                                 ElapsedTime elapsedTime) {
+        if (toAnalyze == null) {
+            return newLeafExecutionResultNode()
+                    .executionPath(executionPath)
+                    .alias(normalizedQueryField.getAlias())
+                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                    .objectType(normalizedQueryField.getObjectType())
+                    .completedValue(null)
+                    .fieldIds(fieldIds)
+                    .elapsedTime(elapsedTime)
+                    .build();
+
+        }
+        Object serialized;
+        try {
+            serialized = enumType.serialize(toAnalyze);
+        } catch (CoercingSerializeException e) {
+            SerializationError error = new SerializationError(executionPath, e);
+            return newLeafExecutionResultNode()
+                    .executionPath(executionPath)
+                    .alias(normalizedQueryField.getAlias())
+                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                    .objectType(normalizedQueryField.getObjectType())
+                    .completedValue(null)
+                    .fieldIds(fieldIds)
+                    .elapsedTime(elapsedTime)
+                    .addError(error)
+                    .build();
+        }
+        // handle non null values
+        return newLeafExecutionResultNode()
+                .executionPath(executionPath)
+                .alias(normalizedQueryField.getAlias())
+                .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                .objectType(normalizedQueryField.getObjectType())
+                .completedValue(serialized)
+                .fieldIds(fieldIds)
+                .elapsedTime(elapsedTime)
+                .build();
+    }
+
 
 }

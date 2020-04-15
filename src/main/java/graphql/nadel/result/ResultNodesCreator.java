@@ -2,7 +2,6 @@ package graphql.nadel.result;
 
 import graphql.Internal;
 import graphql.execution.NonNullableFieldWasNullException;
-import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.nadel.engine.FetchedValueAnalysis;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.schema.GraphQLTypeUtil;
@@ -19,7 +18,7 @@ import static graphql.nadel.result.UnresolvedObjectResultNode.newUnresolvedExecu
 public class ResultNodesCreator {
 
     public ExecutionResultNode createResultNode(FetchedValueAnalysis fetchedValueAnalysis) {
-        ResolvedValue resolvedValue = createResolvedValue(fetchedValueAnalysis);
+        Object resolvedValue = createResolvedValue(fetchedValueAnalysis);
         NormalizedQueryField normalizedQueryField = fetchedValueAnalysis.getNormalizedQueryField();
 
         boolean isNonNullType = GraphQLTypeUtil.isNonNull(fetchedValueAnalysis.getActualType());
@@ -32,7 +31,7 @@ public class ResultNodesCreator {
                     .fieldIds(fetchedValueAnalysis.getFieldIds())
                     .objectType(normalizedQueryField.getObjectType())
                     .fieldDefinition(normalizedQueryField.getFieldDefinition())
-                    .resolvedValue(resolvedValue)
+                    .completedValue(resolvedValue)
 //                    .nonNullableFieldWasNullException(nonNullableFieldWasNullException)
                     .build();
             return result;
@@ -44,7 +43,7 @@ public class ResultNodesCreator {
                     .objectType(normalizedQueryField.getObjectType())
                     .fieldDefinition(normalizedQueryField.getFieldDefinition())
                     .executionPath(fetchedValueAnalysis.getExecutionPath())
-                    .resolvedValue(resolvedValue)
+                    .completedValue(resolvedValue)
                     .build();
             return result;
         }
@@ -60,7 +59,7 @@ public class ResultNodesCreator {
                 .objectType(normalizedQueryField.getObjectType())
                 .fieldDefinition(normalizedQueryField.getFieldDefinition())
                 .executionPath(fetchedValueAnalysis.getExecutionPath())
-                .resolvedValue(resolvedValue)
+                .completedValue(resolvedValue)
                 .build();
         return result;
     }
@@ -71,18 +70,13 @@ public class ResultNodesCreator {
                 .resolvedType(fetchedValueAnalysis.getResolvedType())
                 .fieldIds(fetchedValueAnalysis.getFieldIds())
                 .normalizedField(fetchedValueAnalysis.getNormalizedQueryField())
-                .resolvedValue(createResolvedValue(fetchedValueAnalysis))
+                .completedValue(createResolvedValue(fetchedValueAnalysis))
                 .build();
         return result;
     }
 
-    private ResolvedValue createResolvedValue(FetchedValueAnalysis fetchedValueAnalysis) {
-        return ResolvedValue.newResolvedValue()
-                .completedValue(fetchedValueAnalysis.getCompletedValue())
-                .localContext(fetchedValueAnalysis.getFetchedValue().getLocalContext())
-                .nullValue(fetchedValueAnalysis.isNullValue())
-                .errors(fetchedValueAnalysis.getErrors())
-                .build();
+    private Object createResolvedValue(FetchedValueAnalysis fetchedValueAnalysis) {
+        return fetchedValueAnalysis.getCompletedValue();
     }
 
     private Optional<NonNullableFieldWasNullException> getFirstNonNullableException(Collection<ExecutionResultNode> collection) {
@@ -104,7 +98,7 @@ public class ResultNodesCreator {
                 .objectType(normalizedQueryField.getObjectType())
                 .fieldDefinition(normalizedQueryField.getFieldDefinition())
                 .executionPath(fetchedValueAnalysis.getExecutionPath())
-                .resolvedValue(createResolvedValue(fetchedValueAnalysis))
+                .completedValue(createResolvedValue(fetchedValueAnalysis))
                 .children(childrenNodes)
                 .build();
         return result;

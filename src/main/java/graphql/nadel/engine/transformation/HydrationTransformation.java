@@ -152,7 +152,7 @@ public class HydrationTransformation extends FieldTransformation {
         ExecutionPath executionPath = pathMapper.mapPath(leafNode.getExecutionPath(), leafNode.getResultKey(), environment);
         leafNode = leafNode.transform(builder -> builder.executionPath(executionPath));
 
-        if (leafNode.getResolvedValue().isNullValue()) {
+        if (leafNode.isNullValue()) {
             return leafNode;
         } else {
             return newHydrationInputNode()
@@ -162,7 +162,7 @@ public class HydrationTransformation extends FieldTransformation {
                     .objectType(leafNode.getObjectType())
                     .fieldDefinition(leafNode.getFieldDefinition())
                     .executionPath(leafNode.getExecutionPath())
-                    .resolvedValue(leafNode.getResolvedValue())
+                    .completedValue(leafNode.getCompletedValue())
                     .elapsedTime(leafNode.getElapsedTime())
                     .normalizedField(matchingNormalizedField)
                     .build();

@@ -53,7 +53,6 @@ public class ResultNodesUtil {
 
     private static ExecutionResultData data(Object data, ExecutionResultNode executionResultNode) {
         List<GraphQLError> allErrors = new ArrayList<>();
-        allErrors.addAll(executionResultNode.getResolvedValue().getErrors());
         allErrors.addAll(executionResultNode.getErrors());
         return new ExecutionResultData(data, allErrors);
     }
@@ -68,7 +67,7 @@ public class ResultNodesUtil {
 
     private static ExecutionResultData toDataImpl(ExecutionResultNode root) {
         if (root instanceof LeafExecutionResultNode) {
-            return root.getResolvedValue().isNullValue() ? data(null, root) : data(((LeafExecutionResultNode) root).getValue(), root);
+            return root.isNullValue() ? data(null, root) : data(((LeafExecutionResultNode) root).getCompletedValue(), root);
         }
         if (root instanceof ListExecutionResultNode) {
             Optional<NonNullableFieldWasNullException> childNonNullableException = root.getChildNonNullableException();

@@ -5,7 +5,6 @@ import graphql.GraphQLError;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionPath;
 import graphql.execution.MergedField;
-import graphql.execution.nextgen.result.ResolvedValue;
 import graphql.language.AbstractNode;
 import graphql.nadel.Tuples;
 import graphql.nadel.TuplesTwo;
@@ -191,11 +190,6 @@ public class ServiceResultNodesToOverallResult {
                                                              MergedField mergedField,
                                                              NormalizedQueryField normalizedQueryField,
                                                              GraphQLError error) {
-        ResolvedValue resolvedValue = ResolvedValue.newResolvedValue().completedValue(null)
-                .localContext(null)
-                .nullValue(true)
-                .build();
-
         ExecutionPath parentPath = parent.getExecutionPath();
         ExecutionPath executionPath = parentPath.segment(normalizedQueryField.getResultKey());
 
@@ -205,7 +199,7 @@ public class ServiceResultNodesToOverallResult {
                 .fieldIds(NodeId.getIds(mergedField))
                 .objectType(normalizedQueryField.getObjectType())
                 .fieldDefinition(normalizedQueryField.getFieldDefinition())
-                .resolvedValue(resolvedValue)
+                .completedValue(null)
                 .errors(singletonList(error))
                 .build();
         return removedNode;
@@ -398,9 +392,9 @@ public class ServiceResultNodesToOverallResult {
 
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {
         ExecutionResultNode mappedNode = executionResultNodeMapper.mapERNFromUnderlyingToOverall(node, environment);
-        ResolvedValue mappedResolvedValue = resolvedValueMapper.mapResolvedValue(node, environment);
+        mappedNode = resolvedValueMapper.mapResolvedValue(mappedNode, environment);
         ExecutionPath executionPath = pathMapper.mapPath(node.getExecutionPath(), mappedNode.getResultKey(), environment);
-        return mappedNode.transform(builder -> builder.resolvedValue(mappedResolvedValue).executionPath(executionPath));
+        return mappedNode.transform(builder -> builder.executionPath(executionPath));
     }
 
     private void mapAndChangeNode(ExecutionResultNode node, UnapplyEnvironment environment, TraverserContext<ExecutionResultNode> context) {

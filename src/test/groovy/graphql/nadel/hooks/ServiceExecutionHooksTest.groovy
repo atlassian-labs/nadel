@@ -258,10 +258,8 @@ class ServiceExecutionHooksTest extends Specification {
                     TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                         if (context.thisNode() instanceof LeafExecutionResultNode) {
                             LeafExecutionResultNode leafExecutionResultNode = context.thisNode()
-                            def resolvedValue = leafExecutionResultNode.getResolvedValue()
-                            def completedValue = resolvedValue.getCompletedValue()
-                            def newResolvedValue = resolvedValue.transform({ builder -> builder.completedValue(completedValue + "-CHANGED") })
-                            def newNode = leafExecutionResultNode.withNewResolvedValue(newResolvedValue)
+                            def completedValue = leafExecutionResultNode.getCompletedValue()
+                            def newNode = leafExecutionResultNode.withNewCompletedValue(completedValue + "-CHANGED")
                             return TreeTransformerUtil.changeNode(context, newNode)
                         }
                         return TraversalControl.CONTINUE
