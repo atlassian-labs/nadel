@@ -17,6 +17,7 @@ class ServiceResultToResultNodesTest extends Specification {
         def data = ["hello": "world"]
         def schema = TestUtil.schema("type Query{ hello: String }")
         def query = TestUtil.parseQuery("{hello}")
+        def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
@@ -29,7 +30,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
-                elapsedTime
+                elapsedTime,
+                normalizedQuery
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -43,6 +45,7 @@ class ServiceResultToResultNodesTest extends Specification {
         def data = ["myAlias": "world"]
         def schema = TestUtil.schema("type Query{ hello: String }")
         def query = TestUtil.parseQuery("{myAlias: hello}")
+        def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
 
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
@@ -56,7 +59,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
-                elapsedTime
+                elapsedTime,
+                normalizedQuery
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -95,6 +99,7 @@ class ServiceResultToResultNodesTest extends Specification {
             }
         }}
         """)
+        def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
@@ -107,7 +112,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
-                elapsedTime
+                elapsedTime,
+                normalizedQuery
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -120,6 +126,7 @@ class ServiceResultToResultNodesTest extends Specification {
         def data = ["unknown field": "world"]
         def schema = TestUtil.schema("type Query{ hello: String }")
         def query = TestUtil.parseQuery("{hello}")
+        def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
 
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
@@ -133,7 +140,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
-                elapsedTime
+                elapsedTime,
+                normalizedQuery
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -145,6 +153,7 @@ class ServiceResultToResultNodesTest extends Specification {
         def data = ["hello": ["world1", "world2"]]
         def schema = TestUtil.schema("type Query{ hello: Int }")
         def query = TestUtil.parseQuery("{hello}")
+        def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
 
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
@@ -159,7 +168,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
-                elapsedTime
+                elapsedTime,
+                normalizedQuery
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -172,6 +182,7 @@ class ServiceResultToResultNodesTest extends Specification {
         def data = ["hello": ["world1", "world2"]]
         def schema = TestUtil.schema("type Query{ hello: String }")
         def query = TestUtil.parseQuery("{hello}")
+        def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
 
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
@@ -185,7 +196,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
-                elapsedTime
+                elapsedTime,
+                normalizedQuery
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 
@@ -199,6 +211,7 @@ class ServiceResultToResultNodesTest extends Specification {
         def data = ["hello": "world1"]
         def schema = TestUtil.schema("type Query{ hello: [String] }")
         def query = TestUtil.parseQuery("{hello}")
+        def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
         (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
@@ -211,7 +224,8 @@ class ServiceResultToResultNodesTest extends Specification {
                 fieldSubSelection.getExecutionStepInfo(),
                 fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
-                elapsedTime
+                elapsedTime,
+                normalizedQuery
         )
         def executionResult = ResultNodesUtil.toExecutionResult(node)
 

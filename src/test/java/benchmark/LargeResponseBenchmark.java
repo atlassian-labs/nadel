@@ -84,7 +84,7 @@ public class LargeResponseBenchmark {
 
     @Benchmark
     @Warmup(iterations = 2)
-    @Measurement(iterations = 3)
+    @Measurement(iterations = 5, time = 10)
     @Threads(1)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
@@ -95,6 +95,7 @@ public class LargeResponseBenchmark {
                 .build();
         ExecutionResult executionResult = nadelInstance.nadel.execute(nadelExecutionInput).get();
         Assert.assertTrue(executionResult.getErrors().size() == 0);
+//        System.out.println("data:" +executionResult.getData());
         return executionResult;
     }
 

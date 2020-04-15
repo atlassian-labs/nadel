@@ -1,6 +1,7 @@
 package graphql.nadel.normalized
 
 import graphql.GraphQL
+import graphql.introspection.Introspection
 import graphql.language.Document
 import graphql.language.Field
 import graphql.language.FragmentDefinition
@@ -356,8 +357,9 @@ type Dog implements Animal{
         def printedTree = printTree(tree)
 
         expect:
-        //TODO: this is not really correct: should be conditional
         printedTree == ['Query.pets: [CatOrDog] (conditional: false)',
+                        'Cat.__typename: String! (conditional: true)',
+                        'Dog.__typename: String! (conditional: true)',
                         'Cat.catName: String (conditional: true)',
                         'Dog.dogName: String (conditional: true)']
 
@@ -726,6 +728,59 @@ type Dog implements Animal{
         normalizedFieldsByFieldId.get(idFieldId)[0].objectType.name == "Cat"
         normalizedFieldsByFieldId.get(idFieldId)[1].objectType.name == "Dog"
 
+
+    }
+
+    def "query with introspection fields"() {
+        String schema = """
+        type Query{ 
+            foo: String
+        }
+        """
+        GraphQLSchema graphQLSchema = TestUtil.schema(schema)
+
+        String query = """
+        {
+            __typename
+            alias: __typename
+            __schema {  queryType { name } }
+            __type(name: "Query") {name}
+            ...F
+        }
+        fragment F on Query {
+            __typename
+            alias: __typename
+            __schema {  queryType { name } }
+            __type(name: "Query") {name}
+        }
+        
+        
+        """
+        assertValidQuery(graphQLSchema, query)
+
+        Document document = TestUtil.parseQuery(query)
+        def selections = (document.getDefinitions()[0] as OperationDefinition).getSelectionSet().getSelections()
+        def typeNameField = selections[0]
+        def aliasedTypeName = selections[1]
+        def schemaField = selections[2]
+        def typeField = selections[3]
+
+        NormalizedQueryFactory dependencyGraph = new NormalizedQueryFactory();
+        def tree = dependencyGraph.createNormalizedQuery(graphQLSchema, document, null, [:])
+        def normalizedFieldsByFieldId = tree.getNormalizedFieldsByFieldId()
+
+        expect:
+        normalizedFieldsByFieldId.size() == 14
+        normalizedFieldsByFieldId.get(getId(typeNameField))[0].objectType.name == "Query"
+        normalizedFieldsByFieldId.get(getId(typeNameField))[0].fieldDefinition == Introspection.TypeNameMetaFieldDef
+        normalizedFieldsByFieldId.get(getId(aliasedTypeName))[0].alias == "alias"
+        normalizedFieldsByFieldId.get(getId(aliasedTypeName))[0].fieldDefinition == Introspection.TypeNameMetaFieldDef
+
+        normalizedFieldsByFieldId.get(getId(schemaField))[0].objectType.name == "Query"
+        normalizedFieldsByFieldId.get(getId(schemaField))[0].fieldDefinition == Introspection.SchemaMetaFieldDef
+
+        normalizedFieldsByFieldId.get(getId(typeField))[0].objectType.name == "Query"
+        normalizedFieldsByFieldId.get(getId(typeField))[0].fieldDefinition == Introspection.TypeMetaFieldDef
 
     }
 

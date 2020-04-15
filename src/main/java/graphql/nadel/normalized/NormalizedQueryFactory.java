@@ -45,6 +45,7 @@ public class NormalizedQueryFactory {
             fixUpParentReference(realRoot);
 
             updateByIdMap(realRoot, mergedField, normalizedFieldsByFieldId);
+            mergedFieldsByNormalizedField.put(realRoot, mergedField);
             realRoots.add(realRoot);
         }
 
