@@ -644,7 +644,7 @@ type Dog implements Animal{
     List<String> printTree(NormalizedQueryFromAst queryExecutionTree) {
         def result = []
         Traverser<NormalizedQueryField> traverser = Traverser.depthFirst({ it.getChildren() });
-        traverser.traverse(queryExecutionTree.getRootFields(), new TraverserVisitorStub<NormalizedQueryField>() {
+        traverser.traverse(queryExecutionTree.getTopLevelFields(), new TraverserVisitorStub<NormalizedQueryField>() {
             @Override
             TraversalControl enter(TraverserContext<NormalizedQueryField> context) {
                 NormalizedQueryField queryExecutionField = context.thisNode();

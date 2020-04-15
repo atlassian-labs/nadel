@@ -8,6 +8,7 @@ import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.FragmentDefinition;
+import graphql.nadel.DebugContext;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
@@ -190,7 +191,17 @@ public class ServiceExecutor {
             Data data, NormalizedQueryFromAst normalizedQuery) {
         ServiceExecutionResult serviceExecutionResult = data.get(ServiceExecutionResult.class);
         ElapsedTime elapsedTime = data.get(ElapsedTime.class);
+        NadelContext nadelContext = executionContextForService.getContext();
 
+        if (nadelContext.getUserSuppliedContext() instanceof DebugContext) {
+            DebugContext debugContext = (DebugContext) nadelContext.getUserSuppliedContext();
+            debugContext.executionContextForService = executionContextForService;
+            debugContext.underlyingRootStepInfo = underlyingRootStepInfo;
+            debugContext.transformedMergedFields = transformedMergedFields;
+            debugContext.serviceExecutionResult = serviceExecutionResult;
+            debugContext.elapsedTime = elapsedTime;
+            debugContext.normalizedQuery = normalizedQuery;
+        }
         return resultToResultNode.resultToResultNode(executionContextForService,
                 underlyingRootStepInfo,
                 transformedMergedFields,

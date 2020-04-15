@@ -2,12 +2,12 @@ package graphql.nadel.dsl;
 
 import graphql.execution.MergedField;
 import graphql.language.Node;
-import graphql.util.FpKit;
 
 import java.util.Collections;
 import java.util.List;
 
 import static graphql.Assert.assertNotNull;
+import static graphql.nadel.util.FpKit.map;
 
 public class NodeId {
     /**
@@ -24,10 +24,10 @@ public class NodeId {
     }
 
     public static List<String> getIds(List<? extends Node<?>> nodes) {
-        return FpKit.map(nodes, NodeId::getId);
+        return map(nodes, NodeId::getId);
     }
 
     public static List<String> getIds(MergedField mergedField) {
-        return FpKit.map(mergedField.getFields(), NodeId::getId);
+        return map(mergedField.getFields(), NodeId::getId);
     }
 }

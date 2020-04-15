@@ -2,11 +2,13 @@ package graphql.nadel.normalized;
 
 import graphql.Internal;
 import graphql.execution.MergedField;
+import graphql.execution.nextgen.Common;
 import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.NodeUtil;
 import graphql.nadel.dsl.NodeId;
 import graphql.nadel.normalized.FieldCollectorNormalizedQuery.CollectFieldResult;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 
 import java.util.ArrayList;
@@ -32,7 +34,9 @@ public class NormalizedQueryFactory {
                 .variables(variables)
                 .build();
 
-        CollectFieldResult roots = fieldCollector.collectFromOperation(parameters, getOperationResult.operationDefinition, graphQLSchema.getQueryType());
+        GraphQLObjectType rootType = Common.getOperationRootType(graphQLSchema, getOperationResult.operationDefinition);
+
+        CollectFieldResult roots = fieldCollector.collectFromOperation(parameters, getOperationResult.operationDefinition, rootType);
 
         Map<String, List<NormalizedQueryField>> normalizedFieldsByFieldId = new LinkedHashMap<>();
         Map<NormalizedQueryField, MergedField> mergedFieldsByNormalizedField = new LinkedHashMap<>();

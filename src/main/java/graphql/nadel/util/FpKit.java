@@ -1,5 +1,6 @@
 package graphql.nadel.util;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,4 +48,13 @@ public class FpKit {
     public static <T> List<T> filter(List<T> list, Predicate<T> filter) {
         return list.stream().filter(filter).collect(Collectors.toList());
     }
+
+    public static <T, U> List<U> map(List<T> list, Function<T, U> function) {
+        List<U> result = new ArrayList<>();
+        for (T t : list) {
+            result.add(function.apply(t));
+        }
+        return result;
+    }
+
 }
