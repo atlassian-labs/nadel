@@ -197,12 +197,13 @@ public class ServiceResultToResultNodes {
 
         curType = (GraphQLOutputType) GraphQLTypeUtil.unwrapNonNull(curType);
         if (isList(curType)) {
-            return analyzeList(executionContext, toAnalyze, (GraphQLList) curType, isNonNull, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+            return analyzeList(executionContext, toAnalyze, (GraphQLList) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         } else if (curType instanceof GraphQLScalarType) {
             return analyzeScalarValue(toAnalyze, (GraphQLScalarType) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         } else if (curType instanceof GraphQLEnumType) {
             return analyzeEnumValue(toAnalyze, (GraphQLEnumType) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         }
+
 
         GraphQLObjectType resolvedObjectType = resolveType(executionContext, toAnalyze, curType);
         return newUnresolvedExecutionResultNode()
@@ -214,19 +215,29 @@ public class ServiceResultToResultNodes {
                 .build();
     }
 
-    private LeafExecutionResultNode createNullERN(NormalizedQueryField normalizedQueryField,
-                                                  ExecutionPath executionPath,
-                                                  List<String> fieldIds,
-                                                  ElapsedTime elapsedTime) {
-        return newLeafExecutionResultNode()
-                .executionPath(executionPath)
-                .alias(normalizedQueryField.getAlias())
-                .fieldDefinition(normalizedQueryField.getFieldDefinition())
-                .objectType(normalizedQueryField.getObjectType())
-                .completedValue(null)
-                .fieldIds(fieldIds)
-                .elapsedTime(elapsedTime)
-                .build();
+    private ExecutionResultNode analyzeList(ExecutionContext executionContext,
+                                            Object toAnalyze,
+                                            GraphQLList curType,
+                                            NormalizedQueryField normalizedQueryField,
+                                            ExecutionPath executionPath,
+                                            List<String> fieldIds,
+                                            ElapsedTime elapsedTime) {
+
+        if (toAnalyze instanceof List) {
+            return createListImpl(executionContext, toAnalyze, (List<Object>) toAnalyze, curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+        } else {
+            TypeMismatchError error = new TypeMismatchError(executionPath, curType);
+            return LeafExecutionResultNode.newLeafExecutionResultNode()
+                    .executionPath(executionPath)
+                    .alias(normalizedQueryField.getAlias())
+                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                    .objectType(normalizedQueryField.getObjectType())
+                    .completedValue(null)
+                    .fieldIds(fieldIds)
+                    .elapsedTime(elapsedTime)
+                    .addError(error)
+                    .build();
+        }
     }
 
     private LeafExecutionResultNode createNullERNWithNullableError(NormalizedQueryField normalizedQueryField,
@@ -246,47 +257,34 @@ public class ServiceResultToResultNodes {
                 .build();
     }
 
-    private ExecutionResultNode analyzeList(ExecutionContext executionContext,
-                                            Object toAnalyze,
-                                            GraphQLList curType,
-                                            boolean isNonNull,
-                                            NormalizedQueryField normalizedQueryField,
-                                            ExecutionPath executionPath,
-                                            List<String> fieldIds,
-                                            ElapsedTime elapsedTime) {
-        if (toAnalyze instanceof List) {
-            return createListNode(executionContext, toAnalyze, (List<Object>) toAnalyze, curType, isNonNull, normalizedQueryField, executionPath, fieldIds, elapsedTime);
-        } else {
-            TypeMismatchError error = new TypeMismatchError(executionPath, curType);
-            return LeafExecutionResultNode.newLeafExecutionResultNode()
-                    .executionPath(executionPath)
-                    .alias(normalizedQueryField.getAlias())
-                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
-                    .objectType(normalizedQueryField.getObjectType())
-                    .completedValue(null)
-                    .fieldIds(fieldIds)
-                    .elapsedTime(elapsedTime)
-                    .addError(error)
-                    .build();
-        }
-
+    private LeafExecutionResultNode createNullERN(NormalizedQueryField normalizedQueryField,
+                                                  ExecutionPath executionPath,
+                                                  List<String> fieldIds,
+                                                  ElapsedTime elapsedTime) {
+        return newLeafExecutionResultNode()
+                .executionPath(executionPath)
+                .alias(normalizedQueryField.getAlias())
+                .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                .objectType(normalizedQueryField.getObjectType())
+                .completedValue(null)
+                .fieldIds(fieldIds)
+                .elapsedTime(elapsedTime)
+                .build();
     }
 
-    private ExecutionResultNode createListNode(ExecutionContext executionContext,
+    private ExecutionResultNode createListImpl(ExecutionContext executionContext,
                                                Object fetchedValue,
-                                               List<Object> values,
+                                               List<Object> iterableValues,
                                                GraphQLList currentType,
-                                               boolean isNonNull,
                                                NormalizedQueryField normalizedQueryField,
                                                ExecutionPath executionPath,
                                                List<String> fieldIds,
                                                ElapsedTime elapsedTime) {
         List<ExecutionResultNode> children = new ArrayList<>();
         int index = 0;
-        for (Object item : values) {
+        for (Object item : iterableValues) {
             ExecutionPath indexedPath = executionPath.segment(index);
-            ExecutionResultNode child = analyzeFetchedValueImpl(executionContext, item, normalizedQueryField, (GraphQLOutputType) GraphQLTypeUtil.unwrapOne(currentType), indexedPath, fieldIds, elapsedTime);
-            children.add(child);
+            children.add(analyzeFetchedValueImpl(executionContext, item, normalizedQueryField, (GraphQLOutputType) GraphQLTypeUtil.unwrapOne(currentType), indexedPath, fieldIds, elapsedTime));
             index++;
         }
         return ListExecutionResultNode.newListExecutionResultNode()
