@@ -15,6 +15,7 @@ import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.ListExecutionResultNode;
+import graphql.nadel.result.NonNullableFieldWasNullError;
 import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.nadel.result.UnresolvedObjectResultNode;
@@ -22,6 +23,7 @@ import graphql.nadel.util.ErrorUtil;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
@@ -50,9 +52,6 @@ import static graphql.schema.GraphQLTypeUtil.isList;
 
 public class ServiceResultToResultNodes {
 
-//    private final FetchedValueAnalyzer fetchedValueAnalyzer = new FetchedValueAnalyzer();
-//    private final ResultNodesCreator resultNodesCreator = new ResultNodesCreator();
-
     ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
 
@@ -70,7 +69,7 @@ public class ServiceResultToResultNodes {
 
         List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
         RootExecutionResultNode rootNode = RootExecutionResultNode.newRootExecutionResultNode().errors(errors).elapsedTime(elapsedTimeForServiceCall).build();
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        NadelContext nadelContext = executionContext.getContext();
 
         AtomicInteger count = new AtomicInteger();
 
@@ -87,9 +86,11 @@ public class ServiceResultToResultNodes {
                             normalizedQueryFromAst);
                     return TreeTransformerUtil.changeNode(context, changedRootNode);
                 }
+
                 if (!(node instanceof UnresolvedObjectResultNode)) {
                     return TraversalControl.CONTINUE;
                 }
+
                 ObjectExecutionResultNode resolvedNode = resolveUnresolvedNode(executionContext, (UnresolvedObjectResultNode) node, normalizedQueryFromAst, elapsedTimeForServiceCall);
                 return TreeTransformerUtil.changeNode(context, resolvedNode);
             }
@@ -187,27 +188,21 @@ public class ServiceResultToResultNodes {
                                                         ExecutionPath executionPath,
                                                         List<String> fieldIds,
                                                         ElapsedTime elapsedTime) {
-        curType = (GraphQLOutputType) GraphQLTypeUtil.unwrapNonNull(curType);
 
+        if (toAnalyze == null && GraphQLTypeUtil.isNonNull(curType)) {
+            NonNullableFieldWasNullError nonNullableFieldWasNullError = new NonNullableFieldWasNullError((GraphQLNonNull) curType, executionPath);
+            return createNullERNWithNullableError(normalizedQueryField, executionPath, fieldIds, elapsedTime, nonNullableFieldWasNullError);
+        } else if (toAnalyze == null) {
+            return createNullERN(normalizedQueryField, executionPath, fieldIds, elapsedTime);
+        }
+
+        curType = (GraphQLOutputType) GraphQLTypeUtil.unwrapNonNull(curType);
         if (isList(curType)) {
             return analyzeList(executionContext, toAnalyze, (GraphQLList) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         } else if (curType instanceof GraphQLScalarType) {
             return analyzeScalarValue(toAnalyze, (GraphQLScalarType) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         } else if (curType instanceof GraphQLEnumType) {
             return analyzeEnumValue(toAnalyze, (GraphQLEnumType) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
-        }
-
-        if (toAnalyze == null) {
-            return newLeafExecutionResultNode()
-                    .executionPath(executionPath)
-                    .alias(normalizedQueryField.getAlias())
-                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
-                    .objectType(normalizedQueryField.getObjectType())
-                    .completedValue(null)
-                    .fieldIds(fieldIds)
-                    .elapsedTime(elapsedTime)
-                    .build();
-
         }
 
         GraphQLObjectType resolvedObjectType = resolveType(executionContext, toAnalyze, curType);
@@ -220,6 +215,38 @@ public class ServiceResultToResultNodes {
                 .build();
     }
 
+    private LeafExecutionResultNode createNullERN(NormalizedQueryField normalizedQueryField,
+                                                  ExecutionPath executionPath,
+                                                  List<String> fieldIds,
+                                                  ElapsedTime elapsedTime) {
+        return newLeafExecutionResultNode()
+                .executionPath(executionPath)
+                .alias(normalizedQueryField.getAlias())
+                .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                .objectType(normalizedQueryField.getObjectType())
+                .completedValue(null)
+                .fieldIds(fieldIds)
+                .elapsedTime(elapsedTime)
+                .build();
+    }
+
+    private LeafExecutionResultNode createNullERNWithNullableError(NormalizedQueryField normalizedQueryField,
+                                                                   ExecutionPath executionPath,
+                                                                   List<String> fieldIds,
+                                                                   ElapsedTime elapsedTime,
+                                                                   NonNullableFieldWasNullError nonNullableFieldWasNullError) {
+        return newLeafExecutionResultNode()
+                .executionPath(executionPath)
+                .alias(normalizedQueryField.getAlias())
+                .fieldDefinition(normalizedQueryField.getFieldDefinition())
+                .objectType(normalizedQueryField.getObjectType())
+                .completedValue(null)
+                .fieldIds(fieldIds)
+                .elapsedTime(elapsedTime)
+                .nonNullableFieldWasNullError(nonNullableFieldWasNullError)
+                .build();
+    }
+
     private ExecutionResultNode analyzeList(ExecutionContext executionContext,
                                             Object toAnalyze,
                                             GraphQLList curType,
@@ -227,18 +254,6 @@ public class ServiceResultToResultNodes {
                                             ExecutionPath executionPath,
                                             List<String> fieldIds,
                                             ElapsedTime elapsedTime) {
-        if (toAnalyze == null) {
-            return newLeafExecutionResultNode()
-                    .executionPath(executionPath)
-                    .alias(normalizedQueryField.getAlias())
-                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
-                    .objectType(normalizedQueryField.getObjectType())
-                    .completedValue(null)
-                    .fieldIds(fieldIds)
-                    .elapsedTime(elapsedTime)
-                    .build();
-        }
-
         if (toAnalyze.getClass().isArray() || toAnalyze instanceof Iterable) {
             Collection<Object> collection = FpKit.toCollection(toAnalyze);
             return analyzeIterable(executionContext, toAnalyze, collection, curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
@@ -316,17 +331,6 @@ public class ServiceResultToResultNodes {
                                                    ExecutionPath executionPath,
                                                    List<String> fieldIds,
                                                    ElapsedTime elapsedTime) {
-        if (toAnalyze == null) {
-            return newLeafExecutionResultNode()
-                    .executionPath(executionPath)
-                    .alias(normalizedQueryField.getAlias())
-                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
-                    .objectType(normalizedQueryField.getObjectType())
-                    .completedValue(null)
-                    .fieldIds(fieldIds)
-                    .elapsedTime(elapsedTime)
-                    .build();
-        }
         Object serialized;
         try {
             serialized = serializeScalarValue(toAnalyze, scalarType);
@@ -347,15 +351,7 @@ public class ServiceResultToResultNodes {
         // TODO: fix that: this should not be handled here
         //6.6.1 http://facebook.github.io/graphql/#sec-Field-entries
         if (serialized instanceof Double && ((Double) serialized).isNaN()) {
-            return newLeafExecutionResultNode()
-                    .executionPath(executionPath)
-                    .alias(normalizedQueryField.getAlias())
-                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
-                    .objectType(normalizedQueryField.getObjectType())
-                    .completedValue(null)
-                    .fieldIds(fieldIds)
-                    .elapsedTime(elapsedTime)
-                    .build();
+            return createNullERN(normalizedQueryField, executionPath, fieldIds, elapsedTime);
         }
         return newLeafExecutionResultNode()
                 .executionPath(executionPath)
@@ -386,18 +382,6 @@ public class ServiceResultToResultNodes {
                                                  ExecutionPath executionPath,
                                                  List<String> fieldIds,
                                                  ElapsedTime elapsedTime) {
-        if (toAnalyze == null) {
-            return newLeafExecutionResultNode()
-                    .executionPath(executionPath)
-                    .alias(normalizedQueryField.getAlias())
-                    .fieldDefinition(normalizedQueryField.getFieldDefinition())
-                    .objectType(normalizedQueryField.getObjectType())
-                    .completedValue(null)
-                    .fieldIds(fieldIds)
-                    .elapsedTime(elapsedTime)
-                    .build();
-
-        }
         Object serialized;
         try {
             serialized = enumType.serialize(toAnalyze);
@@ -414,7 +398,6 @@ public class ServiceResultToResultNodes {
                     .addError(error)
                     .build();
         }
-        // handle non null values
         return newLeafExecutionResultNode()
                 .executionPath(executionPath)
                 .alias(normalizedQueryField.getAlias())

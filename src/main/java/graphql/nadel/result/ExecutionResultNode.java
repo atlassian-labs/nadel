@@ -4,7 +4,6 @@ import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.ExecutionPath;
-import graphql.execution.NonNullableFieldWasNullException;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 
@@ -20,7 +19,7 @@ import static graphql.Assert.assertNotNull;
 public abstract class ExecutionResultNode {
 
     private final Object completedValue;
-    private final NonNullableFieldWasNullException nonNullableFieldWasNullException;
+    private final NonNullableFieldWasNullError nonNullableFieldWasNullError;
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
     private final ElapsedTime elapsedTime;
@@ -52,10 +51,10 @@ public abstract class ExecutionResultNode {
         this.fieldDefinition = builderBase.fieldDefinition;
         this.objectType = builderBase.objectType;
 
-        if (builderBase.nonNullableFieldWasNullException == null) {
-            this.nonNullableFieldWasNullException = ResultNodesUtil.newNullableException(fieldDefinition, getChildren());
+        if (builderBase.nonNullableFieldWasNullError == null) {
+            this.nonNullableFieldWasNullError = ResultNodesUtil.bubbledUpNonNullableError(fieldDefinition, executionPath, this.children);
         } else {
-            this.nonNullableFieldWasNullException = builderBase.nonNullableFieldWasNullException;
+            this.nonNullableFieldWasNullError = builderBase.nonNullableFieldWasNullError;
         }
     }
 
@@ -102,18 +101,18 @@ public abstract class ExecutionResultNode {
         return objectType;
     }
 
-    public NonNullableFieldWasNullException getNonNullableFieldWasNullException() {
-        return nonNullableFieldWasNullException;
+    public NonNullableFieldWasNullError getNonNullableFieldWasNullError() {
+        return nonNullableFieldWasNullError;
     }
 
     public List<ExecutionResultNode> getChildren() {
         return this.children;
     }
 
-    public Optional<NonNullableFieldWasNullException> getChildNonNullableException() {
+    public Optional<NonNullableFieldWasNullError> getChildNonNullableError() {
         return children.stream()
-                .filter(executionResultNode -> executionResultNode.getNonNullableFieldWasNullException() != null)
-                .map(ExecutionResultNode::getNonNullableFieldWasNullException)
+                .filter(executionResultNode -> executionResultNode.getNonNullableFieldWasNullError() != null)
+                .map(ExecutionResultNode::getNonNullableFieldWasNullError)
                 .findFirst();
     }
 
@@ -158,7 +157,7 @@ public abstract class ExecutionResultNode {
                 ", name=" + (fieldDefinition != null ? fieldDefinition.getName() : "null") +
                 ", fieldDefinition=" + fieldDefinition +
                 ", resolvedValue=" + completedValue +
-                ", nonNullableFieldWasNullException=" + nonNullableFieldWasNullException +
+                ", nonNullableFieldWasNullError" + nonNullableFieldWasNullError +
                 ", children=" + children +
                 ", errors=" + errors +
                 '}';
@@ -166,7 +165,7 @@ public abstract class ExecutionResultNode {
 
     public abstract static class BuilderBase<T extends BuilderBase<T>> {
         protected Object completedValue;
-        protected NonNullableFieldWasNullException nonNullableFieldWasNullException;
+        protected NonNullableFieldWasNullError nonNullableFieldWasNullError;
         protected List<ExecutionResultNode> children = new ArrayList<>();
         protected List<GraphQLError> errors = new ArrayList<>();
         protected ElapsedTime elapsedTime;
@@ -185,7 +184,7 @@ public abstract class ExecutionResultNode {
 
         public BuilderBase(ExecutionResultNode existing) {
             this.completedValue = existing.getCompletedValue();
-            this.nonNullableFieldWasNullException = existing.getNonNullableFieldWasNullException();
+            this.nonNullableFieldWasNullError = existing.getNonNullableFieldWasNullError();
             this.children.addAll(existing.getChildren());
             this.errors.addAll(existing.getErrors());
             this.elapsedTime = existing.getElapsedTime();
@@ -206,8 +205,8 @@ public abstract class ExecutionResultNode {
         }
 
 
-        public T nonNullableFieldWasNullException(NonNullableFieldWasNullException nonNullableFieldWasNullException) {
-            this.nonNullableFieldWasNullException = nonNullableFieldWasNullException;
+        public T nonNullableFieldWasNullError(NonNullableFieldWasNullError nonNullableFieldWasNullError) {
+            this.nonNullableFieldWasNullError = nonNullableFieldWasNullError;
             return (T) this;
         }
 

@@ -28,6 +28,52 @@ class StrategyTestHelper extends Specification {
 
     ExecutionHelper executionHelper = new ExecutionHelper()
 
+    Object[] test1Service(GraphQLSchema overallSchema,
+                          String serviceOneName,
+                          GraphQLSchema underlyingOne,
+                          String query,
+                          List<String> topLevelFields,
+                          String expectedQuery1,
+                          Map response1,
+                          ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {}
+    ) {
+        def response1ServiceResult = new ServiceExecutionResult(response1)
+
+        boolean calledService1 = false
+        ServiceExecution service1Execution = { ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            assert printAstCompact(sep.query) == expectedQuery1
+            calledService1 = true
+            return completedFuture(response1ServiceResult)
+        }
+        def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
+        def definitionRegistry = Mock(DefinitionRegistry)
+        def instrumentation = new NadelInstrumentation() {}
+
+        def service1 = new Service(serviceOneName, underlyingOne, service1Execution, serviceDefinition, definitionRegistry)
+
+        Map fieldInfoByDefinition = [:]
+        topLevelFields.forEach({ it ->
+            def fd = overallSchema.getQueryType().getFieldDefinition(it)
+            FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service1, fd)
+            fieldInfoByDefinition.put(fd, fieldInfo)
+        })
+        FieldInfos fieldInfos = new FieldInfos(fieldInfoByDefinition)
+
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, Mock(ResultComplexityAggregator))
+
+        assert calledService1
+
+        return [resultData(response), resultErrors(response)]
+
+
+    }
+
     Object[] test2Services(GraphQLSchema overallSchema,
                            String serviceOneName,
                            GraphQLSchema underlyingOne,

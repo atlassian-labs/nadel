@@ -2,8 +2,10 @@ package graphql.nadel.engine
 
 import graphql.ExecutionInput
 import graphql.GraphQLError
+import graphql.execution.AbortExecutionException
 import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
+import graphql.language.Field
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
@@ -11,6 +13,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.StrategyTestHelper
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -35,7 +38,7 @@ import static graphql.nadel.testutils.TestUtil.createNormalizedQuery
 import static graphql.nadel.testutils.TestUtil.parseQuery
 import static java.util.concurrent.CompletableFuture.completedFuture
 
-class NadelExecutionStrategyTest extends Specification {
+class NadelExecutionStrategyTest extends StrategyTestHelper {
 
     ExecutionHelper executionHelper
     def service1Execution
