@@ -28,10 +28,10 @@ import graphql.nadel.result.ListExecutionResultNode;
 import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.nadel.result.ResultComplexityAggregator;
 import graphql.nadel.result.RootExecutionResultNode;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
-import graphql.util.FpKit;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 
@@ -53,12 +53,12 @@ import static graphql.nadel.engine.StrategyUtil.copyFieldInformation;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
 import static graphql.nadel.engine.StrategyUtil.groupNodesIntoBatchesByField;
 import static graphql.nadel.util.FpKit.filter;
+import static graphql.nadel.util.FpKit.findOneOrNull;
+import static graphql.nadel.util.FpKit.flatList;
+import static graphql.nadel.util.FpKit.map;
 import static graphql.schema.GraphQLTypeUtil.isList;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import static graphql.schema.GraphQLTypeUtil.unwrapNonNull;
-import static graphql.util.FpKit.findOneOrNull;
-import static graphql.util.FpKit.flatList;
-import static graphql.util.FpKit.map;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 

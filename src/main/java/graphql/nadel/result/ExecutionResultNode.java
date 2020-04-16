@@ -10,7 +10,6 @@ import graphql.schema.GraphQLObjectType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
@@ -50,12 +49,7 @@ public abstract class ExecutionResultNode {
         this.fieldIds = builderBase.fieldIds;
         this.fieldDefinition = builderBase.fieldDefinition;
         this.objectType = builderBase.objectType;
-
-        if (builderBase.nonNullableFieldWasNullError == null) {
-            this.nonNullableFieldWasNullError = ResultNodesUtil.bubbledUpNonNullableError(fieldDefinition, executionPath, this.children);
-        } else {
-            this.nonNullableFieldWasNullError = builderBase.nonNullableFieldWasNullError;
-        }
+        this.nonNullableFieldWasNullError = builderBase.nonNullableFieldWasNullError;
     }
 
     public ElapsedTime getElapsedTime() {
@@ -108,14 +102,6 @@ public abstract class ExecutionResultNode {
     public List<ExecutionResultNode> getChildren() {
         return this.children;
     }
-
-    public Optional<NonNullableFieldWasNullError> getChildNonNullableError() {
-        return children.stream()
-                .filter(executionResultNode -> executionResultNode.getNonNullableFieldWasNullError() != null)
-                .map(ExecutionResultNode::getNonNullableFieldWasNullError)
-                .findFirst();
-    }
-
 
     public int getTotalNodeCount() {
         return totalNodeCount;

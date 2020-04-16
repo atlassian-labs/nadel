@@ -12,7 +12,6 @@ import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.ObjectExecutionResultNode;
-import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
@@ -26,6 +25,7 @@ import java.util.function.Function;
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.SelectionSet.newSelectionSet;
+import static graphql.nadel.util.FpKit.map;
 
 public final class FieldUtils {
 
@@ -127,7 +127,7 @@ public final class FieldUtils {
 
 
     public static ExecutionResultNode mapChildren(ExecutionResultNode executionResultNode, Function<ExecutionResultNode, ExecutionResultNode> mapper) {
-        List<ExecutionResultNode> newChildren = FpKit.map(executionResultNode.getChildren(), mapper);
+        List<ExecutionResultNode> newChildren = map(executionResultNode.getChildren(), mapper);
         return executionResultNode.withNewChildren(newChildren);
     }
 

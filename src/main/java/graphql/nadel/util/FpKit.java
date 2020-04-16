@@ -5,11 +5,11 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -18,7 +18,11 @@ import static java.util.stream.Collectors.toMap;
 public class FpKit {
 
     public static <T> Map<String, T> getByName(List<T> namedObjects, Function<T, String> nameFn) {
-        return graphql.util.FpKit.getByName(namedObjects, nameFn);
+        Map<String, T> result = new LinkedHashMap<>();
+        for (T t : namedObjects) {
+            result.put(nameFn.apply(t), t);
+        }
+        return result;
     }
 
     public static <T, K, U> Collector<T, ?, Map<K, U>> toMapCollector(Function<? super T, ? extends K> keyMapper,
@@ -41,12 +45,24 @@ public class FpKit {
         return map.values().iterator().next();
     }
 
-    public static <T, U> List<U> filterAndMap(List<T> list, Predicate<T> filter, Function<T, U> function) {
-        return list.stream().filter(filter).map(function).collect(Collectors.toList());
+    public static <T, U> List<U> filterAndMap(Collection<T> collection, Predicate<T> filter, Function<T, U> function) {
+        List<U> result = new ArrayList<>();
+        for (T t : collection) {
+            if (filter.test(t)) {
+                result.add(function.apply(t));
+            }
+        }
+        return result;
     }
 
-    public static <T> List<T> filter(List<T> list, Predicate<T> filter) {
-        return list.stream().filter(filter).collect(Collectors.toList());
+    public static <T> List<T> filter(Collection<T> collection, Predicate<T> filter) {
+        List<T> result = new ArrayList<>();
+        for (T t : collection) {
+            if (filter.test(t)) {
+                result.add(t);
+            }
+        }
+        return result;
     }
 
     public static <T, U> List<U> map(List<T> list, Function<T, U> function) {
@@ -56,5 +72,27 @@ public class FpKit {
         }
         return result;
     }
+
+    public static <T> Optional<T> findOne(Collection<T> collection, Predicate<T> filter) {
+        for (T t : collection) {
+            if (filter.test(t)) {
+                return Optional.of(t);
+            }
+        }
+        return Optional.empty();
+    }
+
+    public static <T> T findOneOrNull(List<T> list, Predicate<T> filter) {
+        return findOne(list, filter).orElse(null);
+    }
+
+    public static <T> List<T> flatList(List<List<T>> listLists) {
+        List<T> result = new ArrayList<>();
+        for (List<T> list : listLists) {
+            result.addAll(list);
+        }
+        return result;
+    }
+
 
 }

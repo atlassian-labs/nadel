@@ -42,9 +42,9 @@ import java.util.Set;
 import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.nadel.engine.UnderlyingTypeContext.newUnderlyingTypeContext;
+import static graphql.nadel.util.FpKit.map;
 import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
 import static graphql.util.FpKit.groupingByUniqueKey;
-import static graphql.util.FpKit.map;
 
 public class OverallQueryTransformer {
 

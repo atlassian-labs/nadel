@@ -29,7 +29,6 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeUtil;
-import graphql.util.FpKit;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
@@ -38,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -189,7 +187,8 @@ public class ServiceResultToResultNodes {
                                                         List<String> fieldIds,
                                                         ElapsedTime elapsedTime) {
 
-        if (toAnalyze == null && GraphQLTypeUtil.isNonNull(curType)) {
+        boolean isNonNull = GraphQLTypeUtil.isNonNull(curType);
+        if (toAnalyze == null && isNonNull) {
             NonNullableFieldWasNullError nonNullableFieldWasNullError = new NonNullableFieldWasNullError((GraphQLNonNull) curType, executionPath);
             return createNullERNWithNullableError(normalizedQueryField, executionPath, fieldIds, elapsedTime, nonNullableFieldWasNullError);
         } else if (toAnalyze == null) {
@@ -198,7 +197,7 @@ public class ServiceResultToResultNodes {
 
         curType = (GraphQLOutputType) GraphQLTypeUtil.unwrapNonNull(curType);
         if (isList(curType)) {
-            return analyzeList(executionContext, toAnalyze, (GraphQLList) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+            return analyzeList(executionContext, toAnalyze, (GraphQLList) curType, isNonNull, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         } else if (curType instanceof GraphQLScalarType) {
             return analyzeScalarValue(toAnalyze, (GraphQLScalarType) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         } else if (curType instanceof GraphQLEnumType) {
@@ -250,13 +249,13 @@ public class ServiceResultToResultNodes {
     private ExecutionResultNode analyzeList(ExecutionContext executionContext,
                                             Object toAnalyze,
                                             GraphQLList curType,
+                                            boolean isNonNull,
                                             NormalizedQueryField normalizedQueryField,
                                             ExecutionPath executionPath,
                                             List<String> fieldIds,
                                             ElapsedTime elapsedTime) {
-        if (toAnalyze.getClass().isArray() || toAnalyze instanceof Iterable) {
-            Collection<Object> collection = FpKit.toCollection(toAnalyze);
-            return analyzeIterable(executionContext, toAnalyze, collection, curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+        if (toAnalyze instanceof List) {
+            return createListNode(executionContext, toAnalyze, (List<Object>) toAnalyze, curType, isNonNull, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         } else {
             TypeMismatchError error = new TypeMismatchError(executionPath, curType);
             return LeafExecutionResultNode.newLeafExecutionResultNode()
@@ -273,20 +272,21 @@ public class ServiceResultToResultNodes {
 
     }
 
-    private ExecutionResultNode analyzeIterable(ExecutionContext executionContext,
-                                                Object fetchedValue,
-                                                Iterable<Object> iterableValues,
-                                                GraphQLList currentType,
-                                                NormalizedQueryField normalizedQueryField,
-                                                ExecutionPath executionPath,
-                                                List<String> fieldIds,
-                                                ElapsedTime elapsedTime) {
-        Collection<Object> values = FpKit.toCollection(iterableValues);
+    private ExecutionResultNode createListNode(ExecutionContext executionContext,
+                                               Object fetchedValue,
+                                               List<Object> values,
+                                               GraphQLList currentType,
+                                               boolean isNonNull,
+                                               NormalizedQueryField normalizedQueryField,
+                                               ExecutionPath executionPath,
+                                               List<String> fieldIds,
+                                               ElapsedTime elapsedTime) {
         List<ExecutionResultNode> children = new ArrayList<>();
         int index = 0;
         for (Object item : values) {
             ExecutionPath indexedPath = executionPath.segment(index);
-            children.add(analyzeFetchedValueImpl(executionContext, item, normalizedQueryField, (GraphQLOutputType) GraphQLTypeUtil.unwrapOne(currentType), indexedPath, fieldIds, elapsedTime));
+            ExecutionResultNode child = analyzeFetchedValueImpl(executionContext, item, normalizedQueryField, (GraphQLOutputType) GraphQLTypeUtil.unwrapOne(currentType), indexedPath, fieldIds, elapsedTime);
+            children.add(child);
             index++;
         }
         return ListExecutionResultNode.newListExecutionResultNode()

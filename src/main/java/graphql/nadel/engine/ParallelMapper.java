@@ -2,7 +2,6 @@ package graphql.nadel.engine;
 
 import graphql.Internal;
 import graphql.execution.ExecutionContext;
-import graphql.util.FpKit;
 
 import java.util.Collections;
 import java.util.List;
@@ -10,6 +9,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
+
+import static graphql.nadel.util.FpKit.map;
 
 @Internal
 public class ParallelMapper {
@@ -21,7 +22,7 @@ public class ParallelMapper {
             return Collections.emptyList();
         }
         if (list.size() <= partitionSize) {
-            return FpKit.map(list, function);
+            return map(list, function);
         }
         Object[] array = new Object[list.size()];
         CopyOnWriteArrayList<U> result = new CopyOnWriteArrayList<>((U[]) array);

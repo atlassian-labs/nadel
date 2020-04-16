@@ -8,7 +8,6 @@ import graphql.nadel.dsl.NodeId;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 import graphql.util.Breadcrumb;
-import graphql.util.FpKit;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 import graphql.util.TraversalControl;
@@ -28,12 +27,13 @@ import java.util.concurrent.ForkJoinPool;
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
 import static graphql.nadel.result.ObjectExecutionResultNode.newObjectExecutionResultNode;
+import static graphql.util.FpKit.groupingBy;
 import static graphql.util.FpKit.mapEntries;
 
 public class StrategyUtil {
 
     public static List<NodeMultiZipper<ExecutionResultNode>> groupNodesIntoBatchesByField(Collection<NodeZipper<ExecutionResultNode>> nodes, ExecutionResultNode root) {
-        Map<List<String>, List<NodeZipper<ExecutionResultNode>>> zipperByField = FpKit.groupingBy(nodes,
+        Map<List<String>, List<NodeZipper<ExecutionResultNode>>> zipperByField = groupingBy(nodes,
                 (executionResultZipper -> executionResultZipper.getCurNode().getFieldIds()));
         return mapEntries(zipperByField, (key, value) -> new NodeMultiZipper<>(root, value, FIX_NAMES_ADAPTER));
     }

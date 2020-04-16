@@ -35,7 +35,7 @@ import java.util.concurrent.CompletableFuture;
 import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.result.RootExecutionResultNode.newRootExecutionResultNode;
-import static graphql.util.FpKit.map;
+import static graphql.nadel.util.FpKit.map;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 

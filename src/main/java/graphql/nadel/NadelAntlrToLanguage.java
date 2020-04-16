@@ -45,7 +45,7 @@ import static graphql.nadel.dsl.ExtendedFieldDefinition.newExtendedFieldDefiniti
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.CONTEXT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
-import static graphql.util.FpKit.map;
+import static graphql.nadel.util.FpKit.map;
 
 @Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {

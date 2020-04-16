@@ -2,7 +2,6 @@ package graphql.nadel.engine;
 
 import graphql.language.Field;
 import graphql.nadel.engine.transformation.FieldMetadata;
-import graphql.nadel.util.FpKit;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,28 +11,30 @@ import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.dsl.NodeId.getId;
 import static graphql.nadel.util.FpKit.filter;
+import static graphql.nadel.util.FpKit.filterAndMap;
+import static graphql.nadel.util.FpKit.map;
 
 public class FieldMetadataUtil {
 
 
     public static List<String> getRootOfTransformationIds(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
-        return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getTransformationId);
+        return filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getTransformationId);
     }
 
     public static List<String> getRootOfTransformationIds(String fieldId, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(fieldId, metadataByFieldId);
-        return FpKit.filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getTransformationId);
+        return filterAndMap(fieldMetadata, FieldMetadata::isRootOfTransformation, FieldMetadata::getTransformationId);
     }
 
     public static List<String> getTransformationIds(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
-        return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getTransformationId);
+        return map(fieldMetadata, FieldMetadata::getTransformationId);
     }
 
     public static List<String> getTransformationIds(String fieldId, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(fieldId, metadataByFieldId);
-        return graphql.util.FpKit.map(fieldMetadata, FieldMetadata::getTransformationId);
+        return map(fieldMetadata, FieldMetadata::getTransformationId);
     }
 
     public static void addFieldMetadata(Field field, String transformationId, boolean rootOfTransformation, Map<String, List<FieldMetadata>> metadataByFieldId) {
