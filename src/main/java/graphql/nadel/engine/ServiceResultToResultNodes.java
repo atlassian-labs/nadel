@@ -18,7 +18,6 @@ import graphql.nadel.result.ListExecutionResultNode;
 import graphql.nadel.result.NonNullableFieldWasNullError;
 import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
-import graphql.nadel.result.UnresolvedObjectResultNode;
 import graphql.nadel.util.ErrorUtil;
 import graphql.schema.CoercingSerializeException;
 import graphql.schema.GraphQLEnumType;
@@ -29,28 +28,20 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeUtil;
-import graphql.util.TraversalControl;
-import graphql.util.TraverserContext;
-import graphql.util.TraverserVisitorStub;
-import graphql.util.TreeTransformerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.result.LeafExecutionResultNode.newLeafExecutionResultNode;
 import static graphql.nadel.result.ObjectExecutionResultNode.newObjectExecutionResultNode;
-import static graphql.nadel.result.UnresolvedObjectResultNode.newUnresolvedExecutionResultNode;
 import static graphql.schema.GraphQLTypeUtil.isList;
 
 public class ServiceResultToResultNodes {
-
-    ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
 
 
     private static final Logger log = LoggerFactory.getLogger(ServiceResultToResultNodes.class);
@@ -69,65 +60,12 @@ public class ServiceResultToResultNodes {
         RootExecutionResultNode rootNode = RootExecutionResultNode.newRootExecutionResultNode().errors(errors).elapsedTime(elapsedTimeForServiceCall).build();
         NadelContext nadelContext = executionContext.getContext();
 
-        AtomicInteger count = new AtomicInteger();
-
-        RootExecutionResultNode result = (RootExecutionResultNode) resultNodesTransformer.transformParallel(nadelContext.getForkJoinPool(), rootNode, new TraverserVisitorStub<ExecutionResultNode>() {
-            @Override
-            public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-                count.incrementAndGet();
-                ExecutionResultNode node = context.thisNode();
-                if (node instanceof RootExecutionResultNode) {
-                    RootExecutionResultNode changedRootNode = fetchTopLevelFields((RootExecutionResultNode) node,
-                            executionContext,
-                            serviceExecutionResult,
-                            elapsedTimeForServiceCall,
-                            normalizedQueryFromAst);
-                    return TreeTransformerUtil.changeNode(context, changedRootNode);
-                }
-
-                if (!(node instanceof UnresolvedObjectResultNode)) {
-                    return TraversalControl.CONTINUE;
-                }
-
-                ObjectExecutionResultNode resolvedNode = resolveUnresolvedNode(executionContext, (UnresolvedObjectResultNode) node, normalizedQueryFromAst, elapsedTimeForServiceCall);
-                return TreeTransformerUtil.changeNode(context, resolvedNode);
-            }
-        });
-//        System.out.println(count.get());
+        RootExecutionResultNode rootExecutionResultNode = fetchTopLevelFields(rootNode, executionContext, serviceExecutionResult, elapsedTimeForServiceCall, normalizedQueryFromAst);
         long elapsedTime = System.currentTimeMillis() - startTime;
         log.debug("ServiceResultToResultNodes time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
-        return result;
+        return rootExecutionResultNode;
     }
 
-    private ObjectExecutionResultNode resolveUnresolvedNode(ExecutionContext context,
-                                                            UnresolvedObjectResultNode unresolvedNode,
-                                                            NormalizedQueryFromAst normalizedQueryFromAst,
-                                                            ElapsedTime elapsedTime) {
-        NormalizedQueryField normalizedField = unresolvedNode.getNormalizedField();
-        GraphQLObjectType resolvedType = unresolvedNode.getResolvedType();
-        ExecutionPath executionPath = unresolvedNode.getExecutionPath();
-
-        List<ExecutionResultNode> nodeChildren = new ArrayList<>(normalizedField.getChildren().size());
-        for (NormalizedQueryField child : normalizedField.getChildren()) {
-            if (child.getObjectType() == resolvedType) {
-                ExecutionPath pathForChild = executionPath.segment(child.getResultKey());
-                List<String> fieldIds = normalizedQueryFromAst.getFieldIds(child);
-                ExecutionResultNode childNode = fetchAndAnalyzeField(context, unresolvedNode.getCompletedValue(), child, pathForChild, fieldIds, elapsedTime);
-                nodeChildren.add(childNode);
-            }
-        }
-        return newObjectExecutionResultNode()
-                .executionPath(unresolvedNode.getExecutionPath())
-                .alias(normalizedField.getAlias())
-                .fieldIds(unresolvedNode.getFieldIds())
-                .objectType(normalizedField.getObjectType())
-                .fieldDefinition(normalizedField.getFieldDefinition())
-                .completedValue(unresolvedNode.getCompletedValue())
-                .children(nodeChildren)
-                .elapsedTime(elapsedTime)
-                .build();
-
-    }
 
     private RootExecutionResultNode fetchTopLevelFields(RootExecutionResultNode rootNode,
                                                         ExecutionContext executionContext,
@@ -144,7 +82,7 @@ public class ServiceResultToResultNodes {
             ExecutionPath path = rootPath.segment(topLevelField.getResultKey());
             List<String> fieldIds = normalizedQueryFromAst.getFieldIds(topLevelField);
 
-            ExecutionResultNode executionResultNode = fetchAndAnalyzeField(executionContext, source, topLevelField, path, fieldIds, elapsedTime);
+            ExecutionResultNode executionResultNode = fetchAndAnalyzeField(executionContext, source, topLevelField, normalizedQueryFromAst, path, fieldIds, elapsedTime);
             children.add(executionResultNode);
         }
         return (RootExecutionResultNode) rootNode.withNewChildren(children);
@@ -154,11 +92,12 @@ public class ServiceResultToResultNodes {
     private ExecutionResultNode fetchAndAnalyzeField(ExecutionContext context,
                                                      Object source,
                                                      NormalizedQueryField normalizedQueryField,
+                                                     NormalizedQueryFromAst normalizedQueryFromAst,
                                                      ExecutionPath executionPath,
                                                      List<String> fieldIds,
                                                      ElapsedTime elapsedTime) {
         Object fetchedValue = fetchValue(source, normalizedQueryField.getResultKey());
-        return analyseValue(context, fetchedValue, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+        return analyseValue(context, fetchedValue, normalizedQueryField, normalizedQueryFromAst, executionPath, fieldIds, elapsedTime);
     }
 
     private Object fetchValue(Object source, String key) {
@@ -173,15 +112,17 @@ public class ServiceResultToResultNodes {
     private ExecutionResultNode analyseValue(ExecutionContext executionContext,
                                              Object fetchedValue,
                                              NormalizedQueryField normalizedQueryField,
+                                             NormalizedQueryFromAst normalizedQueryFromAst,
                                              ExecutionPath executionPath,
                                              List<String> fieldIds,
                                              ElapsedTime elapsedTime) {
-        return analyzeFetchedValueImpl(executionContext, fetchedValue, normalizedQueryField, normalizedQueryField.getFieldDefinition().getType(), executionPath, fieldIds, elapsedTime);
+        return analyzeFetchedValueImpl(executionContext, fetchedValue, normalizedQueryField, normalizedQueryFromAst, normalizedQueryField.getFieldDefinition().getType(), executionPath, fieldIds, elapsedTime);
     }
 
     private ExecutionResultNode analyzeFetchedValueImpl(ExecutionContext executionContext,
                                                         Object toAnalyze,
                                                         NormalizedQueryField normalizedQueryField,
+                                                        NormalizedQueryFromAst normalizedQueryFromAst,
                                                         GraphQLOutputType curType,
                                                         ExecutionPath executionPath,
                                                         List<String> fieldIds,
@@ -197,7 +138,7 @@ public class ServiceResultToResultNodes {
 
         curType = (GraphQLOutputType) GraphQLTypeUtil.unwrapNonNull(curType);
         if (isList(curType)) {
-            return analyzeList(executionContext, toAnalyze, (GraphQLList) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+            return analyzeList(executionContext, toAnalyze, (GraphQLList) curType, normalizedQueryField, normalizedQueryFromAst, executionPath, fieldIds, elapsedTime);
         } else if (curType instanceof GraphQLScalarType) {
             return analyzeScalarValue(toAnalyze, (GraphQLScalarType) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         } else if (curType instanceof GraphQLEnumType) {
@@ -206,25 +147,52 @@ public class ServiceResultToResultNodes {
 
 
         GraphQLObjectType resolvedObjectType = resolveType(executionContext, toAnalyze, curType);
-        return newUnresolvedExecutionResultNode()
-                .executionPath(executionPath)
-                .resolvedType(resolvedObjectType)
-                .fieldIds(fieldIds)
-                .normalizedField(normalizedQueryField)
-                .completedValue(toAnalyze)
-                .build();
+        return resolveObject(executionContext, normalizedQueryField, fieldIds, normalizedQueryFromAst, resolvedObjectType, toAnalyze, executionPath, elapsedTime);
     }
+
+    private ObjectExecutionResultNode resolveObject(ExecutionContext context,
+                                                    NormalizedQueryField normalizedField,
+                                                    List<String> objectFieldIds,
+                                                    NormalizedQueryFromAst normalizedQueryFromAst,
+                                                    GraphQLObjectType resolvedType,
+                                                    Object completedValue,
+                                                    ExecutionPath executionPath,
+                                                    ElapsedTime elapsedTime) {
+
+        List<ExecutionResultNode> nodeChildren = new ArrayList<>(normalizedField.getChildren().size());
+        for (NormalizedQueryField child : normalizedField.getChildren()) {
+            if (child.getObjectType() == resolvedType) {
+                ExecutionPath pathForChild = executionPath.segment(child.getResultKey());
+                List<String> fieldIds = normalizedQueryFromAst.getFieldIds(child);
+                ExecutionResultNode childNode = fetchAndAnalyzeField(context, completedValue, child, normalizedQueryFromAst, pathForChild, fieldIds, elapsedTime);
+                nodeChildren.add(childNode);
+            }
+        }
+        return newObjectExecutionResultNode()
+                .executionPath(executionPath)
+                .alias(normalizedField.getAlias())
+                .fieldIds(objectFieldIds)
+                .objectType(normalizedField.getObjectType())
+                .fieldDefinition(normalizedField.getFieldDefinition())
+                .completedValue(completedValue)
+                .children(nodeChildren)
+                .elapsedTime(elapsedTime)
+                .build();
+
+    }
+
 
     private ExecutionResultNode analyzeList(ExecutionContext executionContext,
                                             Object toAnalyze,
                                             GraphQLList curType,
                                             NormalizedQueryField normalizedQueryField,
+                                            NormalizedQueryFromAst normalizedQueryFromAst,
                                             ExecutionPath executionPath,
                                             List<String> fieldIds,
                                             ElapsedTime elapsedTime) {
 
         if (toAnalyze instanceof List) {
-            return createListImpl(executionContext, toAnalyze, (List<Object>) toAnalyze, curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
+            return createListImpl(executionContext, toAnalyze, (List<Object>) toAnalyze, curType, normalizedQueryField, normalizedQueryFromAst, executionPath, fieldIds, elapsedTime);
         } else {
             TypeMismatchError error = new TypeMismatchError(executionPath, curType);
             return LeafExecutionResultNode.newLeafExecutionResultNode()
@@ -277,6 +245,7 @@ public class ServiceResultToResultNodes {
                                                List<Object> iterableValues,
                                                GraphQLList currentType,
                                                NormalizedQueryField normalizedQueryField,
+                                               NormalizedQueryFromAst normalizedQueryFromAst,
                                                ExecutionPath executionPath,
                                                List<String> fieldIds,
                                                ElapsedTime elapsedTime) {
@@ -284,7 +253,7 @@ public class ServiceResultToResultNodes {
         int index = 0;
         for (Object item : iterableValues) {
             ExecutionPath indexedPath = executionPath.segment(index);
-            children.add(analyzeFetchedValueImpl(executionContext, item, normalizedQueryField, (GraphQLOutputType) GraphQLTypeUtil.unwrapOne(currentType), indexedPath, fieldIds, elapsedTime));
+            children.add(analyzeFetchedValueImpl(executionContext, item, normalizedQueryField, normalizedQueryFromAst, (GraphQLOutputType) GraphQLTypeUtil.unwrapOne(currentType), indexedPath, fieldIds, elapsedTime));
             index++;
         }
         return ListExecutionResultNode.newListExecutionResultNode()
