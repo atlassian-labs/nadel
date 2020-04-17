@@ -84,7 +84,7 @@ public class LargeResponseBenchmark {
 
     @Benchmark
     @Warmup(iterations = 2)
-    @Measurement(iterations = 5, time = 10)
+    @Measurement(iterations = 3, time = 10)
     @Threads(1)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)

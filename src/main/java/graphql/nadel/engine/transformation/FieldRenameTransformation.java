@@ -4,7 +4,6 @@ import graphql.execution.ExecutionPath;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
-import graphql.nadel.engine.ExecutionResultNodeMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
 import graphql.nadel.engine.PathMapper;
 import graphql.nadel.engine.UnapplyEnvironment;
@@ -25,7 +24,6 @@ import static graphql.util.TreeTransformerUtil.changeNode;
 
 public class FieldRenameTransformation extends FieldTransformation {
 
-    ExecutionResultNodeMapper executionResultNodeMapper = new ExecutionResultNodeMapper();
     PathMapper pathMapper = new PathMapper();
     private final FieldMappingDefinition mappingDefinition;
 

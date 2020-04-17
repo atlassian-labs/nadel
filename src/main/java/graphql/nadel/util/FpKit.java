@@ -73,6 +73,17 @@ public class FpKit {
         return result;
     }
 
+    public static <T, U> List<U> mapAndFilter(List<T> list, Function<T, U> function, Predicate<U> filter) {
+        List<U> result = new ArrayList<>(list.size());
+        for (T t : list) {
+            U mappedValue = function.apply(t);
+            if (filter.test(mappedValue)) {
+                result.add(mappedValue);
+            }
+        }
+        return result;
+    }
+
     public static <T> Optional<T> findOne(Collection<T> collection, Predicate<T> filter) {
         for (T t : collection) {
             if (filter.test(t)) {

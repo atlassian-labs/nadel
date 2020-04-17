@@ -14,6 +14,7 @@ import graphql.execution.nextgen.FieldSubSelection;
 import graphql.language.Document;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
+import graphql.nadel.DebugContext;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.NadelExecutionParams;
@@ -101,6 +102,9 @@ public class Execution {
         } else {
             CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection, resultComplexityAggregator);
             result = resultNodes.thenApply(rootResultNode -> {
+                if (nadelContext.getUserSuppliedContext() instanceof DebugContext) {
+                    ((DebugContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
+                }
                 rootResultNode = instrumentation.instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
                 ExecutionResult executionResult = withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);
                 return executionResult;

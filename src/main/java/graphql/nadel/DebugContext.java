@@ -5,6 +5,7 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.result.ElapsedTime;
+import graphql.nadel.result.RootExecutionResultNode;
 
 import java.util.List;
 
@@ -16,4 +17,6 @@ public class DebugContext {
     public ServiceExecutionResult serviceExecutionResult;
     public ElapsedTime elapsedTime;
     public NormalizedQueryFromAst normalizedQuery;
+
+    public RootExecutionResultNode overallResult;
 }
