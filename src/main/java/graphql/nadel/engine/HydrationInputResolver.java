@@ -299,7 +299,6 @@ public class HydrationInputResolver {
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
                 .convertChildren(executionId,
-                        forkJoinPool,
                         rootResultNode.getChildren().get(0),
                         rootNormalizedField,
                         overallSchema,
@@ -423,7 +422,6 @@ public class HydrationInputResolver {
             if (matchingResolvedNode != null) {
                 ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convertChildren(
                         executionContext.getExecutionId(),
-                        forkJoinPool,
                         matchingResolvedNode,
                         hydrationInputNode.getNormalizedField(),
                         overallSchema,

@@ -167,7 +167,6 @@ public class NadelExecutionStrategy {
                     .thenApply(resultNode -> {
                         return (RootExecutionResultNode) serviceResultNodesToOverallResult
                                 .convert(newExecutionContext.getExecutionId(),
-                                        nadelContext.getForkJoinPool(),
                                         resultNode,
                                         overallSchema,
                                         resultNode,
