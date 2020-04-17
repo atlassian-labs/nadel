@@ -17,17 +17,5 @@ public class ResultNodesTransformer {
         TreeTransformer<ExecutionResultNode> treeTransformer = new TreeTransformer<>(RESULT_NODE_ADAPTER);
         return treeTransformer.transform(root, traverserVisitor);
     }
-
-//    public ExecutionResultNode transformParallel(ForkJoinPool forkJoinPool, ExecutionResultNode root, TraverserVisitor<ExecutionResultNode> traverserVisitor) {
-//        return transformParallel(forkJoinPool, root, traverserVisitor, Collections.emptyMap());
-//    }
-//
-//    public ExecutionResultNode transformParallel(ForkJoinPool forkJoinPool, ExecutionResultNode root, TraverserVisitor<ExecutionResultNode> traverserVisitor, Map<Class<?>, Object> rootVars) {
-//        assertNotNull(root);
-//
-//        TreeParallelTransformer<ExecutionResultNode> parallelTransformer = TreeParallelTransformer.parallelTransformer(RESULT_NODE_ADAPTER, forkJoinPool);
-//        parallelTransformer.rootVars(rootVars);
-//        return parallelTransformer.transform(root, traverserVisitor);
-//    }
 }
 

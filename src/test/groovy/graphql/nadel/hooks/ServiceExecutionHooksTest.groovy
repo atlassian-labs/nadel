@@ -38,7 +38,6 @@ import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.testutils.TestUtil.parseQuery
@@ -80,7 +79,6 @@ class ServiceExecutionHooksTest extends Specification {
         def normalizedQuery = new NormalizedQueryFactory().createNormalizedQuery(overallSchema, document, null, variables)
 
         def nadelContext = NadelContext.newContext()
-                .forkJoinPool(ForkJoinPool.commonPool())
                 .artificialFieldsUUID("UUID")
         .normalizedOverallQuery(normalizedQuery)
                 .build()

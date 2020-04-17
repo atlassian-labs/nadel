@@ -17,7 +17,6 @@ import graphql.schema.GraphQLSchema
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.testutils.TestUtil.createNormalizedQuery
@@ -142,7 +141,6 @@ class StrategyTestHelper extends Specification {
         def normalizedQuery = createNormalizedQuery(overallSchema, document)
 
         def nadelContext = NadelContext.newContext()
-                .forkJoinPool(ForkJoinPool.commonPool())
                 .artificialFieldsUUID("UUID")
                 .normalizedOverallQuery(normalizedQuery)
                 .build()

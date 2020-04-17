@@ -22,7 +22,6 @@ import groovy.json.JsonSlurper
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 
 import static graphql.nadel.testutils.TestUtil.createNormalizedQuery
 import static graphql.nadel.testutils.TestUtil.parseQuery
@@ -200,7 +199,7 @@ type ActivityUser {
         def document = parseQuery(query)
         def normalizedQuery = createNormalizedQuery(overallSchema, document)
 
-        def nadelContext = NadelContext.newContext().artificialFieldsUUID("UUID").forkJoinPool(ForkJoinPool.commonPool())
+        def nadelContext = NadelContext.newContext().artificialFieldsUUID("UUID")
                 .normalizedOverallQuery(normalizedQuery)
                 .build()
         def executionInput = ExecutionInput.newExecutionInput().query(query)

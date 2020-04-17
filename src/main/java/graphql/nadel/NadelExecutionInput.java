@@ -5,7 +5,6 @@ import graphql.execution.ExecutionId;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ForkJoinPool;
 
 import static graphql.GraphQLContext.newContext;
 import static java.util.Objects.requireNonNull;
@@ -19,21 +18,18 @@ public class NadelExecutionInput {
     private final Map<String, Object> variables;
     private final String artificialFieldsUUID;
     private final ExecutionId executionId;
-    private final ForkJoinPool forkJoinPool;
 
     private NadelExecutionInput(String query,
                                 String operationName,
                                 Object context, Map<String, Object> variables,
                                 String artificialFieldsUUID,
-                                ExecutionId executionId,
-                                ForkJoinPool forkJoinPool) {
+                                ExecutionId executionId) {
         this.query = requireNonNull(query);
         this.operationName = operationName;
         this.context = context;
         this.variables = requireNonNull(variables);
         this.artificialFieldsUUID = artificialFieldsUUID;
         this.executionId = executionId;
-        this.forkJoinPool = forkJoinPool;
     }
 
     public static Builder newNadelExecutionInput() {
@@ -59,11 +55,6 @@ public class NadelExecutionInput {
     public Map<String, Object> getVariables() {
         return new LinkedHashMap<>(variables);
     }
-
-    public ForkJoinPool getForkJoinPool() {
-        return forkJoinPool;
-    }
-
     /**
      * @return Id that will be/was used to execute this operation.
      */
@@ -78,7 +69,6 @@ public class NadelExecutionInput {
         private Map<String, Object> variables = new LinkedHashMap<>();
         private String artificialFieldsUUID;
         private ExecutionId executionId;
-        private ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
 
         private Builder() {
         }
@@ -113,13 +103,9 @@ public class NadelExecutionInput {
             return this;
         }
 
-        public Builder forkJoinPool(ForkJoinPool forkJoinPool) {
-            this.forkJoinPool = forkJoinPool;
-            return this;
-        }
 
         public NadelExecutionInput build() {
-            return new NadelExecutionInput(query, operationName, context, variables, artificialFieldsUUID, executionId, forkJoinPool);
+            return new NadelExecutionInput(query, operationName, context, variables, artificialFieldsUUID, executionId);
         }
 
     }

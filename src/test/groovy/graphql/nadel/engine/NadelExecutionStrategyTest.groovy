@@ -2,10 +2,8 @@ package graphql.nadel.engine
 
 import graphql.ExecutionInput
 import graphql.GraphQLError
-import graphql.execution.AbortExecutionException
 import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.language.Field
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
@@ -28,10 +26,8 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
-import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.testutils.TestUtil.createNormalizedQuery
@@ -1173,7 +1169,6 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def normalizedQuery = createNormalizedQuery(overallSchema, document)
 
         def nadelContext = NadelContext.newContext()
-                .forkJoinPool(ForkJoinPool.commonPool())
                 .artificialFieldsUUID("UUID")
                 .normalizedOverallQuery(normalizedQuery)
                 .build()

@@ -30,7 +30,6 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 public class ExecutionBenchmark {
@@ -78,7 +77,6 @@ public class ExecutionBenchmark {
             query = readFromClasspath("large_response_benchmark_query.graphql");
             debugContext = new DebugContext();
             NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
-                    .forkJoinPool(ForkJoinPool.commonPool())
                     .context(debugContext)
                     .query(query)
                     .build();

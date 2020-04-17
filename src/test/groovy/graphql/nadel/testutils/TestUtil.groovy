@@ -54,7 +54,6 @@ import graphql.schema.idl.errors.SchemaProblem
 import groovy.json.JsonSlurper
 
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 import java.util.function.Supplier
 import java.util.stream.Collectors
 
@@ -335,7 +334,6 @@ class TestUtil {
     static def executionData(GraphQLSchema schema, Document query, Map variables = [:]) {
         def normalizedQuery = new NormalizedQueryFactory().createNormalizedQuery(schema, query, null, variables)
         def nadelContext = NadelContext.newContext()
-                .forkJoinPool(ForkJoinPool.commonPool())
                 .originalOperationName(query, null)
                 .normalizedOverallQuery(normalizedQuery)
                 .artificialFieldsUUID("UUID")

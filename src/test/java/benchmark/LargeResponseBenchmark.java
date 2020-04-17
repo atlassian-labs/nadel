@@ -29,7 +29,6 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -90,7 +89,6 @@ public class LargeResponseBenchmark {
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public ExecutionResult benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
         NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
-                .forkJoinPool(ForkJoinPool.commonPool())
                 .query(nadelInstance.query)
                 .build();
         ExecutionResult executionResult = nadelInstance.nadel.execute(nadelExecutionInput).get();

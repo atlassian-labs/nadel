@@ -87,7 +87,6 @@ public class Execution {
                 .userSuppliedContext(executionInput.getContext())
                 .originalOperationName(document, executionInput.getOperationName())
                 .artificialFieldsUUID(nadelExecutionParams.getArtificialFieldsUUID())
-                .forkJoinPool(nadelExecutionParams.getForkJoinPool())
                 .normalizedOverallQuery(normalizedQueryFromAst)
                 .build();
 

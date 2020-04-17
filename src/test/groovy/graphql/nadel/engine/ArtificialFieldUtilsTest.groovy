@@ -1,6 +1,5 @@
 package graphql.nadel.engine
 
-
 import graphql.language.AstPrinter
 import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.result.LeafExecutionResultNode
@@ -12,8 +11,6 @@ import graphql.util.TraverserVisitorStub
 import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
-import java.util.concurrent.ForkJoinPool
-
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.leaf
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.list
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.object
@@ -23,7 +20,7 @@ import static graphql.nadel.testutils.TestUtil.mkField
 
 class ArtificialFieldUtilsTest extends Specification {
 
-    def context = NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()
+    def context = NadelContext.newContext().build()
     def underscoreTypeNameAlias = context.underscoreTypeNameAlias
     def interfaceType = GraphQLInterfaceType.newInterface().name("I").build()
     def objectType = GraphQLObjectType.newObject().name("O").build()
