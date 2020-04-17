@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ForkJoinPool;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
@@ -91,7 +90,7 @@ public class HydrationInputResolver {
                                                                             Map<Service, Object> serviceContexts,
                                                                             ResultComplexityAggregator resultComplexityAggregator) {
         NadelContext nadelContext = (NadelContext) context.getContext();
-        Set<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(nadelContext.getForkJoinPool(), node);
+        Set<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(node);
         if (hydrationInputZippers.size() == 0) {
             return CompletableFuture.completedFuture(node);
         }
@@ -248,10 +247,8 @@ public class HydrationInputResolver {
                 .execute(executionContext, queryTransformationResult, service, operation,
                         serviceContexts.get(service), true);
 
-        ForkJoinPool forkJoinPool = getNadelContext(executionContext).getForkJoinPool();
         return serviceResult
                 .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
-                        forkJoinPool,
                         fieldTracking,
                         hydrationInputNode,
                         hydrationTransformation,
@@ -282,7 +279,6 @@ public class HydrationInputResolver {
     }
 
     private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(ExecutionId executionId,
-                                                                              ForkJoinPool forkJoinPool,
                                                                               FieldTracking fieldTracking,
                                                                               HydrationInputNode hydrationInputNode,
                                                                               HydrationTransformation hydrationTransformation,
@@ -415,7 +411,6 @@ public class HydrationInputResolver {
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
 
         boolean first = true;
-        ForkJoinPool forkJoinPool = getNadelContext(executionContext).getForkJoinPool();
         for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
             ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
             ExecutionResultNode resultNode;

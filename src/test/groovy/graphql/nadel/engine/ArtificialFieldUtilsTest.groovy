@@ -146,7 +146,7 @@ class ArtificialFieldUtilsTest extends Specification {
 
     static ExecutionResultNode removeArtificialFields(NadelContext nadelContext, ExecutionResultNode resultNode) {
         ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
-        ExecutionResultNode newNode = resultNodesTransformer.transformParallel(nadelContext.getForkJoinPool(), resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+        ExecutionResultNode newNode = resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 ExecutionResultNode node = context.thisNode()

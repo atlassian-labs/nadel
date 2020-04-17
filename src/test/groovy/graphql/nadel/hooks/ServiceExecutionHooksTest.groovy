@@ -253,7 +253,7 @@ class ServiceExecutionHooksTest extends Specification {
                 def resultNode = params.resultNode
 
                 def transformer = new ResultNodesTransformer()
-                def result = transformer.transformParallel(ForkJoinPool.commonPool(), resultNode, new TraverserVisitor<ExecutionResultNode>() {
+                def result = transformer.transform(resultNode, new TraverserVisitor<ExecutionResultNode>() {
                     @Override
                     TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                         if (context.thisNode() instanceof LeafExecutionResultNode) {

@@ -11,9 +11,9 @@ import graphql.util.Breadcrumb;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 import graphql.util.TraversalControl;
+import graphql.util.Traverser;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
-import graphql.util.TreeParallelTraverser;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ForkJoinPool;
 
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
 import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
@@ -39,7 +38,7 @@ public class StrategyUtil {
     }
 
 
-    public static Set<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(ForkJoinPool forkJoinPool, ExecutionResultNode roots) {
+    public static Set<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(ExecutionResultNode roots) {
         Comparator<NodeZipper<ExecutionResultNode>> comparator = (node1, node2) -> {
             if (node1 == node2) {
                 return 0;
@@ -60,7 +59,7 @@ public class StrategyUtil {
         };
         Set<NodeZipper<ExecutionResultNode>> result = Collections.synchronizedSet(new TreeSet<>(comparator));
 
-        TreeParallelTraverser<ExecutionResultNode> traverser = TreeParallelTraverser.parallelTraverser(ExecutionResultNode::getChildren, null, forkJoinPool);
+        Traverser<ExecutionResultNode> traverser = Traverser.depthFirst(ExecutionResultNode::getChildren);
         traverser.traverse(roots, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
