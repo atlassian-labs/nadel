@@ -64,11 +64,11 @@ public class ServiceResultNodesToOverallResult {
                                        ExecutionResultNode resultNode,
                                        GraphQLSchema overallSchema,
                                        ExecutionResultNode correctRootNode,
-                                       Map<String, FieldTransformation> transformationMap,
+                                       Map<String, FieldTransformation> fieldIdToTransformation,
                                        Map<String, String> typeRenameMappings,
                                        NadelContext nadelContext,
                                        Metadata metadata) {
-        return convertImpl(executionId, resultNode, null, overallSchema, correctRootNode, false, false, transformationMap, typeRenameMappings, false, nadelContext, metadata);
+        return convertImpl(executionId, resultNode, null, overallSchema, correctRootNode, false, false, fieldIdToTransformation, typeRenameMappings, false, nadelContext, metadata);
     }
 
     public ExecutionResultNode convertChildren(ExecutionId executionId,
@@ -78,11 +78,11 @@ public class ServiceResultNodesToOverallResult {
                                                ExecutionResultNode correctRootNode,
                                                boolean isHydrationTransformation,
                                                boolean batched,
-                                               Map<String, FieldTransformation> transformationMap,
+                                               Map<String, FieldTransformation> fieldIdToTransformation,
                                                Map<String, String> typeRenameMappings,
                                                NadelContext nadelContext,
                                                Metadata metadata) {
-        return convertImpl(executionId, root, normalizedRootField, overallSchema, correctRootNode, isHydrationTransformation, batched, transformationMap, typeRenameMappings, true, nadelContext, metadata);
+        return convertImpl(executionId, root, normalizedRootField, overallSchema, correctRootNode, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, true, nadelContext, metadata);
     }
 
     private ExecutionResultNode convertImpl(ExecutionId executionId,
@@ -92,21 +92,21 @@ public class ServiceResultNodesToOverallResult {
                                             ExecutionResultNode correctRootNode,
                                             boolean isHydrationTransformation,
                                             boolean batched,
-                                            Map<String, FieldTransformation> transformationMap,
+                                            Map<String, FieldTransformation> fieldIdToTransformation,
                                             Map<String, String> typeRenameMappings,
                                             boolean onlyChildren,
                                             NadelContext nadelContext,
                                             Metadata metadata) {
         final AtomicInteger nodeCount = new AtomicInteger();
 
-        HandleResult handleResult = convertSingleNode(root, null/*not for root*/, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, transformationMap, typeRenameMappings, onlyChildren, nadelContext, metadata, nodeCount);
+        HandleResult handleResult = convertSingleNode(root, null/*not for root*/, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, metadata, nodeCount);
         assertNotNull(handleResult, "can't delete root");
 
         ExecutionResultNode changedNode = handleResult.changedNode;
         List<ExecutionResultNode> newChildren = new ArrayList<>();
         for (ExecutionResultNode child : changedNode.getChildren()) {
             // pass in the correct root node as parent, not root
-            HandleResult handleResultChild = convertRecursively(child, correctRootNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, transformationMap, typeRenameMappings, onlyChildren, nadelContext, metadata, nodeCount);
+            HandleResult handleResultChild = convertRecursively(child, correctRootNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, metadata, nodeCount);
             if (handleResultChild == null) {
                 continue;
             }
@@ -124,13 +124,13 @@ public class ServiceResultNodesToOverallResult {
                                             GraphQLSchema overallSchema,
                                             boolean isHydrationTransformation,
                                             boolean batched,
-                                            Map<String, FieldTransformation> transformationMap,
+                                            Map<String, FieldTransformation> fieldIdToTransformation,
                                             Map<String, String> typeRenameMappings,
                                             boolean onlyChildren,
                                             NadelContext nadelContext,
                                             Metadata metadata,
                                             AtomicInteger nodeCount) {
-        HandleResult handleResult = convertSingleNode(node, parentNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, transformationMap, typeRenameMappings, onlyChildren, nadelContext, metadata, nodeCount);
+        HandleResult handleResult = convertSingleNode(node, parentNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, metadata, nodeCount);
         if (handleResult == null) {
             return null;
         }
@@ -140,7 +140,7 @@ public class ServiceResultNodesToOverallResult {
         ExecutionResultNode changedNode = handleResult.changedNode;
         List<ExecutionResultNode> newChildren = new ArrayList<>();
         for (ExecutionResultNode child : changedNode.getChildren()) {
-            HandleResult handleResultChild = convertRecursively(child, changedNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, transformationMap, typeRenameMappings, onlyChildren, nadelContext, metadata, nodeCount);
+            HandleResult handleResultChild = convertRecursively(child, changedNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, metadata, nodeCount);
             if (handleResultChild == null) {
                 continue;
             }
@@ -160,7 +160,7 @@ public class ServiceResultNodesToOverallResult {
                                            GraphQLSchema overallSchema,
                                            boolean isHydrationTransformation,
                                            boolean batched,
-                                           Map<String, FieldTransformation> transformationMap,
+                                           Map<String, FieldTransformation> fieldIdTransformation,
                                            Map<String, String> typeRenameMappings,
                                            boolean onlyChildren,
                                            NadelContext nadelContext,
@@ -190,7 +190,7 @@ public class ServiceResultNodesToOverallResult {
         }
 
         TuplesTwo<Set<FieldTransformation>, List<String>> transformationsAndNotTransformedFields =
-                getTransformationsAndNotTransformedFields(node, transformationMap, metadata);
+                getTransformationsAndNotTransformedFields(node, fieldIdTransformation, metadata);
 
         List<FieldTransformation> transformations = new ArrayList<>(transformationsAndNotTransformedFields.getT1());
 
@@ -205,7 +205,7 @@ public class ServiceResultNodesToOverallResult {
         if (transformations.size() == 0) {
             result = HandleResult.simple(mapNode(node, unapplyEnvironment));
         } else {
-            result = unapplyTransformations(executionId, node, transformations, unapplyEnvironment, transformationMap, nadelContext, metadata);
+            result = unapplyTransformations(executionId, node, transformations, unapplyEnvironment, fieldIdTransformation, nadelContext, metadata);
         }
 
         if (result.changedNode instanceof ObjectExecutionResultNode) {
@@ -255,7 +255,7 @@ public class ServiceResultNodesToOverallResult {
                                                 ExecutionResultNode node,
                                                 List<FieldTransformation> transformations,
                                                 UnapplyEnvironment unapplyEnvironment,
-                                                Map<String, FieldTransformation> transformationMap,
+                                                Map<String, FieldTransformation> fieldIdToTransformation,
                                                 NadelContext nadelContext,
                                                 Metadata metadata) {
 
@@ -263,9 +263,9 @@ public class ServiceResultNodesToOverallResult {
         FieldTransformation transformation = transformations.get(0);
 
         if (transformation instanceof HydrationTransformation) {
-            handleResult = unapplyHydration(node, transformations, unapplyEnvironment, transformationMap, transformation, metadata);
+            handleResult = unapplyHydration(node, transformations, unapplyEnvironment, fieldIdToTransformation, transformation, metadata);
         } else if (transformation instanceof FieldRenameTransformation) {
-            handleResult = unapplyFieldRename(executionId, node, transformations, unapplyEnvironment, transformationMap, nadelContext, metadata);
+            handleResult = unapplyFieldRename(executionId, node, transformations, unapplyEnvironment, fieldIdToTransformation, nadelContext, metadata);
         } else {
             return assertShouldNeverHappen("Unexpected transformation type " + transformation);
         }
@@ -276,12 +276,12 @@ public class ServiceResultNodesToOverallResult {
                                             ExecutionResultNode node,
                                             List<FieldTransformation> transformations,
                                             UnapplyEnvironment unapplyEnvironment,
-                                            Map<String, FieldTransformation> transformationMap,
+                                            Map<String, FieldTransformation> fieldIdToTransformation,
                                             NadelContext nadelContext,
                                             Metadata metadata) {
         Map<AbstractNode, List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
 
-        TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, transformationMap, metadata);
+        TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, fieldIdToTransformation, metadata);
         ExecutionResultNode notTransformedTree = splittedNodes.getT1();
         Map<AbstractNode, ExecutionResultNode> nodesWithTransformedFields = splittedNodes.getT2();
 
@@ -304,7 +304,7 @@ public class ServiceResultNodesToOverallResult {
                     unapplyEnvironment.parentNode,
                     unapplyEnvironment.isHydrationTransformation,
                     unapplyEnvironment.batched,
-                    transformationMap,
+                    fieldIdToTransformation,
                     unapplyEnvironment.typeRenameMappings,
                     nadelContext,
                     metadata);
@@ -326,7 +326,7 @@ public class ServiceResultNodesToOverallResult {
                         unapplyResultNode,
                         unapplyEnvironment.isHydrationTransformation,
                         unapplyEnvironment.batched,
-                        transformationMap,
+                        fieldIdToTransformation,
                         unapplyEnvironment.typeRenameMappings,
                         nadelContext,
                         metadata);
@@ -345,13 +345,13 @@ public class ServiceResultNodesToOverallResult {
     private HandleResult unapplyHydration(ExecutionResultNode node,
                                           List<FieldTransformation> transformations,
                                           UnapplyEnvironment unapplyEnvironment,
-                                          Map<String, FieldTransformation> transformationMap,
+                                          Map<String, FieldTransformation> fieldIdToTransformation,
                                           FieldTransformation transformation,
                                           Metadata metadata
     ) {
         HandleResult handleResult = HandleResult.newHandleResultWithSiblings();
 
-        TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, transformationMap, metadata);
+        TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, fieldIdToTransformation, metadata);
         ExecutionResultNode withoutTransformedFields = splittedNodes.getT1();
         assertTrue(splittedNodes.getT2().size() == 1, "only one split tree expected atm");
         ExecutionResultNode nodesWithTransformedFields = getSingleMapValue(splittedNodes.getT2());
@@ -371,11 +371,10 @@ public class ServiceResultNodesToOverallResult {
     }
 
 
-    private TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splitTreeByTransformationDefinition
-            (
-                    ExecutionResultNode executionResultNode,
-                    Map<String, FieldTransformation> transformationMap,
-                    Metadata metadata) {
+    private TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splitTreeByTransformationDefinition(
+            ExecutionResultNode executionResultNode,
+            Map<String, FieldTransformation> fieldIdToTransformation,
+            Metadata metadata) {
         if (executionResultNode instanceof RootExecutionResultNode) {
             return Tuples.of(executionResultNode, emptyMap());
         }
@@ -385,7 +384,7 @@ public class ServiceResultNodesToOverallResult {
         for (String fieldId : fieldIds) {
             List<String> transformationIds = FieldMetadataUtil.getRootOfTransformationIds(fieldId, metadata.getMetadataByFieldId());
             for (String transformationId : transformationIds) {
-                FieldTransformation fieldTransformation = assertNotNull(transformationMap.get(transformationId));
+                FieldTransformation fieldTransformation = assertNotNull(fieldIdToTransformation.get(transformationId));
                 AbstractNode definition = fieldTransformation.getDefinition();
                 transformationIdsByTransformationDefinition.putIfAbsent(definition, new LinkedHashSet<>());
                 transformationIdsByTransformationDefinition.get(definition).add(transformationId);
@@ -448,7 +447,7 @@ public class ServiceResultNodesToOverallResult {
 
     private TuplesTwo<Set<FieldTransformation>, List<String>> getTransformationsAndNotTransformedFields(
             ExecutionResultNode node,
-            Map<String, FieldTransformation> transformationMap,
+            Map<String, FieldTransformation> fieldIdToTransformation,
             Metadata metadata
     ) {
         Set<FieldTransformation> transformations = new LinkedHashSet<>();
@@ -468,7 +467,7 @@ public class ServiceResultNodesToOverallResult {
                 continue;
             }
             for (String transformationId : rootTransformationIds) {
-                FieldTransformation fieldTransformation = transformationMap.get(transformationId);
+                FieldTransformation fieldTransformation = fieldIdToTransformation.get(transformationId);
                 transformations.add(fieldTransformation);
             }
         }

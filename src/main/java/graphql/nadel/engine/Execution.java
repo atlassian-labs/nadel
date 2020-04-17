@@ -52,12 +52,27 @@ public class Execution {
 
     private NormalizedQueryFactory normalizedQueryFactory = new NormalizedQueryFactory();
 
-    public Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner, ServiceExecutionHooks serviceExecutionHooks) {
+    public Execution(List<Service> services,
+                     GraphQLSchema overallSchema,
+                     NadelInstrumentation instrumentation,
+                     IntrospectionRunner introspectionRunner,
+                     ServiceExecutionHooks serviceExecutionHooks,
+                     Object userSuppliedContext) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.instrumentation = instrumentation;
         this.introspectionRunner = introspectionRunner;
-        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, createFieldsInfos(), overallSchema, instrumentation, serviceExecutionHooks);
+        FieldInfos fieldsInfos = createFieldsInfos();
+        if (userSuppliedContext instanceof DebugContext) {
+            DebugContext.NadelExecutionStrategyArgs args = ((DebugContext) userSuppliedContext).nadelExecutionStrategyArgs;
+            args.services = services;
+            args.fieldInfos = fieldsInfos;
+            args.overallSchema = overallSchema;
+            args.instrumentation = instrumentation;
+            args.serviceExecutionHooks = serviceExecutionHooks;
+        }
+
+        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, fieldsInfos, overallSchema, instrumentation, serviceExecutionHooks);
     }
 
     public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput,
@@ -100,6 +115,12 @@ public class Execution {
         if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
             result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
         } else {
+            if (nadelContext.getUserSuppliedContext() instanceof DebugContext) {
+                DebugContext.NadelExecutionStrategyArgs args = ((DebugContext) nadelContext.getUserSuppliedContext()).nadelExecutionStrategyArgs;
+                args.executionContext = executionContext;
+                args.fieldSubSelection = fieldSubSelection;
+                args.resultComplexityAggregator = resultComplexityAggregator;
+            }
             CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection, resultComplexityAggregator);
             result = resultNodes.thenApply(rootResultNode -> {
                 if (nadelContext.getUserSuppliedContext() instanceof DebugContext) {

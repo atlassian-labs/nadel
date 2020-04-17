@@ -10,8 +10,8 @@ import graphql.nadel.NadelExecutionInput;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.ServiceExecutionFactory;
 import graphql.nadel.ServiceExecutionResult;
-import graphql.nadel.engine.ServiceResultToResultNodes;
-import graphql.nadel.result.RootExecutionResultNode;
+import graphql.nadel.engine.ServiceResultNodesToOverallResult;
+import graphql.nadel.result.ExecutionResultNode;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -34,7 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
-public class ServiceResultToResultNodesBenchmark {
+public class ServiceResultNodesToOverallBenchmark {
 
     @State(Scope.Benchmark)
     public static class NadelInstance {
@@ -44,7 +44,7 @@ public class ServiceResultToResultNodesBenchmark {
         ObjectMapper objectMapper;
         DebugContext debugContext;
 
-        ServiceResultToResultNodes serviceResultToResultNodes = new ServiceResultToResultNodes();
+        ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
 
         @Setup
         public void setup() throws IOException, ExecutionException, InterruptedException {
@@ -101,15 +101,17 @@ public class ServiceResultToResultNodesBenchmark {
     @Threads(1)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    public RootExecutionResultNode benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
-        DebugContext debugContext = nadelInstance.debugContext;
-        RootExecutionResultNode result = nadelInstance.serviceResultToResultNodes.resultToResultNode(
-                debugContext.executionContextForService,
-                debugContext.underlyingRootStepInfo,
-                debugContext.transformedMergedFields,
-                debugContext.serviceExecutionResult,
-                debugContext.elapsedTime,
-                debugContext.normalizedQuery);
+    public ExecutionResultNode benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
+        DebugContext.ServiceResultNodesToOverallResultArgs args = nadelInstance.debugContext.serviceResultNodesToOverallResult;
+        ExecutionResultNode result = nadelInstance.serviceResultNodesToOverallResult.convert(
+                args.executionId,
+                args.resultNode,
+                args.overallSchema,
+                args.correctRootNode,
+                args.fieldIdToTransformation,
+                args.typeRenameMappings,
+                args.nadelContext,
+                args.metadata);
 //        System.out.println(result);
         return result;
     }

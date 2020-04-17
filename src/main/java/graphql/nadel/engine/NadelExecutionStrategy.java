@@ -8,6 +8,7 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.FieldSubSelection;
+import graphql.nadel.DebugContext;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
@@ -165,6 +166,17 @@ public class NadelExecutionStrategy {
 
             CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
                     .thenApply(resultNode -> {
+                        if (nadelContext.getUserSuppliedContext() instanceof DebugContext) {
+                            DebugContext debugContext = (DebugContext) nadelContext.getUserSuppliedContext();
+                            debugContext.serviceResultNodesToOverallResult.executionId = newExecutionContext.getExecutionId();
+                            debugContext.serviceResultNodesToOverallResult.resultNode = resultNode;
+                            debugContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
+                            debugContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
+                            debugContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
+                            debugContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
+                            debugContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
+                            debugContext.serviceResultNodesToOverallResult.metadata = queryTransform.getRemovedFieldMap();
+                        }
                         return (RootExecutionResultNode) serviceResultNodesToOverallResult
                                 .convert(newExecutionContext.getExecutionId(),
                                         resultNode,
