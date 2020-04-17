@@ -287,6 +287,21 @@ public class Nadel {
             executionId = executionIdProvider.provide(query, operationName, context);
         }
 
+        if (executionInput.getContext() instanceof DebugContext) {
+            DebugContext.ExecutionArgs executionArgs = ((DebugContext) executionInput.getContext()).executionArgs;
+            executionArgs.services = getServices();
+            executionArgs.overallSchema = overallSchema;
+            executionArgs.instrumentation = instrumentation;
+            executionArgs.introspectionRunner = introspectionRunner;
+            executionArgs.serviceExecutionHooks = serviceExecutionHooks;
+            executionArgs.context = executionInput.getContext();
+            executionArgs.executionInput = executionInput;
+            executionArgs.document = document;
+            executionArgs.executionId = executionId;
+            executionArgs.instrumentationState = instrumentationState;
+            executionArgs.nadelExecutionParams = nadelExecutionParams;
+        }
+
         Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner, serviceExecutionHooks, executionInput.getContext());
 
         return execution.execute(executionInput, document, executionId, instrumentationState, nadelExecutionParams);

@@ -1,15 +1,19 @@
 package graphql.nadel;
 
+import graphql.ExecutionInput;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
+import graphql.execution.instrumentation.InstrumentationState;
 import graphql.execution.nextgen.FieldSubSelection;
+import graphql.language.Document;
 import graphql.nadel.engine.NadelContext;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.Metadata;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
+import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.ResultComplexityAggregator;
@@ -33,6 +37,21 @@ public class DebugContext {
         public Metadata metadata;
     }
 
+    public static class ExecutionArgs {
+
+        public List<Service> services;
+        public GraphQLSchema overallSchema;
+        public NadelInstrumentation instrumentation;
+        public IntrospectionRunner introspectionRunner;
+        public ServiceExecutionHooks serviceExecutionHooks;
+        public Object context;
+        public ExecutionInput executionInput;
+        public Document document;
+        public ExecutionId executionId;
+        public InstrumentationState instrumentationState;
+        public NadelExecutionParams nadelExecutionParams;
+    }
+
     public static class NadelExecutionStrategyArgs {
 
         public List<Service> services;
@@ -47,6 +66,7 @@ public class DebugContext {
 
     public ServiceResultNodesToOverallResultArgs serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResultArgs();
     public NadelExecutionStrategyArgs nadelExecutionStrategyArgs = new NadelExecutionStrategyArgs();
+    public ExecutionArgs executionArgs = new ExecutionArgs();
 
     public ExecutionContext executionContextForService;
     public ExecutionStepInfo underlyingRootStepInfo;
