@@ -10,7 +10,7 @@ import graphql.execution.nextgen.FieldSubSelection;
 import graphql.language.Document;
 import graphql.nadel.engine.NadelContext;
 import graphql.nadel.engine.transformation.FieldTransformation;
-import graphql.nadel.engine.transformation.Metadata;
+import graphql.nadel.engine.transformation.TransformationMetadata;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.introspection.IntrospectionRunner;
@@ -34,7 +34,7 @@ public class DebugContext {
         public Map<String, FieldTransformation> fieldIdToTransformation;
         public Map<String, String> typeRenameMappings;
         public NadelContext nadelContext;
-        public Metadata metadata;
+        public TransformationMetadata transformationMetadata;
     }
 
     public static class ExecutionArgs {

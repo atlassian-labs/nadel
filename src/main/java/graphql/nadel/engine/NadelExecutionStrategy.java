@@ -175,7 +175,7 @@ public class NadelExecutionStrategy {
                             debugContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
                             debugContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
                             debugContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
-                            debugContext.serviceResultNodesToOverallResult.metadata = queryTransform.getRemovedFieldMap();
+                            debugContext.serviceResultNodesToOverallResult.transformationMetadata = queryTransform.getRemovedFieldMap();
                         }
                         return (RootExecutionResultNode) serviceResultNodesToOverallResult
                                 .convert(newExecutionContext.getExecutionId(),

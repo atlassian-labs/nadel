@@ -5,7 +5,7 @@ import graphql.language.Document;
 import graphql.language.FragmentDefinition;
 import graphql.language.OperationDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
-import graphql.nadel.engine.transformation.Metadata;
+import graphql.nadel.engine.transformation.TransformationMetadata;
 
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ public class QueryTransformationResult {
 
     private final Map<String, Object> variableValues;
 
-    private final Metadata removedFieldMap;
+    private final TransformationMetadata removedFieldMap;
 
     public QueryTransformationResult(Document document,
                                      OperationDefinition operationDefinition,
@@ -40,7 +40,7 @@ public class QueryTransformationResult {
                                      Map<String, FieldTransformation> fieldIdToTransformation,
                                      Map<String, FragmentDefinition> transformedFragments,
                                      Map<String, Object> variableValues,
-                                     Metadata removedFieldMap) {
+                                     TransformationMetadata removedFieldMap) {
         this.document = document;
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
@@ -84,7 +84,7 @@ public class QueryTransformationResult {
         return variableValues;
     }
 
-    public Metadata getRemovedFieldMap() {
+    public TransformationMetadata getRemovedFieldMap() {
         return removedFieldMap;
     }
 }

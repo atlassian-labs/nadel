@@ -14,9 +14,9 @@ import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
-import graphql.nadel.engine.transformation.Metadata;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
+import graphql.nadel.engine.transformation.TransformationMetadata;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLObjectType;
@@ -70,7 +70,7 @@ public class OverallQueryTransformer {
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
-        Metadata removedFieldMap = new Metadata();
+        TransformationMetadata removedFieldMap = new TransformationMetadata();
 
 
         NadelContext nadelContext = executionContext.getContext();
@@ -154,7 +154,7 @@ public class OverallQueryTransformer {
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
-        Metadata removedFieldMap = new Metadata();
+        TransformationMetadata removedFieldMap = new TransformationMetadata();
 
         List<MergedField> transformedMergedFields = new ArrayList<>();
         List<Field> transformedFields = new ArrayList<>();
@@ -259,7 +259,7 @@ public class OverallQueryTransformer {
                                                                Map<String, Object> variableValues,
                                                                Service service,
                                                                Object serviceContext,
-                                                               Metadata removedFieldMap) {
+                                                               TransformationMetadata removedFieldMap) {
 
         Set<String> fragmentsToTransform = new LinkedHashSet<>(referencedFragmentNames);
         List<FragmentDefinition> transformedFragments = new ArrayList<>();
@@ -298,7 +298,7 @@ public class OverallQueryTransformer {
                                                            Map<String, Object> variableValues,
                                                            Service service,
                                                            Object serviceContext,
-                                                           Metadata removedFieldMap
+                                                           TransformationMetadata removedFieldMap
     ) {
         NadelContext nadelContext = executionContext.getContext();
 
@@ -371,7 +371,7 @@ public class OverallQueryTransformer {
                                              Map<String, Object> variableValues,
                                              Service service,
                                              Object serviceContext,
-                                             Metadata removedFieldMap) {
+                                             TransformationMetadata removedFieldMap) {
         OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
                 nodeWithoutTypeInfo,
                 executionContext.getGraphQLSchema(),
