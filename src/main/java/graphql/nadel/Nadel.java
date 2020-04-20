@@ -287,8 +287,8 @@ public class Nadel {
             executionId = executionIdProvider.provide(query, operationName, context);
         }
 
-        if (executionInput.getContext() instanceof DebugContext) {
-            DebugContext.ExecutionArgs executionArgs = ((DebugContext) executionInput.getContext()).executionArgs;
+        if (executionInput.getContext() instanceof BenchmarkContext) {
+            BenchmarkContext.ExecutionArgs executionArgs = ((BenchmarkContext) executionInput.getContext()).executionArgs;
             executionArgs.services = getServices();
             executionArgs.overallSchema = overallSchema;
             executionArgs.instrumentation = instrumentation;

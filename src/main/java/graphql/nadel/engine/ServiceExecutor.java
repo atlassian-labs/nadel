@@ -8,7 +8,7 @@ import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.FragmentDefinition;
-import graphql.nadel.DebugContext;
+import graphql.nadel.BenchmarkContext;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
@@ -193,14 +193,14 @@ public class ServiceExecutor {
         ElapsedTime elapsedTime = data.get(ElapsedTime.class);
         NadelContext nadelContext = executionContextForService.getContext();
 
-        if (nadelContext.getUserSuppliedContext() instanceof DebugContext) {
-            DebugContext debugContext = (DebugContext) nadelContext.getUserSuppliedContext();
-            debugContext.executionContextForService = executionContextForService;
-            debugContext.underlyingRootStepInfo = underlyingRootStepInfo;
-            debugContext.transformedMergedFields = transformedMergedFields;
-            debugContext.serviceExecutionResult = serviceExecutionResult;
-            debugContext.elapsedTime = elapsedTime;
-            debugContext.normalizedQuery = normalizedQuery;
+        if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+            BenchmarkContext.ServiceResultToResultNodesArgs serviceResultToResultNodesArgs = ((BenchmarkContext) nadelContext.getUserSuppliedContext()).serviceResultToResultNodesArgs;
+            serviceResultToResultNodesArgs.executionContextForService = executionContextForService;
+            serviceResultToResultNodesArgs.underlyingRootStepInfo = underlyingRootStepInfo;
+            serviceResultToResultNodesArgs.transformedMergedFields = transformedMergedFields;
+            serviceResultToResultNodesArgs.serviceExecutionResult = serviceExecutionResult;
+            serviceResultToResultNodesArgs.elapsedTime = elapsedTime;
+            serviceResultToResultNodesArgs.normalizedQuery = normalizedQuery;
         }
         return resultToResultNode.resultToResultNode(executionContextForService,
                 underlyingRootStepInfo,

@@ -23,7 +23,7 @@ import graphql.schema.GraphQLSchema;
 import java.util.List;
 import java.util.Map;
 
-public class DebugContext {
+public class BenchmarkContext {
 
     public static class ServiceResultNodesToOverallResultArgs {
 
@@ -64,16 +64,20 @@ public class DebugContext {
         public ResultComplexityAggregator resultComplexityAggregator;
     }
 
+    public static class ServiceResultToResultNodesArgs {
+        public ExecutionContext executionContextForService;
+        public ExecutionStepInfo underlyingRootStepInfo;
+        public List<MergedField> transformedMergedFields;
+        public ServiceExecutionResult serviceExecutionResult;
+        public ElapsedTime elapsedTime;
+        public NormalizedQueryFromAst normalizedQuery;
+    }
+
     public ServiceResultNodesToOverallResultArgs serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResultArgs();
     public NadelExecutionStrategyArgs nadelExecutionStrategyArgs = new NadelExecutionStrategyArgs();
     public ExecutionArgs executionArgs = new ExecutionArgs();
+    public ServiceResultToResultNodesArgs serviceResultToResultNodesArgs = new ServiceResultToResultNodesArgs();
 
-    public ExecutionContext executionContextForService;
-    public ExecutionStepInfo underlyingRootStepInfo;
-    public List<MergedField> transformedMergedFields;
-    public ServiceExecutionResult serviceExecutionResult;
-    public ElapsedTime elapsedTime;
-    public NormalizedQueryFromAst normalizedQuery;
 
     public RootExecutionResultNode overallResult;
 }

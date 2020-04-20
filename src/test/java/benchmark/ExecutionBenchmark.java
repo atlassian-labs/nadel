@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import graphql.ExecutionResult;
-import graphql.nadel.DebugContext;
+import graphql.nadel.BenchmarkContext;
 import graphql.nadel.Nadel;
 import graphql.nadel.NadelExecutionInput;
 import graphql.nadel.ServiceExecution;
@@ -40,7 +40,7 @@ public class ExecutionBenchmark {
         String query;
         String json;
         ObjectMapper objectMapper;
-        DebugContext debugContext;
+        BenchmarkContext benchmarkContext;
 
 //        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy();
 
@@ -75,9 +75,9 @@ public class ExecutionBenchmark {
             String nsdl = "service activity{" + schemaString + "}";
             nadel = Nadel.newNadel().dsl(nsdl).serviceExecutionFactory(serviceExecutionFactory).build();
             query = readFromClasspath("large_response_benchmark_query.graphql");
-            debugContext = new DebugContext();
+            benchmarkContext = new BenchmarkContext();
             NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
-                    .context(debugContext)
+                    .context(benchmarkContext)
                     .query(query)
                     .build();
             ExecutionResult executionResult = nadel.execute(nadelExecutionInput).get();
@@ -99,24 +99,10 @@ public class ExecutionBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public ExecutionResult benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
-        DebugContext.ExecutionArgs executionArgs = nadelInstance.debugContext.executionArgs;
+        BenchmarkContext.ExecutionArgs executionArgs = nadelInstance.benchmarkContext.executionArgs;
         Execution execution = new Execution(executionArgs.services, executionArgs.overallSchema, executionArgs.instrumentation, executionArgs.introspectionRunner, executionArgs.serviceExecutionHooks, executionArgs.context);
         return execution.execute(executionArgs.executionInput, executionArgs.document, executionArgs.executionId, executionArgs.instrumentationState, executionArgs.nadelExecutionParams).get();
     }
-//
-//    public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
-//        NadelInstance nadelInstance = new NadelInstance();
-//        nadelInstance.setup();
-//        DebugContext debugContext = nadelInstance.debugContext;
-//        RootExecutionResultNode result = nadelInstance.serviceResultToResultNodes.resultToResultNode(
-//                debugContext.executionContextForService,
-//                debugContext.underlyingRootStepInfo,
-//                debugContext.transformedMergedFields,
-//                debugContext.serviceExecutionResult,
-//                debugContext.elapsedTime,
-//                debugContext.normalizedQuery);
-//        System.out.println(result);
-//    }
 
 
 }

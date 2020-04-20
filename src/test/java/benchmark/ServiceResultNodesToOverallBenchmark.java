@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import graphql.ExecutionResult;
-import graphql.nadel.DebugContext;
+import graphql.nadel.BenchmarkContext;
 import graphql.nadel.Nadel;
 import graphql.nadel.NadelExecutionInput;
 import graphql.nadel.ServiceExecution;
@@ -41,7 +41,7 @@ public class ServiceResultNodesToOverallBenchmark {
         String query;
         String json;
         ObjectMapper objectMapper;
-        DebugContext debugContext;
+        BenchmarkContext benchmarkContext;
 
         ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
 
@@ -76,9 +76,9 @@ public class ServiceResultNodesToOverallBenchmark {
             String nsdl = "service activity{" + schemaString + "}";
             nadel = Nadel.newNadel().dsl(nsdl).serviceExecutionFactory(serviceExecutionFactory).build();
             query = readFromClasspath("large_response_benchmark_query.graphql");
-            debugContext = new DebugContext();
+            benchmarkContext = new BenchmarkContext();
             NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
-                    .context(debugContext)
+                    .context(benchmarkContext)
                     .query(query)
                     .build();
             ExecutionResult executionResult = nadel.execute(nadelExecutionInput).get();
@@ -100,7 +100,7 @@ public class ServiceResultNodesToOverallBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public ExecutionResultNode benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
-        DebugContext.ServiceResultNodesToOverallResultArgs args = nadelInstance.debugContext.serviceResultNodesToOverallResult;
+        BenchmarkContext.ServiceResultNodesToOverallResultArgs args = nadelInstance.benchmarkContext.serviceResultNodesToOverallResult;
         ExecutionResultNode result = nadelInstance.serviceResultNodesToOverallResult.convert(
                 args.executionId,
                 args.resultNode,
@@ -110,23 +110,8 @@ public class ServiceResultNodesToOverallBenchmark {
                 args.typeRenameMappings,
                 args.nadelContext,
                 args.transformationMetadata);
-//        System.out.println(result);
         return result;
     }
-//
-//    public static void main(String[] args) throws InterruptedException, ExecutionException, IOException {
-//        NadelInstance nadelInstance = new NadelInstance();
-//        nadelInstance.setup();
-//        DebugContext debugContext = nadelInstance.debugContext;
-//        RootExecutionResultNode result = nadelInstance.serviceResultToResultNodes.resultToResultNode(
-//                debugContext.executionContextForService,
-//                debugContext.underlyingRootStepInfo,
-//                debugContext.transformedMergedFields,
-//                debugContext.serviceExecutionResult,
-//                debugContext.elapsedTime,
-//                debugContext.normalizedQuery);
-//        System.out.println(result);
-//    }
 
 
 }

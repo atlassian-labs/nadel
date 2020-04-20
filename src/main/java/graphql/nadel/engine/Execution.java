@@ -14,7 +14,7 @@ import graphql.execution.nextgen.FieldSubSelection;
 import graphql.language.Document;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
-import graphql.nadel.DebugContext;
+import graphql.nadel.BenchmarkContext;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.NadelExecutionParams;
@@ -63,8 +63,8 @@ public class Execution {
         this.instrumentation = instrumentation;
         this.introspectionRunner = introspectionRunner;
         FieldInfos fieldsInfos = createFieldsInfos();
-        if (userSuppliedContext instanceof DebugContext) {
-            DebugContext.NadelExecutionStrategyArgs args = ((DebugContext) userSuppliedContext).nadelExecutionStrategyArgs;
+        if (userSuppliedContext instanceof BenchmarkContext) {
+            BenchmarkContext.NadelExecutionStrategyArgs args = ((BenchmarkContext) userSuppliedContext).nadelExecutionStrategyArgs;
             args.services = services;
             args.fieldInfos = fieldsInfos;
             args.overallSchema = overallSchema;
@@ -114,16 +114,16 @@ public class Execution {
         if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
             result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
         } else {
-            if (nadelContext.getUserSuppliedContext() instanceof DebugContext) {
-                DebugContext.NadelExecutionStrategyArgs args = ((DebugContext) nadelContext.getUserSuppliedContext()).nadelExecutionStrategyArgs;
+            if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+                BenchmarkContext.NadelExecutionStrategyArgs args = ((BenchmarkContext) nadelContext.getUserSuppliedContext()).nadelExecutionStrategyArgs;
                 args.executionContext = executionContext;
                 args.fieldSubSelection = fieldSubSelection;
                 args.resultComplexityAggregator = resultComplexityAggregator;
             }
             CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection, resultComplexityAggregator);
             result = resultNodes.thenApply(rootResultNode -> {
-                if (nadelContext.getUserSuppliedContext() instanceof DebugContext) {
-                    ((DebugContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
+                if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+                    ((BenchmarkContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
                 }
                 rootResultNode = instrumentation.instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
                 ExecutionResult executionResult = withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);

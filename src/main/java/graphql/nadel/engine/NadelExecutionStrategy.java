@@ -8,7 +8,7 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.FieldSubSelection;
-import graphql.nadel.DebugContext;
+import graphql.nadel.BenchmarkContext;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
@@ -166,16 +166,16 @@ public class NadelExecutionStrategy {
 
             CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
                     .thenApply(resultNode -> {
-                        if (nadelContext.getUserSuppliedContext() instanceof DebugContext) {
-                            DebugContext debugContext = (DebugContext) nadelContext.getUserSuppliedContext();
-                            debugContext.serviceResultNodesToOverallResult.executionId = newExecutionContext.getExecutionId();
-                            debugContext.serviceResultNodesToOverallResult.resultNode = resultNode;
-                            debugContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
-                            debugContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
-                            debugContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
-                            debugContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
-                            debugContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
-                            debugContext.serviceResultNodesToOverallResult.transformationMetadata = queryTransform.getRemovedFieldMap();
+                        if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+                            BenchmarkContext benchmarkContext = (BenchmarkContext) nadelContext.getUserSuppliedContext();
+                            benchmarkContext.serviceResultNodesToOverallResult.executionId = newExecutionContext.getExecutionId();
+                            benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
+                            benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
+                            benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
+                            benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
+                            benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
+                            benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
+                            benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = queryTransform.getRemovedFieldMap();
                         }
                         return (RootExecutionResultNode) serviceResultNodesToOverallResult
                                 .convert(newExecutionContext.getExecutionId(),
