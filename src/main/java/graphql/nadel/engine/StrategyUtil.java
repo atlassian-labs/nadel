@@ -24,8 +24,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
-import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
 import static graphql.nadel.result.ObjectExecutionResultNode.newObjectExecutionResultNode;
+import static graphql.nadel.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static graphql.util.FpKit.groupingBy;
 import static graphql.util.FpKit.mapEntries;
 
@@ -34,7 +34,7 @@ public class StrategyUtil {
     public static List<NodeMultiZipper<ExecutionResultNode>> groupNodesIntoBatchesByField(Collection<NodeZipper<ExecutionResultNode>> nodes, ExecutionResultNode root) {
         Map<List<String>, List<NodeZipper<ExecutionResultNode>>> zipperByField = groupingBy(nodes,
                 (executionResultZipper -> executionResultZipper.getCurNode().getFieldIds()));
-        return mapEntries(zipperByField, (key, value) -> new NodeMultiZipper<>(root, value, FIX_NAMES_ADAPTER));
+        return mapEntries(zipperByField, (key, value) -> new NodeMultiZipper<>(root, value, RESULT_NODE_ADAPTER));
     }
 
 
@@ -64,7 +64,7 @@ public class StrategyUtil {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 if (context.thisNode() instanceof HydrationInputNode) {
-                    result.add(new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), FIX_NAMES_ADAPTER));
+                    result.add(new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), RESULT_NODE_ADAPTER));
                 }
                 return TraversalControl.CONTINUE;
             }

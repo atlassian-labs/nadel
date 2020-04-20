@@ -13,7 +13,6 @@ import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
-import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ResultRewriteParams;
@@ -75,13 +74,12 @@ public class NadelExecutionStrategy {
         long startTime = System.currentTimeMillis();
         ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
         NadelContext nadelContext = getNadelContext(executionContext);
-        FieldTracking fieldTracking = new FieldTracking(instrumentation, executionContext);
         Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
         CompletableFuture<List<OneServiceExecution>> oneServiceExecutionsCF = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
         return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
             Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
             List<CompletableFuture<RootExecutionResultNode>> resultNodes =
-                    executeTopLevelFields(executionContext, nadelContext, fieldTracking, operation, oneServiceExecutions, resultComplexityAggregator);
+                    executeTopLevelFields(executionContext, nadelContext, operation, oneServiceExecutions, resultComplexityAggregator);
 
             CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
             return rootResult
@@ -89,7 +87,7 @@ public class NadelExecutionStrategy {
                             //
                             // all the nodes that are hydrated need to make new service calls to get their eventual value
                             //
-                            rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode, serviceContextsByService, resultComplexityAggregator)
+                            rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, rootExecutionResultNode, serviceContextsByService, resultComplexityAggregator)
                                     .thenApply(resultNode -> (RootExecutionResultNode) resultNode))
                     .whenComplete((resultNode, throwable) -> {
                         possiblyLogException(resultNode, throwable);
@@ -132,7 +130,6 @@ public class NadelExecutionStrategy {
     private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(
             ExecutionContext executionContext,
             NadelContext nadelContext,
-            FieldTracking fieldTracking,
             Operation operation,
             List<OneServiceExecution> oneServiceExecutions,
             ResultComplexityAggregator resultComplexityAggregator) {
@@ -159,7 +156,6 @@ public class NadelExecutionStrategy {
 
             ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, queryTransform.getVariableValues());
 
-            fieldTracking.fieldsDispatched(singletonList(esi));
 
             CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
                     .execute(newExecutionContext, queryTransform, service, operation, serviceContext, false);
@@ -190,10 +186,6 @@ public class NadelExecutionStrategy {
 
             //set the result node count for this service
             convertedResult.thenAccept(rootExecutionResultNode -> resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount()));
-
-            // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
-            convertedResult = convertedResult
-                    .whenComplete(fieldTracking::fieldsCompleted);
 
             CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult
                     .thenCompose(rootResultNode -> {

@@ -16,7 +16,6 @@ import graphql.nadel.dsl.NodeId;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
-import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.hooks.ServiceExecutionHooks;
@@ -46,11 +45,11 @@ import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.Field.newField;
 import static graphql.nadel.engine.ArtificialFieldUtils.addObjectIdentifier;
-import static graphql.nadel.engine.FixListNamesAdapter.FIX_NAMES_ADAPTER;
 import static graphql.nadel.engine.StrategyUtil.changeFieldIdsInResultNode;
 import static graphql.nadel.engine.StrategyUtil.copyFieldInformation;
 import static graphql.nadel.engine.StrategyUtil.getHydrationInputNodes;
 import static graphql.nadel.engine.StrategyUtil.groupNodesIntoBatchesByField;
+import static graphql.nadel.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static graphql.nadel.util.FpKit.filter;
 import static graphql.nadel.util.FpKit.findOneOrNull;
 import static graphql.nadel.util.FpKit.flatList;
@@ -85,7 +84,6 @@ public class HydrationInputResolver {
 
 
     public CompletableFuture<ExecutionResultNode> resolveAllHydrationInputs(ExecutionContext context,
-                                                                            FieldTracking fieldTracking,
                                                                             ExecutionResultNode node,
                                                                             Map<Service, Object> serviceContexts,
                                                                             ResultComplexityAggregator resultComplexityAggregator) {
@@ -101,36 +99,34 @@ public class HydrationInputResolver {
 
         for (NodeMultiZipper<ExecutionResultNode> batch : hydrationInputBatches) {
             if (isBatchHydrationField((HydrationInputNode) batch.getZippers().get(0).getCurNode())) {
-                resolveInputNodesAsBatch(context, fieldTracking, resolvedNodeCFs, batch, serviceContexts, resultComplexityAggregator);
+                resolveInputNodesAsBatch(context, resolvedNodeCFs, batch, serviceContexts, resultComplexityAggregator);
             } else {
-                resolveInputNodes(context, fieldTracking, resolvedNodeCFs, batch, serviceContexts, resultComplexityAggregator);
+                resolveInputNodes(context, resolvedNodeCFs, batch, serviceContexts, resultComplexityAggregator);
             }
 
         }
         return Async
                 .each(resolvedNodeCFs)
                 .thenCompose(resolvedNodes -> {
-                    NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, flatList(resolvedNodes), FIX_NAMES_ADAPTER);
+                    NodeMultiZipper<ExecutionResultNode> multiZipper = new NodeMultiZipper<>(node, flatList(resolvedNodes), RESULT_NODE_ADAPTER);
                     ExecutionResultNode newRoot = multiZipper.toRootNode();
-                    return resolveAllHydrationInputs(context, fieldTracking, newRoot, serviceContexts, resultComplexityAggregator);
+                    return resolveAllHydrationInputs(context, newRoot, serviceContexts, resultComplexityAggregator);
                 })
                 .whenComplete(this::possiblyLogException);
     }
 
     private void resolveInputNodes(ExecutionContext context,
-                                   FieldTracking fieldTracking,
                                    List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs,
                                    NodeMultiZipper<ExecutionResultNode> batch, Map<Service, Object> serviceContexts,
                                    ResultComplexityAggregator resultComplexityAggregator) {
         for (NodeZipper<ExecutionResultNode> hydrationInputNodeZipper : batch.getZippers()) {
             HydrationInputNode hydrationInputNode = (HydrationInputNode) hydrationInputNodeZipper.getCurNode();
-            CompletableFuture<ExecutionResultNode> executionResultNodeCompletableFuture = resolveSingleHydrationInput(context, fieldTracking, hydrationInputNode, serviceContexts, resultComplexityAggregator);
+            CompletableFuture<ExecutionResultNode> executionResultNodeCompletableFuture = resolveSingleHydrationInput(context, hydrationInputNode, serviceContexts, resultComplexityAggregator);
             resolvedNodeCFs.add(executionResultNodeCompletableFuture.thenApply(newNode -> singletonList(hydrationInputNodeZipper.withNewNode(newNode))));
         }
     }
 
     private void resolveInputNodesAsBatch(ExecutionContext context,
-                                          FieldTracking fieldTracking,
                                           List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs,
                                           NodeMultiZipper<ExecutionResultNode> batch,
                                           Map<Service, Object> serviceContexts,
@@ -138,7 +134,7 @@ public class HydrationInputResolver {
         List<NodeMultiZipper<ExecutionResultNode>> batchesWithCorrectSize = groupIntoCorrectBatchSizes(batch);
         for (NodeMultiZipper<ExecutionResultNode> oneBatch : batchesWithCorrectSize) {
             List<HydrationInputNode> batchedNodes = map(oneBatch.getZippers(), zipper -> (HydrationInputNode) zipper.getCurNode());
-            CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, fieldTracking, batchedNodes, serviceContexts, resultComplexityAggregator);
+            CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, batchedNodes, serviceContexts, resultComplexityAggregator);
             resolvedNodeCFs.add(replaceNodesInZipper(oneBatch, executionResultNodeCompletableFuture));
         }
     }
@@ -174,13 +170,13 @@ public class HydrationInputResolver {
             currentBatch.add(zipper);
             counter++;
             if (counter == batchSize) {
-                result.add(new NodeMultiZipper<>(batch.getCommonRoot(), currentBatch, FIX_NAMES_ADAPTER));
+                result.add(new NodeMultiZipper<>(batch.getCommonRoot(), currentBatch, RESULT_NODE_ADAPTER));
                 counter = 0;
                 currentBatch = new ArrayList<>();
             }
         }
         if (currentBatch.size() > 0) {
-            result.add(new NodeMultiZipper<>(batch.getCommonRoot(), currentBatch, FIX_NAMES_ADAPTER));
+            result.add(new NodeMultiZipper<>(batch.getCommonRoot(), currentBatch, RESULT_NODE_ADAPTER));
         }
         return result;
     }
@@ -209,7 +205,6 @@ public class HydrationInputResolver {
     }
 
     private CompletableFuture<ExecutionResultNode> resolveSingleHydrationInput(ExecutionContext executionContext,
-                                                                               FieldTracking fieldTracking,
                                                                                HydrationInputNode hydrationInputNode,
                                                                                Map<Service, Object> serviceContexts,
                                                                                ResultComplexityAggregator resultComplexityAggregator) {
@@ -241,7 +236,6 @@ public class HydrationInputResolver {
                 );
 
 
-//        fieldTracking.fieldsDispatched(singletonList(hydratedFieldStepInfo));
 
         CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
                 .execute(executionContext, queryTransformationResult, service, operation,
@@ -249,7 +243,6 @@ public class HydrationInputResolver {
 
         return serviceResult
                 .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
-                        fieldTracking,
                         hydrationInputNode,
                         hydrationTransformation,
                         resultNode,
@@ -279,7 +272,6 @@ public class HydrationInputResolver {
     }
 
     private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(ExecutionId executionId,
-                                                                              FieldTracking fieldTracking,
                                                                               HydrationInputNode hydrationInputNode,
                                                                               HydrationTransformation hydrationTransformation,
                                                                               RootExecutionResultNode rootResultNode,
@@ -289,7 +281,6 @@ public class HydrationInputResolver {
                                                                               ResultComplexityAggregator resultComplexityAggregator
     ) {
 
-//        synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
 
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getFieldIdToTransformation();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
@@ -314,7 +305,6 @@ public class HydrationInputResolver {
     }
 
     private CompletableFuture<List<ExecutionResultNode>> resolveHydrationInputBatch(ExecutionContext executionContext,
-                                                                                    FieldTracking fieldTracking,
                                                                                     List<HydrationInputNode> hydrationInputs,
                                                                                     Map<Service, Object> serviceContexts,
                                                                                     ResultComplexityAggregator resultComplexityAggregator) {
@@ -339,8 +329,7 @@ public class HydrationInputResolver {
 
         return serviceExecutor
                 .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), true)
-                .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, fieldTracking, hydrationInputs, resultNode, queryTransformationResult, resultComplexityAggregator))
-                .whenComplete(fieldTracking::fieldsCompleted)
+                .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, hydrationInputs, resultNode, queryTransformationResult, resultComplexityAggregator))
                 .whenComplete(this::possiblyLogException);
 
     }
@@ -380,7 +369,6 @@ public class HydrationInputResolver {
 
 
     private List<ExecutionResultNode> convertHydrationBatchResultIntoOverallResult(ExecutionContext executionContext,
-                                                                                   FieldTracking fieldTracking,
                                                                                    List<HydrationInputNode> hydrationInputNodes,
                                                                                    RootExecutionResultNode rootResultNode,
                                                                                    QueryTransformationResult queryTransformationResult,
@@ -480,26 +468,6 @@ public class HydrationInputResolver {
     }
 
 
-//    private void synthesizeHydratedParentIfNeeded(FieldTracking fieldTracking, List<ExecutionStepInfo> hydratedFieldStepInfos) {
-//        for (ExecutionStepInfo hydratedFieldStepInfo : hydratedFieldStepInfos) {
-//            synthesizeHydratedParentIfNeeded(fieldTracking, hydratedFieldStepInfo);
-//        }
-//    }
-
-//    private void synthesizeHydratedParentIfNeeded(FieldTracking fieldTracking, ExecutionStepInfo hydratedFieldStepInfo) {
-//        ExecutionPath path = hydratedFieldStepInfo.getPath();
-//        if (ExecutionPathUtils.isListEndingPath(path)) {
-//            //
-//            // a path like /issues/comments[0] wont ever have had a /issues/comments path completed but the tracing spec needs
-//            // one so we make one
-//            ExecutionPath newPath = ExecutionPathUtils.removeLastSegment(path);
-//            ExecutionStepInfo newStepInfo = hydratedFieldStepInfo.transform(builder -> builder.path(newPath));
-//            fieldTracking.fieldCompleted(newStepInfo);
-//        }
-//
-//    }
-
-
     @SuppressWarnings("unused")
     private <T> void possiblyLogException(T result, Throwable exception) {
         if (exception != null) {
@@ -525,4 +493,5 @@ public class HydrationInputResolver {
     private NadelContext getNadelContext(ExecutionContext executionContext) {
         return (NadelContext) executionContext.getContext();
     }
+
 }

@@ -23,7 +23,7 @@ class ResolvedValueMapperTest extends Specification {
                 .build()
 
         when:
-        def mapped = mapper.mapResolvedValue(node, unapplyEnvironment)
+        def mapped = mapper.mapCompletedValue(node, unapplyEnvironment)
 
         then:
         mapped.completedValue == expected
@@ -49,7 +49,7 @@ class ResolvedValueMapperTest extends Specification {
                 .build()
 
         when:
-        def mapped = mapper.mapResolvedValue(node, unapplyEnvironment)
+        def mapped = mapper.mapCompletedValue(node, unapplyEnvironment)
 
         then:
         mapped == node

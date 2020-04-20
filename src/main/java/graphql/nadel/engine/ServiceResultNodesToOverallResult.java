@@ -439,9 +439,8 @@ public class ServiceResultNodesToOverallResult {
 
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment) {
         ExecutionResultNode mappedNode = executionResultNodeMapper.mapERNFromUnderlyingToOverall(node, environment);
-        mappedNode = resolvedValueMapper.mapResolvedValue(mappedNode, environment);
-        ExecutionPath executionPath = pathMapper.mapPath(node.getExecutionPath(), mappedNode.getResultKey(), environment);
-        return mappedNode.transform(builder -> builder.executionPath(executionPath));
+        mappedNode = resolvedValueMapper.mapCompletedValue(mappedNode, environment);
+        return mappedNode;
     }
 
 
@@ -453,8 +452,6 @@ public class ServiceResultNodesToOverallResult {
         Set<FieldTransformation> transformations = new LinkedHashSet<>();
         List<String> notTransformedFields = new ArrayList<>();
         for (String fieldId : node.getFieldIds()) {
-//            System.out.println("processing " + node.getExecutionPath());
-//            System.out.println("field id: " + getId(field) + " field: " + field.getName());
 
             if (node.getExecutionPath().isListSegment()) {
                 notTransformedFields.add(fieldId);
@@ -482,8 +479,8 @@ public class ServiceResultNodesToOverallResult {
                 .build();
     }
 
-    private NormalizedQueryField getNormalizedQueryFieldForResultNode(ObjectExecutionResultNode
-                                                                              resultNode, NormalizedQueryFromAst normalizedQueryFromAst) {
+    private NormalizedQueryField getNormalizedQueryFieldForResultNode(ObjectExecutionResultNode resultNode,
+                                                                      NormalizedQueryFromAst normalizedQueryFromAst) {
         String id = resultNode.getFieldIds().get(0);
         List<NormalizedQueryField> normalizedFields = assertNotNull(normalizedQueryFromAst.getNormalizedFieldsByFieldId(id));
 

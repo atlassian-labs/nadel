@@ -81,8 +81,6 @@ public class FieldRenameTransformation extends FieldTransformation {
 
         if (node instanceof ListExecutionResultNode) {
             return mapChildren(node, child -> {
-//                ExecutionResultNode newChild = replaceFieldWithOriginalValue(allTransformations, child);
-//                newChild = executionResultNodeMapper.mapERNFromUnderlyingToOverall(newChild, environment);
                 ExecutionResultNode newChild = mapToOverallFieldAndTypes(child, allTransformations, normalizedQueryField, environment);
                 return replaceFieldsAndTypesInsideList(newChild,
                         allTransformations,
