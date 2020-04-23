@@ -1,66 +1,41 @@
 package graphql.nadel.result;
 
-import graphql.GraphQLError;
-import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.result.ResolvedValue;
+import graphql.execution.ExecutionPath;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static graphql.Assert.assertShouldNeverHappen;
+import java.util.function.Consumer;
 
 public class RootExecutionResultNode extends ObjectExecutionResultNode {
 
 
-    public RootExecutionResultNode(List<ExecutionResultNode> children, List<GraphQLError> errors, ElapsedTime elapsedTime, int totalNodeCount) {
-        super(null, null, children, errors, elapsedTime, totalNodeCount);
+    private RootExecutionResultNode(Builder builder) {
+        super(builder, null);
     }
 
-    public RootExecutionResultNode(List<ExecutionResultNode> children, List<GraphQLError> errors, ElapsedTime elapsedTime) {
-        super(null, null, children, errors, elapsedTime, 0);
-    }
-
-    public RootExecutionResultNode(List<ExecutionResultNode> children) {
-        super(null, null, children, Collections.emptyList(), null, 0);
+    public static Builder newRootExecutionResultNode() {
+        return new Builder();
     }
 
     @Override
-    public ExecutionStepInfo getExecutionStepInfo() {
-        return assertShouldNeverHappen("not supported at root node");
+    public <T extends BuilderBase<T>> RootExecutionResultNode transform(Consumer<T> builderConsumer) {
+        Builder builder = new Builder(this);
+        builderConsumer.accept((T) builder);
+        return builder.build();
     }
 
-    @Override
-    public ResolvedValue getResolvedValue() {
-        return assertShouldNeverHappen("not supported at root node");
-    }
+    public static class Builder extends BuilderBase<Builder> {
 
-    @Override
-    public RootExecutionResultNode withNewChildren(List<ExecutionResultNode> children) {
-        return new RootExecutionResultNode(children, getErrors(), getElapsedTime(), getTotalNodeCount());
-    }
+        public Builder() {
 
-    @Override
-    public ExecutionResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
-        return assertShouldNeverHappen("not supported at root node");
-    }
+        }
 
-    @Override
-    public ExecutionResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo) {
-        return assertShouldNeverHappen("not supported at root node");
-    }
+        public Builder(RootExecutionResultNode existing) {
+            super(existing);
+        }
 
-    @Override
-    public RootExecutionResultNode withNewErrors(List<GraphQLError> errors) {
-        return new RootExecutionResultNode(getChildren(), new ArrayList<>(errors), getElapsedTime(), getTotalNodeCount());
-    }
-
-    @Override
-    public RootExecutionResultNode withElapsedTime(ElapsedTime elapsedTime) {
-        return new RootExecutionResultNode(getChildren(), getErrors(), elapsedTime, getTotalNodeCount());
-    }
-
-    public RootExecutionResultNode withNodeCount(int nodeCount) {
-        return new RootExecutionResultNode(getChildren(), getErrors(), getElapsedTime(), nodeCount);
+        @Override
+        public RootExecutionResultNode build() {
+            super.executionPath(ExecutionPath.rootPath());
+            return new RootExecutionResultNode(this);
+        }
     }
 }

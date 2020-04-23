@@ -8,11 +8,11 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.nextgen.FieldSubSelection;
+import graphql.nadel.BenchmarkContext;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
-import graphql.nadel.engine.tracking.FieldTracking;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ResultRewriteParams;
@@ -34,7 +34,8 @@ import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
-import static graphql.util.FpKit.map;
+import static graphql.nadel.result.RootExecutionResultNode.newRootExecutionResultNode;
+import static graphql.nadel.util.FpKit.map;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
@@ -73,20 +74,20 @@ public class NadelExecutionStrategy {
         long startTime = System.currentTimeMillis();
         ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
         NadelContext nadelContext = getNadelContext(executionContext);
-        FieldTracking fieldTracking = new FieldTracking(instrumentation, executionContext);
         Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
         CompletableFuture<List<OneServiceExecution>> oneServiceExecutionsCF = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
         return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
             Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
             List<CompletableFuture<RootExecutionResultNode>> resultNodes =
-                    executeTopLevelFields(executionContext, rootExecutionStepInfo, nadelContext, fieldTracking, operation, oneServiceExecutions, resultComplexityAggregator);
+                    executeTopLevelFields(executionContext, nadelContext, operation, oneServiceExecutions, resultComplexityAggregator);
+
             CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
             return rootResult
                     .thenCompose(
                             //
                             // all the nodes that are hydrated need to make new service calls to get their eventual value
                             //
-                            rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, fieldTracking, rootExecutionResultNode, serviceContextsByService, resultComplexityAggregator)
+                            rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, rootExecutionResultNode, serviceContextsByService, resultComplexityAggregator)
                                     .thenApply(resultNode -> (RootExecutionResultNode) resultNode))
                     .whenComplete((resultNode, throwable) -> {
                         possiblyLogException(resultNode, throwable);
@@ -126,7 +127,13 @@ public class NadelExecutionStrategy {
     }
 
 
-    private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(ExecutionContext executionContext, ExecutionStepInfo rootExecutionStepInfo, NadelContext nadelContext, FieldTracking fieldTracking, Operation operation, List<OneServiceExecution> oneServiceExecutions, ResultComplexityAggregator resultComplexityAggregator) {
+    private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(
+            ExecutionContext executionContext,
+            NadelContext nadelContext,
+            Operation operation,
+            List<OneServiceExecution> oneServiceExecutions,
+            ResultComplexityAggregator resultComplexityAggregator) {
+
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
             Service service = oneServiceExecution.service;
@@ -144,32 +151,41 @@ public class NadelExecutionStrategy {
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
 
-            Map<String, FieldTransformation> transformationByResultField = queryTransform.getTransformationByResultField();
+            Map<String, FieldTransformation> fieldIdToTransformation = queryTransform.getFieldIdToTransformation();
             Map<String, String> typeRenameMappings = queryTransform.getTypeRenameMappings();
 
             ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, queryTransform.getVariableValues());
 
-            fieldTracking.fieldsDispatched(singletonList(esi));
+
             CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
                     .execute(newExecutionContext, queryTransform, service, operation, serviceContext, false);
 
             CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
-                    .thenApply(resultNode -> (RootExecutionResultNode) serviceResultNodesToOverallResult
-                            .convert(newExecutionContext.getExecutionId(),
-                                    nadelContext.getForkJoinPool(),
-                                    resultNode,
-                                    overallSchema,
-                                    rootExecutionStepInfo,
-                                    transformationByResultField,
-                                    typeRenameMappings,
-                                    nadelContext));
+                    .thenApply(resultNode -> {
+                        if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+                            BenchmarkContext benchmarkContext = (BenchmarkContext) nadelContext.getUserSuppliedContext();
+                            benchmarkContext.serviceResultNodesToOverallResult.executionId = newExecutionContext.getExecutionId();
+                            benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
+                            benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
+                            benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
+                            benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
+                            benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
+                            benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
+                            benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = queryTransform.getRemovedFieldMap();
+                        }
+                        return (RootExecutionResultNode) serviceResultNodesToOverallResult
+                                .convert(newExecutionContext.getExecutionId(),
+                                        resultNode,
+                                        overallSchema,
+                                        resultNode,
+                                        fieldIdToTransformation,
+                                        typeRenameMappings,
+                                        nadelContext,
+                                        queryTransform.getRemovedFieldMap());
+                    });
 
             //set the result node count for this service
-            convertedResult.thenAccept( rootExecutionResultNode -> resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount()));
-
-            // and then they are done call back on field tracking that they have completed (modulo hydrated ones).  This is per service call
-            convertedResult = convertedResult
-                    .whenComplete(fieldTracking::fieldsCompleted);
+            convertedResult.thenAccept(rootExecutionResultNode -> resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount()));
 
             CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult
                     .thenCompose(rootResultNode -> {
@@ -182,7 +198,6 @@ public class NadelExecutionStrategy {
                                 .build();
                         return serviceExecutionHooks.resultRewrite(resultRewriteParams);
                     });
-
 
 
             resultNodes.add(serviceResult);
@@ -219,10 +234,12 @@ public class NadelExecutionStrategy {
             List<GraphQLError> errors = new ArrayList<>();
             map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
             map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
-            return new RootExecutionResultNode(mergedChildren, errors, null);
+            return newRootExecutionResultNode()
+                    .children(mergedChildren)
+                    .errors(errors)
+                    .build();
         });
     }
-
 
 
     private static class OneServiceExecution {

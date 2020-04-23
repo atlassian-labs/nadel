@@ -22,6 +22,7 @@ import graphql.nadel.engine.NadelContext
 import graphql.nadel.engine.NadelExecutionStrategy
 import graphql.nadel.engine.ResultNodesTransformer
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.normalized.NormalizedQueryFactory
 import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.result.LeafExecutionResultNode
 import graphql.nadel.result.ResultComplexityAggregator
@@ -37,7 +38,6 @@ import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.testutils.TestUtil.parseQuery
@@ -76,8 +76,12 @@ class ServiceExecutionHooksTest extends Specification {
 
     ExecutionHelper.ExecutionData createExecutionData(String query, Map<String, Object> variables, GraphQLSchema overallSchema) {
         def document = parseQuery(query)
+        def normalizedQuery = new NormalizedQueryFactory().createNormalizedQuery(overallSchema, document, null, variables)
 
-        def nadelContext = NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).artificialFieldsUUID("UUID").build()
+        def nadelContext = NadelContext.newContext()
+                .artificialFieldsUUID("UUID")
+        .normalizedOverallQuery(normalizedQuery)
+                .build()
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(query)
                 .variables(variables)
@@ -143,12 +147,12 @@ class ServiceExecutionHooksTest extends Specification {
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
 
         def query = "{foo(id: \"fullID\")}"
-        def executionData = createExecutionData(query, overallSchema)
+        def (executionContext, fieldSubSelection) = TestUtil.executionData(overallSchema, parseQuery(query))
 
         def expectedQuery = "query nadel_2_service {foo(id:\"modified\")}"
 
         when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        nadelExecutionStrategy.execute(executionContext, fieldSubSelection, resultComplexityAggregator)
 
 
         then:
@@ -247,15 +251,13 @@ class ServiceExecutionHooksTest extends Specification {
                 def resultNode = params.resultNode
 
                 def transformer = new ResultNodesTransformer()
-                def result = transformer.transformParallel(ForkJoinPool.commonPool(), resultNode, new TraverserVisitor<ExecutionResultNode>() {
+                def result = transformer.transform(resultNode, new TraverserVisitor<ExecutionResultNode>() {
                     @Override
                     TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                         if (context.thisNode() instanceof LeafExecutionResultNode) {
                             LeafExecutionResultNode leafExecutionResultNode = context.thisNode()
-                            def resolvedValue = leafExecutionResultNode.getResolvedValue()
-                            def completedValue = resolvedValue.getCompletedValue()
-                            def newResolvedValue = resolvedValue.transform({ builder -> builder.completedValue(completedValue + "-CHANGED") })
-                            def newNode = leafExecutionResultNode.withNewResolvedValue(newResolvedValue)
+                            def completedValue = leafExecutionResultNode.getCompletedValue()
+                            def newNode = leafExecutionResultNode.withNewCompletedValue(completedValue + "-CHANGED")
                             return TreeTransformerUtil.changeNode(context, newNode)
                         }
                         return TraversalControl.CONTINUE

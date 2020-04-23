@@ -1,56 +1,72 @@
 package graphql.nadel.result;
 
-import graphql.GraphQLError;
-import graphql.execution.ExecutionStepInfo;
-import graphql.execution.nextgen.result.ResolvedValue;
+import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.schema.GraphQLObjectType;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Consumer;
+
+import static graphql.Assert.assertNotNull;
 
 public class UnresolvedObjectResultNode extends ObjectExecutionResultNode {
 
-    public UnresolvedObjectResultNode(ExecutionStepInfo executionStepInfo, ResolvedValue resolvedValue) {
-        super(executionStepInfo, resolvedValue, Collections.emptyList(), Collections.emptyList());
+    private final NormalizedQueryField normalizedField;
+    private final GraphQLObjectType resolvedType;
+
+    private UnresolvedObjectResultNode(Builder builder) {
+        super(builder, null);
+        this.normalizedField = assertNotNull(builder.normalizedField);
+        this.resolvedType = assertNotNull(builder.resolvedType);
     }
 
-    public UnresolvedObjectResultNode(ExecutionStepInfo executionStepInfo, ResolvedValue resolvedValue, List<ExecutionResultNode> children, List<GraphQLError> errors, ElapsedTime elapsedTime) {
-        super(executionStepInfo, resolvedValue, children, errors, elapsedTime, 0);
+    public NormalizedQueryField getNormalizedField() {
+        return normalizedField;
     }
 
-    public UnresolvedObjectResultNode(ExecutionStepInfo executionStepInfo, ResolvedValue resolvedValue, List<ExecutionResultNode> children, List<GraphQLError> errors, ElapsedTime elapsedTime, int totalNodeCount) {
-        super(executionStepInfo, resolvedValue, children, errors, elapsedTime, totalNodeCount);
+    public GraphQLObjectType getResolvedType() {
+        return resolvedType;
     }
 
-    @Override
-    public UnresolvedObjectResultNode withNewChildren(List<ExecutionResultNode> children) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), children, getErrors(), getElapsedTime(), getTotalNodeCount());
-    }
-
-    @Override
-    public UnresolvedObjectResultNode withNewResolvedValue(ResolvedValue resolvedValue) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), resolvedValue, getChildren(), getErrors(), getElapsedTime(), getTotalNodeCount());
-    }
-
-    @Override
-    public UnresolvedObjectResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo) {
-        return new UnresolvedObjectResultNode(executionStepInfo, getResolvedValue(), getChildren(), getErrors(), getElapsedTime(), getTotalNodeCount());
+    public static Builder newUnresolvedExecutionResultNode() {
+        return new Builder();
     }
 
     @Override
-    public UnresolvedObjectResultNode withNewErrors(List<GraphQLError> errors) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), new ArrayList<>(errors), getElapsedTime(), getTotalNodeCount());
+    public <T extends BuilderBase<T>> UnresolvedObjectResultNode transform(Consumer<T> builderConsumer) {
+        Builder builder = new Builder(this);
+        builderConsumer.accept((T) builder);
+        return builder.build();
     }
 
-    @Override
-    public UnresolvedObjectResultNode withElapsedTime(ElapsedTime elapsedTime) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), getErrors(), elapsedTime);
-    }
+    public static class Builder extends BuilderBase<Builder> {
 
-    @Override
-    public UnresolvedObjectResultNode withNodeCount(int nodeCount) {
-        return new UnresolvedObjectResultNode(getExecutionStepInfo(), getResolvedValue(), getChildren(), getErrors(), getElapsedTime(), nodeCount);
-    }
+        private NormalizedQueryField normalizedField;
+        private GraphQLObjectType resolvedType;
 
+        public Builder() {
+
+        }
+
+        public Builder(UnresolvedObjectResultNode existing) {
+            super(existing);
+            this.normalizedField = existing.getNormalizedField();
+            this.resolvedType = existing.getResolvedType();
+        }
+
+
+        public Builder normalizedField(NormalizedQueryField normalizedField) {
+            this.normalizedField = normalizedField;
+            return this;
+        }
+
+        public Builder resolvedType(GraphQLObjectType resolvedType) {
+            this.resolvedType = resolvedType;
+            return this;
+        }
+
+        @Override
+        public UnresolvedObjectResultNode build() {
+            return new UnresolvedObjectResultNode(this);
+        }
+    }
 
 }

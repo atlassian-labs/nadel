@@ -5,6 +5,7 @@ import graphql.language.Document;
 import graphql.language.FragmentDefinition;
 import graphql.language.OperationDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.TransformationMetadata;
 
 import java.util.List;
 import java.util.Map;
@@ -23,28 +24,32 @@ public class QueryTransformationResult {
     private final List<MergedField> transformedMergedFields;
 
     // needed when the underlying result tree is mapped back
-    private final Map<String, FieldTransformation> transformationByResultField;
+    private final Map<String, FieldTransformation> fieldIdToTransformation;
     // needed when the underlying result tree is mapped back
     private final Map<String, String> typeRenameMappings;
 
     private final Map<String, Object> variableValues;
+
+    private final TransformationMetadata removedFieldMap;
 
     public QueryTransformationResult(Document document,
                                      OperationDefinition operationDefinition,
                                      List<MergedField> transformedMergedFields,
                                      Map<String, String> typeRenameMappings,
                                      List<String> referencedVariables,
-                                     Map<String, FieldTransformation> transformationByResultField,
+                                     Map<String, FieldTransformation> fieldIdToTransformation,
                                      Map<String, FragmentDefinition> transformedFragments,
-                                     Map<String, Object> variableValues) {
+                                     Map<String, Object> variableValues,
+                                     TransformationMetadata removedFieldMap) {
         this.document = document;
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
         this.referencedVariables = referencedVariables;
-        this.transformationByResultField = transformationByResultField;
+        this.fieldIdToTransformation = fieldIdToTransformation;
         this.transformedFragments = transformedFragments;
         this.typeRenameMappings = typeRenameMappings;
         this.variableValues = variableValues;
+        this.removedFieldMap = removedFieldMap;
     }
 
     public Document getDocument() {
@@ -63,8 +68,8 @@ public class QueryTransformationResult {
         return referencedVariables;
     }
 
-    public Map<String, FieldTransformation> getTransformationByResultField() {
-        return transformationByResultField;
+    public Map<String, FieldTransformation> getFieldIdToTransformation() {
+        return fieldIdToTransformation;
     }
 
     public Map<String, FragmentDefinition> getTransformedFragments() {
@@ -77,6 +82,10 @@ public class QueryTransformationResult {
 
     public Map<String, Object> getVariableValues() {
         return variableValues;
+    }
+
+    public TransformationMetadata getRemovedFieldMap() {
+        return removedFieldMap;
     }
 }
 

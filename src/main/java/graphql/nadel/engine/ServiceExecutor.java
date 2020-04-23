@@ -8,6 +8,7 @@ import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.FragmentDefinition;
+import graphql.nadel.BenchmarkContext;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
@@ -15,6 +16,8 @@ import graphql.nadel.ServiceExecutionParameters;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
+import graphql.nadel.normalized.NormalizedQueryFactory;
+import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.nadel.util.Data;
@@ -66,9 +69,14 @@ public class ServiceExecutor {
 
         ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
 
+        NormalizedQueryFactory normalizedQueryFactory = new NormalizedQueryFactory();
+        NormalizedQueryFromAst normalizedQuery = normalizedQueryFactory.createNormalizedQuery(underlyingSchema, serviceExecutionParameters.getQuery(),
+                null,
+                serviceExecutionParameters.getVariables());
+
         CompletableFuture<Data> result = executeImpl(service, serviceExecution, serviceExecutionParameters, underlyingRootStepInfo, executionContext);
         return result
-                .thenApply(data -> serviceExecutionResultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, data));
+                .thenApply(data -> serviceExecutionResultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, data, normalizedQuery));
     }
 
 
@@ -180,10 +188,26 @@ public class ServiceExecutor {
             ExecutionContext executionContextForService,
             ExecutionStepInfo underlyingRootStepInfo,
             List<MergedField> transformedMergedFields,
-            Data data) {
+            Data data, NormalizedQueryFromAst normalizedQuery) {
         ServiceExecutionResult serviceExecutionResult = data.get(ServiceExecutionResult.class);
         ElapsedTime elapsedTime = data.get(ElapsedTime.class);
-        return resultToResultNode.resultToResultNode(executionContextForService, underlyingRootStepInfo, transformedMergedFields, serviceExecutionResult, elapsedTime);
+        NadelContext nadelContext = executionContextForService.getContext();
+
+        if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+            BenchmarkContext.ServiceResultToResultNodesArgs serviceResultToResultNodesArgs = ((BenchmarkContext) nadelContext.getUserSuppliedContext()).serviceResultToResultNodesArgs;
+            serviceResultToResultNodesArgs.executionContextForService = executionContextForService;
+            serviceResultToResultNodesArgs.underlyingRootStepInfo = underlyingRootStepInfo;
+            serviceResultToResultNodesArgs.transformedMergedFields = transformedMergedFields;
+            serviceResultToResultNodesArgs.serviceExecutionResult = serviceExecutionResult;
+            serviceResultToResultNodesArgs.elapsedTime = elapsedTime;
+            serviceResultToResultNodesArgs.normalizedQuery = normalizedQuery;
+        }
+        return resultToResultNode.resultToResultNode(executionContextForService,
+                underlyingRootStepInfo,
+                transformedMergedFields,
+                serviceExecutionResult,
+                elapsedTime,
+                normalizedQuery);
     }
 
 }

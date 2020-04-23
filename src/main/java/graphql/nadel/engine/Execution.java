@@ -14,6 +14,7 @@ import graphql.execution.nextgen.FieldSubSelection;
 import graphql.language.Document;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
+import graphql.nadel.BenchmarkContext;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.NadelExecutionParams;
@@ -23,6 +24,8 @@ import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.introspection.IntrospectionRunner;
+import graphql.nadel.normalized.NormalizedQueryFactory;
+import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.result.ResultComplexityAggregator;
 import graphql.nadel.result.ResultNodesUtil;
 import graphql.nadel.result.RootExecutionResultNode;
@@ -47,12 +50,29 @@ public class Execution {
     private final ExecutionHelper executionHelper = new ExecutionHelper();
     private final NadelExecutionStrategy nadelExecutionStrategy;
 
-    public Execution(List<Service> services, GraphQLSchema overallSchema, NadelInstrumentation instrumentation, IntrospectionRunner introspectionRunner, ServiceExecutionHooks serviceExecutionHooks) {
+    private NormalizedQueryFactory normalizedQueryFactory = new NormalizedQueryFactory();
+
+    public Execution(List<Service> services,
+                     GraphQLSchema overallSchema,
+                     NadelInstrumentation instrumentation,
+                     IntrospectionRunner introspectionRunner,
+                     ServiceExecutionHooks serviceExecutionHooks,
+                     Object userSuppliedContext) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.instrumentation = instrumentation;
         this.introspectionRunner = introspectionRunner;
-        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, createFieldsInfos(), overallSchema, instrumentation, serviceExecutionHooks);
+        FieldInfos fieldsInfos = createFieldsInfos();
+        if (userSuppliedContext instanceof BenchmarkContext) {
+            BenchmarkContext.NadelExecutionStrategyArgs args = ((BenchmarkContext) userSuppliedContext).nadelExecutionStrategyArgs;
+            args.services = services;
+            args.fieldInfos = fieldsInfos;
+            args.overallSchema = overallSchema;
+            args.instrumentation = instrumentation;
+            args.serviceExecutionHooks = serviceExecutionHooks;
+        }
+
+        this.nadelExecutionStrategy = new NadelExecutionStrategy(services, fieldsInfos, overallSchema, instrumentation, serviceExecutionHooks);
     }
 
     public CompletableFuture<ExecutionResult> execute(ExecutionInput executionInput,
@@ -61,11 +81,13 @@ public class Execution {
                                                       InstrumentationState instrumentationState,
                                                       NadelExecutionParams nadelExecutionParams) {
 
+        NormalizedQueryFromAst normalizedQueryFromAst = normalizedQueryFactory.createNormalizedQuery(overallSchema, document, executionInput.getOperationName(), executionInput.getVariables());
+
         NadelContext nadelContext = NadelContext.newContext()
                 .userSuppliedContext(executionInput.getContext())
                 .originalOperationName(document, executionInput.getOperationName())
                 .artificialFieldsUUID(nadelExecutionParams.getArtificialFieldsUUID())
-                .forkJoinPool(nadelExecutionParams.getForkJoinPool())
+                .normalizedOverallQuery(normalizedQueryFromAst)
                 .build();
 
         executionInput = executionInput.transform(builder -> builder.context(nadelContext));
@@ -92,8 +114,17 @@ public class Execution {
         if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
             result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
         } else {
+            if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+                BenchmarkContext.NadelExecutionStrategyArgs args = ((BenchmarkContext) nadelContext.getUserSuppliedContext()).nadelExecutionStrategyArgs;
+                args.executionContext = executionContext;
+                args.fieldSubSelection = fieldSubSelection;
+                args.resultComplexityAggregator = resultComplexityAggregator;
+            }
             CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection, resultComplexityAggregator);
             result = resultNodes.thenApply(rootResultNode -> {
+                if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+                    ((BenchmarkContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
+                }
                 rootResultNode = instrumentation.instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
                 ExecutionResult executionResult = withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);
                 return executionResult;

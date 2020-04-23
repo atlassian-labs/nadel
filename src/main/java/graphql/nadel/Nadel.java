@@ -32,7 +32,6 @@ import graphql.nadel.schema.SchemaTransformationHook;
 import graphql.nadel.schema.UnderlyingSchemaGenerator;
 import graphql.nadel.util.LogKit;
 import graphql.parser.InvalidSyntaxException;
-import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.ScalarInfo;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -172,7 +171,7 @@ public class Nadel {
                 .executionId(nadelExecutionInput.getExecutionId())
                 .build();
 
-        NadelExecutionParams nadelExecutionParams = new NadelExecutionParams(nadelExecutionInput.getArtificialFieldsUUID(), nadelExecutionInput.getForkJoinPool());
+        NadelExecutionParams nadelExecutionParams = new NadelExecutionParams(nadelExecutionInput.getArtificialFieldsUUID());
 
         InstrumentationState instrumentationState = instrumentation.createState(new NadelInstrumentationCreateStateParameters(overallSchema, executionInput));
         NadelInstrumentationQueryExecutionParameters instrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, overallSchema, instrumentationState);
@@ -248,11 +247,10 @@ public class Nadel {
         NadelInstrumentationQueryExecutionParameters parameters = new NadelInstrumentationQueryExecutionParameters(executionInput, graphQLSchema, instrumentationState);
         InstrumentationContext<Document> parseInstrumentation = instrumentation.beginParse(parameters);
 
-        Parser parser = new Parser();
         Document document;
         DocumentAndVariables documentAndVariables;
         try {
-            document = parser.parseDocument(executionInput.getQuery());
+            document = new NadelGraphQLParser().parseDocument(executionInput.getQuery());
             documentAndVariables = newDocumentAndVariables()
                     .document(document).variables(executionInput.getVariables()).build();
             documentAndVariables = instrumentation.instrumentDocumentAndVariables(documentAndVariables, parameters);
@@ -289,7 +287,22 @@ public class Nadel {
             executionId = executionIdProvider.provide(query, operationName, context);
         }
 
-        Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner, serviceExecutionHooks);
+        if (executionInput.getContext() instanceof BenchmarkContext) {
+            BenchmarkContext.ExecutionArgs executionArgs = ((BenchmarkContext) executionInput.getContext()).executionArgs;
+            executionArgs.services = getServices();
+            executionArgs.overallSchema = overallSchema;
+            executionArgs.instrumentation = instrumentation;
+            executionArgs.introspectionRunner = introspectionRunner;
+            executionArgs.serviceExecutionHooks = serviceExecutionHooks;
+            executionArgs.context = executionInput.getContext();
+            executionArgs.executionInput = executionInput;
+            executionArgs.document = document;
+            executionArgs.executionId = executionId;
+            executionArgs.instrumentationState = instrumentationState;
+            executionArgs.nadelExecutionParams = nadelExecutionParams;
+        }
+
+        Execution execution = new Execution(getServices(), overallSchema, instrumentation, introspectionRunner, serviceExecutionHooks, executionInput.getContext());
 
         return execution.execute(executionInput, document, executionId, instrumentationState, nadelExecutionParams);
     }

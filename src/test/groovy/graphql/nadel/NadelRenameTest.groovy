@@ -164,9 +164,6 @@ class NadelRenameTest extends Specification {
         def query = '''
         { 
             renameObject { 
-                ... on ObjectOverall {
-                    name
-                } 
                 ... FragDef
             } 
         }
@@ -188,7 +185,37 @@ class NadelRenameTest extends Specification {
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
             assert printAstCompact(params.query) ==
-                    "query nadel_2_MyService {renameObjectUnderlying {... on ObjectUnderlying {name} ...FragDef}} fragment FragDef on ObjectUnderlying {name}"
+                    "query nadel_2_MyService {renameObjectUnderlying {...FragDef}} fragment FragDef on ObjectUnderlying {name}"
+            completedFuture(new ServiceExecutionResult(data))
+        }
+        result.errors.isEmpty()
+        result.data == [renameObject: [name: "val"]]
+    }
+
+    def "inline fragment type rename and field rename works as expected"() {
+        def query = '''
+        { 
+            renameObject { 
+                ... on ObjectOverall {
+                    name
+                } 
+            } 
+        }
+        '''
+
+        given:
+        def data = [renameObjectUnderlying: [name: "val"]]
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            assert printAstCompact(params.query) ==
+                    "query nadel_2_MyService {renameObjectUnderlying {... on ObjectUnderlying {name}}}"
             completedFuture(new ServiceExecutionResult(data))
         }
         result.errors.isEmpty()

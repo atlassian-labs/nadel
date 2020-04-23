@@ -5,9 +5,12 @@ import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
 import graphql.GraphQLError;
 import graphql.Internal;
-import graphql.execution.ExecutionStepInfo;
-import graphql.execution.NonNullableFieldWasNullError;
-import graphql.execution.NonNullableFieldWasNullException;
+import graphql.execution.ExecutionPath;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLList;
+import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLTypeUtil;
 import graphql.util.NodeLocation;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
@@ -16,22 +19,28 @@ import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
+import static graphql.Assert.assertTrue;
 import static graphql.nadel.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 
 @Internal
 public class ResultNodesUtil {
 
     public static ExecutionResult toExecutionResult(RootExecutionResultNode root) {
         ExecutionResultData executionResultData = toDataImpl(root);
+        if (executionResultData.nonNullableFieldWasNullError != null) {
+            return ExecutionResultImpl.newExecutionResult()
+                    .data(null)
+                    .addError(executionResultData.nonNullableFieldWasNullError)
+                    .build();
+        }
         return ExecutionResultImpl.newExecutionResult()
                 .data(executionResultData.data)
                 .errors(executionResultData.errors)
@@ -40,20 +49,24 @@ public class ResultNodesUtil {
 
     private static class ExecutionResultData {
         Object data;
-        List<GraphQLError> errors;
+        List<GraphQLError> errors = emptyList();
+        NonNullableFieldWasNullError nonNullableFieldWasNullError;
 
 
         public ExecutionResultData(Object data, List<GraphQLError> errors) {
             this.data = data;
             this.errors = errors;
         }
+
+        public ExecutionResultData(NonNullableFieldWasNullError nonNullableFieldWasNullError) {
+            this.data = null;
+            this.nonNullableFieldWasNullError = nonNullableFieldWasNullError;
+        }
     }
 
 
     private static ExecutionResultData data(Object data, ExecutionResultNode executionResultNode) {
-        List<GraphQLError> allErrors = new ArrayList<>();
-        allErrors.addAll(executionResultNode.getResolvedValue().getErrors());
-        allErrors.addAll(executionResultNode.getErrors());
+        List<GraphQLError> allErrors = new ArrayList<>(executionResultNode.getErrors());
         return new ExecutionResultData(data, allErrors);
     }
 
@@ -61,91 +74,98 @@ public class ResultNodesUtil {
         return new ExecutionResultData(data, errors);
     }
 
-    private static ExecutionResultData data(Object data, NonNullableFieldWasNullException exception) {
-        return new ExecutionResultData(data, Arrays.asList(new NonNullableFieldWasNullError(exception)));
+    private static ExecutionResultData data(NonNullableFieldWasNullError error) {
+        return new ExecutionResultData(error);
     }
 
-    private static ExecutionResultData toDataImpl(ExecutionResultNode root) {
-        if (root instanceof LeafExecutionResultNode) {
-            return root.getResolvedValue().isNullValue() ? data(null, root) : data(((LeafExecutionResultNode) root).getValue(), root);
-        }
-        if (root instanceof ListExecutionResultNode) {
-            Optional<NonNullableFieldWasNullException> childNonNullableException = root.getChildNonNullableException();
-            if (childNonNullableException.isPresent()) {
-                return data(null, childNonNullableException.get());
-            }
-
-            List<GraphQLError> errors = new ArrayList<>();
-            List<Object> data = new ArrayList<>();
-            for (ExecutionResultNode child : root.getChildren()) {
-                ExecutionResultData erd = toDataImpl(child);
-                data.add(erd.data);
-                if (!erd.errors.isEmpty()) {
-                    errors.addAll(erd.errors);
-                }
-            }
-            if (!root.getErrors().isEmpty()) {
-                errors.addAll(root.getErrors());
-            }
-            return data(data, errors);
-        }
+    private static ExecutionResultData toDataImpl(final ExecutionResultNode root) {
 
         if (root instanceof UnresolvedObjectResultNode) {
-            ExecutionStepInfo executionStepInfo = root.getExecutionStepInfo();
-            return data("Not resolved : " + executionStepInfo.getPath() + " with field " + executionStepInfo.getField(), emptyList());
+            return data("Not resolved : " + root.getExecutionPath() + " with field " + root.getFieldName(), emptyList());
         }
+
+        if (root instanceof LeafExecutionResultNode) {
+            return root.getNonNullableFieldWasNullError() != null ? data(root.getNonNullableFieldWasNullError()) : data(root.getCompletedValue(), root);
+        }
+        if (root instanceof ListExecutionResultNode) {
+            return toDataImplList(root);
+        }
+
         if (root instanceof ObjectExecutionResultNode) {
-            Optional<NonNullableFieldWasNullException> childrenNonNullableException = root.getChildNonNullableException();
-            if (childrenNonNullableException.isPresent()) {
-                return data(null, childrenNonNullableException.get());
-            }
-            Map<String, Object> resultMap = new LinkedHashMap<>();
-            List<GraphQLError> errors = new ArrayList<>();
-            root.getChildren().forEach(child -> {
-                ExecutionResultData executionResultData = toDataImpl(child);
-                resultMap.put(child.getMergedField().getResultKey(), executionResultData.data);
-                errors.addAll(executionResultData.errors);
-            });
-            errors.addAll(root.getErrors());
-            return data(resultMap, errors);
+            return toDataImplObject(root);
         }
-        return Assert.assertShouldNeverHappen("An unexpected root type %s", root.getClass());
+        return Assert.assertShouldNeverHappen("An unexpected node type %s", root.getClass());
+    }
+
+    private static ExecutionResultData toDataImplObject(ExecutionResultNode root) {
+        boolean isNonNull = false;
+        GraphQLOutputType actualType = null;
+        if (root instanceof RootExecutionResultNode) {
+            isNonNull = true;
+        }
+        if (root.getFieldDefinition() != null) {
+            actualType = getActualType(root.getFieldDefinition(), root.getExecutionPath());
+            isNonNull = GraphQLTypeUtil.isNonNull(actualType);
+        }
+
+        Map<String, Object> resultMap = new LinkedHashMap<>();
+        List<GraphQLError> errors = new ArrayList<>();
+        for (ExecutionResultNode child : root.getChildren()) {
+            ExecutionResultData executionResultData = toDataImpl(child);
+            if (isNonNull && (child.getNonNullableFieldWasNullError() != null || executionResultData.nonNullableFieldWasNullError != null)) {
+                if (actualType != null) {
+                    return data(new NonNullableFieldWasNullError((GraphQLNonNull) actualType, root.getExecutionPath()));
+                } else {
+                    return data(new NonNullableFieldWasNullError((GraphQLNonNull) child.getFieldDefinition().getType(), root.getExecutionPath()));
+                }
+            } else if (executionResultData.nonNullableFieldWasNullError != null) {
+                return data(null, singletonList(executionResultData.nonNullableFieldWasNullError));
+            }
+            resultMap.put(child.getResultKey(), executionResultData.data);
+            errors.addAll(executionResultData.errors);
+        }
+        errors.addAll(root.getErrors());
+        return data(resultMap, errors);
+    }
+
+    private static ExecutionResultData toDataImplList(ExecutionResultNode root) {
+        boolean isNonNull = false;
+        GraphQLOutputType actualType = null;
+        if (root.getFieldDefinition() != null) {
+            actualType = getActualType(root.getFieldDefinition(), root.getExecutionPath());
+            isNonNull = GraphQLTypeUtil.isNonNull(actualType);
+        }
+
+        List<GraphQLError> errors = new ArrayList<>();
+        List<Object> data = new ArrayList<>();
+        for (ExecutionResultNode child : root.getChildren()) {
+
+            ExecutionResultData executionResultData = toDataImpl(child);
+            if (isNonNull && (child.getNonNullableFieldWasNullError() != null || executionResultData.nonNullableFieldWasNullError != null)) {
+                return data(new NonNullableFieldWasNullError((GraphQLNonNull) actualType, root.getExecutionPath()));
+            } else if (executionResultData.nonNullableFieldWasNullError != null) {
+                return data(null, singletonList(executionResultData.nonNullableFieldWasNullError));
+            }
+            data.add(executionResultData.data);
+            errors.addAll(executionResultData.errors);
+        }
+        errors.addAll(root.getErrors());
+        return data(data, errors);
     }
 
 
-    public static Optional<NonNullableFieldWasNullException> getFirstNonNullableException(Collection<ExecutionResultNode> collection) {
-        return collection.stream()
-                .filter(executionResultNode -> executionResultNode.getNonNullableFieldWasNullException() != null)
-                .map(ExecutionResultNode::getNonNullableFieldWasNullException)
-                .findFirst();
-    }
-
-//    public static NonNullableFieldWasNullException newNullableException(ExecutionStepInfo executionStepInfo, List<NamedResultNode> children) {
-//        return newNullableException(executionStepInfo, children.stream().map(NamedResultNode::getNode).collect(Collectors.toList()));
-//    }
-//
-//    public static Map<String, ExecutionResultNode> namedNodesToMap(List<NamedResultNode> namedResultNodes) {
-//        Map<String, ExecutionResultNode> result = new LinkedHashMap<>();
-//        for (NamedResultNode namedResultNode : namedResultNodes) {
-//            result.put(namedResultNode.getName(), namedResultNode.getNode());
-//        }
-//        return result;
-//    }
-
-    public static NonNullableFieldWasNullException newNullableException(ExecutionStepInfo executionStepInfo, Collection<ExecutionResultNode> children) {
-        // can only happen for the root node
-        if (executionStepInfo == null) {
-            return null;
+    private static GraphQLOutputType getActualType(GraphQLFieldDefinition fieldDefinition, ExecutionPath executionPath) {
+        // example: field definition type: [[String]!]!, path: /foo/bar/type[3] => result is [String]!
+        GraphQLOutputType result = fieldDefinition.getType();
+        while (executionPath.isListSegment()) {
+            executionPath = executionPath.dropSegment();
+            // might be non null or not
+            result = (GraphQLOutputType) GraphQLTypeUtil.unwrapNonNull(result);
+            assertTrue(result instanceof GraphQLList);
+            result = (GraphQLOutputType) ((GraphQLList) result).getWrappedType();
         }
-        Assert.assertNotNull(children);
-        boolean listIsNonNull = executionStepInfo.isNonNullType();
-        if (listIsNonNull) {
-            Optional<NonNullableFieldWasNullException> firstNonNullableException = getFirstNonNullableException(children);
-            if (firstNonNullableException.isPresent()) {
-                return new NonNullableFieldWasNullException(firstNonNullableException.get());
-            }
-        }
-        return null;
+        return result;
+
     }
 
     public static List<NodeZipper<ExecutionResultNode>> getUnresolvedNodes(Collection<ExecutionResultNode> roots) {

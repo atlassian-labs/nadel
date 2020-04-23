@@ -3,47 +3,53 @@ package graphql.nadel.result;
 import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
-import graphql.execution.ExecutionStepInfo;
-import graphql.execution.MergedField;
-import graphql.execution.NonNullableFieldWasNullException;
-import graphql.execution.nextgen.result.ResolvedValue;
+import graphql.execution.ExecutionPath;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLObjectType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
 
 @Internal
 public abstract class ExecutionResultNode {
 
-    private final ExecutionStepInfo executionStepInfo;
-    private final ResolvedValue resolvedValue;
-    private final NonNullableFieldWasNullException nonNullableFieldWasNullException;
+    private final Object completedValue;
+    private final NonNullableFieldWasNullError nonNullableFieldWasNullError;
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
     private final ElapsedTime elapsedTime;
     private final int totalNodeCount;
 
+    private final ExecutionPath executionPath;
+
+    private final String alias;
+    private final List<String> fieldIds;
+
+    private final GraphQLFieldDefinition fieldDefinition;
+    private final GraphQLObjectType objectType;
+
+
     /*
      * we are trusting here the the children list is not modified on the outside (no defensive copy)
      */
-    protected ExecutionResultNode(ExecutionStepInfo executionStepInfo,
-                                  ResolvedValue resolvedValue,
-                                  NonNullableFieldWasNullException nonNullableFieldWasNullException,
-                                  List<ExecutionResultNode> children,
-                                  List<GraphQLError> errors,
-                                  ElapsedTime elapsedTime,
-                                  int totalNodeCount) {
-        this.resolvedValue = resolvedValue;
-        this.executionStepInfo = executionStepInfo;
-        this.nonNullableFieldWasNullException = nonNullableFieldWasNullException;
-        this.children = Collections.unmodifiableList(assertNotNull(children));
+    protected ExecutionResultNode(BuilderBase builderBase) {
+        this.completedValue = builderBase.completedValue;
+        this.children = Collections.unmodifiableList(assertNotNull(builderBase.children));
         children.forEach(Assert::assertNotNull);
-        this.errors = Collections.unmodifiableList(errors);
-        this.elapsedTime = elapsedTime;
-        this.totalNodeCount = totalNodeCount;
+        this.errors = Collections.unmodifiableList(builderBase.errors);
+        this.elapsedTime = builderBase.elapsedTime;
+        this.totalNodeCount = builderBase.totalNodeCount;
+        this.executionPath = assertNotNull(builderBase.executionPath);
+
+        this.alias = builderBase.alias;
+        this.fieldIds = builderBase.fieldIds;
+        this.fieldDefinition = builderBase.fieldDefinition;
+        this.objectType = builderBase.objectType;
+        this.nonNullableFieldWasNullError = builderBase.nonNullableFieldWasNullError;
     }
 
     public ElapsedTime getElapsedTime() {
@@ -51,96 +57,208 @@ public abstract class ExecutionResultNode {
     }
 
     public List<GraphQLError> getErrors() {
-        return new ArrayList<>(errors);
+        return errors;
     }
 
     /*
      * can be null for the RootExecutionResultNode
      */
-    public ResolvedValue getResolvedValue() {
-        return resolvedValue;
+    public Object getCompletedValue() {
+        return completedValue;
     }
 
-    public MergedField getMergedField() {
-        return executionStepInfo.getField();
+    public boolean isNullValue() {
+        return completedValue == null;
     }
 
-    public ExecutionStepInfo getExecutionStepInfo() {
-        return executionStepInfo;
+    public String getResultKey() {
+        return alias != null ? alias : fieldDefinition.getName();
     }
 
-    public NonNullableFieldWasNullException getNonNullableFieldWasNullException() {
-        return nonNullableFieldWasNullException;
+    public String getAlias() {
+        return alias;
+    }
+
+    public List<String> getFieldIds() {
+        return fieldIds;
+    }
+
+    public String getFieldName() {
+        return fieldDefinition.getName();
+    }
+
+    public GraphQLFieldDefinition getFieldDefinition() {
+        return fieldDefinition;
+    }
+
+    public GraphQLObjectType getObjectType() {
+        return objectType;
+    }
+
+    public NonNullableFieldWasNullError getNonNullableFieldWasNullError() {
+        return nonNullableFieldWasNullError;
     }
 
     public List<ExecutionResultNode> getChildren() {
         return this.children;
     }
 
-    public Optional<NonNullableFieldWasNullException> getChildNonNullableException() {
-        return children.stream()
-                .filter(executionResultNode -> executionResultNode.getNonNullableFieldWasNullException() != null)
-                .map(ExecutionResultNode::getNonNullableFieldWasNullException)
-                .findFirst();
-    }
-
     public int getTotalNodeCount() {
         return totalNodeCount;
     }
 
-    /**
-     * Creates a new ExecutionResultNode of the same specific type with the new set of result children
-     *
-     * @param children the new children for this result node
-     *
-     * @return a new ExecutionResultNode with the new result children
-     */
-    public abstract ExecutionResultNode withNewChildren(List<ExecutionResultNode> children);
 
-    public abstract ExecutionResultNode withNewResolvedValue(ResolvedValue resolvedValue);
+    public ExecutionPath getExecutionPath() {
+        return executionPath;
+    }
 
-    public abstract ExecutionResultNode withNewExecutionStepInfo(ExecutionStepInfo executionStepInfo);
+    public ExecutionResultNode withNewChildren(List<ExecutionResultNode> children) {
+        return transform(builder -> builder.children(children));
+    }
 
-    /**
-     * Creates a new ExecutionResultNode of the same specific type with the new error collection
-     *
-     * @param errors the new errors for this result node
-     *
-     * @return a new ExecutionResultNode with the new errors
-     */
-    public abstract ExecutionResultNode withNewErrors(List<GraphQLError> errors);
+    public ExecutionResultNode withNewCompletedValue(Object completedValue) {
+        return transform(builder -> builder.completedValue(completedValue));
+    }
 
-    public abstract ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime);
+    public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
+        return transform(builder -> builder.errors(errors));
+    }
 
-    /**
-     * Creates a new ExecutionResultNode of the same specific type with the specified node counts
-     *
-     * @param nodeCount the node count for this node
-     *
-     * @return a new ExecutionResultNode with the nodecount
-     */
-    public abstract ExecutionResultNode withNodeCount(int nodeCount);
+    public ExecutionResultNode withElapsedTime(ElapsedTime elapsedTime) {
+        return transform(builder -> builder.elapsedTime(elapsedTime));
+    }
 
+    public abstract <B extends BuilderBase<B>> ExecutionResultNode transform(Consumer<B> builderConsumer);
+
+    public ExecutionResultNode withNodeCount(int nodeCount) {
+        return transform(builder -> builder.totalNodeCount(nodeCount));
+    }
 
 
     @Override
     public String toString() {
-        return "ExecutionResultNode{" +
-                "executionStepInfo=" + executionStepInfo +
-                ", resolvedValue=" + resolvedValue +
-                ", nonNullableFieldWasNullException=" + nonNullableFieldWasNullException +
+        return getClass().getSimpleName() + "{" +
+                "path=" + executionPath +
+                ", objectType=" + (objectType != null ? objectType.getName() : "null") +
+                ", name=" + (fieldDefinition != null ? fieldDefinition.getName() : "null") +
+                ", fieldDefinition=" + fieldDefinition +
+                ", resolvedValue=" + completedValue +
+                ", nonNullableFieldWasNullError" + nonNullableFieldWasNullError +
                 ", children=" + children +
                 ", errors=" + errors +
                 '}';
     }
 
-    public abstract class Builder {
-        protected ExecutionStepInfo executionStepInfo;
-        protected ResolvedValue resolvedValue;
-        protected NonNullableFieldWasNullException nonNullableFieldWasNullException;
-        protected List<ExecutionResultNode> children;
-        protected List<GraphQLError> errors;
+    public abstract static class BuilderBase<T extends BuilderBase<T>> {
+        protected Object completedValue;
+        protected NonNullableFieldWasNullError nonNullableFieldWasNullError;
+        protected List<ExecutionResultNode> children = new ArrayList<>();
+        protected List<GraphQLError> errors = new ArrayList<>();
         protected ElapsedTime elapsedTime;
+        protected ExecutionPath executionPath;
+
+        private String alias;
+        private List<String> fieldIds = new ArrayList<>();
+        private GraphQLFieldDefinition fieldDefinition;
+        private GraphQLObjectType objectType;
+        private int totalNodeCount;
+
+
+        public BuilderBase() {
+
+        }
+
+        public BuilderBase(ExecutionResultNode existing) {
+            this.completedValue = existing.getCompletedValue();
+            this.nonNullableFieldWasNullError = existing.getNonNullableFieldWasNullError();
+            this.children.addAll(existing.getChildren());
+            this.errors.addAll(existing.getErrors());
+            this.elapsedTime = existing.getElapsedTime();
+            this.executionPath = existing.getExecutionPath();
+            this.alias = existing.getAlias();
+            this.fieldIds.addAll(existing.getFieldIds());
+
+            this.fieldDefinition = existing.fieldDefinition;
+            this.objectType = existing.objectType;
+            this.totalNodeCount = existing.totalNodeCount;
+        }
+
+        public abstract ExecutionResultNode build();
+
+        public T completedValue(Object completedValue) {
+            this.completedValue = completedValue;
+            return (T) this;
+        }
+
+
+        public T nonNullableFieldWasNullError(NonNullableFieldWasNullError nonNullableFieldWasNullError) {
+            this.nonNullableFieldWasNullError = nonNullableFieldWasNullError;
+            return (T) this;
+        }
+
+        public T objectType(GraphQLObjectType objectType) {
+            this.objectType = objectType;
+            return (T) this;
+        }
+
+        public T fieldDefinition(GraphQLFieldDefinition fieldDefinition) {
+            this.fieldDefinition = fieldDefinition;
+            return (T) this;
+        }
+
+        public T alias(String alias) {
+            this.alias = alias;
+            return (T) this;
+        }
+
+        public T fieldIds(List<String> fieldIds) {
+            this.fieldIds.clear();
+            this.fieldIds.addAll(fieldIds);
+            return (T) this;
+        }
+
+        public T fieldId(String fieldId) {
+            this.fieldIds.clear();
+            this.fieldIds.add(fieldId);
+            return (T) this;
+        }
+
+        public T children(List<ExecutionResultNode> children) {
+            this.children.clear();
+            this.children.addAll(children);
+            return (T) this;
+        }
+
+        public T addChild(ExecutionResultNode child) {
+            this.children.add(child);
+            return (T) this;
+        }
+
+        public T errors(List<GraphQLError> errors) {
+            this.errors.clear();
+            this.errors = errors;
+            return (T) this;
+        }
+
+        public T addError(GraphQLError error) {
+            this.errors.add(error);
+            return (T) this;
+        }
+
+        public T elapsedTime(ElapsedTime elapsedTime) {
+            this.elapsedTime = elapsedTime;
+            return (T) this;
+        }
+
+        public T executionPath(ExecutionPath executionPath) {
+            this.executionPath = executionPath;
+            return (T) this;
+        }
+
+        public T totalNodeCount(int totalNodeCount) {
+            this.totalNodeCount = totalNodeCount;
+            return (T) this;
+        }
 
     }
 }

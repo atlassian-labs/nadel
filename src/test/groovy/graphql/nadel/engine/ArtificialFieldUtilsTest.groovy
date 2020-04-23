@@ -1,6 +1,5 @@
 package graphql.nadel.engine
 
-import graphql.execution.MergedField
 import graphql.language.AstPrinter
 import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.result.LeafExecutionResultNode
@@ -12,8 +11,6 @@ import graphql.util.TraverserVisitorStub
 import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
-import java.util.concurrent.ForkJoinPool
-
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.leaf
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.list
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.object
@@ -23,7 +20,7 @@ import static graphql.nadel.testutils.TestUtil.mkField
 
 class ArtificialFieldUtilsTest extends Specification {
 
-    def context = NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()
+    def context = NadelContext.newContext().build()
     def underscoreTypeNameAlias = context.underscoreTypeNameAlias
     def interfaceType = GraphQLInterfaceType.newInterface().name("I").build()
     def objectType = GraphQLObjectType.newObject().name("O").build()
@@ -82,13 +79,13 @@ class ArtificialFieldUtilsTest extends Specification {
                 object("pet", [
                         leaf("__typename"), //  <-- manually added by consumer
                         list("owners", [
-                                object("0", [
+                                object("X", [
                                         leaf("__typename"), //  <-- manually added by consumer say via Fragment Spread
                                         leaf("name"),
                                         leaf("__typename", underscoreTypeNameAlias),
                                         leaf("title"),
                                 ]),
-                                object("1", [
+                                object("Y", [
                                         leaf("name"),
                                         leaf("title"),
                                 ]),
@@ -124,12 +121,12 @@ class ArtificialFieldUtilsTest extends Specification {
                 object("pet", [
                         leaf("__typename"), //  <-- manually added by consumer
                         list("owners", [
-                                object("0", [
+                                object("X", [
                                         leaf("__typename"), //  <-- manually added by consumer say via Fragment Spread
                                         leaf("name"),
                                         leaf("title"),
                                 ]),
-                                object("1", [
+                                object("Y", [
                                         leaf("name"),
                                         leaf("title"),
                                 ]),
@@ -146,15 +143,14 @@ class ArtificialFieldUtilsTest extends Specification {
 
     static ExecutionResultNode removeArtificialFields(NadelContext nadelContext, ExecutionResultNode resultNode) {
         ResultNodesTransformer resultNodesTransformer = new ResultNodesTransformer();
-        ExecutionResultNode newNode = resultNodesTransformer.transformParallel(nadelContext.getForkJoinPool(), resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
+        ExecutionResultNode newNode = resultNodesTransformer.transform(resultNode, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 ExecutionResultNode node = context.thisNode()
                 if (node instanceof LeafExecutionResultNode) {
                     LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
-                    MergedField mergedField = leaf.getMergedField();
 
-                    if (ArtificialFieldUtils.isArtificialField(nadelContext, mergedField)) {
+                    if (ArtificialFieldUtils.isArtificialField(nadelContext, leaf.getAlias())) {
                         return TreeTransformerUtil.deleteNode(context);
                     }
                 }

@@ -1,28 +1,30 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.execution.ExecutionStepInfo;
-import graphql.execution.MergedField;
+import graphql.Assert;
+import graphql.execution.ExecutionPath;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
-import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static graphql.Assert.assertTrue;
-import static graphql.schema.GraphQLTypeUtil.unwrapAll;
+import static java.util.UUID.randomUUID;
 
 public abstract class FieldTransformation {
 
 
     private ApplyEnvironment environment;
-    private String fieldId = UUID.randomUUID().toString();
+    private String transformationId = getClass().getSimpleName() + "-" + randomUUID().toString();
 
     public abstract ApplyResult apply(ApplyEnvironment environment);
 
@@ -36,8 +38,8 @@ public abstract class FieldTransformation {
 
     public abstract AbstractNode getDefinition();
 
-    public String getFieldId() {
-        return fieldId;
+    public String getTransformationId() {
+        return transformationId;
     }
 
     public void setEnvironment(ApplyEnvironment environment) {
@@ -54,43 +56,72 @@ public abstract class FieldTransformation {
     }
 
     public GraphQLOutputType getOriginalFieldType() {
-        return getApplyEnvironment().getFieldDefinition().getType();
+        return getApplyEnvironment().getFieldDefinitionOverall().getType();
     }
 
     public GraphQLFieldsContainer getOriginalFieldsContainer() {
-        return getApplyEnvironment().getFieldsContainer();
+        return getApplyEnvironment().getFieldsContainerOverall();
     }
 
     public GraphQLFieldDefinition getOriginalFieldDefinition() {
-        return getApplyEnvironment().getFieldDefinition();
+        return getApplyEnvironment().getFieldDefinitionOverall();
     }
 
-
-    protected ExecutionStepInfo replaceFieldsAndTypesWithOriginalValues(List<FieldTransformation> allTransformations, ExecutionStepInfo esi, ExecutionStepInfo parentEsi) {
-        MergedField underlyingMergedField = esi.getField();
-        List<Field> underlyingFields = underlyingMergedField.getFields();
-        assertTrue(allTransformations.size() == underlyingFields.size());
-
-        List<Field> newFields = new ArrayList<>();
-        for (FieldTransformation fieldTransformation : allTransformations) {
-            newFields.add(fieldTransformation.getOriginalField());
+    protected NormalizedQueryField getMatchingNormalizedQueryFieldBasedOnParent(ExecutionResultNode parent) {
+        List<NormalizedQueryField> normalizedFields = getApplyEnvironment().getNormalizedQueryFieldsOverall();
+        if (parent instanceof RootExecutionResultNode) {
+            Assert.assertTrue(normalizedFields.size() == 1, "only one normalized field expected");
+            return normalizedFields.get(0);
         }
-        MergedField newMergedField = MergedField.newMergedField(newFields).build();
-        FieldTransformation fieldTransformation = allTransformations.get(0);
-        GraphQLOutputType originalFieldType = fieldTransformation.getOriginalFieldType();
+        ExecutionPath path = parent.getExecutionPath();
+        List<String> parentQueryPath = executionPathToQueryPath(path);
 
-        ExecutionStepInfo esiWithMappedField = esi.transform(builder -> {
-                    builder
-                            .field(newMergedField)
-                            .fieldDefinition(allTransformations.get(0).getOriginalFieldDefinition())
-                            .type(originalFieldType);
-                    if (parentEsi != null && unwrapAll(parentEsi.getType()) instanceof GraphQLObjectType) {
-                        builder.fieldContainer((GraphQLObjectType) unwrapAll(parentEsi.getType()));
-                    }
-                }
+        for (NormalizedQueryField normalizedField : normalizedFields) {
+            NormalizedQueryField parentNormalizedField = normalizedField.getParent();
+            if (!parentQueryPath.equals(parentNormalizedField.getPath())) {
+                continue;
+            }
+            if (parentNormalizedField.getObjectType() == parent.getObjectType() &&
+                    parentNormalizedField.getFieldDefinition() == parent.getFieldDefinition() &&
+                    parentNormalizedField.getResultKey().equals(parent.getResultKey())) {
+                return normalizedField;
+            }
+        }
+        return Assert.assertShouldNeverHappen("could not find matching normalized field");
+    }
 
+    private static List<String> executionPathToQueryPath(ExecutionPath executionPath) {
+        return executionPath.toList()
+                .stream()
+                .filter(o -> o instanceof String)
+                .map(String.class::cast)
+                .collect(Collectors.toList());
+    }
+
+    protected ExecutionResultNode replaceFieldIdsWithOriginalValue(List<FieldTransformation> allTransformations,
+                                                                   ExecutionResultNode executionResultNode) {
+        List<String> underlyingFieldIds = executionResultNode.getFieldIds();
+        assertTrue(allTransformations.size() == underlyingFieldIds.size());
+
+        List<String> newFieldIds = new ArrayList<>();
+        for (FieldTransformation fieldTransformation : allTransformations) {
+            newFieldIds.add(NodeId.getId(fieldTransformation.getOriginalField()));
+        }
+        return executionResultNode.transform((builder -> builder.fieldIds(newFieldIds)));
+    }
+
+    protected ExecutionResultNode mapToOverallFieldAndTypes(ExecutionResultNode node,
+                                                            List<FieldTransformation> allTransformations,
+                                                            NormalizedQueryField matchingNormalizedOverallField,
+                                                            UnapplyEnvironment environment) {
+        node = replaceFieldIdsWithOriginalValue(allTransformations, node);
+        node = node.transform(builder -> builder
+                .alias(matchingNormalizedOverallField.getAlias())
+                .objectType(matchingNormalizedOverallField.getObjectType())
+                .fieldDefinition(matchingNormalizedOverallField.getFieldDefinition())
+                .objectType(matchingNormalizedOverallField.getObjectType())
         );
-        return esiWithMappedField;
+        return node;
     }
 
 

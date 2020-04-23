@@ -4,6 +4,7 @@ package benchmark;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import graphql.Assert;
 import graphql.ExecutionResult;
 import graphql.nadel.Nadel;
 import graphql.nadel.NadelExecutionInput;
@@ -28,7 +29,6 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -83,16 +83,17 @@ public class LargeResponseBenchmark {
 
     @Benchmark
     @Warmup(iterations = 2)
-    @Measurement(iterations = 3)
-    @Threads(Threads.MAX)
+    @Measurement(iterations = 3, time = 10)
+    @Threads(8)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public ExecutionResult benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
         NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
-                .forkJoinPool(ForkJoinPool.commonPool())
                 .query(nadelInstance.query)
                 .build();
         ExecutionResult executionResult = nadelInstance.nadel.execute(nadelExecutionInput).get();
+        Assert.assertTrue(executionResult.getErrors().size() == 0);
+//        System.out.println("data:" +executionResult.getData());
         return executionResult;
     }
 

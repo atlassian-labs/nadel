@@ -11,6 +11,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.StrategyTestHelper
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -25,16 +26,15 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
 import graphql.schema.idl.SchemaParser
-import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ForkJoinPool
 
 import static graphql.language.AstPrinter.printAstCompact
+import static graphql.nadel.testutils.TestUtil.createNormalizedQuery
 import static graphql.nadel.testutils.TestUtil.parseQuery
 import static java.util.concurrent.CompletableFuture.completedFuture
 
-class NadelExecutionStrategyTest extends Specification {
+class NadelExecutionStrategyTest extends StrategyTestHelper {
 
     ExecutionHelper executionHelper
     def service1Execution
@@ -247,9 +247,8 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId\") {id name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
-        def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()) build()
-        def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
+
+        def executionData = createExecutionData(query, overallHydrationSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
@@ -289,9 +288,8 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId\") {name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
-        def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()) build()
-        def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
+
+        def executionData = createExecutionData(query, overallHydrationSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
@@ -331,9 +329,7 @@ class NadelExecutionStrategyTest extends Specification {
         def expectedQuery2 = "query nadel_2_service2 {barById(id:\"barId\") {name}}"
         def response2 = new ServiceExecutionResult([barById: [id: "barId", name: "Bar1"]])
 
-        def document = parseQuery(query)
-        def executionInput = ExecutionInput.newExecutionInput().query(query).context(NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).build()) build()
-        def executionData = executionHelper.createExecutionData(document, overallHydrationSchema, ExecutionId.generate(), executionInput, null)
+        def executionData = createExecutionData(query, overallHydrationSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
@@ -1170,8 +1166,12 @@ class NadelExecutionStrategyTest extends Specification {
 
     ExecutionHelper.ExecutionData createExecutionData(String query, Map<String, Object> variables, GraphQLSchema overallSchema) {
         def document = parseQuery(query)
+        def normalizedQuery = createNormalizedQuery(overallSchema, document)
 
-        def nadelContext = NadelContext.newContext().forkJoinPool(ForkJoinPool.commonPool()).artificialFieldsUUID("UUID").build()
+        def nadelContext = NadelContext.newContext()
+                .artificialFieldsUUID("UUID")
+                .normalizedOverallQuery(normalizedQuery)
+                .build()
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(query)
                 .variables(variables)
@@ -2765,5 +2765,112 @@ fragment F1 on TestingCharacter {
         resultComplexityAggregator.getNodeCountsForService("Foo") == 2
         resultComplexityAggregator.getNodeCountsForService("Bar") == 2
     }
+
+    def "Expecting one child Error on extensive field argument passed to hydration"() {
+        given:
+        def boardSchema = TestUtil.schema("""
+        type Query {
+            board(id: ID) : Board
+        }
+        type Board {
+            id: ID
+            issueChildren: [Card]
+        }
+        type Card {
+            id: ID
+            issue: Issue
+        }
+        
+        type Issue {
+            id: ID
+            assignee: TestUser
+        }
+        
+        type TestUser {
+            accountId: String
+        }
+        """)
+
+        def identitySchema = TestUtil.schema("""
+        type Query {
+            users(accountIds: [ID]): [User] 
+        }
+        type User {
+            accountId: ID
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service TestBoard {
+            type Query {
+                board(id: ID) : SoftwareBoard
+            }
+            
+            type SoftwareBoard => renamed from Board {
+                id: ID
+                cardChildren: [SoftwareCard] => renamed from issueChildren
+            }
+            
+            type SoftwareCard => renamed from Card {
+                id: ID
+                assignee: User => hydrated from Users.users(accountIds: $source.issue.assignee.accountId) object identified by accountId, batch size 3
+            }
+        }
+       
+        service Users {
+            type Query {
+                users(accountIds: [ID]): [User]
+            }
+            type User {
+                accountId: ID
+            }
+        }
+        ''')
+
+        def query = '''{
+                        board(id:1) {
+                            id 
+                            cardChildren { 
+                                assignee { 
+                                    accountId
+                                 } 
+                            }
+                        }
+                        }'''
+
+        def expectedQuery1 = "query nadel_2_TestBoard {board(id:1) {id issueChildren {issue {assignee {accountId}}}}}"
+        def data1 = [board: [id: "1", issueChildren: [[issue: [assignee: [accountId: "1"]]], [issue: [assignee: [accountId: "2"]]], [issue: [assignee: [accountId: "3"]]]]]]
+        def response1 = new ServiceExecutionResult(data1)
+
+        def expectedQuery2 = "query nadel_2_Users {users(accountIds:[\"1\",\"2\",\"3\"]) {accountId object_identifier__UUID:accountId}}"
+        def response2 = new ServiceExecutionResult([users: [[accountId: "1", object_identifier__UUID: "1"], [accountId: "2", object_identifier__UUID: "2"], [accountId: "3", object_identifier__UUID: "3"]]])
+
+        def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("board")
+        def service1 = new Service("TestBoard", boardSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service("Users", identitySchema, service2Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        then:
+        1 * service2Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        resultData(response) == [board: [id: "1", cardChildren: [[assignee: [accountId: "1"]], [assignee: [accountId: "2"]], [assignee: [accountId: "3"]]]]]
+
+    }
+
 
 }

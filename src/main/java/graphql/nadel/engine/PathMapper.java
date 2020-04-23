@@ -1,19 +1,15 @@
 package graphql.nadel.engine;
 
 import graphql.execution.ExecutionPath;
-import graphql.execution.ExecutionStepInfo;
-import graphql.execution.MergedField;
 import graphql.nadel.util.FpKit;
 
 import java.util.List;
 
 public class PathMapper {
 
-    public ExecutionPath mapPath(ExecutionStepInfo executionStepInfo, MergedField mergedField, UnapplyEnvironment environment) {
-        List<Object> fieldSegments = patchLastFieldName(executionStepInfo, mergedField);
+    public ExecutionPath mapPath(ExecutionPath executionPath, String resultKey, UnapplyEnvironment environment) {
+        List<Object> fieldSegments = patchLastFieldName(executionPath, resultKey);
 
-        ExecutionStepInfo parentExecutionStepInfo = environment.parentExecutionStepInfo;
-        ExecutionPath parentPath = parentExecutionStepInfo.getPath();
         if (environment.isHydrationTransformation) {
             //
             // Normally the parent path is all ok and hence there is nothing to add
@@ -25,19 +21,17 @@ public class PathMapper {
             if (environment.batched) {
                 fieldSegments.remove(0);
             }
-            fieldSegments = FpKit.concat(parentPath.toList(), fieldSegments);
+            fieldSegments = FpKit.concat(environment.parentNode.getExecutionPath().toList(), fieldSegments);
         }
         return ExecutionPath.fromList(fieldSegments);
     }
 
-    private List<Object> patchLastFieldName(ExecutionStepInfo fieldStepInfo, MergedField mergedField) {
-        String fieldName = mergedField.getName();
-        ExecutionPath fieldPath = fieldStepInfo.getPath();
-        List<Object> fieldSegments = fieldPath.toList();
+    private List<Object> patchLastFieldName(ExecutionPath executionPath, String resultKey) {
+        List<Object> fieldSegments = executionPath.toList();
         for (int i = fieldSegments.size() - 1; i >= 0; i--) {
             Object segment = fieldSegments.get(i);
             if (segment instanceof String) {
-                fieldSegments.set(i, fieldName);
+                fieldSegments.set(i, resultKey);
                 break;
             }
         }

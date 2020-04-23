@@ -1,12 +1,13 @@
 package graphql.nadel.engine.transformation;
 
-import graphql.execution.ExecutionStepInfo;
+import graphql.execution.ExecutionPath;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.FieldMappingDefinition;
-import graphql.nadel.engine.ExecutionStepInfoMapper;
 import graphql.nadel.engine.FieldMetadataUtil;
+import graphql.nadel.engine.PathMapper;
 import graphql.nadel.engine.UnapplyEnvironment;
+import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.ListExecutionResultNode;
 import graphql.util.TraversalControl;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.nadel.engine.FieldMetadataUtil.addFieldMetadata;
-import static graphql.nadel.engine.transformation.FieldUtils.addFieldIdToChildren;
+import static graphql.nadel.engine.transformation.FieldUtils.addTransformationIdToChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.getSubTree;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
@@ -23,7 +24,7 @@ import static graphql.util.TreeTransformerUtil.changeNode;
 
 public class FieldRenameTransformation extends FieldTransformation {
 
-    ExecutionStepInfoMapper executionStepInfoMapper = new ExecutionStepInfoMapper();
+    PathMapper pathMapper = new PathMapper();
     private final FieldMappingDefinition mappingDefinition;
 
     public FieldRenameTransformation(FieldMappingDefinition mappingDefinition) {
@@ -40,13 +41,13 @@ public class FieldRenameTransformation extends FieldTransformation {
     public ApplyResult apply(ApplyEnvironment environment) {
         setEnvironment(environment);
         List<String> path = mappingDefinition.getInputPath();
-        List<String> existingIds = FieldMetadataUtil.getFieldIds(environment.getField());
+        List<String> existingIds = FieldMetadataUtil.getTransformationIds(environment.getField(), environment.getMetadataByFieldId());
         Field changedNode = environment.getField().transform(builder -> builder.name(mappingDefinition.getInputPath().get(0)));
-        changedNode = addFieldMetadata(changedNode, getFieldId(), true);
-        Field fieldWithIds = addFieldIdToChildren(environment.getField(), getFieldId());
-        SelectionSet selectionSetWithIds = fieldWithIds.getSelectionSet();
+        addFieldMetadata(changedNode, getTransformationId(), true, environment.getMetadataByFieldId());
+        addTransformationIdToChildren(environment.getField(), environment.getFragmentDefinitionMap(), getTransformationId(), environment.getMetadataByFieldId());
+        SelectionSet selectionSetWithIds = changedNode.getSelectionSet();
         if (path.size() > 1) {
-            Field firstChildField = pathToFields(path.subList(1, path.size()), getFieldId(), existingIds, false, selectionSetWithIds);
+            Field firstChildField = pathToFields(path.subList(1, path.size()), environment.getField(), getTransformationId(), existingIds, false, selectionSetWithIds, environment.getMetadataByFieldId());
             changedNode = changedNode.transform(builder -> builder.selectionSet(newSelectionSet().selection(firstChildField).build()));
         } else {
             changedNode = changedNode.transform(builder -> builder.selectionSet(selectionSetWithIds));
@@ -60,27 +61,30 @@ public class FieldRenameTransformation extends FieldTransformation {
     public UnapplyResult unapplyResultNode(ExecutionResultNode executionResultNode,
                                            List<FieldTransformation> allTransformations,
                                            UnapplyEnvironment environment) {
-        ExecutionResultNode subTree = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
-        ExecutionStepInfo esi = subTree.getExecutionStepInfo();
 
-        esi = replaceFieldsAndTypesWithOriginalValues(allTransformations, esi, environment.parentExecutionStepInfo);
-        esi = executionStepInfoMapper.mapExecutionStepInfo(esi, environment);
-        ExecutionResultNode resultNode = subTree.withNewExecutionStepInfo(esi);
+        NormalizedQueryField matchingNormalizedOverallField = getMatchingNormalizedQueryFieldBasedOnParent(environment.parentNode);
+        // the result tree should be in terms of the overall schema
+        ExecutionResultNode resultNode = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
 
-        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, environment);
+        resultNode = mapToOverallFieldAndTypes(resultNode, allTransformations, matchingNormalizedOverallField, environment);
+        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, matchingNormalizedOverallField, environment);
+        ExecutionPath mappedPath = pathMapper.mapPath(executionResultNode.getExecutionPath(), resultNode.getResultKey(), environment);
+        resultNode = resultNode.transform(builder -> builder.executionPath(mappedPath));
 
         return new UnapplyResult(resultNode, TraversalControl.CONTINUE);
     }
 
     private ExecutionResultNode replaceFieldsAndTypesInsideList(ExecutionResultNode node,
                                                                 List<FieldTransformation> allTransformations,
+                                                                NormalizedQueryField normalizedQueryField,
                                                                 UnapplyEnvironment environment) {
 
         if (node instanceof ListExecutionResultNode) {
             return mapChildren(node, child -> {
-                ExecutionStepInfo newEsi = replaceFieldsAndTypesWithOriginalValues(allTransformations, child.getExecutionStepInfo(), environment.parentExecutionStepInfo);
-                return replaceFieldsAndTypesInsideList(child.withNewExecutionStepInfo(newEsi),
+                ExecutionResultNode newChild = mapToOverallFieldAndTypes(child, allTransformations, normalizedQueryField, environment);
+                return replaceFieldsAndTypesInsideList(newChild,
                         allTransformations,
+                        normalizedQueryField,
                         environment);
             });
         }

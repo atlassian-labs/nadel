@@ -296,6 +296,102 @@ class NadelE2ETest extends Specification {
         result.join().data == [foos: [[bar: [name: "Bar 1", nestedBar: [name: "NestedBarName1", nestedBar: [name: "NestedBarName2"]]]], [bar: [name: "Bar 2", nestedBar: null]], [bar: [name: "Bar 3", nestedBar: null]]]]
     }
 
+    def "query with three nested hydrations and simple data"() {
+
+        def nsdl = '''
+         service Foo {
+            type Query{
+                foos: [Foo]  
+            } 
+            type Foo {
+                name: String
+                bar: Bar => hydrated from Bar.barsById(id: $source.barId) object identified by barId, batch size 2
+            }
+         }
+         service Bar {
+            type Query{
+                bar: Bar 
+            } 
+            type Bar {
+                barId: ID
+                name: String 
+                nestedBar: Bar => hydrated from Bar.barsById(id: $source.nestedBarId) object identified by barId
+            }
+         }
+        '''
+        def underlyingSchema1 = typeDefinitions('''
+            type Query{
+                foos: [Foo]  
+            } 
+            type Foo {
+                name: String
+                barId: ID
+            }
+        ''')
+        def underlyingSchema2 = typeDefinitions('''
+            type Query{
+                bar: Bar 
+                barsById(id: [ID]): [Bar]
+            } 
+            type Bar {
+                barId: ID
+                name: String
+                nestedBarId: ID
+            }
+        ''')
+
+        def query = '''
+                { foos { bar { name nestedBar {name nestedBar { name } } } } }
+        '''
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                Foo: new Tuple2(serviceExecution1, underlyingSchema1),
+                Bar: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        def topLevelData = [foos: [[barId: "bar1"]]]
+        def hydrationDataBatch1 = [barsById: [[object_identifier__UUID: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"]]]
+        def hydrationData2 = [barsById: [[object_identifier__UUID: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
+        def hydrationData3 = [barsById: [[object_identifier__UUID: "nestedBarId456", name: "NestedBarName2"]]]
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
+        ServiceExecutionResult hydrationResult1_1 = new ServiceExecutionResult(hydrationDataBatch1)
+        ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)
+        ServiceExecutionResult hydrationResult3 = new ServiceExecutionResult(hydrationData3)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >>
+
+                completedFuture(topLevelResult)
+
+        1 * serviceExecution2.execute(_) >>
+
+                completedFuture(hydrationResult1_1)
+
+        1 * serviceExecution2.execute(_) >>
+
+                completedFuture(hydrationResult2)
+
+        1 * serviceExecution2.execute(_) >>
+
+                completedFuture(hydrationResult3)
+
+        result.join().data == [foos: [[bar: [name: "Bar 1", nestedBar: [name: "NestedBarName1", nestedBar: [name: "NestedBarName2"]]]]]]
+    }
+
     def 'mutation can be executed'() {
 
         def query = '''
