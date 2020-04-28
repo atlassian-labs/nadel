@@ -1,14 +1,20 @@
-# WARNING: STILL WIP AND NOT RELEASED YET
+# Nadel: A distributed GraphQL engine
 
-# Nadel: A GraphQL DSL and execution engine for distributed schemas
+Nadel is a Java library to combine several graphql services together.
+This is achieved by combining several underlying GraphQL services (schemas) into one schema (overall schema).
 
-This is a Java library to combine several graphql services together.
+The main purpose of this library is to power a GraphQL gateway which serves as the entry point for executing requests across different
+services while presenting one GraphQL API.   
+
+![Nadel GraphQL Gateway](docs/nadel-graphql-gateway.png)
+
 
 This is achieved by declaring the services, which should be combined, in a DSL which 
 is build on top of the GraphQL SDL (Schema Definition Language). 
 
 While this library is in Java, the underlying services only need to provide a standard
-GraphQL API and no Java Code is needed to combine services together. It is all done declarative as part of the DSL.
+GraphQL API and no Java Code is required to combine services together. 
+It is all done declarative as part of the DSL.
 
 
 ## Example:
@@ -29,7 +35,7 @@ type Issue {
 And this is the Users service:
 ```graphql
 type Query {
-    usersById(id: [ID]): [User]
+    users(ids: [ID]): [User]
 }
 type User {
     id: ID
@@ -45,17 +51,17 @@ service Issues {
     }
     type Issue {
         id: ID
-        authors: [User] => hydrated from Users.usersById(id: $source.authorIds) batch size 10
+        authors: [User] => hydrated from Users.usersById(id: $source.authorIds) object identified by id, batch size 10
     }
 }
 
 service Users {
     type Query {
-        usersById(id: [ID]): [User]
+        users(ids: [ID]): [User]
     }
     type User {
         id: ID
-        name: String => renamed from $source.fullName
+        name: String => renamed from fullName
     }
 }
 ```
@@ -65,7 +71,7 @@ The result is a new GraphQL API which combines the two services in one and has t
 ```graphql
 type Query {
     issues: [Issue]
-    usersById(id: [ID]): [User]
+    users(ids: [ID]): [User]
 }       
 type Issue {
     id: ID
@@ -84,4 +90,7 @@ type User {
 - Field rename: renaming field from the underlying schema to a new name in the overall schema
 - Type rename: renaming a type from the underlying schema to a new name in the overall schema
 - Batching: Hydration calls are automatically batched with a configurable max batch size per call  
+
+
+## Getting started
 

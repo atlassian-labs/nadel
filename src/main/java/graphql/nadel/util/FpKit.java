@@ -1,5 +1,7 @@
 package graphql.nadel.util;
 
+import graphql.Internal;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -15,6 +17,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
+@Internal
 public class FpKit {
 
     public static <T> Map<String, T> getByName(List<T> namedObjects, Function<T, String> nameFn) {

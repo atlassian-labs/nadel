@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.Assert;
+import graphql.Internal;
 import graphql.execution.ExecutionPath;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 import static graphql.Assert.assertTrue;
 import static java.util.UUID.randomUUID;
 
+@Internal
 public abstract class FieldTransformation {
 
 

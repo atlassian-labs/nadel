@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.Internal;
 import graphql.language.Field;
 import graphql.language.FragmentDefinition;
 import graphql.language.Node;
@@ -11,6 +12,7 @@ import graphql.util.TraverserContext;
 import java.util.List;
 import java.util.Map;
 
+@Internal
 public class ApplyEnvironment {
     private final Field field;
     private final GraphQLFieldDefinition fieldDefinitionOverall;

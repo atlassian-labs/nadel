@@ -3,6 +3,7 @@ package graphql.nadel.util;
 import graphql.ErrorType;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
+import graphql.Internal;
 import graphql.language.SourceLocation;
 
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * A helper class that can to deal with graphql errors
  */
+@Internal
 public class ErrorUtil {
 
     public static List<GraphQLError> createGraphQlErrorsFromRawErrors(List<Map<String, Object>> errors) {

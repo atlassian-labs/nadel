@@ -1,5 +1,8 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.Internal;
+
+@Internal
 public class FieldMetadata {
     private final String transformationId;
     private final boolean rootOfTransformation;

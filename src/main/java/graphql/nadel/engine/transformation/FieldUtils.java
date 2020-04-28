@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.Internal;
 import graphql.language.Field;
 import graphql.language.FragmentDefinition;
 import graphql.language.FragmentSpread;
@@ -27,6 +28,7 @@ import static graphql.Assert.assertTrue;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.nadel.util.FpKit.map;
 
+@Internal
 public final class FieldUtils {
 
     /**

@@ -22,7 +22,7 @@ public class ExtendedFieldDefinition extends FieldDefinition {
 
     private final FieldTransformation fieldTransformation;
 
-    private Integer defaultBatchSize;
+    private final Integer defaultBatchSize;
 
     protected ExtendedFieldDefinition(String name,
                                       Type type,
