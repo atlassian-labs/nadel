@@ -1,6 +1,7 @@
 package graphql.nadel;
 
 import graphql.ExecutionInput;
+import graphql.Internal;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionStepInfo;
@@ -23,6 +24,7 @@ import graphql.schema.GraphQLSchema;
 import java.util.List;
 import java.util.Map;
 
+@Internal
 public class BenchmarkContext {
 
     public static class ServiceResultNodesToOverallResultArgs {

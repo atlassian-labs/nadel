@@ -1,10 +1,12 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 
 import java.util.Map;
 
+@Internal
 public class UnapplyEnvironment {
 
 

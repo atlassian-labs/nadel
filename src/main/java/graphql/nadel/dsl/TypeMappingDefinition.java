@@ -1,5 +1,6 @@
 package graphql.nadel.dsl;
 
+import graphql.Internal;
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
 import graphql.language.IgnoredChars;
@@ -13,6 +14,7 @@ import graphql.util.TraverserContext;
 import java.util.List;
 import java.util.Map;
 
+@Internal
 public class TypeMappingDefinition extends AbstractNode<TypeMappingDefinition> {
 
     private String underlyingName;

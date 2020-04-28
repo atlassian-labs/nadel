@@ -1,5 +1,6 @@
 package graphql.nadel.result;
 
+import graphql.Internal;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.schema.GraphQLObjectType;
 
@@ -7,6 +8,7 @@ import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
 
+@Internal
 public class UnresolvedObjectResultNode extends ObjectExecutionResultNode {
 
     private final NormalizedQueryField normalizedField;

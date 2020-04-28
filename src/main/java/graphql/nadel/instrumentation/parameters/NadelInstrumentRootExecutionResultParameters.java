@@ -1,11 +1,13 @@
 package graphql.nadel.instrumentation.parameters;
 
+import graphql.PublicApi;
 import graphql.execution.ExecutionContext;
 import graphql.execution.instrumentation.InstrumentationState;
 
 /**
  * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
  */
+@PublicApi
 public class NadelInstrumentRootExecutionResultParameters {
 
     private final ExecutionContext executionContext;

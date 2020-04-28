@@ -1,6 +1,7 @@
 package graphql.nadel.instrumentation.parameters;
 
 import graphql.ExecutionInput;
+import graphql.PublicApi;
 import graphql.execution.instrumentation.InstrumentationState;
 import graphql.language.Document;
 import graphql.schema.GraphQLSchema;
@@ -8,6 +9,7 @@ import graphql.schema.GraphQLSchema;
 /**
  * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
  */
+@PublicApi
 public class NadelNadelInstrumentationQueryValidationParameters extends NadelInstrumentationQueryExecutionParameters {
     private final Document document;
 

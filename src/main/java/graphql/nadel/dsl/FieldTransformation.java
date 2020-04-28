@@ -1,5 +1,6 @@
 package graphql.nadel.dsl;
 
+import graphql.Internal;
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
 import graphql.language.IgnoredChars;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Internal
 public class FieldTransformation extends AbstractNode<FieldTransformation> {
 
     private final FieldMappingDefinition fieldMappingDefinition;

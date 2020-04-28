@@ -1,6 +1,7 @@
 package graphql.nadel.instrumentation.parameters;
 
 
+import graphql.PublicApi;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.instrumentation.InstrumentationState;
@@ -9,6 +10,7 @@ import graphql.execution.instrumentation.InstrumentationState;
  * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
  */
 @SuppressWarnings("TypeParameterUnusedInFormals")
+@PublicApi
 public class NadelInstrumentationFetchFieldParameters {
     private final ExecutionContext executionContext;
     private final ExecutionStepInfo executionStepInfo;

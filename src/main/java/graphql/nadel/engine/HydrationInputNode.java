@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
@@ -9,11 +10,11 @@ import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
 
+@Internal
 public class HydrationInputNode extends LeafExecutionResultNode {
 
     private final HydrationTransformation hydrationTransformation;
     private final NormalizedQueryField normalizedField;
-
 
 
     private HydrationInputNode(Builder builder) {

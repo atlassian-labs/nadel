@@ -2,6 +2,7 @@ package graphql.nadel.instrumentation;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import graphql.PublicApi;
 import graphql.execution.instrumentation.DocumentAndVariables;
 import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
@@ -34,6 +35,7 @@ import static graphql.execution.instrumentation.SimpleInstrumentationContext.noO
  * operations such as fetching data and resolving it into objects.
  */
 @SuppressWarnings("unused")
+@PublicApi
 public interface NadelInstrumentation {
 
     /**

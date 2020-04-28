@@ -1,5 +1,6 @@
 package graphql.nadel.schema;
 
+import graphql.Internal;
 import graphql.nadel.engine.NadelContext;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetcherFactory;
@@ -22,6 +23,7 @@ import static graphql.Assert.assertTrue;
 /**
  * This underlying wiring factory has special type resolver support that is needed by Nadel.
  */
+@Internal
 public class UnderlyingWiringFactory implements WiringFactory {
 
     private final WiringFactory delegateWiringFactory;

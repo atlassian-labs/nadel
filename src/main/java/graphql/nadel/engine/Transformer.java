@@ -1,6 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.GraphQLError;
+import graphql.Internal;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ValuesResolver;
 import graphql.introspection.Introspection;
@@ -69,6 +70,7 @@ import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
 
+@Internal
 public class Transformer extends NodeVisitorStub {
 
     private final ValuesResolver valuesResolver = new ValuesResolver();

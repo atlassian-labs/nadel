@@ -1,5 +1,6 @@
 package graphql.nadel.schema;
 
+import graphql.Internal;
 import graphql.schema.Coercing;
 import graphql.schema.CoercingParseLiteralException;
 import graphql.schema.CoercingParseValueException;
@@ -20,6 +21,7 @@ import static graphql.Assert.assertShouldNeverHappen;
  * This wiring factory is designed to be NEVER called and will assert if it ever is.  Nadel
  * uses this for the overall schema and also in part for the underlying schema by default.
  */
+@Internal
 public class NeverWiringFactory implements WiringFactory {
     @Override
     public boolean providesScalar(ScalarWiringEnvironment environment) {

@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.execution.ExecutionContext;
 import graphql.execution.MergedField;
 import graphql.language.AstNodeAdapter;
@@ -46,6 +47,7 @@ import static graphql.nadel.util.FpKit.map;
 import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
 import static graphql.util.FpKit.groupingByUniqueKey;
 
+@Internal
 public class OverallQueryTransformer {
 
     private static final Logger log = LoggerFactory.getLogger(OverallQueryTransformer.class);

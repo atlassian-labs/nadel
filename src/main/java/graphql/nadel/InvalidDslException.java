@@ -1,7 +1,9 @@
 package graphql.nadel;
 
+import graphql.Internal;
 import graphql.language.SourceLocation;
 
+@Internal
 public class InvalidDslException extends RuntimeException {
     private final SourceLocation location;
 

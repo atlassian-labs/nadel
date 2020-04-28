@@ -1,10 +1,12 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.execution.ExecutionPath;
 import graphql.nadel.util.FpKit;
 
 import java.util.List;
 
+@Internal
 public class PathMapper {
 
     public ExecutionPath mapPath(ExecutionPath executionPath, String resultKey, UnapplyEnvironment environment) {

@@ -1,6 +1,7 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.GraphQLError;
+import graphql.Internal;
 import graphql.nadel.normalized.NormalizedQueryField;
 
 import java.util.ArrayList;
@@ -8,11 +9,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Internal
 public class TransformationMetadata {
 
-    private List<NormalizedFieldAndError> removedFields = new ArrayList<>();
+    private final List<NormalizedFieldAndError> removedFields = new ArrayList<>();
 
-    private Map<String, List<FieldMetadata>> metadataByFieldId = new LinkedHashMap<>();
+    private final Map<String, List<FieldMetadata>> metadataByFieldId = new LinkedHashMap<>();
 
     public static class NormalizedFieldAndError {
         private final NormalizedQueryField normalizedField;

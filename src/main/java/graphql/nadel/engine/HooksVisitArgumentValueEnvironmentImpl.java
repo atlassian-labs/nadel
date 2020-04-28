@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.language.Value;
 import graphql.nadel.Service;
 import graphql.schema.GraphQLArgument;
@@ -8,6 +9,7 @@ import graphql.util.TraverserContext;
 
 import java.util.Map;
 
+@Internal
 public class HooksVisitArgumentValueEnvironmentImpl implements HooksVisitArgumentValueEnvironment {
 
     private final GraphQLInputValueDefinition underlyingInputValueDefinition;
