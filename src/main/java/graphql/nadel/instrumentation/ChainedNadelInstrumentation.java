@@ -11,11 +11,9 @@ import graphql.nadel.ServiceExecution;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
-import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.validation.ValidationError;
 
@@ -99,16 +97,6 @@ public class ChainedNadelInstrumentation implements NadelInstrumentation {
                 .collect(toList()));
     }
 
-
-    @Override
-    public InstrumentationContext<ExecutionResultNode> beginFieldFetch(NadelInstrumentationFetchFieldParameters parameters) {
-        return new ChainedInstrumentationContext<>(instrumentations.stream()
-                .map(instrumentation -> {
-                    InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
-                    return instrumentation.beginFieldFetch(parameters.withNewState(state));
-                })
-                .collect(toList()));
-    }
 
     @Override
     public ExecutionInput instrumentExecutionInput(ExecutionInput executionInput, NadelInstrumentationQueryExecutionParameters parameters) {
