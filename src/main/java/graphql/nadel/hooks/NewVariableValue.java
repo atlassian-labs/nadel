@@ -1,5 +1,8 @@
 package graphql.nadel.hooks;
 
+import graphql.PublicApi;
+
+@PublicApi
 public class NewVariableValue {
 
     private final String name;

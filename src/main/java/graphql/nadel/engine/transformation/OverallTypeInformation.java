@@ -1,9 +1,11 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.Internal;
 import graphql.language.Node;
 
 import java.util.Map;
 
+@Internal
 public class OverallTypeInformation<T extends Node> {
     private final Map<String, OverallTypeInfo> overallInfoById;
 

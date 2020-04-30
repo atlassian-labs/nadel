@@ -1,6 +1,7 @@
 package graphql.nadel.dsl;
 
 import graphql.Assert;
+import graphql.Internal;
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
 import graphql.language.IgnoredChars;
@@ -18,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Internal
 public class CommonDefinition extends AbstractNode<CommonDefinition> {
 
     private List<SDLDefinition> typeDefinitions;

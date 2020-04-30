@@ -3,6 +3,7 @@ package graphql.nadel.result;
 import graphql.ErrorType;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorHelper;
+import graphql.PublicApi;
 import graphql.execution.ExecutionPath;
 import graphql.language.SourceLocation;
 import graphql.schema.GraphQLNonNull;
@@ -15,9 +16,8 @@ import static graphql.schema.GraphQLTypeUtil.simplePrint;
 
 /**
  * This is the base error that indicates that a non null field value was in fact null.
- *
- * @see graphql.execution.NonNullableFieldWasNullException for details
  */
+@PublicApi
 public class NonNullableFieldWasNullError implements GraphQLError {
 
     private final String message;

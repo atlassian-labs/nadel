@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.execution.MergedField;
 import graphql.language.Document;
 import graphql.language.FragmentDefinition;
@@ -10,6 +11,7 @@ import graphql.nadel.engine.transformation.TransformationMetadata;
 import java.util.List;
 import java.util.Map;
 
+@Internal
 public class QueryTransformationResult {
 
     private final Document document;

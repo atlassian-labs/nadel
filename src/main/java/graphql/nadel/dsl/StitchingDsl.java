@@ -1,6 +1,7 @@
 package graphql.nadel.dsl;
 
 
+import graphql.Internal;
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
 import graphql.language.IgnoredChars;
@@ -19,6 +20,7 @@ import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
 
+@Internal
 public class StitchingDsl extends AbstractNode<StitchingDsl> {
 
 

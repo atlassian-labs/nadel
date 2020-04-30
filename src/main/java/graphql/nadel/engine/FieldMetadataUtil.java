@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.language.Field;
 import graphql.nadel.engine.transformation.FieldMetadata;
 
@@ -14,6 +15,7 @@ import static graphql.nadel.util.FpKit.filter;
 import static graphql.nadel.util.FpKit.filterAndMap;
 import static graphql.nadel.util.FpKit.map;
 
+@Internal
 public class FieldMetadataUtil {
 
 

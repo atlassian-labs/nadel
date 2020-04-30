@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
@@ -15,6 +16,7 @@ import static graphql.language.Field.newField;
 /**
  * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side
  */
+@Internal
 public class ArtificialFieldUtils {
 
     private static final String UNDERSCORE_TYPENAME = Introspection.TypeNameMetaFieldDef.getName();

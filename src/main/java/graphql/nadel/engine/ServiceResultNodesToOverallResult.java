@@ -1,6 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.GraphQLError;
+import graphql.Internal;
 import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionPath;
 import graphql.execution.MergedField;
@@ -47,10 +48,10 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 
+@Internal
 public class ServiceResultNodesToOverallResult {
 
     ExecutionResultNodeMapper executionResultNodeMapper = new ExecutionResultNodeMapper();
-    PathMapper pathMapper = new PathMapper();
 
     ResolvedValueMapper resolvedValueMapper = new ResolvedValueMapper();
 

@@ -1,8 +1,10 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.introspection.Introspection;
 import graphql.nadel.result.ExecutionResultNode;
 
+@Internal
 public class ResolvedValueMapper {
 
     private static final String UNDERSCORE_TYPENAME = Introspection.TypeNameMetaFieldDef.getName();

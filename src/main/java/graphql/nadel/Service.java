@@ -12,7 +12,7 @@ public class Service {
     // this is not enough in the future as we need to allow for dynamic delegationExecution
     private final ServiceExecution serviceExecution;
     private final ServiceDefinition serviceDefinition;
-    private DefinitionRegistry definitionRegistry;
+    private final DefinitionRegistry definitionRegistry;
 
 
     public Service(String name,

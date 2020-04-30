@@ -1,5 +1,6 @@
 package graphql.nadel;
 
+import graphql.Internal;
 import graphql.language.NodeBuilder;
 import graphql.nadel.dsl.NodeId;
 import graphql.parser.GraphqlAntlrToLanguage;
@@ -14,6 +15,7 @@ import java.util.Map;
 /**
  * Special Parser which adds an ID to every node
  */
+@Internal
 public class NadelGraphQLParser extends Parser {
 
     @Override

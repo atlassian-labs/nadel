@@ -1,6 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.Assert;
+import graphql.Internal;
 import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.nadel.Operation;
@@ -29,6 +30,7 @@ import static graphql.nadel.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static graphql.util.FpKit.groupingBy;
 import static graphql.util.FpKit.mapEntries;
 
+@Internal
 public class StrategyUtil {
 
     public static List<NodeMultiZipper<ExecutionResultNode>> groupNodesIntoBatchesByField(Collection<NodeZipper<ExecutionResultNode>> nodes, ExecutionResultNode root) {

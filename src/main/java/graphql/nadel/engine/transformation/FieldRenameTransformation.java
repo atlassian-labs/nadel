@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.Internal;
 import graphql.execution.ExecutionPath;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
@@ -22,6 +23,7 @@ import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.engine.transformation.FieldUtils.pathToFields;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
+@Internal
 public class FieldRenameTransformation extends FieldTransformation {
 
     PathMapper pathMapper = new PathMapper();

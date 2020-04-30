@@ -1,5 +1,6 @@
 package graphql.nadel.dsl;
 
+import graphql.Internal;
 import graphql.execution.MergedField;
 import graphql.language.Node;
 
@@ -9,6 +10,7 @@ import java.util.List;
 import static graphql.Assert.assertNotNull;
 import static graphql.nadel.util.FpKit.map;
 
+@Internal
 public class NodeId {
     /**
      * Every AST node is given an id as additional data

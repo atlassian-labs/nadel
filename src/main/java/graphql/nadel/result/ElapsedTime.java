@@ -1,9 +1,12 @@
 package graphql.nadel.result;
 
 
+import graphql.Internal;
+
 import java.time.Duration;
 import java.time.OffsetDateTime;
 
+@Internal
 public class ElapsedTime {
 
     private final OffsetDateTime startTime;

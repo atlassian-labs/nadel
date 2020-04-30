@@ -1,6 +1,7 @@
 package graphql.nadel.dsl;
 
 import graphql.Assert;
+import graphql.Internal;
 import graphql.language.Comment;
 import graphql.language.Description;
 import graphql.language.Directive;
@@ -15,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Internal
 public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;

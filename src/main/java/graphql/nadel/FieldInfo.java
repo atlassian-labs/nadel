@@ -1,7 +1,9 @@
 package graphql.nadel;
 
+import graphql.Internal;
 import graphql.schema.GraphQLFieldDefinition;
 
+@Internal
 public class FieldInfo {
 
     public enum FieldKind {

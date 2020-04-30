@@ -2,6 +2,7 @@ package graphql.nadel.introspection;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import graphql.PublicSpi;
 import graphql.execution.ExecutionContext;
 import graphql.execution.nextgen.FieldSubSelection;
 
@@ -13,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * Implementations of this interface are responsible for identifying introspection queries and then running them.
  */
+@PublicSpi
 public interface IntrospectionRunner {
 
     /**

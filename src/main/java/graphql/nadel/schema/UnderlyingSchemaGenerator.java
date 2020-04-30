@@ -1,5 +1,6 @@
 package graphql.nadel.schema;
 
+import graphql.Internal;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
@@ -9,6 +10,7 @@ import graphql.schema.idl.errors.SchemaProblem;
 
 import static java.lang.String.format;
 
+@Internal
 public class UnderlyingSchemaGenerator {
 
     public GraphQLSchema buildUnderlyingSchema(String serviceName, TypeDefinitionRegistry underlyingTypeDefinitions, WiringFactory wiringFactory) throws ServiceSchemaProblem {

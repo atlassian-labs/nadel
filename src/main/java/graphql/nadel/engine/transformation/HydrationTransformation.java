@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.Internal;
 import graphql.execution.ExecutionPath;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
@@ -30,6 +31,7 @@ import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.util.FpKit.filter;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
+@Internal
 public class HydrationTransformation extends FieldTransformation {
 
 

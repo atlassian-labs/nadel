@@ -1,5 +1,6 @@
 package graphql.nadel.schema;
 
+import graphql.Internal;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
 
+@Internal
 public class OverallSchemaGenerator {
 
 

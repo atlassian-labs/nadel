@@ -1,5 +1,6 @@
 package graphql.nadel;
 
+import graphql.Internal;
 import graphql.language.OperationDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
@@ -7,6 +8,7 @@ import graphql.schema.GraphQLSchema;
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
 
+@Internal
 public enum Operation {
     QUERY("query", "Query", OperationDefinition.Operation.QUERY),
     MUTATION("mutation", "Mutation", OperationDefinition.Operation.MUTATION),

@@ -1,5 +1,6 @@
 package graphql.nadel.dsl;
 
+import graphql.Internal;
 import graphql.language.AbstractNode;
 import graphql.language.IgnoredChars;
 import graphql.language.Node;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 import static java.util.Collections.emptyList;
 
+@Internal
 public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinition> {
 
     private final String name;

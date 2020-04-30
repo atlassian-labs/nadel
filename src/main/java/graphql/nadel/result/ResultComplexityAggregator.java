@@ -1,8 +1,12 @@
 package graphql.nadel.result;
 
+import graphql.Internal;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+
+@Internal
 public class ResultComplexityAggregator {
     private int totalNodeCount = 0;
     private Map<String, Integer> serviceNodeCounts = new LinkedHashMap<>();
@@ -20,7 +24,7 @@ public class ResultComplexityAggregator {
     }
 
     public void incrementServiceNodeCount(String serviceFieldName, int nodeCount) {
-        serviceNodeCounts.compute(serviceFieldName, (k,v) -> (v == null) ? nodeCount : v + nodeCount);
+        serviceNodeCounts.compute(serviceFieldName, (k, v) -> (v == null) ? nodeCount : v + nodeCount);
         totalNodeCount += nodeCount;
     }
 
@@ -32,7 +36,6 @@ public class ResultComplexityAggregator {
 
         return resultComplexityMap;
     }
-
 
 
     @Override

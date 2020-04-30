@@ -4,6 +4,7 @@ import graphql.Assert;
 import graphql.ErrorType;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
+import graphql.Internal;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
@@ -38,6 +39,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+@Internal
 public class ServiceExecutor {
 
     private final Logger log = LoggerFactory.getLogger(ServiceExecutor.class);

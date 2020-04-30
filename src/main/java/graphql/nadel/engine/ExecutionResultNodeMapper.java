@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.execution.ExecutionPath;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.schema.GraphQLCompositeType;
@@ -15,6 +16,7 @@ import static graphql.introspection.Introspection.SchemaMetaFieldDef;
 import static graphql.introspection.Introspection.TypeMetaFieldDef;
 import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 
+@Internal
 public class ExecutionResultNodeMapper {
 
     private PathMapper pathMapper = new PathMapper();

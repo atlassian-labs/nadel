@@ -1,5 +1,6 @@
 package graphql.nadel.engine.transformation;
 
+import graphql.Internal;
 import graphql.language.Argument;
 import graphql.language.Field;
 import graphql.language.FragmentDefinition;
@@ -32,6 +33,7 @@ import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 /**
  * Traverses a query and saves type information while doing it.
  */
+@Internal
 public class RecordOverallTypeInformation {
 
 

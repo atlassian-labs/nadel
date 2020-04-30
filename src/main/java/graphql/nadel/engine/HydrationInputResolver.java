@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
@@ -60,6 +61,7 @@ import static graphql.schema.GraphQLTypeUtil.unwrapNonNull;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
+@Internal
 public class HydrationInputResolver {
 
     private final OverallQueryTransformer queryTransformer = new OverallQueryTransformer();
@@ -87,7 +89,6 @@ public class HydrationInputResolver {
                                                                             ExecutionResultNode node,
                                                                             Map<Service, Object> serviceContexts,
                                                                             ResultComplexityAggregator resultComplexityAggregator) {
-        NadelContext nadelContext = (NadelContext) context.getContext();
         Set<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(node);
         if (hydrationInputZippers.size() == 0) {
             return CompletableFuture.completedFuture(node);
@@ -234,7 +235,6 @@ public class HydrationInputResolver {
                         service,
                         serviceContexts.get(service)
                 );
-
 
 
         CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor

@@ -7,6 +7,7 @@ import graphql.ExecutionResultImpl;
 import graphql.GraphQL;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
+import graphql.Internal;
 import graphql.execution.ExecutionContext;
 import graphql.execution.nextgen.FieldSubSelection;
 
@@ -17,6 +18,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
+@Internal
 public class DefaultIntrospectionRunner implements IntrospectionRunner {
 
     private enum Errors implements ErrorClassification {

@@ -1,9 +1,11 @@
 package graphql.nadel.result;
 
+import graphql.Internal;
 import graphql.execution.ExecutionPath;
 
 import java.util.function.Consumer;
 
+@Internal
 public class RootExecutionResultNode extends ObjectExecutionResultNode {
 
 

@@ -2,6 +2,7 @@ package graphql.nadel.instrumentation;
 
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
+import graphql.PublicApi;
 import graphql.execution.instrumentation.DocumentAndVariables;
 import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
@@ -10,11 +11,9 @@ import graphql.nadel.ServiceExecution;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationFetchFieldParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
-import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.validation.ValidationError;
 
@@ -34,6 +33,7 @@ import static graphql.execution.instrumentation.SimpleInstrumentationContext.noO
  * operations such as fetching data and resolving it into objects.
  */
 @SuppressWarnings("unused")
+@PublicApi
 public interface NadelInstrumentation {
 
     /**
@@ -91,18 +91,6 @@ public interface NadelInstrumentation {
     default InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
         return noOp();
     }
-
-    /**
-     * This is called just before the execution a field fetch is started
-     *
-     * @param parameters the parameters to this step
-     *
-     * @return a non null {@link InstrumentationContext} object that will be called back when the step ends
-     */
-    default InstrumentationContext<ExecutionResultNode> beginFieldFetch(NadelInstrumentationFetchFieldParameters parameters) {
-        return noOp();
-    }
-
 
     /**
      * This is called to instrument a {@link graphql.ExecutionInput} before it is used to parse, validate

@@ -1,9 +1,11 @@
 package graphql.nadel.util;
 
+import graphql.Internal;
 import graphql.execution.ExecutionPath;
 
 import java.util.List;
 
+@Internal
 public class ExecutionPathUtils {
 
     /**

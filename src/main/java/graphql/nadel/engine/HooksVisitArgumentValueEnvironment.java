@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.PublicApi;
 import graphql.language.Node;
 import graphql.language.Value;
 import graphql.nadel.Service;
@@ -9,6 +10,7 @@ import graphql.util.TraverserContext;
 
 import java.util.Map;
 
+@PublicApi
 public interface HooksVisitArgumentValueEnvironment {
 
     Value getValue();

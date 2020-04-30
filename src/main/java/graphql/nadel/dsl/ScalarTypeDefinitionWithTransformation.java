@@ -1,5 +1,6 @@
 package graphql.nadel.dsl;
 
+import graphql.Internal;
 import graphql.language.Comment;
 import graphql.language.Description;
 import graphql.language.Directive;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
 
+@Internal
 public class ScalarTypeDefinitionWithTransformation extends ScalarTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
