@@ -1,7 +1,6 @@
 package graphql.nadel.schema
 
 import graphql.GraphQLException
-import graphql.language.ObjectTypeDefinition
 import graphql.nadel.Operation
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLObjectType
@@ -333,6 +332,33 @@ class OverallSchemaGeneratorTest extends Specification {
         then:
         result.queryType.fieldDefinitions.collect { it.name } == ["a", "c"]
         (result.typeMap["A"] as GraphQLObjectType).fieldDefinitions.collect { it.name } == ["x"]
+    }
+
+    def "services can still extend types"() {
+        when:
+        def result = TestUtil.schemaFromNdsl("""
+        service S1 {
+            type Query {
+                a: String
+            }
+            type A {
+                x: String
+            }
+        }
+        service S2 {
+            type Query {
+                c: String
+            }
+            extend type A {
+                y: String 
+            }
+        }
+        """)
+
+
+        then:
+        result.queryType.fieldDefinitions.collect { it.name } == ["a", "c"]
+        (result.typeMap["A"] as GraphQLObjectType).fieldDefinitions.collect { it.name } == ["x", "y"]
     }
 
 }
