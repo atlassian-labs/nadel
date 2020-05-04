@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
 import static java.util.UUID.randomUUID;
 
@@ -89,7 +90,7 @@ public abstract class FieldTransformation {
                 return normalizedField;
             }
         }
-        return Assert.assertShouldNeverHappen("could not find matching normalized field");
+        return assertShouldNeverHappen("could not find matching normalized field for parent node %s ", parent);
     }
 
     private static List<String> executionPathToQueryPath(ExecutionPath executionPath) {
