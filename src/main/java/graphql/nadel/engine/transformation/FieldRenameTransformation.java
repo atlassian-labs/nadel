@@ -68,8 +68,8 @@ public class FieldRenameTransformation extends FieldTransformation {
         // the result tree should be in terms of the overall schema
         ExecutionResultNode resultNode = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
 
-        resultNode = mapToOverallFieldAndTypes(resultNode, allTransformations, matchingNormalizedOverallField, environment);
-        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, matchingNormalizedOverallField, environment);
+        resultNode = mapToOverallFieldAndTypes(resultNode, allTransformations, matchingNormalizedOverallField);
+        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, matchingNormalizedOverallField);
         // the new path is the parent + the original result key
         ExecutionPath mappedPath = environment.parentNode.getExecutionPath().segment(resultNode.getResultKey());
         resultNode = resultNode.transform(builder -> builder.executionPath(mappedPath));
@@ -79,16 +79,15 @@ public class FieldRenameTransformation extends FieldTransformation {
 
     private ExecutionResultNode replaceFieldsAndTypesInsideList(ExecutionResultNode node,
                                                                 List<FieldTransformation> allTransformations,
-                                                                NormalizedQueryField normalizedQueryField,
-                                                                UnapplyEnvironment environment) {
+                                                                NormalizedQueryField normalizedQueryField) {
 
         if (node instanceof ListExecutionResultNode) {
             return mapChildren(node, child -> {
-                ExecutionResultNode newChild = mapToOverallFieldAndTypes(child, allTransformations, normalizedQueryField, environment);
+                ExecutionResultNode newChild = mapToOverallFieldAndTypes(child, allTransformations, normalizedQueryField);
                 return replaceFieldsAndTypesInsideList(newChild,
                         allTransformations,
-                        normalizedQueryField,
-                        environment);
+                        normalizedQueryField
+                );
             });
         }
         return node;

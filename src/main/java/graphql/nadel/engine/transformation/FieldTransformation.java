@@ -115,8 +115,7 @@ public abstract class FieldTransformation {
 
     protected ExecutionResultNode mapToOverallFieldAndTypes(ExecutionResultNode node,
                                                             List<FieldTransformation> allTransformations,
-                                                            NormalizedQueryField matchingNormalizedOverallField,
-                                                            UnapplyEnvironment environment) {
+                                                            NormalizedQueryField matchingNormalizedOverallField) {
         node = replaceFieldIdsWithOriginalValue(allTransformations, node);
         node = node.transform(builder -> builder
                 .alias(matchingNormalizedOverallField.getAlias())

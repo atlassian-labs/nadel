@@ -110,7 +110,7 @@ public class HydrationTransformation extends FieldTransformation {
                                           List<FieldTransformation> allTransformations,
                                           UnapplyEnvironment environment,
                                           NormalizedQueryField matchingNormalizedOverallField) {
-        ExecutionResultNode changedList = mapToOverallFieldAndTypes(listNode, allTransformations, matchingNormalizedOverallField, environment);
+        ExecutionResultNode changedList = mapToOverallFieldAndTypes(listNode, allTransformations, matchingNormalizedOverallField);
         return new UnapplyResult(changedList, TraversalControl.ABORT);
     }
 
@@ -120,7 +120,7 @@ public class HydrationTransformation extends FieldTransformation {
 
         // this is ListNode->ObjectNode(with exact one leaf child)->LeafNode
 
-        ExecutionResultNode mappedNode = mapToOverallFieldAndTypes(transformedNode, allTransformations, matchingNormalizedField, environment);
+        ExecutionResultNode mappedNode = mapToOverallFieldAndTypes(transformedNode, allTransformations, matchingNormalizedField);
 
         ExecutionResultNode changedNode = mapChildren(mappedNode, objectChild -> {
             LeafExecutionResultNode leaf = (LeafExecutionResultNode) objectChild.getChildren().get(0);
@@ -132,7 +132,7 @@ public class HydrationTransformation extends FieldTransformation {
 
 
     private UnapplyResult handleListOfLeafs(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment, NormalizedQueryField matchingNormalizedField) {
-        ExecutionResultNode mappedNode = mapToOverallFieldAndTypes(listExecutionResultNode, allTransformations, matchingNormalizedField, environment);
+        ExecutionResultNode mappedNode = mapToOverallFieldAndTypes(listExecutionResultNode, allTransformations, matchingNormalizedField);
 
 
         List<ExecutionResultNode> newChildren = new ArrayList<>();
@@ -150,7 +150,7 @@ public class HydrationTransformation extends FieldTransformation {
                                                     UnapplyEnvironment environment,
                                                     NormalizedQueryField matchingNormalizedField) {
 
-        leafNode = (LeafExecutionResultNode) mapToOverallFieldAndTypes(leafNode, allTransformations, matchingNormalizedField, environment);
+        leafNode = (LeafExecutionResultNode) mapToOverallFieldAndTypes(leafNode, allTransformations, matchingNormalizedField);
         ExecutionPath executionPath = pathMapper.mapPath(leafNode.getExecutionPath(), leafNode.getResultKey(), environment);
         leafNode = leafNode.transform(builder -> builder.executionPath(executionPath));
 
