@@ -141,9 +141,10 @@ public abstract class ExecutionResultNode {
                 "path=" + executionPath +
                 ", objectType=" + (objectType != null ? objectType.getName() : "null") +
                 ", name=" + (fieldDefinition != null ? fieldDefinition.getName() : "null") +
-                ", resolvedValue=" + completedValue +
+                ", alias=" + alias +
+                ", completedValue=" + completedValue +
                 ", nonNullableFieldWasNullError=" + nonNullableFieldWasNullError +
-                ", children size=" + children.size() +
+                ", children.size=" + children.size() +
                 ", errors=" + errors +
                 '}';
     }
