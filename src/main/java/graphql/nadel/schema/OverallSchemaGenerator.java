@@ -1,5 +1,7 @@
 package graphql.nadel.schema;
 
+import graphql.GraphQLError;
+import graphql.GraphQLException;
 import graphql.Internal;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
@@ -15,15 +17,17 @@ import graphql.schema.idl.WiringFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
 
 @Internal
 public class OverallSchemaGenerator {
-
 
     public GraphQLSchema buildOverallSchema(List<DefinitionRegistry> serviceRegistries, DefinitionRegistry commonTypes, WiringFactory wiringFactory) {
         SchemaGenerator schemaGenerator = new SchemaGenerator();
@@ -54,25 +58,49 @@ public class OverallSchemaGenerator {
             }
         });
 
-        allDefinitions.forEach(overallRegistry::add);
+        for (SDLDefinition<?> definition : allDefinitions) {
+            Optional<GraphQLError> error = overallRegistry.add(definition);
+            if (error.isPresent()) {
+                throw new GraphQLException("Unable to add definition to overall registry: " + error.get().getMessage());
+            }
+        }
+
         return overallRegistry;
     }
 
     private void collectTypes(Map<Operation, List<FieldDefinition>> fieldsMapByType, List<SDLDefinition> allDefinitions, DefinitionRegistry definitionRegistry) {
-        Map<Operation, List<ObjectTypeDefinition>> opsTypes = definitionRegistry.getOperationMap();
-        opsTypes.keySet().forEach(opsType -> {
-            List<ObjectTypeDefinition> opsDefinitions = opsTypes.get(opsType);
+        Map<Operation, List<ObjectTypeDefinition>> opTypes = definitionRegistry.getOperationMap();
+        Set<String> opTypeNames = new HashSet<>(3);
+
+        opTypes.keySet().forEach(opType -> {
+            List<ObjectTypeDefinition> opsDefinitions = opTypes.get(opType);
             if (opsDefinitions != null) {
+                // Collect field definitions
                 for (ObjectTypeDefinition objectTypeDefinition : opsDefinitions) {
-                    fieldsMapByType.get(opsType).addAll(objectTypeDefinition.getFieldDefinitions());
+                    fieldsMapByType.get(opType).addAll(objectTypeDefinition.getFieldDefinitions());
+                }
+
+                // Record down the type name for each operation
+                String operationTypeName = definitionRegistry.getOperationTypeName(opType);
+                if (operationTypeName != null) {
+                    opTypeNames.add(operationTypeName);
                 }
             }
-            definitionRegistry
-                    .getDefinitions()
-                    .stream()
-                    .filter(sdlDefinition -> !(sdlDefinition instanceof SchemaDefinition) && sdlDefinition != opsDefinitions)
-                    .forEach(allDefinitions::add);
         });
+
+        definitionRegistry
+                .getDefinitions()
+                .stream()
+                .filter(definition -> {
+                    // Don't add operation types
+                    if (definition instanceof ObjectTypeDefinition) {
+                        ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) definition;
+                        return !opTypeNames.contains(objectTypeDefinition.getName());
+                    }
+
+                    return !(definition instanceof SchemaDefinition);
+                })
+                .forEach(allDefinitions::add);
     }
 
 }
