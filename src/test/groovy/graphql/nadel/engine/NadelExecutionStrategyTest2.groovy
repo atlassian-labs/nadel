@@ -279,7 +279,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
               }
         }
         ''')
-        def boardSchema = TestUtil.schema("""
+        def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Bar 
               } 
@@ -300,7 +300,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         (response, errors) = test1Service(
                 overallSchema,
                 "Foo",
-                boardSchema,
+                underlyingSchema,
                 query,
                 ["foo"],
                 expectedQuery1,
