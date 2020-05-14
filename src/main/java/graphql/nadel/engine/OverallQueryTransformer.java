@@ -264,7 +264,7 @@ public class OverallQueryTransformer {
                                                                TransformationMetadata removedFieldMap) {
 
         Set<String> fragmentsToTransform = new LinkedHashSet<>(referencedFragmentNames);
-        List<FragmentDefinition> transformedFragments = new ArrayList<>();
+        Set<FragmentDefinition> transformedFragments = new LinkedHashSet<>();
         while (!fragmentsToTransform.isEmpty()) {
             String fragmentName = fragmentsToTransform.iterator().next();
             Set<String> newReferencedFragments = new LinkedHashSet<>();

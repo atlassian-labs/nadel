@@ -266,5 +266,51 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         response == overallResponse
 
     }
+
+    def "fragment referenced twice from inside Query and inside another Fragment"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Bar 
+              } 
+              type Bar {
+                 id: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Bar 
+              } 
+              type Bar {
+                id: String
+              }
+        """)
+        def query = """{foo {id ...F2 ...F1}} fragment F2 on Bar {id} fragment F1 on Bar {id ...F2} """
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {id ...F2 ...F1}} fragment F2 on Bar {id} fragment F1 on Bar {id ...F2}"
+        def response1 = [foo: [id: "ID"]]
+        def overallResponse = response1
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                expectedQuery1,
+                response1,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+
+
+    }
 }
 
