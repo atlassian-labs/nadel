@@ -22,14 +22,16 @@ public class NonNullableFieldWasNullError implements GraphQLError {
 
     private final String message;
     private final List<Object> path;
-//    private final NonNullableFieldWasNullError causedBy;
 
     public NonNullableFieldWasNullError(GraphQLNonNull nonNullType, ExecutionPath executionPath) {
-//        this.message = exception.getMessage();
-        GraphQLType graphQLType = GraphQLTypeUtil.unwrapOne(nonNullType);
+        GraphQLType unwrappedTyped = GraphQLTypeUtil.unwrapNonNull(nonNullType);
         this.path = executionPath.toList();
-        this.message = String.format("Cannot return null for non-nullable type: '%s' (%s)", simplePrint(graphQLType), path);
-//        this.causedBy = causedBy;
+        this.message = String.format(
+                "The field at path '%s' was declared as a non null type, but the code involved in retrieving" +
+                        " data has wrongly returned a null value.  The graphql specification requires that the" +
+                        " parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on." +
+                        " The non-nullable type is '%s'.",
+                executionPath, simplePrint(unwrappedTyped));
     }
 
     @Override
@@ -49,7 +51,7 @@ public class NonNullableFieldWasNullError implements GraphQLError {
 
     @Override
     public ErrorType getErrorType() {
-        return ErrorType.DataFetchingException;
+        return ErrorType.ChangeThis;
     }
 
     @Override
