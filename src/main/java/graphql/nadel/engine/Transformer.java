@@ -367,7 +367,7 @@ public class Transformer extends NodeVisitorStub {
     @SuppressWarnings("ConstantConditions")
     private TypeMappingDefinition typeTransformationForFragment(ExecutionContext executionContext, TypeName typeNameOverall) {
         GraphQLType type = executionContext.getGraphQLSchema().getType(typeNameOverall.getName());
-        assertTrue(type instanceof GraphQLFieldsContainer, "Expected type '%s' to be an field container type", typeNameOverall);
+        assertTrue(type instanceof GraphQLFieldsContainer, () -> String.format("Expected type '%s' to be an field container type", typeNameOverall));
         return extractAndRecordTypeMappingDefinition(executionContext.getGraphQLSchema(), type);
     }
 

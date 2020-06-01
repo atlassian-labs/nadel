@@ -11,11 +11,11 @@ stitchingDSL:
 commonDefinition: 'common' '{' (typeSystemDefinition|typeSystemExtension)* '}';
 
 serviceDefinition:
-   'service' name '{' (typeSystemDefinition|typeSystemExtension)* '}' ;
+   SERVICE name '{' (typeSystemDefinition|typeSystemExtension)* '}' ;
 
 objectTypeDefinition : description? TYPE name implementsInterfaces? directives? typeTransformation?  fieldsDefinition? ;
 
-interfaceTypeDefinition : description? INTERFACE name directives? typeTransformation? fieldsDefinition?;
+interfaceTypeDefinition : description? INTERFACE name implementsInterfaces? directives? typeTransformation? fieldsDefinition?;
 
 unionTypeDefinition : description? UNION name directives? typeTransformation? unionMembership?;
 
@@ -67,3 +67,7 @@ intValue: IntValue;
 serviceName: NAME;
 
 topLevelField: NAME;
+
+baseName: NAME | FRAGMENT | QUERY | MUTATION | SUBSCRIPTION | SCHEMA | SCALAR | TYPE | INTERFACE | IMPLEMENTS | ENUM | UNION | INPUT | EXTEND | DIRECTIVE | SERVICE;
+
+SERVICE: 'service';

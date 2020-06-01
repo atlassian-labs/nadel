@@ -33,6 +33,7 @@ public class InputValueTransformer {
      * @param valueDefinition     the input value definition to transform for
      * @param coercedValue        the value to transform
      * @param inputValueTransform the transformer function
+     *
      * @return a transformed object
      */
     public static Object transform(GraphQLInputValueDefinition valueDefinition, Object coercedValue, InputValueTransform inputValueTransform) {
@@ -59,12 +60,12 @@ public class InputValueTransformer {
             return inputValueTransform.transformValue(coercedValue, inputValueTree);
         }
         if (isList(type)) {
-            assertTrue(coercedValue instanceof Iterable, "The value MUST be an Iterable");
+            assertTrue(coercedValue instanceof Iterable, () -> "The value MUST be an Iterable");
             Object newValue = transformListValue((Iterable) coercedValue, name, unwrapOne(type), inputValueTree.unwrapOne(), inputValueTransform);
             return inputValueTransform.transformValue(newValue, inputValueTree);
         }
         if (type instanceof GraphQLInputObjectType) {
-            assertTrue(coercedValue instanceof Map, "The value MUST be an Map");
+            assertTrue(coercedValue instanceof Map, () -> "The value MUST be an Map");
             Object newValue = transformObjectValue((Map<String, Object>) coercedValue, (GraphQLInputObjectType) type, inputValueTree, inputValueTransform);
             return inputValueTransform.transformValue(newValue, inputValueTree);
         }

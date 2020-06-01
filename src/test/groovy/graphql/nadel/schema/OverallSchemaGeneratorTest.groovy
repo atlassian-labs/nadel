@@ -197,7 +197,7 @@ class OverallSchemaGeneratorTest extends Specification {
         "subscription" | "one service with default definition and one service defined in schema and extension" | "service Foo {$fooService_subscription_in_schema $fooType $fooSubscriptionExtension}" | "service Bar {$barService_default_subscription $barType}"                             | ["subFoo", "subFoo2", "subBar"]                          | _
         "subscription" | "both services with definition in schema"                                             | "service Foo {$fooService_subscription_in_schema $fooType}"                           | "service Bar {$barService_subscription_in_schema $barType}"                           | ["subFoo", "subBar"]                                     | _
         "subscription" | "both services with definition in schema and extension"                               | "service Foo {$fooService_subscription_in_schema $fooType $fooSubscriptionExtension}" | "service Bar {$barService_subscription_in_schema $barType $barSubscriptionExtension}" | ["subFoo", "subFoo2", "subBar", "subBar2"]               | _
-        "directives"   | "both services"                                                                       | "service Foo {$fooService_with_directives $fooType }"                                 | "service Bar {$barService_with_directives $barType}"                                  | ["include", "skip", "deprecated", "cloudId", "cloudId2"] | _
+        "directives" | "both services" | "service Foo {$fooService_with_directives $fooType }" | "service Bar {$barService_with_directives $barType}" | ["include", "skip", "deprecated", "cloudId", "cloudId2", "specifiedBy"] | _
     }
 
 

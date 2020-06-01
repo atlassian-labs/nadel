@@ -18,7 +18,7 @@ public class NodeId {
     public static final String ID = "id";
 
     public static String getId(Node<?> node) {
-        return assertNotNull(node.getAdditionalData().get(ID), "expected node %s to have an id", node);
+        return assertNotNull(node.getAdditionalData().get(ID), () -> String.format("expected node %s to have an id", node));
     }
 
     public static List<String> getIds(Node<?> node) {

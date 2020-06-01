@@ -33,6 +33,7 @@ public class InputValueFinder {
      * @param coercedArgs            the coerced args for this list of input defs
      * @param inputValueFindFunction the find function
      * @param <T>                    for two
+     *
      * @return the list of found values
      */
     public static <T> List<T> find(List<? extends GraphQLInputValueDefinition> valueDefinitions, Map<String, Object> coercedArgs, InputValueFindFunction<T> inputValueFindFunction) {
@@ -59,10 +60,10 @@ public class InputValueFinder {
         } else if (isNonNull(type)) {
             findImpl(foundValues, unwrapOne(type), coercedValue, inputValueTree.unwrapOne(), inputValueFindFunction);
         } else if (isList(type)) {
-            assertTrue(coercedValue instanceof Iterable, "The value MUST be an Iterable");
+            assertTrue(coercedValue instanceof Iterable, () -> "The value MUST be an Iterable");
             findListValue(foundValues, unwrapOne(type), (Iterable) coercedValue, inputValueTree.unwrapOne(), inputValueFindFunction);
         } else if (type instanceof GraphQLInputObjectType) {
-            assertTrue(coercedValue instanceof Map, "The value MUST be an Map");
+            assertTrue(coercedValue instanceof Map, () -> "The value MUST be an Map");
             Map<String, Object> coercedMap = (Map<String, Object>) coercedValue;
             findObjectValue(foundValues, (GraphQLInputObjectType) type, coercedMap, inputValueTree, inputValueFindFunction);
         } else {
