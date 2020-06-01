@@ -58,9 +58,9 @@ public class HydrationTransformation extends FieldTransformation {
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
 
         List<RemoteArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
-        assertTrue(sourceValues.size() == 1, "exactly one object field source expected");
+        assertTrue(sourceValues.size() == 1, () -> "exactly one object field source expected");
         List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
-        assertTrue(1 + argumentValues.size() == arguments.size(), "only $source and $argument values for arguments are supported");
+        assertTrue(1 + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");
 
         RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
         List<String> hydrationSourceName = remoteArgumentSource.getPath();

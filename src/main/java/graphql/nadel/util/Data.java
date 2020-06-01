@@ -56,7 +56,7 @@ public class Data {
 
     public <T> T getOrDefault(Class<? extends T> key, Object defaultValue) {
         T val = getOrDefault(assertNotNull(key).getCanonicalName(), defaultValue);
-        assertTrue(isOfClass(val, key), "Expecting a value of class '%s'", key.getCanonicalName());
+        assertTrue(isOfClass(val, key), () -> String.format("Expecting a value of class '%s'", key.getCanonicalName()));
         return val;
     }
 

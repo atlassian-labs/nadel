@@ -67,7 +67,7 @@ public class FieldCollectorNormalizedQueryParams {
         }
 
         public FieldCollectorNormalizedQueryParams build() {
-            Assert.assertNotNull(graphQLSchema, "You must provide a schema");
+            Assert.assertNotNull(graphQLSchema, () -> "You must provide a schema");
             return new FieldCollectorNormalizedQueryParams(graphQLSchema, variables, fragmentsByName);
         }
 

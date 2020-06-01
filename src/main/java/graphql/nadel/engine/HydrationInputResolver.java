@@ -390,7 +390,7 @@ public class HydrationInputResolver {
             }
             return result;
         }
-        assertTrue(rootResultNode.getChildren().get(0) instanceof ListExecutionResultNode, "expect a list result from the underlying service for batched hydration");
+        assertTrue(rootResultNode.getChildren().get(0) instanceof ListExecutionResultNode, () -> "expect a list result from the underlying service for batched hydration");
         ListExecutionResultNode listResultNode = (ListExecutionResultNode) rootResultNode.getChildren().get(0);
         List<ExecutionResultNode> resolvedNodes = listResultNode.getChildren();
 
@@ -452,9 +452,9 @@ public class HydrationInputResolver {
         String inputNodeId = (String) inputNode.getCompletedValue();
         for (ExecutionResultNode resolvedNode : resolvedNodes) {
             LeafExecutionResultNode idNode = getFieldByResultKey((ObjectExecutionResultNode) resolvedNode, objectIdentifier);
-            assertNotNull(idNode, "no value found for object identifier: " + objectIdentifier);
+            assertNotNull(idNode, () -> String.format("no value found for object identifier: %s", objectIdentifier));
             Object id = idNode.getCompletedValue();
-            assertNotNull(id, "object identifier is null");
+            assertNotNull(id, () -> "object identifier is null");
             if (id.equals(inputNodeId)) {
                 return (ObjectExecutionResultNode) resolvedNode;
             }

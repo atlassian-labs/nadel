@@ -59,7 +59,7 @@ public class FieldMetadataUtil {
     public static String getUniqueRootFieldId(Field field, Map<String, List<FieldMetadata>> metadataByFieldId) {
         List<FieldMetadata> fieldMetadata = readMetadata(field, metadataByFieldId);
         List<FieldMetadata> rootFieldMetadata = filter(fieldMetadata, FieldMetadata::isRootOfTransformation);
-        assertTrue(rootFieldMetadata.size() == 1, "exactly one root info expected");
+        assertTrue(rootFieldMetadata.size() == 1, () -> "exactly one root info expected");
         return rootFieldMetadata.get(0).getTransformationId();
     }
 

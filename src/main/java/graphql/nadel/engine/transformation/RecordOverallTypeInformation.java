@@ -104,7 +104,7 @@ public class RecordOverallTypeInformation {
                     return TraversalControl.CONTINUE;
                 }
                 GraphQLFieldsContainer fieldsContainer = (GraphQLFieldsContainer) unwrapAll(context.getVarFromParents(GraphQLOutputType.class));
-                GraphQLFieldDefinition fieldDefinition = assertNotNull(fieldsContainer.getFieldDefinition(field.getName()), "field %s not found for type %s", field.getName(), fieldsContainer.getName());
+                GraphQLFieldDefinition fieldDefinition = assertNotNull(fieldsContainer.getFieldDefinition(field.getName()), () -> String.format("field %s not found for type %s", field.getName(), fieldsContainer.getName()));
                 context.setVar(GraphQLFieldDefinition.class, fieldDefinition);
                 GraphQLOutputType newOutputType = fieldDefinition.getType();
                 context.setVar(GraphQLOutputType.class, newOutputType);

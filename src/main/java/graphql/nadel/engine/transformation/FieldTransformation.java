@@ -73,7 +73,7 @@ public abstract class FieldTransformation {
     protected NormalizedQueryField getMatchingNormalizedQueryFieldBasedOnParent(ExecutionResultNode parent) {
         List<NormalizedQueryField> normalizedFields = getApplyEnvironment().getNormalizedQueryFieldsOverall();
         if (parent instanceof RootExecutionResultNode) {
-            Assert.assertTrue(normalizedFields.size() == 1, "only one normalized field expected");
+            Assert.assertTrue(normalizedFields.size() == 1, () -> "only one normalized field expected");
             return normalizedFields.get(0);
         }
         ExecutionPath path = parent.getExecutionPath();
