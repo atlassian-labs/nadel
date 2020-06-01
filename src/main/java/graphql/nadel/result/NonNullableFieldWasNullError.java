@@ -51,7 +51,7 @@ public class NonNullableFieldWasNullError implements GraphQLError {
 
     @Override
     public ErrorType getErrorType() {
-        return ErrorType.ChangeThis;
+        return ErrorType.NullValueInNonNullableField;
     }
 
     @Override
