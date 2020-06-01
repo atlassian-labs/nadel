@@ -1,9 +1,10 @@
 package graphql.nadel.engine
 
-
+import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.nadel.StrategyTestHelper
 import graphql.nadel.testutils.TestUtil
+
 
 class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
@@ -50,7 +51,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         then:
         response == overallResponse
         errors.size() == 1
-        errors[0].message.contains("Cannot return null for non-nullable")
+        errors[0].errorType == ErrorType.NullValueInNonNullableField
 
     }
 
@@ -97,7 +98,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         then:
         response == overallResponse
         errors.size() == 1
-        errors[0].message.contains("Cannot return null for non-nullable")
+        errors[0].errorType == ErrorType.NullValueInNonNullableField
 
 
     }
@@ -145,8 +146,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         then:
         response == overallResponse
         errors.size() == 1
-        errors[0].message.contains("Cannot return null for non-nullable")
-
+        errors[0].errorType == ErrorType.NullValueInNonNullableField
     }
 
     def "non-nullable field error in lists bubbles up"() {
@@ -192,7 +192,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         then:
         response == overallResponse
         errors.size() == 1
-        errors[0].message.contains("Cannot return null for non-nullable")
+        errors[0].errorType == ErrorType.NullValueInNonNullableField
 
     }
 
