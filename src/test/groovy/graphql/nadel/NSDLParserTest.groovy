@@ -293,6 +293,28 @@ class NSDLParserTest extends Specification {
         })
         true
     }
+
+    def "allow 'service' as type name"() {
+        given:
+
+        def dsl = """
+            service FooService {
+                type Service {
+                    id: String
+                }
+                type Query {
+                    service: Service
+                }
+            }
+        """
+
+        when:
+        NSDLParser parser = new NSDLParser()
+        def stitchingDSL = parser.parseDSL(dsl)
+
+        then:
+        astAsMap(stitchingDSL).size() > 0
+    }
 }
 
 

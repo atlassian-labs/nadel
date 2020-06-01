@@ -3,7 +3,7 @@ package graphql.nadel;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
-import graphql.ParseResult;
+import graphql.ParseAndValidateResult;
 import graphql.PublicApi;
 import graphql.execution.AbortExecutionException;
 import graphql.execution.ExecutionId;
@@ -222,10 +222,10 @@ public class Nadel {
         String query = executionInput.getQuery();
 
         logNotSafe.debug("Parsing query: '{}'...", query);
-        ParseResult parseResult = parse(executionInput, graphQLSchema, instrumentationState);
+        ParseAndValidateResult parseResult = parse(executionInput, graphQLSchema, instrumentationState);
         if (parseResult.isFailure()) {
             logNotSafe.warn("Query failed to parse : '{}'", executionInput.getQuery());
-            return new PreparsedDocumentEntry(parseResult.getException().toInvalidSyntaxError());
+            return new PreparsedDocumentEntry(parseResult.getSyntaxException().toInvalidSyntaxError());
         } else {
             final Document document = parseResult.getDocument();
             // they may have changed the document and the variables via instrumentation so update the reference to it
@@ -243,7 +243,7 @@ public class Nadel {
         }
     }
 
-    private ParseResult parse(ExecutionInput executionInput, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState) {
+    private ParseAndValidateResult parse(ExecutionInput executionInput, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState) {
         NadelInstrumentationQueryExecutionParameters parameters = new NadelInstrumentationQueryExecutionParameters(executionInput, graphQLSchema, instrumentationState);
         InstrumentationContext<Document> parseInstrumentation = instrumentation.beginParse(parameters);
 
@@ -256,11 +256,11 @@ public class Nadel {
             documentAndVariables = instrumentation.instrumentDocumentAndVariables(documentAndVariables, parameters);
         } catch (InvalidSyntaxException e) {
             parseInstrumentation.onCompleted(null, e);
-            return ParseResult.ofError(e);
+            return ParseAndValidateResult.newResult().syntaxException(e).build();
         }
 
         parseInstrumentation.onCompleted(documentAndVariables.getDocument(), null);
-        return ParseResult.of(documentAndVariables);
+        return ParseAndValidateResult.newResult().document(documentAndVariables.getDocument()).variables(documentAndVariables.getVariables()).build();
     }
 
     private List<ValidationError> validate(ExecutionInput executionInput, Document document, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState) {

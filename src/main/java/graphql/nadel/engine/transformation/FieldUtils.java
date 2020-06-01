@@ -80,10 +80,11 @@ public final class FieldUtils {
     public static LeafExecutionResultNode geFirstLeafNode(ExecutionResultNode executionResultNode) {
         ExecutionResultNode curNode = executionResultNode;
         while (curNode instanceof ObjectExecutionResultNode) {
-            assertTrue(curNode.getChildren().size() == 1, "expecting one child but got %s", curNode.getChildren().size());
+            ExecutionResultNode finalCurNode = curNode;
+            assertTrue(curNode.getChildren().size() == 1, () -> String.format("expecting one child but got %s", finalCurNode.getChildren().size()));
             curNode = curNode.getChildren().get(0);
         }
-        assertTrue(curNode instanceof LeafExecutionResultNode, "expecting only object results and at the end one leaf");
+        assertTrue(curNode instanceof LeafExecutionResultNode, () -> "expecting only object results and at the end one leaf");
         return (LeafExecutionResultNode) curNode;
     }
 
@@ -92,7 +93,8 @@ public final class FieldUtils {
         ExecutionResultNode curNode = executionResultNode;
         int curLevel = 0;
         while (curNode.getChildren().size() > 0 && curLevel++ < levels) {
-            assertTrue(curNode.getChildren().size() == 1, "expecting one child but got %s", curNode.getChildren().size());
+            ExecutionResultNode finalCurNode = curNode;
+            assertTrue(curNode.getChildren().size() == 1, () -> String.format("expecting one child but got %s", finalCurNode.getChildren().size()));
             curNode = curNode.getChildren().get(0);
             if (curNode instanceof LeafExecutionResultNode) {
                 return curNode;

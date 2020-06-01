@@ -257,7 +257,7 @@ public class NadelExecutionStrategy {
 
 
     private Service getServiceForFieldDefinition(GraphQLFieldDefinition fieldDefinition) {
-        FieldInfo info = assertNotNull(fieldInfos.getInfo(fieldDefinition), "no field info for field %s", fieldDefinition.getName());
+        FieldInfo info = assertNotNull(fieldInfos.getInfo(fieldDefinition), () -> String.format("no field info for field %s", fieldDefinition.getName()));
         return info.getService();
     }
 

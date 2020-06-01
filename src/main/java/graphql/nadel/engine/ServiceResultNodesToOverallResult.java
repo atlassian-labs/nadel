@@ -101,7 +101,7 @@ public class ServiceResultNodesToOverallResult {
         final AtomicInteger nodeCount = new AtomicInteger();
 
         HandleResult handleResult = convertSingleNode(root, null/*not for root*/, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, transformationMetadata, nodeCount);
-        assertNotNull(handleResult, "can't delete root");
+        assertNotNull(handleResult, () -> "can't delete root");
 
         ExecutionResultNode changedNode = handleResult.changedNode;
         List<ExecutionResultNode> newChildren = new ArrayList<>();
@@ -354,7 +354,7 @@ public class ServiceResultNodesToOverallResult {
 
         TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, fieldIdToTransformation, transformationMetadata);
         ExecutionResultNode withoutTransformedFields = splittedNodes.getT1();
-        assertTrue(splittedNodes.getT2().size() == 1, "only one split tree expected atm");
+        assertTrue(splittedNodes.getT2().size() == 1, () -> "only one split tree expected atm");
         ExecutionResultNode nodesWithTransformedFields = getSingleMapValue(splittedNodes.getT2());
 
         UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);

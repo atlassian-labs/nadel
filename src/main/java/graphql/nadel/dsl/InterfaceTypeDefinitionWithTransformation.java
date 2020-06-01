@@ -1,6 +1,5 @@
 package graphql.nadel.dsl;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.language.Comment;
 import graphql.language.Description;
@@ -10,26 +9,31 @@ import graphql.language.IgnoredChars;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.NodeBuilder;
 import graphql.language.SourceLocation;
+import graphql.language.Type;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static graphql.Assert.assertNotNull;
+
 @Internal
 public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefinition {
 
     private final TypeMappingDefinition typeMappingDefinition;
 
-    protected InterfaceTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition,
-                                                        String name,
-                                                        List<FieldDefinition> fieldDefinitions,
-                                                        List<Directive> directives,
-                                                        Description description,
-                                                        SourceLocation sourceLocation,
-                                                        List<Comment> comments,
-                                                        IgnoredChars ignoredChars, Map<String, String> additionalData) {
-        super(name, fieldDefinitions, directives, description, sourceLocation, comments, ignoredChars, additionalData);
+    public InterfaceTypeDefinitionWithTransformation(TypeMappingDefinition typeMappingDefinition,
+                                                     String name,
+                                                     List<Type> implementz,
+                                                     List<FieldDefinition> definitions,
+                                                     List<Directive> directives,
+                                                     Description description,
+                                                     SourceLocation sourceLocation,
+                                                     List<Comment> comments,
+                                                     IgnoredChars ignoredChars,
+                                                     Map<String, String> additionalData) {
+        super(name, implementz, definitions, directives, description, sourceLocation, comments, ignoredChars, additionalData);
         this.typeMappingDefinition = typeMappingDefinition;
     }
 
@@ -44,12 +48,13 @@ public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefi
     public static final class Builder implements NodeBuilder {
         private SourceLocation sourceLocation;
         private List<Comment> comments = new ArrayList<>();
-        private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
         private String name;
         private Description description;
-        private List<Directive> directives = new ArrayList<>();
-        private List<FieldDefinition> fieldDefinitions = new ArrayList<>();
+        private List<Type> implementz = new ArrayList<>();
+        private List<FieldDefinition> definitions = new ArrayList<>();
         private TypeMappingDefinition typeMappingDefinition;
+        private List<Directive> directives = new ArrayList<>();
+        private IgnoredChars ignoredChars = IgnoredChars.EMPTY;
         private Map<String, String> additionalData = new LinkedHashMap<>();
 
         private Builder() {
@@ -61,7 +66,9 @@ public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefi
             this.name = existing.getName();
             this.description = existing.getDescription();
             this.directives = existing.getDirectives();
-            this.fieldDefinitions = existing.getFieldDefinitions();
+            this.definitions = existing.getFieldDefinitions();
+            this.ignoredChars = existing.getIgnoredChars();
+            this.additionalData = new LinkedHashMap<>(existing.getAdditionalData());
         }
 
         public Builder typeMappingDefinition(TypeMappingDefinition typeMappingDefinition) {
@@ -79,22 +86,6 @@ public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefi
             return this;
         }
 
-        @Override
-        public NodeBuilder ignoredChars(IgnoredChars ignoredChars) {
-            this.ignoredChars = ignoredChars;
-            return this;
-        }
-
-        public Builder additionalData(Map<String, String> additionalData) {
-            this.additionalData = Assert.assertNotNull(additionalData);
-            return this;
-        }
-
-        public Builder additionalData(String key, String value) {
-            this.additionalData.put(key, value);
-            return this;
-        }
-
         public Builder name(String name) {
             this.name = name;
             return this;
@@ -105,6 +96,26 @@ public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefi
             return this;
         }
 
+        public Builder implementz(List<Type> implementz) {
+            this.implementz = implementz;
+            return this;
+        }
+
+        public Builder implementz(Type implement) {
+            this.implementz.add(implement);
+            return this;
+        }
+
+
+        public Builder definitions(List<FieldDefinition> definitions) {
+            this.definitions = definitions;
+            return this;
+        }
+
+        public Builder definition(FieldDefinition definition) {
+            this.definitions.add(definition);
+            return this;
+        }
 
         public Builder directives(List<Directive> directives) {
             this.directives = directives;
@@ -116,28 +127,34 @@ public class InterfaceTypeDefinitionWithTransformation extends InterfaceTypeDefi
             return this;
         }
 
-        public Builder fieldDefinitions(List<FieldDefinition> fieldDefinitions) {
-            this.fieldDefinitions = fieldDefinitions;
+        public Builder ignoredChars(IgnoredChars ignoredChars) {
+            this.ignoredChars = ignoredChars;
             return this;
         }
 
-        public Builder fieldDefinition(FieldDefinition fieldDefinition) {
-            this.fieldDefinitions.add(fieldDefinition);
+        public Builder additionalData(Map<String, String> additionalData) {
+            this.additionalData = assertNotNull(additionalData);
             return this;
         }
+
+        public Builder additionalData(String key, String value) {
+            this.additionalData.put(key, value);
+            return this;
+        }
+
 
         public InterfaceTypeDefinitionWithTransformation build() {
             return new InterfaceTypeDefinitionWithTransformation(
                     typeMappingDefinition,
                     name,
-                    fieldDefinitions,
+                    implementz,
+                    definitions,
                     directives,
                     description,
                     sourceLocation,
                     comments,
                     ignoredChars,
-                    additionalData
-            );
+                    additionalData);
         }
     }
 }

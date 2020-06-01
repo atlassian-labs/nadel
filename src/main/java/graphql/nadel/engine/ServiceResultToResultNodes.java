@@ -276,16 +276,16 @@ public class ServiceResultToResultNodes {
         NadelContext nadelContext = executionContext.getContext();
         String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
 
-        assertTrue(source instanceof Map, "The Nadel result object MUST be a Map");
+        assertTrue(source instanceof Map, () -> "The Nadel result object MUST be a Map");
 
         Map<String, Object> sourceMap = (Map<String, Object>) source;
-        assertTrue(sourceMap.containsKey(underscoreTypeNameAlias), "The Nadel result object for interfaces and unions MUST have an aliased __typename in them");
+        assertTrue(sourceMap.containsKey(underscoreTypeNameAlias), () -> "The Nadel result object for interfaces and unions MUST have an aliased __typename in them");
 
         Object typeName = sourceMap.get(underscoreTypeNameAlias);
-        assertNotNull(typeName, "The Nadel result object for interfaces and unions MUST have an aliased__typename with a non null value in them");
+        assertNotNull(typeName, () -> "The Nadel result object for interfaces and unions MUST have an aliased__typename with a non null value in them");
 
         GraphQLObjectType objectType = executionContext.getGraphQLSchema().getObjectType(typeName.toString());
-        assertNotNull(objectType, "There must be an underlying graphql object type called '%s'", typeName);
+        assertNotNull(objectType, () -> String.format("There must be an underlying graphql object type called '%s'", typeName));
         return objectType;
 
 

@@ -91,7 +91,7 @@ public class ServiceExecutor {
             log.debug("service {} invocation started - executionId '{}'", service.getName(), executionContext.getExecutionId());
             ElapsedTime.Builder elapsedTimeBuilder = ElapsedTime.newElapsedTime().start();
             CompletableFuture<ServiceExecutionResult> executeReturnValue = serviceExecution.execute(serviceExecutionParameters);
-            Assert.assertNotNull(executeReturnValue, "service execution returned null");
+            Assert.assertNotNull(executeReturnValue, () -> "service execution returned null");
 
             CompletableFuture<Data> result = executeReturnValue
                     .thenApply((serviceExecutionResult) -> {

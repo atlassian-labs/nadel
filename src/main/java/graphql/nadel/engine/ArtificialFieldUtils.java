@@ -26,7 +26,7 @@ public class ArtificialFieldUtils {
             return field;
         }
         String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
-        assertNotNull(underscoreTypeNameAlias, "We MUST have a generated __typename alias in the request context");
+        assertNotNull(underscoreTypeNameAlias, () -> "We MUST have a generated __typename alias in the request context");
 
         // check if we have already added it
         SelectionSet selectionSet = field.getSelectionSet();

@@ -216,7 +216,7 @@ public class FieldCollectorNormalizedQuery {
                 } else if (field.getName().equals(Introspection.TypeMetaFieldDef.getName())) {
                     fieldDefinition = TypeMetaFieldDef;
                 } else {
-                    fieldDefinition = assertNotNull(objectType.getFieldDefinition(field.getName()), "no field with name %s found in object %s", field.getName(), objectType.getName());
+                    fieldDefinition = assertNotNull(objectType.getFieldDefinition(field.getName()), () -> String.format("no field with name %s found in object %s", field.getName(), objectType.getName()));
                 }
                 NormalizedQueryField newFieldWTC = NormalizedQueryField.newQueryExecutionField()
                         .alias(field.getAlias())

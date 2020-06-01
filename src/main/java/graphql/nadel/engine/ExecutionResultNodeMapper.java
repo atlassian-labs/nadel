@@ -39,7 +39,7 @@ public class ExecutionResultNodeMapper {
     private GraphQLObjectType mapObjectType(ExecutionResultNode node, Map<String, String> typeRenameMappings, GraphQLSchema overallSchema) {
         String objectTypeName = mapTypeName(typeRenameMappings, node.getObjectType().getName());
         GraphQLObjectType mappedObjectType = overallSchema.getObjectType(objectTypeName);
-        assertNotNull(mappedObjectType, "object type %s not found in overall schema", objectTypeName);
+        assertNotNull(mappedObjectType, () -> String.format("object type %s not found in overall schema", objectTypeName));
         return mappedObjectType;
     }
 
@@ -62,6 +62,6 @@ public class ExecutionResultNodeMapper {
         }
         GraphQLFieldsContainer fieldsContainer = (GraphQLFieldsContainer) parentType;
         GraphQLFieldDefinition fieldDefinition = schema.getCodeRegistry().getFieldVisibility().getFieldDefinition(fieldsContainer, fieldName);
-        return assertNotNull(fieldDefinition, "field '%s' not found in container '%s'", fieldName, fieldsContainer);
+        return assertNotNull(fieldDefinition, () -> String.format("field '%s' not found in container '%s'", fieldName, fieldsContainer));
     }
 }
