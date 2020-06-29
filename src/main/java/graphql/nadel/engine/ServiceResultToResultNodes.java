@@ -57,8 +57,9 @@ public class ServiceResultToResultNodes {
         long startTime = System.currentTimeMillis();
 
         List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
-        RootExecutionResultNode rootNode = RootExecutionResultNode.newRootExecutionResultNode().errors(errors).elapsedTime(elapsedTimeForServiceCall).build();
-        NadelContext nadelContext = executionContext.getContext();
+        Map<String, Object> extensions = serviceExecutionResult.getExtensions();
+
+        RootExecutionResultNode rootNode = RootExecutionResultNode.newRootExecutionResultNode().errors(errors).extensions(extensions).elapsedTime(elapsedTimeForServiceCall).build();
 
         RootExecutionResultNode rootExecutionResultNode = fetchTopLevelFields(rootNode, executionContext, serviceExecutionResult, elapsedTimeForServiceCall, normalizedQueryFromAst);
         long elapsedTime = System.currentTimeMillis() - startTime;

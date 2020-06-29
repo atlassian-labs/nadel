@@ -476,6 +476,7 @@ public class ServiceResultNodesToOverallResult {
         return RootExecutionResultNode.newRootExecutionResultNode()
                 .children(resultNode.getChildren())
                 .errors(resultNode.getErrors())
+                .extensions(resultNode.getExtensions())
                 .elapsedTime(resultNode.getElapsedTime())
                 .build();
     }

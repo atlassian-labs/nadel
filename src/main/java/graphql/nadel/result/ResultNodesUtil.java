@@ -27,6 +27,7 @@ import java.util.Map;
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 
@@ -41,17 +42,28 @@ public class ResultNodesUtil {
                     .addError(executionResultData.nonNullableFieldWasNullError)
                     .build();
         }
+        // this is a bug in graphql-java code - the builder should accept <String,Object>
+        Map<Object, Object> bugMap = new LinkedHashMap<>(executionResultData.extensions);
+
         return ExecutionResultImpl.newExecutionResult()
                 .data(executionResultData.data)
                 .errors(executionResultData.errors)
+                .extensions(bugMap)
                 .build();
     }
 
     private static class ExecutionResultData {
         Object data;
         List<GraphQLError> errors = emptyList();
+        Map<String, Object> extensions = emptyMap();
         NonNullableFieldWasNullError nonNullableFieldWasNullError;
 
+
+        public ExecutionResultData(Object data, List<GraphQLError> errors, Map<String, Object> extensions) {
+            this.data = data;
+            this.errors = errors;
+            this.extensions = extensions;
+        }
 
         public ExecutionResultData(Object data, List<GraphQLError> errors) {
             this.data = data;
@@ -72,6 +84,10 @@ public class ResultNodesUtil {
 
     private static ExecutionResultData data(Object data, List<GraphQLError> errors) {
         return new ExecutionResultData(data, errors);
+    }
+
+    private static ExecutionResultData data(Object data, List<GraphQLError> errors, Map<String, Object> extensions) {
+        return new ExecutionResultData(data, errors, extensions);
     }
 
     private static ExecutionResultData data(NonNullableFieldWasNullError error) {
@@ -108,6 +124,7 @@ public class ResultNodesUtil {
             isNonNull = GraphQLTypeUtil.isNonNull(actualType);
         }
 
+        Map<String, Object> extensions = root.getExtensions();
         Map<String, Object> resultMap = new LinkedHashMap<>();
         List<GraphQLError> errors = new ArrayList<>();
         for (ExecutionResultNode child : root.getChildren()) {
@@ -119,13 +136,14 @@ public class ResultNodesUtil {
                     return data(new NonNullableFieldWasNullError((GraphQLNonNull) child.getFieldDefinition().getType(), root.getExecutionPath()));
                 }
             } else if (executionResultData.nonNullableFieldWasNullError != null) {
-                return data(null, singletonList(executionResultData.nonNullableFieldWasNullError));
+                return data(null, singletonList(executionResultData.nonNullableFieldWasNullError), extensions);
             }
             resultMap.put(child.getResultKey(), executionResultData.data);
             errors.addAll(executionResultData.errors);
         }
         errors.addAll(root.getErrors());
-        return data(resultMap, errors);
+
+        return data(resultMap, errors, extensions);
     }
 
     private static ExecutionResultData toDataImplList(ExecutionResultNode root) {
