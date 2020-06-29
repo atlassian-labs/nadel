@@ -27,6 +27,7 @@ import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +140,7 @@ public class ServiceExecutor {
                 .build();
 
         Map<String, Object> errorMap = error.toSpecification();
-        return new ServiceExecutionResult(new LinkedHashMap<>(), singletonList(errorMap));
+        return new ServiceExecutionResult(new LinkedHashMap<>(), singletonList(errorMap), Collections.emptyMap());
     }
 
 

@@ -10,9 +10,11 @@ import graphql.schema.GraphQLObjectType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
+import static java.util.Collections.emptyMap;
 
 @Internal
 public abstract class ExecutionResultNode {
@@ -21,6 +23,7 @@ public abstract class ExecutionResultNode {
     private final NonNullableFieldWasNullError nonNullableFieldWasNullError;
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
+    private final Map<String, Object> extensions;
     private final ElapsedTime elapsedTime;
     private final int totalNodeCount;
 
@@ -41,6 +44,7 @@ public abstract class ExecutionResultNode {
         this.children = Collections.unmodifiableList(assertNotNull(builderBase.children));
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(builderBase.errors);
+        this.extensions = builderBase.extensions;
         this.elapsedTime = builderBase.elapsedTime;
         this.totalNodeCount = builderBase.totalNodeCount;
         this.executionPath = assertNotNull(builderBase.executionPath);
@@ -58,6 +62,10 @@ public abstract class ExecutionResultNode {
 
     public List<GraphQLError> getErrors() {
         return errors;
+    }
+
+    public Map<String, Object> getExtensions() {
+        return extensions;
     }
 
     /*
@@ -154,6 +162,7 @@ public abstract class ExecutionResultNode {
         protected NonNullableFieldWasNullError nonNullableFieldWasNullError;
         protected List<ExecutionResultNode> children = new ArrayList<>();
         protected List<GraphQLError> errors = new ArrayList<>();
+        protected Map<String, Object> extensions = emptyMap();
         protected ElapsedTime elapsedTime;
         protected ExecutionPath executionPath;
 
@@ -173,6 +182,7 @@ public abstract class ExecutionResultNode {
             this.nonNullableFieldWasNullError = existing.getNonNullableFieldWasNullError();
             this.children.addAll(existing.getChildren());
             this.errors.addAll(existing.getErrors());
+            this.extensions = existing.extensions;
             this.elapsedTime = existing.getElapsedTime();
             this.executionPath = existing.getExecutionPath();
             this.alias = existing.getAlias();
@@ -235,8 +245,12 @@ public abstract class ExecutionResultNode {
         }
 
         public T errors(List<GraphQLError> errors) {
-            this.errors.clear();
             this.errors = errors;
+            return (T) this;
+        }
+
+        public T extensions(Map<String, Object> extensions) {
+            this.extensions = extensions == null ? emptyMap() : extensions;
             return (T) this;
         }
 

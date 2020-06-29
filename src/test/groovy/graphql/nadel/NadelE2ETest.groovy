@@ -182,15 +182,23 @@ class NadelE2ETest extends Specification {
                 .build()
         def data1 = [otherFoo: [name: "Foo"]]
         def data2 = [bar: [title: "Bar"]]
-        ServiceExecutionResult delegatedExecutionResult1 = new ServiceExecutionResult(data1)
-        ServiceExecutionResult delegatedExecutionResult2 = new ServiceExecutionResult(data2)
+        ServiceExecutionResult delegatedExecutionResult1 = new ServiceExecutionResult(data1, [], [ext1 : "val1", merged : "m1"])
+        ServiceExecutionResult delegatedExecutionResult2 = new ServiceExecutionResult(data2, [], [ext2 : "val2", merged : "m2"])
         when:
         def result = nadel.execute(nadelExecutionInput)
 
         then:
         1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
         1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
-        result.join().data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
+        def er = result.join()
+        er.data == [otherFoo: [name: "Foo"], bar: [name: "Bar"]]
+        //
+        // we added extension data
+        // we have request complexity added at the end as well
+        er.extensions["ext1"] == "val1"
+        er.extensions["ext2"] == "val2"
+        er.extensions["merged"] == "m2"
+        er.extensions.containsKey("resultComplexity")
     }
 
     def "query with three nested hydrations"() {

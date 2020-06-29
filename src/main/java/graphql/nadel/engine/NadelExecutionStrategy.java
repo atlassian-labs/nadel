@@ -234,9 +234,12 @@ public class NadelExecutionStrategy {
             List<GraphQLError> errors = new ArrayList<>();
             map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
             map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
+            Map<String,Object> extensions = new LinkedHashMap<>();
+            rootNodes.forEach( node -> extensions.putAll(node.getExtensions()));
             return newRootExecutionResultNode()
                     .children(mergedChildren)
                     .errors(errors)
+                    .extensions(extensions)
                     .build();
         });
     }
