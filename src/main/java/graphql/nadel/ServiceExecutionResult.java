@@ -20,10 +20,12 @@ public class ServiceExecutionResult {
         this.extensions = extensions == null ? emptyMap() : extensions;
     }
 
+    public ServiceExecutionResult(Map<String, Object> data, List<Map<String, Object>> errors) {
+        this(data, errors, emptyMap());
+    }
+
     public ServiceExecutionResult(Map<String, Object> data) {
-        this.data = data;
-        this.errors = emptyList();
-        this.extensions = emptyMap();
+        this(data, emptyList(), emptyMap());
     }
 
     public Map<String, Object> getData() {
