@@ -207,7 +207,7 @@ public class Transformer extends NodeVisitorStub {
 
         GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
         GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
-        String fieldContainerName = overallTypeInfo.getFieldsContainer().getName();
+
 
         NormalizedQueryFromAst normalizedOverallQuery = nadelContext.getNormalizedOverallQuery();
         List<NormalizedQueryField> normalizedFields = normalizedOverallQuery.getNormalizedFieldsByFieldId(getId(field));
@@ -237,27 +237,21 @@ public class Transformer extends NodeVisitorStub {
                 maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);
             }
             if (applyResult.getTraversalControl() == TraversalControl.CONTINUE) {
-                updateTypeContext(context, typeContext.getOutputTypeUnderlying(), fieldContainerName);
+                updateTypeContext(context, typeContext.getOutputTypeUnderlying());
             }
             return applyResult.getTraversalControl();
 
         } else {
             maybeAddUnderscoreTypeName(context, field, fieldTypeOverall);
         }
-        updateTypeContext(context, typeContext.getOutputTypeUnderlying(), fieldContainerName);
+        updateTypeContext(context, typeContext.getOutputTypeUnderlying());
         return TraversalControl.CONTINUE;
     }
 
+
     private void updateTypeContext(TraverserContext<Node> context, GraphQLOutputType currentOutputTypeUnderlying) {
-        updateTypeContext(context, currentOutputTypeUnderlying, null);
-    }
-
-
-    private void updateTypeContext(TraverserContext<Node> context, GraphQLOutputType currentOutputTypeUnderlying, String fieldContainerName) {
         Field newField = (Field) context.thisNode();
         GraphQLFieldsContainer fieldsContainerUnderlying = (GraphQLFieldsContainer) unwrapAll(currentOutputTypeUnderlying);
-        assertTrue(fieldsContainerUnderlying instanceof GraphQLFieldsContainer, () -> String.format("Schema Mismatch: Underlying schema is missing the required field %s", fieldContainerName));
-
         GraphQLFieldDefinition fieldDefinitionUnderlying = Introspection.getFieldDef(underlyingSchema, fieldsContainerUnderlying, newField.getName());
         GraphQLOutputType newOutputTypeUnderlying = fieldDefinitionUnderlying.getType();
 
