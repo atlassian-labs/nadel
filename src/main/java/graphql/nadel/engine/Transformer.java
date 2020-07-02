@@ -255,7 +255,7 @@ public class Transformer extends NodeVisitorStub {
     private void updateTypeContext(TraverserContext<Node> context, GraphQLOutputType currentOutputTypeUnderlying, String fieldContainerName) {
         Field newField = (Field) context.thisNode();
         GraphQLFieldsContainer fieldsContainerUnderlying = (GraphQLFieldsContainer) unwrapAll(currentOutputTypeUnderlying);
-        assertTrue(fieldsContainerUnderlying instanceof GraphQLFieldsContainer, () -> String.format("Schema mismatch: Underlying schema is missing required Object or Interface %s", fieldContainerName));
+        assertTrue(fieldsContainerUnderlying instanceof GraphQLFieldsContainer, () -> String.format("Schema mismatch: Underlying schema is missing required Interface Type %s", fieldContainerName));
 
         GraphQLFieldDefinition fieldDefinitionUnderlying = Introspection.getFieldDef(underlyingSchema, fieldsContainerUnderlying, newField.getName());
         GraphQLOutputType newOutputTypeUnderlying = fieldDefinitionUnderlying.getType();
