@@ -1042,7 +1042,7 @@ class NadelE2ETest extends Specification {
         then:
         def e = thrown CompletionException
         e.cause instanceof AssertException
-        e.cause.message == "Schema mismatch: Underlying schema is missing required field Mars"
+        e.cause.message == "Schema mismatch: Underlying schema is missing required Object or Interface Mars"
 
     }
 
