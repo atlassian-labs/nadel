@@ -252,7 +252,6 @@ public class Transformer extends NodeVisitorStub {
         updateTypeContext(context, currentOutputTypeUnderlying, null);
     }
 
-
     private void updateTypeContext(TraverserContext<Node> context, GraphQLOutputType currentOutputTypeUnderlying, String fieldContainerName) {
         Field newField = (Field) context.thisNode();
         GraphQLFieldsContainer fieldsContainerUnderlying = (GraphQLFieldsContainer) unwrapAll(currentOutputTypeUnderlying);
@@ -270,7 +269,6 @@ public class Transformer extends NodeVisitorStub {
                 .fieldDefinitionUnderlying(fieldDefinitionUnderlying)
                 .fieldArgumentValues(argumentValues);
         context.setVar(UnderlyingTypeContext.class, newTypeContext.build());
-
     }
 
     ApplyEnvironment createApplyEnvironment(Field field,

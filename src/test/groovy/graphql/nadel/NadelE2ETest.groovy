@@ -1,5 +1,6 @@
 package graphql.nadel
 
+import graphql.AssertException
 import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.GraphqlErrorException
@@ -25,6 +26,7 @@ import graphql.util.TraverserContext
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
@@ -983,5 +985,67 @@ class NadelE2ETest extends Specification {
         originalExecutionResult != null
         ResultNodesUtil.toExecutionResult(originalExecutionResult).errors.isEmpty()
     }
+
+    def "object type from underlying schema is removed"() {
+
+        def simpleNDSL = '''
+         service MyService {
+            type Query {
+                hello: World
+            }
+            
+            interface World {
+                id: ID
+                name: String
+            }
+            
+            type Mars implements World {
+                id: ID
+                name: String
+            }
+         }
+        '''
+
+        def underlyingSchemaChanged = typeDefinitions('''
+            type Query{
+                hello: World  
+            } 
+            
+            interface World {
+                id: ID
+                name: String
+            }
+        ''')
+
+        def query = '''
+        query OpName { 
+            hello {
+                ... on Mars {
+                    name
+                }
+            } 
+        }
+        '''
+
+        def nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(TestUtil.serviceFactory(delegatedExecution, underlyingSchemaChanged))
+                .build()
+
+        def nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .operationName("OpName")
+                .build()
+
+        when:
+        nadel.execute(nadelExecutionInput).join()
+        then:
+        def e = thrown CompletionException
+        e.cause instanceof AssertException
+        e.cause.message == "Schema mismatch: Underlying schema is missing required field Mars"
+
+    }
+
+
 
 }
