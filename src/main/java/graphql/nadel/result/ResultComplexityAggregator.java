@@ -2,15 +2,15 @@ package graphql.nadel.result;
 
 import graphql.Internal;
 
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Internal
 public class ResultComplexityAggregator {
     private int totalNodeCount = 0;
-    private Map<String, Integer> serviceNodeCounts = new LinkedHashMap<>();
+    private Map<String, Integer> serviceNodeCounts = new ConcurrentHashMap<>();
 
     public int getTotalNodeCount() {
         return totalNodeCount;

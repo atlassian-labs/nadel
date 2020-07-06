@@ -398,7 +398,6 @@ public class HydrationInputResolver {
         List<ExecutionResultNode> result = new ArrayList<>();
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getFieldIdToTransformation();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
-        Map<String, Integer> nodeCounts = new LinkedHashMap<>();
 
         boolean first = true;
         for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
@@ -420,7 +419,7 @@ public class HydrationInputResolver {
 
                 String serviceName = hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName();
                 int nodeCount = overallResultNode.getTotalNodeCount();
-                nodeCounts.compute(serviceName, (k, v) -> (v == null) ? nodeCount : v + nodeCount);
+                resultComplexityAggregator.incrementServiceNodeCount(serviceName, nodeCount);
 
                 resultNode = copyFieldInformation(hydrationInputNode, overallResultNode);
             } else {
@@ -432,7 +431,6 @@ public class HydrationInputResolver {
             }
             result.add(resultNode);
         }
-        nodeCounts.forEach(resultComplexityAggregator::incrementServiceNodeCount);
         return result;
 
     }
