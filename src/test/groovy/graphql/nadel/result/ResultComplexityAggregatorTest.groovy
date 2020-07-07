@@ -65,7 +65,7 @@ class ResultComplexityAggregatorTest extends Specification {
         resultComplexityAggregator.incrementServiceNodeCount("service2", 5)
 
         then:
-        resultComplexityAggregator.toString() == "ResultComplexityAggregator{totalNodeCount=24, serviceNodeCountsMap={service2=10, service1=14}}"
+        resultComplexityAggregator.toString() == "ResultComplexityAggregator{totalNodeCount=24, serviceNodeCountsMap={service1=14, service2=10}}"
     }
 
     def "test snapshotComplexityData method"() {
