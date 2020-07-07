@@ -5,15 +5,16 @@ import graphql.Internal;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Internal
 public class ResultComplexityAggregator {
-    private int totalNodeCount = 0;
+    private AtomicInteger totalNodeCount = new AtomicInteger(0);
     private Map<String, Integer> serviceNodeCounts = new ConcurrentHashMap<>();
 
     public int getTotalNodeCount() {
-        return totalNodeCount;
+        return totalNodeCount.get();
     }
 
     public Map<String, Integer> getServiceNodeCounts() {
@@ -26,14 +27,14 @@ public class ResultComplexityAggregator {
 
     public void incrementServiceNodeCount(String serviceFieldName, int nodeCount) {
         serviceNodeCounts.compute(serviceFieldName, (k, v) -> (v == null) ? nodeCount : v + nodeCount);
-        totalNodeCount += nodeCount;
+        totalNodeCount.getAndAdd(nodeCount);
     }
 
     public Map<String, Object> snapshotResultComplexityData() {
 
         Map<String, Object> resultComplexityMap = new LinkedHashMap<>();
-        resultComplexityMap.put("totalNodeCount", totalNodeCount);
-        resultComplexityMap.put("serviceNodeCounts", serviceNodeCounts);
+        resultComplexityMap.put("totalNodeCount", getTotalNodeCount());
+        resultComplexityMap.put("serviceNodeCounts", getServiceNodeCounts());
 
         return resultComplexityMap;
     }

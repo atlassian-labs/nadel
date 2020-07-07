@@ -3,6 +3,8 @@ package graphql.nadel.result
 
 import spock.lang.Specification
 
+import java.util.concurrent.ConcurrentHashMap
+
 class ResultComplexityAggregatorTest extends Specification {
     def resultComplexityAggregator = new ResultComplexityAggregator();
 
@@ -63,7 +65,7 @@ class ResultComplexityAggregatorTest extends Specification {
         resultComplexityAggregator.incrementServiceNodeCount("service2", 5)
 
         then:
-        resultComplexityAggregator.toString() == "ResultComplexityAggregator{totalNodeCount=24, serviceNodeCountsMap={service1=14, service2=10}}"
+        resultComplexityAggregator.toString() == "ResultComplexityAggregator{totalNodeCount=24, serviceNodeCountsMap={service2=10, service1=14}}"
     }
 
     def "test snapshotComplexityData method"() {
@@ -78,7 +80,7 @@ class ResultComplexityAggregatorTest extends Specification {
         def complexityMap = resultComplexityAggregator.snapshotResultComplexityData()
 
         then:
-        complexityMap == [totalNodeCount:24, serviceNodeCounts:[service1:14, service2:10]]
+        complexityMap == [totalNodeCount:24, serviceNodeCounts:[service2:10, service1:14]]
     }
 
 
