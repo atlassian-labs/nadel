@@ -3,8 +3,6 @@ package graphql.nadel.result
 
 import spock.lang.Specification
 
-import java.util.concurrent.ConcurrentHashMap
-
 class ResultComplexityAggregatorTest extends Specification {
     def resultComplexityAggregator = new ResultComplexityAggregator();
 
