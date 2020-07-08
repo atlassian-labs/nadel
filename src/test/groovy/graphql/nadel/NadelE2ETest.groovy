@@ -1042,7 +1042,7 @@ class NadelE2ETest extends Specification {
         then:
         def e = thrown CompletionException
         e.cause instanceof AssertException
-        e.cause.message == "Schema mismatch: Underlying schema is missing required Interface Type Mars"
+        e.cause.message == "Schema mismatch: The underlying schema is missing required interface type Mars"
 
     }
 
