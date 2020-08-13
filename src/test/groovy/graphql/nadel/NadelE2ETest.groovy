@@ -6,6 +6,7 @@ import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.nadel.engine.NadelExecutionStrategy
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
@@ -982,6 +983,99 @@ class NadelE2ETest extends Specification {
         instrumentationParams.executionContext.operationDefinition.name == "OpName"
         originalExecutionResult != null
         ResultNodesUtil.toExecutionResult(originalExecutionResult).errors.isEmpty()
+    }
+
+    def "hydration query with a synthetic field"() {
+
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            issue(id: ID): Issue
+        }
+        type Issue {
+            id: ID
+        }
+        """)
+
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            projects: ProjectsQuery
+        }
+        type ProjectsQuery {
+            barProject(id: ID) : BarProject
+        }
+
+        type BarProject {
+            id: ID
+            name: String
+        }
+        """)
+
+        def nsdl = '''
+        service service1 {
+            type Query {
+                issue(id: ID): Issue
+            }
+            type Issue {
+                id: ID
+                project: BarProject => hydrated from service2.projects.barProject(id: $source.id)
+            }
+        }
+        service service2 {
+            type Query {
+                projects: ProjectsQuery
+            }
+            type ProjectsQuery {
+                barProject(id: ID) : BarProject
+            }
+            type BarProject {
+                id: ID
+                name: String
+            }
+        }
+        '''
+
+        def query = '''
+            query { issue { project { name } } }
+        '''
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                service1: new Tuple2(serviceExecution1, underlyingSchema1),
+                service2: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+//        def expectedQuery1 = 'query nadel_2_service1 {issue {id}}'
+        def topLevelData = [issue: [id: "1"]]
+
+//        def expectedQuery2 = "query nadel_2_service2 {projects {barProject(id:\"1\")} {name }}"
+        def hydrationData = [projects: [barProject: [id: "1", name: "Bar1"]]]
+
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
+        ServiceExecutionResult hydrationResult1_1 = new ServiceExecutionResult(hydrationData)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >>
+
+                completedFuture(topLevelResult)
+
+        1 * serviceExecution2.execute(_) >>
+
+                completedFuture(hydrationResult1_1)
+
+
+        result.join().data == [issue: [project: [name: "Bar1"]]]
     }
 
 }
