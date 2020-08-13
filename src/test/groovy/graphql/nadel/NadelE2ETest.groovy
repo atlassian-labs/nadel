@@ -1054,10 +1054,8 @@ class NadelE2ETest extends Specification {
                 .query(query)
                 .artificialFieldsUUID("UUID")
                 .build()
-//        def expectedQuery1 = 'query nadel_2_service1 {issue {id}}'
         def topLevelData = [issue: [id: "1"]]
 
-//        def expectedQuery2 = "query nadel_2_service2 {projects {barProject(id:\"1\")} {name }}"
         def hydrationData = [projects: [barProject: [id: "1", name: "Bar1"]]]
 
         ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
