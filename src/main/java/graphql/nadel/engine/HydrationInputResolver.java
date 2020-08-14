@@ -39,6 +39,7 @@ import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -490,7 +491,8 @@ public class HydrationInputResolver {
                         queryTransformationResult.getRemovedFieldMap());
 
                 String serviceName = hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName();
-                resultComplexityAggregator.incrementServiceNodeCount(serviceName, overallResultNode.getTotalNodeCount());
+                int nodeCount = overallResultNode.getTotalNodeCount();
+                resultComplexityAggregator.incrementServiceNodeCount(serviceName, nodeCount);
 
                 resultNode = copyFieldInformation(hydrationInputNode, overallResultNode);
             } else {
