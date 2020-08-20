@@ -1055,6 +1055,7 @@ class NadelE2ETest extends Specification {
         }
         type Issue {
             id: ID
+            appleId: ID
         }
         """)
 
@@ -1079,7 +1080,7 @@ class NadelE2ETest extends Specification {
             }
             type Issue {
                 id: ID
-                project: BarProject => hydrated from service2.projects.barProject(id: $source.id)
+                project: BarProject => hydrated from service2.projects.barProject(id: $source.appleId)
             }
         }
         service service2 {
@@ -1116,7 +1117,7 @@ class NadelE2ETest extends Specification {
                 .query(query)
                 .artificialFieldsUUID("UUID")
                 .build()
-        def topLevelData = [issue: [id: "1"]]
+        def topLevelData = [issue: [id: "1", appleId:"1"]]
 
         def hydrationData = [projects: [barProject: [id: "1", name: "Bar1"]]]
 
@@ -1737,7 +1738,7 @@ class NadelE2ETest extends Specification {
             type Testing {
                 movies: [TestingMovie]
             }
-            type TestingCharacter => renamed from Character  {
+            type TestingCharacter => renamed from Character   {
                 id: ID!
                 name: String
             }
@@ -1785,7 +1786,7 @@ class NadelE2ETest extends Specification {
 
 
         def movies = [[id: "M1", name: "Movie 1", characterIds: ["C1", "C2"]], [id: "M2", name: "Movie 2", characterIds: ["C1", "C2", "C3"]]]
-        def response1 = new ServiceExecutionResult([tests:[testing: [movies: movies]]])
+        def response1 = new ServiceExecutionResult([tests: [testing: [movies: movies]]])
 
         def characters1 = [[id: "C1", name: "Luke", object_identifier__UUID: "C1"], [id: "C2", name: "Leia", object_identifier__UUID: "C2"], [id: "C1", name: "Luke", object_identifier__UUID: "C1"]]
         def response2 = new ServiceExecutionResult([tests:[characters: characters1]])
@@ -1809,5 +1810,307 @@ class NadelE2ETest extends Specification {
         result.join().data == [testing: data]
     }
 
+    def " batched hydration call over itself with renamed types without Synthetic Field"() {
+        def testingSchema = typeDefinitions("""
+        type Query {
+            testing: Testing
+            characters(ids: [ID!]!): [Character]
+        }
+        
+        type Testing {
+            movies: [Movie]
+        }
+
+        type Character {
+            id: ID!
+            name: String
+        }
+
+        type Movie {
+            id: ID!
+            name: String
+            characterIds: [ID]
+        }
+        """)
+        def nsdl = '''
+        service testing {
+            type Query {
+                testing: Testing
+            }
+            
+            type Testing {
+                movies: [TestingMovie]
+            }
+            type TestingCharacter => renamed from Character  {
+                id: ID!
+                name: String
+            }
+
+            type TestingMovie => renamed from Movie {
+                id: ID!
+                name: String
+                characters: [TestingCharacter] => hydrated from testing.characters(ids: $source.characterIds) object identified by id, batch size  3
+            }
+        }
+        '''
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                testing: new Tuple2(serviceExecution1, testingSchema)]
+        )
+
+        def query = """
+                    {
+                         testing {
+                            movies {
+                              id
+                              name
+                               characters {
+                                 id
+                                 name
+                               }
+                            }
+                          }
+                       
+                    }
+        """
+
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+
+        def movies = [[id: "M1", name: "Movie 1", characterIds: ["C1", "C2"]], [id: "M2", name: "Movie 2", characterIds: ["C1", "C2", "C3"]]]
+        def response1 = new ServiceExecutionResult([testing: [movies: movies]])
+
+        def characters1 = [[id: "C1", name: "Luke", object_identifier__UUID: "C1"], [id: "C2", name: "Leia", object_identifier__UUID: "C2"], [id: "C1", name: "Luke", object_identifier__UUID: "C1"]]
+        def response2 = new ServiceExecutionResult([characters: characters1])
+
+        def characters2 = [[id: "C2", name: "Leia", object_identifier__UUID: "C2"], [id: "C3", name: "Anakin", object_identifier__UUID: "C3"]]
+        def response3 = new ServiceExecutionResult([characters: characters2])
+
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response1)
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response2)
+
+        1 * serviceExecution1.execute(_) >> completedFuture(response3)
+
+        def data = [movies: [[id: "M1", name: "Movie 1", characters: [[id: "C1", name: "Luke"], [id: "C2", name: "Leia"]]], [id: "M2", name: "Movie 2", characters: [[id: "C1", name: "Luke"], [id: "C2", name: "Leia"], [id: "C3", name: "Anakin"]]]]]
+        result.join().data == [testing: data]
+    }
+
+    def "simple hydration with one service and synthetic field"() {
+        def testingSchema = typeDefinitions("""
+        type Query {
+            tests: TestQuery
+        }
+        type TestQuery {
+            testing: Testing
+            character(id: ID): Character
+        }
+
+        type Testing {
+            movie: Movie
+        }
+
+        type Character {
+            id: ID!
+            name: String
+        }
+
+        type Movie {
+            id: ID!
+            name: String
+            characterId: ID
+        }
+        """)
+
+        def nsdl = '''
+        service testing {
+            type Query {
+                tests: TestQuery
+            }
+            type TestQuery {
+               testing: Testing
+            }
+
+            type Testing {
+                movie: Movie
+            }
+            type TestingCharacter => renamed from Character   {
+                id: ID!
+                name: String
+            }
+
+            type Movie {
+                id: ID!
+                name: String
+                character: TestingCharacter => hydrated from testing.tests.character(id: $source.characterId) object identified by id, batch size  3
+            }
+        }
+        '''
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                testing: new Tuple2(serviceExecution1, testingSchema)]
+        )
+
+        def query = """
+                    {
+                        tests { 
+                         testing {
+                            movie {
+                              id
+                              name
+                               character {
+                                 id
+                                 name
+                               }
+                            }
+                          }
+                        }
+                    }
+        """
+
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        def movies = [id: "M1", name: "Movie 1", characterId:"C1"]
+        def response1 = new ServiceExecutionResult([tests: [testing: [movie: movies]]])
+
+        def characters1 = [id: "C1", name: "Luke", object_identifier__UUID: "C1"]
+        def response2 = new ServiceExecutionResult([tests:[character: characters1]])
+
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response1)
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response2)
+
+        def data = [movie: [id: "M1", name: "Movie 1", character: [id: "C1", name: "Luke"]]]
+        result.join().data == [tests:[testing: data]]
+    }
+
+    def "simple hydration with one service and no synthetic field"() {
+        def testingSchema = typeDefinitions("""
+        type Query {
+            testing: Testing
+            character(id: ID): Character
+        }
+
+        type Testing {
+            movie: Movie
+        }
+
+        type Character {
+            id: ID!
+            name: String
+        }
+
+        type Movie {
+            id: ID!
+            name: String
+            characterId: ID
+        }
+        """)
+
+        def nsdl = '''
+        service testing {
+            type Query {
+                testing: Testing
+            }
+
+            type Testing {
+                movie: Movie
+            }
+            type TestingCharacter => renamed from Character   {
+                id: ID!
+                name: String
+            }
+
+            type Movie {
+                id: ID!
+                name: String
+                character: TestingCharacter => hydrated from testing.character(id: $source.characterId) object identified by id, batch size  3
+            }
+        }
+        '''
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                testing: new Tuple2(serviceExecution1, testingSchema)]
+        )
+
+        def query = """
+                    {
+                         testing {
+                            movie {
+                              id
+                              name
+                               character {
+                                 id
+                                 name
+                               }
+                            }
+                          }
+                        
+                    }
+        """
+
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        def movies = [id: "M1", name: "Movie 1", characterId:"C1"]
+        def response1 = new ServiceExecutionResult([testing: [movie: movies]])
+
+        def characters1 = [id: "C1", name: "Luke", object_identifier__UUID: "C1"]
+        def response2 = new ServiceExecutionResult([character: characters1])
+
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response1)
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response2)
+
+        def data = [movie: [id: "M1", name: "Movie 1", character: [id: "C1", name: "Luke"]]]
+        result.join().data == [testing:data]
+    }
 
 }
