@@ -264,7 +264,7 @@ public class HydrationInputResolver {
             SelectionSet newSelectionSet = newSelectionSet().selection(syntheticField).build();
 
             topLevelField = createSingleHydrationTopLevelField(hydrationInputNode, newSelectionSet, underlyingServiceHydration, topLevelFieldName, true);
-            topLevelFieldType = topLevelfieldTypeForSyntheticHydration(topLevelFieldName, service);
+            topLevelFieldType = topLevelfieldTypeForSyntheticHydration(topLevelFieldName,underlyingServiceHydration.getSyntheticField(),  service);
         } else {
             topLevelField = createSingleHydrationTopLevelField(hydrationInputNode, originalField.getSelectionSet(), underlyingServiceHydration, topLevelFieldName, false);
             topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
@@ -307,9 +307,9 @@ public class HydrationInputResolver {
     }
 
     // We get the field type in overall schema; otherwise get the field type in underlying schema if absent
-    private GraphQLCompositeType topLevelfieldTypeForSyntheticHydration(String topLevelFieldName, Service service) {
+    private GraphQLCompositeType topLevelfieldTypeForSyntheticHydration(String topLevelFieldName, String syntheticFieldName, Service service) {
         GraphQLFieldDefinition overallType = overallSchema.getObjectType("Query").getFieldDefinition(topLevelFieldName);
-        if (overallType != null) {
+        if (overallType != null && ((GraphQLObjectType) overallType.getType()).getFieldDefinition(syntheticFieldName) != null) {
             return (GraphQLCompositeType) unwrapAll(overallType.getType());
         }
         overallType = service.getUnderlyingSchema().getQueryType().getFieldDefinition(topLevelFieldName);
@@ -418,7 +418,7 @@ public class HydrationInputResolver {
             SelectionSet syntheticSelectionSet = newSelectionSet().selection(syntheticField).build();
 
             topLevelField = createBatchHydrationTopLevelField(executionContext, hydrationInputs, syntheticSelectionSet, null,  underlyingServiceHydration, true);
-            topLevelFieldType = topLevelfieldTypeForSyntheticHydration(underlyingServiceHydration.getTopLevelField(), service);
+            topLevelFieldType = topLevelfieldTypeForSyntheticHydration(underlyingServiceHydration.getTopLevelField(), underlyingServiceHydration.getSyntheticField(), service);
         } else {
             topLevelField = createBatchHydrationTopLevelField(executionContext, hydrationInputs, originalField.getSelectionSet(), originalField.getArguments(), underlyingServiceHydration, false);
             topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
