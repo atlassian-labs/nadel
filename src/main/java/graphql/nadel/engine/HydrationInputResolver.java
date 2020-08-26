@@ -372,8 +372,7 @@ public class HydrationInputResolver {
 
         Field topLevelField = createBatchHydrationTopLevelField(executionContext,
                 hydrationInputs,
-                originalField.getSelectionSet(),
-                originalField.getArguments(),
+                originalField,
                 underlyingServiceHydration,
                 underlyingServiceHydration.getSyntheticField());
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
@@ -405,8 +404,7 @@ public class HydrationInputResolver {
 
     private Field createBatchHydrationTopLevelField(ExecutionContext executionContext,
                                                     List<HydrationInputNode> hydrationInputs,
-                                                    SelectionSet selectionSet,
-                                                    List<Argument> originalArguments,
+                                                    Field originalField,
                                                     UnderlyingServiceHydration underlyingServiceHydration,
                                                     String syntheticFieldName) {
 
@@ -424,7 +422,7 @@ public class HydrationInputResolver {
         List<Argument> allArguments = new ArrayList<>();
         allArguments.add(argumentAstFromSourceObject);
 
-        Map<String, Argument> originalArgumentsByName = FpKit.getByName(originalArguments, Argument::getName);
+        Map<String, Argument> originalArgumentsByName = FpKit.getByName(originalField.getArguments(), Argument::getName);
         for (RemoteArgumentDefinition argumentDefinition : extraArguments) {
             if (originalArgumentsByName.containsKey(argumentDefinition.getName())) {
                 allArguments.add(originalArgumentsByName.get(argumentDefinition.getName()));
@@ -432,7 +430,7 @@ public class HydrationInputResolver {
         }
 
         Field topLevelField = newField(topLevelFieldName)
-                .selectionSet(selectionSet)
+                .selectionSet(originalField.getSelectionSet())
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .arguments(allArguments)
                 .build();
