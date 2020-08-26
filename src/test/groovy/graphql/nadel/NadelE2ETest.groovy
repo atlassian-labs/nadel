@@ -26,7 +26,6 @@ import graphql.util.TraverserContext
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
