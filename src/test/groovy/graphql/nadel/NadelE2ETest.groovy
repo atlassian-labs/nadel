@@ -7,7 +7,6 @@ import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
-import graphql.nadel.engine.NadelExecutionStrategy
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
@@ -1046,4 +1045,8 @@ class NadelE2ETest extends Specification {
         e.cause.message == "Schema mismatch: The underlying schema is missing required interface type Mars"
 
     }
+
+
+
+
 }

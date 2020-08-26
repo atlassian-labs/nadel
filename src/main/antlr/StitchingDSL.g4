@@ -43,7 +43,7 @@ fieldMappingDefinition : 'renamed from' name ('.'name)?;
 //
 // hydration
 
-underlyingServiceHydration: 'hydrated from' serviceName '.' (syntheticField '.')? topLevelField  remoteCallDefinition? objectIdentifier? batchSize?;
+underlyingServiceHydration: 'hydrated from' serviceName '.' (syntheticField '.')? topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
 
 objectIdentifier: 'object identified by' name;
 
