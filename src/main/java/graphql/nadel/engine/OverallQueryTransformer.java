@@ -60,11 +60,12 @@ public class OverallQueryTransformer {
             GraphQLSchema underlyingSchema,
             String operationName,
             Operation operation,
-            Field topLevelField,
+            Field rootField,
             GraphQLCompositeType topLevelFieldTypeOverall,
             ServiceExecutionHooks serviceExecutionHooks,
             Service service,
-            Object serviceContext
+            Object serviceContext,
+            boolean isSynthetic
     ) {
         long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
@@ -77,10 +78,17 @@ public class OverallQueryTransformer {
 
         NadelContext nadelContext = executionContext.getContext();
 
+        SelectionSet selectionSet = rootField.getSelectionSet();
+        Field topLevelField = rootField;
+        if (isSynthetic) {
+            topLevelField = (Field) selectionSet.getSelections().get(0);
+            selectionSet = topLevelField.getSelectionSet();
+        }
+
         SelectionSet topLevelFieldSelectionSet = transformNode(
                 executionContext,
                 underlyingSchema,
-                topLevelField.getSelectionSet(),
+                selectionSet,
                 topLevelFieldTypeOverall,
                 fieldIdToTransformation,
                 typeRenameMappings,
@@ -94,9 +102,14 @@ public class OverallQueryTransformer {
                 removedFieldMap
         );
 
-        Field transformedTopLevelField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
+        Field transformedRootField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
-        transformedTopLevelField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedTopLevelField, topLevelFieldTypeOverall);
+        transformedRootField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
+
+        if (isSynthetic) {
+            Field tempTransformedRootLevelField = transformedRootField;
+            transformedRootField = rootField.transform(builder -> builder.selectionSet(newSelectionSet().selection(tempTransformedRootLevelField).build()));
+        }
 
         List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
         List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
@@ -114,7 +127,7 @@ public class OverallQueryTransformer {
                 serviceContext,
                 removedFieldMap);
 
-        SelectionSet newOperationSelectionSet = newSelectionSet().selection(transformedTopLevelField).build();
+        SelectionSet newOperationSelectionSet = newSelectionSet().selection(transformedRootField).build();
         OperationDefinition operationDefinition = newOperationDefinition()
                 .name(operationName)
                 .operation(operation.getAstOperation())
@@ -124,7 +137,7 @@ public class OverallQueryTransformer {
 
         Document newDocument = newDocument(operationDefinition, transformedFragments);
 
-        MergedField transformedMergedField = MergedField.newMergedField(transformedTopLevelField).build();
+        MergedField transformedMergedField = MergedField.newMergedField(transformedRootField).build();
         long elapsedTime = System.currentTimeMillis() - startTime;
         log.debug("OverallQueryTransformer.transformHydratedTopLevelField time: {}, executionId: {}", elapsedTime, executionContext.getExecutionId());
         return new QueryTransformationResult(

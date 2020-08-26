@@ -153,7 +153,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     private UnderlyingServiceHydration createUnderlyingServiceHydration(StitchingDSLParser.UnderlyingServiceHydrationContext ctx) {
         String serviceName = ctx.serviceName().getText();
         String topLevelField = ctx.topLevelField().getText();
-        String syntheticField = "";
+        String syntheticField = null;
         if (ctx.syntheticField() != null) {
             syntheticField = ctx.syntheticField().getText();
         }
