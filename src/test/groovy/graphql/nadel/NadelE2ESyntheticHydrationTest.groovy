@@ -2,6 +2,7 @@ package graphql.nadel
 
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
+import graphql.nadel.testutils.MockServiceExecution
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
@@ -9,12 +10,13 @@ import spock.lang.Specification
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
+import static graphql.nadel.testutils.TestUtil.serviceFactory
 import static graphql.nadel.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
 class NadelE2ESyntheticHydrationTest extends Specification {
 
     def "simple hydration query with a synthetic field"() {
-
+        given:
         def underlyingSchema1 = typeDefinitions("""
         type Query {
             issue(id: ID): Issue
@@ -73,7 +75,6 @@ class NadelE2ESyntheticHydrationTest extends Specification {
                 service1: new Tuple2(serviceExecution1, underlyingSchema1),
                 service2: new Tuple2(serviceExecution2, underlyingSchema2)]
         )
-        given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
@@ -103,7 +104,7 @@ class NadelE2ESyntheticHydrationTest extends Specification {
     }
 
     def "batched hydration query with a synthetic field"() {
-
+        given:
         def underlyingSchema1 = typeDefinitions("""
         type Query {
             issues : [Issue]
@@ -143,6 +144,7 @@ class NadelE2ESyntheticHydrationTest extends Specification {
             }
         
             type UsersQuery {
+                foo: String
                 usersByIds(id: [ID]): [User] default batch size 3
             }
             type User {
@@ -161,7 +163,6 @@ class NadelE2ESyntheticHydrationTest extends Specification {
                 service2: new Tuple2(serviceExecution2, underlyingSchema2)]
         )
 
-        given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
@@ -207,6 +208,7 @@ class NadelE2ESyntheticHydrationTest extends Specification {
     }
 
     def "query with three nested hydrations and synthetic fields"() {
+        given:
 
         def nsdl = '''
          service Foo {
@@ -267,7 +269,6 @@ class NadelE2ESyntheticHydrationTest extends Specification {
                 Foo: new Tuple2(serviceExecution1, underlyingSchema1),
                 Bar: new Tuple2(serviceExecution2, underlyingSchema2)]
         )
-        given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
@@ -311,6 +312,7 @@ class NadelE2ESyntheticHydrationTest extends Specification {
     }
 
     def "extending types from another service is possible with synthetic fields"() {
+        given:
         def ndsl = '''
          service Service1 {
             extend type Query{
@@ -447,6 +449,7 @@ class NadelE2ESyntheticHydrationTest extends Specification {
     }
 
     def "hydration call with fragments in the hydrated part and synthetic field"() {
+        given:
         def issueSchema = typeDefinitions("""
         type Query {
             issues : [Issue]
@@ -534,7 +537,6 @@ class NadelE2ESyntheticHydrationTest extends Specification {
                 name
             } 
         """
-        given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
@@ -570,7 +572,8 @@ class NadelE2ESyntheticHydrationTest extends Specification {
         result.join().data == [issues: [issue1Result], userQuery: [usersByIds: [[id: "USER-1", name: "User 1"]]]]
     }
 
-    def "hydration with renamed type and synthetic field"() {
+    def "synthetic hydration with renamed type"() {
+        given:
         def underlyingFooSchema = typeDefinitions("""
             type Query {
                 fooOriginal: Foo
@@ -632,7 +635,6 @@ class NadelE2ESyntheticHydrationTest extends Specification {
                 Bar: new Tuple2(serviceExecution2, underlyingBarSchema)]
         )
 
-        given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
@@ -667,7 +669,8 @@ class NadelE2ESyntheticHydrationTest extends Specification {
         ]
     }
 
-    def "hydration call over itself within renamed types and synthetic field"() {
+    def "synthetic hydration call over itself within renamed types"() {
+        given:
         def testingSchema = typeDefinitions("""
         type Query {
             tests: TestQuery
@@ -739,7 +742,6 @@ class NadelE2ESyntheticHydrationTest extends Specification {
                     }
         """
 
-        given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
@@ -776,14 +778,15 @@ class NadelE2ESyntheticHydrationTest extends Specification {
         result.join().data == [tests: [testing: data]]
     }
 
-    def "simple hydration with one service and synthetic field and type renaming"() {
+    def "simple synthetic hydration with one service and type renaming"() {
+        given:
         def testingSchema = typeDefinitions("""
         type Query {
             tests: TestQuery
         }
         type TestQuery {
             testing: Testing
-            character(id: ID): Character
+            character(id: ID): Character 
         }
 
         type Testing {
@@ -849,7 +852,6 @@ class NadelE2ESyntheticHydrationTest extends Specification {
                     }
         """
 
-        given:
         Nadel nadel = newNadel()
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
@@ -887,5 +889,609 @@ class NadelE2ESyntheticHydrationTest extends Specification {
         }
     }
 
+
+    def "Expecting one child Error on extensive field argument passed to hydration"() {
+        given:
+        def boardSchema = typeDefinitions("""
+        type Query {
+            board(id: ID) : Board
+        }
+        type Board {
+            id: ID
+            issueChildren: [Card]
+        }
+        type Card {
+            id: ID
+            issue: Issue
+        }
+        
+        type Issue {
+            id: ID
+            assignee: TestUser
+        }
+        
+        type TestUser {
+            accountId: String
+        }
+        """)
+
+        def identitySchema = typeDefinitions("""
+        type Query {
+            users(accountIds: [ID]): [User] 
+        }
+        type User {
+            accountId: ID
+        }
+        """)
+
+        def overallSchema = '''
+        service TestBoard {
+            type Query {
+                board(id: ID) : SoftwareBoard
+            }
+            
+            type SoftwareBoard => renamed from Board {
+                id: ID
+                cardChildren: [SoftwareCard] => renamed from issueChildren
+            }
+            
+            type SoftwareCard => renamed from Card {
+                id: ID
+                assignee: User => hydrated from Users.users(accountIds: $source.issue.assignee.accountId) object identified by accountId, batch size 3
+            }
+        }
+       
+        service Users {
+            type Query {
+                users(accountIds: [ID]): [User]
+            }
+            type User {
+                accountId: ID
+            }
+        }
+        '''
+
+        def query = '''{
+                        board(id:1) {
+                            id 
+                            cardChildren { 
+                                assignee { 
+                                    accountId
+                                 } 
+                            }
+                        }
+                        }'''
+
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = serviceFactory([
+                TestBoard: new Tuple2(serviceExecution1, boardSchema),
+                Users: new Tuple2(serviceExecution2, identitySchema)]
+        )
+
+        Nadel nadel = newNadel()
+                .dsl(overallSchema)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        def data1 = [board: [id: "1", issueChildren: [[issue: [assignee: [accountId: "1"]]], [issue: [assignee: [accountId: "2"]]], [issue: [assignee: [accountId: "3"]]]]]]
+        def response1 = new ServiceExecutionResult(data1)
+
+        def response2 = new ServiceExecutionResult([users: [[accountId: "1", object_identifier__UUID: "1"], [accountId: "2", object_identifier__UUID: "2"], [accountId: "3", object_identifier__UUID: "3"]]])
+
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response1)
+
+        then:
+        1 * serviceExecution2.execute(_) >> completedFuture(response2)
+
+        result.join().data == [board: [id: "1", cardChildren: [[assignee: [accountId: "1"]], [assignee: [accountId: "2"]], [assignee: [accountId: "3"]]]]]
+
+    }
+
+    def "query with synthetic hydration that fail with errors are reflected in the result"() {
+        given:
+        def hydratedNDSL = '''
+         service Foo {
+            type Query{
+                foo: Foo
+            }
+            type Foo {
+                name: String
+                bar: Bar => hydrated from Bar.barQuery.barById(id: $source.barId)
+            }
+         }
+         service Bar {
+            type Query{
+                barQuery: BarQuery
+            }
+            type BarQuery {
+                bar: Bar
+                barById(id: ID): Bar
+            }
+            type Bar {
+                name: String
+                nestedBar: Bar => hydrated from Bar.barQuery.barById(id: $source.nestedBarId)
+            }
+         }
+        '''
+        def hydratedUnderlyingSchema1 = typeDefinitions('''
+            type Query{
+                foo: Foo
+            }
+            type Foo {
+                name: String
+                barId: ID
+            }
+        ''')
+        def hydratedUnderlyingSchema2 = typeDefinitions('''
+            type Query{
+                barQuery: BarQuery
+            }
+            type BarQuery {
+                bar: Bar
+                barById(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+                name: String
+                nestedBarId: ID
+            }
+        ''')
+
+        def query = '''
+            { foo { bar { name nestedBar {name nestedBar { name } } } } }
+        '''
+
+        ServiceExecution serviceExecution1 = new MockServiceExecution(
+                [foo: [barId: "barId123"]])
+        ServiceExecution serviceExecution2 = new MockServiceExecution([barQuery:[barById: null]],
+                [[message: "Error during hydration"]])
+
+        ServiceExecutionFactory serviceFactory = serviceFactory([
+                Foo: new Tuple2(serviceExecution1, hydratedUnderlyingSchema1),
+                Bar: new Tuple2(serviceExecution2, hydratedUnderlyingSchema2)]
+        )
+
+        Nadel nadel = newNadel()
+                .dsl(hydratedNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        when:
+        def er = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        !er.errors.isEmpty()
+        er.errors[0].message == "Error during hydration"
+        er.data == [foo: [bar: null]]
+    }
+
+    def "synthetic hydration forwards error"() {
+        given:
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            foo : Foo
+        }
+        type Foo {
+            id: ID
+            barId: ID
+        }
+        """)
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            barsQuery: BarsQuery
+        }
+        type BarsQuery {
+            barById(id: ID): Bar
+        }
+        type Bar {
+            id: ID
+            name : String
+        }
+        """)
+
+        def nsdl = '''
+        service service1 {
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                id: ID
+                bar: Bar => hydrated from service2.barsQuery.barById(id: $source.barId)
+            }
+        }
+        service service2 {
+            type Query {
+                barsQuery: BarsQuery
+            }
+            type BarsQuery {
+                barById(id: ID): Bar
+            }
+            type Bar {
+                id: ID
+                name: String
+            }
+        }
+        '''
+
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                service1: new Tuple2(serviceExecution1, underlyingSchema1),
+                service2: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+
+        def query = "{foo {bar{ name}}}"
+        def response1 = new ServiceExecutionResult([foo: [barId: "barId1"]])
+
+        def response2 = new ServiceExecutionResult(null, [[message: "Some error occurred"]])
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response1)
+
+        then:
+        1 * serviceExecution2.execute(_) >> completedFuture(response2)
+
+        def errors = result.join().errors
+        errors.size() == 1
+        errors[0].message == "Some error occurred"
+    }
+
+    def "synthetic hydration list with batching forwards error"() {
+        given:
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            foo : Foo
+        }
+        type Foo {
+            id: ID
+            barId: [ID]
+        }
+        """)
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            barsQuery: BarsQuery
+        }
+        type BarsQuery {
+            barsById(id: [ID]): [Bar]
+        }
+        type Bar {
+            id: ID
+            name : String
+        }
+        """)
+
+        def nsdl = '''
+        service service1 {
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                id: ID
+                bar: [Bar] => hydrated from service2.barsQuery.barsById(id: $source.barId)
+            }
+        }
+        service service2 {
+            type Query {
+                barsQuery: BarsQuery
+            }
+            type BarsQuery {
+                barsById(id: [ID]): [Bar]
+            }
+            type Bar {
+                id: ID
+                name: String
+            }
+        }
+        '''
+
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                service1: new Tuple2(serviceExecution1, underlyingSchema1),
+                service2: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+
+        def query = "{foo {bar{ name}}}"
+        def expectedQuery1 = "query nadel_2_service1 {foo {barId}}"
+        def response1 = new ServiceExecutionResult([foo: [barId: ["barId1", "barId2", "barId3"]]])
+
+        def expectedQuery2 = "query nadel_2_service2 {barsQuery {barsById(id:[\"barId1\",\"barId2\",\"barId3\"]) {name object_identifier__UUID:id}}}"
+        def response2 = new ServiceExecutionResult(null, [[message: "Some error occurred"]])
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        then:
+        1 * serviceExecution2.execute({ ServiceExecutionParameters sep ->
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        def errors = result.join().errors
+        errors.size() == 1
+        errors[0].message == "Some error occurred"
+    }
+
+
+    def "synthetic hydration input is empty list"() {
+        given:
+        def issueSchema = typeDefinitions("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def userServiceSchema = typeDefinitions("""
+        type Query {
+            usersQuery: UserQuery
+        }
+        type UserQuery {
+            usersByIds(ids: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def nsdl = '''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersQuery.usersByIds(ids: $source.authorIds) object identified by id, batch size 2
+            }
+        }
+        service UserService {
+            type Query {
+                usersQuery: UserQuery
+            }
+            type UserQuery {
+                usersByIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        '''
+
+        def query = '{issues {id authors {name} }}'
+        def issue1 = [id: "ISSUE-1", authorIds: []]
+        def response1 = new ServiceExecutionResult([issues: [issue1]])
+
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = serviceFactory([
+                Issues: new Tuple2(serviceExecution1, issueSchema),
+                UserService: new Tuple2(serviceExecution2, userServiceSchema)]
+        )
+
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response1)
+
+        def issue1Result = [id: "ISSUE-1", authors: []]
+        result.join().data == [issues: [issue1Result]]
+    }
+
+    def "synthetic hydration input is null"() {
+        given:
+        def issueSchema = typeDefinitions("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def userServiceSchema = typeDefinitions("""
+        type Query {
+            usersQuery: UserQuery
+        }
+        type UserQuery {
+            usersByIds(ids: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def nsdl = '''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersQuery.usersByIds(ids: $source.authorIds) object identified by id, batch size 2
+            }
+        }
+        service UserService {
+            type Query {
+                usersQuery: UserQuery
+            }
+            type UserQuery {
+                usersByIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        '''
+
+        def query = '{issues {id authors {name} }}'
+        def issue1 = [id: "ISSUE-1", authorIds: null]
+        def response1 = new ServiceExecutionResult([issues: [issue1]])
+
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = serviceFactory([
+                Issues: new Tuple2(serviceExecution1, issueSchema),
+                UserService: new Tuple2(serviceExecution2, userServiceSchema)]
+        )
+
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response1)
+
+        def issue1Result = [id: "ISSUE-1", authors: null]
+        result.join().data == [issues: [issue1Result]]
+    }
+
+
+    def "synthetic hydration batching returns null"() {
+        given:
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            foo : Foo
+        }
+        type Foo {
+            id: ID
+            barId: [ID]
+        }
+        """)
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            barsQuery: BarsQuery
+        }
+        type BarsQuery {
+           barsById(id: [ID]): [Bar]
+        }
+        type Bar {
+            id: ID
+            name : String
+        }
+        """)
+
+        def nsdl = '''
+        service service1 {
+            type Query {
+                foo: Foo
+            }
+            type Foo {
+                id: ID
+                bar: [Bar] => hydrated from service2.barsQuery.barsById(id: $source.barId)
+            }
+        }
+        service service2 {
+            type Query {
+                barsQuery: BarsQuery
+            }
+            type BarsQuery {
+               barsById(id: [ID]): [Bar]
+            }
+            type Bar {
+                id: ID
+                name: String
+            }
+        }
+        '''
+        def query = "{foo {bar{ name}}}"
+
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                service1: new Tuple2(serviceExecution1, underlyingSchema1),
+                service2: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        def response1 = new ServiceExecutionResult([foo: [barId: ["barId1", "barId2", "barId3"]]])
+
+        def response2 = new ServiceExecutionResult(null)
+
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >> completedFuture(response1)
+
+        then:
+        1 * serviceExecution2.execute(_) >> completedFuture(response2)
+
+        result.join().data == [foo: [bar: [null, null, null]]]
+    }
 
 }
