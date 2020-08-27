@@ -326,9 +326,11 @@ public class HydrationInputResolver {
 
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getFieldIdToTransformation();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
+        assertTrue(rootResultNode.getChildren().size() == 1, () -> "expected rootResultNode to only have 1 child.");
 
         ExecutionResultNode root = rootResultNode.getChildren().get(0);
-        if (hydrationTransformation.getUnderlyingServiceHydration().getSyntheticField() != null && root.getChildren().size() != 0) {
+        if (hydrationTransformation.getUnderlyingServiceHydration().getSyntheticField() != null && root.getChildren().size() > 0) {
+            assertTrue(root.getChildren().size() == 1, () -> "expected synthetic field to only have 1 topLevelField child.");
             root = root.getChildren().get(0);
         }
 
