@@ -371,8 +371,7 @@ public class HydrationInputResolver {
         Field topLevelField = createBatchHydrationTopLevelField(executionContext,
                 hydrationInputs,
                 originalField,
-                underlyingServiceHydration,
-                underlyingServiceHydration.getSyntheticField());
+                underlyingServiceHydration);
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
         Operation operation = Operation.QUERY;
@@ -403,10 +402,10 @@ public class HydrationInputResolver {
     private Field createBatchHydrationTopLevelField(ExecutionContext executionContext,
                                                     List<HydrationInputNode> hydrationInputs,
                                                     Field originalField,
-                                                    UnderlyingServiceHydration underlyingServiceHydration,
-                                                    String syntheticFieldName) {
+                                                    UnderlyingServiceHydration underlyingServiceHydration) {
 
         String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
+        String syntheticFieldName = underlyingServiceHydration.getSyntheticField();
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
         RemoteArgumentDefinition argumentFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
         List<RemoteArgumentDefinition> extraArguments = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
@@ -432,7 +431,6 @@ public class HydrationInputResolver {
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .arguments(allArguments)
                 .build();
-
         topLevelField = addObjectIdentifier(getNadelContext(executionContext), topLevelField, underlyingServiceHydration.getObjectIdentifier());
 
         if (syntheticFieldName == null) {
