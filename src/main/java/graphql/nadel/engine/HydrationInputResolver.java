@@ -152,14 +152,12 @@ public class HydrationInputResolver {
         String topLevelField = underlyingServiceHydration.getTopLevelField();
 
         if (underlyingServiceHydration.getSyntheticField() != null) {
-            Optional<GraphQLFieldDefinition> topLevelFieldDef  = overallSchema.getAllTypesAsList().stream()
-                        .filter(type -> type instanceof GraphQLObjectType)
-                        .flatMap(type -> ((GraphQLObjectType) type).getFieldDefinitions().stream())
-                        .filter(fieldDefinition -> fieldDefinition.getName().equals(topLevelField))
-                        .findFirst();
-            if (topLevelFieldDef.isPresent()) {
-                graphQLFieldDefinition = topLevelFieldDef.get();
+            GraphQLFieldDefinition syntheticFieldDefinition = overallSchema.getQueryType().getFieldDefinition(underlyingServiceHydration.getSyntheticField());
+            if(syntheticFieldDefinition == null) {
+                return null;
             }
+            GraphQLObjectType syntheticFieldDefinitionType = (GraphQLObjectType) syntheticFieldDefinition.getType();
+            graphQLFieldDefinition = syntheticFieldDefinitionType.getFieldDefinition(underlyingServiceHydration.getTopLevelField());
         } else {
             graphQLFieldDefinition = overallSchema.getQueryType().getFieldDefinition(topLevelField);
         }
@@ -333,7 +331,7 @@ public class HydrationInputResolver {
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
 
         ExecutionResultNode root = rootResultNode.getChildren().get(0);
-        if (hydrationTransformation.getUnderlyingServiceHydration().getSyntheticField() != null) {
+        if (hydrationTransformation.getUnderlyingServiceHydration().getSyntheticField() != null && root.getChildren().size() != 0) {
             root = root.getChildren().get(0);
         }
 
@@ -456,10 +454,6 @@ public class HydrationInputResolver {
                                                                                    ResultComplexityAggregator resultComplexityAggregator) {
 
         ExecutionResultNode root = rootResultNode.getChildren().get(0);
-        if (hydrationInputNodes.get(0).getHydrationTransformation().getUnderlyingServiceHydration().getSyntheticField() != null) {
-            root = root.getChildren().get(0);
-        }
-
         if (root instanceof LeafExecutionResultNode) {
             // we only expect a null value here
             assertTrue(root.isNullValue());
@@ -474,6 +468,10 @@ public class HydrationInputResolver {
                 result.add(resultNode);
             }
             return result;
+        }
+
+        if (hydrationInputNodes.get(0).getHydrationTransformation().getUnderlyingServiceHydration().getSyntheticField() != null) {
+            root = root.getChildren().get(0);
         }
         assertTrue(root instanceof ListExecutionResultNode, () -> "expect a list result from the underlying service for batched hydration");
         ListExecutionResultNode listResultNode = (ListExecutionResultNode) root;
