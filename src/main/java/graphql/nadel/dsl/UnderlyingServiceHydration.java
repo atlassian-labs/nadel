@@ -20,6 +20,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
 
     private final String serviceName;
     private final String topLevelField;
+    private final String syntheticField;
     private final List<RemoteArgumentDefinition> arguments;
     private String objectIdentifier;
     private Integer batchSize;
@@ -28,6 +29,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
                                       List<Comment> comments,
                                       String serviceName,
                                       String topLevelField,
+                                      String syntheticField,
                                       List<RemoteArgumentDefinition> arguments,
                                       String objectIdentifier,
                                       Integer batchSize,
@@ -39,6 +41,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
         this.arguments = arguments;
         this.objectIdentifier = objectIdentifier;
         this.batchSize = batchSize;
+        this.syntheticField = syntheticField;
     }
 
 
@@ -92,5 +95,9 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
     @Override
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
+    }
+
+    public String getSyntheticField() {
+        return syntheticField;
     }
 }

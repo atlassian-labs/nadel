@@ -153,6 +153,10 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     private UnderlyingServiceHydration createUnderlyingServiceHydration(StitchingDSLParser.UnderlyingServiceHydrationContext ctx) {
         String serviceName = ctx.serviceName().getText();
         String topLevelField = ctx.topLevelField().getText();
+        String syntheticField = null;
+        if (ctx.syntheticField() != null) {
+            syntheticField = ctx.syntheticField().getText();
+        }
 
         List<RemoteArgumentDefinition> remoteArguments = new ArrayList<>();
         List<StitchingDSLParser.RemoteArgumentPairContext> remoteArgumentPairContexts = ctx.remoteCallDefinition()
@@ -168,7 +172,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         if (ctx.batchSize() != null) {
             batchSize = Integer.parseInt(ctx.batchSize().intValue().getText());
         }
-        return new UnderlyingServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField,
+        return new UnderlyingServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField, syntheticField,
                 remoteArguments, objectIdentifier, batchSize, additionalIdData());
     }
 

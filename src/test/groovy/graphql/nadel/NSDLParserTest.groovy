@@ -151,6 +151,29 @@ class NSDLParserTest extends Specification {
         assertNodesHaveIds(stitchingDSL.children)
     }
 
+    def "parse hydration with a synthetic field"() {
+        given:
+
+        def dsl = '''
+        service FooService {
+            type Query {
+                foo: Foo
+            }
+
+            type Foo {
+                id(inputArg: ID!): ID => hydrated from OtherService.resolver.resolveId(otherId: $source.id, 
+                arg1: $context.ctxParam, arg2: $argument.inputArg)
+            }
+        }
+        '''
+        when:
+        NSDLParser parser = new NSDLParser()
+        def stitchingDSL = parser.parseDSL(dsl)
+        then:
+        astAsMap(stitchingDSL) == expectedJson("hydration-synthetic.json")
+        assertNodesHaveIds(stitchingDSL.children)
+    }
+
 
     def "parse object type transformation"() {
         given:

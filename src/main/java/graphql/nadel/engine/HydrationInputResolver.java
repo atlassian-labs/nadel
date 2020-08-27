@@ -1,5 +1,6 @@
 package graphql.nadel.engine;
 
+import graphql.GraphQLException;
 import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
@@ -8,6 +9,7 @@ import graphql.language.Argument;
 import graphql.language.ArrayValue;
 import graphql.language.Field;
 import graphql.language.FieldDefinition;
+import graphql.language.SelectionSet;
 import graphql.language.StringValue;
 import graphql.language.Value;
 import graphql.nadel.Operation;
@@ -31,12 +33,12 @@ import graphql.nadel.result.RootExecutionResultNode;
 import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +48,7 @@ import java.util.concurrent.CompletableFuture;
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.Field.newField;
+import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.nadel.engine.ArtificialFieldUtils.addObjectIdentifier;
 import static graphql.nadel.engine.StrategyUtil.changeFieldIdsInResultNode;
 import static graphql.nadel.engine.StrategyUtil.copyFieldInformation;
@@ -142,9 +145,19 @@ public class HydrationInputResolver {
     }
 
     private Integer getDefaultBatchSize(UnderlyingServiceHydration underlyingServiceHydration) {
+        GraphQLFieldDefinition graphQLFieldDefinition = null;
         String topLevelField = underlyingServiceHydration.getTopLevelField();
 
-        GraphQLFieldDefinition graphQLFieldDefinition = overallSchema.getQueryType().getFieldDefinition(topLevelField);
+        if (underlyingServiceHydration.getSyntheticField() != null) {
+            GraphQLFieldDefinition syntheticFieldDefinition = overallSchema.getQueryType().getFieldDefinition(underlyingServiceHydration.getSyntheticField());
+            if(syntheticFieldDefinition == null) {
+                return null;
+            }
+            GraphQLObjectType syntheticFieldDefinitionType = (GraphQLObjectType) syntheticFieldDefinition.getType();
+            graphQLFieldDefinition = syntheticFieldDefinitionType.getFieldDefinition(underlyingServiceHydration.getTopLevelField());
+        } else {
+            graphQLFieldDefinition = overallSchema.getQueryType().getFieldDefinition(topLevelField);
+        }
         // the field we use to hydrate doesn't need to be exposed, therefore can be null
         if (graphQLFieldDefinition == null) {
             return null;
@@ -158,6 +171,7 @@ public class HydrationInputResolver {
 
     private List<NodeMultiZipper<ExecutionResultNode>> groupIntoCorrectBatchSizes(NodeMultiZipper<ExecutionResultNode> batch) {
         HydrationInputNode node = (HydrationInputNode) batch.getZippers().get(0).getCurNode();
+
         Integer batchSize = node.getHydrationTransformation().getUnderlyingServiceHydration().getBatchSize();
         if (batchSize == null) {
             batchSize = getDefaultBatchSize(node.getHydrationTransformation().getUnderlyingServiceHydration());
@@ -187,10 +201,20 @@ public class HydrationInputResolver {
     private boolean isBatchHydrationField(HydrationInputNode hydrationInputNode) {
         HydrationTransformation hydrationTransformation = hydrationInputNode.getHydrationTransformation();
         Service service = getService(hydrationTransformation.getUnderlyingServiceHydration());
+
+        String syntheticFieldName = hydrationTransformation.getUnderlyingServiceHydration().getSyntheticField();
         String topLevelFieldName = hydrationTransformation.getUnderlyingServiceHydration().getTopLevelField();
-        GraphQLFieldDefinition topLevelFieldDefinition = service.getUnderlyingSchema().getQueryType().getFieldDefinition(topLevelFieldName);
+
+        GraphQLFieldDefinition topLevelFieldDefinition;
+        if (syntheticFieldName == null) {
+            topLevelFieldDefinition = service.getUnderlyingSchema().getQueryType().getFieldDefinition(topLevelFieldName);
+        } else {
+            topLevelFieldDefinition = ((GraphQLObjectType)service.getUnderlyingSchema().getQueryType().getFieldDefinition(syntheticFieldName).getType()).getFieldDefinition(topLevelFieldName);
+        }
+
         return isList(unwrapNonNull(topLevelFieldDefinition.getType()));
     }
+
 
     private CompletableFuture<List<NodeZipper<ExecutionResultNode>>> replaceNodesInZipper(NodeMultiZipper<ExecutionResultNode> batch,
                                                                                           CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture) {
@@ -215,15 +239,19 @@ public class HydrationInputResolver {
         Field originalField = hydrationTransformation.getOriginalField();
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
         String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
-
-        Field topLevelField = createSingleHydrationTopLevelField(hydrationInputNode, originalField, underlyingServiceHydration, topLevelFieldName);
-
         Service service = getService(underlyingServiceHydration);
+
+        Field topLevelField = createSingleHydrationTopLevelField(hydrationInputNode,
+                originalField.getSelectionSet(),
+                underlyingServiceHydration,
+                topLevelFieldName,
+                underlyingServiceHydration.getSyntheticField());
+        GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
         Operation operation = Operation.QUERY;
         String operationName = buildOperationName(service, executionContext);
-        GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
+        boolean isSyntheticHydration = underlyingServiceHydration.getSyntheticField() != null;
         QueryTransformationResult queryTransformationResult = queryTransformer
                 .transformHydratedTopLevelField(
                         executionContext,
@@ -234,7 +262,8 @@ public class HydrationInputResolver {
                         topLevelFieldType,
                         serviceExecutionHooks,
                         service,
-                        serviceContexts.get(service)
+                        serviceContexts.get(service),
+                        isSyntheticHydration
                 );
 
 
@@ -256,8 +285,11 @@ public class HydrationInputResolver {
 
     }
 
-
-    private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode, Field originalField, UnderlyingServiceHydration underlyingServiceHydration, String topLevelFieldName) {
+    private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode,
+                                                     SelectionSet selectionSet,
+                                                     UnderlyingServiceHydration underlyingServiceHydration,
+                                                     String topLevelFieldName,
+                                                     String syntheticFieldName) {
         RemoteArgumentDefinition remoteArgumentDefinition = underlyingServiceHydration.getArguments().get(0);
         Object value = hydrationInputNode.getCompletedValue();
         Argument argument = Argument.newArgument()
@@ -265,11 +297,21 @@ public class HydrationInputResolver {
                 .value(new StringValue(value.toString()))
                 .build();
 
-        return newField(topLevelFieldName)
-                .selectionSet(originalField.getSelectionSet())
+        Field topLevelField = newField(topLevelFieldName)
+                .selectionSet(selectionSet)
                 .arguments(singletonList(argument))
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .build();
+
+        if (syntheticFieldName == null) {
+            return topLevelField;
+        }
+
+        Field syntheticField = newField(syntheticFieldName)
+                .selectionSet(newSelectionSet().selection(topLevelField).build())
+                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .build();
+        return syntheticField;
     }
 
     private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(ExecutionId executionId,
@@ -282,12 +324,19 @@ public class HydrationInputResolver {
                                                                               ResultComplexityAggregator resultComplexityAggregator
     ) {
 
-
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getFieldIdToTransformation();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
+        assertTrue(rootResultNode.getChildren().size() == 1, () -> "expected rootResultNode to only have 1 child.");
+
+        ExecutionResultNode root = rootResultNode.getChildren().get(0);
+        if (hydrationTransformation.getUnderlyingServiceHydration().getSyntheticField() != null && root.getChildren().size() > 0) {
+            assertTrue(root.getChildren().size() == 1, () -> "expected synthetic field to only have 1 topLevelField child.");
+            root = root.getChildren().get(0);
+        }
+
         ExecutionResultNode firstTopLevelResultNode = serviceResultNodesToOverallResult
                 .convertChildren(executionId,
-                        rootResultNode.getChildren().get(0),
+                        root,
                         rootNormalizedField,
                         overallSchema,
                         hydrationInputNode,
@@ -318,14 +367,28 @@ public class HydrationInputResolver {
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
         Service service = getService(underlyingServiceHydration);
 
-        Field topLevelField = createBatchHydrationTopLevelField(executionContext, hydrationInputs, originalField, underlyingServiceHydration);
+        Field topLevelField = createBatchHydrationTopLevelField(executionContext,
+                hydrationInputs,
+                originalField,
+                underlyingServiceHydration);
+        GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
         Operation operation = Operation.QUERY;
         String operationName = buildOperationName(service, executionContext);
 
-        GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
+        boolean isSyntheticHydration = underlyingServiceHydration.getSyntheticField() != null;
         QueryTransformationResult queryTransformationResult = queryTransformer
-                .transformHydratedTopLevelField(executionContext, service.getUnderlyingSchema(), operationName, operation, topLevelField, topLevelFieldType, serviceExecutionHooks, service, serviceContexts.get(service));
+                .transformHydratedTopLevelField(
+                        executionContext,
+                        service.getUnderlyingSchema(),
+                        operationName, operation,
+                        topLevelField,
+                        topLevelFieldType,
+                        serviceExecutionHooks,
+                        service,
+                        serviceContexts.get(service),
+                        isSyntheticHydration
+                );
 
 
         return serviceExecutor
@@ -339,7 +402,9 @@ public class HydrationInputResolver {
                                                     List<HydrationInputNode> hydrationInputs,
                                                     Field originalField,
                                                     UnderlyingServiceHydration underlyingServiceHydration) {
+
         String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
+        String syntheticFieldName = underlyingServiceHydration.getSyntheticField();
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
         RemoteArgumentDefinition argumentFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
         List<RemoteArgumentDefinition> extraArguments = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
@@ -365,7 +430,17 @@ public class HydrationInputResolver {
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .arguments(allArguments)
                 .build();
-        return addObjectIdentifier(getNadelContext(executionContext), topLevelField, underlyingServiceHydration.getObjectIdentifier());
+        topLevelField = addObjectIdentifier(getNadelContext(executionContext), topLevelField, underlyingServiceHydration.getObjectIdentifier());
+
+        if (syntheticFieldName == null) {
+            return topLevelField;
+        }
+
+        Field syntheticField = newField(syntheticFieldName)
+                .selectionSet(newSelectionSet().selection(topLevelField).build())
+                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .build();
+        return syntheticField;
     }
 
 
@@ -374,11 +449,15 @@ public class HydrationInputResolver {
                                                                                    RootExecutionResultNode rootResultNode,
                                                                                    QueryTransformationResult queryTransformationResult,
                                                                                    ResultComplexityAggregator resultComplexityAggregator) {
+        boolean isSyntheticHydration = hydrationInputNodes.get(0).getHydrationTransformation().getUnderlyingServiceHydration().getSyntheticField() != null;
 
-
-        if (rootResultNode.getChildren().get(0) instanceof LeafExecutionResultNode) {
+        ExecutionResultNode root = rootResultNode.getChildren().get(0);
+        if (!(root instanceof LeafExecutionResultNode) && isSyntheticHydration) {
+            root = root.getChildren().get(0);
+        }
+        if (root instanceof LeafExecutionResultNode) {
             // we only expect a null value here
-            assertTrue(rootResultNode.getChildren().get(0).isNullValue());
+            assertTrue(root.isNullValue());
             List<ExecutionResultNode> result = new ArrayList<>();
             boolean first = true;
             for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
@@ -391,8 +470,8 @@ public class HydrationInputResolver {
             }
             return result;
         }
-        assertTrue(rootResultNode.getChildren().get(0) instanceof ListExecutionResultNode, () -> "expect a list result from the underlying service for batched hydration");
-        ListExecutionResultNode listResultNode = (ListExecutionResultNode) rootResultNode.getChildren().get(0);
+        assertTrue(root instanceof ListExecutionResultNode, () -> "expect a list result from the underlying service for batched hydration");
+        ListExecutionResultNode listResultNode = (ListExecutionResultNode) root;
         List<ExecutionResultNode> resolvedNodes = listResultNode.getChildren();
 
         List<ExecutionResultNode> result = new ArrayList<>();

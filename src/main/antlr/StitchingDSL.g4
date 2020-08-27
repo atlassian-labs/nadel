@@ -43,7 +43,7 @@ fieldMappingDefinition : 'renamed from' name ('.'name)?;
 //
 // hydration
 
-underlyingServiceHydration: 'hydrated from' serviceName '.' topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
+underlyingServiceHydration: 'hydrated from' serviceName '.' (syntheticField '.')? topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
 
 objectIdentifier: 'object identified by' name;
 
@@ -54,7 +54,6 @@ remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | context
 remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 
 remoteArgumentPair : name ':' remoteArgumentSource ;
-
 
 sourceObjectReference : '$source' '.' name ('.'name)*;
 
@@ -67,6 +66,8 @@ intValue: IntValue;
 serviceName: NAME;
 
 topLevelField: NAME;
+
+syntheticField: NAME;
 
 baseName: NAME | FRAGMENT | QUERY | MUTATION | SUBSCRIPTION | SCHEMA | SCALAR | TYPE | INTERFACE | IMPLEMENTS | ENUM | UNION | INPUT | EXTEND | DIRECTIVE | SERVICE;
 
