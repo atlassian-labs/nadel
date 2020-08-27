@@ -39,11 +39,8 @@ import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -450,8 +447,12 @@ public class HydrationInputResolver {
                                                                                    RootExecutionResultNode rootResultNode,
                                                                                    QueryTransformationResult queryTransformationResult,
                                                                                    ResultComplexityAggregator resultComplexityAggregator) {
+        boolean isSyntheticHydration = hydrationInputNodes.get(0).getHydrationTransformation().getUnderlyingServiceHydration().getSyntheticField() != null;
 
         ExecutionResultNode root = rootResultNode.getChildren().get(0);
+        if (!(root instanceof LeafExecutionResultNode) && isSyntheticHydration) {
+            root = root.getChildren().get(0);
+        }
         if (root instanceof LeafExecutionResultNode) {
             // we only expect a null value here
             assertTrue(root.isNullValue());
@@ -466,10 +467,6 @@ public class HydrationInputResolver {
                 result.add(resultNode);
             }
             return result;
-        }
-
-        if (hydrationInputNodes.get(0).getHydrationTransformation().getUnderlyingServiceHydration().getSyntheticField() != null) {
-            root = root.getChildren().get(0);
         }
         assertTrue(root instanceof ListExecutionResultNode, () -> "expect a list result from the underlying service for batched hydration");
         ListExecutionResultNode listResultNode = (ListExecutionResultNode) root;

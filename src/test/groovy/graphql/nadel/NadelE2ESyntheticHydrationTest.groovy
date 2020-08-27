@@ -1386,4 +1386,387 @@ class NadelE2ESyntheticHydrationTest extends Specification {
         result.join().data == [foo: [bar: [null, null, null]]]
     }
 
+    def "top level field is null in synthetic hydration"() {
+        given:
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            issue(id: ID): Issue
+        }
+        type Issue {
+            id: ID
+            projectId: ID
+        }
+        """)
+
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            projects: ProjectsQuery
+        }
+        type ProjectsQuery {
+            project(id: ID) : Project
+        }
+
+        type Project {
+            id: ID
+            name: String
+        }
+        """)
+
+        def nsdl = '''
+        service service1 {
+            type Query {
+                issue(id: ID): Issue
+            }
+            type Issue {
+                id: ID
+                project: Project => hydrated from service2.projects.project(id: $source.projectId)
+            }
+        }
+        service service2 {
+            type Query {
+                projects: ProjectsQuery
+            }
+            type ProjectsQuery {
+                project(id: ID) : Project
+            }
+            type Project {
+                id: ID
+                name: String
+            }
+        }
+        '''
+
+        def query = '''
+            { issue { project { name } } }
+        '''
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                service1: new Tuple2(serviceExecution1, underlyingSchema1),
+                service2: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+        def topLevelData = [issue: [id: "1", projectId:"project1"]]
+
+        def hydrationData = [projects: null]
+
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
+        ServiceExecutionResult hydrationResult1_1 = new ServiceExecutionResult(hydrationData)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >>
+                completedFuture(topLevelResult)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult1_1)
+
+        result.join().data == [issue: [project: null]]
+    }
+
+    def "top level field data returns null in synthetic hydration"() {
+        given:
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            issue(id: ID): Issue
+        }
+        type Issue {
+            id: ID
+            projectId: ID
+        }
+        """)
+
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            projects: ProjectsQuery
+        }
+        type ProjectsQuery {
+            project(id: ID) : Project
+        }
+
+        type Project {
+            id: ID
+            name: String
+        }
+        """)
+
+        def nsdl = '''
+        service service1 {
+            type Query {
+                issue(id: ID): Issue
+            }
+            type Issue {
+                id: ID
+                project: Project => hydrated from service2.projects.project(id: $source.projectId)
+            }
+        }
+        service service2 {
+            type Query {
+                projects: ProjectsQuery
+            }
+            type ProjectsQuery {
+                project(id: ID) : Project
+            }
+            type Project {
+                id: ID
+                name: String
+            }
+        }
+        '''
+
+        def query = '''
+            { issue { project { name } } }
+        '''
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                service1: new Tuple2(serviceExecution1, underlyingSchema1),
+                service2: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+        def topLevelData = [issue: [id: "1", projectId:"project1"]]
+
+        def hydrationData = [projects: [project: null]]
+
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
+        ServiceExecutionResult hydrationResult1_1 = new ServiceExecutionResult(hydrationData)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >>
+                completedFuture(topLevelResult)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult1_1)
+
+        result.join().data == [issue: [project: null]]
+    }
+
+    def "top level field is null in batched synthetic hydration"() {
+        given:
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            users: UsersQuery
+        }
+        
+        type UsersQuery {
+           usersByIds(id: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def nsdl = '''
+        service service1 {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from service2.users.usersByIds(id: $source.authorIds) object identified by id
+            }
+        }
+        service service2 {
+            type Query {
+                users: UsersQuery
+            }
+        
+            type UsersQuery {
+                foo: String
+                usersByIds(id: [ID]): [User] default batch size 3
+            }
+            type User {
+                id: ID
+                lastName: String
+            }
+        }
+        '''
+
+        def query = "{issues {id authors {id}}}"
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                service1: new Tuple2(serviceExecution1, underlyingSchema1),
+                service2: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        def issue1 = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"]]
+        def issue2 = [id: "ISSUE-2", authorIds: ["USER-3"]]
+        def issue3 = [id: "ISSUE-3", authorIds: ["USER-2", "USER-4", "USER-5",]]
+        def topLevelData = [issues: [issue1, issue2, issue3]]
+
+        def batchResponse1 = [[id: "USER-1", object_identifier__UUID: "USER-1"], [id: "USER-2", object_identifier__UUID: "USER-2"], [id: "USER-3", object_identifier__UUID: "USER-3"]]
+        def hydrationData1 = [users: null]
+
+        def batchResponse2 = [[id: "USER-2", object_identifier__UUID: "USER-2"], [id: "USER-4", object_identifier__UUID: "USER-4"], [id: "USER-5", object_identifier__UUID: "USER-5"]]
+        def hydrationData2 = [users: null]
+
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
+        ServiceExecutionResult hydrationResult1 = new ServiceExecutionResult(hydrationData1)
+        ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >>
+                completedFuture(topLevelResult)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult1)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult2)
+
+        def issue1Result = [id: "ISSUE-1", authors: [null, null]]
+        def issue2Result = [id: "ISSUE-2", authors: [null]]
+        def issue3Result = [id: "ISSUE-3", authors: [null, null, null]]
+
+        result.join().data == [issues: [issue1Result, issue2Result, issue3Result]]
+    }
+    def "top level field data returns null in batched synthetic hydration"() {
+        given:
+        def underlyingSchema1 = typeDefinitions("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def underlyingSchema2 = typeDefinitions("""
+        type Query {
+            users: UsersQuery
+        }
+        
+        type UsersQuery {
+           usersByIds(id: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def nsdl = '''
+        service service1 {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from service2.users.usersByIds(id: $source.authorIds) object identified by id
+            }
+        }
+        service service2 {
+            type Query {
+                users: UsersQuery
+            }
+        
+            type UsersQuery {
+                foo: String
+                usersByIds(id: [ID]): [User] default batch size 3
+            }
+            type User {
+                id: ID
+                lastName: String
+            }
+        }
+        '''
+
+        def query = "{issues {id authors {id}}}"
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                service1: new Tuple2(serviceExecution1, underlyingSchema1),
+                service2: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        def issue1 = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"]]
+        def issue2 = [id: "ISSUE-2", authorIds: ["USER-3"]]
+        def issue3 = [id: "ISSUE-3", authorIds: ["USER-2", "USER-4", "USER-5",]]
+        def topLevelData = [issues: [issue1, issue2, issue3]]
+
+        def hydrationData1 = [users: [usersByIds: null]]
+
+        def hydrationData2 = [users: [usersByIds: null]]
+
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
+        ServiceExecutionResult hydrationResult1 = new ServiceExecutionResult(hydrationData1)
+        ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * serviceExecution1.execute(_) >>
+                completedFuture(topLevelResult)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult1)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult2)
+
+        def issue1Result = [id: "ISSUE-1", authors: [null, null]]
+        def issue2Result = [id: "ISSUE-2", authors: [null]]
+        def issue3Result = [id: "ISSUE-3", authors: [null, null, null]]
+
+        result.join().data == [issues: [issue1Result, issue2Result, issue3Result]]
+    }
+
+
+
 }
