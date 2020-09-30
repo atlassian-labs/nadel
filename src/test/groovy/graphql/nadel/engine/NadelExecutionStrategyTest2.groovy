@@ -3,12 +3,7 @@ package graphql.nadel.engine
 import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.nadel.DefinitionRegistry
-import graphql.nadel.Service
-import graphql.nadel.ServiceExecution
-import graphql.nadel.ServiceExecutionParameters
-import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.StrategyTestHelper
+import graphql.nadel.*
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -17,7 +12,6 @@ import graphql.nadel.testutils.TestUtil
 
 import static graphql.language.AstPrinter.printAstCompact
 import static java.util.concurrent.CompletableFuture.completedFuture
-
 
 class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
@@ -409,7 +403,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
         def expectedQuery2 = "query nadel_2_UserService {usersQuery {usersByIds(id:[\"USER-1\"],extraArg1:\"extraArg1\",extraArg2:10) {name object_identifier__UUID:id}}}"
         def batchResponse1 = [[id: "USER-1", name: "User 1", object_identifier__UUID: "USER-1"]]
-        def response2 = new ServiceExecutionResult([usersQuery:[usersByIds: batchResponse1]])
+        def response2 = new ServiceExecutionResult([usersQuery: [usersByIds: batchResponse1]])
 
         def executionData = createExecutionData(query, overallSchema)
 
@@ -509,7 +503,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
         def expectedQuery2 = "query nadel_2_UserService {usersQuery {usersByIds(id:[\"USER-1\",\"USER-2\"]) {id object_identifier__UUID:id}}}"
         def batchResponse1 = [[id: "USER-1", name: "User 1", object_identifier__UUID: "USER-1"], [id: "USER-2", name: "User 2", object_identifier__UUID: "USER-2"]]
-        def response2 = new ServiceExecutionResult([usersQuery:[usersByIds: batchResponse1]])
+        def response2 = new ServiceExecutionResult([usersQuery: [usersByIds: batchResponse1]])
 
         def executionData = createExecutionData(query, overallSchema)
 
@@ -605,7 +599,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
         def expectedQuery2 = "query nadel_2_UserService {usersQuery {usersByIds(id:[\"USER-1\",\"USER-2\"]) {name id object_identifier__UUID:id}}}"
         def batchResponse1 = [[id: "USER-1", name: "User 1", object_identifier__UUID: "USER-1"], [id: "USER-2", name: "User 2", object_identifier__UUID: "USER-2"]]
-        def response2 = new ServiceExecutionResult([usersQuery:[usersByIds: batchResponse1]])
+        def response2 = new ServiceExecutionResult([usersQuery: [usersByIds: batchResponse1]])
 
         def executionData = createExecutionData(query, overallSchema)
 
@@ -716,7 +710,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def response1 = new ServiceExecutionResult(data1)
 
         def expectedQuery2 = "query nadel_2_Users {usersQuery {users(accountIds:[\"1\",\"2\",\"3\"]) {accountId object_identifier__UUID:accountId}}}"
-        def response2 = new ServiceExecutionResult([usersQuery:[users: [[accountId: "1", object_identifier__UUID: "1"], [accountId: "2", object_identifier__UUID: "2"], [accountId: "3", object_identifier__UUID: "3"]]]])
+        def response2 = new ServiceExecutionResult([usersQuery: [users: [[accountId: "1", object_identifier__UUID: "1"], [accountId: "2", object_identifier__UUID: "2"], [accountId: "3", object_identifier__UUID: "3"]]]])
 
         def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("board")
         def service1 = new Service("TestBoard", boardSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -745,6 +739,99 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     }
 
+
+    def "extending types via hydration with arguments passed on"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue: Issue
+        }
+        type Issue  {
+            id: ID
+        }
+        """)
+        def associationSchema = TestUtil.schema("""
+        type Query {
+            association(id: ID, filter: Filter): Association
+        }
+        
+        input Filter  {
+            name: String
+        }
+        
+        type Association {
+            id: ID
+            nameOfAssociation: String
+        }
+        """)
+
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issue {
+            type Query {
+                issue: Issue
+            }
+            type Issue  {
+                id: ID
+            }
+        }
+            
+        service Association {
+            type Query {
+                association(id: ID, filter: Filter): Association
+            }
+            
+            input Filter  {
+                name: String
+            }
+            
+            type Association {
+                id: ID
+                nameOfAssociation: String
+            }
+            extend type Issue {
+                association(filter:Filter): Association => hydrated from Association.association(id: \$source.id, filter: \$argument.filter)
+            } 
+       
+        }
+        ''')
+
+        def query = '''{
+                        issue {
+                            association(filter: {name: "value"}){
+                                nameOfAssociation
+                            }
+                        }
+                        }'''
+
+        def expectedQuery1 = "query nadel_2_Issue {issue {id}}"
+        def response1 = [issue: [id: "ISSUE-1"]]
+
+
+        def expectedQuery2 = """query nadel_2_Association {association(id:"ISSUE-1",filter:{name:"value"}) {nameOfAssociation}}"""
+        def response2 = [association: [nameOfAssociation: "ASSOC NAME"]]
+        def overallResponse = [issue: [association: [nameOfAssociation: "ASSOC NAME"]]]
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issue",
+                issueSchema,
+                "Association",
+                associationSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2
+        )
+
+        then:
+        response == overallResponse
+        errors.size() == 0
+    }
 
 
 }
