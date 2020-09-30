@@ -22,8 +22,8 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
     private final String topLevelField;
     private final String syntheticField;
     private final List<RemoteArgumentDefinition> arguments;
-    private String objectIdentifier;
-    private Integer batchSize;
+    private final String objectIdentifier;
+    private final Integer batchSize;
 
     public UnderlyingServiceHydration(SourceLocation sourceLocation,
                                       List<Comment> comments,

@@ -1,6 +1,5 @@
 package graphql.nadel.engine;
 
-import graphql.GraphQLException;
 import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
@@ -245,7 +244,8 @@ public class HydrationInputResolver {
                 originalField.getSelectionSet(),
                 underlyingServiceHydration,
                 topLevelFieldName,
-                underlyingServiceHydration.getSyntheticField());
+                underlyingServiceHydration.getSyntheticField(),
+                originalField);
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
         Operation operation = Operation.QUERY;
@@ -289,17 +289,32 @@ public class HydrationInputResolver {
                                                      SelectionSet selectionSet,
                                                      UnderlyingServiceHydration underlyingServiceHydration,
                                                      String topLevelFieldName,
-                                                     String syntheticFieldName) {
-        RemoteArgumentDefinition remoteArgumentDefinition = underlyingServiceHydration.getArguments().get(0);
+                                                     String syntheticFieldName,
+                                                     Field originalField) {
+        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
+        RemoteArgumentDefinition argumentFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
+        List<RemoteArgumentDefinition> extraArguments = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
+
         Object value = hydrationInputNode.getCompletedValue();
-        Argument argument = Argument.newArgument()
-                .name(remoteArgumentDefinition.getName())
+        Argument argumentAstFromSourceObject = Argument.newArgument()
+                .name(argumentFromSourceObject.getName())
                 .value(new StringValue(value.toString()))
                 .build();
 
+        List<Argument> allArguments = new ArrayList<>();
+        allArguments.add(argumentAstFromSourceObject);
+
+        Map<String, Argument> originalArgumentsByName = FpKit.getByName(originalField.getArguments(), Argument::getName);
+        for (RemoteArgumentDefinition argumentDefinition : extraArguments) {
+            if (originalArgumentsByName.containsKey(argumentDefinition.getName())) {
+                allArguments.add(originalArgumentsByName.get(argumentDefinition.getName()));
+            }
+        }
+
+
         Field topLevelField = newField(topLevelFieldName)
                 .selectionSet(selectionSet)
-                .arguments(singletonList(argument))
+                .arguments(allArguments)
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .build();
 
