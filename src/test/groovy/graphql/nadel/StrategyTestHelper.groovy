@@ -34,7 +34,8 @@ class StrategyTestHelper extends Specification {
                           List<String> topLevelFields,
                           String expectedQuery1,
                           Map response1,
-                          ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {}
+                          ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
+                          Map variables = [:]
     ) {
         def response1ServiceResult = new ServiceExecutionResult(response1)
 
@@ -62,7 +63,7 @@ class StrategyTestHelper extends Specification {
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
 
 
-        def executionData = createExecutionData(query, overallSchema)
+        def executionData = createExecutionData(query, variables, overallSchema)
 
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, Mock(ResultComplexityAggregator))
 
@@ -84,7 +85,8 @@ class StrategyTestHelper extends Specification {
                            Map response1,
                            String expectedQuery2,
                            Map response2,
-                           ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {}
+                           ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
+                           Map variables = [:]
     ) {
 
         def response1ServiceResult = new ServiceExecutionResult(response1)
@@ -122,7 +124,7 @@ class StrategyTestHelper extends Specification {
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
 
 
-        def executionData = createExecutionData(query, overallSchema)
+        def executionData = createExecutionData(query, variables, overallSchema)
 
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, Mock(ResultComplexityAggregator))
 
@@ -132,8 +134,8 @@ class StrategyTestHelper extends Specification {
         return [resultData(response), resultErrors(response)]
     }
 
-    ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema) {
-        createExecutionData(query, [:], overallSchema)
+    ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema, Map variables) {
+        createExecutionData(query, variables, overallSchema)
     }
 
     ExecutionHelper.ExecutionData createExecutionData(String query, Map<String, Object> variables, GraphQLSchema overallSchema) {
