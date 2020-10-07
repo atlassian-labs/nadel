@@ -405,7 +405,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def batchResponse1 = [[id: "USER-1", name: "User 1", object_identifier__UUID: "USER-1"]]
         def response2 = new ServiceExecutionResult([usersQuery: [usersByIds: batchResponse1]])
 
-        def executionData = createExecutionData(query, overallSchema)
+        def executionData = createExecutionData(query, [:], overallSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
@@ -505,7 +505,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def batchResponse1 = [[id: "USER-1", name: "User 1", object_identifier__UUID: "USER-1"], [id: "USER-2", name: "User 2", object_identifier__UUID: "USER-2"]]
         def response2 = new ServiceExecutionResult([usersQuery: [usersByIds: batchResponse1]])
 
-        def executionData = createExecutionData(query, overallSchema)
+        def executionData = createExecutionData(query, [:], overallSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
@@ -601,7 +601,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def batchResponse1 = [[id: "USER-1", name: "User 1", object_identifier__UUID: "USER-1"], [id: "USER-2", name: "User 2", object_identifier__UUID: "USER-2"]]
         def response2 = new ServiceExecutionResult([usersQuery: [usersByIds: batchResponse1]])
 
-        def executionData = createExecutionData(query, overallSchema)
+        def executionData = createExecutionData(query, [:], overallSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
@@ -718,7 +718,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def fieldInfos = topLevelFieldInfo(issuesFieldDefinition, service1)
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
 
-        def executionData = createExecutionData(query, overallSchema)
+        def executionData = createExecutionData(query, [:], overallSchema)
 
         when:
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
@@ -826,6 +826,101 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 response1,
                 expectedQuery2,
                 response2
+        )
+
+        then:
+        response == overallResponse
+        errors.size() == 0
+    }
+
+    def "extending types via hydration with variables arguments"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue: Issue
+        }
+        type Issue  {
+            id: ID
+        }
+        """)
+        def associationSchema = TestUtil.schema("""
+        type Query {
+            association(id: ID, filter: Filter): Association
+        }
+        
+        input Filter  {
+            name: String
+        }
+        
+        type Association {
+            id: ID
+            nameOfAssociation: String
+        }
+        """)
+
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issue {
+            type Query {
+                issue: Issue
+            }
+            type Issue  {
+                id: ID
+            }
+        }
+            
+        service Association {
+            type Query {
+                association(id: ID, filter: Filter): Association
+            }
+            
+            input Filter  {
+                name: String
+            }
+            
+            type Association {
+                id: ID
+                nameOfAssociation: String
+            }
+            extend type Issue {
+                association(filter:Filter): Association => hydrated from Association.association(id: \$source.id, filter: \$argument.filter)
+            } 
+       
+        }
+        ''')
+
+        def query = '''query MyQuery($filter: Filter){
+                        issue {
+                            association(filter: $filter){
+                                nameOfAssociation
+                            }
+                        }
+                        }'''
+
+        def expectedQuery1 = "query nadel_2_Issue {issue {id}}"
+        def response1 = [issue: [id: "ISSUE-1"]]
+
+
+        def expectedQuery2 = '''query nadel_2_Association($filter:Filter) {association(id:"ISSUE-1",filter:$filter) {nameOfAssociation}}'''
+        def response2 = [association: [nameOfAssociation: "ASSOC NAME"]]
+        def overallResponse = [issue: [association: [nameOfAssociation: "ASSOC NAME"]]]
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issue",
+                issueSchema,
+                "Association",
+                associationSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                new ServiceExecutionHooks() {},
+                [filter: [name: ["value"]]]
         )
 
         then:

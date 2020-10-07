@@ -8,9 +8,12 @@ import graphql.language.Document;
 import graphql.language.Field;
 import graphql.language.FragmentDefinition;
 import graphql.language.Node;
+import graphql.language.NodeTraverser;
+import graphql.language.NodeVisitorStub;
 import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
 import graphql.language.VariableDefinition;
+import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.TypeMappingDefinition;
@@ -19,6 +22,7 @@ import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
 import graphql.nadel.engine.transformation.TransformationMetadata;
 import graphql.nadel.hooks.ServiceExecutionHooks;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
@@ -85,6 +89,20 @@ public class OverallQueryTransformer {
             selectionSet = topLevelField.getSelectionSet();
         }
 
+        Map<String, VariableDefinition> variableDefinitionMap = FpKit.getByName(executionContext.getOperationDefinition().getVariableDefinitions(), VariableDefinition::getName);
+        NodeVisitorStub nodeVisitorStub = new NodeVisitorStub() {
+            @Override
+            public TraversalControl visitVariableReference(VariableReference variableReference, TraverserContext<Node> context) {
+                String name = variableReference.getName();
+                referencedVariables.put(name, variableDefinitionMap.get(name));
+                return super.visitVariableReference(variableReference, context);
+            }
+        };
+
+        NodeTraverser nodeTraverser = new NodeTraverser();
+        nodeTraverser.depthFirst(nodeVisitorStub, topLevelField);
+
+
         SelectionSet topLevelFieldSelectionSet = transformNode(
                 executionContext,
                 underlyingSchema,
@@ -103,6 +121,7 @@ public class OverallQueryTransformer {
         );
 
         Field transformedRootField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
+
 
         transformedRootField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
 
