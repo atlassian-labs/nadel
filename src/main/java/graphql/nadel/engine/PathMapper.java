@@ -2,7 +2,6 @@ package graphql.nadel.engine;
 
 import graphql.Internal;
 import graphql.execution.ExecutionPath;
-import graphql.nadel.util.FpKit;
 
 import java.util.List;
 
@@ -19,11 +18,9 @@ public class PathMapper {
             // so for example
             //
             // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
-            fieldSegments.remove(0);
-            if (environment.batched) {
-                fieldSegments.remove(0);
-            }
-            fieldSegments = FpKit.concat(environment.parentNode.getExecutionPath().toList(), fieldSegments);
+            List<Object> tmp = environment.parentNode.getExecutionPath().toList();
+            tmp.add(fieldSegments.get(fieldSegments.size() - 1));
+            fieldSegments = tmp;
         }
         return ExecutionPath.fromList(fieldSegments);
     }
