@@ -9,6 +9,7 @@ import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
+import graphql.schema.GraphQLSchema
 
 import static graphql.language.AstPrinter.printAstCompact
 import static java.util.concurrent.CompletableFuture.completedFuture
@@ -928,6 +929,207 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         errors.size() == 0
     }
 
+    def "extending types via hydration returning a connection"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            synth: Synth
+        }
+        type Synth {
+            issue: Issue
+        }
+        type Issue  {
+            id: ID
+        }
+        """)
+        def associationSchema = TestUtil.schema("""
+        type Query {
+            association(id: ID, filter: Filter): AssociationConnection
+            pages: Pages
+        }
+        type Pages {
+            page(id:ID): Page
+        }
+        type Page {
+            id: ID
+        }
+        
+        type AssociationConnection {
+            nodes: [Association]
+        }
+
+        input Filter  {
+            name: String
+        }
+
+        type Association {
+            id: ID
+            nameOfAssociation: String
+            pageId: ID
+        }
+        """)
+
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issue {
+            type Query {
+                synth: Synth
+            }
+            type Synth {
+                issue: Issue
+            }
+            type Issue  {
+                id: ID
+            }
+        }
+
+        service Association {
+            type Query {
+                association(id: ID, filter: Filter): AssociationConnection
+            }
+            
+            type AssociationConnection {
+                nodes: [Association]
+            }
+
+            input Filter  {
+                name: String
+            }
+
+            type Association {
+                id: ID
+                nameOfAssociation: String
+                page: Page => hydrated from Association.pages.page(id: $source.pageId)
+            }
+            type Page {
+                id: ID
+            }
+            extend type Issue {
+                association(filter:Filter): AssociationConnection => hydrated from Association.association(id: $source.id, filter: $argument.filter)
+            }
+
+        }
+        ''')
+
+        def query = '''{
+                        synth {
+                            issue {
+                                association(filter: {name: "value"}){
+                                    nodes {
+                                        page {
+                                            id
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        }'''
+
+        def expectedQuery1 = "query nadel_2_Issue {synth {issue {id}}}"
+        def response1 = [synth: [issue: [id: "ISSUE-1"]]]
+
+
+        def expectedQuery2 = """query nadel_2_Association {association(id:"ISSUE-1",filter:{name:"value"}) {nodes {pageId}}}"""
+        def response2 = [association: [nodes: [[pageId: "1"]]]]
+
+        def expectedQuery3 = """query nadel_2_Association {pages {page(id:"1") {id}}}"""
+        def response3 = [pages: [page: [id: "1"]]]
+
+
+        def overallResponse = [synth: [issue: [association: [nodes: [[page: [id: "1"]]]]]]]
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2ServicesWith3Calls(
+                overallSchema,
+                "Issue",
+                issueSchema,
+                "Association",
+                associationSchema,
+                query,
+                ["synth"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                expectedQuery3,
+                response3
+
+        )
+
+        then:
+        response == overallResponse
+        errors.size() == 0
+    }
+
+    Object[] test2ServicesWith3Calls(GraphQLSchema overallSchema,
+                                     String serviceOneName,
+                                     GraphQLSchema underlyingOne,
+                                     String serviceTwoName,
+                                     GraphQLSchema underlyingTwo,
+                                     String query,
+                                     List<String> topLevelFields,
+                                     String expectedQuery1,
+                                     Map response1,
+                                     String expectedQuery2,
+                                     Map response2,
+                                     String expectedQuery3,
+                                     Map response3,
+                                     ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {
+                                     },
+                                     Map variables = [:]
+    ) {
+
+        def response1ServiceResult = new ServiceExecutionResult(response1)
+        def response2ServiceResult = new ServiceExecutionResult(response2)
+        def response3ServiceResult = new ServiceExecutionResult(response3)
+
+        boolean calledService1 = false
+        ServiceExecution service1Execution = { ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            assert printAstCompact(sep.query) == expectedQuery1
+            calledService1 = true
+            return completedFuture(response1ServiceResult)
+        }
+        int calledService2Count = 0;
+        ServiceExecution service2Execution = { ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            calledService2Count++
+            if (calledService2Count == 1) {
+                assert printAstCompact(sep.query) == expectedQuery2
+                return completedFuture(response2ServiceResult)
+            } else {
+                assert printAstCompact(sep.query) == expectedQuery3
+                return completedFuture(response3ServiceResult)
+            }
+        }
+        def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
+        def definitionRegistry = Mock(DefinitionRegistry)
+        def instrumentation = new NadelInstrumentation() {}
+
+        def service1 = new Service(serviceOneName, underlyingOne, service1Execution, serviceDefinition, definitionRegistry)
+        def service2 = new Service(serviceTwoName, underlyingTwo, service2Execution, serviceDefinition, definitionRegistry)
+
+        Map fieldInfoByDefinition = [:]
+        topLevelFields.forEach({ it ->
+            def fd = overallSchema.getQueryType().getFieldDefinition(it)
+            FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service1, fd)
+            fieldInfoByDefinition.put(fd, fieldInfo)
+        })
+        FieldInfos fieldInfos = new FieldInfos(fieldInfoByDefinition)
+
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def executionData = createExecutionData(query, variables, overallSchema)
+
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, Mock(ResultComplexityAggregator))
+
+        assert calledService1
+        assert calledService2Count == 2
+
+        return [resultData(response), resultErrors(response)]
+    }
 
 }
 
