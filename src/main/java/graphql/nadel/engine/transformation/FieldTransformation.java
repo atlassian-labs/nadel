@@ -10,13 +10,13 @@ import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLOutputType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
@@ -24,7 +24,6 @@ import static java.util.UUID.randomUUID;
 
 @Internal
 public abstract class FieldTransformation {
-
 
     private ApplyEnvironment environment;
     private String transformationId = getClass().getSimpleName() + "-" + randomUUID().toString();
@@ -94,11 +93,11 @@ public abstract class FieldTransformation {
     }
 
     private static List<String> executionPathToQueryPath(ExecutionPath executionPath) {
-        return executionPath.toList()
-                .stream()
-                .filter(o -> o instanceof String)
-                .map(String.class::cast)
-                .collect(Collectors.toList());
+        return FpKit.filterAndMap(
+                executionPath.toList(),
+                (object) -> object instanceof String, // filter
+                (string) -> (String) string // map
+        );
     }
 
     protected ExecutionResultNode replaceFieldIdsWithOriginalValue(List<FieldTransformation> allTransformations,

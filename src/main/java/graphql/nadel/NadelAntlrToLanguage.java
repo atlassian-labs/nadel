@@ -29,6 +29,7 @@ import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.dsl.UnionTypeDefinitionWithTransformation;
 import graphql.nadel.parser.GraphqlAntlrToLanguage;
 import graphql.nadel.parser.antlr.StitchingDSLParser;
+import graphql.nadel.util.FpKit;
 import graphql.parser.MultiSourceReader;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -38,7 +39,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.nadel.dsl.ExtendedFieldDefinition.newExtendedFieldDefinition;
@@ -72,9 +72,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
     public StitchingDsl createStitchingDsl(StitchingDSLParser.StitchingDSLContext ctx) {
         StitchingDsl.Builder builder = StitchingDsl.newStitchingDSL();
         addCommonData(builder, ctx);
-        List<ServiceDefinition> serviceDefinitions = ctx.serviceDefinition().stream()
-                .map(this::createServiceDefinition)
-                .collect(Collectors.toList());
+        List<ServiceDefinition> serviceDefinitions = FpKit.map(ctx.serviceDefinition(), this::createServiceDefinition);
         builder.serviceDefinitions(serviceDefinitions);
         if (ctx.commonDefinition() != null) {
             builder.commonDefinition(createCommonDefinition(ctx.commonDefinition()));
@@ -108,11 +106,11 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
 
     private List<SDLDefinition> createTypeSystemDefinitions(List<StitchingDSLParser.TypeSystemDefinitionContext> typeSystemDefinitionContexts) {
-        return typeSystemDefinitionContexts.stream().map(this::createTypeSystemDefinition).collect(Collectors.toList());
+        return FpKit.map(typeSystemDefinitionContexts, this::createTypeSystemDefinition);
     }
 
     private List<SDLDefinition> createTypeSystemExtensions(List<StitchingDSLParser.TypeSystemExtensionContext> typeSystemExtensionContexts) {
-        return typeSystemExtensionContexts.stream().map(this::createTypeSystemExtension).collect(Collectors.toList());
+        return FpKit.map(typeSystemExtensionContexts, this::createTypeSystemExtension);
     }
 
     @Override

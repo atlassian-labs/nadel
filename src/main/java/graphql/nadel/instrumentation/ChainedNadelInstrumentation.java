@@ -15,6 +15,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
 import graphql.nadel.result.RootExecutionResultNode;
+import graphql.nadel.util.FpKit;
 import graphql.validation.ValidationError;
 
 import java.util.ArrayList;
@@ -25,7 +26,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotNull;
-import static java.util.stream.Collectors.toList;
 
 /**
  * This allows you to chain together a number of {@link graphql.nadel.instrumentation.NadelInstrumentation} implementations
@@ -59,42 +59,34 @@ public class ChainedNadelInstrumentation implements NadelInstrumentation {
 
     @Override
     public InstrumentationContext<ExecutionResult> beginQueryExecution(NadelInstrumentationQueryExecutionParameters parameters) {
-        return new ChainedInstrumentationContext<>(instrumentations.stream()
-                .map(instrumentation -> {
-                    InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
-                    return instrumentation.beginQueryExecution(parameters.withNewState(state));
-                })
-                .collect(toList()));
+        return new ChainedInstrumentationContext<>(FpKit.map(instrumentations, instrumentation -> {
+            InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
+            return instrumentation.beginQueryExecution(parameters.withNewState(state));
+        }));
     }
 
     @Override
     public InstrumentationContext<Document> beginParse(NadelInstrumentationQueryExecutionParameters parameters) {
-        return new ChainedInstrumentationContext<>(instrumentations.stream()
-                .map(instrumentation -> {
-                    InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
-                    return instrumentation.beginParse(parameters.withNewState(state));
-                })
-                .collect(toList()));
+        return new ChainedInstrumentationContext<>(FpKit.map(instrumentations, instrumentation -> {
+            InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
+            return instrumentation.beginParse(parameters.withNewState(state));
+        }));
     }
 
     @Override
     public InstrumentationContext<List<ValidationError>> beginValidation(NadelNadelInstrumentationQueryValidationParameters parameters) {
-        return new ChainedInstrumentationContext<>(instrumentations.stream()
-                .map(instrumentation -> {
-                    InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
-                    return instrumentation.beginValidation(parameters.withNewState(state));
-                })
-                .collect(toList()));
+        return new ChainedInstrumentationContext<>(FpKit.map(instrumentations, instrumentation -> {
+            InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
+            return instrumentation.beginValidation(parameters.withNewState(state));
+        }));
     }
 
     @Override
     public InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
-        return new ChainedInstrumentationContext<>(instrumentations.stream()
-                .map(instrumentation -> {
-                    InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
-                    return instrumentation.beginExecute(parameters.withNewState(state));
-                })
-                .collect(toList()));
+        return new ChainedInstrumentationContext<>(FpKit.map(instrumentations, instrumentation -> {
+            InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
+            return instrumentation.beginExecute(parameters.withNewState(state));
+        }));
     }
 
 

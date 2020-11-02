@@ -21,6 +21,7 @@ import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLSchema;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -36,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
@@ -425,17 +425,18 @@ public class ServiceResultNodesToOverallResult {
 
     }
 
-
     private List<String> getFieldIdsWithoutTransformationId(ExecutionResultNode node, TransformationMetadata transformationMetadata) {
-        return node.getFieldIds().stream().filter(fieldId -> FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId()).size() == 0).collect(Collectors.toList());
+        return FpKit.filter(node.getFieldIds(),
+                fieldId -> FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId()).isEmpty());
     }
 
-    private List<String> getFieldIdsWithTransformationIds(ExecutionResultNode
-                                                                  node, Set<String> transformationIds, TransformationMetadata transformationMetadata) {
-        return node.getFieldIds().stream().filter(fieldId -> {
+    private List<String> getFieldIdsWithTransformationIds(ExecutionResultNode node,
+                                                          Set<String> transformationIds,
+                                                          TransformationMetadata transformationMetadata) {
+        return FpKit.filter(node.getFieldIds(), fieldId -> {
             List<String> transformationIdsForField = FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId());
             return transformationIdsForField.containsAll(transformationIds);
-        }).collect(Collectors.toList());
+        });
     }
 
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment) {

@@ -30,6 +30,7 @@ import graphql.nadel.schema.NeverWiringFactory;
 import graphql.nadel.schema.OverallSchemaGenerator;
 import graphql.nadel.schema.SchemaTransformationHook;
 import graphql.nadel.schema.UnderlyingSchemaGenerator;
+import graphql.nadel.util.FpKit;
 import graphql.nadel.util.LogKit;
 import graphql.parser.InvalidSyntaxException;
 import graphql.schema.GraphQLSchema;
@@ -53,7 +54,6 @@ import java.util.function.UnaryOperator;
 import static graphql.execution.instrumentation.DocumentAndVariables.newDocumentAndVariables;
 import static graphql.nadel.util.Util.buildServiceRegistry;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toList;
 
 @PublicApi
 public class Nadel {
@@ -132,9 +132,7 @@ public class Nadel {
     }
 
     private GraphQLSchema createOverallSchema() {
-        List<DefinitionRegistry> registries = this.services.stream()
-                .map(Service::getDefinitionRegistry)
-                .collect(toList());
+        List<DefinitionRegistry> registries = FpKit.map(this.services, Service::getDefinitionRegistry);
         GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory);
 
         GraphQLSchema newSchema = schemaTransformationHook.apply(schema);

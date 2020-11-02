@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static java.util.stream.Collectors.toList;
-
 /**
  * A helper class that can to deal with graphql errors
  */
@@ -19,7 +17,7 @@ import static java.util.stream.Collectors.toList;
 public class ErrorUtil {
 
     public static List<GraphQLError> createGraphQlErrorsFromRawErrors(List<Map<String, Object>> errors) {
-        return errors.stream().map(ErrorUtil::createGraphqlErrorFromRawError).collect(toList());
+        return FpKit.map(errors, ErrorUtil::createGraphqlErrorFromRawError);
     }
 
     public static GraphQLError createGraphqlErrorFromRawError(Map<String, Object> rawError) {

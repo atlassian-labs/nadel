@@ -8,13 +8,13 @@ import graphql.language.OperationTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.SchemaDefinition;
 import graphql.language.TypeDefinition;
+import graphql.nadel.util.FpKit;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Internal
@@ -85,7 +85,7 @@ public class DefinitionRegistry {
         if (sdlDefinitions == null) {
             return null;
         }
-        List<SDLDefinition> result = sdlDefinitions.stream().filter(clazz::isInstance).collect(Collectors.toList());
+        List<SDLDefinition> result = FpKit.filter(sdlDefinitions, clazz::isInstance);
         return (List<T>) result;
     }
 
