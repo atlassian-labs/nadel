@@ -65,7 +65,7 @@ class StrategyTestHelper extends Specification {
 
         def executionData = createExecutionData(query, variables, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, Mock(ResultComplexityAggregator))
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), Mock(ResultComplexityAggregator))
 
         assert calledService1
 
@@ -126,7 +126,7 @@ class StrategyTestHelper extends Specification {
 
         def executionData = createExecutionData(query, variables, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, Mock(ResultComplexityAggregator))
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), Mock(ResultComplexityAggregator))
 
         assert calledService1
         assert calledService2

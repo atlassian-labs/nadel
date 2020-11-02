@@ -3,7 +3,7 @@ package graphql.nadel.result;
 import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
-import graphql.execution.ExecutionPath;
+import graphql.execution.ResultPath;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 
@@ -27,7 +27,7 @@ public abstract class ExecutionResultNode {
     private final ElapsedTime elapsedTime;
     private final int totalNodeCount;
 
-    private final ExecutionPath executionPath;
+    private final ResultPath executionPath;
 
     private final String alias;
     private final List<String> fieldIds;
@@ -116,7 +116,7 @@ public abstract class ExecutionResultNode {
     }
 
 
-    public ExecutionPath getExecutionPath() {
+    public ResultPath getResultPath() {
         return executionPath;
     }
 
@@ -164,7 +164,7 @@ public abstract class ExecutionResultNode {
         protected List<GraphQLError> errors = new ArrayList<>();
         protected Map<String, Object> extensions = emptyMap();
         protected ElapsedTime elapsedTime;
-        protected ExecutionPath executionPath;
+        protected ResultPath executionPath;
 
         private String alias;
         private List<String> fieldIds = new ArrayList<>();
@@ -184,7 +184,7 @@ public abstract class ExecutionResultNode {
             this.errors.addAll(existing.getErrors());
             this.extensions = existing.extensions;
             this.elapsedTime = existing.getElapsedTime();
-            this.executionPath = existing.getExecutionPath();
+            this.executionPath = existing.getResultPath();
             this.alias = existing.getAlias();
             this.fieldIds.addAll(existing.getFieldIds());
 
@@ -264,7 +264,7 @@ public abstract class ExecutionResultNode {
             return (T) this;
         }
 
-        public T executionPath(ExecutionPath executionPath) {
+        public T executionPath(ResultPath executionPath) {
             this.executionPath = executionPath;
             return (T) this;
         }

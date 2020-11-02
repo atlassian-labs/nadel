@@ -3,7 +3,7 @@ package graphql.nadel.engine;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.ExecutionId;
-import graphql.execution.ExecutionPath;
+import graphql.execution.ResultPath;
 import graphql.execution.MergedField;
 import graphql.language.AbstractNode;
 import graphql.nadel.Tuples;
@@ -236,8 +236,8 @@ public class ServiceResultNodesToOverallResult {
                                                              MergedField mergedField,
                                                              NormalizedQueryField normalizedQueryField,
                                                              GraphQLError error) {
-        ExecutionPath parentPath = parent.getExecutionPath();
-        ExecutionPath executionPath = parentPath.segment(normalizedQueryField.getResultKey());
+        ResultPath parentPath = parent.getResultPath();
+        ResultPath executionPath = parentPath.segment(normalizedQueryField.getResultKey());
 
         LeafExecutionResultNode removedNode = LeafExecutionResultNode.newLeafExecutionResultNode()
                 .executionPath(executionPath)
@@ -454,7 +454,7 @@ public class ServiceResultNodesToOverallResult {
         List<String> notTransformedFields = new ArrayList<>();
         for (String fieldId : node.getFieldIds()) {
 
-            if (node.getExecutionPath().isListSegment()) {
+            if (node.getResultPath().isListSegment()) {
                 notTransformedFields.add(fieldId);
                 continue;
             }

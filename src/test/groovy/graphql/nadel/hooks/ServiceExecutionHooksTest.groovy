@@ -204,7 +204,7 @@ class ServiceExecutionHooksTest extends Specification {
         def expectedQuery = 'query nadel_2_service($variable:String) {foo(id:$variable)}'
 
         when:
-        nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
 
         then:
@@ -279,7 +279,7 @@ class ServiceExecutionHooksTest extends Specification {
         def data = [foo: "hello world"]
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
 
         then:

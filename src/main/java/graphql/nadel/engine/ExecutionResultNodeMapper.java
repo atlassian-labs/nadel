@@ -1,7 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.Internal;
-import graphql.execution.ExecutionPath;
+import graphql.execution.ResultPath;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
@@ -25,7 +25,7 @@ public class ExecutionResultNodeMapper {
 
         Map<String, String> typeRenameMappings = environment.typeRenameMappings;
         GraphQLSchema overallSchema = environment.overallSchema;
-        ExecutionPath mappedPath = pathMapper.mapPath(node.getExecutionPath(), node.getResultKey(), environment);
+        ResultPath mappedPath = pathMapper.mapPath(node.getResultPath(), node.getResultKey(), environment);
         GraphQLObjectType mappedObjectType = mapObjectType(node, typeRenameMappings, overallSchema);
         GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedObjectType, node.getFieldName());
         return node.transform(builder -> builder

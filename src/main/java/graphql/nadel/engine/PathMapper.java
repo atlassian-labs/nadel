@@ -1,14 +1,15 @@
 package graphql.nadel.engine;
 
 import graphql.Internal;
-import graphql.execution.ExecutionPath;
+import graphql.execution.ResultPath;
 
+import javax.xml.transform.Result;
 import java.util.List;
 
 @Internal
 public class PathMapper {
 
-    public ExecutionPath mapPath(ExecutionPath executionPath, String resultKey, UnapplyEnvironment environment) {
+    public ResultPath mapPath(ResultPath executionPath, String resultKey, UnapplyEnvironment environment) {
         List<Object> fieldSegments = patchLastFieldName(executionPath, resultKey);
 
         if (environment.isHydrationTransformation) {
@@ -18,14 +19,14 @@ public class PathMapper {
             // so for example
             //
             // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
-            List<Object> tmp = environment.parentNode.getExecutionPath().toList();
+            List<Object> tmp = environment.parentNode.getResultPath().toList();
             tmp.add(fieldSegments.get(fieldSegments.size() - 1));
             fieldSegments = tmp;
         }
-        return ExecutionPath.fromList(fieldSegments);
+        return ResultPath.fromList(fieldSegments);
     }
 
-    private List<Object> patchLastFieldName(ExecutionPath executionPath, String resultKey) {
+    private List<Object> patchLastFieldName(ResultPath executionPath, String resultKey) {
         List<Object> fieldSegments = executionPath.toList();
         for (int i = fieldSegments.size() - 1; i >= 0; i--) {
             Object segment = fieldSegments.get(i);

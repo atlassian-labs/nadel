@@ -2,7 +2,7 @@ package graphql.nadel.engine;
 
 import graphql.Assert;
 import graphql.Internal;
-import graphql.execution.ExecutionPath;
+import graphql.execution.ResultPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.nadel.Operation;
 import graphql.nadel.dsl.NodeId;
@@ -76,7 +76,7 @@ public class StrategyUtil {
     }
 
     public static ExecutionStepInfo createRootExecutionStepInfo(GraphQLSchema graphQLSchema, Operation operation) {
-        ExecutionStepInfo executionInfo = newExecutionStepInfo().type(operation.getRootType(graphQLSchema)).path(ExecutionPath.rootPath()).build();
+        ExecutionStepInfo executionInfo = newExecutionStepInfo().type(operation.getRootType(graphQLSchema)).path(ResultPath.rootPath()).build();
         return executionInfo;
     }
 
@@ -90,7 +90,7 @@ public class StrategyUtil {
 
     public static <T extends ExecutionResultNode> T copyFieldInformation(ExecutionResultNode from, T to) {
         return (T) to.transform(builder -> builder
-                .executionPath(from.getExecutionPath())
+                .executionPath(from.getResultPath())
                 .fieldIds(from.getFieldIds())
                 .alias(from.getAlias())
                 .objectType(from.getObjectType())
