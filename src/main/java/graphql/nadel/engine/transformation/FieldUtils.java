@@ -20,16 +20,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Random;
 import java.util.function.Function;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.nadel.util.FpKit.map;
+import static java.lang.Integer.MAX_VALUE;
 
 @Internal
 public final class FieldUtils {
+    private static final Random RANDOM = new Random();
 
     /**
      * This returns the aliased result name if a field is alised other its the field name
@@ -61,7 +63,7 @@ public final class FieldUtils {
         Field curField = null;
         for (int ix = path.size() - 1; ix >= 0; ix--) {
             Field.Builder newField = Field.newField();
-            String fieldId = "new-field_" + path.get(ix) + "_" + UUID.randomUUID().toString();
+            String fieldId = "new-field_" + path.get(ix) + "_" + FieldUtils.randomFieldSuffix();
             newField.additionalData(NodeId.ID, fieldId);
             FieldMetadataUtil.setFieldMetadata(fieldId, transformationId, additionalIds, ix == 0 && firstRootOfTransformation, metadataByFieldId);
             if (ix == path.size() - 1 && lastSelectionSet != null) {
@@ -135,4 +137,11 @@ public final class FieldUtils {
         return executionResultNode.withNewChildren(newChildren);
     }
 
+    public static String randomNodeId() {
+        return String.valueOf(RANDOM.nextInt(MAX_VALUE));
+    }
+
+    public static String randomFieldSuffix() {
+        return String.valueOf(RANDOM.nextInt(MAX_VALUE));
+    }
 }

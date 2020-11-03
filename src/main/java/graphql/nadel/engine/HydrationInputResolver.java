@@ -19,6 +19,7 @@ import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.FieldUtils;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
@@ -41,7 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotNull;
@@ -315,7 +315,7 @@ public class HydrationInputResolver {
         Field topLevelField = newField(topLevelFieldName)
                 .selectionSet(selectionSet)
                 .arguments(allArguments)
-                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .additionalData(NodeId.ID, FieldUtils.randomNodeId())
                 .build();
 
         if (syntheticFieldName == null) {
@@ -324,7 +324,7 @@ public class HydrationInputResolver {
 
         Field syntheticField = newField(syntheticFieldName)
                 .selectionSet(newSelectionSet().selection(topLevelField).build())
-                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .additionalData(NodeId.ID, FieldUtils.randomNodeId())
                 .build();
         return syntheticField;
     }
@@ -442,7 +442,7 @@ public class HydrationInputResolver {
 
         Field topLevelField = newField(topLevelFieldName)
                 .selectionSet(originalField.getSelectionSet())
-                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .additionalData(NodeId.ID, FieldUtils.randomNodeId())
                 .arguments(allArguments)
                 .build();
         topLevelField = addObjectIdentifier(getNadelContext(executionContext), topLevelField, underlyingServiceHydration.getObjectIdentifier());
@@ -453,7 +453,7 @@ public class HydrationInputResolver {
 
         Field syntheticField = newField(syntheticFieldName)
                 .selectionSet(newSelectionSet().selection(topLevelField).build())
-                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .additionalData(NodeId.ID, FieldUtils.randomNodeId())
                 .build();
         return syntheticField;
     }

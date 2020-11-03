@@ -5,10 +5,9 @@ import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
 import graphql.nadel.dsl.NodeId;
+import graphql.nadel.engine.transformation.FieldUtils;
 import graphql.nadel.util.Util;
 import graphql.schema.GraphQLOutputType;
-
-import java.util.UUID;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.language.Field.newField;
@@ -40,7 +39,7 @@ public class ArtificialFieldUtils {
 
         Field underscoreTypeNameAliasField = newField(UNDERSCORE_TYPENAME)
                 .alias(underscoreTypeNameAlias)
-                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .additionalData(NodeId.ID, FieldUtils.randomNodeId())
                 .build();
         if (selectionSet == null) {
             selectionSet = SelectionSet.newSelectionSet().selection(underscoreTypeNameAliasField).build();
@@ -54,7 +53,7 @@ public class ArtificialFieldUtils {
 
     public static Field addObjectIdentifier(NadelContext nadelContext, Field field, String objectIdentifier) {
         Field idField = newField()
-                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+                .additionalData(NodeId.ID, FieldUtils.randomNodeId())
                 .alias(nadelContext.getObjectIdentifierAlias())
                 .name(objectIdentifier)
                 .build();

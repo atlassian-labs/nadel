@@ -25,8 +25,9 @@ import static java.util.UUID.randomUUID;
 @Internal
 public abstract class FieldTransformation {
 
+    private final String transformationId = getClass().getSimpleName() + "-" + FieldUtils.randomNodeId();
+
     private ApplyEnvironment environment;
-    private String transformationId = getClass().getSimpleName() + "-" + randomUUID().toString();
 
     public abstract ApplyResult apply(ApplyEnvironment environment);
 

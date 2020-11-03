@@ -3,10 +3,10 @@ package graphql.nadel.engine;
 import graphql.Internal;
 import graphql.language.Document;
 import graphql.language.OperationDefinition;
+import graphql.nadel.engine.transformation.FieldUtils;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * We use a wrapper Nadel context object over top of the calling users supplied one
@@ -54,13 +54,12 @@ public class NadelContext {
         return new Builder();
     }
 
-
-    private static String mkUnderscoreTypeNameAlias(String uuid) {
-        return String.format("typename__%s", uuid);
+    private static String mkUnderscoreTypeNameAlias(String suffix) {
+        return "typename__" + suffix;
     }
 
-    private static String createObjectIdentifierAlias(String uuid) {
-        return String.format("object_identifier__%s", uuid);
+    private static String createObjectIdentifierAlias(String suffix) {
+        return "object_identifier__" + suffix;
     }
 
     public NormalizedQueryFromAst getNormalizedOverallQuery() {
@@ -103,8 +102,8 @@ public class NadelContext {
 
 
         public NadelContext build() {
-            String uuid = artificialFieldsUUID != null ? artificialFieldsUUID : UUID.randomUUID().toString().replaceAll("-", "_");
-            return new NadelContext(userSuppliedContext, mkUnderscoreTypeNameAlias(uuid), originalOperationName, createObjectIdentifierAlias(uuid), normalizedOverallQuery);
+            String fieldSuffix = artificialFieldsUUID != null ? artificialFieldsUUID : FieldUtils.randomFieldSuffix();
+            return new NadelContext(userSuppliedContext, mkUnderscoreTypeNameAlias(fieldSuffix), originalOperationName, createObjectIdentifierAlias(fieldSuffix), normalizedOverallQuery);
         }
     }
 }
