@@ -124,7 +124,7 @@ class NadelE2ERenameHydrationTest extends Specification {
         1 * delegatedExecution.execute(_) >>
                 completedFuture(hydrationResult)
 
-        result.join().data == [updateSpecificIssue:[specificIssue:[name:[identity:"Luna"]]]]
+        result.join().data == [updateSpecificIssue: [specificIssue: [name: [identity: "Luna"]]]]
     }
 
 }
