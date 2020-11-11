@@ -1,41 +1,16 @@
 package graphql.nadel.e2e
 
-import graphql.AssertException
-import graphql.ErrorType
-import graphql.GraphQLError
-import graphql.GraphqlErrorException
-import graphql.execution.AbortExecutionException
-import graphql.execution.ExecutionId
-import graphql.execution.ExecutionIdProvider
-import graphql.execution.instrumentation.InstrumentationState
-import graphql.language.Field
+
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.instrumentation.NadelInstrumentation
-import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
-import graphql.nadel.result.ResultNodesUtil
-import graphql.nadel.result.RootExecutionResultNode
-import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.testutils.TestUtil
-import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
-import graphql.schema.*
-import graphql.schema.idl.TypeDefinitionRegistry
-import graphql.util.TraversalControl
-import graphql.util.TraverserContext
 import spock.lang.Specification
 
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
-
-import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import static graphql.nadel.testutils.TestUtil.typeDefinitions
-import static graphql.util.TreeTransformerUtil.changeNode
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ERenameHydrationTest extends Specification {
