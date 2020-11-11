@@ -22,7 +22,6 @@ public class PathMapper {
             tmp.add(fieldSegments.get(fieldSegments.size() - 1));
             fieldSegments = tmp;
         }
-
         return ExecutionPath.fromList(fieldSegments);
     }
 
