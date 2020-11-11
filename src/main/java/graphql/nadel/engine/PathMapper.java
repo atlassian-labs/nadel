@@ -11,24 +11,17 @@ public class PathMapper {
     public ExecutionPath mapPath(ExecutionPath executionPath, String resultKey, UnapplyEnvironment environment) {
         List<Object> fieldSegments = patchLastFieldName(executionPath, resultKey);
 
-        List<Object> tmp = environment.parentNode.getExecutionPath().toList();
-
-        // if we have a executionPath like /issues/reporterId[0] and a parentNode executionPath
-        // like /issues/reporters[0] this replaces the first string field name
-        if (fieldSegments.get(fieldSegments.size() - 1) instanceof Integer) {
-            tmp.set(tmp.size() - 1, fieldSegments.get(fieldSegments.size() - 2));
+        if (environment.isHydrationTransformation) {
+            //
+            // Normally the parent path is all ok and hence there is nothing to add
+            // but if we have a hydrated a field then we need to "merge" the paths not just append them
+            // so for example
+            //
+            // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
+            List<Object> tmp = environment.parentNode.getExecutionPath().toList();
+            tmp.add(fieldSegments.get(fieldSegments.size() - 1));
+            fieldSegments = tmp;
         }
-
-        //
-        // If the case that we have a hydrated field,
-        // or a renamed parent field and are about to hydrate a child field
-        // we need to "merge" the paths not just append them
-        // so for example:
-        //
-        // /issue/reporterId might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
-        // /issue/reporterIds[0] might need to be changed to /issue/reporters[0]
-        tmp.add(fieldSegments.get(fieldSegments.size() - 1));
-        fieldSegments = tmp;
 
         return ExecutionPath.fromList(fieldSegments);
     }
