@@ -153,7 +153,6 @@ public abstract class ExecutionResultNode {
         return transform(builder -> builder.totalNodeCount(nodeCount));
     }
 
-
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{" +
