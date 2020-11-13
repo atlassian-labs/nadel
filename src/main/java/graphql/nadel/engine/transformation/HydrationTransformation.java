@@ -90,6 +90,8 @@ public class HydrationTransformation extends FieldTransformation {
             if (node.getChildren().size() == 0) {
                 return handleEmptyList((ListExecutionResultNode) node, allTransformations, environment, matchingNormalizedOverallField);
             }
+            // Update the environment.parent to current node
+            environment.parentNode = node;
             ExecutionResultNode child = node.getChildren().get(0);
             if (child instanceof LeafExecutionResultNode) {
                 return handleListOfLeafs((ListExecutionResultNode) node, allTransformations, environment, matchingNormalizedOverallField);

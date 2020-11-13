@@ -1,7 +1,13 @@
-package graphql.nadel
+package graphql.nadel.e2e
 
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
+import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionInput
+import graphql.nadel.ServiceExecution
+import graphql.nadel.ServiceExecutionFactory
+import graphql.nadel.ServiceExecutionParameters
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.testutils.MockServiceExecution
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.idl.TypeDefinitionRegistry

@@ -1,4 +1,4 @@
-package graphql.nadel
+package graphql.nadel.e2e
 
 import graphql.AssertException
 import graphql.ErrorType
@@ -7,6 +7,12 @@ import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionInput
+import graphql.nadel.ServiceExecution
+import graphql.nadel.ServiceExecutionFactory
+import graphql.nadel.ServiceExecutionParameters
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
