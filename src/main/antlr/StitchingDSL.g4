@@ -65,7 +65,7 @@ intValue: IntValue;
 
 serviceName: NAME;
 
-topLevelField: NAME;
+topLevelField: NAME | SERVICE;
 
 syntheticField: NAME;
 
