@@ -16,7 +16,8 @@ import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring
 
 class NadelInterfaceAndUnionHandlingTest extends Specification {
 
-    def ndsl = [PetService  : '''
+    def ndsl = [
+            PetService  : '''
          service PetService {
          
             type Query{
@@ -65,7 +66,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
             }
          }
          ''',
-                OwnerService: '''   
+            OwnerService: '''   
          service OwnerService {
             type Query {
                 owner(id : String) : Owner

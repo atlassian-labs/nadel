@@ -126,7 +126,7 @@ class NadelErrorHandlingTest extends Specification {
     }
 
     def hydratedNDSL = [
-            "Foo": '''
+            Foo: '''
                      service Foo {
                         type Query{
                             foo: Foo  
@@ -137,7 +137,7 @@ class NadelErrorHandlingTest extends Specification {
                         }
                      }
             ''',
-            "Bar": '''
+            Bar: '''
                      service Bar {
                         type Query{
                             bar: Bar 
