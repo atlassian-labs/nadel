@@ -316,7 +316,7 @@ class NSDLParserTest extends Specification {
         astAsMap(stitchingDSL).size() > 0
     }
 
-    def "parser allows normal .graphqls syntax"() {
+    def "parser allows normal graphql SDL syntax"() {
 
         given:
 
