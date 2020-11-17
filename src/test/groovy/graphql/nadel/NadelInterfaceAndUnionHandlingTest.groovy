@@ -16,7 +16,7 @@ import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring
 
 class NadelInterfaceAndUnionHandlingTest extends Specification {
 
-    def ndsl = '''
+    def ndsl = [PetService  : '''
          service PetService {
          
             type Query{
@@ -64,7 +64,8 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
                 size : String
             }
          }
-         
+         ''',
+                OwnerService: '''   
          service OwnerService {
             type Query {
                 owner(id : String) : Owner
@@ -84,7 +85,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
                 givesSmacks : Boolean
             }
         }
-        '''
+        ''']
 
     def underlyingSchemaSpecPets = '''
             type Query{
@@ -200,8 +201,8 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
         }
         def runtimeWiring = newRuntimeWiring()
                 .type(newTypeWiring("Query")
-                .dataFetcher("pets", petDF)
-                .dataFetcher("raining", rainingDF))
+                        .dataFetcher("pets", petDF)
+                        .dataFetcher("raining", rainingDF))
                 .type(newTypeWiring("Pet").typeResolver(petTR))
                 .type(newTypeWiring("CatsAndDogs").typeResolver(catsAndDogsTR))
                 .type(newTypeWiring("Collar").typeResolver(collarTR))
@@ -230,7 +231,7 @@ class NadelInterfaceAndUnionHandlingTest extends Specification {
         }
         def runtimeWiring = newRuntimeWiring()
                 .type(newTypeWiring("Query")
-                .dataFetcher("ownerById", ownerDF))
+                        .dataFetcher("ownerById", ownerDF))
                 .type(newTypeWiring("Owner").typeResolver(ownerTR))
                 .build()
         def graphQLSchema = schema(spec, runtimeWiring)

@@ -16,7 +16,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture
 class NadelE2ERenameHydrationTest extends Specification {
 
     def 'mutation with nested renamed fields, field types and a hydration call'() {
-        def simpleNDSL = '''
+        def simpleNDSL = [IssuesService : '''
          service IssuesService {
             type Query {
                 findIssueOwner(id: ID): SpecificIssueOwner
@@ -38,7 +38,7 @@ class NadelE2ERenameHydrationTest extends Specification {
                 updateSpecificIssue: UpdateSpecificIssuePayload => renamed from updateIssue
             }
          }
-        '''
+        ''']
 
         def underlyingSchema = typeDefinitions('''
             type Query {

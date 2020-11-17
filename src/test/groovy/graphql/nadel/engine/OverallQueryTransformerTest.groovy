@@ -18,7 +18,8 @@ import graphql.schema.GraphQLSchema
 import spock.lang.Specification
 
 class OverallQueryTransformerTest extends Specification {
-    def schema = TestUtil.schemaFromNdsl('''
+    def schema = TestUtil.schemaFromNdsl([
+            example       : '''
         service example {
             type Query { 
                 hello: String => renamed from helloWorld 
@@ -40,6 +41,8 @@ class OverallQueryTransformerTest extends Specification {
                 id: ID!
             }
         }
+        ''',
+            AnotherService: ''' 
         service AnotherService {
             type Query { 
                 topLevel(id:ID): AnotherFoo
@@ -48,7 +51,7 @@ class OverallQueryTransformerTest extends Specification {
                 id: ID!
             }
         }
-         ''')
+         '''])
 
     def underlyingSchemaExampleService = TestUtil.schema("""
             type Query { 

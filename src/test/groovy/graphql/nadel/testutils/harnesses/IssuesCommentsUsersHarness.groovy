@@ -23,7 +23,8 @@ import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring
  */
 class IssuesCommentsUsersHarness {
 
-    static def ndsl = '''
+    static def ndsl = [
+            IssueService  : '''
         service IssueService {
          
             type Query {
@@ -40,7 +41,8 @@ class IssuesCommentsUsersHarness {
                 comments : [Comment] => hydrated from CommentService.commentById(id: $source.commentIds)
             }
          }
-         
+         ''',
+            CommentService: '''   
          service CommentService {
             type Query {
                 comments(ids : [ID]) : [Comment]
@@ -54,7 +56,8 @@ class IssuesCommentsUsersHarness {
                 author : User => hydrated from UserService.userById(id: $source.authorId)
             }
         }
-        
+        ''',
+            UserService   : '''
         service UserService {
             type Query {
                 users(ids : [ID]) : [User]
@@ -67,7 +70,7 @@ class IssuesCommentsUsersHarness {
                 avatarUrl : String
             }
         }
-    '''
+    ''']
 
     static def ISSUES_SDL = '''
         type Query {
@@ -168,8 +171,8 @@ class IssuesCommentsUsersHarness {
         }
         def runtimeWiring = newRuntimeWiring()
                 .type(newTypeWiring("Query")
-                .dataFetcher("issues", issuesDF)
-                .dataFetcher("issueById", issueByIdDF))
+                        .dataFetcher("issues", issuesDF)
+                        .dataFetcher("issueById", issueByIdDF))
                 .build()
         def graphQLSchema = schema(ISSUES_SDL, runtimeWiring)
         return GraphQL.newGraphQL(graphQLSchema).build()
@@ -188,8 +191,8 @@ class IssuesCommentsUsersHarness {
         }
         def runtimeWiring = newRuntimeWiring()
                 .type(newTypeWiring("Query")
-                .dataFetcher("comments", commentsDF)
-                .dataFetcher("commentById", commentByIdDF))
+                        .dataFetcher("comments", commentsDF)
+                        .dataFetcher("commentById", commentByIdDF))
                 .build()
         def graphQLSchema = schema(COMMENTS_SDL, runtimeWiring)
         return GraphQL.newGraphQL(graphQLSchema).build()
@@ -213,10 +216,10 @@ class IssuesCommentsUsersHarness {
         }
         def runtimeWiring = newRuntimeWiring()
                 .type(newTypeWiring("Query")
-                .dataFetcher("users", usersDF)
-                .dataFetcher("userById", userByIdDF))
+                        .dataFetcher("users", usersDF)
+                        .dataFetcher("userById", userByIdDF))
                 .type(newTypeWiring("User")
-                .typeResolver(userTR))
+                        .typeResolver(userTR))
                 .build()
         def graphQLSchema = schema(USERS_SDL, runtimeWiring)
         return GraphQL.newGraphQL(graphQLSchema).build()

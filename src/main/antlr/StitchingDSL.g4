@@ -6,7 +6,7 @@ import GraphqlSDL;
 }
 
 stitchingDSL:
-   commonDefinition? serviceDefinition+ ;
+   commonDefinition? | serviceDefinition? | (typeSystemDefinition | typeSystemExtension)* ;
 
 commonDefinition: 'common' '{' (typeSystemDefinition|typeSystemExtension)* '}';
 

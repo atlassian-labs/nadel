@@ -1,5 +1,6 @@
 package graphql.nadel.util;
 
+import graphql.Assert;
 import graphql.Internal;
 import graphql.execution.MissingRootTypeException;
 import graphql.language.Definition;
@@ -19,6 +20,7 @@ import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ScalarTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.ServiceDefinition;
+import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.dsl.UnionTypeDefinitionWithTransformation;
 import graphql.schema.GraphQLEnumType;
@@ -32,6 +34,8 @@ import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.GraphQLUnionType;
 
+import java.util.List;
+
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.language.OperationDefinition.Operation.MUTATION;
 import static graphql.language.OperationDefinition.Operation.QUERY;
@@ -40,23 +44,43 @@ import static graphql.language.OperationDefinition.Operation.SUBSCRIPTION;
 @Internal
 public class Util {
 
-    public static DefinitionRegistry buildServiceRegistry(CommonDefinition commonDefinition) {
-        if (commonDefinition == null) {
-            return new DefinitionRegistry();
-        }
+    public static DefinitionRegistry buildServiceRegistry(List<CommonDefinition> commonDefinitions) {
         DefinitionRegistry definitionRegistry = new DefinitionRegistry();
-        for (Definition definition : commonDefinition.getTypeDefinitions()) {
-            definitionRegistry.add((SDLDefinition) definition);
+        for (CommonDefinition commonDefinition : commonDefinitions) {
+            for (Definition<?> definition : commonDefinition.getTypeDefinitions()) {
+                definitionRegistry.add((SDLDefinition<?>) definition);
+            }
+
         }
         return definitionRegistry;
     }
 
     public static DefinitionRegistry buildServiceRegistry(ServiceDefinition serviceDefinition) {
         DefinitionRegistry definitionRegistry = new DefinitionRegistry();
-        for (Definition definition : serviceDefinition.getTypeDefinitions()) {
-            definitionRegistry.add((SDLDefinition) definition);
+        for (Definition<?> definition : serviceDefinition.getTypeDefinitions()) {
+            definitionRegistry.add((SDLDefinition<?>) definition);
         }
         return definitionRegistry;
+    }
+
+
+    public static ServiceDefinition mkServiceDefinition(String serviceName, StitchingDsl stitchingDsl) {
+        ServiceDefinition serviceDefinition;
+        if (stitchingDsl.getServiceDefinition() == null) {
+            // if we don't have an actual `service X { .. }` then we must have plain old graphql type definitions
+            serviceDefinition = ServiceDefinition.newServiceDefinition()
+                    .name(serviceName).addDefinitions(stitchingDsl.getSDLDefinitions())
+                    .build();
+        } else {
+            serviceDefinition = stitchingDsl.getServiceDefinition();
+        }
+        //
+        // its possible that a nadel service definition MIGHT not be the sane name as its outer container name
+        // so lets assert that to ensure sanity
+        Assert.assertTrue(serviceDefinition.getName().equals(serviceName),
+                () -> String.format("The outer service name is '%s' but internally its declared as '%s'.  They MUST be the same.", serviceName, serviceDefinition.getName()));
+
+        return serviceDefinition;
     }
 
     public static boolean isInterfaceOrUnionField(GraphQLOutputType fieldOutputType) {
