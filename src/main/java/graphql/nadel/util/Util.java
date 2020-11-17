@@ -64,7 +64,7 @@ public class Util {
     }
 
 
-    public static ServiceDefinition mkServiceDefinition(String serviceName, StitchingDsl stitchingDsl) {
+    public static ServiceDefinition buildServiceDefinition(String serviceName, StitchingDsl stitchingDsl) {
         ServiceDefinition serviceDefinition;
         if (stitchingDsl.getServiceDefinition() == null) {
             // if we don't have an actual `service X { .. }` then we must have plain old graphql type definitions

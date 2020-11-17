@@ -133,7 +133,7 @@ public class Nadel {
             if (stitchingDsl.getCommonDefinition() != null) {
                 continue;
             }
-            ServiceDefinition serviceDefinition = Util.mkServiceDefinition(serviceName, stitchingDsl);
+            ServiceDefinition serviceDefinition = Util.buildServiceDefinition(serviceName, stitchingDsl);
             ServiceExecution serviceExecution = this.serviceExecutionFactory.getServiceExecution(serviceName);
             TypeDefinitionRegistry underlyingTypeDefinitions = this.serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName);
 

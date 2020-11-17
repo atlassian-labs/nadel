@@ -209,7 +209,7 @@ class TestUtil {
         for (Map.Entry<String, String> e : serviceDSLs.entrySet()) {
             def serviceName = e.getKey()
             def stitchingDsl = new NSDLParser().parseDSL(e.getValue())
-            def serviceDefinition = Util.mkServiceDefinition(serviceName, stitchingDsl)
+            def serviceDefinition = Util.buildServiceDefinition(serviceName, stitchingDsl)
             def definitionRegistry = Util.buildServiceRegistry(serviceDefinition)
             defRegistries.add(definitionRegistry)
         }
