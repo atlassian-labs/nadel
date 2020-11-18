@@ -4,6 +4,7 @@ import graphql.GraphQLError
 import graphql.execution.AbortExecutionException
 import graphql.language.Field
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
 import graphql.schema.GraphQLFieldDefinition
@@ -332,7 +333,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 response1,
                 expectedQuery2,
                 response2,
-                hooks
+                hooks,
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == overallResponse

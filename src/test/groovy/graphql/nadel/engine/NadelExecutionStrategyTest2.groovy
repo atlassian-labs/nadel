@@ -76,6 +76,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["issue"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         response == overallResponse
@@ -123,6 +124,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["issue"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         response == overallResponse
@@ -171,6 +173,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["issues"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         response == overallResponse
@@ -217,6 +220,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["issues"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         response == overallResponse
@@ -289,11 +293,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["boardScope"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         errors.size() == 0
         response == overallResponse
-
+        resultComplexityAggregator.getFieldRenamesCount() == 3
+        resultComplexityAggregator.getTypeRenamesCount() == 3
     }
 
     def "fragment referenced twice from inside Query and inside another Fragment"() {
@@ -334,10 +340,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["foo"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         errors.size() == 0
         response == overallResponse
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
     }
 
 
@@ -429,6 +438,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         resultComplexityAggregator.getTotalNodeCount() == 7
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
         resultComplexityAggregator.getNodeCountsForService("UserService") == 2
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
 
     }
 
@@ -530,11 +541,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         resultComplexityAggregator.getTotalNodeCount() == 13
         resultComplexityAggregator.getNodeCountsForService("Issues") == 9
         resultComplexityAggregator.getNodeCountsForService("UserService") == 4
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
 
     }
 
 
-    def "one synthetic hydration call with longer path arguments and merged fields"() {
+    def "one synthetic hydration call with longer path arguments and merged fields and renamed Type"() {
         given:
         def issueSchema = TestUtil.schema("""
         type Query {
@@ -569,17 +582,17 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             }
             type Issue {
                 id: ID
-                authors: [User] => hydrated from UserService.usersQuery.usersByIds(id: $source.authors.authorId) object identified by id, batch size 2
+                authors: [RenamedUser] => hydrated from UserService.usersQuery.usersByIds(id: $source.authors.authorId) object identified by id, batch size 2
             }
         }
         service UserService {
             type Query {
-                usersQuery: UserQuery
+                usersQuery: RenamedUserQuery
             }
-            type UserQuery {
-               usersByIds(id: [ID]): [User]
+            type RenamedUserQuery => renamed from UserQuery {
+               usersByIds(id: [ID]): [RenamedUser]
             }
-            type User {
+            type RenamedUser => renamed from User {
                 id: ID
                 name: String
             }
@@ -626,6 +639,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         resultComplexityAggregator.getTotalNodeCount() == 11
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
         resultComplexityAggregator.getNodeCountsForService("UserService") == 6
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 1
     }
 
     def "Expecting one child Error on extensive field argument passed to synthetic hydration"() {
@@ -737,6 +752,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }) >> completedFuture(response2)
 
         resultData(response) == [board: [id: "1", cardChildren: [[assignee: [accountId: "1"]], [assignee: [accountId: "2"]], [assignee: [accountId: "3"]]]]]
+        resultComplexityAggregator.getFieldRenamesCount() == 1
+        resultComplexityAggregator.getTypeRenamesCount() == 2
 
     }
 
@@ -826,12 +843,16 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery1,
                 response1,
                 expectedQuery2,
-                response2
+                response2,
+                resultComplexityAggregator
         )
 
         then:
         response == overallResponse
         errors.size() == 0
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
+
     }
 
     def "extending types via hydration with variables arguments"() {
@@ -872,19 +893,19 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             
         service Association {
             type Query {
-                association(id: ID, filter: Filter): Association
+                association(id: ID, filter: Filter): RenamedAssociation
             }
             
             input Filter  {
                 name: String
             }
             
-            type Association {
+            type RenamedAssociation => renamed from Association {
                 id: ID
                 nameOfAssociation: String
             }
             extend type Issue {
-                association(filter:Filter): Association => hydrated from Association.association(id: \$source.id, filter: \$argument.filter)
+                association(filter:Filter): RenamedAssociation => hydrated from Association.association(id: \$source.id, filter: \$argument.filter)
             } 
        
         }
@@ -921,12 +942,16 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery2,
                 response2,
                 new ServiceExecutionHooks() {},
-                [filter: [name: ["value"]]]
+                [filter: [name: ["value"]]],
+                resultComplexityAggregator
         )
 
         then:
         response == overallResponse
         errors.size() == 0
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 1
+
     }
 
     def "extending types via hydration returning a connection"() {
@@ -1053,13 +1078,15 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery2,
                 response2,
                 expectedQuery3,
-                response3
-
+                response3,
+                resultComplexityAggregator
         )
 
         then:
         response == overallResponse
         errors.size() == 0
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
     }
 
     Object[] test2ServicesWith3Calls(GraphQLSchema overallSchema,
@@ -1077,7 +1104,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                                      Map response3,
                                      ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {
                                      },
-                                     Map variables = [:]
+                                     Map variables = [:],
+                                    ResultComplexityAggregator resultComplexityAggregator
     ) {
 
         def response1ServiceResult = new ServiceExecutionResult(response1)
@@ -1123,7 +1151,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
         def executionData = createExecutionData(query, variables, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, Mock(ResultComplexityAggregator))
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         assert calledService1
         assert calledService2Count == 2

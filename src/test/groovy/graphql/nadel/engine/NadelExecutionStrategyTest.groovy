@@ -93,7 +93,6 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         resultComplexityAggregator.getFieldRenamesCount() == 0
         resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service") == 2
-
     }
 
     def "one call to one service with list result"() {
@@ -2768,14 +2767,14 @@ fragment F1 on TestingCharacter {
                 }
                 type Foo {
                     id: ID!
-                    fooBar: Bar => hydrated from Bar.barById(id: \$source.fooBarId)
+                    fooBar: RenamedBar => hydrated from Bar.barById(id: \$source.fooBarId)
                 }
             }
             service Bar {
                 type Query {
-                    barById(id: ID!): Bar
+                    barById(id: ID!): RenamedBar
                 }
-                type Bar {
+                type RenamedBar => renamed from Bar {
                     id: ID!
                 }
             }
@@ -2830,7 +2829,7 @@ fragment F1 on TestingCharacter {
 
         resultComplexityAggregator.getTotalNodeCount() == 4
         resultComplexityAggregator.getFieldRenamesCount() == 1
-        resultComplexityAggregator.getTypeRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 1
         resultComplexityAggregator.getNodeCountsForService("Foo") == 2
         resultComplexityAggregator.getNodeCountsForService("Bar") == 2
     }
