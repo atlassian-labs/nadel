@@ -2,8 +2,8 @@ package graphql.nadel.engine;
 
 import graphql.Internal;
 import graphql.execution.ExecutionPath;
-import graphql.language.TypeName;
 import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
@@ -31,7 +31,9 @@ public class ExecutionResultNodeMapper {
         ExecutionPath mappedPath = pathMapper.mapPath(node.getExecutionPath(), node.getResultKey(), environment);
         GraphQLObjectType mappedObjectType = mapObjectType(node, typeRenameMappings, overallSchema, typeRenameCount);
         GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedObjectType, node.getFieldName());
-        checkForTypeRename(mappedFieldDefinition, node.getFieldDefinition(),typeRenameMappings, typeRenameCount);
+
+        int typeDecrementValue = node instanceof ListExecutionResultNode ? - node.getChildren().size() : 0;
+        checkForTypeRename(mappedFieldDefinition, node.getFieldDefinition(),typeRenameMappings, typeRenameCount, typeDecrementValue);
         return node.transform(builder -> builder
                 .executionPath(mappedPath)
                 .objectType(mappedObjectType)
@@ -69,11 +71,14 @@ public class ExecutionResultNodeMapper {
         return assertNotNull(fieldDefinition, () -> String.format("field '%s' not found in container '%s'", fieldName, fieldsContainer));
     }
 
-    public static void checkForTypeRename(GraphQLFieldDefinition mappedFieldDefinition, GraphQLFieldDefinition fieldDefinition, Map<String, String> typeRenameMappings, AtomicInteger typeRenameCount) {
+    public static void checkForTypeRename(GraphQLFieldDefinition mappedFieldDefinition, GraphQLFieldDefinition fieldDefinition, Map<String, String> typeRenameMappings, AtomicInteger typeRenameCount, int typeDecrementValue) {
         String overallFieldType = GraphQLTypeUtil.unwrapAll(mappedFieldDefinition.getType()).getName();
         String underlyingFieldType = GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()).getName();
         if (typeRenameMappings.containsKey(underlyingFieldType) && typeRenameMappings.get(underlyingFieldType).equals(overallFieldType)) {
-            typeRenameCount.getAndIncrement();
+            typeRenameCount.getAndAdd(typeDecrementValue + 1);
+        } else if (typeRenameMappings.containsValue(overallFieldType) && !overallFieldType.equals(underlyingFieldType)) {
+            // Handles edge cases where overall field could be renamed while the type is also renamed
+            typeRenameCount.getAndAdd(typeDecrementValue + 1);
         }
     }
 }
