@@ -19,6 +19,7 @@ import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
 import graphql.nadel.result.ObjectExecutionResultNode;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLSchema;
@@ -212,6 +213,10 @@ public class ServiceResultNodesToOverallResult {
         nodeCount.incrementAndGet();
 
         if (onlyChildren && node == root) {
+            // Could be a possible type rename if this is hydrated
+            if (normalizedRootField != null) {
+                checkForTypeRename(normalizedRootField.getFieldDefinition(), node.getFieldDefinition(), typeRenameMappings, typeRenameCount, 0);
+            }
             if (root instanceof ObjectExecutionResultNode) {
                 ExecutionResultNode executionResultNode = addDeletedChildren((ObjectExecutionResultNode) node, normalizedRootField, nadelContext, transformationMetadata);
                 return HandleResult.simple(executionResultNode);
@@ -336,12 +341,10 @@ public class ServiceResultNodesToOverallResult {
         for (AbstractNode definition : nodesWithTransformedFields.keySet()) {
             List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
             UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
-            // ONLY check if the node had a Field Rename if it's execution path wasn't changed
-            // e.g. etc/path -> etc/path.
-            // Otherwise we could have a normal path change where the field is also changed
-            // e.g. etc/path -> etc/name ( Here the field type changes but not because the underlying field Type is different.
-            //THIS DOESNT REALLY WORK IF THE FIELD BEING RENAMED DOESN"T MATCH UP WITH THE NODE DEFINTION E.g node = /authorDetails (type AuthorDetails), unapplyResult = /authorName (type Name)
-            checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(),unapplyEnvironment.typeRenameMappings, typeRenameCount);
+
+            // typeDecrementAmount = 0 because for a field rename it's children will not know about the underlying type.
+            checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(),unapplyEnvironment.typeRenameMappings, typeRenameCount, 0);
+
             unapplyResults.add(unapplyResult);
         }
         fieldRenameCount.getAndAdd(unapplyResults.size());
@@ -413,6 +416,9 @@ public class ServiceResultNodesToOverallResult {
         ExecutionResultNode nodesWithTransformedFields = getSingleMapValue(splittedNodes.getT2());
 
         UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);
+
+        int typeDecrementValue = unapplyResult.getNode() instanceof ListExecutionResultNode ? -unapplyResult.getNode().getChildren().size() : 0;
+        checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, typeRenameCount, typeDecrementValue);
 
         if (withoutTransformedFields != null) {
             handleResult.changedNode = mapNode(withoutTransformedFields, unapplyEnvironment, typeRenameCount);
