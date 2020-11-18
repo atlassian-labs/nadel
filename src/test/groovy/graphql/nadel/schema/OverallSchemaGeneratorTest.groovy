@@ -376,4 +376,37 @@ class OverallSchemaGeneratorTest extends Specification {
         (result.typeMap["A"] as GraphQLObjectType).fieldDefinitions.collect { it.name } == ["x", "y"]
     }
 
+    def "custom directives are in place"() {
+
+        when:
+        def result = TestUtil.schemaFromNdsl([
+                S1: '''
+        service S1 {
+            type Query {
+                a: String
+            }
+            type A {
+                x: String
+            }
+        }
+        ''',
+                S2: '''
+        service S2 {
+            type Query {
+                c: String
+            }
+            extend type A {
+                y: String 
+            }
+        }
+        '''])
+
+
+        then:
+        result.getDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.getName())
+        result.getDirective(NadelDirectives.HIDE_DIRECTIVE_DEFINITION.getName())
+        result.getDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.getName())
+        result.getType(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION.getName())
+    }
+
 }

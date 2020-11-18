@@ -251,6 +251,32 @@ class NadelE2ESyntheticHydrationTest extends Specification {
             }
          }
         ''']
+
+        def directivesBaseNsdl = [
+                Foo: '''
+            type Query{
+               foos: [Foo]  
+            }
+            type Foo {
+                name: String
+                bar: Bar @hydrated(service: "Bar" field: "barsQuery.barsById" arguments : [{ name:"id" value:"$source.barId"}] identifiedBy : "barId" batchSize : 2 )
+            }
+         ''',
+                Bar: '''
+            type Query{
+                barsQuery: BarQuery
+            } 
+            type BarQuery {
+                bar: Bar 
+                barsById(id: [ID]): [Bar]
+            }
+            type Bar {
+                barId: ID
+                name: String 
+                nestedBar: Bar @hydrated(service: "Bar" field: "barsQuery.barsById" arguments : [{ name: "id" value: "$source.nestedBarId"}] identifiedBy : "barId")
+            }
+        ''']
+
         def underlyingSchema1 = typeDefinitions('''
             type Query{
                 foos: [Foo]
@@ -290,6 +316,11 @@ class NadelE2ESyntheticHydrationTest extends Specification {
                 .serviceExecutionFactory(serviceFactory)
                 .build()
 
+        Nadel directivesBasedNadel = newNadel()
+                .dsl(directivesBaseNsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
                 .artificialFieldsUUID("UUID")
@@ -306,7 +337,7 @@ class NadelE2ESyntheticHydrationTest extends Specification {
         ServiceExecutionResult hydrationResult2 = new ServiceExecutionResult(hydrationData2)
         ServiceExecutionResult hydrationResult3 = new ServiceExecutionResult(hydrationData3)
         when:
-        def result = nadel.execute(nadelExecutionInput)
+        def result = nadel.execute(nadelExecutionInput).join()
 
         then:
         1 * serviceExecution1.execute(_) >>
@@ -324,7 +355,29 @@ class NadelE2ESyntheticHydrationTest extends Specification {
         1 * serviceExecution2.execute(_) >>
                 completedFuture(hydrationResult3)
 
-        result.join().data == [foos: [[bar: [name: "Bar 1", nestedBar: [name: "NestedBarName1", nestedBar: [name: "NestedBarName2"]]]], [bar: [name: "Bar 2", nestedBar: null]], [bar: [name: "Bar 3", nestedBar: null]]]]
+        result.data == [foos: [[bar: [name: "Bar 1", nestedBar: [name: "NestedBarName1", nestedBar: [name: "NestedBarName2"]]]], [bar: [name: "Bar 2", nestedBar: null]], [bar: [name: "Bar 3", nestedBar: null]]]]
+
+        when:
+        result = directivesBasedNadel.execute(nadelExecutionInput).join()
+
+        then:
+        1 * serviceExecution1.execute(_) >>
+                completedFuture(topLevelResult)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult1_1)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult1_2)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult2)
+
+        1 * serviceExecution2.execute(_) >>
+                completedFuture(hydrationResult3)
+
+        result.data == [foos: [[bar: [name: "Bar 1", nestedBar: [name: "NestedBarName1", nestedBar: [name: "NestedBarName2"]]]], [bar: [name: "Bar 2", nestedBar: null]], [bar: [name: "Bar 3", nestedBar: null]]]]
+
     }
 
     def "extending types from another service is possible with synthetic fields"() {

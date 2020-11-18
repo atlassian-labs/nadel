@@ -23,6 +23,8 @@ import graphql.nadel.dsl.ServiceDefinition;
 import graphql.nadel.dsl.StitchingDsl;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.dsl.UnionTypeDefinitionWithTransformation;
+import graphql.nadel.schema.NadelDirectives;
+import graphql.schema.GraphQLDirectiveContainer;
 import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLInterfaceType;
@@ -89,6 +91,12 @@ public class Util {
 
     public static TypeMappingDefinition getTypeMappingDefinitionFor(GraphQLType type) {
         TypeMappingDefinition typeMappingDefinition = null;
+        if (type instanceof GraphQLDirectiveContainer) {
+            typeMappingDefinition = NadelDirectives.createTypeMapping((GraphQLDirectiveContainer) type);
+            if (typeMappingDefinition != null) {
+                return typeMappingDefinition;
+            }
+        }
         if (type instanceof GraphQLObjectType) {
             ObjectTypeDefinition definition = ((GraphQLObjectType) type).getDefinition();
             if (definition instanceof ObjectTypeDefinitionWithTransformation) {
