@@ -514,7 +514,6 @@ public class HydrationInputResolver {
                 String serviceName = hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName();
                 int nodeCount = overallResultNode.getTotalNodeCount();
                 resultComplexityAggregator.incrementServiceNodeCount(serviceName, nodeCount);
-                // Potentially increment resultComplexityAggregator Here for TYPE RENAME MAPPING??
                 resultComplexityAggregator.incrementTypeRenameCount(overallResultNode.getTotalTypeRenameCount());
                 resultNode = copyFieldInformation(hydrationInputNode, overallResultNode);
             } else {

@@ -29,7 +29,7 @@ public class ExecutionResultNodeMapper {
         Map<String, String> typeRenameMappings = environment.typeRenameMappings;
         GraphQLSchema overallSchema = environment.overallSchema;
         ExecutionPath mappedPath = pathMapper.mapPath(node.getExecutionPath(), node.getResultKey(), environment);
-        GraphQLObjectType mappedObjectType = mapObjectType(node, typeRenameMappings, overallSchema, typeRenameCount);
+        GraphQLObjectType mappedObjectType = mapObjectType(node, typeRenameMappings, overallSchema);
         GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedObjectType, node.getFieldName());
 
         int typeDecrementValue = node instanceof ListExecutionResultNode ? - node.getChildren().size() : 0;
@@ -42,7 +42,7 @@ public class ExecutionResultNodeMapper {
 
     }
 
-    private GraphQLObjectType mapObjectType(ExecutionResultNode node, Map<String, String> typeRenameMappings, GraphQLSchema overallSchema, AtomicInteger typeRenameCount) {
+    private GraphQLObjectType mapObjectType(ExecutionResultNode node, Map<String, String> typeRenameMappings, GraphQLSchema overallSchema) {
         String objectTypeName = mapTypeName(typeRenameMappings, node.getObjectType().getName());
         GraphQLObjectType mappedObjectType = overallSchema.getObjectType(objectTypeName);
         assertNotNull(mappedObjectType, () -> String.format("object type %s not found in overall schema", objectTypeName));
@@ -74,9 +74,9 @@ public class ExecutionResultNodeMapper {
     public static void checkForTypeRename(GraphQLFieldDefinition mappedFieldDefinition, GraphQLFieldDefinition fieldDefinition, Map<String, String> typeRenameMappings, AtomicInteger typeRenameCount, int typeDecrementValue) {
         String overallFieldType = GraphQLTypeUtil.unwrapAll(mappedFieldDefinition.getType()).getName();
         String underlyingFieldType = GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()).getName();
-        if (typeRenameMappings.containsKey(underlyingFieldType) && typeRenameMappings.get(underlyingFieldType).equals(overallFieldType)) {
+        if (typeRenameMappings.getOrDefault(underlyingFieldType, "").equals(overallFieldType)) {
             typeRenameCount.getAndAdd(typeDecrementValue + 1);
-        } else if (typeRenameMappings.containsValue(overallFieldType) && !overallFieldType.equals(underlyingFieldType)) {
+        }else if (typeRenameMappings.containsValue(overallFieldType) && !overallFieldType.equals(underlyingFieldType)) {
             // Handles edge cases where overall field could be renamed while the type is also renamed
             typeRenameCount.getAndAdd(typeDecrementValue + 1);
         }
