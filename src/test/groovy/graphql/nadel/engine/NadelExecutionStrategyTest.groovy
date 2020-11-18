@@ -1828,6 +1828,7 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         resultData(response) == [hello: "world"]
         resultComplexityAggregator.getTotalNodeCount() == 2
         resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("MyService") == 2
     }
 

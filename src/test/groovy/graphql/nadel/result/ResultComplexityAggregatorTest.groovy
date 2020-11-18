@@ -78,11 +78,51 @@ class ResultComplexityAggregatorTest extends Specification {
         def complexityMap = resultComplexityAggregator.snapshotResultComplexityData()
 
         then:
-        complexityMap == [totalNodeCount:24, serviceNodeCounts:[service1:14, service2:10]]
+        complexityMap == [totalNodeCount:24, serviceNodeCounts:[service1:14, service2:10], fieldRenamesCount:0, typeRenamesCount:0]
     }
 
+    def "test rename field method"() {
+        when:
+        resultComplexityAggregator.incrementFieldRenameCount(10);
+        then:
+        resultComplexityAggregator.getTotalNodeCount() == 0
+        resultComplexityAggregator.getFieldRenamesCount() == 10
 
+        when:
+        resultComplexityAggregator.incrementFieldRenameCount(-2);
+        then:
+        resultComplexityAggregator.getFieldRenamesCount() == 8
+    }
 
+    def "test rename field type method"() {
+        when:
+        resultComplexityAggregator.incrementTypeRenameCount(3);
+        resultComplexityAggregator.incrementTypeRenameCount(1);
+        resultComplexityAggregator.incrementTypeRenameCount(2);
 
+        then:
+        resultComplexityAggregator.getTotalNodeCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 6
+
+        when:
+        resultComplexityAggregator.incrementTypeRenameCount(-3);
+        resultComplexityAggregator.incrementTypeRenameCount(4);
+
+        then:
+        resultComplexityAggregator.getTypeRenamesCount() == 7
+    }
+
+    def "test snapshotComplexity Data method for type/field renames"() {
+        when:
+        resultComplexityAggregator.incrementTypeRenameCount(3);
+        resultComplexityAggregator.incrementTypeRenameCount(1);
+        resultComplexityAggregator.incrementTypeRenameCount(2);
+        resultComplexityAggregator.incrementFieldRenameCount(10);
+
+        def complexityMap = resultComplexityAggregator.snapshotResultComplexityData()
+
+        then:
+        complexityMap == [totalNodeCount:0, serviceNodeCounts:[:], fieldRenamesCount:10, typeRenamesCount:6]
+    }
 
 }
