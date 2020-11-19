@@ -363,6 +363,8 @@ public class HydrationInputResolver {
                         queryTransformationResult.getRemovedFieldMap());
         String serviceName = hydrationTransformation.getUnderlyingServiceHydration().getServiceName();
         resultComplexityAggregator.incrementServiceNodeCount(serviceName, firstTopLevelResultNode.getTotalNodeCount());
+        resultComplexityAggregator.incrementTypeRenameCount(firstTopLevelResultNode.getTotalTypeRenameCount());
+        resultComplexityAggregator.incrementFieldRenameCount(firstTopLevelResultNode.getTotalFieldRenameCount());
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = StrategyUtil.copyFieldInformation(hydrationInputNode, firstTopLevelResultNode);
 
@@ -515,6 +517,7 @@ public class HydrationInputResolver {
                 int nodeCount = overallResultNode.getTotalNodeCount();
                 resultComplexityAggregator.incrementServiceNodeCount(serviceName, nodeCount);
                 resultComplexityAggregator.incrementTypeRenameCount(overallResultNode.getTotalTypeRenameCount());
+                resultComplexityAggregator.incrementFieldRenameCount(overallResultNode.getTotalFieldRenameCount());
                 resultNode = copyFieldInformation(hydrationInputNode, overallResultNode);
             } else {
                 resultNode = createNullValue(hydrationInputNode);
