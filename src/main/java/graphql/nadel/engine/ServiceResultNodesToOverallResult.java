@@ -187,7 +187,6 @@ public class ServiceResultNodesToOverallResult {
             if (handleResultChild == null) {
                 continue;
             }
-            fieldRenameCount.getAndAdd(handleResult.changedNode.getTotalFieldRenameCount());
             newChildren.add(handleResultChild.changedNode);
             // additional siblings are not descended, just added
             newChildren.addAll(handleResultChild.siblings);
@@ -365,6 +364,8 @@ public class ServiceResultNodesToOverallResult {
                     nadelContext,
                     transformationMetadata);
             handleResult.changedNode = mappedNode;
+            fieldRenameCount.getAndAdd(mappedNode.getTotalFieldRenameCount());
+            typeRenameCount.getAndAdd(mappedNode.getTotalTypeRenameCount());
             first = false;
         }
 

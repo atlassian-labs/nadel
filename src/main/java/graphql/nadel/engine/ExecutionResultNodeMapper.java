@@ -77,7 +77,7 @@ public class ExecutionResultNodeMapper {
         if (typeRenameMappings.getOrDefault(underlyingFieldType, "").equals(overallFieldType)) {
             typeRenameCount.getAndAdd(typeDecrementValue + 1);
         }else if (typeRenameMappings.containsValue(overallFieldType) && !overallFieldType.equals(underlyingFieldType)) {
-            // Handles edge cases where overall field could be renamed while the type is also renamed
+            // Handles edge cases where overall field could be renamed while the type is also renamed, or list inside hydration
             typeRenameCount.getAndAdd(typeDecrementValue + 1);
         }
     }

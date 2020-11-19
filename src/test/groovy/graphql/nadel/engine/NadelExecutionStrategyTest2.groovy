@@ -1092,11 +1092,21 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def nsdl = TestUtil.schemaFromNdsl('''
          service Foo {
             type Query{
-                fooz: [FooName]  => renamed from foos
+                fooz: [Fooz]  => renamed from foos
             } 
-            type FooName => renamed from Foo {
-                fooName: String => renamed from name
+            type Fooz => renamed from Foo {
+                fooDetails: FooDetails => renamed from details
                 bar: Bar => hydrated from Bar.barsById(id: $source.barId) object identified by barId, batch size 2
+            }
+            type FooDetails => renamed from Details {
+                fooName: String => renamed from name
+                fooAge: Int => renamed from age
+                fooContact: FooContactDetails => renamed from contact
+            }
+            
+            type FooContactDetails => renamed from ContactDetails {
+                fooEmail: String => renamed from email
+                fooPhone: Int => renamed from phone
             }
          }
          service Bar {
@@ -1107,6 +1117,15 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 barId: ID
                 barName: String => renamed from name
                 nestedBar: Bar => hydrated from Bar.barsById(id: $source.nestedBarId) object identified by barId
+                barDetails: BarDetails => renamed from details
+            }
+            type BarDetails => renamed from Details {
+                barAge: Int => renamed from age
+                barContact: BarContactDetails => renamed from contact
+            }
+            type BarContactDetails => renamed from ContactDetails {
+                barEmail: String => renamed from email
+                barPhone: Int => renamed from phone
             }
          }
         ''')
@@ -1115,8 +1134,19 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 foos: [Foo]  
             } 
             type Foo {
-                name: String
+                details: Details
                 barId: ID
+            }
+            
+            type Details {
+                name: String
+                age: Int
+                contact: ContactDetails
+            }
+            
+            type ContactDetails {
+                email: String
+                phone: Int
             }
        """)
         def underlyingSchema2 = TestUtil.schema("""
@@ -1128,21 +1158,57 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 barId: ID
                 name: String
                 nestedBarId: ID
+                details: Details
+            }
+            type Details {
+                age: Int 
+                contact: ContactDetails
+            }
+            type ContactDetails {
+                email: String
+                phone: Int 
             }
         """)
 
         def query = """
-                { fooz { bar { barName nestedBar {barName nestedBar { barName } } } } }
+                { 
+                    fooz { 
+                        fooDetails {
+                            fooName
+                            fooAge
+                            fooContact {
+                                fooEmail
+                                fooPhone
+                            }
+                        } 
+                        bar { 
+                            barName 
+                            nestedBar {
+                                barName 
+                                nestedBar { 
+                                    barName
+                                    barDetails {
+                                        barAge
+                                        barContact {
+                                            barEmail
+                                            barPhone
+                                        }
+                                    }
+                                } 
+                            } 
+                        } 
+                    } 
+                }
         """
-        def expectedQuery1 = "query nadel_2_Foo {foos {barId}}"
+        def expectedQuery1 = "query nadel_2_Foo {foos {details {name age contact {email phone}} barId}}"
         def expectedQuery2 = "query nadel_2_Bar {barsById(id:[\"bar1\"]) {name nestedBarId object_identifier__UUID:barId}}"
         def expectedQuery3 = "query nadel_2_Bar {barsById(id:[\"nestedBar1\"]) {name nestedBarId object_identifier__UUID:barId}}"
-        def expectedQuery4 = "query nadel_2_Bar {barsById(id:[\"nestedBarId456\"]) {name object_identifier__UUID:barId}}"
+        def expectedQuery4 = "query nadel_2_Bar {barsById(id:[\"nestedBarId456\"]) {name details {age contact {email phone}} object_identifier__UUID:barId}}"
 
-        def response1 = [foos: [[barId: "bar1"]]]
+        def response1 = [foos: [[details:[name:"smith", age:1, contact:[email:"test", phone:1]] ,barId: "bar1"]]]
         def response2 = [barsById: [[object_identifier__UUID: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"]]]
         def response3 = [barsById: [[object_identifier__UUID: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
-        def response4 = [barsById: [[object_identifier__UUID: "nestedBarId456", name: "NestedBarName2"]]]
+        def response4 = [barsById: [[object_identifier__UUID: "nestedBarId456", name: "NestedBarName2", details:[age:1, contact:[email:"test", phone:1]]]]]
 
         Map response
         List<GraphQLError> errors
@@ -1163,9 +1229,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         )
 
         then:
-        response == [fooz: [[bar: [barName: "Bar 1", nestedBar: [barName: "NestedBarName1", nestedBar: [barName: "NestedBarName2"]]]]]]
-        resultComplexityAggregator.getTypeRenamesCount() == 1
-        resultComplexityAggregator.getFieldRenamesCount() == 4
+        response == [fooz: [
+                            [fooDetails:[fooName:"smith", fooAge:1, fooContact:[fooEmail:"test", fooPhone:1]],
+                             bar:[barName:"Bar 1", nestedBar:[barName:"NestedBarName1", nestedBar:[barName:"NestedBarName2", barDetails:[barAge:1, barContact:[barEmail:"test", barPhone:1]]]]]]
+                            ]
+                    ]
+        resultComplexityAggregator.getTypeRenamesCount() == 5
+        resultComplexityAggregator.getFieldRenamesCount() == 15
     }
 
 

@@ -189,7 +189,6 @@ public class NadelExecutionStrategy {
                 resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount());
                 resultComplexityAggregator.incrementFieldRenameCount(rootExecutionResultNode.getTotalFieldRenameCount());
                 resultComplexityAggregator.incrementTypeRenameCount(rootExecutionResultNode.getTotalTypeRenameCount());
-
             });
 
             CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult
