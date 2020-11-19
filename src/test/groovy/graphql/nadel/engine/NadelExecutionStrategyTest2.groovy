@@ -1065,7 +1065,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test2ServicesWith3Calls(
+        (response, errors) = test2ServicesWithNCalls(
                 overallSchema,
                 "Issue",
                 issueSchema,
@@ -1073,12 +1073,9 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 associationSchema,
                 query,
                 ["synth"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
-                expectedQuery3,
-                response3,
+                [expectedQuery1, expectedQuery2, expectedQuery3],
+                [response1, response2, response3],
+                3,
                 resultComplexityAggregator
         )
 
@@ -1089,47 +1086,120 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         resultComplexityAggregator.getTypeRenamesCount() == 0
     }
 
-    Object[] test2ServicesWith3Calls(GraphQLSchema overallSchema,
+
+    def "query with three nested hydrations and simple data and lots of renames"() {
+
+        def nsdl = TestUtil.schemaFromNdsl('''
+         service Foo {
+            type Query{
+                fooz: [FooName]  => renamed from foos
+            } 
+            type FooName => renamed from Foo {
+                fooName: String => renamed from name
+                bar: Bar => hydrated from Bar.barsById(id: $source.barId) object identified by barId, batch size 2
+            }
+         }
+         service Bar {
+            type Query{
+                ibar: Bar => renamed from bar 
+            } 
+            type Bar {
+                barId: ID
+                barName: String => renamed from name
+                nestedBar: Bar => hydrated from Bar.barsById(id: $source.nestedBarId) object identified by barId
+            }
+         }
+        ''')
+        def underlyingSchema1 = TestUtil.schema("""
+            type Query{
+                foos: [Foo]  
+            } 
+            type Foo {
+                name: String
+                barId: ID
+            }
+       """)
+        def underlyingSchema2 = TestUtil.schema("""
+            type Query{
+                bar: Bar 
+                barsById(id: [ID]): [Bar]
+            } 
+            type Bar {
+                barId: ID
+                name: String
+                nestedBarId: ID
+            }
+        """)
+
+        def query = """
+                { fooz { bar { barName nestedBar {barName nestedBar { barName } } } } }
+        """
+        def expectedQuery1 = "query nadel_2_Foo {foos {barId}}"
+        def expectedQuery2 = "query nadel_2_Bar {barsById(id:[\"bar1\"]) {name nestedBarId object_identifier__UUID:barId}}"
+        def expectedQuery3 = "query nadel_2_Bar {barsById(id:[\"nestedBar1\"]) {name nestedBarId object_identifier__UUID:barId}}"
+        def expectedQuery4 = "query nadel_2_Bar {barsById(id:[\"nestedBarId456\"]) {name object_identifier__UUID:barId}}"
+
+        def response1 = [foos: [[barId: "bar1"]]]
+        def response2 = [barsById: [[object_identifier__UUID: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"]]]
+        def response3 = [barsById: [[object_identifier__UUID: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
+        def response4 = [barsById: [[object_identifier__UUID: "nestedBarId456", name: "NestedBarName2"]]]
+
+        Map response
+        List<GraphQLError> errors
+
+        when:
+        (response, errors) = test2ServicesWithNCalls(
+                nsdl,
+                "Foo",
+                underlyingSchema1,
+                "Bar",
+                underlyingSchema2,
+                query,
+                ["fooz"],
+                [expectedQuery1, expectedQuery2, expectedQuery3, expectedQuery4],
+                [response1, response2, response3, response4],
+                4,
+                resultComplexityAggregator
+        )
+
+        then:
+        response == [fooz: [[bar: [barName: "Bar 1", nestedBar: [barName: "NestedBarName1", nestedBar: [barName: "NestedBarName2"]]]]]]
+        resultComplexityAggregator.getTypeRenamesCount() == 1
+        resultComplexityAggregator.getFieldRenamesCount() == 4
+    }
+
+
+    Object[] test2ServicesWithNCalls(GraphQLSchema overallSchema,
                                      String serviceOneName,
                                      GraphQLSchema underlyingOne,
                                      String serviceTwoName,
                                      GraphQLSchema underlyingTwo,
                                      String query,
                                      List<String> topLevelFields,
-                                     String expectedQuery1,
-                                     Map response1,
-                                     String expectedQuery2,
-                                     Map response2,
-                                     String expectedQuery3,
-                                     Map response3,
+                                     List<String> expectedQueries,
+                                     List<Map> responses,
+                                     int serviceCalls,
                                      ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {
                                      },
                                      Map variables = [:],
-                                    ResultComplexityAggregator resultComplexityAggregator
+                                     ResultComplexityAggregator resultComplexityAggregator
     ) {
 
-        def response1ServiceResult = new ServiceExecutionResult(response1)
-        def response2ServiceResult = new ServiceExecutionResult(response2)
-        def response3ServiceResult = new ServiceExecutionResult(response3)
-
+        def response1ServiceResult = new ServiceExecutionResult(responses[0])
         boolean calledService1 = false
         ServiceExecution service1Execution = { ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
-            assert printAstCompact(sep.query) == expectedQuery1
+            assert printAstCompact(sep.query) == expectedQueries[0]
             calledService1 = true
             return completedFuture(response1ServiceResult)
         }
+
         int calledService2Count = 0;
         ServiceExecution service2Execution = { ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             calledService2Count++
-            if (calledService2Count == 1) {
-                assert printAstCompact(sep.query) == expectedQuery2
-                return completedFuture(response2ServiceResult)
-            } else {
-                assert printAstCompact(sep.query) == expectedQuery3
-                return completedFuture(response3ServiceResult)
-            }
+            assert printAstCompact(sep.query) == expectedQueries[calledService2Count]
+            return completedFuture(new ServiceExecutionResult(responses[calledService2Count]))
         }
         def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
         def definitionRegistry = Mock(DefinitionRegistry)
@@ -1154,10 +1224,9 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         assert calledService1
-        assert calledService2Count == 2
+        assert calledService2Count == serviceCalls - 1
 
         return [resultData(response), resultErrors(response)]
     }
-
 }
 
