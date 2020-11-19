@@ -60,6 +60,8 @@ public class ResultComplexityAggregator {
         return "ResultComplexityAggregator{" +
                 "totalNodeCount=" + totalNodeCount +
                 ", serviceNodeCountsMap=" + serviceNodeCounts +
+                ", totalFieldRenameCount=" + totalFieldRenameCount +
+                ", totalTypeRenameCount=" + totalTypeRenameCount +
                 '}';
     }
 }
