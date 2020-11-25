@@ -1298,5 +1298,85 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
         return [resultData(response), resultErrors(response)]
     }
+
+
+    def "renamed list inside renamed list"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+         service IssuesService {
+            type Query {
+                renamedIssue: [RenamedIssue] => renamed from issue
+            }
+            
+            type RenamedIssue => renamed from Issue {
+                renamedTicket: RenamedTicket => renamed from ticket
+            }
+            
+            type RenamedTicket => renamed from Ticket  {
+                renamedTicketTypes: [RenamedTicketType]  => renamed from ticketTypes
+            }
+
+            type RenamedTicketType => renamed from TicketType {
+                renamedId: String => renamed from id
+                renamedDate: String => renamed from date
+            }
+         }
+        ''')
+        def boardSchema = TestUtil.schema("""
+            type Query {
+                issue: [Issue]
+            }
+            
+            type Issue  {
+                ticket: Ticket
+            }
+            
+            type Ticket   {
+                ticketTypes: [TicketType]
+            }
+
+            type TicketType {
+                id: String
+                date: String
+            }
+        """)
+        def query = "{\n" +
+                "            renamedIssue {\n" +
+                "                renamedTicket {\n" +
+                "                    renamedTicketTypes {\n" +
+                "                        renamedId\n" +
+                "                        renamedDate\n" +
+                "                    }\n" +
+                "                }\n" +
+                "            }\n" +
+                "        }"
+
+        def expectedQuery1 = "query nadel_2_IssuesService {issue {ticket {ticketTypes {id date}}}}"
+        def response1 =   [issue: [[ticket: [ticketTypes: [[id:"1", date:"20/11/2020"]]]]]]
+
+        def overallResponse = [renamedIssue: [[renamedTicket: [renamedTicketTypes: [[renamedId:"1", renamedDate:"20/11/2020"]]]]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "IssuesService",
+                boardSchema,
+                query,
+                ["renamedIssue"],
+                expectedQuery1,
+                response1,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+        resultComplexityAggregator.getFieldRenamesCount() == 5
+        resultComplexityAggregator.getTypeRenamesCount() == 3
+    }
+
+
 }
 
