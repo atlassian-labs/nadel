@@ -1054,4 +1054,109 @@ class NadelE2ETest extends Specification {
 
 
 
+
+    def 'renamed list inside renamed list'() {
+        def simpleNDSL = '''
+         service IssuesService {
+            type Query {
+                renamedIssue: [RenamedIssue] => renamed from issue
+            }
+            
+            type RenamedIssue => renamed from Issue {
+                renamedTicket: RenamedTicket => renamed from ticket
+            }
+            
+            type RenamedTicket => renamed from Ticket  {
+                renamedTicketTypes: [RenamedTicketType]  => renamed from ticketTypes
+            }
+
+            type RenamedTicketType => renamed from TicketType {
+                renamedId: String => renamed from id
+                renamedDate: String => renamed from date
+            }
+         }
+        '''
+
+        def underlyingSchema = typeDefinitions('''
+            type Query {
+                issue: [Issue]
+            }
+            
+            type Issue  {
+                ticket: Ticket
+            }
+            
+            type Ticket   {
+                ticketTypes: [TicketType]
+            }
+
+            type TicketType {
+                id: String
+                date: String
+            }
+        ''')
+
+        def delegatedExecution = Mock(ServiceExecution)
+        def serviceFactory = TestUtil.serviceFactory(delegatedExecution, underlyingSchema)
+
+        def query = '''
+        query {
+            renamedIssue {
+                renamedTicket {
+                    renamedTicketTypes {
+                        renamedId
+                        renamedDate
+                    }
+                }
+            }
+        }
+        
+        '''
+
+        given:
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+
+        def topLevelData =
+                [
+                        issue: [
+                                [
+                                        ticket: [
+                                                ticketTypes: [
+                                                        [id:"1", date:"20/11/2020"]
+                                                ]
+                                        ]
+                                ]
+                        ]
+                ]
+
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
+
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * delegatedExecution.execute(_) >>
+                completedFuture(topLevelResult)
+
+        result.join().data ==                 [
+                renamedIssue: [
+                        [
+                                renamedTicket: [
+                                        renamedTicketTypes: [
+                                                [renamedId:"1", renamedDate:"20/11/2020"]
+                                        ]
+                                ]
+                        ]
+                ]
+        ]
+    }
+
+
+
 }
