@@ -25,6 +25,10 @@ public class ArtificialFieldUtils {
         if (!Util.isInterfaceOrUnionField(fieldType)) {
             return field;
         }
+        return addUnderscoreTypeName(nadelContext, field);
+    }
+
+    public static Field addUnderscoreTypeName(NadelContext nadelContext, Field field) {
         String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
         assertNotNull(underscoreTypeNameAlias, () -> "We MUST have a generated __typename alias in the request context");
 
