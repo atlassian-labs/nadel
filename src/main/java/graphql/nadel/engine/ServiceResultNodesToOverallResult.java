@@ -209,9 +209,9 @@ public class ServiceResultNodesToOverallResult {
             result = unapplyTransformations(executionId, node, transformations, unapplyEnvironment, fieldIdTransformation, nadelContext, transformationMetadata);
         }
 
-//        if (result.changedNode instanceof ObjectExecutionResultNode) {
-//            result.changedNode = addDeletedChildren((ObjectExecutionResultNode) result.changedNode, normalizedRootField, nadelContext, transformationMetadata);
-//        }
+        if (result.changedNode instanceof ObjectExecutionResultNode && !(parentNode instanceof HydrationInputNode)) {
+            result.changedNode = addDeletedChildren((ObjectExecutionResultNode) result.changedNode, null, nadelContext, transformationMetadata);
+        }
         return result;
     }
 
