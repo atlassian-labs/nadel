@@ -92,12 +92,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
         def result = nadel.execute(newNadelExecutionInput().query(query)).join()
 
         then:
-        // What should the expected outcome of this be?
-        // [issueById:[comments:[null, null, null]]?
-        // [issueById:[comments:null]?
-        // [issueById:null]?
-        // [issueById:[comments:[[author:null], [author:null], [author:null]]]] ?
-        result.data != [issueById: [comments: [[author: null], [author: null], [author: null]]]]
+        result.data == [issueById: [comments: [[author: null], [author: null], [author: null]]]]
     }
 
     //query validation error message appears from graphql-java due to empty query
@@ -125,7 +120,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
         def result = nadel.execute(newNadelExecutionInput().query(query)).join()
 
         then:
-        result.data == [commentById: null]
+        result.data == [commentById: ["id": null, "created": null, "commentText": null]]
     }
 
     def "top level field is removed"() {

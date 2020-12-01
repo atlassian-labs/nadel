@@ -26,10 +26,8 @@ import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
-import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
-import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.idl.TypeInfo;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
@@ -125,9 +123,7 @@ public class OverallQueryTransformer {
         Field transformedRootField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
 
-        if (!(GraphQLTypeUtil.unwrapAll(topLevelFieldTypeOverall) instanceof GraphQLScalarType)) {
-            transformedRootField = ArtificialFieldUtils.addUnderscoreTypeName(nadelContext, transformedRootField);
-        }
+        transformedRootField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
 
         if (isSynthetic) {
             Field tempTransformedRootLevelField = transformedRootField;
@@ -225,10 +221,7 @@ public class OverallQueryTransformer {
                 // if all child fields of the high level field are removed then the top-level field is nulled
 
                 GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
-                boolean fieldIsAScalar = GraphQLTypeUtil.unwrapAll(fieldType) instanceof GraphQLScalarType;
-                if (!fieldIsAScalar) {
-                    newField = ArtificialFieldUtils.addUnderscoreTypeName(nadelContext, newField);
-                }
+                newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
                 return newField;
             });
             transformedFields.addAll(transformed);

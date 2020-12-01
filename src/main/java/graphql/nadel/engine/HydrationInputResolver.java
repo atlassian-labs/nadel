@@ -246,7 +246,6 @@ public class HydrationInputResolver {
                 topLevelFieldName,
                 underlyingServiceHydration.getSyntheticField(),
                 originalField);
-        Field topLevelFieldWithTypeName = ArtificialFieldUtils.addUnderscoreTypeName(executionContext.getContext(), topLevelField);
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
         Operation operation = Operation.QUERY;
@@ -259,7 +258,7 @@ public class HydrationInputResolver {
                         service.getUnderlyingSchema(),
                         operationName,
                         operation,
-                        topLevelFieldWithTypeName,
+                        topLevelField,
                         topLevelFieldType,
                         serviceExecutionHooks,
                         service,

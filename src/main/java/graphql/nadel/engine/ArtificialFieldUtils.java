@@ -14,7 +14,9 @@ import static graphql.Assert.assertNotNull;
 import static graphql.language.Field.newField;
 
 /**
- * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side
+ * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side.
+ * We also add __typename field when all fields were deleted from a selection set to avoid producing non valid graphql
+ * with empty selection sets.
  */
 @Internal
 public class ArtificialFieldUtils {
@@ -22,13 +24,23 @@ public class ArtificialFieldUtils {
     private static final String UNDERSCORE_TYPENAME = Introspection.TypeNameMetaFieldDef.getName();
 
     public static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
-        if (!Util.isInterfaceOrUnionField(fieldType)) {
+        if (Util.isInterfaceOrUnionField(fieldType)) {
+            return addUnderscoreTypeName(nadelContext, field);
+        }
+        if (Util.isScalar(fieldType)) {
             return field;
         }
-        return addUnderscoreTypeName(nadelContext, field);
+        boolean selectionSetIsEmpty = field.getSelectionSet() == null
+                || field.getSelectionSet().getSelections() == null
+                || field.getSelectionSet().getSelections().isEmpty();
+        if (selectionSetIsEmpty) {
+            return addUnderscoreTypeName(nadelContext, field);
+        } else {
+            return field;
+        }
     }
 
-    public static Field addUnderscoreTypeName(NadelContext nadelContext, Field field) {
+    private static Field addUnderscoreTypeName(NadelContext nadelContext, Field field) {
         String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
         assertNotNull(underscoreTypeNameAlias, () -> "We MUST have a generated __typename alias in the request context");
 
