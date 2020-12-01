@@ -53,6 +53,9 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
         return objectIdentifier;
     }
 
+    public boolean isObjectMatchByIndex() {
+        return objectIdentifier.equals("$index");
+    }
 
     public String getServiceName() {
         return serviceName;

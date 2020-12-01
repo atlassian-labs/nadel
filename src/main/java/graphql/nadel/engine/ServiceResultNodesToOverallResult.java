@@ -210,7 +210,7 @@ public class ServiceResultNodesToOverallResult {
         }
 
         if (result.changedNode instanceof ObjectExecutionResultNode) {
-            result.changedNode = addDeletedChildren((ObjectExecutionResultNode) result.changedNode, null, nadelContext, transformationMetadata);
+            result.changedNode = addDeletedChildren((ObjectExecutionResultNode) result.changedNode, normalizedRootField, nadelContext, transformationMetadata);
         }
         return result;
     }

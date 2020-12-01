@@ -1062,6 +1062,161 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         errors.size() == 0
     }
 
+    def "hydration matching using index"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIds(ids: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) object identified by $index, batch size 5
+            }
+        }
+        service UserService {
+            type Query {
+                usersByIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
+        def issue1 = [id: "ISSUE-1", authorIds: ['1']]
+        def issue2 = [id: "ISSUE-2", authorIds: ['1', '2']]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersByIds(ids:[\"1\",\"1\",\"2\"]) {name}}"
+        def user1 = [id: "USER-1", name: 'Name']
+        def user2 = [id: "USER-2", name: 'Name 2']
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issues"],
+                expectedQuery1,
+                [issues: [issue1, issue2]],
+                expectedQuery2,
+                [usersByIds: [user1, user1, user2]]
+        )
+
+
+        then:
+        def user1Result = [name: 'Name']
+        def user2Result = [name: 'Name 2']
+        def issue1Result = [id: "ISSUE-1", authors: [user1Result]]
+        def issue2Result = [id: "ISSUE-2", authors: [user1Result, user2Result]]
+        response == [issues: [issue1Result, issue2Result]]
+        errors.size() == 0
+    }
+
+    def "hydration matching using index with arrays"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIssueIds(issueIds: [ID]): [[User]]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIssueIds(issueIds: $source.id) object identified by $index, batch size 5
+            }
+        }
+        service UserService {
+            type Query {
+                usersByIssueIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id id}}"
+        def issue1 = [id: "ISSUE-1"]
+        def issue2 = [id: "ISSUE-2"]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersByIssueIds(issueIds:[\"ISSUE-1\",\"ISSUE-2\"]) {name}}"
+        def user1 = [name: 'Name']
+        def user2 = [name: 'Name 2']
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issues"],
+                expectedQuery1,
+                [issues: [issue1, issue2]],
+                expectedQuery2,
+                [usersByIssueIds: [[user1], [user1, user2]]]
+        )
+
+
+        then:
+        def user1Result = [name: 'Name']
+        def user2Result = [name: 'Name 2']
+        def issue1Result = [id: "ISSUE-1", authors: [user1Result]]
+        def issue2Result = [id: "ISSUE-2", authors: [user1Result, user2Result]]
+        response == [issues: [issue1Result, issue2Result]]
+        errors.size() == 0
+    }
+
     Object[] test2ServicesWith3Calls(GraphQLSchema overallSchema,
                                      String serviceOneName,
                                      GraphQLSchema underlyingOne,

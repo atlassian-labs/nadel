@@ -166,7 +166,11 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         }
         String objectIdentifier = "id";
         if (ctx.objectIdentifier() != null) {
-            objectIdentifier = ctx.objectIdentifier().name().getText();
+            if (ctx.objectIdentifier().indexReference() != null) {
+                objectIdentifier = "$index";
+            } else {
+                objectIdentifier = ctx.objectIdentifier().name().getText();
+            }
         }
         Integer batchSize = null;
         if (ctx.batchSize() != null) {
