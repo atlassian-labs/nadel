@@ -1172,7 +1172,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         service UserService {
             type Query {
-                usersByIssueIds(ids: [ID]): [User]
+                usersByIssueIds(issueIds: [ID]): [[User]]
             }
             type User {
                 id: ID
