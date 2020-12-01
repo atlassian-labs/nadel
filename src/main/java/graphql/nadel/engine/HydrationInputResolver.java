@@ -503,7 +503,7 @@ public class HydrationInputResolver {
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
 
         boolean first = true;
-        for (int i = 0, hydrationInputNodesSize = hydrationInputNodes.size(); i < hydrationInputNodesSize; i++) {
+        for (int i = 0; i < hydrationInputNodes.size(); i++) {
             HydrationInputNode hydrationInputNode = hydrationInputNodes.get(i);
 
             ExecutionResultNode matchingResolvedNode;
