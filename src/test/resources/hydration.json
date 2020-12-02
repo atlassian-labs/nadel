@@ -37,6 +37,7 @@
                   "serviceName": "OtherService",
                   "topLevelField": "resolveId",
                   "objectIdentifier": "id",
+                  "objectMatchByIndex": false,
                   "arguments": [
                     {
                       "name": "otherId",
