@@ -49,7 +49,7 @@ objectResolution: (objectByIdentifier | objectByIndex);
 
 objectByIdentifier: 'object identified by' name;
 
-objectByIndex: 'object indexed';
+objectByIndex: 'using indexes';
 
 batchSize: 'batch size ' intValue;
 

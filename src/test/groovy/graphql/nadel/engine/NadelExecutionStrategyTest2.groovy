@@ -1094,7 +1094,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             }
             type Issue {
                 id: ID
-                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) object indexed, batch size 5
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) using indexes, batch size 5
             }
         }
         service UserService {
@@ -1172,7 +1172,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             }
             type Issue {
                 id: ID
-                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) object indexed, batch size 5
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) using indexes, batch size 5
             }
         }
         service UserService {
@@ -1250,7 +1250,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             }
             type Issue {
                 id: ID
-                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) object indexed, batch size 5
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds)  using indexes, batch size 5
             }
         }
         service UserService {
@@ -1324,7 +1324,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             }
             type Issue {
                 id: ID
-                authors: [User] => hydrated from UserService.usersByIssueIds(issueIds: $source.id) object indexed, batch size 5
+                authors: [User] => hydrated from UserService.usersByIssueIds(issueIds: $source.id) using indexes, batch size 5
             }
         }
         service UserService {
