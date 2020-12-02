@@ -1,5 +1,6 @@
 package graphql.nadel.engine
 
+import graphql.AssertException
 import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.execution.nextgen.ExecutionHelper
@@ -10,6 +11,9 @@ import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
+
+import java.util.concurrent.CompletionException
+import java.util.concurrent.ExecutionException
 
 import static graphql.language.AstPrinter.printAstCompact
 import static java.util.concurrent.CompletableFuture.completedFuture
@@ -1216,6 +1220,81 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def issue2Result = [id: "ISSUE-2", authors: [null, user2Result]]
         response == [issues: [issue1Result, issue2Result]]
         errors.size() == 0
+    }
+
+    def "hydration matching using index result size invariant mismatch"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIds(ids: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) object indexed, batch size 5
+            }
+        }
+        service UserService {
+            type Query {
+                usersByIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
+        def issue1 = [id: "ISSUE-1", authorIds: ['1']]
+        def issue2 = [id: "ISSUE-2", authorIds: ['1', '2']]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersByIds(ids:[\"1\",\"1\",\"2\"]) {name}}"
+        def user1 = [id: "USER-1", name: 'Name']
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issues"],
+                expectedQuery1,
+                [issues: [issue1, issue2]],
+                expectedQuery2,
+                [usersByIds: [user1, null]]
+        )
+
+
+        then:
+        ExecutionException ex = thrown()
+
+        ex.cause.getClass() in AssertException
+        ex.cause.message == "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments. We expected 3 returned nodes but only got 2"
     }
 
     def "hydration matching using index with arrays"() {

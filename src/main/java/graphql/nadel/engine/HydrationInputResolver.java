@@ -495,7 +495,11 @@ public class HydrationInputResolver {
         List<ExecutionResultNode> resolvedNodes = listResultNode.getChildren();
 
         if (isResolveByIndex) {
-            assertTrue(resolvedNodes.size() == hydrationInputNodes.size(), () -> "Expect the size of the resolved nodes to match the size of the input when resolving by index");
+            assertTrue(resolvedNodes.size() == hydrationInputNodes.size(), () -> String.format(
+                    "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments. We expected %d returned nodes but only got %d",
+                    hydrationInputNodes.size(),
+                    resolvedNodes.size()
+            ));
         }
 
         List<ExecutionResultNode> result = new ArrayList<>();
