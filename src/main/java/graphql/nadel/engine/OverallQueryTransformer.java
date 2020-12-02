@@ -18,21 +18,26 @@ import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.OverallTypeInfo;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
 import graphql.nadel.engine.transformation.TransformationMetadata;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLCompositeType;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLNamedOutputType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.idl.TypeInfo;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
 import graphql.util.TreeTransformer;
+import graphql.util.TreeTransformerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +51,7 @@ import java.util.Set;
 
 import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
+import static graphql.nadel.dsl.NodeId.getId;
 import static graphql.nadel.engine.UnderlyingTypeContext.newUnderlyingTypeContext;
 import static graphql.nadel.util.FpKit.map;
 import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
@@ -444,7 +450,44 @@ public class OverallQueryTransformer {
         );
 
         //noinspection unchecked
-        return (T) newNode;
+        return (T) addUnderscoreTypeNameToEmptySelectionSets(nadelContext, overallTypeInformation, rootVars, treeTransformer, newNode);
+    }
+
+    private Node addUnderscoreTypeNameToEmptySelectionSets(NadelContext nadelContext,
+                                                           OverallTypeInformation<?> overallTypeInformation,
+                                                           Map<Class<?>, Object> rootVars,
+                                                           TreeTransformer<Node> treeTransformer,
+                                                           Node field
+    ) {
+        if (field == null) {
+            return null;
+        }
+        NodeVisitorStub addDummyFieldToEmptySubSelectsVisitor = new NodeVisitorStub() {
+
+            @Override
+            public TraversalControl visitField(Field node, TraverserContext<Node> context) {
+                OverallTypeInfo overallTypeInfo = overallTypeInformation.getOverallTypeInfo(getId(node));
+                if (overallTypeInfo == null) {
+                    return TraversalControl.CONTINUE;
+                }
+                GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
+                GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
+                Field newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, node, fieldTypeOverall);
+                if (newField != node) {
+                    TreeTransformerUtil.changeNode(context, newField);
+                }
+                return TraversalControl.CONTINUE;
+            }
+        };
+
+        return treeTransformer.transform(field, new TraverserVisitorStub<Node>() {
+                    @Override
+                    public TraversalControl enter(TraverserContext<Node> context) {
+                        return context.thisNode().accept(context, addDummyFieldToEmptySubSelectsVisitor);
+                    }
+                },
+                rootVars
+        );
     }
 
     private String getUnderlyingTypeNameAndRecordMapping(GraphQLCompositeType typeOverall, Map<String, String> typeRenameMappings) {

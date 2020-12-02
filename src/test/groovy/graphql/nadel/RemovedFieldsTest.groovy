@@ -42,6 +42,36 @@ class RemovedFieldsTest extends StrategyTestHelper {
         result.errors[0].message.contains("removed field")
     }
 
+    def "all hydrated fields in query are removed"() {
+        given:
+        def query = """
+        {
+            commentById(id:"C1") {
+                author {
+                    displayName
+                    userId
+                }
+            }
+        }
+        """
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
+
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["displayName", "userId"]))
+                .build()
+
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
+        then:
+        result.data == [commentById: [author: [displayName: null, userId: null]]]
+        result.errors.size() == 2
+        result.errors[0].message.contains("removed field")
+        result.errors[1].message.contains("removed field")
+    }
+
     def "field in non-hydrated query is removed"() {
         given:
         def query = """
@@ -93,6 +123,117 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [issueById: [comments: [[author: null], [author: null], [author: null]]]]
+    }
+
+    def "field with selections is removed"() {
+        given:
+        def query = """
+        { 
+            issueById(id : "I1") {
+                id
+                epic {
+                    id
+                    title
+                } 
+            } 
+        }
+        """
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
+
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["epic"]))
+                .build()
+
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
+        then:
+        result.data == [issueById: [id: "I1", epic: null]]
+    }
+
+    def "field in the selection set is removed"() {
+        given:
+        def query = """
+        { 
+            issueById(id : "I1") {
+                id
+                epic {
+                    id
+                    title
+                }
+            }
+        }
+        """
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
+
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["title"]))
+                .build()
+
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
+        then:
+        result.data == [issueById: [id: "I1", epic: [id: "E1", title: null]]]
+    }
+
+    def "the only field in the selection set is removed"() {
+        given:
+        def query = """
+        {
+            issueById(id : "I1") {
+                id
+                epic {
+                    title
+                }
+            }
+        }
+        """
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
+
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["title"]))
+                .build()
+
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
+        then:
+        result.data == [issueById: [id: "I1", epic: [title: null]]]
+    }
+
+    def "all fields in the selection set are removed"() {
+        given:
+        def query = """
+        {
+            issueById(id : "I1") {
+                id
+                epic {
+                    title
+                    description
+                }
+            }
+        }
+        """
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
+
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["title", "description"]))
+                .build()
+
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
+        then:
+        result.data == [issueById: [id: "I1", epic: [title: null, description: null]]]
     }
 
     //query validation error message appears from graphql-java due to empty query
