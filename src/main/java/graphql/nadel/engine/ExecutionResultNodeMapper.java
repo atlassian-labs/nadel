@@ -26,8 +26,15 @@ public class ExecutionResultNodeMapper {
         Map<String, String> typeRenameMappings = environment.typeRenameMappings;
         GraphQLSchema overallSchema = environment.overallSchema;
         ExecutionPath mappedPath = pathMapper.mapPath(node.getExecutionPath(), node.getResultKey(), environment);
-        GraphQLObjectType mappedObjectType = mapObjectType(node, typeRenameMappings, overallSchema);
-        GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedObjectType, node.getFieldName());
+        GraphQLObjectType mappedObjectType;
+        GraphQLFieldDefinition mappedFieldDefinition;
+        if (environment.parentNode instanceof HydrationInputNode && mappedPath.isListSegment()) {
+            mappedObjectType = environment.parentNode.getObjectType();
+            mappedFieldDefinition = environment.parentNode.getFieldDefinition();
+        } else {
+            mappedObjectType = mapObjectType(node, typeRenameMappings, overallSchema, environment.parentNode);
+            mappedFieldDefinition = getFieldDef(overallSchema, mappedObjectType, node.getFieldName());
+        }
         return node.transform(builder -> builder
                 .executionPath(mappedPath)
                 .objectType(mappedObjectType)
@@ -36,7 +43,7 @@ public class ExecutionResultNodeMapper {
 
     }
 
-    private GraphQLObjectType mapObjectType(ExecutionResultNode node, Map<String, String> typeRenameMappings, GraphQLSchema overallSchema) {
+    private GraphQLObjectType mapObjectType(ExecutionResultNode node, Map<String, String> typeRenameMappings, GraphQLSchema overallSchema, ExecutionResultNode parentNode) {
         String objectTypeName = mapTypeName(typeRenameMappings, node.getObjectType().getName());
         GraphQLObjectType mappedObjectType = overallSchema.getObjectType(objectTypeName);
         assertNotNull(mappedObjectType, () -> String.format("object type %s not found in overall schema", objectTypeName));

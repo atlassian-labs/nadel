@@ -12,7 +12,6 @@ import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
 
-import java.util.concurrent.CompletionException
 import java.util.concurrent.ExecutionException
 
 import static graphql.language.AstPrinter.printAstCompact
@@ -1297,7 +1296,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         ex.cause.message == "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments. We expected 3 returned nodes but only got 2"
     }
 
-    def "hydration matching using index with arrays"() {
+    def "hydration matching using index with lists"() {
         given:
         def issueSchema = TestUtil.schema("""
         type Query {
@@ -1330,6 +1329,84 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         service UserService {
             type Query {
                 usersByIssueIds(issueIds: [ID]): [[User]]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id id}}"
+        def issue1 = [id: "ISSUE-1"]
+        def issue2 = [id: "ISSUE-2"]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersByIssueIds(issueIds:[\"ISSUE-1\",\"ISSUE-2\"]) {name}}"
+        def user1 = [name: 'Name']
+        def user2 = [name: 'Name 2']
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issues"],
+                expectedQuery1,
+                [issues: [issue1, issue2]],
+                expectedQuery2,
+                [usersByIssueIds: [[user1], [user1, user2]]]
+        )
+
+
+        then:
+        def user1Result = [name: 'Name']
+        def user2Result = [name: 'Name 2']
+        def issue1Result = [id: "ISSUE-1", authors: [user1Result]]
+        def issue2Result = [id: "ISSUE-2", authors: [user1Result, user2Result]]
+        response == [issues: [issue1Result, issue2Result]]
+        errors.size() == 0
+    }
+
+    def "hydration matching using index with lists with hydration field not exposed"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIssueIds(issueIds: [ID]): [[User]]
+            echo: String
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIssueIds(issueIds: $source.id) using indexes, batch size 5
+            }
+        }
+        service UserService {
+            type Query {
+                echo: String
             }
             type User {
                 id: ID
