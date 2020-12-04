@@ -49,11 +49,11 @@ objectIdentifier: 'object identified by' name;
 
 batchSize: 'batch size ' intValue;
 
-remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference;
-
 remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 
 remoteArgumentPair : name ':' remoteArgumentSource ;
+
+remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference;
 
 sourceObjectReference : '$source' '.' name ('.'name)*;
 
