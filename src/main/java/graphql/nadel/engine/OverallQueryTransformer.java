@@ -449,8 +449,11 @@ public class OverallQueryTransformer {
                 rootVars
         );
 
+        if (removedFieldMap.hasRemovedFields()) {
+            newNode = addUnderscoreTypeNameToEmptySelectionSets(nadelContext, overallTypeInformation, rootVars, treeTransformer, newNode);
+        }
         //noinspection unchecked
-        return (T) addUnderscoreTypeNameToEmptySelectionSets(nadelContext, overallTypeInformation, rootVars, treeTransformer, newNode);
+        return (T) newNode;
     }
 
     private Node addUnderscoreTypeNameToEmptySelectionSets(NadelContext nadelContext,
