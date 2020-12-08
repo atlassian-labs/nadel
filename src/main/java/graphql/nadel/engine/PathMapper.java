@@ -7,30 +7,44 @@ import java.util.List;
 
 @Internal
 public class PathMapper {
+    /**
+     * This function corrects the given {@code executionPath} by taking the parent path
+     * and appending the last child segment to it. It also replaces the last String path
+     * segment with {@code resultKey}.
+     * <p>
+     * There are two reasons for using the parent path:
+     * <p> <p>
+     * Firstly, to fix hydration paths i.e. the {@code executionPath} will be the hydrated
+     * field path and the parent path will be where the hydrated object is stitched in and
+     * we need to merge those two paths.
+     * <p>
+     * e.g. if we hydrate {@code reporter} here
+     * <pre>{@code
+     * type Issue {
+     *     reporter: User => hydrated from Users.user(id: $source.reporterId)
+     * }
+     * }</pre>
+     * Then the {@code executionPath} could be {@code /user/name} and the parent path would
+     * be {@code /issue/reporter} and the desired path would be {@code /issue/reporter/name}
+     * <p><p>
+     * Secondly, to fix renamed paths e.g. given the parent path {@code /devOpsRelationships/nodes[0]}
+     * and given the {@code executionPath} {@code /relationships/nodes[0]}
+     * <p>
+     * where the field {@code relationships} was renamed to {@code devOpsRelationships}
+     * <p>
+     * we should take the renamed parent path {@code /devopsRelationships/nodes}
+     * <p>
+     * and append the child path {@code [0]} to it
+     *
+     * @param executionPath the path to correct
+     * @param resultKey     the correct segment name to use
+     * @param environment   context for the current path
+     * @return the fixed path as described above
+     */
     public ExecutionPath mapPath(ExecutionPath executionPath, String resultKey, UnapplyEnvironment environment) {
-        List<Object> pathSegments = executionPath.toList();
-
-        if (environment.isHydrationTransformation) {
-            //
-            // Normally the parent path is all ok and hence there is nothing to add
-            // but if we have a hydrated a field then we need to "merge" the paths not just append them
-            // so for example
-            //
-            // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
-            List<Object> tmp = environment.parentNode.getExecutionPath().toList();
-            tmp.add(pathSegments.get(pathSegments.size() - 1));
-            pathSegments = tmp;
-        } else {
-            // This takes the parent path which is more correct and then appends the child path to it
-            // e.g. given the parent path /devOpsRelationships/nodes[0] and
-            //      given the path /relationships/nodes[0]
-            //      where the field relationships was renamed to devOpsRelationships
-            //      we should take the renamed parent path /devopsRelationships/nodes
-            //      and append the child path [0] to it
-            List<Object> tmp = environment.parentNode.getExecutionPath().toList();
-            tmp.addAll(pathSegments.subList(tmp.size(), pathSegments.size()));
-            pathSegments = tmp;
-        }
+        List<Object> pathSegments = environment.parentNode.getExecutionPath().toList();
+        // Add the trailing segment from the child path to the parent path
+        pathSegments.add(executionPath.getSegmentValue());
 
         patchLastFieldName(pathSegments, resultKey);
         return ExecutionPath.fromList(pathSegments);
