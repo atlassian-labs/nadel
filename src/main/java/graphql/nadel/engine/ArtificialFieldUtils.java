@@ -23,42 +23,38 @@ public class ArtificialFieldUtils {
 
     private static final String UNDERSCORE_TYPENAME = Introspection.TypeNameMetaFieldDef.getName();
     private static final String TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS = "empty_selection_set_";
+    public static final String TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS = "type_hint_";
 
     public static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
-        if (Util.isInterfaceOrUnionField(fieldType)) {
-            return addUnderscoreTypeName(nadelContext, field);
-        }
         if (Util.isScalar(fieldType)) {
             return field;
         }
-        boolean selectionSetIsEmpty = field.getSelectionSet() == null
-                || field.getSelectionSet().getSelections() == null
-                || field.getSelectionSet().getSelections().isEmpty();
+        if (Util.isInterfaceOrUnionField(fieldType)) {
+            return addUnderscoreTypeName(field, nadelContext, TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS);
+        }
+        boolean selectionSetIsEmpty = field.getSelectionSet() == null || field.getSelectionSet().getSelections().isEmpty();
         if (selectionSetIsEmpty) {
-            return addUnderscoreTypeName(field, TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS + getTypeNameAliasFromContext(nadelContext));
+            return addUnderscoreTypeName(field, nadelContext, TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS);
         } else {
             return field;
         }
     }
 
-    private static Field addUnderscoreTypeName(NadelContext nadelContext, Field field) {
-        return addUnderscoreTypeName(field, getTypeNameAliasFromContext(nadelContext));
-    }
-
-    private static Field addUnderscoreTypeName(Field field, String typeNameAlias) {
+    private static Field addUnderscoreTypeName(Field field, NadelContext nadelContext, String aliasPrefix) {
         // check if we have already added it
+        String typeNameAliasFromContext = getTypeNameAliasFromContext(nadelContext);
         SelectionSet selectionSet = field.getSelectionSet();
         if (selectionSet != null) {
             for (Field fld : selectionSet.getSelectionsOfType(Field.class)) {
-                String alias = fld.getAlias();
-                if (alias != null && alias.contains(typeNameAlias)) {
+                if ((TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + typeNameAliasFromContext).equals(fld.getAlias()) ||
+                        (TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS + typeNameAliasFromContext).equals(fld.getAlias())) {
                     return field;
                 }
             }
         }
 
         Field underscoreTypeNameAliasField = newField(UNDERSCORE_TYPENAME)
-                .alias(typeNameAlias)
+                .alias(aliasPrefix + typeNameAliasFromContext)
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .build();
         if (selectionSet == null) {
@@ -88,10 +84,10 @@ public class ArtificialFieldUtils {
     }
 
     public static boolean isArtificialField(NadelContext nadelContext, String alias) {
-        if (alias == null) {
-            return false;
-        }
-        return alias.contains(getTypeNameAliasFromContext(nadelContext)) || nadelContext.getObjectIdentifierAlias().equals(alias);
+        String typeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
+        return (TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + typeNameAlias).equals(alias)
+                || (TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS + typeNameAlias).equals(alias)
+                || nadelContext.getObjectIdentifierAlias().equals(alias);
     }
 
 }

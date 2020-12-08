@@ -143,10 +143,6 @@ public class ResultNodesUtil {
         }
         errors.addAll(root.getErrors());
 
-        if (resultMap.isEmpty()) {
-            resultMap = null;
-        }
-
         return data(resultMap, errors, extensions);
     }
 

@@ -11,6 +11,7 @@ import graphql.util.TraverserVisitorStub
 import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
+import static graphql.nadel.engine.ArtificialFieldUtils.TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.leaf
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.list
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.object
@@ -21,7 +22,7 @@ import static graphql.nadel.testutils.TestUtil.mkField
 class ArtificialFieldUtilsTest extends Specification {
 
     def context = NadelContext.newContext().build()
-    def underscoreTypeNameAlias = context.underscoreTypeNameAlias
+    def underscoreTypeNameAlias = TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + context.underscoreTypeNameAlias
     def underscoreTypeNameAliasOnEmptySelections = "empty_selection_set_" + context.underscoreTypeNameAlias
     def interfaceType = GraphQLInterfaceType.newInterface().name("I").build()
     def objectType = GraphQLObjectType.newObject().name("O").build()

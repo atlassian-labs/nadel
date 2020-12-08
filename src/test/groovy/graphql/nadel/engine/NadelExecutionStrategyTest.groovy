@@ -2489,9 +2489,9 @@ fragment F1 on TestingCharacter {
 
 
         def query = "{issues {__typename id ... on Issue {authorIds}}}"
-        def expectedQuery1 = "query nadel_2_Issues {issues {__typename id ... on Issue {authorIds} typename__UUID:__typename}}"
-        def issue1 = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"], __typename: "Issue", typename__UUID: "Issue"]
-        def issue2 = [id: "ISSUE-2", authorIds: ["USER-3"], __typename: "Issue", typename__UUID: "Issue"]
+        def expectedQuery1 = "query nadel_2_Issues {issues {__typename id ... on Issue {authorIds} type_hint_typename__UUID:__typename}}"
+        def issue1 = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"], __typename: "Issue", type_hint_typename__UUID: "Issue"]
+        def issue2 = [id: "ISSUE-2", authorIds: ["USER-3"], __typename: "Issue", type_hint_typename__UUID: "Issue"]
         def response1 = new ServiceExecutionResult([issues: [issue1, issue2]])
 
         def executionData = createExecutionData(query, overallSchema)

@@ -7,6 +7,7 @@ import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.testutils.TestUtil
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
 import graphql.schema.GraphQLFieldDefinition
+import spock.lang.Ignore
 
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
@@ -95,6 +96,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [commentById: [created: "1969-08-08@C1", id: null]]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
     }
 
     def "field is removed from non-hydrated field in query"() {
@@ -123,6 +126,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [issueById: [comments: [[author: null], [author: null], [author: null]]]]
+        result.errors.size() == 3
+        result.errors.every { it.message.contains("removed field") }
     }
 
     def "field with selections is removed"() {
@@ -151,6 +156,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [issueById: [id: "I1", epic: null]]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
     }
 
     def "field in the selection set is removed"() {
@@ -179,6 +186,9 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [issueById: [id: "I1", epic: [id: "E1", title: null]]]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
+
     }
 
     def "the only field in the selection set is removed"() {
@@ -206,6 +216,9 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [issueById: [id: "I1", epic: [title: null]]]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
+
     }
 
     def "all fields in the selection set are removed"() {
@@ -234,6 +247,9 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [issueById: [id: "I1", epic: [title: null, description: null]]]
+        result.errors.size() == 2
+        result.errors[0].message.contains("removed field")
+        result.errors[1].message.contains("removed field")
     }
 
     //query validation error message appears from graphql-java due to empty query
@@ -262,8 +278,12 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [commentById: ["id": null, "created": null, "commentText": null]]
+        result.errors.size() == 3
+        result.errors.every { it.message.contains("removed field") }
+
     }
 
+    @Ignore("Logic for top level fields is not implemented yet. We need to avoid calling underlying service in this case")
     def "top level field is removed"() {
         given:
         def query = """
@@ -286,6 +306,39 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         then:
         result.data == [commentById: null]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
+    }
+
+    @Ignore("Logic for top level fields is not implemented yet. We need to avoid calling underlying service in this case")
+    def "one of top level fields is removed"() {
+        given:
+        def query = """
+        {
+            commentById(id:"C1") {
+                id
+            }
+            
+            issues {
+                key
+            }
+        }
+        """
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
+
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["commentById"]))
+                .build()
+
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
+        then:
+        result.data == [commentById: null, issues: [[key: "WORK-I1"], [key: "WORK-I2"]]]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
     }
 
     def "nested hydrated field in query is removed"() {
@@ -334,7 +387,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                             [commentText: "Text of C4", author: [displayName: "Display name of jed", userId: null]],
                             [commentText: "Text of C6", author: [displayName: "Display name of ted", userId: null]]]]],
         ]
-
+        result.errors.size() == 6
+        result.errors.every { it.message.contains("removed field") }
     }
 
     def "top level field in batched query is removed"() {
@@ -371,6 +425,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 [key: "WORK-I1", comments: null],
                 [key: "WORK-I2", comments: null]]]
 
+        result.errors.size() == 2
+        result.errors[0].message.contains("removed field")
     }
 
 
