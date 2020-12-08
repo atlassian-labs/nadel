@@ -27,14 +27,14 @@ public class PathMapper {
      * Then the {@code executionPath} could be {@code /user/name} and the parent path would
      * be {@code /issue/reporter} and the desired path would be {@code /issue/reporter/name}
      * <p><p>
-     * Secondly, to fix renamed paths e.g. given the parent path {@code /devOpsRelationships/nodes[0]}
-     * and given the {@code executionPath} {@code /relationships/nodes[0]}
+     * Secondly, to fix renamed paths e.g. given the parent path {@code /devOpsRelationships}
+     * and given the {@code executionPath} {@code /relationships/nodes}
      * <p>
      * where the field {@code relationships} was renamed to {@code devOpsRelationships}
      * <p>
-     * we should take the renamed parent path {@code /devopsRelationships/nodes}
+     * we should take the renamed parent path {@code /devopsRelationships}
      * <p>
-     * and append the child path {@code [0]} to it
+     * and append the child path {@code nodes} to it
      *
      * @param executionPath the path to correct
      * @param resultKey     the correct segment name to use
