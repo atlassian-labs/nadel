@@ -22,6 +22,7 @@ import static graphql.language.Field.newField;
 public class ArtificialFieldUtils {
 
     private static final String UNDERSCORE_TYPENAME = Introspection.TypeNameMetaFieldDef.getName();
+    private static final String TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS = "empty_selection_set_";
 
     public static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
         if (Util.isInterfaceOrUnionField(fieldType)) {
@@ -34,28 +35,30 @@ public class ArtificialFieldUtils {
                 || field.getSelectionSet().getSelections() == null
                 || field.getSelectionSet().getSelections().isEmpty();
         if (selectionSetIsEmpty) {
-            return addUnderscoreTypeName(nadelContext, field);
+            return addUnderscoreTypeName(field, TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS + getTypeNameAliasFromContext(nadelContext));
         } else {
             return field;
         }
     }
 
     private static Field addUnderscoreTypeName(NadelContext nadelContext, Field field) {
-        String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
-        assertNotNull(underscoreTypeNameAlias, () -> "We MUST have a generated __typename alias in the request context");
+        return addUnderscoreTypeName(field, getTypeNameAliasFromContext(nadelContext));
+    }
 
+    private static Field addUnderscoreTypeName(Field field, String typeNameAlias) {
         // check if we have already added it
         SelectionSet selectionSet = field.getSelectionSet();
         if (selectionSet != null) {
             for (Field fld : selectionSet.getSelectionsOfType(Field.class)) {
-                if (underscoreTypeNameAlias.equals(fld.getAlias())) {
+                String alias = fld.getAlias();
+                if (alias != null && alias.contains(typeNameAlias)) {
                     return field;
                 }
             }
         }
 
         Field underscoreTypeNameAliasField = newField(UNDERSCORE_TYPENAME)
-                .alias(underscoreTypeNameAlias)
+                .alias(typeNameAlias)
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .build();
         if (selectionSet == null) {
@@ -66,6 +69,12 @@ public class ArtificialFieldUtils {
         SelectionSet newSelectionSet = selectionSet;
         field = field.transform(builder -> builder.selectionSet(newSelectionSet));
         return field;
+    }
+
+    private static String getTypeNameAliasFromContext(NadelContext nadelContext) {
+        String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
+        assertNotNull(underscoreTypeNameAlias, () -> "We MUST have a generated __typename alias in the request context");
+        return underscoreTypeNameAlias;
     }
 
     public static Field addObjectIdentifier(NadelContext nadelContext, Field field, String objectIdentifier) {
@@ -79,7 +88,10 @@ public class ArtificialFieldUtils {
     }
 
     public static boolean isArtificialField(NadelContext nadelContext, String alias) {
-        return nadelContext.getUnderscoreTypeNameAlias().equals(alias) || nadelContext.getObjectIdentifierAlias().equals(alias);
+        if (alias == null) {
+            return false;
+        }
+        return alias.contains(getTypeNameAliasFromContext(nadelContext)) || nadelContext.getObjectIdentifierAlias().equals(alias);
     }
 
 }
