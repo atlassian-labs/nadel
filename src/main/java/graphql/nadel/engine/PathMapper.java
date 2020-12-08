@@ -7,9 +7,8 @@ import java.util.List;
 
 @Internal
 public class PathMapper {
-
     public ExecutionPath mapPath(ExecutionPath executionPath, String resultKey, UnapplyEnvironment environment) {
-        List<Object> fieldSegments = patchLastFieldName(executionPath, resultKey);
+        List<Object> pathSegments = executionPath.toList();
 
         if (environment.isHydrationTransformation) {
             //
@@ -19,21 +18,31 @@ public class PathMapper {
             //
             // /issue/reporter might lead to /userById and hence we need to collapse the top level hydrated field INTO the target field
             List<Object> tmp = environment.parentNode.getExecutionPath().toList();
-            tmp.add(fieldSegments.get(fieldSegments.size() - 1));
-            fieldSegments = tmp;
+            tmp.add(pathSegments.get(pathSegments.size() - 1));
+            pathSegments = tmp;
+        } else {
+            // This takes the parent path which is more correct and then appends the child path to it
+            // e.g. given the parent path /devOpsRelationships/nodes[0] and
+            //      given the path /relationships/nodes[0]
+            //      where the field relationships was renamed to devOpsRelationships
+            //      we should take the renamed parent path /devopsRelationships/nodes
+            //      and append the child path [0] to it
+            List<Object> tmp = environment.parentNode.getExecutionPath().toList();
+            tmp.addAll(pathSegments.subList(tmp.size(), pathSegments.size()));
+            pathSegments = tmp;
         }
-        return ExecutionPath.fromList(fieldSegments);
+
+        patchLastFieldName(pathSegments, resultKey);
+        return ExecutionPath.fromList(pathSegments);
     }
 
-    private List<Object> patchLastFieldName(ExecutionPath executionPath, String resultKey) {
-        List<Object> fieldSegments = executionPath.toList();
-        for (int i = fieldSegments.size() - 1; i >= 0; i--) {
-            Object segment = fieldSegments.get(i);
+    private void patchLastFieldName(List<Object> pathSegments, String resultKey) {
+        for (int i = pathSegments.size() - 1; i >= 0; i--) {
+            Object segment = pathSegments.get(i);
             if (segment instanceof String) {
-                fieldSegments.set(i, resultKey);
+                pathSegments.set(i, resultKey);
                 break;
             }
         }
-        return fieldSegments;
     }
 }
