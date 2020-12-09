@@ -475,7 +475,7 @@ public class OverallQueryTransformer {
                 }
                 GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
                 GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
-                Field newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, node, fieldTypeOverall);
+                Field newField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(nadelContext, node, fieldTypeOverall);
                 if (newField != node) {
                     TreeTransformerUtil.changeNode(context, newField);
                 }

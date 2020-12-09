@@ -54,6 +54,18 @@ class ArtificialFieldUtilsTest extends Specification {
         AstPrinter.printAstCompact(newField) == """pet {$underscoreTypeNameAliasOnEmptySelections:__typename}"""
     }
 
+    def "test that underscore type alias is added on empty selection sets with maybeAddEmptySelectionSetUnderscoreTypeName"() {
+
+        def petField = mkField('''
+            pet
+        ''')
+
+        when:
+        def newField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(context, petField, objectType)
+        then:
+        AstPrinter.printAstCompact(newField) == """pet {$underscoreTypeNameAliasOnEmptySelections:__typename}"""
+    }
+
     def "test that underscore type alias is not added on empty selection sets if a typename alias is already present"() {
 
         def petField = mkField("""
@@ -64,6 +76,20 @@ class ArtificialFieldUtilsTest extends Specification {
 
         when:
         def newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(context, petField, objectType)
+        then:
+        AstPrinter.printAstCompact(newField) == """pet {$underscoreTypeNameAlias:__typename}"""
+    }
+
+    def "test that underscore type alias is not added on empty selection sets if a typename alias is already present using maybeAddEmptySelectionSetUnderscoreTypeName"() {
+
+        def petField = mkField("""
+            pet {
+                $underscoreTypeNameAlias:__typename
+            }
+        """)
+
+        when:
+        def newField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(context, petField, objectType)
         then:
         AstPrinter.printAstCompact(newField) == """pet {$underscoreTypeNameAlias:__typename}"""
     }

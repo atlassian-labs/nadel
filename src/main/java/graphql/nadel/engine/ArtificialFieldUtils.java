@@ -26,11 +26,15 @@ public class ArtificialFieldUtils {
     public static final String TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS = "type_hint_";
 
     public static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
-        if (Util.isScalar(fieldType)) {
-            return field;
-        }
         if (Util.isInterfaceOrUnionField(fieldType)) {
             return addUnderscoreTypeName(field, nadelContext, TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS);
+        }
+        return maybeAddEmptySelectionSetUnderscoreTypeName(nadelContext, field, fieldType);
+    }
+
+    public static Field maybeAddEmptySelectionSetUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
+        if (Util.isScalar(fieldType)) {
+            return field;
         }
         boolean selectionSetIsEmpty = field.getSelectionSet() == null || field.getSelectionSet().getSelections().isEmpty();
         if (selectionSetIsEmpty) {
@@ -89,5 +93,4 @@ public class ArtificialFieldUtils {
                 || (TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS + typeNameAlias).equals(alias)
                 || nadelContext.getObjectIdentifierAlias().equals(alias);
     }
-
 }
