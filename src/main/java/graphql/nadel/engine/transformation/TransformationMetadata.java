@@ -50,6 +50,10 @@ public class TransformationMetadata {
         return result;
     }
 
+    public boolean hasRemovedFields() {
+        return !removedFields.isEmpty();
+    }
+
     public Map<String, List<FieldMetadata>> getMetadataByFieldId() {
         return metadataByFieldId;
     }
