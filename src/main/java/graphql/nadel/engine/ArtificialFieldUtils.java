@@ -29,7 +29,7 @@ public class ArtificialFieldUtils {
         if (Util.isInterfaceOrUnionField(fieldType)) {
             return addUnderscoreTypeName(field, nadelContext, TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS);
         }
-        return maybeAddEmptySelectionSetUnderscoreTypeName(nadelContext, field, fieldType);
+        return field;
     }
 
     public static Field maybeAddEmptySelectionSetUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {

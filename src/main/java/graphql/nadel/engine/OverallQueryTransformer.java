@@ -130,6 +130,7 @@ public class OverallQueryTransformer {
 
 
         transformedRootField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
+        transformedRootField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
 
         if (isSynthetic) {
             Field tempTransformedRootLevelField = transformedRootField;
