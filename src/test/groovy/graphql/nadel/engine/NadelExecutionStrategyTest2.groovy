@@ -4,7 +4,14 @@ import graphql.AssertException
 import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.nadel.*
+import graphql.nadel.DefinitionRegistry
+import graphql.nadel.FieldInfo
+import graphql.nadel.FieldInfos
+import graphql.nadel.Service
+import graphql.nadel.ServiceExecution
+import graphql.nadel.ServiceExecutionParameters
+import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.StrategyTestHelper
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -12,34 +19,22 @@ import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
 
-import java.util.concurrent.CompletionException
 import java.util.concurrent.ExecutionException
 
 import static graphql.language.AstPrinter.printAstCompact
+import static graphql.language.AstPrinter.printAst
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
-
-    ExecutionHelper executionHelper
-    def service1Execution
-    def service2Execution
-    def serviceDefinition
-    def definitionRegistry
-    def instrumentation
-    def serviceExecutionHooks
-    def resultComplexityAggregator
-
-    void setup() {
-        executionHelper = new ExecutionHelper()
-        service1Execution = Mock(ServiceExecution)
-        service2Execution = Mock(ServiceExecution)
-        serviceDefinition = ServiceDefinition.newServiceDefinition().build()
-        definitionRegistry = Mock(DefinitionRegistry)
-        instrumentation = new NadelInstrumentation() {}
-        serviceExecutionHooks = new ServiceExecutionHooks() {}
-        resultComplexityAggregator = new ResultComplexityAggregator()
-    }
+    ExecutionHelper executionHelper = new ExecutionHelper()
+    def service1Execution = Mock(ServiceExecution)
+    def service2Execution = Mock(ServiceExecution)
+    def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
+    def definitionRegistry = Mock(DefinitionRegistry)
+    def instrumentation = new NadelInstrumentation() {}
+    def serviceExecutionHooks = new ServiceExecutionHooks() {}
+    def resultComplexityAggregator = new ResultComplexityAggregator()
 
     def "underlying service returns null for non-nullable field"() {
         given:
@@ -836,6 +831,107 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         then:
         response == overallResponse
         errors.size() == 0
+    }
+
+    def 'hydration works when an ancestor field has been renamed'() {
+        // Note: this bug happens when the root field has been renamed, and then a hydration occurs further down the tree
+        // i.e. here we rename relationships to devOpsRelationships and hydrate devOpsRelationships/nodes[0]/issue
+
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Issue {
+            id: ID
+        }
+
+        type Relationship {
+            issueId: ID
+        }
+
+        type RelationshipConnection {
+            nodes: [Relationship]
+        }
+
+        type Query {
+            relationships: RelationshipConnection
+            issue(id: ID): Issue
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service IssueService {
+           type DevOpsIssue => renamed from Issue {
+               id: ID
+           }
+
+           type DevOpsRelationship => renamed from Relationship {
+               devOpsIssue: DevOpsIssue => hydrated from IssueService.issue(id: $source.issueId)
+           }
+
+           type DevOpsRelationshipConnection => renamed from RelationshipConnection {
+               nodes: [DevOpsRelationship]
+           }
+
+           type Query {
+               devOpsRelationships: DevOpsRelationshipConnection => renamed from relationships
+               devOpsIssue(id: ID): DevOpsIssue => renamed from issue
+           }
+        }
+        ''')
+
+        def fieldDef = overallSchema.getQueryType().getFieldDefinition("devOpsRelationships")
+        def service1 = new Service("IssueService", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fieldDef, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def query = '''
+        query { 
+            devOpsRelationships {
+                nodes {
+                    devOpsIssue {
+                        id
+                    }
+                }
+            }
+        }
+        '''
+
+        def expectedQuery1 = "query nadel_2_IssueService {relationships {nodes {issueId}}}"
+        def response1 = new ServiceExecutionResult([
+                relationships: [
+                        nodes: [
+                                [issueId: "1"],
+                        ],
+                ],
+        ])
+
+        def expectedQuery2 = "query nadel_2_IssueService {issue(id:\"1\") {id}}"
+        def response2 = new ServiceExecutionResult([issue: [id: "1"]])
+
+        def executionData = createExecutionData(query, [:], overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        resultData(response) == [
+                devOpsRelationships: [
+                        nodes: [
+                                [
+                                        devOpsIssue: [id: "1"],
+                                ],
+                        ],
+                ],
+        ]
     }
 
     def "extending types via hydration with variables arguments"() {
