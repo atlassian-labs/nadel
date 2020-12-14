@@ -13,8 +13,6 @@ import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.ListExecutionResultNode;
 import graphql.util.TraversalControl;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static graphql.language.SelectionSet.newSelectionSet;
@@ -71,11 +69,10 @@ public class FieldRenameTransformation extends FieldTransformation {
         ExecutionResultNode resultNode = getSubTree(executionResultNode, mappingDefinition.getInputPath().size() - 1);
 
         resultNode = mapToOverallFieldAndTypes(resultNode, allTransformations, matchingNormalizedOverallField);
+        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, matchingNormalizedOverallField);
         // the new path is the parent + the original result key
         ExecutionPath mappedPath = environment.parentNode.getExecutionPath().segment(resultNode.getResultKey());
         resultNode = resultNode.transform(builder -> builder.executionPath(mappedPath));
-
-        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, matchingNormalizedOverallField);
 
         return new UnapplyResult(resultNode, TraversalControl.CONTINUE);
     }
@@ -95,5 +92,6 @@ public class FieldRenameTransformation extends FieldTransformation {
         }
         return node;
     }
+
 
 }

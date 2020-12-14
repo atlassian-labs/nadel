@@ -208,7 +208,9 @@ public class ServiceResultNodesToOverallResult {
                                            boolean onlyChildren,
                                            NadelContext nadelContext,
                                            TransformationMetadata transformationMetadata,
-                                           AtomicInteger nodeCount, AtomicInteger fieldRenameCount, AtomicInteger typeRenameCount) {
+                                           AtomicInteger nodeCount,
+                                           AtomicInteger fieldRenameCount,
+                                           AtomicInteger typeRenameCount) {
         nodeCount.incrementAndGet();
 
         if (onlyChildren && node == root) {
