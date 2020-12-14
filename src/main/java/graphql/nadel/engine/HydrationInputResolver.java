@@ -447,7 +447,10 @@ public class HydrationInputResolver {
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .arguments(allArguments)
                 .build();
-        topLevelField = addObjectIdentifier(getNadelContext(executionContext), topLevelField, underlyingServiceHydration.getObjectIdentifier());
+
+        if (!underlyingServiceHydration.isObjectMatchByIndex()) {
+            topLevelField = addObjectIdentifier(getNadelContext(executionContext), topLevelField, underlyingServiceHydration.getObjectIdentifier());
+        }
 
         if (syntheticFieldName == null) {
             return topLevelField;
@@ -466,7 +469,9 @@ public class HydrationInputResolver {
                                                                                    RootExecutionResultNode rootResultNode,
                                                                                    QueryTransformationResult queryTransformationResult,
                                                                                    ResultComplexityAggregator resultComplexityAggregator) {
-        boolean isSyntheticHydration = hydrationInputNodes.get(0).getHydrationTransformation().getUnderlyingServiceHydration().getSyntheticField() != null;
+        UnderlyingServiceHydration serviceHydration = hydrationInputNodes.get(0).getHydrationTransformation().getUnderlyingServiceHydration();
+        boolean isSyntheticHydration = serviceHydration.getSyntheticField() != null;
+        boolean isResolveByIndex = serviceHydration.isObjectMatchByIndex();
 
         ExecutionResultNode root = rootResultNode.getChildren().get(0);
         if (!(root instanceof LeafExecutionResultNode) && isSyntheticHydration) {
@@ -491,13 +496,29 @@ public class HydrationInputResolver {
         ListExecutionResultNode listResultNode = (ListExecutionResultNode) root;
         List<ExecutionResultNode> resolvedNodes = listResultNode.getChildren();
 
+        if (isResolveByIndex) {
+            assertTrue(resolvedNodes.size() == hydrationInputNodes.size(), () -> String.format(
+                    "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments. We expected %d returned nodes but only got %d",
+                    hydrationInputNodes.size(),
+                    resolvedNodes.size()
+            ));
+        }
+
         List<ExecutionResultNode> result = new ArrayList<>();
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getFieldIdToTransformation();
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
 
         boolean first = true;
-        for (HydrationInputNode hydrationInputNode : hydrationInputNodes) {
-            ObjectExecutionResultNode matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
+        for (int i = 0; i < hydrationInputNodes.size(); i++) {
+            HydrationInputNode hydrationInputNode = hydrationInputNodes.get(i);
+
+            ExecutionResultNode matchingResolvedNode;
+            if (isResolveByIndex) {
+            matchingResolvedNode = resolvedNodes.get(i);
+            } else {
+                matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
+            }
+
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
                 ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convertChildren(
@@ -545,7 +566,7 @@ public class HydrationInputResolver {
                 .build();
     }
 
-    private ObjectExecutionResultNode findMatchingResolvedNode(ExecutionContext executionContext, HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
+    private ExecutionResultNode findMatchingResolvedNode(ExecutionContext executionContext, HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
         NadelContext nadelContext = getNadelContext(executionContext);
         String objectIdentifier = nadelContext.getObjectIdentifierAlias();
         String inputNodeId = (String) inputNode.getCompletedValue();

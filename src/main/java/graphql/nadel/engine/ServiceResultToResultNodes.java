@@ -275,7 +275,7 @@ public class ServiceResultToResultNodes {
             return (GraphQLObjectType) curType;
         }
         NadelContext nadelContext = executionContext.getContext();
-        String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
+        String underscoreTypeNameAlias = ArtificialFieldUtils.TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + nadelContext.getUnderscoreTypeNameAlias();
 
         assertTrue(source instanceof Map, () -> "The Nadel result object MUST be a Map");
 

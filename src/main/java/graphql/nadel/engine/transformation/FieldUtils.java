@@ -77,7 +77,7 @@ public final class FieldUtils {
         return curField;
     }
 
-    public static LeafExecutionResultNode geFirstLeafNode(ExecutionResultNode executionResultNode) {
+    public static LeafExecutionResultNode getFirstLeafNode(ExecutionResultNode executionResultNode) {
         ExecutionResultNode curNode = executionResultNode;
         while (curNode instanceof ObjectExecutionResultNode) {
             ExecutionResultNode finalCurNode = curNode;

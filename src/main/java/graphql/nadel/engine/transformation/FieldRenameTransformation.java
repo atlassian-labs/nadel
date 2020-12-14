@@ -75,41 +75,25 @@ public class FieldRenameTransformation extends FieldTransformation {
         ExecutionPath mappedPath = environment.parentNode.getExecutionPath().segment(resultNode.getResultKey());
         resultNode = resultNode.transform(builder -> builder.executionPath(mappedPath));
 
-        resultNode = replaceFieldsAndTypesAndPathInsideList(resultNode, allTransformations, matchingNormalizedOverallField, mappedPath);
+        resultNode = replaceFieldsAndTypesInsideList(resultNode, allTransformations, matchingNormalizedOverallField);
 
         return new UnapplyResult(resultNode, TraversalControl.CONTINUE);
     }
 
-    private ExecutionResultNode replaceFieldsAndTypesAndPathInsideList(ExecutionResultNode node,
+    private ExecutionResultNode replaceFieldsAndTypesInsideList(ExecutionResultNode node,
                                                                 List<FieldTransformation> allTransformations,
-                                                                NormalizedQueryField normalizedQueryField, ExecutionPath mappedPath) {
+                                                                NormalizedQueryField normalizedQueryField) {
 
         if (node instanceof ListExecutionResultNode) {
             return mapChildren(node, child -> {
                 ExecutionResultNode newChild = mapToOverallFieldAndTypes(child, allTransformations, normalizedQueryField);
-
-                ExecutionPath childMappedPath = patchListChildExecutionPath(mappedPath, newChild.getExecutionPath());
-                newChild = newChild.transform(builder -> builder.executionPath(childMappedPath));
-
-                return replaceFieldsAndTypesAndPathInsideList(newChild,
+                return replaceFieldsAndTypesInsideList(newChild,
                         allTransformations,
-                        normalizedQueryField, mappedPath
+                        normalizedQueryField
                 );
             });
         }
         return node;
-    }
-
-
-    private ExecutionPath patchListChildExecutionPath(ExecutionPath executionPath, ExecutionPath childExecutionPath) {
-
-        List<Integer> listSegments = new ArrayList<Integer>();
-        while (childExecutionPath.isListSegment()) {
-            listSegments.add(childExecutionPath.getSegmentIndex());
-            childExecutionPath = childExecutionPath.getPathWithoutListEnd();
-        }
-        Collections.reverse(listSegments);
-        return executionPath.append(ExecutionPath.fromList(listSegments));
     }
 
 }

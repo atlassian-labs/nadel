@@ -43,9 +43,13 @@ fieldMappingDefinition : 'renamed from' name ('.'name)?;
 //
 // hydration
 
-underlyingServiceHydration: 'hydrated from' serviceName '.' (syntheticField '.')? topLevelField remoteCallDefinition? objectIdentifier? batchSize?;
+underlyingServiceHydration: 'hydrated from' serviceName '.' (syntheticField '.')? topLevelField remoteCallDefinition? objectResolution? batchSize?;
 
-objectIdentifier: 'object identified by' name;
+objectResolution: (objectByIdentifier | objectByIndex);
+
+objectByIdentifier: 'object identified by' name;
+
+objectByIndex: 'using indexes';
 
 batchSize: 'batch size ' intValue;
 
@@ -65,7 +69,7 @@ intValue: IntValue;
 
 serviceName: NAME;
 
-topLevelField: NAME;
+topLevelField: NAME | SERVICE;
 
 syntheticField: NAME;
 

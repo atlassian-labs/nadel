@@ -1,9 +1,17 @@
 package graphql.nadel.engine
 
+import graphql.AssertException
 import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.nadel.*
+import graphql.nadel.DefinitionRegistry
+import graphql.nadel.FieldInfo
+import graphql.nadel.FieldInfos
+import graphql.nadel.Service
+import graphql.nadel.ServiceExecution
+import graphql.nadel.ServiceExecutionParameters
+import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.StrategyTestHelper
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -11,31 +19,23 @@ import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
 
+import javax.xml.transform.Result
+import java.util.concurrent.ExecutionException
+
 import static graphql.language.AstPrinter.printAstCompact
+import static graphql.language.AstPrinter.printAst
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
-
-    ExecutionHelper executionHelper
-    def service1Execution
-    def service2Execution
-    def serviceDefinition
-    def definitionRegistry
-    def instrumentation
-    def serviceExecutionHooks
-    def resultComplexityAggregator
-
-    void setup() {
-        executionHelper = new ExecutionHelper()
-        service1Execution = Mock(ServiceExecution)
-        service2Execution = Mock(ServiceExecution)
-        serviceDefinition = ServiceDefinition.newServiceDefinition().build()
-        definitionRegistry = Mock(DefinitionRegistry)
-        instrumentation = new NadelInstrumentation() {}
-        serviceExecutionHooks = new ServiceExecutionHooks() {}
-        resultComplexityAggregator = new ResultComplexityAggregator()
-    }
+    ExecutionHelper executionHelper = new ExecutionHelper()
+    def service1Execution = Mock(ServiceExecution)
+    def service2Execution = Mock(ServiceExecution)
+    def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
+    def definitionRegistry = Mock(DefinitionRegistry)
+    def instrumentation = new NadelInstrumentation() {}
+    def serviceExecutionHooks = new ServiceExecutionHooks() {}
+    def resultComplexityAggregator = new ResultComplexityAggregator()
 
     def "underlying service returns null for non-nullable field"() {
         given:
@@ -855,6 +855,107 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     }
 
+    def 'hydration works when an ancestor field has been renamed'() {
+        // Note: this bug happens when the root field has been renamed, and then a hydration occurs further down the tree
+        // i.e. here we rename relationships to devOpsRelationships and hydrate devOpsRelationships/nodes[0]/issue
+
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Issue {
+            id: ID
+        }
+
+        type Relationship {
+            issueId: ID
+        }
+
+        type RelationshipConnection {
+            nodes: [Relationship]
+        }
+
+        type Query {
+            relationships: RelationshipConnection
+            issue(id: ID): Issue
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service IssueService {
+           type DevOpsIssue => renamed from Issue {
+               id: ID
+           }
+
+           type DevOpsRelationship => renamed from Relationship {
+               devOpsIssue: DevOpsIssue => hydrated from IssueService.issue(id: $source.issueId)
+           }
+
+           type DevOpsRelationshipConnection => renamed from RelationshipConnection {
+               nodes: [DevOpsRelationship]
+           }
+
+           type Query {
+               devOpsRelationships: DevOpsRelationshipConnection => renamed from relationships
+               devOpsIssue(id: ID): DevOpsIssue => renamed from issue
+           }
+        }
+        ''')
+
+        def fieldDef = overallSchema.getQueryType().getFieldDefinition("devOpsRelationships")
+        def service1 = new Service("IssueService", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fieldDef, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def query = '''
+        query { 
+            devOpsRelationships {
+                nodes {
+                    devOpsIssue {
+                        id
+                    }
+                }
+            }
+        }
+        '''
+
+        def expectedQuery1 = "query nadel_2_IssueService {relationships {nodes {issueId}}}"
+        def response1 = new ServiceExecutionResult([
+                relationships: [
+                        nodes: [
+                                [issueId: "1"],
+                        ],
+                ],
+        ])
+
+        def expectedQuery2 = "query nadel_2_IssueService {issue(id:\"1\") {id}}"
+        def response2 = new ServiceExecutionResult([issue: [id: "1"]])
+
+        def executionData = createExecutionData(query, [:], overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        resultData(response) == [
+                devOpsRelationships: [
+                        nodes: [
+                                [
+                                        devOpsIssue: [id: "1"],
+                                ],
+                        ],
+                ],
+        ]
+    }
+
     def "extending types via hydration with variables arguments"() {
         given:
         def issueSchema = TestUtil.schema("""
@@ -1238,6 +1339,318 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         resultComplexityAggregator.getFieldRenamesCount() == 15
     }
 
+    def "hydration matching using index"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIds(ids: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) using indexes, batch size 5
+            }
+        }
+        service UserService {
+            type Query {
+                usersByIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
+        def issue1 = [id: "ISSUE-1", authorIds: ['1']]
+        def issue2 = [id: "ISSUE-2", authorIds: ['1', '2']]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersByIds(ids:[\"1\",\"1\",\"2\"]) {name}}"
+        def user1 = [id: "USER-1", name: 'Name']
+        def user2 = [id: "USER-2", name: 'Name 2']
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issues"],
+                expectedQuery1,
+                [issues: [issue1, issue2]],
+                expectedQuery2,
+                [usersByIds: [user1, user1, user2]],
+                Mock(ResultComplexityAggregator)
+        )
+
+
+        then:
+        def user1Result = [name: 'Name']
+        def user2Result = [name: 'Name 2']
+        def issue1Result = [id: "ISSUE-1", authors: [user1Result]]
+        def issue2Result = [id: "ISSUE-2", authors: [user1Result, user2Result]]
+        response == [issues: [issue1Result, issue2Result]]
+        errors.size() == 0
+    }
+
+    def "hydration matching using index returning null"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIds(ids: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) using indexes, batch size 5
+            }
+        }
+        service UserService {
+            type Query {
+                usersByIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
+        def issue1 = [id: "ISSUE-1", authorIds: ['1']]
+        def issue2 = [id: "ISSUE-2", authorIds: ['1', '2']]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersByIds(ids:[\"1\",\"1\",\"2\"]) {name}}"
+        def user1 = [id: "USER-1", name: 'Name']
+        def user2 = [id: "USER-2", name: 'Name 2']
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issues"],
+                expectedQuery1,
+                [issues: [issue1, issue2]],
+                expectedQuery2,
+                [usersByIds: [user1, null, user2]],
+                Mock(ResultComplexityAggregator)
+        )
+
+
+        then:
+        def user1Result = [name: 'Name']
+        def user2Result = [name: 'Name 2']
+        def issue1Result = [id: "ISSUE-1", authors: [user1Result]]
+        def issue2Result = [id: "ISSUE-2", authors: [null, user2Result]]
+        response == [issues: [issue1Result, issue2Result]]
+        errors.size() == 0
+    }
+
+    def "hydration matching using index result size invariant mismatch"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+            authorIds: [ID]
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIds(ids: [ID]): [User]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds)  using indexes, batch size 5
+            }
+        }
+        service UserService {
+            type Query {
+                usersByIds(ids: [ID]): [User]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
+        def issue1 = [id: "ISSUE-1", authorIds: ['1']]
+        def issue2 = [id: "ISSUE-2", authorIds: ['1', '2']]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersByIds(ids:[\"1\",\"1\",\"2\"]) {name}}"
+        def user1 = [id: "USER-1", name: 'Name']
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issues"],
+                expectedQuery1,
+                [issues: [issue1, issue2]],
+                expectedQuery2,
+                [usersByIds: [user1, null]],
+                Mock(ResultComplexityAggregator)
+        )
+
+
+        then:
+        ExecutionException ex = thrown()
+
+        ex.cause.getClass() in AssertException
+        ex.cause.message == "If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments. We expected 3 returned nodes but only got 2"
+    }
+
+    def "hydration matching using index with arrays"() {
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issues : [Issue]
+        }
+        type Issue {
+            id: ID
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            usersByIssueIds(issueIds: [ID]): [[User]]
+        }
+        type User {
+            id: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issues: [Issue]
+            }
+            type Issue {
+                id: ID
+                authors: [User] => hydrated from UserService.usersByIssueIds(issueIds: $source.id) using indexes, batch size 5
+            }
+        }
+        service UserService {
+            type Query {
+                usersByIssueIds(issueIds: [ID]): [[User]]
+            }
+            type User {
+                id: ID
+                name: String
+            }
+        }
+        ''')
+
+        def query = '{issues {id authors {name} }}'
+        def expectedQuery1 = "query nadel_2_Issues {issues {id id}}"
+        def issue1 = [id: "ISSUE-1"]
+        def issue2 = [id: "ISSUE-2"]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersByIssueIds(issueIds:[\"ISSUE-1\",\"ISSUE-2\"]) {name}}"
+        def user1 = [name: 'Name']
+        def user2 = [name: 'Name 2']
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issues"],
+                expectedQuery1,
+                [issues: [issue1, issue2]],
+                expectedQuery2,
+                [usersByIssueIds: [[user1], [user1, user2]]],
+                Mock(ResultComplexityAggregator)
+        )
+
+
+        then:
+        def user1Result = [name: 'Name']
+        def user2Result = [name: 'Name 2']
+        def issue1Result = [id: "ISSUE-1", authors: [user1Result]]
+        def issue2Result = [id: "ISSUE-2", authors: [user1Result, user2Result]]
+        response == [issues: [issue1Result, issue2Result]]
+        errors.size() == 0
+    }
+
 
     Object[] test2ServicesWithNCalls(GraphQLSchema overallSchema,
                                      String serviceOneName,
@@ -1376,6 +1789,115 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         resultComplexityAggregator.getFieldRenamesCount() == 5
         resultComplexityAggregator.getTypeRenamesCount() == 3
     }
+
+
+    def 'synthetic hydration works when an ancestor field has been renamed'() {
+
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Issue {
+            id: ID
+        }
+
+        type Relationship {
+            issueId: ID
+        }
+
+        type RelationshipConnection {
+            nodes: [Relationship]
+        }
+        type SyntheticIssue {
+            issue(id: ID): Issue
+        }
+
+        type Query {
+            relationships: RelationshipConnection
+            syntheticIssue: SyntheticIssue
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service IssueService {
+           type DevOpsIssue => renamed from Issue {
+               id: ID
+           }
+
+           type DevOpsRelationship => renamed from Relationship {
+               devOpsIssue: DevOpsIssue => hydrated from IssueService.syntheticIssue.issue(id: $source.issueId)
+           }
+
+           type DevOpsRelationshipConnection => renamed from RelationshipConnection {
+               devOpsNodes: [DevOpsRelationship] => renamed from nodes
+           }
+           type SyntheticIssue {
+               devOpsIssue(id: ID): DevOpsIssue => renamed from issue
+           }
+
+           type Query {
+               devOpsRelationships: DevOpsRelationshipConnection => renamed from relationships
+           }
+        }
+        ''')
+
+        def fieldDef = overallSchema.getQueryType().getFieldDefinition("devOpsRelationships")
+        def service1 = new Service("IssueService", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fieldDef, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def query = '''
+        query { 
+            devOpsRelationships {
+                devOpsNodes {
+                    devOpsIssue {
+                        id
+                    }
+                }
+            }
+        }
+        '''
+
+        def expectedQuery1 = "query nadel_2_IssueService {relationships {nodes {issueId}}}"
+        def response1 = new ServiceExecutionResult([
+                relationships: [
+                        nodes: [
+                                [issueId: "1"],
+                        ],
+                ],
+        ])
+
+        def expectedQuery2 = "query nadel_2_IssueService {syntheticIssue {issue(id:\"1\") {id}}}"
+        def response2 = new ServiceExecutionResult([syntheticIssue:[issue: [id: "1"]]])
+
+        def executionData = createExecutionData(query, [:], overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        resultData(response) == [
+                devOpsRelationships: [
+                        devOpsNodes: [
+                                [
+                                        devOpsIssue: [id: "1"],
+                                ],
+                        ],
+                ],
+        ]
+        resultComplexityAggregator.getFieldRenamesCount() == 2
+        resultComplexityAggregator.getTypeRenamesCount() == 3
+
+    }
+
 
 
 }

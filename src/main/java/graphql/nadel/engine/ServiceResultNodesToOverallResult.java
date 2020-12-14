@@ -255,7 +255,7 @@ public class ServiceResultNodesToOverallResult {
             result = unapplyTransformations(executionId, node, transformations, unapplyEnvironment, fieldIdTransformation, nadelContext, transformationMetadata, fieldRenameCount, typeRenameCount);
         }
 
-        if (result.changedNode instanceof ObjectExecutionResultNode) {
+        if (result.changedNode instanceof ObjectExecutionResultNode && !(parentNode instanceof HydrationInputNode)) {
             result.changedNode = addDeletedChildren((ObjectExecutionResultNode) result.changedNode, null, nadelContext, transformationMetadata);
         }
         return result;
