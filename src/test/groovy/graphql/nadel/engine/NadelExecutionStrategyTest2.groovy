@@ -934,6 +934,111 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         ]
     }
 
+    def 'able to ask for field and use same field as hydration source'() {
+        // This was a bug where the nestedBar field would not be hydrated
+        // because the hydration used $source.barId and because the query
+        // also asked for barId
+        //
+        // Normally in hydration we expect that the $source field not be
+        // exposed so we usually replace the field
+        // But in this case we can't just replace it, as its been queried
+        // for, so we need to add the hydrated field as a sibling and leave
+        // the $source field alone
+        //
+        // Before, we weren't handling the sibling properly
+        // This test case ensures we do that
+
+        given:
+        def underlyingSchema = TestUtil.schema("""
+        type Query {
+            bar: Bar 
+            barById(id: ID): Bar
+        } 
+        type Bar {
+            barId: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+         service Bar {
+             type Query {
+                 bar: Bar 
+             } 
+             type Bar {
+                 barId: ID
+                 name: String 
+                 nestedBar: Bar => hydrated from Bar.barById(id: $source.barId)
+             }
+         }
+        ''')
+
+        def fieldDef = overallSchema.getQueryType().getFieldDefinition("bar")
+        def service1 = new Service("Bar", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fieldDef, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def query = '''
+        {
+            bar {
+                barId
+                nestedBar {
+                    nestedBar {
+                        barId
+                    }
+                    barId
+                }
+                name
+            }
+        }
+        '''
+
+        def topLevelQuery = "query nadel_2_Bar {bar {barId barId name}}"
+        def topLevelResult = new ServiceExecutionResult([
+                bar: [
+                        barId: "1",
+                        name : "Test",
+                ],
+        ])
+
+        def hydrationQuery1 = "query nadel_2_Bar {barById(id:\"1\") {barId barId}}"
+        def hydrationQuery2 = "query nadel_2_Bar {barById(id:\"1\") {barId}}"
+        def hydrationResult = new ServiceExecutionResult([
+                barById: [
+                        barId: "1",
+                ],
+        ])
+
+        def executionData = createExecutionData(query, [:], overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == topLevelQuery
+        }) >> completedFuture(topLevelResult)
+
+        2 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) in [hydrationQuery1, hydrationQuery2]
+        }) >> completedFuture(hydrationResult)
+
+        resultData(response) == [
+                bar: [
+                        barId    : "1",
+                        nestedBar: [
+                                barId    : "1",
+                                nestedBar: [
+                                        barId: "1",
+                                ],
+                        ],
+                        name     : "Test",
+                ],
+        ]
+    }
+
     def "extending types via hydration with variables arguments"() {
         given:
         def issueSchema = TestUtil.schema("""
