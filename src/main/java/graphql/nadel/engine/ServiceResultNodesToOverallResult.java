@@ -21,6 +21,7 @@ import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.LeafExecutionResultNode;
 import graphql.nadel.result.ListExecutionResultNode;
 import graphql.nadel.result.ObjectExecutionResultNode;
+import graphql.nadel.result.ResultCounter;
 import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 import graphql.util.TraversalControl;
@@ -36,7 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
@@ -100,9 +100,7 @@ public class ServiceResultNodesToOverallResult {
                                             boolean onlyChildren,
                                             NadelContext nadelContext,
                                             TransformationMetadata transformationMetadata) {
-        final AtomicInteger nodeCount = new AtomicInteger();
-        final AtomicInteger fieldRenameCount = new AtomicInteger();
-        final AtomicInteger typeRenameCount = new AtomicInteger();
+        ResultCounter resultCounter = new ResultCounter();
 
         HandleResult handleResult = convertSingleNode(root,
                 null/*not for root*/,
@@ -117,9 +115,7 @@ public class ServiceResultNodesToOverallResult {
                 onlyChildren,
                 nadelContext,
                 transformationMetadata,
-                nodeCount,
-                fieldRenameCount,
-                typeRenameCount);
+                resultCounter);
         assertNotNull(handleResult, () -> "can't delete root");
 
         ExecutionResultNode changedNode = handleResult.changedNode;
@@ -139,9 +135,7 @@ public class ServiceResultNodesToOverallResult {
                     onlyChildren,
                     nadelContext,
                     transformationMetadata,
-                    nodeCount,
-                    fieldRenameCount,
-                    typeRenameCount);
+                    resultCounter);
             if (handleResultChild == null) {
                 continue;
             }
@@ -152,9 +146,9 @@ public class ServiceResultNodesToOverallResult {
         return changedNode.transform(
                 builder -> builder
                         .children(newChildren)
-                        .totalNodeCount(nodeCount.get())
-                        .totalFieldRenameCount(fieldRenameCount.get())
-                        .totalTypeRenameCount(typeRenameCount.get())
+                        .totalNodeCount(resultCounter.getNodeCount())
+                        .totalFieldRenameCount(resultCounter.getFieldRenameCount())
+                        .totalTypeRenameCount(resultCounter.getTypeRenameCount())
         );
     }
 
@@ -171,19 +165,18 @@ public class ServiceResultNodesToOverallResult {
                                             boolean onlyChildren,
                                             NadelContext nadelContext,
                                             TransformationMetadata transformationMetadata,
-                                            AtomicInteger nodeCount, AtomicInteger fieldRenameCount, AtomicInteger typeRenameCount) {
-        HandleResult handleResult = convertSingleNode(node, parentNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, transformationMetadata, nodeCount, fieldRenameCount, typeRenameCount);
+                                            ResultCounter resultCounter) {
+        HandleResult handleResult = convertSingleNode(node, parentNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, transformationMetadata, resultCounter);
         if (handleResult == null) {
             return null;
         }
-
         if (handleResult.traversalControl == TraversalControl.ABORT) {
             return handleResult;
         }
         ExecutionResultNode changedNode = handleResult.changedNode;
         List<ExecutionResultNode> newChildren = new ArrayList<>();
         for (ExecutionResultNode child : changedNode.getChildren()) {
-            HandleResult handleResultChild = convertRecursively(child, changedNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, transformationMetadata, nodeCount, fieldRenameCount, typeRenameCount);
+            HandleResult handleResultChild = convertRecursively(child, changedNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, transformationMetadata, resultCounter);
             if (handleResultChild == null) {
                 continue;
             }
@@ -208,15 +201,13 @@ public class ServiceResultNodesToOverallResult {
                                            boolean onlyChildren,
                                            NadelContext nadelContext,
                                            TransformationMetadata transformationMetadata,
-                                           AtomicInteger nodeCount,
-                                           AtomicInteger fieldRenameCount,
-                                           AtomicInteger typeRenameCount) {
-        nodeCount.incrementAndGet();
+                                           ResultCounter resultCounter) {
+        resultCounter.incrementNodeCount();
 
         if (onlyChildren && node == root) {
             // Could be a possible type rename if this is hydrated
             if (normalizedRootField != null) {
-                checkForTypeRename(normalizedRootField.getFieldDefinition(), node.getFieldDefinition(), typeRenameMappings, typeRenameCount, 0);
+                checkForTypeRename(normalizedRootField.getFieldDefinition(), node.getFieldDefinition(), typeRenameMappings, resultCounter, 0);
             }
             if (root instanceof ObjectExecutionResultNode) {
                 ExecutionResultNode executionResultNode = addDeletedChildren((ObjectExecutionResultNode) node, normalizedRootField, nadelContext, transformationMetadata);
@@ -233,7 +224,7 @@ public class ServiceResultNodesToOverallResult {
         if (node instanceof LeafExecutionResultNode) {
             LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
             if (ArtificialFieldUtils.isArtificialField(nadelContext, leaf.getAlias())) {
-                nodeCount.decrementAndGet();
+                resultCounter.decrementNodeCount();
                 return null;
             }
         }
@@ -252,9 +243,9 @@ public class ServiceResultNodesToOverallResult {
         );
         HandleResult result;
         if (transformations.size() == 0) {
-            result = HandleResult.simple(mapNode(node, unapplyEnvironment, typeRenameCount));
+            result = HandleResult.simple(mapNode(node, unapplyEnvironment, resultCounter));
         } else {
-            result = unapplyTransformations(executionId, node, transformations, unapplyEnvironment, fieldIdTransformation, nadelContext, transformationMetadata, fieldRenameCount, typeRenameCount);
+            result = unapplyTransformations(executionId, node, transformations, unapplyEnvironment, fieldIdTransformation, nadelContext, transformationMetadata, resultCounter);
         }
 
         if (result.changedNode instanceof ObjectExecutionResultNode && !(parentNode instanceof HydrationInputNode)) {
@@ -307,16 +298,15 @@ public class ServiceResultNodesToOverallResult {
                                                 Map<String, FieldTransformation> fieldIdToTransformation,
                                                 NadelContext nadelContext,
                                                 TransformationMetadata transformationMetadata,
-                                                AtomicInteger fieldRenameCount,
-                                                AtomicInteger typeRenameCount) {
+                                                ResultCounter resultCounter) {
 
         HandleResult handleResult;
         FieldTransformation transformation = transformations.get(0);
 
         if (transformation instanceof HydrationTransformation) {
-            handleResult = unapplyHydration(node, transformations, unapplyEnvironment, fieldIdToTransformation, transformation, transformationMetadata, typeRenameCount);
+            handleResult = unapplyHydration(node, transformations, unapplyEnvironment, fieldIdToTransformation, transformation, transformationMetadata, resultCounter);
         } else if (transformation instanceof FieldRenameTransformation) {
-            handleResult = unapplyFieldRename(executionId, node, transformations, unapplyEnvironment, fieldIdToTransformation, nadelContext, transformationMetadata, fieldRenameCount, typeRenameCount);
+            handleResult = unapplyFieldRename(executionId, node, transformations, unapplyEnvironment, fieldIdToTransformation, nadelContext, transformationMetadata, resultCounter);
         } else {
             return assertShouldNeverHappen("Unexpected transformation type " + transformation);
         }
@@ -330,8 +320,7 @@ public class ServiceResultNodesToOverallResult {
                                             Map<String, FieldTransformation> fieldIdToTransformation,
                                             NadelContext nadelContext,
                                             TransformationMetadata transformationMetadata,
-                                            AtomicInteger fieldRenameCount,
-                                            AtomicInteger typeRenameCount) {
+                                            ResultCounter resultCounter) {
         Map<AbstractNode, List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
 
         TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, fieldIdToTransformation, transformationMetadata);
@@ -344,16 +333,16 @@ public class ServiceResultNodesToOverallResult {
             UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
 
             // typeDecrementAmount = 0 because for a field rename it's children will not know about the underlying type.
-            checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(),unapplyEnvironment.typeRenameMappings, typeRenameCount, 0);
+            checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, resultCounter, 0);
 
             unapplyResults.add(unapplyResult);
         }
-        fieldRenameCount.getAndAdd(unapplyResults.size());
+        resultCounter.incrementFieldRenameCount(unapplyResults.size());
         HandleResult handleResult = HandleResult.newHandleResultWithSiblings();
         boolean first = true;
         // the not transformed part should simply continue to be converted
         if (notTransformedTree != null) {
-            ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, typeRenameCount);
+            ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, resultCounter);
             mappedNode = convertChildren(executionId,
                     mappedNode,
                     null,
@@ -366,8 +355,8 @@ public class ServiceResultNodesToOverallResult {
                     nadelContext,
                     transformationMetadata);
             handleResult.changedNode = mappedNode;
-            fieldRenameCount.getAndAdd(mappedNode.getTotalFieldRenameCount());
-            typeRenameCount.getAndAdd(mappedNode.getTotalTypeRenameCount());
+            resultCounter.incrementFieldRenameCount(mappedNode.getTotalFieldRenameCount());
+            resultCounter.incrementTypeRenameCount(mappedNode.getTotalTypeRenameCount());
             first = false;
         }
 
@@ -390,8 +379,8 @@ public class ServiceResultNodesToOverallResult {
                         nadelContext,
                         transformationMetadata);
             }
-            fieldRenameCount.getAndAdd(transformedResult.getTotalFieldRenameCount());
-            typeRenameCount.getAndAdd(transformedResult.getTotalTypeRenameCount());
+            resultCounter.incrementFieldRenameCount(transformedResult.getTotalFieldRenameCount());
+            resultCounter.incrementTypeRenameCount(transformedResult.getTotalTypeRenameCount());
             if (first) {
                 handleResult.changedNode = transformedResult;
                 first = false;
@@ -409,7 +398,7 @@ public class ServiceResultNodesToOverallResult {
                                           Map<String, FieldTransformation> fieldIdToTransformation,
                                           FieldTransformation transformation,
                                           TransformationMetadata transformationMetadata,
-                                          AtomicInteger typeRenameCount
+                                          ResultCounter resultCounter
     ) {
         HandleResult handleResult = HandleResult.newHandleResultWithSiblings();
 
@@ -421,10 +410,10 @@ public class ServiceResultNodesToOverallResult {
         UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);
 
         int typeDecrementValue = unapplyResult.getNode() instanceof ListExecutionResultNode ? -unapplyResult.getNode().getChildren().size() : -1;
-        checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, typeRenameCount, typeDecrementValue);
+        checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, resultCounter, typeDecrementValue);
 
         if (withoutTransformedFields != null) {
-            handleResult.changedNode = mapNode(withoutTransformedFields, unapplyEnvironment, typeRenameCount);
+            handleResult.changedNode = mapNode(withoutTransformedFields, unapplyEnvironment, resultCounter);
             handleResult.siblings.add(unapplyResult.getNode());
             handleResult.traversalControl = TraversalControl.CONTINUE;
             return handleResult;
@@ -502,8 +491,8 @@ public class ServiceResultNodesToOverallResult {
         }).collect(Collectors.toList());
     }
 
-    private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, AtomicInteger typeRenameCount) {
-        ExecutionResultNode mappedNode = executionResultNodeMapper.mapERNFromUnderlyingToOverall(node, environment, typeRenameCount);
+    private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, ResultCounter resultCounter) {
+        ExecutionResultNode mappedNode = executionResultNodeMapper.mapERNFromUnderlyingToOverall(node, environment, resultCounter);
         mappedNode = resolvedValueMapper.mapCompletedValue(mappedNode, environment);
         return mappedNode;
     }
