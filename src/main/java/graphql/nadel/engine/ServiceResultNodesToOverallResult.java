@@ -59,7 +59,6 @@ public class ServiceResultNodesToOverallResult {
 
     private static final Logger log = LoggerFactory.getLogger(ServiceResultNodesToOverallResult.class);
 
-
     @SuppressWarnings("UnnecessaryLocalVariable")
     public ExecutionResultNode convert(ExecutionId executionId,
                                        ExecutionResultNode resultNode,
@@ -102,6 +101,7 @@ public class ServiceResultNodesToOverallResult {
 
         HandleResult handleResult = convertSingleNode(root, null/*not for root*/, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, onlyChildren, nadelContext, transformationMetadata, nodeCount);
         assertNotNull(handleResult, () -> "can't delete root");
+        assertTrue(handleResult.siblings.isEmpty(), () -> "can't add siblings to root");
 
         ExecutionResultNode changedNode = handleResult.changedNode;
         List<ExecutionResultNode> newChildren = new ArrayList<>();
@@ -112,7 +112,7 @@ public class ServiceResultNodesToOverallResult {
                 continue;
             }
             newChildren.add(handleResultChild.changedNode);
-            newChildren.addAll(handleResult.siblings);
+            newChildren.addAll(handleResultChild.siblings);
         }
         return changedNode.transform(builder -> builder.children(newChildren).totalNodeCount(nodeCount.get()));
     }
@@ -251,7 +251,6 @@ public class ServiceResultNodesToOverallResult {
         return removedNode;
     }
 
-
     private HandleResult unapplyTransformations(ExecutionId executionId,
                                                 ExecutionResultNode node,
                                                 List<FieldTransformation> transformations,
@@ -371,7 +370,6 @@ public class ServiceResultNodesToOverallResult {
         }
     }
 
-
     private TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splitTreeByTransformationDefinition(
             ExecutionResultNode executionResultNode,
             Map<String, FieldTransformation> fieldIdToTransformation,
@@ -421,10 +419,7 @@ public class ServiceResultNodesToOverallResult {
                 return TreeTransformerUtil.changeNode(context, changedNode);
             }
         });
-
-
     }
-
 
     private List<String> getFieldIdsWithoutTransformationId(ExecutionResultNode node, TransformationMetadata transformationMetadata) {
         return node.getFieldIds().stream().filter(fieldId -> FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId()).size() == 0).collect(Collectors.toList());
@@ -443,7 +438,6 @@ public class ServiceResultNodesToOverallResult {
         mappedNode = resolvedValueMapper.mapCompletedValue(mappedNode, environment);
         return mappedNode;
     }
-
 
     private TuplesTwo<Set<FieldTransformation>, List<String>> getTransformationsAndNotTransformedFields(
             ExecutionResultNode node,
@@ -521,5 +515,4 @@ public class ServiceResultNodesToOverallResult {
             return handleResult;
         }
     }
-
 }
