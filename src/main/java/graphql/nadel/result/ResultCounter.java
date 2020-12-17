@@ -9,7 +9,7 @@ public class ResultCounter {
 
     public ResultCounter() {
         nodeCount = new AtomicInteger();
-        fieldRenameCount =  new AtomicInteger();
+        fieldRenameCount = new AtomicInteger();
         typeRenameCount = new AtomicInteger();
     }
 
@@ -20,6 +20,7 @@ public class ResultCounter {
     public void incrementFieldRenameCount() {
         incrementFieldRenameCount(1);
     }
+
     public void incrementTypeRenameCount() {
         incrementTypeRenameCount(1);
     }
@@ -31,6 +32,7 @@ public class ResultCounter {
     public void decrementFieldRenameCount() {
         incrementFieldRenameCount(-1);
     }
+
     public void decrementTypeRenameCount() {
         incrementTypeRenameCount(-1);
     }
@@ -42,6 +44,7 @@ public class ResultCounter {
     public void incrementFieldRenameCount(int count) {
         fieldRenameCount.getAndAdd(count);
     }
+
     public void incrementTypeRenameCount(int count) {
         typeRenameCount.getAndAdd(count);
     }
