@@ -3,11 +3,14 @@ package graphql.nadel.engine;
 import graphql.Internal;
 import graphql.execution.ExecutionPath;
 import graphql.nadel.result.ExecutionResultNode;
+import graphql.nadel.result.ListExecutionResultNode;
+import graphql.nadel.result.ResultCounter;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLTypeUtil;
 
 import java.util.Map;
 
@@ -21,13 +24,16 @@ public class ExecutionResultNodeMapper {
 
     private PathMapper pathMapper = new PathMapper();
 
-    public ExecutionResultNode mapERNFromUnderlyingToOverall(ExecutionResultNode node, UnapplyEnvironment environment) {
+    public ExecutionResultNode mapERNFromUnderlyingToOverall(ExecutionResultNode node, UnapplyEnvironment environment, ResultCounter resultCounter) {
 
         Map<String, String> typeRenameMappings = environment.typeRenameMappings;
         GraphQLSchema overallSchema = environment.overallSchema;
         ExecutionPath mappedPath = pathMapper.mapPath(node.getExecutionPath(), node.getResultKey(), environment);
         GraphQLObjectType mappedObjectType = mapObjectType(node, typeRenameMappings, overallSchema);
         GraphQLFieldDefinition mappedFieldDefinition = getFieldDef(overallSchema, mappedObjectType, node.getFieldName());
+
+        int typeDecrementValue = node instanceof ListExecutionResultNode ? -node.getChildren().size() : 0;
+        checkForTypeRename(mappedFieldDefinition, node.getFieldDefinition(), typeRenameMappings, resultCounter, typeDecrementValue);
         return node.transform(builder -> builder
                 .executionPath(mappedPath)
                 .objectType(mappedObjectType)
@@ -63,5 +69,16 @@ public class ExecutionResultNodeMapper {
         GraphQLFieldsContainer fieldsContainer = (GraphQLFieldsContainer) parentType;
         GraphQLFieldDefinition fieldDefinition = schema.getCodeRegistry().getFieldVisibility().getFieldDefinition(fieldsContainer, fieldName);
         return assertNotNull(fieldDefinition, () -> String.format("field '%s' not found in container '%s'", fieldName, fieldsContainer));
+    }
+
+    public static void checkForTypeRename(GraphQLFieldDefinition mappedFieldDefinition, GraphQLFieldDefinition fieldDefinition, Map<String, String> typeRenameMappings, ResultCounter resultCounter, int typeDecrementValue) {
+        String overallFieldType = GraphQLTypeUtil.unwrapAll(mappedFieldDefinition.getType()).getName();
+        String underlyingFieldType = GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()).getName();
+        if (typeRenameMappings.getOrDefault(underlyingFieldType, "").equals(overallFieldType)) {
+            resultCounter.incrementTypeRenameCount(typeDecrementValue + 1);
+        } else if (typeRenameMappings.containsValue(overallFieldType) && !overallFieldType.equals(underlyingFieldType)) {
+            // Handles edge cases where overall field could be renamed while the type is also renamed, or list inside hydration
+            resultCounter.incrementTypeRenameCount(typeDecrementValue + 1);
+        }
     }
 }

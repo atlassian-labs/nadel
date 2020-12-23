@@ -4,6 +4,7 @@ import graphql.GraphQLError
 import graphql.execution.AbortExecutionException
 import graphql.language.Field
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
 import graphql.schema.GraphQLFieldDefinition
@@ -53,7 +54,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 response1,
                 expectedQuery2,
                 response2,
-                createServiceExecutionHooksWithFieldRemoval(["userId"])
+                createServiceExecutionHooksWithFieldRemoval(["userId"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [commentById: [author: [displayName: "Display name of Fred", userId: null]]]
@@ -94,7 +96,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 response1,
                 expectedQuery2,
                 response2,
-                createServiceExecutionHooksWithFieldRemoval(["userId", "displayName"])
+                createServiceExecutionHooksWithFieldRemoval(["userId", "displayName"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [commentById: [author: [displayName: null, userId: null]]]
@@ -130,7 +133,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 ["commentById"],
                 expectedQuery1,
                 response1,
-                createServiceExecutionHooksWithFieldRemoval(["author"])
+                createServiceExecutionHooksWithFieldRemoval(["author"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [commentById: [author: null]]
@@ -172,7 +176,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 response1,
                 expectedQuery2,
                 response2,
-                createServiceExecutionHooksWithFieldRemoval(["author"])
+                createServiceExecutionHooksWithFieldRemoval(["author"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [issueById: [comments: [[author: null]]]]
@@ -257,7 +262,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 ["issueById"],
                 expectedQuery1,
                 response1,
-                createServiceExecutionHooksWithFieldRemoval(["epic"])
+                createServiceExecutionHooksWithFieldRemoval(["epic"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [issueById: [id: "I1", epic: null]]
@@ -292,7 +298,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 ["issueById"],
                 expectedQuery1,
                 response1,
-                createServiceExecutionHooksWithFieldRemoval(["title"])
+                createServiceExecutionHooksWithFieldRemoval(["title"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [issueById: [id: "I1", epic: [id: "E1", title: null]]]
@@ -327,7 +334,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 ["issueById"],
                 expectedQuery1,
                 response1,
-                createServiceExecutionHooksWithFieldRemoval(["title"])
+                createServiceExecutionHooksWithFieldRemoval(["title"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [issueById: [id: "I1", epic: [title: null]]]
@@ -363,7 +371,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 ["issueById"],
                 expectedQuery1,
                 response1,
-                createServiceExecutionHooksWithFieldRemoval(["title", "description"])
+                createServiceExecutionHooksWithFieldRemoval(["title", "description"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [issueById: [id: "I1", epic: [title: null, description: null]]]
@@ -397,7 +406,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 ["commentById"],
                 expectedQuery1,
                 response1,
-                createServiceExecutionHooksWithFieldRemoval(["created"])
+                createServiceExecutionHooksWithFieldRemoval(["created"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [commentById: [id: "C1", created: null]]
@@ -431,7 +441,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 ["commentById"],
                 expectedQuery1,
                 response1,
-                createServiceExecutionHooksWithFieldRemoval(["id", "created", "commentText"])
+                createServiceExecutionHooksWithFieldRemoval(["id", "created", "commentText"]),
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == [commentById: ["id": null, "created": null, "commentText": null]]
@@ -533,7 +544,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 ["issues"],
                 expectedQuery1,
                 response1,
-                createServiceExecutionHooksWithFieldRemoval(["comments"])
+                createServiceExecutionHooksWithFieldRemoval(["comments"]),
+                Mock(ResultComplexityAggregator)
         )
 
         then:
@@ -641,7 +653,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 response1,
                 expectedQuery2,
                 response2,
-                hooks
+                hooks,
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == overallResponse
