@@ -35,6 +35,7 @@ import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.util.FpKit.filter;
 import static graphql.nadel.util.FpKit.findOneOrNull;
 import static graphql.util.TreeTransformerUtil.changeNode;
+import static graphql.util.TreeTransformerUtil.insertAfter;
 
 @Internal
 public class HydrationTransformation extends FieldTransformation {
@@ -80,7 +81,8 @@ public class HydrationTransformation extends FieldTransformation {
         if (hasPrimaryArgumentSource) {
             // not sure if this is entirely correct when it comes to modification of the zippers?
             // changing both the parent context node and this nodes context didn't work in my testing.
-            context.changeNode(newField);
+            changeNode(context, newField);
+            addExtraSourceArgumentFields(environment);
         } else {
             assertTrue(1 + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");
             changeNode(context, newField);
@@ -88,33 +90,15 @@ public class HydrationTransformation extends FieldTransformation {
         return new ApplyResult(TraversalControl.ABORT);
     }
 
-    public void addExtraSourceArgumentFields(ApplyEnvironment environment, NadelContext context, Field primarySourceField) {
-        Field parentField;
-        TraverserContext<Node> parentContext = environment.getTraverserContext().getParentContext();
-        while (!(parentContext.thisNode() instanceof Field)){
-            parentContext = parentContext.getParentContext();
-        }
-        parentField = (Field) parentContext.thisNode();
-
-        SelectionSet selectionSet = parentField.getSelectionSet();
-        List<Selection> selections = selectionSet.getSelections();
-        selections.remove(environment.getField());
-        selections.add(primarySourceField);
-        selectionSet = selectionSet.transform(builder -> builder.selections(selections));
-
+    public void addExtraSourceArgumentFields(ApplyEnvironment environment) {
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
         List<RemoteArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
 
         for (RemoteArgumentDefinition remoteArgumentDefinition : sourceValues) {
             List<String> hydrationSourceName = remoteArgumentDefinition.getRemoteArgumentSource().getPath();
             Field extraSourceArgumentField = ArtificialFieldUtils.createExtraSourceArgUnderscoreTypeNameField(hydrationSourceName);
-
-            selectionSet = selectionSet.transform(builder -> builder.selection(extraSourceArgumentField));
+            insertAfter(environment.getTraverserContext(), extraSourceArgumentField);
         }
-
-        SelectionSet newSelectionSet = selectionSet;
-        parentField = parentField.transform(builder -> builder.selectionSet(newSelectionSet));
-        changeNode(parentContext, parentField);
     }
 
 

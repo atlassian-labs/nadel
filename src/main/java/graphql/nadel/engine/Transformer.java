@@ -239,9 +239,6 @@ public class Transformer extends NodeVisitorStub {
             if (transformation instanceof FieldRenameTransformation) {
                 maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);
             }
-            if (transformation instanceof HydrationTransformation) {
-                maybeAddExtraSourceArgs((HydrationTransformation) transformation, applyEnvironment, changedField);
-            }
 
             if (applyResult.getTraversalControl() == TraversalControl.CONTINUE) {
                 updateTypeContext(context, typeContext.getOutputTypeUnderlying(), fieldContainerName);
@@ -253,13 +250,6 @@ public class Transformer extends NodeVisitorStub {
         }
         updateTypeContext(context, typeContext.getOutputTypeUnderlying(), fieldContainerName);
         return TraversalControl.CONTINUE;
-    }
-
-    private void maybeAddExtraSourceArgs(HydrationTransformation transformation, ApplyEnvironment applyEnvironment, Field changedField) {
-        List<RemoteArgumentDefinition> arguments = transformation.getUnderlyingServiceHydration().getArguments();
-        if (findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD) != null) {
-            transformation.addExtraSourceArgumentFields(applyEnvironment, nadelContext, changedField);
-        }
     }
 
     private void updateTypeContext(TraverserContext<Node> context, GraphQLOutputType currentOutputTypeUnderlying) {
