@@ -79,8 +79,6 @@ public class HydrationTransformation extends FieldTransformation {
         List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
 
         if (hasPrimaryArgumentSource) {
-            // not sure if this is entirely correct when it comes to modification of the zippers?
-            // changing both the parent context node and this nodes context didn't work in my testing.
             changeNode(context, newField);
             addExtraSourceArgumentFields(environment);
         } else {

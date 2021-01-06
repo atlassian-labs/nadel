@@ -21,8 +21,6 @@ import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.ExtendedFieldDefinition;
-import graphql.nadel.dsl.RemoteArgumentDefinition;
-import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.engine.transformation.ApplyEnvironment;
 import graphql.nadel.engine.transformation.ApplyResult;
@@ -67,8 +65,6 @@ import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 import static graphql.language.TypeName.newTypeName;
 import static graphql.nadel.dsl.NodeId.getId;
 import static graphql.nadel.engine.UnderlyingTypeContext.newUnderlyingTypeContext;
-import static graphql.nadel.util.FpKit.filter;
-import static graphql.nadel.util.FpKit.findOneOrNull;
 import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import static graphql.util.TreeTransformerUtil.changeNode;
@@ -233,13 +229,13 @@ public class Transformer extends NodeVisitorStub {
             ApplyResult applyResult = transformation.apply(applyEnvironment);
             Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
 
+
             String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField, this.transformationMetadata.getMetadataByFieldId());
             fieldIdToTransformation.put(fieldId, transformation);
 
             if (transformation instanceof FieldRenameTransformation) {
                 maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);
             }
-
             if (applyResult.getTraversalControl() == TraversalControl.CONTINUE) {
                 updateTypeContext(context, typeContext.getOutputTypeUnderlying(), fieldContainerName);
             }
