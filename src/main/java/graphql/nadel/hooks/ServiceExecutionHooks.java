@@ -9,7 +9,6 @@ import graphql.schema.GraphQLFieldDefinition;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 /**
  * These hooks allow you to change the way service execution happens
@@ -32,15 +31,6 @@ public interface ServiceExecutionHooks {
         return null;
     }
 
-
-    interface IsFieldAllowed {
-        CompletableFuture<Optional<GraphQLError>> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext);
-    }
-
-
-    default CompletableFuture<Object> createIsFieldAllowedState(Consumer<IsFieldAllowed> isFieldAllowedConsumer) {
-        return CompletableFuture.completedFuture(null);
-    }
 
     default CompletableFuture<Optional<GraphQLError>> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
         return CompletableFuture.completedFuture(Optional.empty());
