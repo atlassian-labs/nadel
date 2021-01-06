@@ -85,7 +85,7 @@ public class Transformer extends NodeVisitorStub {
     final ServiceExecutionHooks serviceExecutionHooks;
     private OverallTypeInformation<?> overallTypeInformation;
     private TransformationMetadata transformationMetadata;
-    private Map<String, GraphQLError> isFieldAllowedErrors;
+    private Map<String, GraphQLError> forbiddenFields;
     private Service service;
     private Object serviceContext;
     private Map<String, Object> variableValues;
@@ -104,7 +104,7 @@ public class Transformer extends NodeVisitorStub {
                        Service service,
                        Object serviceContext,
                        TransformationMetadata transformationMetadata,
-                       Map<String, GraphQLError> isFieldAllowedErrors
+                       Map<String, GraphQLError> forbiddenFields
     ) {
         this.executionContext = executionContext;
         this.underlyingSchema = underlyingSchema;
@@ -116,7 +116,7 @@ public class Transformer extends NodeVisitorStub {
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.overallTypeInformation = overallTypeInformation;
         this.transformationMetadata = transformationMetadata;
-        this.isFieldAllowedErrors = isFieldAllowedErrors;
+        this.forbiddenFields = forbiddenFields;
         OperationDefinition operationDefinition = executionContext.getOperationDefinition();
         this.variableDefinitions = FpKit.getByName(operationDefinition.getVariableDefinitions(), VariableDefinition::getName);
         this.variableValues = variableValues;
@@ -214,9 +214,9 @@ public class Transformer extends NodeVisitorStub {
         NormalizedQueryFromAst normalizedOverallQuery = nadelContext.getNormalizedOverallQuery();
         List<NormalizedQueryField> normalizedFields = normalizedOverallQuery.getNormalizedFieldsByFieldId(getId(field));
 
-        GraphQLError isFieldAllowedError = isFieldAllowedErrors.get(getId(field));
-        if (isFieldAllowedError != null) {
-            transformationMetadata.add(normalizedFields, isFieldAllowedError);
+        GraphQLError forbiddenFieldError = forbiddenFields.get(getId(field));
+        if (forbiddenFieldError != null) {
+            transformationMetadata.add(normalizedFields, forbiddenFieldError);
             return TreeTransformerUtil.deleteNode(context);
         }
 

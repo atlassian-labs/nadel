@@ -408,9 +408,9 @@ public class OverallQueryTransformer {
                 executionContext.getGraphQLSchema(),
                 null);
 
-        AsyncIsFieldAllowed asyncIsFieldAllowed = new AsyncIsFieldAllowed(serviceExecutionHooks, nadelContext, overallTypeInformation);
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext, overallTypeInformation);
 
-        return asyncIsFieldAllowed.isFieldAllowed(fragmentDefinitionWithoutTypeInfo).thenApply(isFieldAllowedErrors -> {
+        return asyncIsFieldForbidden.getForbiddenFields(fragmentDefinitionWithoutTypeInfo).thenApply(forbiddenFields -> {
 
             Transformer transformer = new Transformer(
                     executionContext,
@@ -426,7 +426,7 @@ public class OverallQueryTransformer {
                     service,
                     serviceContext,
                     removedFieldMap,
-                    isFieldAllowedErrors
+                    forbiddenFields
             );
             Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
             rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext().build());
@@ -484,9 +484,9 @@ public class OverallQueryTransformer {
                 executionContext.getGraphQLSchema(),
                 parentTypeOverall);
 
-        AsyncIsFieldAllowed asyncIsFieldAllowed = new AsyncIsFieldAllowed(serviceExecutionHooks, nadelContext, overallTypeInformation);
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext, overallTypeInformation);
 
-        return asyncIsFieldAllowed.isFieldAllowed(nodeWithoutTypeInfo).thenApply(isFieldAllowedErrors -> {
+        return asyncIsFieldForbidden.getForbiddenFields(nodeWithoutTypeInfo).thenApply(forbiddenFields -> {
             Transformer transformer = new Transformer(
                     executionContext,
                     underlyingSchema,
@@ -501,7 +501,7 @@ public class OverallQueryTransformer {
                     service,
                     serviceContext,
                     removedFieldMap,
-                    isFieldAllowedErrors
+                    forbiddenFields
             );
             Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
             String underlyingParentName = getUnderlyingTypeNameAndRecordMapping(parentTypeOverall, typeRenameMappings);

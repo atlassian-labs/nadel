@@ -17,20 +17,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 import static graphql.nadel.dsl.NodeId.getId;
 
-public class AsyncIsFieldAllowed {
+public class AsyncIsFieldForbidden {
 
-    private Map<String, GraphQLError> fieldIdsToErrors = new ConcurrentHashMap<>();
+    private final Map<String, GraphQLError> fieldIdsToErrors = new ConcurrentHashMap<>();
     private final ServiceExecutionHooks serviceExecutionHooks;
     private final NadelContext nadelContext;
     private final OverallTypeInformation<?> overallTypeInformation;
 
-    public AsyncIsFieldAllowed(ServiceExecutionHooks serviceExecutionHooks, NadelContext nadelContext, OverallTypeInformation<?> overallTypeInformation) {
+    public AsyncIsFieldForbidden(ServiceExecutionHooks serviceExecutionHooks, NadelContext nadelContext, OverallTypeInformation<?> overallTypeInformation) {
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.nadelContext = nadelContext;
         this.overallTypeInformation = overallTypeInformation;
     }
 
-    public CompletableFuture<Map<String, GraphQLError>> isFieldAllowed(Node<?> root) {
+    public CompletableFuture<Map<String, GraphQLError>> getForbiddenFields(Node<?> root) {
         return visitChildren(root).thenApply(unused -> {
             return fieldIdsToErrors;
         });
@@ -62,7 +62,7 @@ public class AsyncIsFieldAllowed {
 
         GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
 
-        return serviceExecutionHooks.isFieldAllowed(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext()).thenCompose(graphQLError -> {
+        return serviceExecutionHooks.isFieldForbidden(field, fieldDefinitionOverall, nadelContext.getUserSuppliedContext()).thenCompose(graphQLError -> {
             if (graphQLError.isPresent()) {
                 fieldIdsToErrors.put(fieldId, graphQLError.get());
                 return CompletableFuture.completedFuture(null);
