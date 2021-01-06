@@ -9,6 +9,7 @@ import graphql.schema.GraphQLFieldDefinition;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 /**
  * These hooks allow you to change the way service execution happens
@@ -21,7 +22,6 @@ public interface ServiceExecutionHooks {
      * Called per top level field for a service.  This allows you to create a "context" object that will be passed into further calls.
      *
      * @param params the parameters to this call
-     *
      * @return an async context object of your choosing
      */
     default CompletableFuture<Object> createServiceContext(CreateServiceContextParams params) {
@@ -32,15 +32,24 @@ public interface ServiceExecutionHooks {
         return null;
     }
 
-    default Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
-        return Optional.empty();
+
+    interface IsFieldAllowed {
+        CompletableFuture<Optional<GraphQLError>> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext);
+    }
+
+
+    default CompletableFuture<Object> createIsFieldAllowedState(Consumer<IsFieldAllowed> isFieldAllowedConsumer) {
+        return CompletableFuture.completedFuture(null);
+    }
+
+    default CompletableFuture<Optional<GraphQLError>> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
+        return CompletableFuture.completedFuture(Optional.empty());
     }
 
     /**
      * Called to allow a service to post process the service result in some fashion.
      *
      * @param params the parameters to this call
-     *
      * @return an async possible result node
      */
     default CompletableFuture<RootExecutionResultNode> resultRewrite(ResultRewriteParams params) {
