@@ -222,11 +222,14 @@ public class ServiceResultNodesToOverallResult {
             return HandleResult.simple(convertedNode);
         }
         if (node instanceof LeafExecutionResultNode) {
-            LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
-            if (ArtificialFieldUtils.isArtificialField(nadelContext, leaf.getAlias())) {
+            if (ArtificialFieldUtils.isArtificialField(nadelContext, node.getAlias())) {
                 resultCounter.decrementNodeCount();
                 return null;
             }
+        }
+        if (ArtificialFieldUtils.isExtraSourceArgumentField(node.getAlias(), node.getFieldDefinition().getName())) {
+            resultCounter.decrementNodeCount();
+            return null;
         }
 
         TuplesTwo<Set<FieldTransformation>, List<String>> transformationsAndNotTransformedFields =

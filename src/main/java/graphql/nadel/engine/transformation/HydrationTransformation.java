@@ -5,10 +5,14 @@ import graphql.execution.ExecutionPath;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
+import graphql.language.Selection;
+import graphql.language.SelectionSet;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
+import graphql.nadel.engine.ArtificialFieldUtils;
 import graphql.nadel.engine.ExecutionResultNodeMapper;
+import graphql.nadel.engine.NadelContext;
 import graphql.nadel.engine.PathMapper;
 import graphql.nadel.engine.UnapplyEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
@@ -29,6 +33,7 @@ import static graphql.nadel.engine.HydrationInputNode.newHydrationInputNode;
 import static graphql.nadel.engine.transformation.FieldUtils.getFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.util.FpKit.filter;
+import static graphql.nadel.util.FpKit.findOneOrNull;
 import static graphql.util.TreeTransformerUtil.changeNode;
 
 @Internal
@@ -54,20 +59,64 @@ public class HydrationTransformation extends FieldTransformation {
 
         TraverserContext<Node> context = environment.getTraverserContext();
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
-
         List<RemoteArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
-        assertTrue(sourceValues.size() == 1, () -> "exactly one object field source expected");
-        List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
-        assertTrue(1 + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");
 
-        RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
+        RemoteArgumentSource remoteArgumentSource;
+
+        RemoteArgumentDefinition primaryArgumentSource = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
+        boolean hasPrimaryArgumentSource = primaryArgumentSource != null;
+        if (hasPrimaryArgumentSource) {
+            remoteArgumentSource = primaryArgumentSource.getRemoteArgumentSource();
+        } else {
+            assertTrue(sourceValues.size() == 1, () -> "exactly one object field source expected");
+            remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
+        }
+
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
-
         Field newField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), getTransformationId(), Collections.emptyList(), true, environment.getMetadataByFieldId());
 
-        changeNode(context, newField);
+        List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
+
+        if (hasPrimaryArgumentSource) {
+            // not sure if this is entirely correct when it comes to modification of the zippers?
+            // changing both the parent context node and this nodes context didn't work in my testing.
+            context.changeNode(newField);
+        } else {
+            assertTrue(1 + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");
+            changeNode(context, newField);
+        }
         return new ApplyResult(TraversalControl.ABORT);
     }
+
+    public void addExtraSourceArgumentFields(ApplyEnvironment environment, NadelContext context, Field primarySourceField) {
+        Field parentField;
+        TraverserContext<Node> parentContext = environment.getTraverserContext().getParentContext();
+        while (!(parentContext.thisNode() instanceof Field)){
+            parentContext = parentContext.getParentContext();
+        }
+        parentField = (Field) parentContext.thisNode();
+
+        SelectionSet selectionSet = parentField.getSelectionSet();
+        List<Selection> selections = selectionSet.getSelections();
+        selections.remove(environment.getField());
+        selections.add(primarySourceField);
+        selectionSet = selectionSet.transform(builder -> builder.selections(selections));
+
+        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
+        List<RemoteArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
+
+        for (RemoteArgumentDefinition remoteArgumentDefinition : sourceValues) {
+            List<String> hydrationSourceName = remoteArgumentDefinition.getRemoteArgumentSource().getPath();
+            Field extraSourceArgumentField = ArtificialFieldUtils.createExtraSourceArgUnderscoreTypeNameField(hydrationSourceName);
+
+            selectionSet = selectionSet.transform(builder -> builder.selection(extraSourceArgumentField));
+        }
+
+        SelectionSet newSelectionSet = selectionSet;
+        parentField = parentField.transform(builder -> builder.selectionSet(newSelectionSet));
+        changeNode(parentContext, parentField);
+    }
+
 
     public UnderlyingServiceHydration getUnderlyingServiceHydration() {
         return underlyingServiceHydration;

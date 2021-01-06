@@ -8,10 +8,12 @@ import graphql.nadel.dsl.NodeId;
 import graphql.nadel.util.Util;
 import graphql.schema.GraphQLOutputType;
 
+import java.util.List;
 import java.util.UUID;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.language.Field.newField;
+import static graphql.language.SelectionSet.newSelectionSet;
 
 /**
  * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side.
@@ -23,6 +25,8 @@ public class ArtificialFieldUtils {
 
     private static final String UNDERSCORE_TYPENAME = Introspection.TypeNameMetaFieldDef.getName();
     private static final String TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS = "empty_selection_set_";
+
+    public static final String TYPE_NAME_ALIAS_PREFIX_FOR_EXTRA_SOURCE_ARGUMENTS = "extra_source_arg_";
     public static final String TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS = "type_hint_";
 
     public static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
@@ -42,6 +46,30 @@ public class ArtificialFieldUtils {
         } else {
             return field;
         }
+    }
+
+    public static Field createExtraSourceArgUnderscoreTypeNameField(List<String> path) {
+        Field curField = null;
+        for (int ix = path.size() - 1; ix >= 0; ix--) {
+            Field.Builder newField = Field.newField();
+            newField.additionalData(NodeId.ID, UUID.randomUUID().toString());
+            if (curField != null) {
+                newField.selectionSet(newSelectionSet().selection(curField).build());
+            }
+            newField.name(path.get(ix));
+            if (ix == 0) {
+                newField.alias(TYPE_NAME_ALIAS_PREFIX_FOR_EXTRA_SOURCE_ARGUMENTS + path.get(ix));
+            }
+            curField = newField.build();
+        }
+        return curField;
+
+//        Field underscoreTypeNameAliasField = newField(name)
+//                .alias(TYPE_NAME_ALIAS_PREFIX_FOR_EXTRA_SOURCE_ARGUMENTS + getTypeNameAliasFromContext(nadelContext))
+//                .alias(TYPE_NAME_ALIAS_PREFIX_FOR_EXTRA_SOURCE_ARGUMENTS + name)
+//                .additionalData(NodeId.ID, UUID.randomUUID().toString())
+//                .build();
+//        return underscoreTypeNameAliasField;
     }
 
     private static Field addUnderscoreTypeName(Field field, NadelContext nadelContext, String aliasPrefix) {
@@ -92,5 +120,8 @@ public class ArtificialFieldUtils {
         return (TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + typeNameAlias).equals(alias)
                 || (TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS + typeNameAlias).equals(alias)
                 || nadelContext.getObjectIdentifierAlias().equals(alias);
+    }
+    public static boolean isExtraSourceArgumentField(String alias, String definitionName) {
+        return (TYPE_NAME_ALIAS_PREFIX_FOR_EXTRA_SOURCE_ARGUMENTS + definitionName).equals(alias);
     }
 }

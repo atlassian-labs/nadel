@@ -4,10 +4,12 @@ import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
+import graphql.execution.ExecutionPath;
 import graphql.language.Argument;
 import graphql.language.ArrayValue;
 import graphql.language.Field;
 import graphql.language.FieldDefinition;
+import graphql.language.NullValue;
 import graphql.language.SelectionSet;
 import graphql.language.StringValue;
 import graphql.language.Value;
@@ -38,6 +40,8 @@ import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,6 +52,7 @@ import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.Field.newField;
 import static graphql.language.SelectionSet.newSelectionSet;
+import static graphql.nadel.engine.ArtificialFieldUtils.TYPE_NAME_ALIAS_PREFIX_FOR_EXTRA_SOURCE_ARGUMENTS;
 import static graphql.nadel.engine.ArtificialFieldUtils.addObjectIdentifier;
 import static graphql.nadel.engine.StrategyUtil.changeFieldIdsInResultNode;
 import static graphql.nadel.engine.StrategyUtil.copyFieldInformation;
@@ -100,7 +105,6 @@ public class HydrationInputResolver {
         List<NodeMultiZipper<ExecutionResultNode>> hydrationInputBatches = groupNodesIntoBatchesByField(hydrationInputZippers, node);
 
         List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs = new ArrayList<>();
-
         for (NodeMultiZipper<ExecutionResultNode> batch : hydrationInputBatches) {
             if (isBatchHydrationField((HydrationInputNode) batch.getZippers().get(0).getCurNode())) {
                 resolveInputNodesAsBatch(context, resolvedNodeCFs, batch, serviceContexts, resultComplexityAggregator);
@@ -136,9 +140,10 @@ public class HydrationInputResolver {
                                           Map<Service, Object> serviceContexts,
                                           ResultComplexityAggregator resultComplexityAggregator) {
         List<NodeMultiZipper<ExecutionResultNode>> batchesWithCorrectSize = groupIntoCorrectBatchSizes(batch);
+        HashMap<RemoteArgumentDefinition,HashMap<ExecutionPath, Integer>> correctBatchArgumentIndex = new HashMap<>();
         for (NodeMultiZipper<ExecutionResultNode> oneBatch : batchesWithCorrectSize) {
             List<HydrationInputNode> batchedNodes = map(oneBatch.getZippers(), zipper -> (HydrationInputNode) zipper.getCurNode());
-            CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, batchedNodes, serviceContexts, resultComplexityAggregator);
+            CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, batchedNodes, serviceContexts, resultComplexityAggregator, correctBatchArgumentIndex);
             resolvedNodeCFs.add(replaceNodesInZipper(oneBatch, executionResultNodeCompletableFuture));
         }
     }
@@ -291,26 +296,7 @@ public class HydrationInputResolver {
                                                      String topLevelFieldName,
                                                      String syntheticFieldName,
                                                      Field originalField) {
-        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
-        RemoteArgumentDefinition argumentFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
-        List<RemoteArgumentDefinition> extraArguments = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
-
-        Object value = hydrationInputNode.getCompletedValue();
-        Argument argumentAstFromSourceObject = Argument.newArgument()
-                .name(argumentFromSourceObject.getName())
-                .value(new StringValue(value.toString()))
-                .build();
-
-        List<Argument> allArguments = new ArrayList<>();
-        allArguments.add(argumentAstFromSourceObject);
-
-        Map<String, Argument> originalArgumentsByName = FpKit.getByName(originalField.getArguments(), Argument::getName);
-        for (RemoteArgumentDefinition argumentDefinition : extraArguments) {
-            if (originalArgumentsByName.containsKey(argumentDefinition.getName())) {
-                allArguments.add(originalArgumentsByName.get(argumentDefinition.getName()));
-            }
-        }
-
+        List<Argument> allArguments = getArguments(hydrationInputNode, underlyingServiceHydration, originalField);
 
         Field topLevelField = newField(topLevelFieldName)
                 .selectionSet(selectionSet)
@@ -327,6 +313,39 @@ public class HydrationInputResolver {
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .build();
         return syntheticField;
+    }
+
+    private List<Argument> getArguments(HydrationInputNode hydrationInputNode, UnderlyingServiceHydration underlyingServiceHydration, Field originalField) {
+        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
+        List<RemoteArgumentDefinition> argumentDefinitionsFromSourceObjects = new ArrayList<>();
+        List<Argument> allArguments = new ArrayList<>();
+
+        RemoteArgumentDefinition primaryArgumentDefinitionFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
+
+        boolean hasPrimaryArgSource = primaryArgumentDefinitionFromSourceObject != null;
+        if (hasPrimaryArgSource) {
+            argumentDefinitionsFromSourceObjects.add(primaryArgumentDefinitionFromSourceObject);
+        }
+        argumentDefinitionsFromSourceObjects.addAll(filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD));
+
+        Object value = hydrationInputNode.getCompletedValue();
+        for (RemoteArgumentDefinition definition : argumentDefinitionsFromSourceObjects) {
+            boolean isPrimarySourceDefinition = (definition.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
+            List<String> sourcePath = definition.getRemoteArgumentSource().getPath();
+            Object definitionValue = getDefinitionValue(sourcePath,
+                    value,
+                    hydrationInputNode.getExecutionPath(),
+                    hasPrimaryArgSource && !isPrimarySourceDefinition);
+            Value argumentValue = (definitionValue != null) ? new StringValue(definitionValue.toString()) : NullValue.newNullValue().build();
+            Argument argumentAstFromSourceObject = Argument.newArgument()
+                     .name(definition.getName())
+                     .value(argumentValue)
+                     .build();
+            allArguments.add(argumentAstFromSourceObject);
+        }
+
+        addExtraFieldArguments(originalField, arguments, allArguments);
+        return allArguments;
     }
 
     private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(ExecutionId executionId,
@@ -374,7 +393,8 @@ public class HydrationInputResolver {
     private CompletableFuture<List<ExecutionResultNode>> resolveHydrationInputBatch(ExecutionContext executionContext,
                                                                                     List<HydrationInputNode> hydrationInputs,
                                                                                     Map<Service, Object> serviceContexts,
-                                                                                    ResultComplexityAggregator resultComplexityAggregator) {
+                                                                                    ResultComplexityAggregator resultComplexityAggregator,
+                                                                                    HashMap<RemoteArgumentDefinition,HashMap<ExecutionPath, Integer>> correctBatchArgumentIndex) {
 
         List<HydrationTransformation> hydrationTransformations = map(hydrationInputs, HydrationInputNode::getHydrationTransformation);
 
@@ -387,7 +407,7 @@ public class HydrationInputResolver {
         Field topLevelField = createBatchHydrationTopLevelField(executionContext,
                 hydrationInputs,
                 originalField,
-                underlyingServiceHydration);
+                underlyingServiceHydration, correctBatchArgumentIndex);
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
         Operation operation = Operation.QUERY;
@@ -418,29 +438,13 @@ public class HydrationInputResolver {
     private Field createBatchHydrationTopLevelField(ExecutionContext executionContext,
                                                     List<HydrationInputNode> hydrationInputs,
                                                     Field originalField,
-                                                    UnderlyingServiceHydration underlyingServiceHydration) {
+                                                    UnderlyingServiceHydration underlyingServiceHydration,
+                                                    HashMap<RemoteArgumentDefinition,HashMap<ExecutionPath, Integer>> correctBatchArgumentIndex) {
 
         String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
         String syntheticFieldName = underlyingServiceHydration.getSyntheticField();
-        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
-        RemoteArgumentDefinition argumentFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
-        List<RemoteArgumentDefinition> extraArguments = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
 
-        List<Value> values = new ArrayList<>();
-        for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
-            Object value = hydrationInputNode.getCompletedValue();
-            values.add(StringValue.newStringValue(value.toString()).build());
-        }
-        Argument argumentAstFromSourceObject = Argument.newArgument().name(argumentFromSourceObject.getName()).value(new ArrayValue(values)).build();
-        List<Argument> allArguments = new ArrayList<>();
-        allArguments.add(argumentAstFromSourceObject);
-
-        Map<String, Argument> originalArgumentsByName = FpKit.getByName(originalField.getArguments(), Argument::getName);
-        for (RemoteArgumentDefinition argumentDefinition : extraArguments) {
-            if (originalArgumentsByName.containsKey(argumentDefinition.getName())) {
-                allArguments.add(originalArgumentsByName.get(argumentDefinition.getName()));
-            }
-        }
+        List<Argument> allArguments = getBatchArguments(hydrationInputs, originalField, underlyingServiceHydration, correctBatchArgumentIndex);
 
         Field topLevelField = newField(topLevelFieldName)
                 .selectionSet(originalField.getSelectionSet())
@@ -461,6 +465,72 @@ public class HydrationInputResolver {
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .build();
         return syntheticField;
+    }
+
+    private List<Argument> getBatchArguments(List<HydrationInputNode> hydrationInputs,
+                                             Field originalField,
+                                             UnderlyingServiceHydration underlyingServiceHydration,
+                                             HashMap<RemoteArgumentDefinition, HashMap<ExecutionPath, Integer>> correctBatchArgumentIndex) {
+        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
+        List<RemoteArgumentDefinition> argumentDefinitionsFromSourceObjects = new ArrayList<>();
+
+        RemoteArgumentDefinition primaryArgumentDefinitionFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
+        boolean hydrationHasPrimaryArgSource = primaryArgumentDefinitionFromSourceObject != null;
+        if (hydrationHasPrimaryArgSource) {
+            argumentDefinitionsFromSourceObjects.add(primaryArgumentDefinitionFromSourceObject);
+        }
+
+        argumentDefinitionsFromSourceObjects.addAll(filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD));
+        List<Argument> allArguments = new ArrayList<>();
+        List<HydrationInputNode> fixedHydrationInputs = new ArrayList<>();
+
+        for (RemoteArgumentDefinition definition : argumentDefinitionsFromSourceObjects) {
+            HashMap<ExecutionPath, Integer> executionPathToArgumentIndexMap = correctBatchArgumentIndex.computeIfAbsent(definition, k -> new HashMap<ExecutionPath, Integer>());
+            List<Value> values = new ArrayList<>();
+            boolean isPrimarySourceDefinition = (definition.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
+
+            for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
+                ExecutionPath parentExecutionPath = hydrationInputNode.getExecutionPath().getPathWithoutListEnd();
+                int currentIndex = executionPathToArgumentIndexMap.compute(parentExecutionPath, (k, v) -> v == null ? 0 : v + 1);
+
+                Object value = hydrationInputNode.getCompletedValue();
+                List<String> sourcePath = definition.getRemoteArgumentSource().getPath();
+                Object definitionValue = getDefinitionValueInList(sourcePath,
+                        value,
+                        currentIndex,
+                        hydrationHasPrimaryArgSource && !isPrimarySourceDefinition);
+
+                if (definitionValue != null) {
+                    values.add(StringValue.newStringValue(definitionValue.toString()).build());
+                    // add back the definition value so we can resolve nodes later
+                    if (!hydrationHasPrimaryArgSource || isPrimarySourceDefinition) {
+                        fixedHydrationInputs.add((HydrationInputNode) hydrationInputNode.withNewCompletedValue(definitionValue));
+                    }
+                } else {
+                    values.add(NullValue.newNullValue().build());
+                }
+
+            }
+            Argument argumentAstFromSourceObject = Argument.newArgument().name(definition.getName()).value(new ArrayValue(values)).build();
+            allArguments.add(argumentAstFromSourceObject);
+        }
+
+        for (int i = 0; i < hydrationInputs.size(); i++) {
+            hydrationInputs.set(i, fixedHydrationInputs.get(i));
+        }
+
+        addExtraFieldArguments(originalField, arguments, allArguments);
+        return allArguments;
+    }
+
+    private void addExtraFieldArguments(Field originalField, List<RemoteArgumentDefinition> arguments, List<Argument> allArguments) {
+        List<RemoteArgumentDefinition> extraArguments = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
+        Map<String, Argument> originalArgumentsByName = FpKit.getByName(originalField.getArguments(), Argument::getName);
+        for (RemoteArgumentDefinition argumentDefinition : extraArguments) {
+            if (originalArgumentsByName.containsKey(argumentDefinition.getName())) {
+                allArguments.add(originalArgumentsByName.get(argumentDefinition.getName()));
+            }
+        }
     }
 
 
@@ -581,6 +651,38 @@ public class HydrationInputResolver {
         }
         return null;
     }
+
+    private Object getDefinitionValue(List<String> definitionPath, Object values, ExecutionPath executionPath, boolean isSecondarySource) {
+        int currentIndex = -1;
+        if (executionPath.isListSegment()) {
+            currentIndex = executionPath.getSegmentIndex();
+        }
+        return getDefinitionValueInList(definitionPath, values, currentIndex, isSecondarySource);
+    }
+
+    private Object getDefinitionValueInList(List<String> definitionPath, Object values, int index, boolean isSecondarySource) {
+        Object definitionValue = values;
+        boolean first = true;
+        for (String field : definitionPath) {
+            if (isSecondarySource && first) {
+                field = TYPE_NAME_ALIAS_PREFIX_FOR_EXTRA_SOURCE_ARGUMENTS + field;
+                first = false;
+            }
+
+            definitionValue = ((LinkedHashMap) definitionValue).get(field);
+            if (definitionValue instanceof List) {
+                // This happens when a secondary source object does not have enough values to match the primary source object value
+                // Generally should not happen unless underlying service did not return enough results.
+                if (index < 0 || index >= ((List)definitionValue).size()) {
+                    definitionValue = null;
+                } else {
+                    definitionValue = ((List) definitionValue).get(index);
+                }
+            }
+        }
+        return definitionValue;
+    }
+
 
 
     private LeafExecutionResultNode getFieldByResultKey(ObjectExecutionResultNode node, String resultKey) {

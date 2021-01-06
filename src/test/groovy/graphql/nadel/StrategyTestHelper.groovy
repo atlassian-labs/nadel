@@ -71,9 +71,119 @@ class StrategyTestHelper extends Specification {
         assert calledService1
 
         return [resultData(response), resultErrors(response)]
-
-
     }
+
+    Object[] test1ServiceWithHydration(GraphQLSchema overallSchema,
+                                       String serviceOneName,
+                                       GraphQLSchema underlyingOne,
+                                       String query,
+                                       List<String> topLevelFields,
+                                       String expectedQuery1,
+                                       Map response1,
+                                       String expectedQuery2,
+                                       Map response2,
+                                       ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
+                                       Map variables = [:],
+                                       ResultComplexityAggregator resultComplexityAggregator
+    ) {
+        def response1ServiceResult = new ServiceExecutionResult(response1)
+        def response2ServiceResult = new ServiceExecutionResult(response2)
+
+        boolean calledService1 = false
+        def call = 0
+        ServiceExecution service1Execution = { ServiceExecutionParameters sep ->
+            call++
+            if (call == 1) {
+                println printAstCompact(sep.query)
+                assert printAstCompact(sep.query) == expectedQuery1
+                calledService1 = true
+                return completedFuture(response1ServiceResult)
+            } else {
+                println printAstCompact(sep.query)
+                assert printAstCompact(sep.query) == expectedQuery2
+                calledService1 = true
+                return completedFuture(response2ServiceResult)
+            }
+        }
+        def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
+        def definitionRegistry = Mock(DefinitionRegistry)
+        def instrumentation = new NadelInstrumentation() {}
+
+        def service1 = new Service(serviceOneName, underlyingOne, service1Execution, serviceDefinition, definitionRegistry)
+
+        Map fieldInfoByDefinition = [:]
+        topLevelFields.forEach({ it ->
+            def fd = overallSchema.getQueryType().getFieldDefinition(it)
+            FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service1, fd)
+            fieldInfoByDefinition.put(fd, fieldInfo)
+        })
+        FieldInfos fieldInfos = new FieldInfos(fieldInfoByDefinition)
+
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def executionData = createExecutionData(query, variables, overallSchema)
+
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        assert calledService1
+
+        return [resultData(response), resultErrors(response)]
+    }
+
+    Object[] test1ServiceWithNHydration(GraphQLSchema overallSchema,
+                                        String serviceOneName,
+                                        GraphQLSchema underlyingOne,
+                                        String query,
+                                        List<String> topLevelFields,
+                                        List<String> expectedQueries,
+                                        List<Map> responses,
+                                        int nCalls,
+                                        ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks () {},
+                                        Map variables = [:],
+                                        ResultComplexityAggregator resultComplexityAggregator
+    ) {
+        def serviceExecutionResults = []
+        for (Map response : responses) {
+            serviceExecutionResults.add(new ServiceExecutionResult(response))
+        }
+
+        boolean calledService1 = false
+        def call = -1
+        ServiceExecution service1Execution = { ServiceExecutionParameters sep ->
+            call++
+            println printAstCompact(sep.query)
+            assert printAstCompact(sep.query) == expectedQueries[call]
+            calledService1 = true
+            return completedFuture(serviceExecutionResults[call])
+        }
+        def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
+        def definitionRegistry = Mock(DefinitionRegistry)
+        def instrumentation = new NadelInstrumentation() {}
+
+        def service1 = new Service(serviceOneName, underlyingOne, service1Execution, serviceDefinition, definitionRegistry)
+
+        Map fieldInfoByDefinition = [:]
+        topLevelFields.forEach({ it ->
+            def fd = overallSchema.getQueryType().getFieldDefinition(it)
+            FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service1, fd)
+            fieldInfoByDefinition.put(fd, fieldInfo)
+        })
+        FieldInfos fieldInfos = new FieldInfos(fieldInfoByDefinition)
+
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+
+        def executionData = createExecutionData(query, variables, overallSchema)
+
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        assert calledService1
+        assert call == nCalls - 1
+
+        return [resultData(response), resultErrors(response)]
+    }
+
 
     Object[] test2Services(GraphQLSchema overallSchema,
                            String serviceOneName,
