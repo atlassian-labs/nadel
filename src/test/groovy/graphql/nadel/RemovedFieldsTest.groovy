@@ -11,6 +11,8 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
 import spock.lang.Ignore
 
+import java.util.concurrent.CompletableFuture
+
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 
@@ -563,12 +565,12 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         return new ServiceExecutionHooks() {
             @Override
-            Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
                 if (fieldsToRemove.contains(field.getName())) {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
-                    return Optional.of(new AbortExecutionException("removed field"))
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
                 }
-                return Optional.empty();
+                return CompletableFuture.completedFuture(Optional.empty())
             }
         }
     }
@@ -628,12 +630,12 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         def hooks = new ServiceExecutionHooks() {
             @Override
-            Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
                 if (fieldDefinitionOverall.getName() == "restricted") {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
-                    return Optional.of(new AbortExecutionException("removed field"))
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
                 }
-                return Optional.empty();
+                return CompletableFuture.completedFuture(Optional.empty())
             }
         }
 
