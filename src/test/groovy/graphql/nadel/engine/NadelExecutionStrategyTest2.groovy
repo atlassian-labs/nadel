@@ -4,7 +4,14 @@ import graphql.AssertException
 import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.nadel.*
+import graphql.nadel.DefinitionRegistry
+import graphql.nadel.FieldInfo
+import graphql.nadel.FieldInfos
+import graphql.nadel.Service
+import graphql.nadel.ServiceExecution
+import graphql.nadel.ServiceExecutionParameters
+import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.StrategyTestHelper
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -12,33 +19,23 @@ import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
 
+import javax.xml.transform.Result
 import java.util.concurrent.ExecutionException
 
 import static graphql.language.AstPrinter.printAstCompact
+import static graphql.language.AstPrinter.printAst
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
-
-    ExecutionHelper executionHelper
-    def service1Execution
-    def service2Execution
-    def serviceDefinition
-    def definitionRegistry
-    def instrumentation
-    def serviceExecutionHooks
-    def resultComplexityAggregator
-
-    void setup() {
-        executionHelper = new ExecutionHelper()
-        service1Execution = Mock(ServiceExecution)
-        service2Execution = Mock(ServiceExecution)
-        serviceDefinition = ServiceDefinition.newServiceDefinition().build()
-        definitionRegistry = Mock(DefinitionRegistry)
-        instrumentation = new NadelInstrumentation() {}
-        serviceExecutionHooks = new ServiceExecutionHooks() {}
-        resultComplexityAggregator = new ResultComplexityAggregator()
-    }
+    ExecutionHelper executionHelper = new ExecutionHelper()
+    def service1Execution = Mock(ServiceExecution)
+    def service2Execution = Mock(ServiceExecution)
+    def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
+    def definitionRegistry = Mock(DefinitionRegistry)
+    def instrumentation = new NadelInstrumentation() {}
+    def serviceExecutionHooks = new ServiceExecutionHooks() {}
+    def resultComplexityAggregator = new ResultComplexityAggregator()
 
     def "underlying service returns null for non-nullable field"() {
         given:
@@ -79,6 +76,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["issue"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         response == overallResponse
@@ -126,6 +124,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["issue"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         response == overallResponse
@@ -174,6 +173,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["issues"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         response == overallResponse
@@ -220,6 +220,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["issues"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         response == overallResponse
@@ -292,11 +293,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["boardScope"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         errors.size() == 0
         response == overallResponse
-
+        resultComplexityAggregator.getFieldRenamesCount() == 3
+        resultComplexityAggregator.getTypeRenamesCount() == 3
     }
 
     def "fragment referenced twice from inside Query and inside another Fragment"() {
@@ -337,10 +340,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 ["foo"],
                 expectedQuery1,
                 response1,
+                resultComplexityAggregator
         )
         then:
         errors.size() == 0
         response == overallResponse
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
     }
 
 
@@ -432,6 +438,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         resultComplexityAggregator.getTotalNodeCount() == 7
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
         resultComplexityAggregator.getNodeCountsForService("UserService") == 2
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
 
     }
 
@@ -533,11 +541,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         resultComplexityAggregator.getTotalNodeCount() == 13
         resultComplexityAggregator.getNodeCountsForService("Issues") == 9
         resultComplexityAggregator.getNodeCountsForService("UserService") == 4
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
 
     }
 
 
-    def "one synthetic hydration call with longer path arguments and merged fields"() {
+    def "one synthetic hydration call with longer path arguments and merged fields and renamed Type"() {
         given:
         def issueSchema = TestUtil.schema("""
         type Query {
@@ -572,17 +582,17 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             }
             type Issue {
                 id: ID
-                authors: [User] => hydrated from UserService.usersQuery.usersByIds(id: $source.authors.authorId) object identified by id, batch size 2
+                authors: [RenamedUser] => hydrated from UserService.usersQuery.usersByIds(id: $source.authors.authorId) object identified by id, batch size 2
             }
         }
         service UserService {
             type Query {
-                usersQuery: UserQuery
+                usersQuery: RenamedUserQuery
             }
-            type UserQuery {
-               usersByIds(id: [ID]): [User]
+            type RenamedUserQuery => renamed from UserQuery {
+               usersByIds(id: [ID]): [RenamedUser]
             }
-            type User {
+            type RenamedUser => renamed from User {
                 id: ID
                 name: String
             }
@@ -629,6 +639,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         resultComplexityAggregator.getTotalNodeCount() == 11
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
         resultComplexityAggregator.getNodeCountsForService("UserService") == 6
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 1
     }
 
     def "Expecting one child Error on extensive field argument passed to synthetic hydration"() {
@@ -740,6 +752,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }) >> completedFuture(response2)
 
         resultData(response) == [board: [id: "1", cardChildren: [[assignee: [accountId: "1"]], [assignee: [accountId: "2"]], [assignee: [accountId: "3"]]]]]
+        resultComplexityAggregator.getFieldRenamesCount() == 1
+        resultComplexityAggregator.getTypeRenamesCount() == 2
 
     }
 
@@ -829,12 +843,222 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery1,
                 response1,
                 expectedQuery2,
-                response2
+                response2,
+                resultComplexityAggregator
         )
 
         then:
         response == overallResponse
         errors.size() == 0
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
+
+    }
+
+    def 'hydration works when an ancestor field has been renamed'() {
+        // Note: this bug happens when the root field has been renamed, and then a hydration occurs further down the tree
+        // i.e. here we rename relationships to devOpsRelationships and hydrate devOpsRelationships/nodes[0]/issue
+
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Issue {
+            id: ID
+        }
+
+        type Relationship {
+            issueId: ID
+        }
+
+        type RelationshipConnection {
+            nodes: [Relationship]
+        }
+
+        type Query {
+            relationships: RelationshipConnection
+            issue(id: ID): Issue
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service IssueService {
+           type DevOpsIssue => renamed from Issue {
+               id: ID
+           }
+
+           type DevOpsRelationship => renamed from Relationship {
+               devOpsIssue: DevOpsIssue => hydrated from IssueService.issue(id: $source.issueId)
+           }
+
+           type DevOpsRelationshipConnection => renamed from RelationshipConnection {
+               nodes: [DevOpsRelationship]
+           }
+
+           type Query {
+               devOpsRelationships: DevOpsRelationshipConnection => renamed from relationships
+               devOpsIssue(id: ID): DevOpsIssue => renamed from issue
+           }
+        }
+        ''')
+
+        def fieldDef = overallSchema.getQueryType().getFieldDefinition("devOpsRelationships")
+        def service1 = new Service("IssueService", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fieldDef, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def query = '''
+        query { 
+            devOpsRelationships {
+                nodes {
+                    devOpsIssue {
+                        id
+                    }
+                }
+            }
+        }
+        '''
+
+        def expectedQuery1 = "query nadel_2_IssueService {relationships {nodes {issueId}}}"
+        def response1 = new ServiceExecutionResult([
+                relationships: [
+                        nodes: [
+                                [issueId: "1"],
+                        ],
+                ],
+        ])
+
+        def expectedQuery2 = "query nadel_2_IssueService {issue(id:\"1\") {id}}"
+        def response2 = new ServiceExecutionResult([issue: [id: "1"]])
+
+        def executionData = createExecutionData(query, [:], overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        resultData(response) == [
+                devOpsRelationships: [
+                        nodes: [
+                                [
+                                        devOpsIssue: [id: "1"],
+                                ],
+                        ],
+                ],
+        ]
+    }
+
+    def 'able to ask for field and use same field as hydration source'() {
+        // This was a bug where the nestedBar field would not be hydrated
+        // because the hydration used $source.barId and because the query
+        // also asked for barId
+        //
+        // Normally in hydration we expect that the $source field not be
+        // exposed so we usually replace the field
+        // But in this case we can't just replace it, as its been queried
+        // for, so we need to add the hydrated field as a sibling and leave
+        // the $source field alone
+        //
+        // Before, we weren't handling the sibling properly
+        // This test case ensures we do that
+
+        given:
+        def underlyingSchema = TestUtil.schema("""
+        type Query {
+            bar: Bar 
+            barById(id: ID): Bar
+        } 
+        type Bar {
+            barId: ID
+            name: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+         service Bar {
+             type Query {
+                 bar: Bar 
+             } 
+             type Bar {
+                 barId: ID
+                 name: String 
+                 nestedBar: Bar => hydrated from Bar.barById(id: $source.barId)
+             }
+         }
+        ''')
+
+        def fieldDef = overallSchema.getQueryType().getFieldDefinition("bar")
+        def service1 = new Service("Bar", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fieldDef, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def query = '''
+        {
+            bar {
+                barId
+                nestedBar {
+                    nestedBar {
+                        barId
+                    }
+                    barId
+                }
+                name
+            }
+        }
+        '''
+
+        def topLevelQuery = "query nadel_2_Bar {bar {barId barId name}}"
+        def topLevelResult = new ServiceExecutionResult([
+                bar: [
+                        barId: "1",
+                        name : "Test",
+                ],
+        ])
+
+        def hydrationQuery1 = "query nadel_2_Bar {barById(id:\"1\") {barId barId}}"
+        def hydrationQuery2 = "query nadel_2_Bar {barById(id:\"1\") {barId}}"
+        def hydrationResult = new ServiceExecutionResult([
+                barById: [
+                        barId: "1",
+                ],
+        ])
+
+        def executionData = createExecutionData(query, [:], overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == topLevelQuery
+        }) >> completedFuture(topLevelResult)
+
+        2 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) in [hydrationQuery1, hydrationQuery2]
+        }) >> completedFuture(hydrationResult)
+
+        resultData(response) == [
+                bar: [
+                        barId    : "1",
+                        nestedBar: [
+                                barId    : "1",
+                                nestedBar: [
+                                        barId: "1",
+                                ],
+                        ],
+                        name     : "Test",
+                ],
+        ]
     }
 
     def "extending types via hydration with variables arguments"() {
@@ -875,19 +1099,19 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             
         service Association {
             type Query {
-                association(id: ID, filter: Filter): Association
+                association(id: ID, filter: Filter): RenamedAssociation
             }
             
             input Filter  {
                 name: String
             }
             
-            type Association {
+            type RenamedAssociation => renamed from Association {
                 id: ID
                 nameOfAssociation: String
             }
             extend type Issue {
-                association(filter:Filter): Association => hydrated from Association.association(id: \$source.id, filter: \$argument.filter)
+                association(filter:Filter): RenamedAssociation => hydrated from Association.association(id: \$source.id, filter: \$argument.filter)
             } 
        
         }
@@ -924,12 +1148,16 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery2,
                 response2,
                 new ServiceExecutionHooks() {},
-                [filter: [name: ["value"]]]
+                [filter: [name: ["value"]]],
+                resultComplexityAggregator
         )
 
         then:
         response == overallResponse
         errors.size() == 0
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 1
+
     }
 
     def "extending types via hydration returning a connection"() {
@@ -1043,7 +1271,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test2ServicesWith3Calls(
+        (response, errors) = test2ServicesWithNCalls(
                 overallSchema,
                 "Issue",
                 issueSchema,
@@ -1051,18 +1279,169 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 associationSchema,
                 query,
                 ["synth"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
-                expectedQuery3,
-                response3
-
+                [expectedQuery1, expectedQuery2, expectedQuery3],
+                [response1, response2, response3],
+                3,
+                resultComplexityAggregator
         )
 
         then:
         response == overallResponse
         errors.size() == 0
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
+    }
+
+
+    def "query with three nested hydrations and simple data and lots of renames"() {
+
+        def nsdl = TestUtil.schemaFromNdsl('''
+         service Foo {
+            type Query{
+                fooz: [Fooz]  => renamed from foos
+            } 
+            type Fooz => renamed from Foo {
+                fooDetails: FooDetails => renamed from details
+                bar: Bar => hydrated from Bar.barsById(id: $source.barId) object identified by barId, batch size 2
+            }
+            type FooDetails => renamed from Details {
+                fooName: String => renamed from name
+                fooAge: Int => renamed from age
+                fooContact: FooContactDetails => renamed from contact
+            }
+            
+            type FooContactDetails => renamed from ContactDetails {
+                fooEmail: String => renamed from email
+                fooPhone: Int => renamed from phone
+            }
+         }
+         service Bar {
+            type Query{
+                ibar: Bar => renamed from bar 
+            } 
+            type Bar {
+                barId: ID
+                barName: String => renamed from name
+                nestedBar: Bar => hydrated from Bar.barsById(id: $source.nestedBarId) object identified by barId
+                barDetails: BarDetails => renamed from details
+            }
+            type BarDetails => renamed from Details {
+                barAge: Int => renamed from age
+                barContact: BarContactDetails => renamed from contact
+            }
+            type BarContactDetails => renamed from ContactDetails {
+                barEmail: String => renamed from email
+                barPhone: Int => renamed from phone
+            }
+         }
+        ''')
+        def underlyingSchema1 = TestUtil.schema("""
+            type Query{
+                foos: [Foo]  
+            } 
+            type Foo {
+                details: Details
+                barId: ID
+            }
+            
+            type Details {
+                name: String
+                age: Int
+                contact: ContactDetails
+            }
+            
+            type ContactDetails {
+                email: String
+                phone: Int
+            }
+       """)
+        def underlyingSchema2 = TestUtil.schema("""
+            type Query{
+                bar: Bar 
+                barsById(id: [ID]): [Bar]
+            } 
+            type Bar {
+                barId: ID
+                name: String
+                nestedBarId: ID
+                details: Details
+            }
+            type Details {
+                age: Int 
+                contact: ContactDetails
+            }
+            type ContactDetails {
+                email: String
+                phone: Int 
+            }
+        """)
+
+        def query = """
+                { 
+                    fooz { 
+                        fooDetails {
+                            fooName
+                            fooAge
+                            fooContact {
+                                fooEmail
+                                fooPhone
+                            }
+                        } 
+                        bar { 
+                            barName 
+                            nestedBar {
+                                barName 
+                                nestedBar { 
+                                    barName
+                                    barDetails {
+                                        barAge
+                                        barContact {
+                                            barEmail
+                                            barPhone
+                                        }
+                                    }
+                                } 
+                            } 
+                        } 
+                    } 
+                }
+        """
+        def expectedQuery1 = "query nadel_2_Foo {foos {details {name age contact {email phone}} barId}}"
+        def expectedQuery2 = "query nadel_2_Bar {barsById(id:[\"bar1\"]) {name nestedBarId object_identifier__UUID:barId}}"
+        def expectedQuery3 = "query nadel_2_Bar {barsById(id:[\"nestedBar1\"]) {name nestedBarId object_identifier__UUID:barId}}"
+        def expectedQuery4 = "query nadel_2_Bar {barsById(id:[\"nestedBarId456\"]) {name details {age contact {email phone}} object_identifier__UUID:barId}}"
+
+        def response1 = [foos: [[details:[name:"smith", age:1, contact:[email:"test", phone:1]] ,barId: "bar1"]]]
+        def response2 = [barsById: [[object_identifier__UUID: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"]]]
+        def response3 = [barsById: [[object_identifier__UUID: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
+        def response4 = [barsById: [[object_identifier__UUID: "nestedBarId456", name: "NestedBarName2", details:[age:1, contact:[email:"test", phone:1]]]]]
+
+        Map response
+        List<GraphQLError> errors
+
+        when:
+        (response, errors) = test2ServicesWithNCalls(
+                nsdl,
+                "Foo",
+                underlyingSchema1,
+                "Bar",
+                underlyingSchema2,
+                query,
+                ["fooz"],
+                [expectedQuery1, expectedQuery2, expectedQuery3, expectedQuery4],
+                [response1, response2, response3, response4],
+                4,
+                resultComplexityAggregator
+        )
+
+        then:
+        response == [fooz: [
+                            [fooDetails:[fooName:"smith", fooAge:1, fooContact:[fooEmail:"test", fooPhone:1]],
+                             bar:[barName:"Bar 1", nestedBar:[barName:"NestedBarName1", nestedBar:[barName:"NestedBarName2", barDetails:[barAge:1, barContact:[barEmail:"test", barPhone:1]]]]]]
+                            ]
+                    ]
+        resultComplexityAggregator.getTypeRenamesCount() == 5
+        resultComplexityAggregator.getFieldRenamesCount() == 15
     }
 
     def "hydration matching using index"() {
@@ -1130,7 +1509,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery1,
                 [issues: [issue1, issue2]],
                 expectedQuery2,
-                [usersByIds: [user1, user1, user2]]
+                [usersByIds: [user1, user1, user2]],
+                Mock(ResultComplexityAggregator)
         )
 
 
@@ -1208,7 +1588,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery1,
                 [issues: [issue1, issue2]],
                 expectedQuery2,
-                [usersByIds: [user1, null, user2]]
+                [usersByIds: [user1, null, user2]],
+                Mock(ResultComplexityAggregator)
         )
 
 
@@ -1285,7 +1666,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery1,
                 [issues: [issue1, issue2]],
                 expectedQuery2,
-                [usersByIds: [user1, null]]
+                [usersByIds: [user1, null]],
+                Mock(ResultComplexityAggregator)
         )
 
 
@@ -1360,7 +1742,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery1,
                 [issues: [issue1, issue2]],
                 expectedQuery2,
-                [usersByIssueIds: [[user1], [user1, user2]]]
+                [usersByIssueIds: [[user1], [user1, user2]]],
+                Mock(ResultComplexityAggregator)
         )
 
 
@@ -1438,7 +1821,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 expectedQuery1,
                 [issues: [issue1, issue2]],
                 expectedQuery2,
-                [usersByIssueIds: [[user1], [user1, user2]]]
+                [usersByIssueIds: [[user1], [user1, user2]]],
+                Mock(ResultComplexityAggregator)
         )
 
 
@@ -1451,46 +1835,39 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         errors.size() == 0
     }
 
-    Object[] test2ServicesWith3Calls(GraphQLSchema overallSchema,
+
+
+    Object[] test2ServicesWithNCalls(GraphQLSchema overallSchema,
                                      String serviceOneName,
                                      GraphQLSchema underlyingOne,
                                      String serviceTwoName,
                                      GraphQLSchema underlyingTwo,
                                      String query,
                                      List<String> topLevelFields,
-                                     String expectedQuery1,
-                                     Map response1,
-                                     String expectedQuery2,
-                                     Map response2,
-                                     String expectedQuery3,
-                                     Map response3,
+                                     List<String> expectedQueries,
+                                     List<Map> responses,
+                                     int serviceCalls,
                                      ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {
                                      },
-                                     Map variables = [:]
+                                     Map variables = [:],
+                                     ResultComplexityAggregator resultComplexityAggregator
     ) {
 
-        def response1ServiceResult = new ServiceExecutionResult(response1)
-        def response2ServiceResult = new ServiceExecutionResult(response2)
-        def response3ServiceResult = new ServiceExecutionResult(response3)
-
+        def response1ServiceResult = new ServiceExecutionResult(responses[0])
         boolean calledService1 = false
         ServiceExecution service1Execution = { ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
-            assert printAstCompact(sep.query) == expectedQuery1
+            assert printAstCompact(sep.query) == expectedQueries[0]
             calledService1 = true
             return completedFuture(response1ServiceResult)
         }
+
         int calledService2Count = 0;
         ServiceExecution service2Execution = { ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             calledService2Count++
-            if (calledService2Count == 1) {
-                assert printAstCompact(sep.query) == expectedQuery2
-                return completedFuture(response2ServiceResult)
-            } else {
-                assert printAstCompact(sep.query) == expectedQuery3
-                return completedFuture(response3ServiceResult)
-            }
+            assert printAstCompact(sep.query) == expectedQueries[calledService2Count]
+            return completedFuture(new ServiceExecutionResult(responses[calledService2Count]))
         }
         def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
         def definitionRegistry = Mock(DefinitionRegistry)
@@ -1512,12 +1889,201 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
         def executionData = createExecutionData(query, variables, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, Mock(ResultComplexityAggregator))
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
 
         assert calledService1
-        assert calledService2Count == 2
+        assert calledService2Count == serviceCalls - 1
 
         return [resultData(response), resultErrors(response)]
     }
+
+
+    def "renamed list inside renamed list"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+         service IssuesService {
+            type Query {
+                renamedIssue: [RenamedIssue] => renamed from issue
+            }
+            
+            type RenamedIssue => renamed from Issue {
+                renamedTicket: RenamedTicket => renamed from ticket
+            }
+            
+            type RenamedTicket => renamed from Ticket  {
+                renamedTicketTypes: [RenamedTicketType]  => renamed from ticketTypes
+            }
+
+            type RenamedTicketType => renamed from TicketType {
+                renamedId: String => renamed from id
+                renamedDate: String => renamed from date
+            }
+         }
+        ''')
+        def boardSchema = TestUtil.schema("""
+            type Query {
+                issue: [Issue]
+            }
+            
+            type Issue  {
+                ticket: Ticket
+            }
+            
+            type Ticket   {
+                ticketTypes: [TicketType]
+            }
+
+            type TicketType {
+                id: String
+                date: String
+            }
+        """)
+        def query = "{\n" +
+                "            renamedIssue {\n" +
+                "                renamedTicket {\n" +
+                "                    renamedTicketTypes {\n" +
+                "                        renamedId\n" +
+                "                        renamedDate\n" +
+                "                    }\n" +
+                "                }\n" +
+                "            }\n" +
+                "        }"
+
+        def expectedQuery1 = "query nadel_2_IssuesService {issue {ticket {ticketTypes {id date}}}}"
+        def response1 =   [issue: [[ticket: [ticketTypes: [[id:"1", date:"20/11/2020"]]]]]]
+
+        def overallResponse = [renamedIssue: [[renamedTicket: [renamedTicketTypes: [[renamedId:"1", renamedDate:"20/11/2020"]]]]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "IssuesService",
+                boardSchema,
+                query,
+                ["renamedIssue"],
+                expectedQuery1,
+                response1,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+        resultComplexityAggregator.getFieldRenamesCount() == 5
+        resultComplexityAggregator.getTypeRenamesCount() == 3
+    }
+
+
+    def 'synthetic hydration works when an ancestor field has been renamed'() {
+
+        given:
+        def issueSchema = TestUtil.schema("""
+        type Issue {
+            id: ID
+        }
+
+        type Relationship {
+            issueId: ID
+        }
+
+        type RelationshipConnection {
+            nodes: [Relationship]
+        }
+        type SyntheticIssue {
+            issue(id: ID): Issue
+        }
+
+        type Query {
+            relationships: RelationshipConnection
+            syntheticIssue: SyntheticIssue
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service IssueService {
+           type DevOpsIssue => renamed from Issue {
+               id: ID
+           }
+
+           type DevOpsRelationship => renamed from Relationship {
+               devOpsIssue: DevOpsIssue => hydrated from IssueService.syntheticIssue.issue(id: $source.issueId)
+           }
+
+           type DevOpsRelationshipConnection => renamed from RelationshipConnection {
+               devOpsNodes: [DevOpsRelationship] => renamed from nodes
+           }
+           type SyntheticIssue {
+               devOpsIssue(id: ID): DevOpsIssue => renamed from issue
+           }
+
+           type Query {
+               devOpsRelationships: DevOpsRelationshipConnection => renamed from relationships
+           }
+        }
+        ''')
+
+        def fieldDef = overallSchema.getQueryType().getFieldDefinition("devOpsRelationships")
+        def service1 = new Service("IssueService", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fieldDef, service1)
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def query = '''
+        query { 
+            devOpsRelationships {
+                devOpsNodes {
+                    devOpsIssue {
+                        id
+                    }
+                }
+            }
+        }
+        '''
+
+        def expectedQuery1 = "query nadel_2_IssueService {relationships {nodes {issueId}}}"
+        def response1 = new ServiceExecutionResult([
+                relationships: [
+                        nodes: [
+                                [issueId: "1"],
+                        ],
+                ],
+        ])
+
+        def expectedQuery2 = "query nadel_2_IssueService {syntheticIssue {issue(id:\"1\") {id}}}"
+        def response2 = new ServiceExecutionResult([syntheticIssue:[issue: [id: "1"]]])
+
+        def executionData = createExecutionData(query, [:], overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery2
+        }) >> completedFuture(response2)
+
+        resultData(response) == [
+                devOpsRelationships: [
+                        devOpsNodes: [
+                                [
+                                        devOpsIssue: [id: "1"],
+                                ],
+                        ],
+                ],
+        ]
+        resultComplexityAggregator.getFieldRenamesCount() == 2
+        resultComplexityAggregator.getTypeRenamesCount() == 3
+
+    }
+
+
+
 }
 

@@ -90,8 +90,9 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
 
         resultComplexityAggregator.getTotalNodeCount() == 2
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service") == 2
-
     }
 
     def "one call to one service with list result"() {
@@ -215,6 +216,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [foo: [bar: [id: "barId", name: "Bar1"]]]
         resultComplexityAggregator.getTotalNodeCount() == 6
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
         resultComplexityAggregator.getNodeCountsForService("service2") == 3
     }
@@ -265,6 +268,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [foo: [bar: [id: "barId", name: "Bar1"]]]
         resultComplexityAggregator.getTotalNodeCount() == 6
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
         resultComplexityAggregator.getNodeCountsForService("service2") == 3
     }
@@ -306,6 +311,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [foo: [bar: [name: "Bar1"]]]
         resultComplexityAggregator.getTotalNodeCount() == 5
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
         resultComplexityAggregator.getNodeCountsForService("service2") == 2
     }
@@ -346,6 +353,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [foo: [barLongerInput: [name: "Bar1"]]]
         resultComplexityAggregator.getTotalNodeCount() == 5
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
         resultComplexityAggregator.getNodeCountsForService("service2") == 2
     }
@@ -441,6 +450,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         resultData(response) == [issues: [issue1Result]]
 
         resultComplexityAggregator.getTotalNodeCount() == 13
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 9
         resultComplexityAggregator.getNodeCountsForService("UserService") == 4
 
@@ -531,6 +542,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         resultData(response) == [issues: [issue1Result]]
 
         resultComplexityAggregator.getTotalNodeCount() == 11
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
         resultComplexityAggregator.getNodeCountsForService("UserService") == 6
 
@@ -624,6 +637,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def issue3Result = [id: "ISSUE-3", authors: [[id: "USER-2"], [id: "USER-4"], [id: "USER-5"]]]
         resultData(response) == [issues: [issue1Result, issue2Result, issue3Result]]
         resultComplexityAggregator.getTotalNodeCount() == 23
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 11
         resultComplexityAggregator.getNodeCountsForService("UserService") == 12
 
@@ -724,6 +739,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def issue3Result = [id: "ISSUE-3", authors: [[id: "USER-2"], [id: "USER-4"], [id: "USER-5"]]]
         resultData(response) == [issues: [issue1Result, issue2Result, issue3Result]]
         resultComplexityAggregator.getTotalNodeCount() == 23
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 11
         resultComplexityAggregator.getNodeCountsForService("UserService") == 12
 
@@ -816,6 +833,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"], [id: "barId2", name: "Bar3"], [id: "barId3", name: "Bar4"]]]]
         resultComplexityAggregator.getTotalNodeCount() == 12
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
         resultComplexityAggregator.getNodeCountsForService("service2") == 9
     }
@@ -867,6 +886,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [issue: [name: null]]
         resultComplexityAggregator.getTotalNodeCount() == 3
+        resultComplexityAggregator.getFieldRenamesCount() == 1
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 3
     }
 
@@ -917,6 +938,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [issue: [name: null]]
         resultComplexityAggregator.getTotalNodeCount() == 3
+        resultComplexityAggregator.getFieldRenamesCount() == 1
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 3
     }
 
@@ -996,6 +1019,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [foo: [bar: [[name: "Bar1"], [name: "Bar2"], [name: "Bar3"]]]]
         resultComplexityAggregator.getTotalNodeCount() == 9
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
         resultComplexityAggregator.getNodeCountsForService("service2") == 6
     }
@@ -1074,6 +1099,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [foo: [bar: [null, null, null]]]
         resultComplexityAggregator.getTotalNodeCount() == 3
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
     }
 
@@ -1151,6 +1178,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [foo: [bar: [[id: "barId1", name: "Bar1"]]]]
         resultComplexityAggregator.getTotalNodeCount() == 6
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
         resultComplexityAggregator.getNodeCountsForService("service2") == 3
     }
@@ -1248,6 +1277,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def issue2Result = [id: "ISSUE-2", authorId: "USER-2", authorName: "User 2"]
         resultData(response) == [issues: [issue1Result, issue2Result]]
         resultComplexityAggregator.getTotalNodeCount() == 8
+        resultComplexityAggregator.getFieldRenamesCount() == 4
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 8
 
     }
@@ -1314,6 +1345,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def issue1Result = [id: "ISSUE-1", authorId: "USER-1", authorName: "User 1", details: [extra: "extra 1"]]
         resultData(response) == [issue: issue1Result]
         resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getFieldRenamesCount() == 4
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 4
 
     }
@@ -1383,6 +1416,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def issue2Result = [id: "ISSUE-2", authorName: [firstName: "Elizabeth", lastName: "Windsor"]]
         resultData(response) == [issues: [issue1Result, issue2Result]]
         resultComplexityAggregator.getTotalNodeCount() == 8
+        resultComplexityAggregator.getFieldRenamesCount() == 6
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 8
     }
 
@@ -1439,6 +1474,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def detail1Result = [labels: ["label1", "label2"]]
         resultData(response) == [details: [detail1Result]]
         resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getFieldRenamesCount() == 1
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 4
     }
 
@@ -1495,6 +1532,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def detail1Result = [labels: [["label1", "label2"], ["label3"]]]
         resultData(response) == [details: [detail1Result]]
         resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getFieldRenamesCount() == 1
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 4
     }
 
@@ -1562,6 +1601,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def issue2Result = [id: "ISSUE-2", authorName: [firstName: "Elizabeth", lastName: "Windsor"]]
         resultData(response) == [issues: [issue1Result, issue2Result]]
         resultComplexityAggregator.getTotalNodeCount() == 8
+        resultComplexityAggregator.getFieldRenamesCount() == 4
+        resultComplexityAggregator.getTypeRenamesCount() == 2
         resultComplexityAggregator.getNodeCountsForService("Issues") == 8
     }
 
@@ -1645,6 +1686,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def issue1Result = [id: "ISSUE-1", author: [name: "User 1"]]
         resultData(response) == [issues: [issue1Result]]
         resultComplexityAggregator.getTotalNodeCount() == 7
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
         resultComplexityAggregator.getNodeCountsForService("UserService") == 2
     }
@@ -1729,6 +1772,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def issue1Result = [id: "ISSUE-1", author: [name: "User 1"]]
         resultData(response) == [issues: [issue1Result]]
         resultComplexityAggregator.getTotalNodeCount() == 7
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
         resultComplexityAggregator.getNodeCountsForService("UserService") == 2
 
@@ -1782,6 +1827,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [hello: "world"]
         resultComplexityAggregator.getTotalNodeCount() == 2
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("MyService") == 2
     }
 
@@ -1876,6 +1923,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
 
         resultData(response) == [issues: [issue1, issue2], user: user]
         resultComplexityAggregator.getTotalNodeCount() == 10
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 6
         resultComplexityAggregator.getNodeCountsForService("UserService") == 4
 
@@ -2001,6 +2050,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         resultData(response) == [issues: [issue1Result], usersByIds: [[id: "USER-1", name: "User 1"]]]
 
         resultComplexityAggregator.getTotalNodeCount() == 16
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
         resultComplexityAggregator.getNodeCountsForService("UserService") == 11
 
@@ -2083,6 +2134,8 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         resultData(response) == [boardScope: [board: [cardChildren: [[id: "1234", key: "abc", summary: "Summary 1"], [id: "456", key: "def", summary: "Summary 2"]]]]]
 
         resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getFieldRenamesCount() == 5
+        resultComplexityAggregator.getTypeRenamesCount() == 2
         resultComplexityAggregator.getNodeCountsForService("Issues") == 4
 
     }
@@ -2198,6 +2251,8 @@ fragment F1 on TestingCharacter {
         def result = [movies: [[id: "M1", name: "Movie 1", characters: [[id: "C1", name: "Luke"], [id: "C2", name: "Leia"]]], [id: "M2", name: "Movie 2", characters: [[id: "C1", name: "Luke"], [id: "C2", name: "Leia"], [id: "C3", name: "Anakin"]]]]]
         resultData(response) == [testing: result]
         resultComplexityAggregator.getTotalNodeCount() == 26
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 3
         resultComplexityAggregator.getNodeCountsForService("testing") == 26
     }
 
@@ -2272,6 +2327,8 @@ fragment F1 on TestingCharacter {
         resultData(response) == [issues: [issue1Result]]
 
         resultComplexityAggregator.getTotalNodeCount() == 5
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
 
     }
@@ -2347,6 +2404,8 @@ fragment F1 on TestingCharacter {
         resultData(response) == [issues: [issue1Result]]
 
         resultComplexityAggregator.getTotalNodeCount() == 5
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
 
     }
@@ -2440,6 +2499,8 @@ fragment F1 on TestingCharacter {
         resultData(response) == [issues: [issue1Result, issue2Result, issue3Result]]
 
         resultComplexityAggregator.getTotalNodeCount() == 23
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 11
         resultComplexityAggregator.getNodeCountsForService("UserService") == 12
 
@@ -2489,9 +2550,9 @@ fragment F1 on TestingCharacter {
 
 
         def query = "{issues {__typename id ... on Issue {authorIds}}}"
-        def expectedQuery1 = "query nadel_2_Issues {issues {__typename id ... on Issue {authorIds} typename__UUID:__typename}}"
-        def issue1 = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"], __typename: "Issue", typename__UUID: "Issue"]
-        def issue2 = [id: "ISSUE-2", authorIds: ["USER-3"], __typename: "Issue", typename__UUID: "Issue"]
+        def expectedQuery1 = "query nadel_2_Issues {issues {__typename id ... on Issue {authorIds} type_hint_typename__UUID:__typename}}"
+        def issue1 = [id: "ISSUE-1", authorIds: ["USER-1", "USER-2"], __typename: "Issue", type_hint_typename__UUID: "Issue"]
+        def issue2 = [id: "ISSUE-2", authorIds: ["USER-3"], __typename: "Issue", type_hint_typename__UUID: "Issue"]
         def response1 = new ServiceExecutionResult([issues: [issue1, issue2]])
 
         def executionData = createExecutionData(query, overallSchema)
@@ -2511,6 +2572,8 @@ fragment F1 on TestingCharacter {
         resultData(response) == [issues: [issue1Result, issue2Result]]
 
         resultComplexityAggregator.getTotalNodeCount() == 13
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 13
     }
 
@@ -2591,6 +2654,8 @@ fragment F1 on TestingCharacter {
 
         //want to make sure we still get node counts when there's an error
         resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
         resultComplexityAggregator.getNodeCountsForService("service2") == 1
     }
@@ -2672,6 +2737,8 @@ fragment F1 on TestingCharacter {
         errors[0].message == "Some error occurred"
 
         resultComplexityAggregator.getTotalNodeCount() == 3
+        resultComplexityAggregator.getFieldRenamesCount() == 0
+        resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("service1") == 3
     }
 
@@ -2701,14 +2768,14 @@ fragment F1 on TestingCharacter {
                 }
                 type Foo {
                     id: ID!
-                    fooBar: Bar => hydrated from Bar.barById(id: \$source.fooBarId)
+                    fooBar: RenamedBar => hydrated from Bar.barById(id: \$source.fooBarId)
                 }
             }
             service Bar {
                 type Query {
-                    barById(id: ID!): Bar
+                    barById(id: ID!): RenamedBar
                 }
-                type Bar {
+                type RenamedBar => renamed from Bar {
                     id: ID!
                 }
             }
@@ -2762,6 +2829,8 @@ fragment F1 on TestingCharacter {
         ]
 
         resultComplexityAggregator.getTotalNodeCount() == 4
+        resultComplexityAggregator.getFieldRenamesCount() == 1
+        resultComplexityAggregator.getTypeRenamesCount() == 1
         resultComplexityAggregator.getNodeCountsForService("Foo") == 2
         resultComplexityAggregator.getNodeCountsForService("Bar") == 2
     }
@@ -2831,6 +2900,7 @@ fragment F1 on TestingCharacter {
                         board(id:1) {
                             id 
                             cardChildren { 
+                                id
                                 assignee { 
                                     accountId
                                  } 
@@ -2838,8 +2908,8 @@ fragment F1 on TestingCharacter {
                         }
                         }'''
 
-        def expectedQuery1 = "query nadel_2_TestBoard {board(id:1) {id issueChildren {issue {assignee {accountId}}}}}"
-        def data1 = [board: [id: "1", issueChildren: [[issue: [assignee: [accountId: "1"]]], [issue: [assignee: [accountId: "2"]]], [issue: [assignee: [accountId: "3"]]]]]]
+        def expectedQuery1 = "query nadel_2_TestBoard {board(id:1) {id issueChildren {id issue {assignee {accountId}}}}}"
+        def data1 = [board: [id: "1", issueChildren: [[id:"a1", issue: [assignee: [accountId: "1"]]], [id:"a2", issue: [assignee: [accountId: "2"]]], [id:"a3", issue: [assignee: [accountId: "3"]]]]]]
         def response1 = new ServiceExecutionResult(data1)
 
         def expectedQuery2 = "query nadel_2_Users {users(accountIds:[\"1\",\"2\",\"3\"]) {accountId object_identifier__UUID:accountId}}"
@@ -2868,8 +2938,9 @@ fragment F1 on TestingCharacter {
             printAstCompact(sep.query) == expectedQuery2
         }) >> completedFuture(response2)
 
-        resultData(response) == [board: [id: "1", cardChildren: [[assignee: [accountId: "1"]], [assignee: [accountId: "2"]], [assignee: [accountId: "3"]]]]]
-
+        resultData(response) == [board: [id: "1", cardChildren: [ [id:"a1",assignee: [accountId: "1"]], [id:"a2", assignee: [accountId: "2"]], [id:"a3", assignee: [accountId: "3"]]]]]
+        resultComplexityAggregator.getFieldRenamesCount() == 1
+        resultComplexityAggregator.getTypeRenamesCount() == 2
     }
 
 

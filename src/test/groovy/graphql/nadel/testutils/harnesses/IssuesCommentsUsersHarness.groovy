@@ -36,8 +36,15 @@ class IssuesCommentsUsersHarness {
                 key : String
                 summary : String
                 description : String
+                epic: Epic
                 reporter : User => hydrated from UserService.userById(id: $source.reporterId)
                 comments : [Comment] => hydrated from CommentService.commentById(id: $source.commentIds)
+            }
+            
+            type Epic {
+                id: ID
+                title: String
+                description : String
             }
          }
          
@@ -80,8 +87,15 @@ class IssuesCommentsUsersHarness {
             key : String
             summary : String
             description : String
+            epic: Epic
             reporterId : ID
             commentIds : [ID]
+        }
+        
+        type Epic {
+            id: ID
+            title: String
+            description : String
         }
     '''
 
@@ -223,9 +237,13 @@ class IssuesCommentsUsersHarness {
     }
 
 
+    static epicData = [
+            new Epic("E1", "tech debt", "epic with tech debt")
+    ]
+
     static issueData = [
-            new Issue("I1", "fred", ["C1", "C3", "C5"]),
-            new Issue("I2", "zed", ["C2", "C4", "C6"])
+            new Issue("I1", "fred", ["C1", "C3", "C5"], epicData[0]),
+            new Issue("I2", "zed", ["C2", "C4", "C6"], epicData[0])
     ]
 
     static commentData = [
@@ -251,16 +269,30 @@ class IssuesCommentsUsersHarness {
         String key
         String summary
         String description
+        Epic epic
         String reporterId
         List<String> commentIds
 
-        Issue(String id, String reporterId, List<String> commentIds) {
+        Issue(String id, String reporterId, List<String> commentIds, Epic epic) {
             this.id = id
             this.key = "WORK-" + id
             this.summary = "Summary for $key"
             this.description = "Description of $key"
             this.reporterId = reporterId
             this.commentIds = commentIds
+            this.epic = epic
+        }
+    }
+
+    static class Epic {
+        String id
+        String title
+        String description
+
+        Epic(String id, String title, String description) {
+            this.id = id
+            this.title = title
+            this.description = description
         }
     }
 

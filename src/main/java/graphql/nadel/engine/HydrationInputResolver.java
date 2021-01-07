@@ -149,7 +149,7 @@ public class HydrationInputResolver {
 
         if (underlyingServiceHydration.getSyntheticField() != null) {
             GraphQLFieldDefinition syntheticFieldDefinition = overallSchema.getQueryType().getFieldDefinition(underlyingServiceHydration.getSyntheticField());
-            if(syntheticFieldDefinition == null) {
+            if (syntheticFieldDefinition == null) {
                 return null;
             }
             GraphQLObjectType syntheticFieldDefinitionType = (GraphQLObjectType) syntheticFieldDefinition.getType();
@@ -208,7 +208,7 @@ public class HydrationInputResolver {
         if (syntheticFieldName == null) {
             topLevelFieldDefinition = service.getUnderlyingSchema().getQueryType().getFieldDefinition(topLevelFieldName);
         } else {
-            topLevelFieldDefinition = ((GraphQLObjectType)service.getUnderlyingSchema().getQueryType().getFieldDefinition(syntheticFieldName).getType()).getFieldDefinition(topLevelFieldName);
+            topLevelFieldDefinition = ((GraphQLObjectType) service.getUnderlyingSchema().getQueryType().getFieldDefinition(syntheticFieldName).getType()).getFieldDefinition(topLevelFieldName);
         }
 
         return isList(unwrapNonNull(topLevelFieldDefinition.getType()));
@@ -252,7 +252,7 @@ public class HydrationInputResolver {
         String operationName = buildOperationName(service, executionContext);
 
         boolean isSyntheticHydration = underlyingServiceHydration.getSyntheticField() != null;
-        QueryTransformationResult queryTransformationResult = queryTransformer
+        CompletableFuture<QueryTransformationResult> queryTransformationResultCF = queryTransformer
                 .transformHydratedTopLevelField(
                         executionContext,
                         service.getUnderlyingSchema(),
@@ -266,23 +266,24 @@ public class HydrationInputResolver {
                         isSyntheticHydration
                 );
 
+        return queryTransformationResultCF.thenCompose(queryTransformationResult -> {
 
-        CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
-                .execute(executionContext, queryTransformationResult, service, operation,
-                        serviceContexts.get(service), true);
+            CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
+                    .execute(executionContext, queryTransformationResult, service, operation,
+                            serviceContexts.get(service), true);
 
-        return serviceResult
-                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
-                        hydrationInputNode,
-                        hydrationTransformation,
-                        resultNode,
-                        hydrationInputNode.getNormalizedField(),
-                        queryTransformationResult,
-                        getNadelContext(executionContext),
-                        resultComplexityAggregator
-                ))
-                .whenComplete(this::possiblyLogException);
-
+            return serviceResult
+                    .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
+                            hydrationInputNode,
+                            hydrationTransformation,
+                            resultNode,
+                            hydrationInputNode.getNormalizedField(),
+                            queryTransformationResult,
+                            getNadelContext(executionContext),
+                            resultComplexityAggregator
+                    ))
+                    .whenComplete(this::possiblyLogException);
+        });
     }
 
     private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode,
@@ -363,6 +364,8 @@ public class HydrationInputResolver {
                         queryTransformationResult.getRemovedFieldMap());
         String serviceName = hydrationTransformation.getUnderlyingServiceHydration().getServiceName();
         resultComplexityAggregator.incrementServiceNodeCount(serviceName, firstTopLevelResultNode.getTotalNodeCount());
+        resultComplexityAggregator.incrementTypeRenameCount(firstTopLevelResultNode.getTotalTypeRenameCount());
+        resultComplexityAggregator.incrementFieldRenameCount(firstTopLevelResultNode.getTotalFieldRenameCount());
         firstTopLevelResultNode = firstTopLevelResultNode.withNewErrors(rootResultNode.getErrors());
         firstTopLevelResultNode = StrategyUtil.copyFieldInformation(hydrationInputNode, firstTopLevelResultNode);
 
@@ -392,7 +395,7 @@ public class HydrationInputResolver {
         String operationName = buildOperationName(service, executionContext);
 
         boolean isSyntheticHydration = underlyingServiceHydration.getSyntheticField() != null;
-        QueryTransformationResult queryTransformationResult = queryTransformer
+        CompletableFuture<QueryTransformationResult> queryTransformationResultCF = queryTransformer
                 .transformHydratedTopLevelField(
                         executionContext,
                         service.getUnderlyingSchema(),
@@ -406,11 +409,12 @@ public class HydrationInputResolver {
                 );
 
 
-        return serviceExecutor
-                .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), true)
-                .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, hydrationInputs, resultNode, queryTransformationResult, resultComplexityAggregator))
-                .whenComplete(this::possiblyLogException);
-
+        return queryTransformationResultCF.thenCompose(queryTransformationResult -> {
+            return serviceExecutor
+                    .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), true)
+                    .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, hydrationInputs, resultNode, queryTransformationResult, resultComplexityAggregator))
+                    .whenComplete(this::possiblyLogException);
+        });
     }
 
     private Field createBatchHydrationTopLevelField(ExecutionContext executionContext,
@@ -512,7 +516,7 @@ public class HydrationInputResolver {
 
             ExecutionResultNode matchingResolvedNode;
             if (isResolveByIndex) {
-            matchingResolvedNode = resolvedNodes.get(i);
+                matchingResolvedNode = resolvedNodes.get(i);
             } else {
                 matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
             }
@@ -535,7 +539,8 @@ public class HydrationInputResolver {
                 String serviceName = hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName();
                 int nodeCount = overallResultNode.getTotalNodeCount();
                 resultComplexityAggregator.incrementServiceNodeCount(serviceName, nodeCount);
-
+                resultComplexityAggregator.incrementTypeRenameCount(overallResultNode.getTotalTypeRenameCount());
+                resultComplexityAggregator.incrementFieldRenameCount(overallResultNode.getTotalFieldRenameCount());
                 resultNode = copyFieldInformation(hydrationInputNode, overallResultNode);
             } else {
                 resultNode = createNullValue(hydrationInputNode);
