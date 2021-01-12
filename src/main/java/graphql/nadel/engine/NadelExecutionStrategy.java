@@ -13,11 +13,14 @@ import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
+import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.TransformationMetadata;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
+import graphql.nadel.result.ElapsedTime;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.ResultComplexityAggregator;
 import graphql.nadel.result.RootExecutionResultNode;
@@ -27,9 +30,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
@@ -45,11 +51,11 @@ public class NadelExecutionStrategy {
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
     private final OverallQueryTransformer queryTransformer = new OverallQueryTransformer();
+    private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
 
 
     private final FieldInfos fieldInfos;
     private final GraphQLSchema overallSchema;
-    private final NadelInstrumentation instrumentation;
     private final ServiceExecutor serviceExecutor;
     private final HydrationInputResolver hydrationInputResolver;
     private final ServiceExecutionHooks serviceExecutionHooks;
@@ -62,7 +68,6 @@ public class NadelExecutionStrategy {
                                   NadelInstrumentation instrumentation,
                                   ServiceExecutionHooks serviceExecutionHooks) {
         this.overallSchema = overallSchema;
-        this.instrumentation = instrumentation;
         assertNotEmpty(services);
         this.fieldInfos = fieldInfos;
         this.serviceExecutionHooks = serviceExecutionHooks;
@@ -157,6 +162,13 @@ public class NadelExecutionStrategy {
 
                 ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, queryTransform.getVariableValues());
 
+                String topLevelFieldId = esi.getFieldDefinition().getDefinition().getAdditionalData().get("id");
+                Optional<TransformationMetadata.NormalizedFieldAndError> maybeTopLevelFieldError = queryTransform.getRemovedFieldMap().getRemovedFieldById(topLevelFieldId);
+                boolean topLevelFieldExecutionShouldBeSkipped = maybeTopLevelFieldError.isPresent();
+                if (topLevelFieldExecutionShouldBeSkipped) {
+                    RootExecutionResultNode value = getSkippedServiceCallResult(nadelContext, esi, executionContext, maybeTopLevelFieldError.get());
+                    return CompletableFuture.completedFuture(value);
+                }
 
                 CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
                         .execute(newExecutionContext, queryTransform, service, operation, serviceContext, false);
@@ -209,6 +221,19 @@ public class NadelExecutionStrategy {
             }));
         }
         return resultNodes;
+    }
+
+    private RootExecutionResultNode getSkippedServiceCallResult(NadelContext nadelContext, ExecutionStepInfo esi, ExecutionContext newExecutionContext, TransformationMetadata.NormalizedFieldAndError topLevelFieldError) {
+        HashMap<String, Object> stringObjectHashMap = new HashMap<>();
+        HashMap<String, Object> errorMap = new HashMap<>();
+        errorMap.put("message", topLevelFieldError.getError().getMessage());
+        stringObjectHashMap.put(esi.getFieldDefinition().getName(), null);
+        return resultToResultNode.resultToResultNode(
+                newExecutionContext,
+                new ServiceExecutionResult(stringObjectHashMap, Collections.singletonList(errorMap)),
+                ElapsedTime.newElapsedTime().build(),
+                nadelContext.getNormalizedOverallQuery()
+        );
     }
 
 

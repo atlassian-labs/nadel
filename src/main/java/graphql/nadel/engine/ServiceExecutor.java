@@ -206,8 +206,6 @@ public class ServiceExecutor {
             serviceResultToResultNodesArgs.normalizedQuery = normalizedQuery;
         }
         return resultToResultNode.resultToResultNode(executionContextForService,
-                underlyingRootStepInfo,
-                transformedMergedFields,
                 serviceExecutionResult,
                 elapsedTime,
                 normalizedQuery);

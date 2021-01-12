@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Internal
 public class TransformationMetadata {
@@ -48,6 +49,16 @@ public class TransformationMetadata {
             }
         }
         return result;
+    }
+
+    public Optional<NormalizedFieldAndError> getRemovedFieldById(String id) {
+        for (NormalizedFieldAndError fieldAndError : removedFields) {
+            String fieldId = fieldAndError.normalizedField.getFieldDefinition().getDefinition().getAdditionalData().get("id");
+            if (id.equals(fieldId)) {
+                return Optional.of(fieldAndError);
+            }
+        }
+        return Optional.empty();
     }
 
     public boolean hasRemovedFields() {
