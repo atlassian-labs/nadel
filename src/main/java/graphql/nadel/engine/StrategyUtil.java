@@ -7,8 +7,6 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.nadel.Operation;
 import graphql.nadel.dsl.NodeId;
 import graphql.nadel.result.ExecutionResultNode;
-import graphql.nadel.result.LeafExecutionResultNode;
-import graphql.nadel.result.ListExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 import graphql.util.Breadcrumb;
 import graphql.util.NodeMultiZipper;
@@ -21,9 +19,6 @@ import graphql.util.TraverserVisitorStub;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,8 +67,7 @@ public class StrategyUtil {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 if (context.thisNode() instanceof HydrationInputNode) {
-                    NodeZipper<ExecutionResultNode> nodeZipper = new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), RESULT_NODE_ADAPTER);
-                    result.add(nodeZipper);
+                    result.add(new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), RESULT_NODE_ADAPTER));
                 }
                 return TraversalControl.CONTINUE;
             }

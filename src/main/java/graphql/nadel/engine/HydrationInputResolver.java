@@ -41,7 +41,6 @@ import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,7 +51,6 @@ import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.Field.newField;
 import static graphql.language.SelectionSet.newSelectionSet;
-import static graphql.nadel.engine.ArtificialFieldUtils.TYPE_NAME_ALIAS_PREFIX_FOR_EXTRA_SOURCE_ARGUMENTS;
 import static graphql.nadel.engine.ArtificialFieldUtils.addObjectIdentifier;
 import static graphql.nadel.engine.StrategyUtil.changeFieldIdsInResultNode;
 import static graphql.nadel.engine.StrategyUtil.copyFieldInformation;
@@ -140,10 +138,9 @@ public class HydrationInputResolver {
                                           Map<Service, Object> serviceContexts,
                                           ResultComplexityAggregator resultComplexityAggregator) {
         List<NodeMultiZipper<ExecutionResultNode>> batchesWithCorrectSize = groupIntoCorrectBatchSizes(batch);
-        HashMap<RemoteArgumentDefinition,HashMap<ExecutionPath, Integer>> correctBatchArgumentIndex = new HashMap<>();
         for (NodeMultiZipper<ExecutionResultNode> oneBatch : batchesWithCorrectSize) {
             List<HydrationInputNode> batchedNodes = map(oneBatch.getZippers(), zipper -> (HydrationInputNode) zipper.getCurNode());
-            CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, batchedNodes, serviceContexts, resultComplexityAggregator, correctBatchArgumentIndex);
+            CompletableFuture<List<ExecutionResultNode>> executionResultNodeCompletableFuture = resolveHydrationInputBatch(context, batchedNodes, serviceContexts, resultComplexityAggregator);
             resolvedNodeCFs.add(replaceNodesInZipper(oneBatch, executionResultNodeCompletableFuture));
         }
     }
@@ -154,7 +151,7 @@ public class HydrationInputResolver {
 
         if (underlyingServiceHydration.getSyntheticField() != null) {
             GraphQLFieldDefinition syntheticFieldDefinition = overallSchema.getQueryType().getFieldDefinition(underlyingServiceHydration.getSyntheticField());
-            if(syntheticFieldDefinition == null) {
+            if (syntheticFieldDefinition == null) {
                 return null;
             }
             GraphQLObjectType syntheticFieldDefinitionType = (GraphQLObjectType) syntheticFieldDefinition.getType();
@@ -213,7 +210,7 @@ public class HydrationInputResolver {
         if (syntheticFieldName == null) {
             topLevelFieldDefinition = service.getUnderlyingSchema().getQueryType().getFieldDefinition(topLevelFieldName);
         } else {
-            topLevelFieldDefinition = ((GraphQLObjectType)service.getUnderlyingSchema().getQueryType().getFieldDefinition(syntheticFieldName).getType()).getFieldDefinition(topLevelFieldName);
+            topLevelFieldDefinition = ((GraphQLObjectType) service.getUnderlyingSchema().getQueryType().getFieldDefinition(syntheticFieldName).getType()).getFieldDefinition(topLevelFieldName);
         }
 
         return isList(unwrapNonNull(topLevelFieldDefinition.getType()));
@@ -317,19 +314,17 @@ public class HydrationInputResolver {
 
     private List<Argument> getArguments(HydrationInputNode hydrationInputNode, UnderlyingServiceHydration underlyingServiceHydration, Field originalField) {
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
-        List<RemoteArgumentDefinition> argumentDefinitionsFromSourceObjects = new ArrayList<>();
+        List<RemoteArgumentDefinition> argumentDefinitionsFromSourceObjects = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
         List<Argument> allArguments = new ArrayList<>();
-
-        argumentDefinitionsFromSourceObjects.addAll(filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD));
 
         for (RemoteArgumentDefinition definition : argumentDefinitionsFromSourceObjects) {
             List<String> sourcePath = definition.getRemoteArgumentSource().getPath();
             Object definitionValue = getDefinitionValue(sourcePath, hydrationInputNode.getCompletedValue());
             Value argumentValue = (definitionValue != null) ? new StringValue(definitionValue.toString()) : NullValue.newNullValue().build();
             Argument argumentAstFromSourceObject = Argument.newArgument()
-                     .name(definition.getName())
-                     .value(argumentValue)
-                     .build();
+                    .name(definition.getName())
+                    .value(argumentValue)
+                    .build();
             allArguments.add(argumentAstFromSourceObject);
         }
 
@@ -392,8 +387,7 @@ public class HydrationInputResolver {
     private CompletableFuture<List<ExecutionResultNode>> resolveHydrationInputBatch(ExecutionContext executionContext,
                                                                                     List<HydrationInputNode> hydrationInputs,
                                                                                     Map<Service, Object> serviceContexts,
-                                                                                    ResultComplexityAggregator resultComplexityAggregator,
-                                                                                    HashMap<RemoteArgumentDefinition,HashMap<ExecutionPath, Integer>> correctBatchArgumentIndex) {
+                                                                                    ResultComplexityAggregator resultComplexityAggregator) {
 
         List<HydrationTransformation> hydrationTransformations = map(hydrationInputs, HydrationInputNode::getHydrationTransformation);
 
@@ -406,7 +400,7 @@ public class HydrationInputResolver {
         Field topLevelField = createBatchHydrationTopLevelField(executionContext,
                 hydrationInputs,
                 originalField,
-                underlyingServiceHydration, correctBatchArgumentIndex);
+                underlyingServiceHydration);
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
         Operation operation = Operation.QUERY;
@@ -437,13 +431,12 @@ public class HydrationInputResolver {
     private Field createBatchHydrationTopLevelField(ExecutionContext executionContext,
                                                     List<HydrationInputNode> hydrationInputs,
                                                     Field originalField,
-                                                    UnderlyingServiceHydration underlyingServiceHydration,
-                                                    HashMap<RemoteArgumentDefinition,HashMap<ExecutionPath, Integer>> correctBatchArgumentIndex) {
+                                                    UnderlyingServiceHydration underlyingServiceHydration) {
 
         String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
         String syntheticFieldName = underlyingServiceHydration.getSyntheticField();
 
-        List<Argument> allArguments = getBatchArguments(hydrationInputs, originalField, underlyingServiceHydration, correctBatchArgumentIndex);
+        List<Argument> allArguments = getBatchArguments(hydrationInputs, originalField, underlyingServiceHydration);
 
         Field topLevelField = newField(topLevelFieldName)
                 .selectionSet(originalField.getSelectionSet())
@@ -468,24 +461,18 @@ public class HydrationInputResolver {
 
     private List<Argument> getBatchArguments(List<HydrationInputNode> hydrationInputs,
                                              Field originalField,
-                                             UnderlyingServiceHydration underlyingServiceHydration,
-                                             HashMap<RemoteArgumentDefinition, HashMap<ExecutionPath, Integer>> correctBatchArgumentIndex) {
+                                             UnderlyingServiceHydration underlyingServiceHydration) {
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
-        List<RemoteArgumentDefinition> argumentDefinitionsFromSourceObjects = new ArrayList<>();
-
-        argumentDefinitionsFromSourceObjects.addAll(filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD));
+        List<RemoteArgumentDefinition> argumentDefinitionsFromSourceObjects = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
         List<Argument> allArguments = new ArrayList<>();
-        List<HydrationInputNode> fixedHydrationInputs = new ArrayList<>();
+
         for (RemoteArgumentDefinition definition : argumentDefinitionsFromSourceObjects) {
             List<Value> values = new ArrayList<>();
             for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
                 List<String> sourcePath = definition.getRemoteArgumentSource().getPath();
-                Object value = getDefinitionValue(sourcePath, hydrationInputNode.getCompletedValue());
-                if (value != null) {
-                    values.add(StringValue.newStringValue(value.toString()).build());
-                } else {
-                    values.add(NullValue.newNullValue().build());
-                }
+                Object definitionValue = getDefinitionValue(sourcePath, hydrationInputNode.getCompletedValue());
+                Value argumentValue = (definitionValue != null) ? new StringValue(definitionValue.toString()) : NullValue.newNullValue().build();
+                values.add(argumentValue);
             }
             Argument argumentAstFromSourceObject = Argument.newArgument().name(definition.getName()).value(new ArrayValue(values)).build();
             allArguments.add(argumentAstFromSourceObject);
@@ -557,8 +544,9 @@ public class HydrationInputResolver {
 
             ExecutionResultNode matchingResolvedNode;
             if (isResolveByIndex) {
-            matchingResolvedNode = resolvedNodes.get(i);
+                matchingResolvedNode = resolvedNodes.get(i);
             } else {
+                // the first source object defined in the nadel schema is the idDefinition
                 RemoteArgumentDefinition idDefinition = findOneOrNull(serviceHydration.getArguments(), argument -> (argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD));
                 matchingResolvedNode = findMatchingResolvedNode(executionContext,
                         hydrationInputNode,
@@ -626,7 +614,7 @@ public class HydrationInputResolver {
             Object id = idNode.getCompletedValue();
             assertNotNull(id, () -> "object identifier is null");
             if (id.equals(inputNodeId)) {
-                return (ObjectExecutionResultNode) resolvedNode;
+                return resolvedNode;
             }
         }
         return null;
@@ -651,7 +639,7 @@ public class HydrationInputResolver {
 
     private String buildOperationName(Service service, ExecutionContext executionContext) {
         // to help with downstream debugging we put our name and their name in the operation
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        NadelContext nadelContext = executionContext.getContext();
         if (nadelContext.getOriginalOperationName() != null) {
             return format("nadel_2_%s_%s", service.getName(), nadelContext.getOriginalOperationName());
         } else {

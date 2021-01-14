@@ -1,6 +1,5 @@
 package graphql.nadel;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
@@ -46,7 +45,6 @@ import static graphql.nadel.dsl.ExtendedFieldDefinition.newExtendedFieldDefiniti
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.CONTEXT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD;
 import static graphql.nadel.util.FpKit.map;
 
 @Internal

@@ -69,16 +69,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Issues",
                 underlyingSchema,
                 query,
                 ["issue"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -192,16 +191,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Foo",
                 underlyingSchema,
                 query,
                 ["foo"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -249,16 +247,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Songs",
                 underlyingSchema,
                 query,
                 ["music"],
-                expectedQuery1,
-                response1,
-                null,
-                null,
+                [expectedQuery1],
+                [response1],
+                1,
                 resultComplexityAggregator
         )
         then:
@@ -305,16 +302,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Songs",
                 underlyingSchema,
                 query,
                 ["music"],
-                expectedQuery1,
-                response1,
-                null,
-                null,
+                [expectedQuery1],
+                [response1],
+                1,
                 resultComplexityAggregator
         )
         then:
@@ -366,16 +362,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Issues",
                 underlyingSchema,
                 query,
                 ["issue"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -434,16 +429,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Issues",
                 underlyingSchema,
                 query,
                 ["issue"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -499,16 +493,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Issues",
                 underlyingSchema,
                 query,
                 ["issue"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -564,16 +557,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Issues",
                 underlyingSchema,
                 query,
                 ["issue"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -626,16 +618,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Issues",
                 underlyingSchema,
                 query,
                 ["issue"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -688,16 +679,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Issues",
                 underlyingSchema,
                 query,
                 ["issue"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -750,16 +740,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Issues",
                 underlyingSchema,
                 query,
                 ["issue"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -817,16 +806,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Foo",
                 underlyingSchema,
                 query,
                 ["bar"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:
@@ -883,16 +871,15 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         Map response
         List<GraphQLError> errors
         when:
-        (response, errors) = test1ServiceWithHydration(
+        (response, errors) = test1ServiceWithNHydration(
                 overallSchema,
                 "Foo",
                 underlyingSchema,
                 query,
                 ["bar"],
-                expectedQuery1,
-                response1,
-                expectedQuery2,
-                response2,
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
                 resultComplexityAggregator
         )
         then:

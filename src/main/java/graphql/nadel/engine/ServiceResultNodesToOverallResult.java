@@ -239,10 +239,6 @@ public class ServiceResultNodesToOverallResult {
                 return null;
             }
         }
-        if (ArtificialFieldUtils.isExtraSourceArgumentField(node.getAlias(), node.getFieldDefinition().getName())) {
-            resultCounter.decrementNodeCount();
-            return null;
-        }
 
         TuplesTwo<Set<FieldTransformation>, List<String>> transformationsAndNotTransformedFields =
                 getTransformationsAndNotTransformedFields(node, fieldIdTransformation, transformationMetadata);
@@ -475,7 +471,7 @@ public class ServiceResultNodesToOverallResult {
                 assertTrue(!(hydrationNode instanceof ListExecutionResultNode), () -> String.format("Expected source argument %s to return a single value", hydrationNode.getResultKey()));
             }
         }
-        if (primaryNode instanceof ListExecutionResultNode) {
+        if (isListSource) {
             return mergeListHydrationNodeValues(primaryNode, completedValues);
         } else if (primaryNode instanceof ObjectExecutionResultNode) {
             return mergeObjectHydrationNodeValues(primaryNode, completedValues);
@@ -511,10 +507,10 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private ExecutionResultNode mergeObjectHydrationNodeValues(ExecutionResultNode node, Map<String, Object> completedValues) {
-        return node.transform(builder -> builder.children(changeObjectHydrationNode(node.getChildren().get(0), completedValues)));
+        return node.transform(builder -> builder.children(changeLeafValueInObjectNode(node.getChildren().get(0), completedValues)));
     }
 
-    private List<ExecutionResultNode> changeObjectHydrationNode(ExecutionResultNode node, Map<String, Object> completedValues) {
+    private List<ExecutionResultNode> changeLeafValueInObjectNode(ExecutionResultNode node, Map<String, Object> completedValues) {
         if (node instanceof LeafExecutionResultNode) {
             node = node.withNewCompletedValue(completedValues);
             return Collections.singletonList(node);
@@ -522,7 +518,7 @@ public class ServiceResultNodesToOverallResult {
         ExecutionResultNode finalNode = node;
         return Collections.singletonList(
                 node.transform(builder -> builder.children(
-                        changeObjectHydrationNode(finalNode.getChildren().get(0), completedValues)))
+                        changeLeafValueInObjectNode(finalNode.getChildren().get(0), completedValues)))
         );
     }
 
@@ -549,8 +545,9 @@ public class ServiceResultNodesToOverallResult {
         Map<AbstractNode, List<ExecutionResultNode>> treesByDefinition = new LinkedHashMap<>();
         for (AbstractNode definition : transformationIdsByTransformationDefinition.keySet()) {
             Set<String> transformationIds = transformationIdsByTransformationDefinition.get(definition);
+            treesByDefinition.putIfAbsent(definition, new ArrayList<>());
+
             for (ExecutionResultNode child : directParentNode.getChildren()) {
-                treesByDefinition.putIfAbsent(definition, new ArrayList<>());
                 ExecutionResultNode resultNode = nodesWithTransformationIds(child, transformationIds, transformationMetadata);
                 if (resultNode != null) {
                     treesByDefinition.get(definition).add(resultNode);
