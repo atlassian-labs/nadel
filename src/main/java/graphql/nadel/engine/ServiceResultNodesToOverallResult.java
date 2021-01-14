@@ -162,7 +162,7 @@ public class ServiceResultNodesToOverallResult {
 
     private HandleResult convertRecursively(ExecutionResultNode node,
                                             ExecutionResultNode correctParentNode,
-                                            ExecutionResultNode parentNode,
+                                            ExecutionResultNode directParentNode,
                                             ExecutionId executionId,
                                             ExecutionResultNode root,
                                             NormalizedQueryField normalizedRootField,
@@ -176,7 +176,7 @@ public class ServiceResultNodesToOverallResult {
                                             NadelContext nadelContext,
                                             TransformationMetadata transformationMetadata,
                                             ResultCounter resultCounter) {
-        HandleResult handleResult = convertSingleNode(node, correctParentNode, parentNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, transformationToFieldId, typeRenameMappings, onlyChildren, nadelContext, transformationMetadata, resultCounter);
+        HandleResult handleResult = convertSingleNode(node, correctParentNode, directParentNode, executionId, root, normalizedRootField, overallSchema, isHydrationTransformation, batched, fieldIdToTransformation, transformationToFieldId, typeRenameMappings, onlyChildren, nadelContext, transformationMetadata, resultCounter);
         if (handleResult == null) {
             return null;
         }
@@ -200,7 +200,7 @@ public class ServiceResultNodesToOverallResult {
 
     private HandleResult convertSingleNode(ExecutionResultNode node,
                                            ExecutionResultNode correctParentNode,
-                                           ExecutionResultNode parentNode,
+                                           ExecutionResultNode directParentNode,
                                            ExecutionId executionId,
                                            ExecutionResultNode root,
                                            NormalizedQueryField normalizedRootField,
@@ -256,7 +256,7 @@ public class ServiceResultNodesToOverallResult {
         if (transformations.size() == 0) {
             result = HandleResult.simple(mapNode(node, unapplyEnvironment, resultCounter));
         } else {
-            result = unapplyTransformations(executionId, node, parentNode, transformations, unapplyEnvironment, fieldIdTransformation, transformationToFieldId, nadelContext, transformationMetadata, resultCounter);
+            result = unapplyTransformations(executionId, node, directParentNode, transformations, unapplyEnvironment, fieldIdTransformation, transformationToFieldId, nadelContext, transformationMetadata, resultCounter);
             if (result == null) {
                 return null;
             }
@@ -459,8 +459,8 @@ public class ServiceResultNodesToOverallResult {
 
         for (ExecutionResultNode hydrationNode : nodesWithTransformedFields) {
             Object value = hydrationNode.getCompletedValue();
-            String resultKey = hydrationNode.getValueKey();
-            completedValues.put(resultKey, value);
+            String valueKey = hydrationNode.getValueKey();
+            completedValues.put(valueKey, value);
 
             if (hydrationNode.getExecutionPath().equals(primaryNode.getExecutionPath())) {
                 primaryNode = hydrationNode;
@@ -487,13 +487,7 @@ public class ServiceResultNodesToOverallResult {
             Map<String, Object> childCompletedValues = new LinkedHashMap<>();
             for (Map.Entry<String, Object> entry : completedValues.entrySet()) {
                 Object value = entry.getValue();
-
-                if (index >= ((List) value).size()) {
-                    value = null;
-                } else {
-                    value = ((List) value).get(index);
-                }
-
+                value = (index < ((List) value).size()) ? ((List) value).get(index) : null;
                 childCompletedValues.put(entry.getKey(), value);
             }
             if (child instanceof ObjectExecutionResultNode) {

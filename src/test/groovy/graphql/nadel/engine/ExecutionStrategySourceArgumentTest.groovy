@@ -574,6 +574,73 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     }
 
+    def "two list sources that return a single object for list type"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+              type Query {
+                issue: Issue
+              } 
+              type Issue {
+                 authors: [User] => hydrated from Issues.user(id: $source.accountIds, userId: $source.authorIds)
+              }
+              type User {
+                 id: ID!
+                 userId: ID!
+                 name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                issue: Issue 
+                user(id: ID, userId: ID): User
+              } 
+              type Issue {
+                authorIds: [ID]
+                accountIds: [ID]
+              }
+              type User {
+                 id: ID!
+                 userId: ID!
+                 name: String
+              }
+        """)
+        def query = """{ issue { authors { name}}}"""
+
+        def expectedQuery1 = "query nadel_2_Issues {issue {accountIds authorIds}}"
+        def response1 = [issue: [accountIds: ["a1", "a2", "a3"], authorIds: ["ID1", "ID2", "ID3"]]]
+
+        def expectedQuery2 = "query nadel_2_Issues {user(id:\"a1\",userId:\"ID1\") {name}}"
+        def response2 = [user: [name: "name"]]
+        def expectedQuery3 = "query nadel_2_Issues {user(id:\"a2\",userId:\"ID2\") {name}}"
+        def response3 = [user: [name: "name2"]]
+        def expectedQuery4 = "query nadel_2_Issues {user(id:\"a3\",userId:\"ID3\") {name}}"
+        def response4 = [user: [name: "name3"]]
+
+        def overallResponse = [issue: [authors: [[name: "name"], [name: "name2"], [name: "name3"]]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Issues",
+                underlyingSchema,
+                query,
+                ["issue"],
+                [expectedQuery1, expectedQuery2, expectedQuery3, expectedQuery4],
+                [response1, response2, response3, response4],
+                4,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+
     def "two single sources that returns a single object"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
@@ -675,7 +742,6 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         def overallResponse = [issue: [author: [name: "name1"]]]
 
 
-
         Map response
         List<GraphQLError> errors
         when:
@@ -731,7 +797,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         def query = """{ issue { author { name}}}"""
 
         def expectedQuery1 = "query nadel_2_Issues {issue {accountId authorId number}}"
-        def response1 = [issue: [accountId: "a1", authorId: "ID1", number:"123"]]
+        def response1 = [issue: [accountId: "a1", authorId: "ID1", number: "123"]]
         def expectedQuery2 = "query nadel_2_Issues {user(id:\"a1\",userId:\"ID1\",number:\"123\") {name}}"
         def response2 = [user: [name: "name1"]]
         def overallResponse = [issue: [author: [name: "name1"]]]

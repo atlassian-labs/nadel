@@ -470,8 +470,8 @@ public class HydrationInputResolver {
 
         for (RemoteArgumentDefinition definition : argumentDefinitionsFromSourceObjects) {
             List<Value> values = new ArrayList<>();
+            List<String> sourcePath = definition.getRemoteArgumentSource().getPath();
             for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
-                List<String> sourcePath = definition.getRemoteArgumentSource().getPath();
                 Object definitionValue = getDefinitionValue(sourcePath, hydrationInputNode.getCompletedValue());
                 Value argumentValue = (definitionValue != null) ? new StringValue(definitionValue.toString()) : NullValue.newNullValue().build();
                 values.add(argumentValue);
@@ -641,7 +641,7 @@ public class HydrationInputResolver {
 
     private String buildOperationName(Service service, ExecutionContext executionContext) {
         // to help with downstream debugging we put our name and their name in the operation
-        NadelContext nadelContext = executionContext.getContext();
+        NadelContext nadelContext = (NadelContext) executionContext.getContext();
         if (nadelContext.getOriginalOperationName() != null) {
             return format("nadel_2_%s_%s", service.getName(), nadelContext.getOriginalOperationName());
         } else {

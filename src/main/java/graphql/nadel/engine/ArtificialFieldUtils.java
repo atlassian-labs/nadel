@@ -12,7 +12,6 @@ import java.util.UUID;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.language.Field.newField;
-import static graphql.language.SelectionSet.newSelectionSet;
 
 /**
  * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side.
