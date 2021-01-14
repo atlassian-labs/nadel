@@ -23,7 +23,10 @@ public class NodeId {
     }
 
     public static String getId(GraphQLFieldDefinition graphQLFieldDefinition) {
-        return graphQLFieldDefinition.getDefinition().getAdditionalData().get(ID);
+        return assertNotNull(
+                graphQLFieldDefinition.getDefinition().getAdditionalData().get(ID),
+                () -> String.format("expected field %s to have an id", graphQLFieldDefinition.getName())
+        );
     }
 
     public static List<String> getIds(Node<?> node) {
