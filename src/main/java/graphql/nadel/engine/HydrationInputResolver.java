@@ -254,7 +254,7 @@ public class HydrationInputResolver {
         String operationName = buildOperationName(service, executionContext);
 
         boolean isSyntheticHydration = underlyingServiceHydration.getSyntheticField() != null;
-        QueryTransformationResult queryTransformationResult = queryTransformer
+        CompletableFuture<QueryTransformationResult> queryTransformationResultCF = queryTransformer
                 .transformHydratedTopLevelField(
                         executionContext,
                         service.getUnderlyingSchema(),
@@ -268,23 +268,24 @@ public class HydrationInputResolver {
                         isSyntheticHydration
                 );
 
+        return queryTransformationResultCF.thenCompose(queryTransformationResult -> {
 
-        CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
-                .execute(executionContext, queryTransformationResult, service, operation,
-                        serviceContexts.get(service), true);
+            CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
+                    .execute(executionContext, queryTransformationResult, service, operation,
+                            serviceContexts.get(service), true);
 
-        return serviceResult
-                .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
-                        hydrationInputNode,
-                        hydrationTransformation,
-                        resultNode,
-                        hydrationInputNode.getNormalizedField(),
-                        queryTransformationResult,
-                        getNadelContext(executionContext),
-                        resultComplexityAggregator
-                ))
-                .whenComplete(this::possiblyLogException);
-
+            return serviceResult
+                    .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
+                            hydrationInputNode,
+                            hydrationTransformation,
+                            resultNode,
+                            hydrationInputNode.getNormalizedField(),
+                            queryTransformationResult,
+                            getNadelContext(executionContext),
+                            resultComplexityAggregator
+                    ))
+                    .whenComplete(this::possiblyLogException);
+        });
     }
 
     private Field createSingleHydrationTopLevelField(HydrationInputNode hydrationInputNode,
@@ -407,7 +408,7 @@ public class HydrationInputResolver {
         String operationName = buildOperationName(service, executionContext);
 
         boolean isSyntheticHydration = underlyingServiceHydration.getSyntheticField() != null;
-        QueryTransformationResult queryTransformationResult = queryTransformer
+        CompletableFuture<QueryTransformationResult> queryTransformationResultCF = queryTransformer
                 .transformHydratedTopLevelField(
                         executionContext,
                         service.getUnderlyingSchema(),
@@ -421,11 +422,12 @@ public class HydrationInputResolver {
                 );
 
 
-        return serviceExecutor
-                .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), true)
-                .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, hydrationInputs, resultNode, queryTransformationResult, resultComplexityAggregator))
-                .whenComplete(this::possiblyLogException);
-
+        return queryTransformationResultCF.thenCompose(queryTransformationResult -> {
+            return serviceExecutor
+                    .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), true)
+                    .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, hydrationInputs, resultNode, queryTransformationResult, resultComplexityAggregator))
+                    .whenComplete(this::possiblyLogException);
+        });
     }
 
     private Field createBatchHydrationTopLevelField(ExecutionContext executionContext,
