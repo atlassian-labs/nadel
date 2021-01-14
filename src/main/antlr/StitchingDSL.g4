@@ -53,13 +53,11 @@ objectByIndex: 'using indexes';
 
 batchSize: 'batch size ' intValue;
 
-remoteArgumentSource :  sourceObjectReference | primarySourceObjectReference | fieldArgumentReference | contextArgumentReference;
+remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference;
 
 remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 
 remoteArgumentPair : name ':' remoteArgumentSource ;
-
-primarySourceObjectReference : '$primarySource' '.' name ('.'name)* ;
 
 sourceObjectReference : '$source' '.' name ('.'name)*;
 

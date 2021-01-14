@@ -62,43 +62,28 @@ public class HydrationTransformation extends FieldTransformation {
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
         List<RemoteArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
 
-        RemoteArgumentSource remoteArgumentSource;
-
-        RemoteArgumentDefinition primaryArgumentSource = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
-        boolean hasPrimaryArgumentSource = primaryArgumentSource != null;
-        if (hasPrimaryArgumentSource) {
-            remoteArgumentSource = primaryArgumentSource.getRemoteArgumentSource();
-        } else {
-            assertTrue(sourceValues.size() == 1, () -> "exactly one object field source expected");
-            remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
-        }
-
+        RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
-        Field newField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), getTransformationId(), Collections.emptyList(), true, environment.getMetadataByFieldId());
+        String transformationId = getTransformationId();
+        Field newField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), transformationId, Collections.emptyList(), true, environment.getMetadataByFieldId());
 
         List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
+        assertTrue(sourceValues.size() + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");
+        changeNode(context, newField);
 
-        if (hasPrimaryArgumentSource) {
-            changeNode(context, newField);
-            addExtraSourceArgumentFields(environment);
-        } else {
-            assertTrue(1 + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");
-            changeNode(context, newField);
+        if (sourceValues.size() > 1) {
+            addExtraSourceArgumentFields(environment, transformationId, sourceValues.subList(1, sourceValues.size()));
         }
         return new ApplyResult(TraversalControl.ABORT);
     }
 
-    public void addExtraSourceArgumentFields(ApplyEnvironment environment) {
-        List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
-        List<RemoteArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
-
-        for (RemoteArgumentDefinition remoteArgumentDefinition : sourceValues) {
+    public void addExtraSourceArgumentFields(ApplyEnvironment environment, String transformationId, List<RemoteArgumentDefinition> remoteArgumentDefinitions) {
+        for (RemoteArgumentDefinition remoteArgumentDefinition : remoteArgumentDefinitions) {
             List<String> hydrationSourceName = remoteArgumentDefinition.getRemoteArgumentSource().getPath();
-            Field extraSourceArgumentField = ArtificialFieldUtils.createExtraSourceArgUnderscoreTypeNameField(hydrationSourceName);
+            Field extraSourceArgumentField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), transformationId, Collections.emptyList(), true, environment.getMetadataByFieldId());
             insertAfter(environment.getTraverserContext(), extraSourceArgumentField);
         }
     }
-
 
     public UnderlyingServiceHydration getUnderlyingServiceHydration() {
         return underlyingServiceHydration;
@@ -192,6 +177,7 @@ public class HydrationTransformation extends FieldTransformation {
                     .fieldDefinition(leafNode.getFieldDefinition())
                     .executionPath(leafNode.getExecutionPath())
                     .completedValue(leafNode.getCompletedValue())
+                    .valueKey(leafNode.getValueKey())
                     .elapsedTime(leafNode.getElapsedTime())
                     .normalizedField(matchingNormalizedField)
                     .build();

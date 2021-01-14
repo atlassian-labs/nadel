@@ -67,32 +67,13 @@ public class StrategyUtil {
         Set<NodeZipper<ExecutionResultNode>> result = Collections.synchronizedSet(new TreeSet<>(comparator));
 
         Traverser<ExecutionResultNode> traverser = Traverser.depthFirst(ExecutionResultNode::getChildren);
-        Set<ExecutionResultNode> parents = new HashSet<>();
 
         traverser.traverse(roots, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 if (context.thisNode() instanceof HydrationInputNode) {
-                    HydrationInputNode hydrationNode = (HydrationInputNode) context.thisNode();
-
-                    if (parents.contains(context.getParentNode())) {
-                        Object value;
-                        //we want to change the hydrationInputNodes value to the parents completed value so that we can have multiple source objects
-                        if (context.getParentNode() instanceof ListExecutionResultNode) {
-                            value = context.getParentContext().getParentNode().getCompletedValue();
-                        } else {
-                            value = context.getParentNode().getCompletedValue();
-                        }
-                        hydrationNode = (HydrationInputNode) context.thisNode().transform(builder -> builder.completedValue(value));
-                    }
-
-                    NodeZipper<ExecutionResultNode> nodeZipper = new NodeZipper<>(hydrationNode, context.getBreadcrumbs(), RESULT_NODE_ADAPTER);
+                    NodeZipper<ExecutionResultNode> nodeZipper = new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), RESULT_NODE_ADAPTER);
                     result.add(nodeZipper);
-                } else {
-                    parents.add(context.thisNode());
-//                    if (context.thisNode() instanceof LeafExecutionResultNode && context.thisNode().getFieldName().equals("extra_source_arg_")) {
-//                        context.deleteNode();
-//                    }
                 }
                 return TraversalControl.CONTINUE;
             }

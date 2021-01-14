@@ -163,15 +163,10 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         List<RemoteArgumentDefinition> remoteArguments = new ArrayList<>();
         List<StitchingDSLParser.RemoteArgumentPairContext> remoteArgumentPairContexts = ctx.remoteCallDefinition()
                 .remoteArgumentPair();
-        int primaryArgumentCount = 0;
         for (StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext : remoteArgumentPairContexts) {
             RemoteArgumentDefinition remoteArgumentDefinition = createRemoteArgumentDefinition(remoteArgumentPairContext);
             remoteArguments.add(remoteArgumentDefinition);
-            if (remoteArgumentDefinition.getRemoteArgumentSource().getSourceType() == PRIMARY_OBJECT_FIELD) {
-                primaryArgumentCount++;
-            }
         }
-        Assert.assertTrue(primaryArgumentCount <= 1, () -> "Only 0 or 1 primary argument source expected.");
 
         String objectIdentifier = "id";
         boolean objectIndexed = false;
@@ -307,9 +302,6 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         } else if (ctx.sourceObjectReference() != null) {
             path = map(ctx.sourceObjectReference().name(), RuleContext::getText);
             argumentType = OBJECT_FIELD;
-        } else if (ctx.primarySourceObjectReference() != null) {
-            path = map(ctx.primarySourceObjectReference().name(), RuleContext::getText);
-            argumentType = PRIMARY_OBJECT_FIELD;
         } else {
             assertShouldNeverHappen();
         }

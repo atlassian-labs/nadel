@@ -80,6 +80,7 @@ public class OverallQueryTransformer {
         long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
         Map<String, FieldTransformation> fieldIdToTransformation = new LinkedHashMap<>();
+        Map<FieldTransformation, String> transformationToFieldId = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
@@ -115,6 +116,7 @@ public class OverallQueryTransformer {
                 selectionSet,
                 topLevelFieldTypeOverall,
                 fieldIdToTransformation,
+                transformationToFieldId,
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
@@ -144,6 +146,7 @@ public class OverallQueryTransformer {
                 underlyingSchema,
                 executionContext.getFragmentsByName(),
                 fieldIdToTransformation,
+                transformationToFieldId,
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
@@ -173,6 +176,7 @@ public class OverallQueryTransformer {
                 typeRenameMappings,
                 referencedVariableNames,
                 fieldIdToTransformation,
+                transformationToFieldId,
                 transformedFragments,
                 variableValues,
                 removedFieldMap);
@@ -192,6 +196,7 @@ public class OverallQueryTransformer {
         NadelContext nadelContext = executionContext.getContext();
         Set<String> fragmentsDirectlyReferenced = new LinkedHashSet<>();
         Map<String, FieldTransformation> fieldIdToTransformation = new LinkedHashMap<>();
+        Map<FieldTransformation, String> transformationToFieldId = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
@@ -211,6 +216,7 @@ public class OverallQueryTransformer {
                         field,
                         rootType,
                         fieldIdToTransformation,
+                        transformationToFieldId,
                         typeRenameMappings,
                         fragmentsDirectlyReferenced,
                         referencedVariables,
@@ -254,6 +260,7 @@ public class OverallQueryTransformer {
                 underlyingSchema,
                 executionContext.getFragmentsByName(),
                 fieldIdToTransformation,
+                transformationToFieldId,
                 typeRenameMappings,
                 fragmentsDirectlyReferenced,
                 referencedVariables,
@@ -274,6 +281,7 @@ public class OverallQueryTransformer {
                 typeRenameMappings,
                 referencedVariableNames,
                 fieldIdToTransformation,
+                transformationToFieldId,
                 transformedFragments,
                 variableValues,
                 removedFieldMap);
@@ -293,6 +301,7 @@ public class OverallQueryTransformer {
                                                                GraphQLSchema underlyingSchema,
                                                                Map<String, FragmentDefinition> fragments,
                                                                Map<String, FieldTransformation> transformationByResultField,
+                                                               Map<FieldTransformation, String> transformationToFieldId,
                                                                Map<String, String> typeRenameMappings,
                                                                Set<String> referencedFragmentNames,
                                                                Map<String, VariableDefinition> referencedVariables,
@@ -312,6 +321,7 @@ public class OverallQueryTransformer {
                     underlyingSchema,
                     fragments.get(fragmentName),
                     transformationByResultField,
+                    transformationToFieldId,
                     typeRenameMappings,
                     newReferencedFragments,
                     referencedVariables,
@@ -332,6 +342,7 @@ public class OverallQueryTransformer {
                                                            GraphQLSchema underlyingSchema,
                                                            FragmentDefinition fragmentDefinitionWithoutTypeInfo,
                                                            Map<String, FieldTransformation> transformationByResultField,
+                                                           Map<FieldTransformation, String> transformationToFieldId,
                                                            Map<String, String> typeRenameMappings,
                                                            Set<String> referencedFragmentNames,
                                                            Map<String, VariableDefinition> referencedVariables,
@@ -353,6 +364,7 @@ public class OverallQueryTransformer {
                 executionContext,
                 underlyingSchema,
                 transformationByResultField,
+                transformationToFieldId,
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
@@ -404,6 +416,7 @@ public class OverallQueryTransformer {
                                              T nodeWithoutTypeInfo,
                                              GraphQLCompositeType parentTypeOverall,
                                              Map<String, FieldTransformation> fieldIdToTransformation,
+                                             Map<FieldTransformation, String> transformationToFieldId,
                                              Map<String, String> typeRenameMappings,
                                              Set<String> referencedFragmentNames,
                                              Map<String, VariableDefinition> referencedVariables,
@@ -423,6 +436,7 @@ public class OverallQueryTransformer {
                 executionContext,
                 underlyingSchema,
                 fieldIdToTransformation,
+                transformationToFieldId,
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,

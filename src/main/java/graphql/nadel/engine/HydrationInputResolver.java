@@ -320,22 +320,11 @@ public class HydrationInputResolver {
         List<RemoteArgumentDefinition> argumentDefinitionsFromSourceObjects = new ArrayList<>();
         List<Argument> allArguments = new ArrayList<>();
 
-        RemoteArgumentDefinition primaryArgumentDefinitionFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
-
-        boolean hasPrimaryArgSource = primaryArgumentDefinitionFromSourceObject != null;
-        if (hasPrimaryArgSource) {
-            argumentDefinitionsFromSourceObjects.add(primaryArgumentDefinitionFromSourceObject);
-        }
         argumentDefinitionsFromSourceObjects.addAll(filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD));
 
-        Object value = hydrationInputNode.getCompletedValue();
         for (RemoteArgumentDefinition definition : argumentDefinitionsFromSourceObjects) {
-            boolean isPrimarySourceDefinition = (definition.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
             List<String> sourcePath = definition.getRemoteArgumentSource().getPath();
-            Object definitionValue = getDefinitionValue(sourcePath,
-                    value,
-                    hydrationInputNode.getExecutionPath(),
-                    hasPrimaryArgSource && !isPrimarySourceDefinition);
+            Object definitionValue = getDefinitionValue(sourcePath, hydrationInputNode.getCompletedValue());
             Value argumentValue = (definitionValue != null) ? new StringValue(definitionValue.toString()) : NullValue.newNullValue().build();
             Argument argumentAstFromSourceObject = Argument.newArgument()
                      .name(definition.getName())
@@ -346,6 +335,13 @@ public class HydrationInputResolver {
 
         addExtraFieldArguments(originalField, arguments, allArguments);
         return allArguments;
+    }
+
+    private Object getDefinitionValue(List<String> sourcePath, Object value) {
+        for (String path : sourcePath) {
+            value = ((Map) value).get(path);
+        }
+        return value;
     }
 
     private ExecutionResultNode convertSingleHydrationResultIntoOverallResult(ExecutionId executionId,
@@ -359,6 +355,8 @@ public class HydrationInputResolver {
     ) {
 
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getFieldIdToTransformation();
+        Map<FieldTransformation, String> transformationToFieldId = queryTransformationResult.getTransformationToFieldId();
+
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
         assertTrue(rootResultNode.getChildren().size() == 1, () -> "expected rootResultNode to only have 1 child.");
 
@@ -377,6 +375,7 @@ public class HydrationInputResolver {
                         true,
                         false,
                         transformationByResultField,
+                        transformationToFieldId,
                         typeRenameMappings,
                         nadelContext,
                         queryTransformationResult.getRemovedFieldMap());
@@ -474,51 +473,23 @@ public class HydrationInputResolver {
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
         List<RemoteArgumentDefinition> argumentDefinitionsFromSourceObjects = new ArrayList<>();
 
-        RemoteArgumentDefinition primaryArgumentDefinitionFromSourceObject = findOneOrNull(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
-        boolean hydrationHasPrimaryArgSource = primaryArgumentDefinitionFromSourceObject != null;
-        if (hydrationHasPrimaryArgSource) {
-            argumentDefinitionsFromSourceObjects.add(primaryArgumentDefinitionFromSourceObject);
-        }
-
         argumentDefinitionsFromSourceObjects.addAll(filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD));
         List<Argument> allArguments = new ArrayList<>();
         List<HydrationInputNode> fixedHydrationInputs = new ArrayList<>();
-
         for (RemoteArgumentDefinition definition : argumentDefinitionsFromSourceObjects) {
-            HashMap<ExecutionPath, Integer> executionPathToArgumentIndexMap = correctBatchArgumentIndex.computeIfAbsent(definition, k -> new HashMap<ExecutionPath, Integer>());
             List<Value> values = new ArrayList<>();
-            boolean isPrimarySourceDefinition = (definition.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.PRIMARY_OBJECT_FIELD);
-
             for (ExecutionResultNode hydrationInputNode : hydrationInputs) {
-                ExecutionPath parentExecutionPath = hydrationInputNode.getExecutionPath().getPathWithoutListEnd();
-                int currentIndex = executionPathToArgumentIndexMap.compute(parentExecutionPath, (k, v) -> v == null ? 0 : v + 1);
-
-                Object value = hydrationInputNode.getCompletedValue();
                 List<String> sourcePath = definition.getRemoteArgumentSource().getPath();
-                Object definitionValue = getDefinitionValueInList(sourcePath,
-                        value,
-                        currentIndex,
-                        hydrationHasPrimaryArgSource && !isPrimarySourceDefinition);
-
-                if (definitionValue != null) {
-                    values.add(StringValue.newStringValue(definitionValue.toString()).build());
-                    // add back the definition value so we can resolve nodes later
-                    if (!hydrationHasPrimaryArgSource || isPrimarySourceDefinition) {
-                        fixedHydrationInputs.add((HydrationInputNode) hydrationInputNode.withNewCompletedValue(definitionValue));
-                    }
+                Object value = getDefinitionValue(sourcePath, hydrationInputNode.getCompletedValue());
+                if (value != null) {
+                    values.add(StringValue.newStringValue(value.toString()).build());
                 } else {
                     values.add(NullValue.newNullValue().build());
                 }
-
             }
             Argument argumentAstFromSourceObject = Argument.newArgument().name(definition.getName()).value(new ArrayValue(values)).build();
             allArguments.add(argumentAstFromSourceObject);
         }
-
-        for (int i = 0; i < hydrationInputs.size(); i++) {
-            hydrationInputs.set(i, fixedHydrationInputs.get(i));
-        }
-
         addExtraFieldArguments(originalField, arguments, allArguments);
         return allArguments;
     }
@@ -576,6 +547,8 @@ public class HydrationInputResolver {
 
         List<ExecutionResultNode> result = new ArrayList<>();
         Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getFieldIdToTransformation();
+        Map<FieldTransformation, String> transformationToFieldId = queryTransformationResult.getTransformationToFieldId();
+
         Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
 
         boolean first = true;
@@ -586,9 +559,12 @@ public class HydrationInputResolver {
             if (isResolveByIndex) {
             matchingResolvedNode = resolvedNodes.get(i);
             } else {
-                matchingResolvedNode = findMatchingResolvedNode(executionContext, hydrationInputNode, resolvedNodes);
+                RemoteArgumentDefinition idDefinition = findOneOrNull(serviceHydration.getArguments(), argument -> (argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD));
+                matchingResolvedNode = findMatchingResolvedNode(executionContext,
+                        hydrationInputNode,
+                        resolvedNodes,
+                        idDefinition.getRemoteArgumentSource().getPath());
             }
-
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
                 ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convertChildren(
@@ -600,6 +576,7 @@ public class HydrationInputResolver {
                         true,
                         true,
                         transformationByResultField,
+                        transformationToFieldId,
                         typeRenameMappings,
                         getNadelContext(executionContext),
                         queryTransformationResult.getRemovedFieldMap());
@@ -636,10 +613,13 @@ public class HydrationInputResolver {
                 .build();
     }
 
-    private ExecutionResultNode findMatchingResolvedNode(ExecutionContext executionContext, HydrationInputNode inputNode, List<ExecutionResultNode> resolvedNodes) {
+    private ExecutionResultNode findMatchingResolvedNode(ExecutionContext executionContext,
+                                                         HydrationInputNode inputNode,
+                                                         List<ExecutionResultNode> resolvedNodes,
+                                                         List<String> sourcePath) {
         NadelContext nadelContext = getNadelContext(executionContext);
         String objectIdentifier = nadelContext.getObjectIdentifierAlias();
-        String inputNodeId = (String) inputNode.getCompletedValue();
+        String inputNodeId = (String) getDefinitionValue(sourcePath, inputNode.getCompletedValue());
         for (ExecutionResultNode resolvedNode : resolvedNodes) {
             LeafExecutionResultNode idNode = getFieldByResultKey((ObjectExecutionResultNode) resolvedNode, objectIdentifier);
             assertNotNull(idNode, () -> String.format("no value found for object identifier: %s", objectIdentifier));
@@ -651,39 +631,6 @@ public class HydrationInputResolver {
         }
         return null;
     }
-
-    private Object getDefinitionValue(List<String> definitionPath, Object values, ExecutionPath executionPath, boolean isSecondarySource) {
-        int currentIndex = -1;
-        if (executionPath.isListSegment()) {
-            currentIndex = executionPath.getSegmentIndex();
-        }
-        return getDefinitionValueInList(definitionPath, values, currentIndex, isSecondarySource);
-    }
-
-    private Object getDefinitionValueInList(List<String> definitionPath, Object values, int index, boolean isSecondarySource) {
-        Object definitionValue = values;
-        boolean first = true;
-        for (String field : definitionPath) {
-            if (isSecondarySource && first) {
-                field = TYPE_NAME_ALIAS_PREFIX_FOR_EXTRA_SOURCE_ARGUMENTS + field;
-                first = false;
-            }
-
-            definitionValue = ((LinkedHashMap) definitionValue).get(field);
-            if (definitionValue instanceof List) {
-                // This happens when a secondary source object does not have enough values to match the primary source object value
-                // Generally should not happen unless underlying service did not return enough results.
-                if (index < 0 || index >= ((List)definitionValue).size()) {
-                    definitionValue = null;
-                } else {
-                    definitionValue = ((List) definitionValue).get(index);
-                }
-            }
-        }
-        return definitionValue;
-    }
-
-
 
     private LeafExecutionResultNode getFieldByResultKey(ObjectExecutionResultNode node, String resultKey) {
         return (LeafExecutionResultNode) findOneOrNull(node.getChildren(), child -> child.getResultKey().equals(resultKey));
