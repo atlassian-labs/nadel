@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
@@ -50,7 +51,7 @@ import static graphql.nadel.util.FpKit.map;
 @Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
-    private int idCounter = 1;
+    private AtomicInteger idCounter = new AtomicInteger(1);
 
     public NadelAntlrToLanguage(CommonTokenStream tokens, MultiSourceReader multiSourceReader) {
         super(tokens, multiSourceReader);
@@ -64,7 +65,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     private Map<String, String> additionalIdData() {
         Map<String, String> additionalData = new LinkedHashMap<>();
-        String nodeIdVal = String.valueOf(idCounter++);
+        String nodeIdVal = String.valueOf(idCounter.getAndIncrement());
         additionalData.put(NodeId.ID, nodeIdVal);
         return additionalData;
     }
