@@ -14,8 +14,9 @@ import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecutionResult;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.transformation.FieldTransformation;
-import graphql.nadel.engine.transformation.TransformationMetadata;
+import graphql.nadel.engine.transformation.TransformationMetadata.NormalizedFieldAndError;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
@@ -162,12 +163,14 @@ public class NadelExecutionStrategy {
 
                 ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, queryTransform.getVariableValues());
 
-                String topLevelFieldId = esi.getFieldDefinition().getDefinition().getAdditionalData().get("id");
-                Optional<TransformationMetadata.NormalizedFieldAndError> maybeTopLevelFieldError = queryTransform.getRemovedFieldMap().getRemovedFieldById(topLevelFieldId);
+                String topLevelFieldId = NodeId.getId(esi.getFieldDefinition());
+                Optional<GraphQLError> maybeTopLevelFieldError = queryTransform.getRemovedFieldMap()
+                        .getRemovedFieldById(topLevelFieldId)
+                        .map(NormalizedFieldAndError::getError);
                 boolean topLevelFieldExecutionShouldBeSkipped = maybeTopLevelFieldError.isPresent();
                 if (topLevelFieldExecutionShouldBeSkipped) {
-                    RootExecutionResultNode value = getSkippedServiceCallResult(nadelContext, esi, executionContext, maybeTopLevelFieldError.get());
-                    return CompletableFuture.completedFuture(value);
+                    GraphQLError topLevelFieldError = maybeTopLevelFieldError.get();
+                    return CompletableFuture.completedFuture(getSkippedServiceCallResult(nadelContext, esi, executionContext, topLevelFieldError));
                 }
 
                 CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
@@ -223,14 +226,17 @@ public class NadelExecutionStrategy {
         return resultNodes;
     }
 
-    private RootExecutionResultNode getSkippedServiceCallResult(NadelContext nadelContext, ExecutionStepInfo esi, ExecutionContext newExecutionContext, TransformationMetadata.NormalizedFieldAndError topLevelFieldError) {
-        HashMap<String, Object> stringObjectHashMap = new HashMap<>();
-        HashMap<String, Object> errorMap = new HashMap<>();
-        errorMap.put("message", topLevelFieldError.getError().getMessage());
-        stringObjectHashMap.put(esi.getFieldDefinition().getName(), null);
+    private RootExecutionResultNode getSkippedServiceCallResult(NadelContext nadelContext, ExecutionStepInfo esi, ExecutionContext newExecutionContext, GraphQLError error) {
+        HashMap<String, Object> errorMap = new LinkedHashMap<>();
+        errorMap.put("message", error.getMessage());
+
+        HashMap<String, Object> dataMap = new LinkedHashMap<>();
+        String topLevelFieldName = esi.getFieldDefinition().getName();
+        dataMap.put(topLevelFieldName, null);
+
         return resultToResultNode.resultToResultNode(
                 newExecutionContext,
-                new ServiceExecutionResult(stringObjectHashMap, Collections.singletonList(errorMap)),
+                new ServiceExecutionResult(dataMap, Collections.singletonList(errorMap)),
                 ElapsedTime.newElapsedTime().build(),
                 nadelContext.getNormalizedOverallQuery()
         );
@@ -296,7 +302,7 @@ public class NadelExecutionStrategy {
 
     private String buildOperationName(Service service, ExecutionContext executionContext) {
         // to help with downstream debugging we put our name and their name in the operation
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        NadelContext nadelContext = executionContext.getContext();
         if (nadelContext.getOriginalOperationName() != null) {
             return format("nadel_2_%s_%s", service.getName(), nadelContext.getOriginalOperationName());
         } else {
@@ -305,7 +311,7 @@ public class NadelExecutionStrategy {
     }
 
     private NadelContext getNadelContext(ExecutionContext executionContext) {
-        return (NadelContext) executionContext.getContext();
+        return executionContext.getContext();
     }
 
 }

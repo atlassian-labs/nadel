@@ -32,32 +32,12 @@ public class AsyncIsFieldForbidden {
     }
 
     public CompletableFuture<Map<String, GraphQLError>> getForbiddenFields(Node<?> root) {
-        return CompletableFuture.allOf(
-                checkTopLevelField(root),
-                visitChildren(root)
-        ).thenApply(unused -> fieldIdsToErrors);
-    }
-
-    private CompletableFuture<Void> checkTopLevelField(Node root) {
-        if (!(root instanceof Field)) {
-            return CompletableFuture.completedFuture(null);
+        if (root instanceof Field) {
+            return visitField((Field) root)
+                    .thenApply(unused -> fieldIdsToErrors);
         }
-        Field field = ((Field) root);
-
-        String fieldId = getId(field);
-        OverallTypeInfo overallTypeInfo = overallTypeInformation.getOverallTypeInfo(fieldId);
-        // this means we have a new field which was added by a transformation and we don't have overall type info about it
-        if (overallTypeInfo == null) {
-            return CompletableFuture.completedFuture(null);
-        }
-        GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
-        List<NormalizedQueryField> normalizedFields = nadelContext.getNormalizedOverallQuery().getNormalizedFieldsByFieldId(fieldId);
-        return serviceExecutionHooks.isFieldForbidden(
-                field,
-                normalizedFields,
-                fieldDefinitionOverall,
-                nadelContext.getUserSuppliedContext()
-        ).thenAccept(maybeGQLError -> maybeGQLError.ifPresent(error -> fieldIdsToErrors.put(fieldId, error)));
+        return visitChildren(root)
+                .thenApply(unused -> fieldIdsToErrors);
     }
 
     private CompletableFuture<Void> visitChildren(Node<?> root) {

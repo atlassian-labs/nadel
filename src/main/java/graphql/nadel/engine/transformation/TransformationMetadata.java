@@ -2,6 +2,7 @@ package graphql.nadel.engine.transformation;
 
 import graphql.GraphQLError;
 import graphql.Internal;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.normalized.NormalizedQueryField;
 
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class TransformationMetadata {
 
     public Optional<NormalizedFieldAndError> getRemovedFieldById(String id) {
         for (NormalizedFieldAndError fieldAndError : removedFields) {
-            String fieldId = fieldAndError.normalizedField.getFieldDefinition().getDefinition().getAdditionalData().get("id");
+            String fieldId = NodeId.getId(fieldAndError.normalizedField.getFieldDefinition());
             if (id.equals(fieldId)) {
                 return Optional.of(fieldAndError);
             }
