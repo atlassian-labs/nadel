@@ -496,7 +496,7 @@ class NadelE2ETest extends Specification {
                 .query(query)
                 .artificialFieldsUUID("uuid")
                 .build()
-        def data1 = [node: [typename__uuid: "Issue", name: "My Issue"]]
+        def data1 = [node: [type_hint_typename__uuid: "Issue", name: "My Issue"]]
         ServiceExecutionResult serviceExecutionResult = new ServiceExecutionResult(data1)
         when:
         def result = nadel.execute(nadelExecutionInput)

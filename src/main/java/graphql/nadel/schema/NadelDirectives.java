@@ -1,6 +1,7 @@
 package graphql.nadel.schema;
 
 import graphql.Assert;
+import graphql.language.BooleanValue;
 import graphql.language.Description;
 import graphql.language.DirectiveDefinition;
 import graphql.language.InputObjectTypeDefinition;
@@ -8,6 +9,7 @@ import graphql.language.IntValue;
 import graphql.language.NonNullType;
 import graphql.language.SourceLocation;
 import graphql.language.StringValue;
+import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
@@ -123,9 +125,16 @@ public class NadelDirectives {
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
+                                .name("indexed")
+                                .description(createDescription("Are results indexed"))
+                                .type(typeOf("Boolean"))
+                                .defaultValue(BooleanValue.newBooleanValue(false).build())
+                                .build())
+                .inputValueDefinition(
+                        newInputValueDefinition()
                                 .name("batchSize")
                                 .description(createDescription("The batch size"))
-                                .type(newTypeName().name("Int").build())
+                                .type(typeOf("Int"))
                                 .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(200)).build())
                                 .build())
                 .inputValueDefinition(
@@ -138,8 +147,12 @@ public class NadelDirectives {
 
     }
 
+    private static TypeName typeOf(String typename) {
+        return newTypeName().name(typename).build();
+    }
+
     private static NonNullType nonNull(String typeName) {
-        return NonNullType.newNonNullType(newTypeName().name(typeName).build()).build();
+        return NonNullType.newNonNullType(typeOf(typeName)).build();
     }
 
     private static Description createDescription(String s) {
@@ -155,6 +168,10 @@ public class NadelDirectives {
         String service = getDirectiveValue(directive, "service", String.class);
         String field = getDirectiveValue(directive, "field", String.class);
         String objectIdentifier = getDirectiveValue(directive, "identifiedBy", String.class);
+        Boolean objectIndexed = getDirectiveValue(directive, "indexed", Boolean.class, false);
+        if (objectIndexed) {
+            objectIdentifier = null; // we cant have both but it has a default
+        }
         int batchSize = getDirectiveValue(directive, "batchSize", Integer.class, 200);
         List<RemoteArgumentDefinition> arguments = createArgs(directive.getArgument("arguments").getValue());
 
@@ -173,6 +190,7 @@ public class NadelDirectives {
                 syntheticField,
                 arguments,
                 objectIdentifier,
+                objectIndexed,
                 batchSize,
                 emptyMap()
         );

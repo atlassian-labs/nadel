@@ -15,6 +15,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static graphql.Assert.assertTrue;
+
 @Internal
 public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHydration> {
 
@@ -23,6 +25,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
     private final String syntheticField;
     private final List<RemoteArgumentDefinition> arguments;
     private final String objectIdentifier;
+    private final boolean objectIndexed;
     private final Integer batchSize;
 
     public UnderlyingServiceHydration(SourceLocation sourceLocation,
@@ -32,14 +35,18 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
                                       String syntheticField,
                                       List<RemoteArgumentDefinition> arguments,
                                       String objectIdentifier,
+                                      boolean objectIndexed,
                                       Integer batchSize,
                                       Map<String, String> additionalData
     ) {
         super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
+        assertTrue(!objectIndexed ^ objectIdentifier == null, () -> "An object identifier cannot be provided if the hydration is by index");
+
         this.serviceName = serviceName;
         this.topLevelField = topLevelField;
         this.arguments = arguments;
         this.objectIdentifier = objectIdentifier;
+        this.objectIndexed = objectIndexed;
         this.batchSize = batchSize;
         this.syntheticField = syntheticField;
     }
@@ -53,6 +60,9 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
         return objectIdentifier;
     }
 
+    public boolean isObjectMatchByIndex() {
+        return objectIndexed;
+    }
 
     public String getServiceName() {
         return serviceName;

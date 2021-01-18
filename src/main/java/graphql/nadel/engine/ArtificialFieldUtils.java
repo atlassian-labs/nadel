@@ -14,32 +14,51 @@ import static graphql.Assert.assertNotNull;
 import static graphql.language.Field.newField;
 
 /**
- * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side
+ * Interfaces and unions require that __typename be put on queries so we can work out what type they are on he other side.
+ * We also add __typename field when all fields were deleted from a selection set to avoid producing non valid graphql
+ * with empty selection sets.
  */
 @Internal
 public class ArtificialFieldUtils {
 
     private static final String UNDERSCORE_TYPENAME = Introspection.TypeNameMetaFieldDef.getName();
+    private static final String TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS = "empty_selection_set_";
+    public static final String TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS = "type_hint_";
 
     public static Field maybeAddUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
-        if (!Util.isInterfaceOrUnionField(fieldType)) {
+        if (Util.isInterfaceOrUnionField(fieldType)) {
+            return addUnderscoreTypeName(field, nadelContext, TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS);
+        }
+        return field;
+    }
+
+    public static Field maybeAddEmptySelectionSetUnderscoreTypeName(NadelContext nadelContext, Field field, GraphQLOutputType fieldType) {
+        if (Util.isScalar(fieldType)) {
             return field;
         }
-        String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
-        assertNotNull(underscoreTypeNameAlias, () -> "We MUST have a generated __typename alias in the request context");
+        boolean selectionSetIsEmpty = field.getSelectionSet() == null || field.getSelectionSet().getSelections().isEmpty();
+        if (selectionSetIsEmpty) {
+            return addUnderscoreTypeName(field, nadelContext, TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS);
+        } else {
+            return field;
+        }
+    }
 
+    private static Field addUnderscoreTypeName(Field field, NadelContext nadelContext, String aliasPrefix) {
         // check if we have already added it
+        String typeNameAliasFromContext = getTypeNameAliasFromContext(nadelContext);
         SelectionSet selectionSet = field.getSelectionSet();
         if (selectionSet != null) {
             for (Field fld : selectionSet.getSelectionsOfType(Field.class)) {
-                if (underscoreTypeNameAlias.equals(fld.getAlias())) {
+                if ((TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + typeNameAliasFromContext).equals(fld.getAlias()) ||
+                        (TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS + typeNameAliasFromContext).equals(fld.getAlias())) {
                     return field;
                 }
             }
         }
 
         Field underscoreTypeNameAliasField = newField(UNDERSCORE_TYPENAME)
-                .alias(underscoreTypeNameAlias)
+                .alias(aliasPrefix + typeNameAliasFromContext)
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .build();
         if (selectionSet == null) {
@@ -50,6 +69,12 @@ public class ArtificialFieldUtils {
         SelectionSet newSelectionSet = selectionSet;
         field = field.transform(builder -> builder.selectionSet(newSelectionSet));
         return field;
+    }
+
+    private static String getTypeNameAliasFromContext(NadelContext nadelContext) {
+        String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
+        assertNotNull(underscoreTypeNameAlias, () -> "We MUST have a generated __typename alias in the request context");
+        return underscoreTypeNameAlias;
     }
 
     public static Field addObjectIdentifier(NadelContext nadelContext, Field field, String objectIdentifier) {
@@ -63,7 +88,9 @@ public class ArtificialFieldUtils {
     }
 
     public static boolean isArtificialField(NadelContext nadelContext, String alias) {
-        return nadelContext.getUnderscoreTypeNameAlias().equals(alias) || nadelContext.getObjectIdentifierAlias().equals(alias);
+        String typeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
+        return (TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + typeNameAlias).equals(alias)
+                || (TYPE_NAME_ALIAS_PREFIX_FOR_EMPTY_SELECTION_SETS + typeNameAlias).equals(alias)
+                || nadelContext.getObjectIdentifierAlias().equals(alias);
     }
-
 }

@@ -268,7 +268,7 @@ class NadelRenameTest extends Specification {
         //
         // note how we have to give back an implementation object type not and interface
         //
-        def data = [renameInterfaceUnderlying: [name: "val", typename__xxx: "ObjectUnderlying"]]
+        def data = [renameInterfaceUnderlying: [name: "val", type_hint_typename__xxx: "ObjectUnderlying"]]
         when:
         def result = nadel.execute(nadelExecutionInput).join()
 
@@ -276,7 +276,7 @@ class NadelRenameTest extends Specification {
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
             def q = printAstCompact(params.query)
-            assert q == "query nadel_2_MyService {renameInterfaceUnderlying {name typename__xxx:__typename}}", "Unexpected query: $q"
+            assert q == "query nadel_2_MyService {renameInterfaceUnderlying {name type_hint_typename__xxx:__typename}}", "Unexpected query: $q"
             completedFuture(new ServiceExecutionResult(data))
         }
         result.errors.isEmpty()
@@ -303,7 +303,7 @@ class NadelRenameTest extends Specification {
         //
         // note how we have to give back an implementation object type not and interface
         //
-        def data = [renameUnionUnderlying: [x: 1, typename__xxx: "XUnderlying"]]
+        def data = [renameUnionUnderlying: [x: 1, type_hint_typename__xxx: "XUnderlying"]]
         when:
         def result = nadel.execute(nadelExecutionInput).join()
 
@@ -311,7 +311,7 @@ class NadelRenameTest extends Specification {
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
             def q = printAstCompact(params.query)
-            assert q == "query nadel_2_MyService {renameUnionUnderlying {... on XUnderlying {x} typename__xxx:__typename}}", "Unexpected query: $q"
+            assert q == "query nadel_2_MyService {renameUnionUnderlying {... on XUnderlying {x} type_hint_typename__xxx:__typename}}", "Unexpected query: $q"
             completedFuture(new ServiceExecutionResult(data))
         }
         result.errors.isEmpty()

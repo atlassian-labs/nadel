@@ -36,7 +36,6 @@
                 "serviceName": "OtherService",
                 "topLevelField": "resolveId",
                 "syntheticField": "resolver",
-                "objectIdentifier": "id",
                 "arguments": [
                   {
                     "name": "otherId",
@@ -61,7 +60,9 @@
                       "sourceType": "FIELD_ARGUMENT"
                     }
                   }
-                ]
+                ],
+                "objectIdentifier": "id",
+                "objectMatchByIndex": false
               }
             }
           }

@@ -316,6 +316,28 @@ class NSDLParserTest extends Specification {
         astAsMap(stitchingDSL).size() > 0
     }
 
+    def "allow 'service' field to be hydrated"() {
+        given:
+        def dsl = '''
+            service FooService {
+                type Service {
+                    id: ID
+                    related: Service => hydrated from FooService.service(id: $source.relatedId)
+                }
+                type Query {
+                    service(id: String): Service
+                }
+            }
+        '''
+
+        when:
+        NSDLParser parser = new NSDLParser()
+        def stitchingDSL = parser.parseDSL(dsl)
+
+        then:
+        astAsMap(stitchingDSL).size() > 0
+    }
+
     def "parser allows normal graphql SDL syntax"() {
 
         given:

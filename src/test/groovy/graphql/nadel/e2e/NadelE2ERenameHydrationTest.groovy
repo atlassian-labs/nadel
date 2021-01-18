@@ -21,11 +21,11 @@ class NadelE2ERenameHydrationTest extends Specification {
             type Query {
                 findIssueOwner(id: ID): SpecificIssueOwner
             }
-            
+           
             type SpecificIssueOwner => renamed from IssueOwner {
                 identity: String
             }
-            
+ 
             type SpecificIssue => renamed from Issue  {
                 id: ID
                 name: SpecificIssueOwner => hydrated from IssuesService.findIssueOwner(id: $source.id)
@@ -34,6 +34,7 @@ class NadelE2ERenameHydrationTest extends Specification {
             type UpdateSpecificIssuePayload => renamed from UpdateIssuePayload {
                 specificIssue: SpecificIssue => renamed from issue
             }
+ 
             type Mutation {
                 updateSpecificIssue: UpdateSpecificIssuePayload => renamed from updateIssue
             }
@@ -66,15 +67,19 @@ class NadelE2ERenameHydrationTest extends Specification {
             type Query {
                 findIssueOwner(id: ID): IssueOwner
             }
+ 
             type IssueOwner {
                 identity: String
             }
+ 
             type Issue {
                 id: ID
             }
+ 
             type UpdateIssuePayload {
                 issue: Issue
             }
+ 
             type Mutation {
                 updateIssue: UpdateIssuePayload
             }

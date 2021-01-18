@@ -35,7 +35,6 @@
               "underlyingServiceHydration": {
                 "serviceName": "OtherService",
                 "topLevelField": "resolveId",
-                "objectIdentifier": "id",
                 "arguments": [
                   {
                     "name": "otherId",
@@ -60,7 +59,9 @@
                       "sourceType": "FIELD_ARGUMENT"
                     }
                   }
-                ]
+                ],
+                "objectIdentifier": "id",
+                "objectMatchByIndex": false
               }
             }
           }

@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
@@ -50,7 +51,7 @@ import static graphql.nadel.util.FpKit.map;
 @Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
-    private int idCounter = 1;
+    private AtomicInteger idCounter = new AtomicInteger(1);
 
     public NadelAntlrToLanguage(CommonTokenStream tokens, MultiSourceReader multiSourceReader) {
         super(tokens, multiSourceReader);
@@ -64,7 +65,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
     private Map<String, String> additionalIdData() {
         Map<String, String> additionalData = new LinkedHashMap<>();
-        String nodeIdVal = String.valueOf(idCounter++);
+        String nodeIdVal = String.valueOf(idCounter.getAndIncrement());
         additionalData.put(NodeId.ID, nodeIdVal);
         return additionalData;
     }
@@ -170,16 +171,25 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         for (StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext : remoteArgumentPairContexts) {
             remoteArguments.add(createRemoteArgumentDefinition(remoteArgumentPairContext));
         }
+
         String objectIdentifier = "id";
-        if (ctx.objectIdentifier() != null) {
-            objectIdentifier = ctx.objectIdentifier().name().getText();
+        boolean objectIndexed = false;
+        StitchingDSLParser.ObjectResolutionContext objectResolution = ctx.objectResolution();
+        if (objectResolution != null) {
+            if (objectResolution.objectByIndex() != null) {
+                objectIdentifier = null;
+                objectIndexed = true;
+            } else {
+                objectIdentifier = objectResolution.objectByIdentifier().name().getText();
+            }
         }
+
         Integer batchSize = null;
         if (ctx.batchSize() != null) {
             batchSize = Integer.parseInt(ctx.batchSize().intValue().getText());
         }
         return new UnderlyingServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField, syntheticField,
-                remoteArguments, objectIdentifier, batchSize, additionalIdData());
+                remoteArguments, objectIdentifier, objectIndexed, batchSize, additionalIdData());
     }
 
     @Override
