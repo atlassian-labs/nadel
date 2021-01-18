@@ -10,7 +10,6 @@ import graphql.nadel.testutils.TestUtil
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
-import spock.lang.Ignore
 
 import java.util.concurrent.CompletableFuture
 
@@ -453,7 +452,6 @@ class RemovedFieldsTest extends StrategyTestHelper {
         errors.every { it.message.contains("removed field") }
     }
 
-    @Ignore("Logic for top level fields is not implemented yet. We need to avoid calling underlying service in this case")
     def "top level field is removed"() {
         given:
         def query = """
@@ -463,29 +461,23 @@ class RemovedFieldsTest extends StrategyTestHelper {
             }
         }
         """
-        def expectedQuery1 = """query nadel_2_CommentService {commentById(id:"C1") {empty_selection_set_typename__UUID:__typename}}"""
-        Map response1 = [commentById: [empty_selection_set_typename__UUID: "Query"]]
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
 
-        Map response
-        List<GraphQLError> errors
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["commentById"]))
+                .build()
+
         when:
-        (response, errors) = test1Service(
-                overallSchema,
-                "CommentService",
-                commentSchema,
-                query,
-                ["commentById"],
-                expectedQuery1,
-                response1,
-                createServiceExecutionHooksWithFieldRemoval(["commentById"])
-        )
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
         then:
-        response == [commentById: null]
-        errors.size() == 1
-        errors[0].message == "removed field"
+        result.data == [commentById: null]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
     }
 
-    @Ignore("Logic for top level fields is not implemented yet. We need to avoid calling underlying service in this case")
     def "one of top level fields is removed"() {
         given:
         def query = """
