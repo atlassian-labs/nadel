@@ -30,7 +30,6 @@ import static graphql.nadel.engine.transformation.FieldUtils.getFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.util.FpKit.filter;
 import static graphql.util.TreeTransformerUtil.changeNode;
-import static graphql.util.TreeTransformerUtil.insertAfter;
 
 @Internal
 public class HydrationTransformation extends FieldTransformation {
@@ -55,29 +54,19 @@ public class HydrationTransformation extends FieldTransformation {
 
         TraverserContext<Node> context = environment.getTraverserContext();
         List<RemoteArgumentDefinition> arguments = underlyingServiceHydration.getArguments();
+
         List<RemoteArgumentDefinition> sourceValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.OBJECT_FIELD);
+        assertTrue(sourceValues.size() == 1, () -> "exactly one object field source expected");
+        List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
+        assertTrue(1 + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");
 
         RemoteArgumentSource remoteArgumentSource = sourceValues.get(0).getRemoteArgumentSource();
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
-        String transformationId = getTransformationId();
-        Field newField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), transformationId, Collections.emptyList(), true, environment.getMetadataByFieldId());
 
-        List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
-        assertTrue(sourceValues.size() + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");
+        Field newField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), getTransformationId(), Collections.emptyList(), true, environment.getMetadataByFieldId());
+
         changeNode(context, newField);
-
-        if (sourceValues.size() > 1) {
-            addExtraSourceArgumentFields(environment, transformationId, sourceValues.subList(1, sourceValues.size()));
-        }
         return new ApplyResult(TraversalControl.ABORT);
-    }
-
-    public void addExtraSourceArgumentFields(ApplyEnvironment environment, String transformationId, List<RemoteArgumentDefinition> remoteArgumentDefinitions) {
-        for (RemoteArgumentDefinition remoteArgumentDefinition : remoteArgumentDefinitions) {
-            List<String> hydrationSourceName = remoteArgumentDefinition.getRemoteArgumentSource().getPath();
-            Field extraSourceArgumentField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), transformationId, Collections.emptyList(), true, environment.getMetadataByFieldId());
-            insertAfter(environment.getTraverserContext(), extraSourceArgumentField);
-        }
     }
 
     public UnderlyingServiceHydration getUnderlyingServiceHydration() {
@@ -172,7 +161,6 @@ public class HydrationTransformation extends FieldTransformation {
                     .fieldDefinition(leafNode.getFieldDefinition())
                     .executionPath(leafNode.getExecutionPath())
                     .completedValue(leafNode.getCompletedValue())
-                    .valueKey(leafNode.getValueKey())
                     .elapsedTime(leafNode.getElapsedTime())
                     .normalizedField(matchingNormalizedField)
                     .build();
