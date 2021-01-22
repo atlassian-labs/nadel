@@ -4,7 +4,6 @@ import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
-import graphql.execution.ExecutionPath;
 import graphql.language.Argument;
 import graphql.language.ArrayValue;
 import graphql.language.Field;
@@ -40,7 +39,6 @@ import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -599,6 +597,7 @@ public class HydrationInputResolver {
                 .executionPath(inputNode.getExecutionPath())
                 .fieldDefinition(inputNode.getFieldDefinition())
                 .completedValue(null)
+                .isNull(true)
                 .elapsedTime(elapsedTime)
                 .build();
     }

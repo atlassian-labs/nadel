@@ -27,7 +27,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
     def serviceExecutionHooks = new ServiceExecutionHooks() {}
     def resultComplexityAggregator = new ResultComplexityAggregator()
 
-    def "single source that returns a list object for list type"() {
+    def "single source that hydrates a list object for list type"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Issues {
@@ -85,7 +85,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
-    def "list source that returns an object for list type"() {
+    def "list source that hydrates an object for list type"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Issues {
@@ -150,7 +150,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
-    def "single source that returns an object for list type"() {
+    def "single source that hydrates an object for list type"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Foo {
@@ -206,6 +206,269 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         errors.size() == 0
         response == overallResponse
     }
+
+    def "single nested source with a null hydration input value"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 details: [Detail] => hydrated from Foo.detail(detailIds: $source.issue.fooId)
+              }
+              type Detail {
+                 detailId: ID!
+                 name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Foo 
+                detail(detailIds: [ID]): [Detail]
+              } 
+              type Foo {
+                issue: Issue
+              }
+              type Issue {
+                fooId: ID
+              }
+
+              type Detail {
+                 detailId: ID!
+                 name: String
+              }
+        """)
+        def query = """{ foo { details { name}}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {issue {fooId}}}"
+        def response1 = [foo: [issue:[fooId: null]]]
+        def overallResponse = [foo:[details:null]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1],
+                [response1],
+                1,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "list source with a null value that hydrates a list of objects"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 users: [User] => hydrated from Foo.people(userIds: $source.users.accountId) object identified by userId
+              }
+              type User {
+                 userId: ID!
+                 name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Foo 
+                people(userIds: [ID]): [User]
+              } 
+              type Foo {
+                fooId: ID
+                users: [Owner]
+              }
+              
+              type Owner {
+                accountId: ID
+              }
+
+              type User {
+                 userId: ID!
+                 name: String
+              }
+        """)
+        def query = """{ foo { users { name}}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {users {accountId}}}"
+        def response1 = [foo: [users: [[accountId:"id1"], [accountId:null], [accountId:"id3"]]]]
+        def expectedQuery2 = "query nadel_2_Foo {people(userIds:[\"id1\",\"id3\"]) {name object_identifier__UUID:userId}}"
+        def response2 = [people: [[name: "name", object_identifier__UUID: "id1"],[name: "name3", object_identifier__UUID: "id3"]]]
+        def overallResponse = [foo: [users: [[name: "name"],null, [name: "name3"]]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "list source that returns an overall null hydration value"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 users: [User] => hydrated from Foo.people(userIds: $source.users.accountId) object identified by userId
+              }
+              type User {
+                 userId: ID!
+                 name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Foo 
+                people(userIds: [ID]): [User]
+              } 
+              type Foo {
+                fooId: ID
+                users: [Owner]
+              }
+              
+              type Owner {
+                accountId: ID
+              }
+
+              type User {
+                 userId: ID!
+                 name: String
+              }
+        """)
+        def query = """{ foo { users { name}}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {users {accountId}}}"
+        def response1 = [foo: [users: null]]
+        def overallResponse = [foo:[users:null]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1],
+                [response1],
+                1,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+
+    def "one source value that hydrates a list of objects with nested id"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                fooUsers: [FooUser]
+              }
+              type FooUser {
+                fooId: ID
+                assignee: User => hydrated from Foo.people(userIds: $source.issue.owner.accountId)
+              }
+
+              type User {
+                id: String
+                name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Foo 
+                people(userIds: [ID]): [User]
+              } 
+              
+              type Foo {
+                fooUsers: [FooUser]
+              }
+              
+              type FooUser {
+                fooId: ID!
+                issue: Issue
+              }
+              
+              type Issue {
+                owner: Owner
+              }
+              
+              type Owner {
+                accountId: String
+              }
+              
+              type User {
+                 id: ID
+                 name: String
+              }
+              
+        """)
+        def query = """{ foo { fooUsers {fooId assignee { name}}}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooUsers {fooId issue {owner {accountId}}}}}"
+        def response1 = [foo: [fooUsers: [[fooId:"id1", issue:[owner:[accountId:"one"]]], [fooId:"id2", issue:[owner:[accountId:"two"]]], [fooId:"id3", issue:[owner:[accountId:"three"]]]]]]
+        def expectedQuery2 = "query nadel_2_Foo {people(userIds:[\"one\",\"two\",\"three\"]) {name object_identifier__UUID:id}}"
+        def response2 = [people: [[name: "name", object_identifier__UUID: "one"],[name: "name2", object_identifier__UUID: "two"],[name: "name3", object_identifier__UUID: "three"]]]
+        def overallResponse = [foo:[fooUsers:[[fooId:"id1", assignee:[name:"name"]], [fooId:"id2", assignee:[name:"name2"]], [fooId:"id3", assignee:[name:"name3"]]]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
 
 
     def "a list source combined with a single source throws assert exception"() {
@@ -445,7 +708,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
-    def "2 list sources that returns a list but secondary source has null field"() {
+    def "2 list sources that hydrates a list but secondary source has null field"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Issues {
@@ -509,7 +772,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
-    def "2 list sources that returns a list but secondary source has less values"() {
+    def "2 list sources that hydrates a list but secondary source has less values"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Issues {
@@ -641,7 +904,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
     }
 
 
-    def "two single sources that returns a single object"() {
+    def "two single sources that hydrates a single object"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Issues {
@@ -701,7 +964,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
-    def "two single sources that returns a single object where secondary source is null"() {
+    def "two single sources that hydrates a single object where secondary source is null"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Issues {
@@ -761,7 +1024,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
-    def "three single sources that returns a single object"() {
+    def "three single sources that hydrates a single object"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Issues {
@@ -823,7 +1086,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
     }
 
 
-    def "two single sources that returns a single object with nested id field"() {
+    def "two single sources that hydrates a single object with nested id field"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Foo {
@@ -888,7 +1151,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
-    def "two list sources that returns a list object with nested id fields"() {
+    def "two list sources that hydrates a list object with nested id fields"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Foo {
@@ -953,6 +1216,407 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
+    def "two single source values inside a list of objects with nested ids and a rename"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                fooUsers : [FooUser]
+              }
+              type FooUser {
+                fooId: ID!
+                owner : String => renamed from issue.name
+                assignee: User => hydrated from Foo.people(userIds: $source.issue.assignee.accountId, names: $source.issue.assignee.name) object identified by userId
+              }
+
+              type User {
+                 userId: ID!
+                 name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Foo 
+                people(userIds: [ID], names: [String]): [User]
+              } 
+              
+              type Foo {
+                fooUsers: [FooUser]
+              }
+              
+              type FooUser {
+                fooId: ID!
+                issue: Issue
+              }
+              
+              type Issue {
+                assignee: Assignee
+                name : String
+              }
+              
+              type Assignee {
+                accountId: String
+                name : String
+              }
+              
+              type User {
+                 userId: ID!
+                 name: String
+              }
+              
+        """)
+        def query = """{ foo { fooUsers {fooId owner assignee { name}}}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooUsers {fooId issue {name} issue {assignee {accountId}} issue {assignee {name}}}}}"
+        def response1 = [foo: [fooUsers: [[fooId:"id1", issue:[name: "Peter Pettigrew", assignee:[accountId:"one", name:"Jack"]]]]]]
+        def expectedQuery2 = "query nadel_2_Foo {people(userIds:[\"one\"],names:[\"Jack\"]) {name object_identifier__UUID:userId}}"
+        def response2 = [people: [[name: "Jack Pepper", object_identifier__UUID: "one"]]]
+        def overallResponse = [foo:[fooUsers:[[fooId:"id1", owner:"Peter Pettigrew", assignee:[name:"Jack Pepper"]]]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "two single source values where primary source value is null"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                fooUsers : [FooUser]
+              }
+              type FooUser {
+                fooId: ID!
+                owner : String => renamed from issue.name
+                assignee: User => hydrated from Foo.people(userIds: $source.issue.assignee.accountId, names: $source.issue.assignee.name) object identified by userId
+              }
+              
+              type User {
+                 userId: ID!
+                 name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Foo 
+                people(userIds: [ID], names: [String]): [User]
+              } 
+              
+              type Foo {
+                fooUsers: [FooUser]
+              }
+              
+              type FooUser {
+                fooId: ID!
+                issue: Issue
+              }
+              
+              type Issue {
+                assignee: Assignee
+                name : String
+              }
+              
+              type Assignee {
+                accountId: String
+                name : String
+              }
+              
+              type User {
+                 userId: ID!
+                 name: String
+              }
+              
+        """)
+        def query = """{ foo { fooUsers {fooId owner assignee { name} }}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooUsers {fooId issue {name} issue {assignee {accountId}} issue {assignee {name}}}}}"
+        def response1 = [foo: [fooUsers: [[fooId:"id1", issue:[name: "Peter Pettigrew", assignee:[accountId:null, name:"Jack"]]]]]]
+        def overallResponse = [foo:[fooUsers:[[fooId:"id1", owner:"Peter Pettigrew", assignee:null]]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1],
+                [response1],
+                1,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "two single source values where source path is uneven"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                fooUsers : [FooUser]
+              }
+              type FooUser {
+                fooId: ID!
+                owner : String => renamed from issue.name
+                assignee: User => hydrated from Foo.people(userIds: $source.issue.assignee.accountId, names: $source.issue.name) object identified by userId
+              }
+              
+              type User {
+                 userId: ID!
+                 name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Foo 
+                people(userIds: [ID], names: [String]): [User]
+              } 
+              
+              type Foo {
+                fooUsers: [FooUser]
+              }
+              
+              type FooUser {
+                fooId: ID!
+                issue: Issue
+              }
+              
+              type Issue {
+                assignee: Assignee
+                name : String
+              }
+              
+              type Assignee {
+                accountId: String
+                name : String
+              }
+              
+              type User {
+                 userId: ID!
+                 name: String
+              }
+              
+        """)
+        def query = """{ foo { fooUsers {fooId owner assignee { name} }}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooUsers {fooId issue {name} issue {assignee {accountId}} issue {name}}}}"
+        def response1 = [foo: [fooUsers: [[fooId:"id1", issue:[name: "Peter Pettigrew", assignee:[accountId:"1", name:"Jack"]]]]]]
+        def expectedQuery2 = "query nadel_2_Foo {people(userIds:[\"1\"],names:[\"Peter Pettigrew\"]) {name object_identifier__UUID:userId}}"
+        def response2 = [people: [[name: "Jack Pepper", object_identifier__UUID: "1"]]]
+
+        def overallResponse = [foo:[fooUsers:[[fooId:"id1", owner:"Peter Pettigrew", assignee:[name:"Jack Pepper"]]]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+
+    def "three list source values with nested ids in the same parent path and a null hydration input value"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                fooUsers : [FooUser]
+              }
+              type FooUser {
+                fooId: ID!
+                assignee: User => hydrated from Foo.people(userIds: $source.assignees.accountId, names: $source.assignees.name, numbers: $source.contacts.number) object identified by userId
+              }
+              
+              type User {
+                 userId: ID!
+                 name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Foo 
+                people(userIds: [ID], names: [String], numbers: [String]): [User]
+              } 
+              
+              type Foo {
+                fooUsers: [FooUser]
+              }
+              
+              type FooUser {
+                fooId: ID!
+                assignees: [Assignee]
+                contacts: [Contact]
+              }
+              
+              type Contact {
+                number: String
+              }
+                            
+              type Assignee {
+                accountId: String
+                name : String
+              }
+              
+              type User {
+                 userId: ID!
+                 name: String
+              }
+              
+        """)
+        def query = """{ foo { fooUsers {fooId  assignee { name}}}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooUsers {fooId assignees {accountId} assignees {name} contacts {number}}}}"
+
+        def assigneeData = [[accountId:"1", name:"Jack"],[accountId:null, name:"George"], [accountId:"3", name:null]]
+        def contactData = [[number:"123"], [number:"456"], [number:"789"]]
+        def fooId = "id1"
+        def response1 = [foo: [fooUsers: [[fooId:fooId, assignees:assigneeData, contacts:contactData]]]]
+        def expectedQuery2 = "query nadel_2_Foo {people(userIds:[\"1\",\"3\"],names:[\"Jack\",null],numbers:[\"123\",\"789\"]) {name object_identifier__UUID:userId}}"
+        def response2 = [people: [[name: "Jack Pepper", object_identifier__UUID: "1"], [name: "George Salt", object_identifier__UUID: "3"]]]
+
+        def overallResponse = [foo:[fooUsers:[[fooId:"id1", assignee:[[name:"Jack Pepper"], null, [name:"George Salt"]]]]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "two list source values with nested ids in the same parent path"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                fooUsers : [FooUser]
+              }
+              type FooUser {
+                fooId: ID!
+                assignee: User => hydrated from Foo.people(userIds: $source.assignees.accountId, names: $source.assignees.name) object identified by userId
+              }
+              
+              type User {
+                 userId: ID!
+                 name: String
+              }
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+              type Query {
+                foo: Foo 
+                people(userIds: [ID], names: [String]): [User]
+              } 
+              
+              type Foo {
+                fooUsers: [FooUser]
+              }
+              
+              type FooUser {
+                fooId: ID!
+                assignees: [Assignee]
+              }
+              
+              type Assignee {
+                accountId: String
+                name : String
+              }
+              
+              type User {
+                 userId: ID!
+                 name: String
+              }
+              
+        """)
+        def query = """{ foo { fooUsers {fooId  assignee { name}}}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooUsers {fooId assignees {accountId} assignees {name}}}}"
+
+        def assigneeData = [[accountId:"1", name:"Jack"],[accountId:"2", name:"George"], [accountId:"3", name:"Bob"]]
+        def fooId = "id1"
+        def response1 = [foo: [fooUsers: [[fooId:fooId, assignees:assigneeData]]]]
+        def expectedQuery2 = "query nadel_2_Foo {people(userIds:[\"1\",\"2\",\"3\"],names:[\"Jack\",\"George\",\"Bob\"]) {name object_identifier__UUID:userId}}"
+        def response2 = [people: [[name: "Jack Pepper", object_identifier__UUID: "1"],[name: "Harry Paprika", object_identifier__UUID: "2"], [name: "George Salt", object_identifier__UUID: "3"]]]
+
+        def overallResponse = [foo:[fooUsers:[[fooId:"id1", assignee:[[name:"Jack Pepper"], [name:"Harry Paprika"], [name:"George Salt"]]]]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
 
     def "batching hydration with three list sources"() {
         given:

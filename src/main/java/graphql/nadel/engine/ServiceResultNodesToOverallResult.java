@@ -299,6 +299,7 @@ public class ServiceResultNodesToOverallResult {
                 .objectType(normalizedQueryField.getObjectType())
                 .fieldDefinition(normalizedQueryField.getFieldDefinition())
                 .completedValue(null)
+                .isNull(true)
                 .errors(singletonList(error))
                 .build();
         return removedNode;
@@ -347,11 +348,19 @@ public class ServiceResultNodesToOverallResult {
         List<UnapplyResult> unapplyResults = new ArrayList<>();
         for (AbstractNode definition : nodesWithTransformedFields.keySet()) {
             List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
-            UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition).get(0), transformationsForDefinition, unapplyEnvironment);
+            FieldTransformation transformation = transformationsForDefinition.get(0);
+
+            List<ExecutionResultNode> transformedNodes = nodesWithTransformedFields.get(definition);
+            ExecutionResultNode resultNode = transformedNodes.get(0);
+
+            if (transformation instanceof HydrationTransformation) {
+                resultNode = mergeHydrationNodes(transformedNodes, resultNode);
+            }
+
+            UnapplyResult unapplyResult = transformation.unapplyResultNode(resultNode, transformationsForDefinition, unapplyEnvironment);
 
             // typeDecrementAmount = 0 because for a field rename it's children will not know about the underlying type.
             checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, resultCounter, 0);
-
             unapplyResults.add(unapplyResult);
         }
         resultCounter.incrementFieldRenameCount(unapplyResults.size());
@@ -497,23 +506,21 @@ public class ServiceResultNodesToOverallResult {
             }
             newChildren.add(child);
         }
-        return primaryNode.withNewChildren(newChildren);
+        return primaryNode.withNewChildren(newChildren).transform(builder -> builder.fieldId(primaryNode.getFieldIds().get(0)));
     }
 
     private ExecutionResultNode mergeObjectHydrationNodeValues(ExecutionResultNode node, Map<String, Object> completedValues) {
-        return node.transform(builder -> builder.children(changeLeafValueInObjectNode(node.getChildren().get(0), completedValues)));
+        return changeLeafValueInObjectNode(node, completedValues).get(0);
     }
 
     private List<ExecutionResultNode> changeLeafValueInObjectNode(ExecutionResultNode node, Map<String, Object> completedValues) {
         if (node instanceof LeafExecutionResultNode) {
             node = node.withNewCompletedValue(completedValues);
-            return Collections.singletonList(node);
+            return new ArrayList<>(Collections.singletonList(node));
         }
-        ExecutionResultNode finalNode = node;
-        return Collections.singletonList(
-                node.transform(builder -> builder.children(
-                        changeLeafValueInObjectNode(finalNode.getChildren().get(0), completedValues)))
-        );
+
+        List<ExecutionResultNode> modifiedChildren = changeLeafValueInObjectNode(node.getChildren().get(0), completedValues);
+        return new ArrayList<>(Collections.singletonList(node.transform(builder -> builder.children(modifiedChildren))));
     }
 
     private TuplesTwo<ExecutionResultNode, Map<AbstractNode, List<ExecutionResultNode>>> splitTreeByTransformationDefinition(
