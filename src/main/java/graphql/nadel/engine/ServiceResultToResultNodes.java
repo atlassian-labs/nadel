@@ -6,8 +6,6 @@ import graphql.SerializationError;
 import graphql.TypeMismatchError;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionPath;
-import graphql.execution.ExecutionStepInfo;
-import graphql.execution.MergedField;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
@@ -48,8 +46,6 @@ public class ServiceResultToResultNodes {
 
 
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
-                                                      ExecutionStepInfo executionStepInfo,
-                                                      List<MergedField> mergedFields,
                                                       ServiceExecutionResult serviceExecutionResult,
                                                       ElapsedTime elapsedTimeForServiceCall,
                                                       NormalizedQueryFromAst normalizedQueryFromAst

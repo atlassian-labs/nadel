@@ -1,7 +1,6 @@
 package graphql.nadel.engine
 
 import graphql.execution.ExecutionContext
-import graphql.execution.nextgen.FieldSubSelection
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.result.ElapsedTime
 import graphql.nadel.result.ResultNodesUtil
@@ -18,17 +17,14 @@ class ServiceResultToResultNodesTest extends Specification {
         def schema = TestUtil.schema("type Query{ hello: String }")
         def query = TestUtil.parseQuery("{hello}")
         def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
-        FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
-        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        (executionContext) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
         ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
-                fieldSubSelection.getExecutionStepInfo(),
-                fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
                 elapsedTime,
                 normalizedQuery
@@ -47,17 +43,14 @@ class ServiceResultToResultNodesTest extends Specification {
         def query = TestUtil.parseQuery("{myAlias: hello}")
         def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
 
-        FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
-        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        (executionContext) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
         ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
-                fieldSubSelection.getExecutionStepInfo(),
-                fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
                 elapsedTime,
                 normalizedQuery
@@ -100,17 +93,14 @@ class ServiceResultToResultNodesTest extends Specification {
         }}
         """)
         def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
-        FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
-        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        (executionContext) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
         ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
-                fieldSubSelection.getExecutionStepInfo(),
-                fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
                 elapsedTime,
                 normalizedQuery
@@ -128,17 +118,14 @@ class ServiceResultToResultNodesTest extends Specification {
         def query = TestUtil.parseQuery("{hello}")
         def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
 
-        FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
-        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        (executionContext) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
         ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
-                fieldSubSelection.getExecutionStepInfo(),
-                fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
                 elapsedTime,
                 normalizedQuery
@@ -155,9 +142,8 @@ class ServiceResultToResultNodesTest extends Specification {
         def query = TestUtil.parseQuery("{hello}")
         def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
 
-        FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
-        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        (executionContext) = TestUtil.executionData(schema, query)
 
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
@@ -165,8 +151,6 @@ class ServiceResultToResultNodesTest extends Specification {
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
-                fieldSubSelection.getExecutionStepInfo(),
-                fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
                 elapsedTime,
                 normalizedQuery
@@ -184,17 +168,14 @@ class ServiceResultToResultNodesTest extends Specification {
         def query = TestUtil.parseQuery("{hello}")
         def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
 
-        FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
-        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        (executionContext) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
         ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
-                fieldSubSelection.getExecutionStepInfo(),
-                fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
                 elapsedTime,
                 normalizedQuery
@@ -212,17 +193,14 @@ class ServiceResultToResultNodesTest extends Specification {
         def schema = TestUtil.schema("type Query{ hello: [String] }")
         def query = TestUtil.parseQuery("{hello}")
         def normalizedQuery = TestUtil.createNormalizedQuery(schema, query)
-        FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
-        (executionContext, fieldSubSelection) = TestUtil.executionData(schema, query)
+        (executionContext) = TestUtil.executionData(schema, query)
 
         ServiceResultToResultNodes resultToNodes = new ServiceResultToResultNodes()
         ServiceExecutionResult delegatedResult = new ServiceExecutionResult(data)
 
         when:
         def node = resultToNodes.resultToResultNode(executionContext,
-                fieldSubSelection.getExecutionStepInfo(),
-                fieldSubSelection.getMergedSelectionSet().getSubFieldsList(),
                 delegatedResult,
                 elapsedTime,
                 normalizedQuery

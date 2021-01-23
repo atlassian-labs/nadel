@@ -32,9 +32,12 @@ public class AsyncIsFieldForbidden {
     }
 
     public CompletableFuture<Map<String, GraphQLError>> getForbiddenFields(Node<?> root) {
-        return visitChildren(root).thenApply(unused -> {
-            return fieldIdsToErrors;
-        });
+        if (root instanceof Field) {
+            return visitField((Field) root)
+                    .thenApply(unused -> fieldIdsToErrors);
+        }
+        return visitChildren(root)
+                .thenApply(unused -> fieldIdsToErrors);
     }
 
     private CompletableFuture<Void> visitChildren(Node<?> root) {

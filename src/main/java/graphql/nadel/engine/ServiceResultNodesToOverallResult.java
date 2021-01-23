@@ -234,7 +234,8 @@ public class ServiceResultNodesToOverallResult {
             return HandleResult.simple(convertedNode);
         }
         if (node instanceof LeafExecutionResultNode) {
-            if (ArtificialFieldUtils.isArtificialField(nadelContext, node.getAlias())) {
+            LeafExecutionResultNode leaf = (LeafExecutionResultNode) node;
+            if (ArtificialFieldUtils.isArtificialField(nadelContext, leaf.getAlias())) {
                 resultCounter.decrementNodeCount();
                 return null;
             }
@@ -361,6 +362,7 @@ public class ServiceResultNodesToOverallResult {
 
             // typeDecrementAmount = 0 because for a field rename it's children will not know about the underlying type.
             checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, resultCounter, 0);
+
             unapplyResults.add(unapplyResult);
         }
         resultCounter.incrementFieldRenameCount(unapplyResults.size());
