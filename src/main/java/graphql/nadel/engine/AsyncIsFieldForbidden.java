@@ -7,7 +7,6 @@ import graphql.nadel.engine.transformation.OverallTypeInfo;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
-import graphql.schema.GraphQLFieldDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +16,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 import static graphql.nadel.dsl.NodeId.getId;
+import static graphql.nadel.util.FpKit.map;
 
 public class AsyncIsFieldForbidden {
 
-    private final Map<String, GraphQLError> fieldIdsToErrors = new ConcurrentHashMap<>();
+    private final Map<NormalizedQueryField, GraphQLError> fieldIdsToErrors = new ConcurrentHashMap<>();
     private final ServiceExecutionHooks serviceExecutionHooks;
     private final NadelContext nadelContext;
     private final OverallTypeInformation<?> overallTypeInformation;
@@ -31,7 +31,7 @@ public class AsyncIsFieldForbidden {
         this.overallTypeInformation = overallTypeInformation;
     }
 
-    public CompletableFuture<Map<String, GraphQLError>> getForbiddenFields(Node<?> root) {
+    public CompletableFuture<Map<NormalizedQueryField, GraphQLError>> getForbiddenFields(Node<?> root) {
         if (root instanceof Field) {
             return visitField((Field) root)
                     .thenApply(unused -> fieldIdsToErrors);
@@ -63,17 +63,18 @@ public class AsyncIsFieldForbidden {
             return visitChildren(field);
         }
 
-        GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
-
         List<NormalizedQueryField> normalizedFields = nadelContext.getNormalizedOverallQuery().getNormalizedFieldsByFieldId(fieldId);
 
-        return serviceExecutionHooks.isFieldForbidden(field, normalizedFields, fieldDefinitionOverall, nadelContext.getUserSuppliedContext())
-                .thenCompose(graphQLError -> {
-                    if (graphQLError.isPresent()) {
-                        fieldIdsToErrors.put(fieldId, graphQLError.get());
-                        return CompletableFuture.completedFuture(null);
-                    }
-                    return visitChildren(field);
-                });
+        CompletableFuture<?>[] cfs = map(normalizedFields, normalizedField ->
+                serviceExecutionHooks.isFieldForbidden(normalizedField, nadelContext.getUserSuppliedContext())
+                        .thenCompose(graphQLError -> {
+                            if (graphQLError.isPresent()) {
+                                fieldIdsToErrors.put(normalizedField, graphQLError.get());
+                                return CompletableFuture.completedFuture(null);
+                            }
+                            return visitChildren(field);
+                        }))
+                .toArray(new CompletableFuture[0]);
+        return CompletableFuture.allOf(cfs);
     }
 }

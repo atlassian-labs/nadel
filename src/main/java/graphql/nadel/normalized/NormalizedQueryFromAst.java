@@ -4,6 +4,7 @@ import graphql.Internal;
 import graphql.execution.MergedField;
 import graphql.nadel.dsl.NodeId;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ public class NormalizedQueryFromAst {
     }
 
     public List<NormalizedQueryField> getNormalizedFieldsByFieldId(String astFieldId) {
-        return normalizedFieldsByFieldId.get(astFieldId);
+        return normalizedFieldsByFieldId.getOrDefault(astFieldId, Collections.emptyList());
     }
 
     public Map<NormalizedQueryField, MergedField> getMergedFieldByNormalizedFields() {
