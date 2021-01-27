@@ -176,36 +176,42 @@ public class NadelExecutionStrategy {
                 CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
                         .execute(newExecutionContext, queryTransform, service, operation, serviceContext, false);
 
-                CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
-                        .thenApply(resultNode -> {
-                            if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
-                                BenchmarkContext benchmarkContext = (BenchmarkContext) nadelContext.getUserSuppliedContext();
-                                benchmarkContext.serviceResultNodesToOverallResult.executionId = newExecutionContext.getExecutionId();
-                                benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
-                                benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
-                                benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
-                                benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
-                                benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
-                                benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
-                                benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = queryTransform.getRemovedFieldMap();
-                            }
-                            return (RootExecutionResultNode) serviceResultNodesToOverallResult
-                                    .convert(newExecutionContext.getExecutionId(),
-                                            resultNode,
-                                            overallSchema,
-                                            resultNode,
-                                            fieldIdToTransformation,
-                                            typeRenameMappings,
-                                            nadelContext,
-                                            queryTransform.getRemovedFieldMap());
-                        });
+                CompletableFuture<RootExecutionResultNode> convertedResult;
 
-                //set the result node count for this service
-                convertedResult.thenAccept(rootExecutionResultNode -> {
-                    resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount());
-                    resultComplexityAggregator.incrementFieldRenameCount(rootExecutionResultNode.getTotalFieldRenameCount());
-                    resultComplexityAggregator.incrementTypeRenameCount(rootExecutionResultNode.getTotalTypeRenameCount());
-                });
+                if (fieldIdToTransformation.size() > 0 || typeRenameMappings.size() > 0 || queryTransform.getRemovedFieldMap().hasRemovedFields()) {
+                    convertedResult = serviceCallResult
+                            .thenApply(resultNode -> {
+                                if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+                                    BenchmarkContext benchmarkContext = (BenchmarkContext) nadelContext.getUserSuppliedContext();
+                                    benchmarkContext.serviceResultNodesToOverallResult.executionId = newExecutionContext.getExecutionId();
+                                    benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
+                                    benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
+                                    benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
+                                    benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
+                                    benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
+                                    benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
+                                    benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = queryTransform.getRemovedFieldMap();
+                                }
+                                return (RootExecutionResultNode) serviceResultNodesToOverallResult
+                                        .convert(newExecutionContext.getExecutionId(),
+                                                resultNode,
+                                                overallSchema,
+                                                resultNode,
+                                                fieldIdToTransformation,
+                                                typeRenameMappings,
+                                                nadelContext,
+                                                queryTransform.getRemovedFieldMap());
+                            });
+
+                    //set the result node count for this service
+                    convertedResult.thenAccept(rootExecutionResultNode -> {
+                        resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount());
+                        resultComplexityAggregator.incrementFieldRenameCount(rootExecutionResultNode.getTotalFieldRenameCount());
+                        resultComplexityAggregator.incrementTypeRenameCount(rootExecutionResultNode.getTotalTypeRenameCount());
+                    });
+                } else { // Skip work because no hydrations and no renames
+                    convertedResult = serviceCallResult;
+                }
 
                 CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult
                         .thenCompose(rootResultNode -> {
