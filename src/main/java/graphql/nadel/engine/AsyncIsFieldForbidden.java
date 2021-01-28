@@ -6,7 +6,6 @@ import graphql.language.Node;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -19,7 +18,7 @@ import static graphql.nadel.util.FpKit.map;
 
 public class AsyncIsFieldForbidden {
 
-    private final Map<NormalizedQueryField, GraphQLError> fieldIdsToErrors = new ConcurrentHashMap<>();
+    private final Map<NormalizedQueryField, GraphQLError> fieldsToErrors = new ConcurrentHashMap<>();
     private final ServiceExecutionHooks serviceExecutionHooks;
     private final NadelContext nadelContext;
 
@@ -29,39 +28,36 @@ public class AsyncIsFieldForbidden {
     }
 
     public CompletableFuture<Map<NormalizedQueryField, GraphQLError>> getForbiddenFields(Node<?> root) {
-        List<CompletableFuture<Void>> visitAllFields = map(getNormalisedFields(root), this::visitField);
-        return allOf(visitAllFields)
-                .thenApply(ignored -> fieldIdsToErrors);
+        List<NormalizedQueryField> normalisedFields = getNormalisedFields(root);
+        List<CompletableFuture<Void>> visitNormalisedFields = map(normalisedFields, this::visitField);
+        return allOf(visitNormalisedFields)
+                .thenApply(ignored -> fieldsToErrors);
     }
 
-    private List<NormalizedQueryField> getNormalisedFields(Node<?> root) {
-        if (root instanceof Field) {
-            return getNormalisedFieldsFromAstField(root);
+    private List<NormalizedQueryField> getNormalisedFields(Node<?> node) {
+        if (node instanceof Field) {
+            return nadelContext.getNormalizedOverallQuery()
+                    .getNormalizedFieldsByFieldId(getId(node));
         }
-        return flatMap(root.getChildren(), this::getNormalisedFieldsFromAstField);
-    }
-
-    private List<NormalizedQueryField> getNormalisedFieldsFromAstField(Node<?> root) {
-        return nadelContext.getNormalizedOverallQuery().getNormalizedFieldsByFieldId(getId(root));
+        return flatMap(node.getChildren(), this::getNormalisedFields);
     }
 
     private CompletableFuture<Void> visitField(NormalizedQueryField field) {
         if (field.getName().equals(TypeNameMetaFieldDef.getName())) {
             return CompletableFuture.completedFuture(null);
         }
-
         return serviceExecutionHooks.isFieldForbidden(field, nadelContext.getUserSuppliedContext())
                 .thenCompose(graphQLError -> {
                     if (graphQLError.isPresent()) {
-                        fieldIdsToErrors.put(field, graphQLError.get());
+                        fieldsToErrors.put(field, graphQLError.get());
                         return CompletableFuture.completedFuture(null);
                     }
-                    List<CompletableFuture<Void>> visitAllChildren = map(field.getChildren(), this::visitField);
-                    return allOf(visitAllChildren);
+                    List<CompletableFuture<Void>> visitChildren = map(field.getChildren(), this::visitField);
+                    return allOf(visitChildren);
                 });
     }
 
-    private static CompletableFuture<Void> allOf(Collection<? extends CompletableFuture<?>> cfs) {
+    private static CompletableFuture<Void> allOf(List<CompletableFuture<Void>> cfs) {
         return CompletableFuture.allOf(cfs.toArray(new CompletableFuture<?>[0]));
     }
 }

@@ -352,7 +352,7 @@ public class OverallQueryTransformer {
 
         String fragmentName = fragmentsToTransform.iterator().next();
         Set<String> newReferencedFragments = new LinkedHashSet<>();
-        FragmentDefinition transformedFragment = transformFragmentDefinition(
+        CompletableFuture<FragmentDefinition> transformedFragmentCF = transformFragmentDefinition(
                 executionContext,
                 underlyingSchema,
                 fragments.get(fragmentName),
@@ -366,6 +366,7 @@ public class OverallQueryTransformer {
                 serviceContext,
                 removedFieldMap
         );
+        return transformedFragmentCF.thenCompose(transformedFragment -> {
             fragmentsToTransform.remove(fragmentName);
             transformedFragments.add(transformedFragment);
             fragmentsToTransform.addAll(newReferencedFragments);
@@ -383,21 +384,22 @@ public class OverallQueryTransformer {
                     removedFieldMap,
                     fragmentsToTransform,
                     transformedFragments);
+        });
     }
 
 
-    private FragmentDefinition transformFragmentDefinition(ExecutionContext executionContext,
-                                                           GraphQLSchema underlyingSchema,
-                                                           FragmentDefinition fragmentDefinitionWithoutTypeInfo,
-                                                           Map<String, FieldTransformation> transformationByResultField,
-                                                           Map<String, String> typeRenameMappings,
-                                                           Set<String> referencedFragmentNames,
-                                                           Map<String, VariableDefinition> referencedVariables,
-                                                           ServiceExecutionHooks serviceExecutionHooks,
-                                                           Map<String, Object> variableValues,
-                                                           Service service,
-                                                           Object serviceContext,
-                                                           TransformationMetadata removedFieldMap
+    private CompletableFuture<FragmentDefinition> transformFragmentDefinition(ExecutionContext executionContext,
+                                                                              GraphQLSchema underlyingSchema,
+                                                                              FragmentDefinition fragmentDefinitionWithoutTypeInfo,
+                                                                              Map<String, FieldTransformation> transformationByResultField,
+                                                                              Map<String, String> typeRenameMappings,
+                                                                              Set<String> referencedFragmentNames,
+                                                                              Map<String, VariableDefinition> referencedVariables,
+                                                                              ServiceExecutionHooks serviceExecutionHooks,
+                                                                              Map<String, Object> variableValues,
+                                                                              Service service,
+                                                                              Object serviceContext,
+                                                                              TransformationMetadata removedFieldMap
     ) {
         NadelContext nadelContext = executionContext.getContext();
 
@@ -406,35 +408,40 @@ public class OverallQueryTransformer {
                 executionContext.getGraphQLSchema(),
                 null);
 
-        Transformer transformer = new Transformer(
-                executionContext,
-                underlyingSchema,
-                transformationByResultField,
-                typeRenameMappings,
-                referencedFragmentNames,
-                referencedVariables,
-                nadelContext,
-                serviceExecutionHooks,
-                overallTypeInformation,
-                variableValues,
-                service,
-                serviceContext,
-                removedFieldMap,
-                Collections.emptyMap()
-        );
-        Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
-        rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext().build());
-        TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
-        Node newNode = treeTransformer.transform(fragmentDefinitionWithoutTypeInfo, new TraverserVisitorStub<Node>() {
-                    @Override
-                    public TraversalControl enter(TraverserContext<Node> context) {
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext);
+
+        return asyncIsFieldForbidden.getForbiddenFields(fragmentDefinitionWithoutTypeInfo).thenApply(forbiddenFields -> {
+
+            Transformer transformer = new Transformer(
+                    executionContext,
+                    underlyingSchema,
+                    transformationByResultField,
+                    typeRenameMappings,
+                    referencedFragmentNames,
+                    referencedVariables,
+                    nadelContext,
+                    serviceExecutionHooks,
+                    overallTypeInformation,
+                    variableValues,
+                    service,
+                    serviceContext,
+                    removedFieldMap,
+                    forbiddenFields
+            );
+            Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
+            rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext().build());
+            TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
+            Node newNode = treeTransformer.transform(fragmentDefinitionWithoutTypeInfo, new TraverserVisitorStub<Node>() {
+                        @Override
+                        public TraversalControl enter(TraverserContext<Node> context) {
                             return context.thisNode().accept(context, transformer);
                         }
                     },
                     rootVars
             );
             //noinspection unchecked
-        return (FragmentDefinition) newNode;
+            return (FragmentDefinition) newNode;
+        });
     }
 
     private List<VariableDefinition> buildReferencedVariableDefinitions(Map<String, VariableDefinition> referencedVariables,
