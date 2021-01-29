@@ -4,6 +4,7 @@ import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
+import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
@@ -31,11 +32,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -60,6 +63,7 @@ public class NadelExecutionStrategy {
     private final ServiceExecutor serviceExecutor;
     private final HydrationInputResolver hydrationInputResolver;
     private final ServiceExecutionHooks serviceExecutionHooks;
+    private final ExecutionPathSet hydrationInputPaths;
 
     private static final Logger log = LoggerFactory.getLogger(NadelExecutionStrategy.class);
 
@@ -73,7 +77,8 @@ public class NadelExecutionStrategy {
         this.fieldInfos = fieldInfos;
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.serviceExecutor = new ServiceExecutor(instrumentation);
-        this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks);
+        this.hydrationInputPaths = new ExecutionPathSet();
+        this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks, hydrationInputPaths);
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection, ResultComplexityAggregator resultComplexityAggregator) {
@@ -82,10 +87,11 @@ public class NadelExecutionStrategy {
         NadelContext nadelContext = getNadelContext(executionContext);
         Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
         CompletableFuture<List<OneServiceExecution>> oneServiceExecutionsCF = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
+
         return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
             Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
             List<CompletableFuture<RootExecutionResultNode>> resultNodes =
-                    executeTopLevelFields(executionContext, nadelContext, operation, oneServiceExecutions, resultComplexityAggregator);
+                    executeTopLevelFields(executionContext, nadelContext, operation, oneServiceExecutions, resultComplexityAggregator, hydrationInputPaths);
 
             CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
             return rootResult
@@ -138,7 +144,8 @@ public class NadelExecutionStrategy {
             NadelContext nadelContext,
             Operation operation,
             List<OneServiceExecution> oneServiceExecutions,
-            ResultComplexityAggregator resultComplexityAggregator) {
+            ResultComplexityAggregator resultComplexityAggregator,
+            Set<ExecutionPath> hydrationInputPaths) {
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
@@ -197,7 +204,8 @@ public class NadelExecutionStrategy {
                                             fieldIdToTransformation,
                                             typeRenameMappings,
                                             nadelContext,
-                                            queryTransform.getRemovedFieldMap());
+                                            queryTransform.getRemovedFieldMap(),
+                                            hydrationInputPaths);
                         });
 
                 //set the result node count for this service
@@ -292,6 +300,18 @@ public class NadelExecutionStrategy {
         final Service service;
         final Object serviceContext;
         final ExecutionStepInfo stepInfo;
+    }
+
+    public static class ExecutionPathSet extends HashSet<ExecutionPath> {
+        @Override
+        public boolean add(ExecutionPath executionPath) {
+            ExecutionPath path = executionPath;
+            while (path != null) {
+                path = path.getParent();
+                super.add(path);
+            }
+            return super.add(executionPath);
+        }
     }
 
 

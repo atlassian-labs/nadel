@@ -76,15 +76,18 @@ public class HydrationInputResolver {
     private final GraphQLSchema overallSchema;
     private final ServiceExecutor serviceExecutor;
     private final ServiceExecutionHooks serviceExecutionHooks;
+    private final NadelExecutionStrategy.ExecutionPathSet hydrationInputPaths;
 
     public HydrationInputResolver(List<Service> services,
                                   GraphQLSchema overallSchema,
                                   ServiceExecutor serviceExecutor,
-                                  ServiceExecutionHooks serviceExecutionHooks) {
+                                  ServiceExecutionHooks serviceExecutionHooks,
+                                  NadelExecutionStrategy.ExecutionPathSet hydrationInputPaths) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.serviceExecutor = serviceExecutor;
         this.serviceExecutionHooks = serviceExecutionHooks;
+        this.hydrationInputPaths = hydrationInputPaths;
     }
 
 
@@ -92,7 +95,7 @@ public class HydrationInputResolver {
                                                                             ExecutionResultNode node,
                                                                             Map<Service, Object> serviceContexts,
                                                                             ResultComplexityAggregator resultComplexityAggregator) {
-        Set<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(node);
+        Set<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(node, hydrationInputPaths);
         if (hydrationInputZippers.size() == 0) {
             return CompletableFuture.completedFuture(node);
         }
@@ -361,7 +364,9 @@ public class HydrationInputResolver {
                         transformationByResultField,
                         typeRenameMappings,
                         nadelContext,
-                        queryTransformationResult.getRemovedFieldMap());
+                        queryTransformationResult.getRemovedFieldMap(),
+                        hydrationInputPaths);
+
         String serviceName = hydrationTransformation.getUnderlyingServiceHydration().getServiceName();
         resultComplexityAggregator.incrementServiceNodeCount(serviceName, firstTopLevelResultNode.getTotalNodeCount());
         resultComplexityAggregator.incrementTypeRenameCount(firstTopLevelResultNode.getTotalTypeRenameCount());
@@ -534,7 +539,8 @@ public class HydrationInputResolver {
                         transformationByResultField,
                         typeRenameMappings,
                         getNadelContext(executionContext),
-                        queryTransformationResult.getRemovedFieldMap());
+                        queryTransformationResult.getRemovedFieldMap(),
+                        hydrationInputPaths);
 
                 String serviceName = hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName();
                 int nodeCount = overallResultNode.getTotalNodeCount();
