@@ -295,6 +295,7 @@ public class Transformer extends NodeVisitorStub {
         Field changedNode = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, field, fieldType);
         if (changedNode != field) {
             TreeTransformerUtil.changeNode(traverserContext, changedNode);
+            hintTypenameMappings.add(changedNode.getName());
         }
     }
 

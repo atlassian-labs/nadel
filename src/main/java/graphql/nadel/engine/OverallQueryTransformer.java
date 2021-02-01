@@ -134,8 +134,11 @@ public class OverallQueryTransformer {
 
             Field transformedRootField = finalTopLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
-
-            transformedRootField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
+            Field maybeTransformedRootField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
+            if (maybeTransformedRootField != transformedRootField) {
+                hintTypenameMappings.add(maybeTransformedRootField.getName());
+            }
+            transformedRootField = maybeTransformedRootField;
             transformedRootField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
 
             if (isSynthetic) {
@@ -242,7 +245,12 @@ public class OverallQueryTransformer {
                     }
                     // if all child fields of the high level field are removed then the top-level field is nulled
                     GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
-                    newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
+
+                    Field maybeNewField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
+                    if (maybeNewField != newField) {
+                        hintTypenameMappings.add(maybeNewField.getName());
+                    }
+                    newField = maybeNewField;
                     return newField;
 
                 });
