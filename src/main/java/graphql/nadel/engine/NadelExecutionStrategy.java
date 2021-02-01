@@ -211,6 +211,7 @@ public class NadelExecutionStrategy {
                     });
                 } else { // Skip work because no hydrations and no renames
                     convertedResult = serviceCallResult;
+                    resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);
                 }
 
                 CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult
