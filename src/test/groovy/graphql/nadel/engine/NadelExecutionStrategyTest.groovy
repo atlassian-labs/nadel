@@ -2062,7 +2062,7 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         resultComplexityAggregator.getFieldRenamesCount() == 0
         resultComplexityAggregator.getTypeRenamesCount() == 0
         resultComplexityAggregator.getNodeCountsForService("Issues") == 5
-        // UserService node count is non-zero as there are 6 nodes counted in hydration resolver step
+        // UserService node count is non-zero as there are 6 nodes counted in hydration resolver step.
         resultComplexityAggregator.getNodeCountsForService("UserService") == 6
 
     }
