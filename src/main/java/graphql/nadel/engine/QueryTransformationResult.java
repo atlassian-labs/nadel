@@ -93,5 +93,7 @@ public class QueryTransformationResult {
     public TransformationMetadata getRemovedFieldMap() {
         return removedFieldMap;
     }
+
+    public List<String> getHintTypenameMap() { return hintTypenameMappings; }
 }
 

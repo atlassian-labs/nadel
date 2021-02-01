@@ -178,7 +178,7 @@ public class NadelExecutionStrategy {
 
                 CompletableFuture<RootExecutionResultNode> convertedResult;
 
-                if (fieldIdToTransformation.size() > 0 || typeRenameMappings.size() > 0 || queryTransform.getRemovedFieldMap().hasRemovedFields()) {
+                if (fieldIdToTransformation.size() > 0 || typeRenameMappings.size() > 0 || queryTransform.getRemovedFieldMap().hasRemovedFields() || queryTransform.getHintTypenameMap().size() > 0) {
                     convertedResult = serviceCallResult
                             .thenApply(resultNode -> {
                                 if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
