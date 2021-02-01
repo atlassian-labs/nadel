@@ -84,6 +84,7 @@ public class OverallQueryTransformer {
         Map<String, FieldTransformation> fieldIdToTransformation = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
+        List<String> hintTypenameMappings = new ArrayList<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
         TransformationMetadata removedFieldMap = new TransformationMetadata();
 
@@ -120,6 +121,7 @@ public class OverallQueryTransformer {
                 typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
+                hintTypenameMappings,
                 nadelContext,
                 serviceExecutionHooks,
                 variableValues,
@@ -151,6 +153,7 @@ public class OverallQueryTransformer {
                     typeRenameMappings,
                     referencedFragmentNames,
                     referencedVariables,
+                    hintTypenameMappings,
                     serviceExecutionHooks,
                     variableValues,
                     service,
@@ -178,6 +181,7 @@ public class OverallQueryTransformer {
                         Collections.singletonList(transformedMergedField),
                         typeRenameMappings,
                         referencedVariableNames,
+                        hintTypenameMappings,
                         fieldIdToTransformation,
                         transformedFragments,
                         variableValues,
@@ -202,6 +206,7 @@ public class OverallQueryTransformer {
         Map<String, FieldTransformation> fieldIdToTransformation = new LinkedHashMap<>();
         Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
+        List<String> hintTypenameMappings = new ArrayList<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
         TransformationMetadata removedFieldMap = new TransformationMetadata();
 
@@ -222,6 +227,7 @@ public class OverallQueryTransformer {
                         typeRenameMappings,
                         fragmentsDirectlyReferenced,
                         referencedVariables,
+                        hintTypenameMappings,
                         nadelContext,
                         serviceExecutionHooks,
                         variableValues,
@@ -265,6 +271,7 @@ public class OverallQueryTransformer {
                     typeRenameMappings,
                     fragmentsDirectlyReferenced,
                     referencedVariables,
+                    hintTypenameMappings,
                     serviceExecutionHooks,
                     variableValues,
                     service,
@@ -282,6 +289,7 @@ public class OverallQueryTransformer {
                         transformedMergedFields,
                         typeRenameMappings,
                         referencedVariableNames,
+                        hintTypenameMappings,
                         fieldIdToTransformation,
                         transformedFragments,
                         variableValues,
@@ -308,6 +316,7 @@ public class OverallQueryTransformer {
                                                                                   Map<String, String> typeRenameMappings,
                                                                                   Set<String> referencedFragmentNames,
                                                                                   Map<String, VariableDefinition> referencedVariables,
+                                                                                  List<String> hintTypenameMappings,
                                                                                   ServiceExecutionHooks serviceExecutionHooks,
                                                                                   Map<String, Object> variableValues,
                                                                                   Service service,
@@ -323,6 +332,7 @@ public class OverallQueryTransformer {
                 transformationByResultField,
                 typeRenameMappings,
                 referencedVariables,
+                hintTypenameMappings,
                 serviceExecutionHooks,
                 variableValues,
                 service,
@@ -339,6 +349,7 @@ public class OverallQueryTransformer {
                                                                              Map<String, FieldTransformation> transformationByResultField,
                                                                              Map<String, String> typeRenameMappings,
                                                                              Map<String, VariableDefinition> referencedVariables,
+                                                                             List<String> hintTypenameMappings,
                                                                              ServiceExecutionHooks serviceExecutionHooks,
                                                                              Map<String, Object> variableValues,
                                                                              Service service,
@@ -360,6 +371,7 @@ public class OverallQueryTransformer {
                 typeRenameMappings,
                 newReferencedFragments,
                 referencedVariables,
+                hintTypenameMappings,
                 serviceExecutionHooks,
                 variableValues,
                 service,
@@ -377,6 +389,7 @@ public class OverallQueryTransformer {
                     transformationByResultField,
                     typeRenameMappings,
                     referencedVariables,
+                    hintTypenameMappings,
                     serviceExecutionHooks,
                     variableValues,
                     service,
@@ -395,6 +408,7 @@ public class OverallQueryTransformer {
                                                                               Map<String, String> typeRenameMappings,
                                                                               Set<String> referencedFragmentNames,
                                                                               Map<String, VariableDefinition> referencedVariables,
+                                                                              List<String> hintTypenameMappings,
                                                                               ServiceExecutionHooks serviceExecutionHooks,
                                                                               Map<String, Object> variableValues,
                                                                               Service service,
@@ -419,6 +433,7 @@ public class OverallQueryTransformer {
                     typeRenameMappings,
                     referencedFragmentNames,
                     referencedVariables,
+                    hintTypenameMappings,
                     nadelContext,
                     serviceExecutionHooks,
                     overallTypeInformation,
@@ -472,6 +487,7 @@ public class OverallQueryTransformer {
                                                                 Map<String, String> typeRenameMappings,
                                                                 Set<String> referencedFragmentNames,
                                                                 Map<String, VariableDefinition> referencedVariables,
+                                                                List<String> hintTypenameMappings,
                                                                 NadelContext nadelContext,
                                                                 ServiceExecutionHooks serviceExecutionHooks,
                                                                 Map<String, Object> variableValues,
@@ -494,6 +510,7 @@ public class OverallQueryTransformer {
                     typeRenameMappings,
                     referencedFragmentNames,
                     referencedVariables,
+                    hintTypenameMappings,
                     nadelContext,
                     serviceExecutionHooks,
                     overallTypeInformation,

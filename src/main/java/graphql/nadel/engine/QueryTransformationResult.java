@@ -29,6 +29,8 @@ public class QueryTransformationResult {
     private final Map<String, FieldTransformation> fieldIdToTransformation;
     // needed when the underlying result tree is mapped back
     private final Map<String, String> typeRenameMappings;
+    // store artificial fields created to support interfaces and unions
+    private final List<String> hintTypenameMappings;
 
     private final Map<String, Object> variableValues;
 
@@ -39,6 +41,7 @@ public class QueryTransformationResult {
                                      List<MergedField> transformedMergedFields,
                                      Map<String, String> typeRenameMappings,
                                      List<String> referencedVariables,
+                                     List<String> hintTypenameMappings,
                                      Map<String, FieldTransformation> fieldIdToTransformation,
                                      Map<String, FragmentDefinition> transformedFragments,
                                      Map<String, Object> variableValues,
@@ -47,6 +50,7 @@ public class QueryTransformationResult {
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
         this.referencedVariables = referencedVariables;
+        this.hintTypenameMappings = hintTypenameMappings;
         this.fieldIdToTransformation = fieldIdToTransformation;
         this.transformedFragments = transformedFragments;
         this.typeRenameMappings = typeRenameMappings;
