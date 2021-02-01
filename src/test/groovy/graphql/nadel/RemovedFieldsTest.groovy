@@ -2,13 +2,11 @@ package graphql.nadel
 
 import graphql.GraphQLError
 import graphql.execution.AbortExecutionException
-import graphql.language.Field
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.normalized.NormalizedQueryField
 import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
-import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
 
 import java.util.concurrent.CompletableFuture
@@ -558,8 +556,8 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         return new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(Field field, List<NormalizedQueryField> normalizedFields, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
-                if (fieldsToRemove.contains(field.getName())) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+                if (fieldsToRemove.contains(normalizedField.getName())) {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
                 }
@@ -568,10 +566,104 @@ class RemovedFieldsTest extends StrategyTestHelper {
         }
     }
 
-    def "restricted field inside hydration via fragments used twice"() {
+    def setupFragmentTests() {
+        GraphQLSchema overallSchema = TestUtil.schemaFromNdsl([Issues : '''
+        service Issues {
+            type Query {
+                issue: Issue
+            }
+            type Issue {
+                id: ID
+                relatedIssue: Issue                 
+                restricted: String
+            }
+        }
+        '''])
+        GraphQLSchema issueSchema = TestUtil.schema("""
+        type Query {
+            issue : Issue
+        }
+        type Issue {
+            id: ID
+            relatedIssue: Issue                 
+            restricted: String
+        }
+        """)
+        def query = "{issue { ...IssueFragment relatedIssue { ...IssueFragment }}} fragment IssueFragment on Issue { id restricted }"
+
+        return [overallSchema, issueSchema, query]
+    }
+
+    def "restricted field via fragments used twice"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl([
-                Issues     : '''
+        def (GraphQLSchema overallSchema, GraphQLSchema issueSchema, String query) = setupFragmentTests()
+
+        def hooks = createServiceExecutionHooksWithFieldRemoval(["restricted"])
+
+        def expectedQuery1 = """query nadel_2_Issues {issue {...IssueFragment relatedIssue {...IssueFragment}}} fragment IssueFragment on Issue {id}"""
+        def response1 = [issue: [id: "ID1", relatedIssue: [id: "ID2"]]]
+
+        def overallResponse = [issue: [id: "ID1", restricted: null, relatedIssue: [id: "ID2", restricted: null]]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test1Service(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.size() == 2
+        errors[0].message.contains("removed field")
+        errors[1].message.contains("removed field")
+    }
+
+    def "restricted single field via fragments used twice"() {
+        given:
+        def (GraphQLSchema overallSchema, GraphQLSchema issueSchema, String query) = setupFragmentTests()
+
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+                if (normalizedField.getName() == "restricted" && normalizedField.getParent().getName() == "issue") {
+                    //temporary GraphQLError ->  need to implement a field permissions denied error
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
+                }
+                return CompletableFuture.completedFuture(Optional.empty())
+            }
+        }
+
+        def expectedQuery1 = "query nadel_2_Issues {issue {...IssueFragment relatedIssue {...IssueFragment}}} fragment IssueFragment on Issue {id restricted}"
+        def response1 = [issue: [id: "ID1", restricted: "secret", relatedIssue: [id: "ID2", restricted: "secret"]]]
+
+        def overallResponse = [issue: [id: "ID1", restricted: null, relatedIssue: [id: "ID2", restricted: "secret"]]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test1Service(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.size() == 1
+        errors[0].message.contains("removed field")
+    }
+
+    def setupFragmentHydrationTests() {
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
             type Query {
                 issue: Issue
@@ -616,30 +708,28 @@ class RemovedFieldsTest extends StrategyTestHelper {
         """)
         def query = "{issue { ...IssueFragment relatedIssue { ...IssueFragment }}} fragment IssueFragment on Issue {id author {id restricted}}"
 
+        return [overallSchema, issueSchema, userServiceSchema, query]
+    }
+
+    def "restricted field inside hydration via fragments used twice"() {
+        given:
+        def (GraphQLSchema overallSchema, GraphQLSchema issueSchema, GraphQLSchema userServiceSchema, String query) = setupFragmentHydrationTests()
+
+        ServiceExecutionHooks hooks = createServiceExecutionHooksWithFieldRemoval(["restricted"])
+
         def expectedQuery1 = "query nadel_2_Issues {issue {...IssueFragment relatedIssue {...IssueFragment}}} fragment IssueFragment on Issue {id authorId}"
         def response1 = [issue: [id: "ID1", authorId: "USER-1", relatedIssue: [id: "ID2", authorId: "USER-2"]]]
 
         def expectedQuery2 = "query nadel_2_UserService {usersById(id:[\"USER-1\",\"USER-2\"]) {id object_identifier__UUID:id}}"
-        def response2 = [usersById: [[id: "USER-1", object_identifier__UUID: "USER-1"], [id: "USER-2", object_identifier__UUID: "USER-2"]]]
+        def response2 = [usersById: [
+                [id: "USER-1", object_identifier__UUID: "USER-1"],
+                [id: "USER-2", object_identifier__UUID: "USER-2"]
+        ]]
 
         def overallResponse = [issue: [id: "ID1", author: [id: "USER-1", restricted: null], relatedIssue: [id: "ID2", author: [id: "USER-2", restricted: null]]]]
 
-        def hooks = new ServiceExecutionHooks() {
-            @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(Field field, List<NormalizedQueryField> normalizedFields, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
-                if (fieldDefinitionOverall.getName() == "restricted") {
-                    //temporary GraphQLError ->  need to implement a field permissions denied error
-                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
-                }
-                return CompletableFuture.completedFuture(Optional.empty())
-            }
-        }
-
-
-        Map response
-        List<GraphQLError> errors
         when:
-        (response, errors) = test2Services(
+        def (Map response, List<GraphQLError> errors) = test2Services(
                 overallSchema,
                 "Issues",
                 issueSchema,
@@ -659,8 +749,54 @@ class RemovedFieldsTest extends StrategyTestHelper {
         errors.size() == 2
         errors[0].message.contains("removed field")
         errors[1].message.contains("removed field")
+    }
 
+    def "restricted single field inside hydration via fragments used twice"() {
+        given:
+        def (GraphQLSchema overallSchema, GraphQLSchema issueSchema, GraphQLSchema userServiceSchema, String query) = setupFragmentHydrationTests()
 
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+                if (normalizedField.getName() == "restricted" && normalizedField.getParent().getParent().getName() == "issue") {
+                    //temporary GraphQLError ->  need to implement a field permissions denied error
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
+                }
+                return CompletableFuture.completedFuture(Optional.empty())
+            }
+        }
+
+        def expectedQuery1 = "query nadel_2_Issues {issue {...IssueFragment relatedIssue {...IssueFragment}}} fragment IssueFragment on Issue {id authorId}"
+        def response1 = [issue: [id: "ID1", authorId: "USER-1", relatedIssue: [id: "ID2", authorId: "USER-2"]]]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersById(id:[\"USER-1\",\"USER-2\"]) {id restricted object_identifier__UUID:id}}"
+        def response2 = [usersById: [
+                [id: "USER-1", restricted: "superSecret", object_identifier__UUID: "USER-1"],
+                [id: "USER-2", restricted: "secret", object_identifier__UUID: "USER-2"]
+        ]]
+
+        def overallResponse = [issue: [id: "ID1", author: [id: "USER-1", restricted: null], relatedIssue: [id: "ID2", author: [id: "USER-2", restricted: "secret"]]]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.size() == 1
+        errors[0].message.contains("removed field")
     }
 
 }

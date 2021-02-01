@@ -37,9 +37,9 @@ group = 'com.graphql-java'
 
 
 repositories {
+    mavenLocal()
     maven { url "http://dl.bintray.com/andimarek/graphql-java" }
     mavenCentral()
-    mavenLocal()
 }
 
 apply plugin: 'groovy'
