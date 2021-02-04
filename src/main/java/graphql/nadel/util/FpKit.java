@@ -76,6 +76,14 @@ public class FpKit {
         return result;
     }
 
+    public static <T, U> List<U> flatMap(List<T> list, Function<T, List<U>> function) {
+        List<U> result = new ArrayList<>();
+        for (T t : list) {
+            result.addAll(function.apply(t));
+        }
+        return result;
+    }
+
     public static <T, U> List<U> mapAndFilter(List<T> list, Function<T, U> function, Predicate<U> filter) {
         List<U> result = new ArrayList<>(list.size());
         for (T t : list) {

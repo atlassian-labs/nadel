@@ -54,6 +54,7 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TreeTransformerUtil;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,6 +65,7 @@ import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 import static graphql.language.TypeName.newTypeName;
 import static graphql.nadel.dsl.NodeId.getId;
 import static graphql.nadel.engine.UnderlyingTypeContext.newUnderlyingTypeContext;
+import static graphql.nadel.util.FpKit.filter;
 import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import static graphql.util.TreeTransformerUtil.changeNode;
@@ -86,7 +88,7 @@ public class Transformer extends NodeVisitorStub {
     final ServiceExecutionHooks serviceExecutionHooks;
     private OverallTypeInformation<?> overallTypeInformation;
     private TransformationMetadata transformationMetadata;
-    private Map<String, GraphQLError> forbiddenFields;
+    private Map<NormalizedQueryField, GraphQLError> forbiddenFields;
     private Service service;
     private Object serviceContext;
     private Map<String, Object> variableValues;
@@ -106,7 +108,7 @@ public class Transformer extends NodeVisitorStub {
                        Service service,
                        Object serviceContext,
                        TransformationMetadata transformationMetadata,
-                       Map<String, GraphQLError> forbiddenFields
+                       Map<NormalizedQueryField, GraphQLError> forbiddenFields
     ) {
         this.executionContext = executionContext;
         this.underlyingSchema = underlyingSchema;
@@ -217,9 +219,16 @@ public class Transformer extends NodeVisitorStub {
         NormalizedQueryFromAst normalizedOverallQuery = nadelContext.getNormalizedOverallQuery();
         List<NormalizedQueryField> normalizedFields = normalizedOverallQuery.getNormalizedFieldsByFieldId(getId(field));
 
-        GraphQLError forbiddenFieldError = forbiddenFields.get(getId(field));
-        if (forbiddenFieldError != null) {
-            transformationMetadata.add(normalizedFields, forbiddenFieldError);
+        int numberOfRemovedNormalizedFields = filter(normalizedFields, normalizedField -> {
+            GraphQLError forbiddenFieldError = forbiddenFields.get(normalizedField);
+            if (forbiddenFieldError == null) {
+                return false;
+            }
+            transformationMetadata.add(Collections.singletonList(normalizedField), forbiddenFieldError);
+            return true;
+        }).size();
+
+        if (!normalizedFields.isEmpty() && numberOfRemovedNormalizedFields == normalizedFields.size()) {
             return TreeTransformerUtil.deleteNode(context);
         }
 

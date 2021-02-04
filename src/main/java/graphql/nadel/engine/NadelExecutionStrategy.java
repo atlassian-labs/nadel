@@ -229,8 +229,7 @@ public class NadelExecutionStrategy {
     }
 
     private RootExecutionResultNode getSkippedServiceCallResult(NadelContext nadelContext, ExecutionStepInfo esi, ExecutionContext newExecutionContext, GraphQLError error) {
-        HashMap<String, Object> errorMap = new LinkedHashMap<>();
-        errorMap.put("message", error.getMessage());
+        Map<String, Object> errorMap = error.toSpecification();
 
         HashMap<String, Object> dataMap = new LinkedHashMap<>();
         String topLevelFieldName = esi.getFieldDefinition().getName();
