@@ -61,23 +61,7 @@ public class StrategyUtil {
         };
         Set<NodeZipper<ExecutionResultNode>> result = Collections.synchronizedSet(new TreeSet<>(comparator));
 
-        Traverser<ExecutionResultNode> traverser = Traverser.depthFirst(node -> {
-//                List<ExecutionResultNode> children = new ArrayList<>();
-//                for (ExecutionResultNode child : node.getChildren()) {
-//                    if (child instanceof HydrationInputNode) {
-                        return node.getChildren();
-//                    }
-                    // Problem is that we can't set the index for the breadcrumbs leading to the hydration Input Node
-                    // i.e tree = /foo -> /foo/bar -> /foo/bar/name, /foo/bar/nestedBar
-                    // -> /foo/bar/nestedBar/name, /foo/bar/nestedBar/hydrationNode
-                    // here nestedBar is the second child of the /bar but this method expects it to return a list of 2 children including name/nestedBar rather than just
-                    // traversing down nestedBar. This screws up in traverserState.java because nodeLocation is based on the index of the node in the children list
-//                    if (hydrationInputPaths.contains(child.getExecutionPath())) {
-//                        children.add(child);
-//                    }
-//                }
-//                return children;
-        });
+        Traverser<ExecutionResultNode> traverser = Traverser.depthFirst(ExecutionResultNode::getChildren);
 
         traverser.traverse(roots, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
@@ -85,9 +69,6 @@ public class StrategyUtil {
                 if (context.thisNode() instanceof HydrationInputNode) {
                     result.add(new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), RESULT_NODE_ADAPTER));
                 }
-
-                // This approach is a bit worse than modifying the DFS algorithm however it works
-                // It aborts traversal as soon as it gets to a node that isn't along the hydrationInputPaths
                 if (hydrationInputPaths.contains(context.thisNode().getExecutionPath())) {
                     return TraversalControl.CONTINUE;
                 } else {

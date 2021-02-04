@@ -4,6 +4,7 @@ import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
+import graphql.execution.ExecutionPath;
 import graphql.language.Argument;
 import graphql.language.ArrayValue;
 import graphql.language.Field;
@@ -76,13 +77,13 @@ public class HydrationInputResolver {
     private final GraphQLSchema overallSchema;
     private final ServiceExecutor serviceExecutor;
     private final ServiceExecutionHooks serviceExecutionHooks;
-    private final NadelExecutionStrategy.ExecutionPathSet hydrationInputPaths;
+    private final Set<ExecutionPath> hydrationInputPaths;
 
     public HydrationInputResolver(List<Service> services,
                                   GraphQLSchema overallSchema,
                                   ServiceExecutor serviceExecutor,
                                   ServiceExecutionHooks serviceExecutionHooks,
-                                  NadelExecutionStrategy.ExecutionPathSet hydrationInputPaths) {
+                                  Set<ExecutionPath> hydrationInputPaths) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.serviceExecutor = serviceExecutor;
@@ -584,7 +585,7 @@ public class HydrationInputResolver {
             Object id = idNode.getCompletedValue();
             assertNotNull(id, () -> "object identifier is null");
             if (id.equals(inputNodeId)) {
-                return (ObjectExecutionResultNode) resolvedNode;
+                return resolvedNode;
             }
         }
         return null;
@@ -610,7 +611,7 @@ public class HydrationInputResolver {
 
     private String buildOperationName(Service service, ExecutionContext executionContext) {
         // to help with downstream debugging we put our name and their name in the operation
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        NadelContext nadelContext = executionContext.getContext();
         if (nadelContext.getOriginalOperationName() != null) {
             return format("nadel_2_%s_%s", service.getName(), nadelContext.getOriginalOperationName());
         } else {

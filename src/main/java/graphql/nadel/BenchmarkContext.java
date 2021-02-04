@@ -38,7 +38,7 @@ public class BenchmarkContext {
         public Map<String, String> typeRenameMappings;
         public NadelContext nadelContext;
         public TransformationMetadata transformationMetadata;
-        public NadelExecutionStrategy.ExecutionPathSet hydrationInputPaths;
+        public NadelExecutionStrategy.ExecutionPathSet hydrationInputPaths = new NadelExecutionStrategy.ExecutionPathSet();
     }
 
     public static class ExecutionArgs {
