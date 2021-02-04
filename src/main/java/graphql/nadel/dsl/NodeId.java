@@ -3,6 +3,7 @@ package graphql.nadel.dsl;
 import graphql.Internal;
 import graphql.execution.MergedField;
 import graphql.language.Node;
+import graphql.schema.GraphQLFieldDefinition;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +20,13 @@ public class NodeId {
 
     public static String getId(Node<?> node) {
         return assertNotNull(node.getAdditionalData().get(ID), () -> String.format("expected node %s to have an id", node));
+    }
+
+    public static String getId(GraphQLFieldDefinition graphQLFieldDefinition) {
+        return assertNotNull(
+                graphQLFieldDefinition.getDefinition().getAdditionalData().get(ID),
+                () -> String.format("expected field %s to have an id", graphQLFieldDefinition.getName())
+        );
     }
 
     public static List<String> getIds(Node<?> node) {

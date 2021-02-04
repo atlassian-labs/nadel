@@ -48,8 +48,6 @@ public class ServiceResultToResultNodes {
 
 
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
-                                                      ExecutionStepInfo executionStepInfo,
-                                                      List<MergedField> mergedFields,
                                                       ServiceExecutionResult serviceExecutionResult,
                                                       ElapsedTime elapsedTimeForServiceCall,
                                                       NormalizedQueryFromAst normalizedQueryFromAst

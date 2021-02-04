@@ -62,7 +62,6 @@ public class StrategyUtil {
         Set<NodeZipper<ExecutionResultNode>> result = Collections.synchronizedSet(new TreeSet<>(comparator));
 
         Traverser<ExecutionResultNode> traverser = Traverser.depthFirst(ExecutionResultNode::getChildren);
-
         traverser.traverse(roots, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {

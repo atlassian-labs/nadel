@@ -101,6 +101,7 @@ public class HydrationInputResolver {
         List<NodeMultiZipper<ExecutionResultNode>> hydrationInputBatches = groupNodesIntoBatchesByField(hydrationInputZippers, node);
 
         List<CompletableFuture<List<NodeZipper<ExecutionResultNode>>>> resolvedNodeCFs = new ArrayList<>();
+
         for (NodeMultiZipper<ExecutionResultNode> batch : hydrationInputBatches) {
             if (isBatchHydrationField((HydrationInputNode) batch.getZippers().get(0).getCurNode())) {
                 resolveInputNodesAsBatch(context, resolvedNodeCFs, batch, serviceContexts, resultComplexityAggregator);
@@ -553,6 +554,7 @@ public class HydrationInputResolver {
                         resolvedNodes,
                         idDefinition.getRemoteArgumentSource().getPath());
             }
+
             ExecutionResultNode resultNode;
             if (matchingResolvedNode != null) {
                 ExecutionResultNode overallResultNode = serviceResultNodesToOverallResult.convertChildren(
