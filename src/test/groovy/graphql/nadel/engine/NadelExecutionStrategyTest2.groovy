@@ -22,12 +22,10 @@ import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
 
-import javax.xml.transform.Result
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
 import static graphql.language.AstPrinter.printAstCompact
-import static graphql.language.AstPrinter.printAst
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelExecutionStrategyTest2 extends StrategyTestHelper {
@@ -1415,10 +1413,10 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def expectedQuery3 = "query nadel_2_Bar {barsById(id:[\"nestedBar1\"]) {name nestedBarId object_identifier__UUID:barId}}"
         def expectedQuery4 = "query nadel_2_Bar {barsById(id:[\"nestedBarId456\"]) {name details {age contact {email phone}} object_identifier__UUID:barId}}"
 
-        def response1 = [foos: [[details:[name:"smith", age:1, contact:[email:"test", phone:1]] ,barId: "bar1"]]]
+        def response1 = [foos: [[details: [name: "smith", age: 1, contact: [email: "test", phone: 1]], barId: "bar1"]]]
         def response2 = [barsById: [[object_identifier__UUID: "bar1", name: "Bar 1", nestedBarId: "nestedBar1"]]]
         def response3 = [barsById: [[object_identifier__UUID: "nestedBar1", name: "NestedBarName1", nestedBarId: "nestedBarId456"]]]
-        def response4 = [barsById: [[object_identifier__UUID: "nestedBarId456", name: "NestedBarName2", details:[age:1, contact:[email:"test", phone:1]]]]]
+        def response4 = [barsById: [[object_identifier__UUID: "nestedBarId456", name: "NestedBarName2", details: [age: 1, contact: [email: "test", phone: 1]]]]]
 
         Map response
         List<GraphQLError> errors
@@ -1840,7 +1838,6 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
     }
 
 
-
     Object[] test2ServicesWithNCalls(GraphQLSchema overallSchema,
                                      String serviceOneName,
                                      GraphQLSchema underlyingOne,
@@ -1954,9 +1951,9 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 "        }"
 
         def expectedQuery1 = "query nadel_2_IssuesService {issue {ticket {ticketTypes {id date}}}}"
-        def response1 =   [issue: [[ticket: [ticketTypes: [[id:"1", date:"20/11/2020"]]]]]]
+        def response1 = [issue: [[ticket: [ticketTypes: [[id: "1", date: "20/11/2020"]]]]]]
 
-        def overallResponse = [renamedIssue: [[renamedTicket: [renamedTicketTypes: [[renamedId:"1", renamedDate:"20/11/2020"]]]]]]
+        def overallResponse = [renamedIssue: [[renamedTicket: [renamedTicketTypes: [[renamedId: "1", renamedDate: "20/11/2020"]]]]]]
 
 
         Map response
@@ -2055,7 +2052,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         ])
 
         def expectedQuery2 = "query nadel_2_IssueService {syntheticIssue {issue(id:\"1\") {id}}}"
-        def response2 = new ServiceExecutionResult([syntheticIssue:[issue: [id: "1"]]])
+        def response2 = new ServiceExecutionResult([syntheticIssue: [issue: [id: "1"]]])
 
         def executionData = createExecutionData(query, [:], overallSchema)
 
@@ -2139,12 +2136,74 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def actualError = actualErrors[0]
         actualError.message == expectedError.message
         actualError.path == expectedError.path
-        // The error type is actually put into the extensions
-        actualError.extensions == new HashMap<>(expectedError.extensions).tap {
-            put("classification", expectedError.errorType.toSpecification(null))
-        }
+        actualError.extensions == expectedError.extensions
         actualError.locations == expectedError.locations
         actualError.errorType == expectedError.errorType
+    }
+
+    def "top level field error does not redact other top level fields"() {
+        given:
+        def underlyingSchema = TestUtil.schema("""
+        type Query {
+            foo: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl("""
+        service service1 {
+            type Query {
+                foo: String
+            }
+        }
+        """)
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
+
+        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
+
+        def expectedError = GraphqlErrorBuilder.newError()
+                .message("Hello world")
+                .path(["test", "hello"])
+                .build()
+
+        def serviceExecutionHooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+                if (normalizedField.getResultKey() == "foo") {
+                    completedFuture(Optional.of(expectedError))
+                } else {
+                    completedFuture(Optional.empty())
+                }
+            }
+        }
+
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        def expectedQuery1 = "query nadel_2_service {bar:foo}"
+        def response1 = new ServiceExecutionResult([bar: "boo"])
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        resultData(response) == [foo: null, bar: "boo"]
+
+        def errors = resultErrors(response)
+        errors.size() == 1
+        errors[0].message == expectedError.message
+        errors[0].path == expectedError.path
+
+        where:
+        _ | query // Depending on how it the final tree gets merged, the old code would sometimes pass too
+        _ | "{bar: foo foo}"
+        _ | "{foo bar: foo}"
     }
 
 }
