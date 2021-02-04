@@ -54,7 +54,6 @@ import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TreeTransformerUtil;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -224,7 +223,7 @@ public class Transformer extends NodeVisitorStub {
             if (forbiddenFieldError == null) {
                 return false;
             }
-            transformationMetadata.add(Collections.singletonList(normalizedField), forbiddenFieldError);
+            transformationMetadata.removeField(normalizedField, forbiddenFieldError);
             return true;
         }).size();
 
