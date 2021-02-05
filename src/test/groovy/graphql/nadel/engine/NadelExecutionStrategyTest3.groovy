@@ -182,5 +182,157 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
         response == overallResponse
     }
 
+    def "same source for 2 hydrations"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 issue: Issue => hydrated from Foo.issue(issueId: $source.fooId)
+                 detail: Detail => hydrated from Foo.detail(detailId: $source.fooId)
+              }
+              type Detail {
+                 detailId: ID!
+                 name: String
+              }
+              type Issue {
+                fooId: ID
+                field: String
+              }
+
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+          type Query {
+            foo: Foo 
+            detail(detailId: ID): Detail
+            issue(issueId: ID): Issue
+          } 
+          type Foo {
+            field: String
+            fooId: ID
+            issue: Issue
+          }
+          
+          type Issue {
+            fooId: ID
+            field: String
+          }
+          type Detail {
+             detailId: ID!
+             name: String
+          }
+    """)
+        def query = """{ foo {issue {field} detail { name}}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooId fooId}}"
+        def response1 = [foo: [fooId: "ID"]]
+        def expectedQuery2 = "query nadel_2_Foo {issue(issueId:\"ID\") {field}}"
+        def response2 = [issue: [field: "field_name"]]
+        def expectedQuery3 = "query nadel_2_Foo {detail(detailId:\"ID\") {name}}"
+        def response3 = [detail: [name: "apple"]]
+
+        def overallResponse = [foo:[issue:[field:"field_name"], detail:[name:"apple"]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2, expectedQuery3],
+                [response1, response2, response3],
+                3,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "same source for 2 nested hydrations and a rename"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 renamedField: String => renamed from issue.field
+                 issue: Issue => hydrated from Foo.issue(issueId: $source.issue.fooId)
+                 detail: Detail => hydrated from Foo.detail(detailId: $source.issue.fooId)
+              }
+              type Detail {
+                 detailId: ID!
+                 name: String
+              }
+              type Issue {
+                fooId: ID
+                field: String
+              }
+
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+          type Query {
+            foo: Foo 
+            detail(detailId: ID): Detail
+            issue(issueId: ID): Issue
+          } 
+          type Foo {
+            field: String
+            fooId: ID
+            issue: Issue
+          }
+          
+          type Issue {
+            fooId: ID
+            field: String
+          }
+          type Detail {
+             detailId: ID!
+             name: String
+          }
+    """)
+        def query = """{ foo {issue {field} detail { name} renamedField}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {issue {fooId} issue {fooId} issue {field}}}"
+        def response1 = [foo: [issue:[fooId: "ID", field:"field1"]]]
+        def expectedQuery2 = "query nadel_2_Foo {issue(issueId:\"ID\") {field}}"
+        def response2 = [issue: [field: "field_name"]]
+        def expectedQuery3 = "query nadel_2_Foo {detail(detailId:\"ID\") {name}}"
+        def response3 = [detail: [name: "apple"]]
+
+        def overallResponse = [foo:[issue:[field:"field_name"], detail:[name:"apple"], renamedField:"field1"]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2, expectedQuery3],
+                [response1, response2, response3],
+                3,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+
+
+
 
 }
