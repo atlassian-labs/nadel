@@ -299,17 +299,94 @@ public class ServiceResultNodesToOverallResult {
                                                 TransformationMetadata transformationMetadata,
                                                 ResultCounter resultCounter) {
 
-        HandleResult handleResult;
-        FieldTransformation transformation = transformations.get(0);
+        Map<AbstractNode, List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
+        TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, fieldIdToTransformation, transformationMetadata);
+        ExecutionResultNode notTransformedTree = splittedNodes.getT1();
+        Map<AbstractNode, ExecutionResultNode> nodesWithTransformedFields = splittedNodes.getT2();
 
-        if (transformation instanceof HydrationTransformation) {
-            handleResult = unapplyHydration(node, transformations, unapplyEnvironment, fieldIdToTransformation, transformation, transformationMetadata, resultCounter);
-        } else if (transformation instanceof FieldRenameTransformation) {
-            handleResult = unapplyFieldRename(executionId, node, transformations, unapplyEnvironment, fieldIdToTransformation, nadelContext, transformationMetadata, resultCounter);
-        } else {
-            return assertShouldNeverHappen("Unexpected transformation type " + transformation);
+        List<UnapplyResult> unapplyResults = new ArrayList<>();
+
+        for (AbstractNode definition : nodesWithTransformedFields.keySet()) {
+            List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
+            UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
+
+            if (transformationsForDefinition.get(0) instanceof HydrationTransformation) {
+                // For every list node, it's children will also have a renamed type so the type rename count is decremented based on
+                // the size of it's children.
+                // //E.g. /foo , /foo[0], /foo[1], /foo[2] => type rename count becomes -2, -1, 0, 1
+                int typeDecrementValue = unapplyResult.getNode() instanceof ListExecutionResultNode ? -unapplyResult.getNode().getChildren().size() : -1;
+                checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, resultCounter, typeDecrementValue);
+            } else {
+                // typeDecrementAmount = 0 because for a field rename it's children will not know about the underlying type.
+                checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, resultCounter, 0);
+                resultCounter.incrementFieldRenameCount();
+            }
+            unapplyResults.add(unapplyResult);
         }
+
+        HandleResult handleResult = HandleResult.newHandleResultWithSiblings();
+        boolean first = true;
+        if (notTransformedTree != null) {
+            ExecutionResultNode mappedNode = mapNode(notTransformedTree, unapplyEnvironment, resultCounter);
+            mappedNode = convertChildren(executionId,
+                    mappedNode,
+                    null,
+                    unapplyEnvironment.overallSchema,
+                    unapplyEnvironment.parentNode,
+                    unapplyEnvironment.isHydrationTransformation,
+                    unapplyEnvironment.batched,
+                    fieldIdToTransformation,
+                    unapplyEnvironment.typeRenameMappings,
+                    nadelContext,
+                    transformationMetadata);
+            handleResult.changedNode = mappedNode;
+            resultCounter.incrementFieldRenameCount(mappedNode.getTotalFieldRenameCount());
+            resultCounter.incrementTypeRenameCount(mappedNode.getTotalTypeRenameCount());
+            resultCounter.incrementNodeCount(mappedNode.getTotalNodeCount() - 1);
+            first = false;
+        }
+
+        // each unapply result is either continued to processed
+        for (UnapplyResult unapplyResult : unapplyResults) {
+            ExecutionResultNode transformedResult;
+            if (unapplyResult.getTraversalControl() != TraversalControl.CONTINUE) {
+                transformedResult = unapplyResult.getNode();
+            } else {
+                ExecutionResultNode unapplyResultNode = unapplyResult.getNode();
+                transformedResult = convertChildren(executionId,
+                        unapplyResultNode,
+                        null,
+                        unapplyEnvironment.overallSchema,
+                        unapplyResultNode,
+                        unapplyEnvironment.isHydrationTransformation,
+                        unapplyEnvironment.batched,
+                        fieldIdToTransformation,
+                        unapplyEnvironment.typeRenameMappings,
+                        nadelContext,
+                        transformationMetadata);
+            }
+            resultCounter.incrementFieldRenameCount(transformedResult.getTotalFieldRenameCount());
+            resultCounter.incrementTypeRenameCount(transformedResult.getTotalTypeRenameCount());
+
+            if (first) {
+                handleResult.changedNode = transformedResult;
+                first = false;
+            } else {
+                handleResult.siblings.add(transformedResult);
+            }
+        }
+        handleResult.traversalControl = TraversalControl.ABORT;
         return handleResult;
+
+
+//        if (transformation instanceof HydrationTransformation) {
+//            handleResult = unapplyHydration(executionId, node, transformations, unapplyEnvironment, fieldIdToTransformation, nadelContext, transformation, transformationMetadata, resultCounter);
+//        } else if (transformation instanceof FieldRenameTransformation) {
+//            handleResult = unapplyFieldRename(executionId, node, transformations, unapplyEnvironment, fieldIdToTransformation, nadelContext, transformationMetadata, resultCounter);
+//        } else {
+//            return assertShouldNeverHappen("Unexpected transformation type " + transformation);
+//        }
+//        return handleResult;
     }
 
     private HandleResult unapplyFieldRename(ExecutionId executionId,
@@ -341,7 +418,7 @@ public class ServiceResultNodesToOverallResult {
         boolean first = true;
         // the not transformed part should simply continue to be converted
         if (notTransformedTree != null) {
-            ExecutionResultNode mappedNode = mapNode(node, unapplyEnvironment, resultCounter);
+            ExecutionResultNode mappedNode = mapNode(notTransformedTree, unapplyEnvironment, resultCounter);
             mappedNode = convertChildren(executionId,
                     mappedNode,
                     null,
@@ -356,6 +433,8 @@ public class ServiceResultNodesToOverallResult {
             handleResult.changedNode = mappedNode;
             resultCounter.incrementFieldRenameCount(mappedNode.getTotalFieldRenameCount());
             resultCounter.incrementTypeRenameCount(mappedNode.getTotalTypeRenameCount());
+            resultCounter.incrementNodeCount(mappedNode.getTotalNodeCount());
+
             first = false;
         }
 
@@ -391,39 +470,15 @@ public class ServiceResultNodesToOverallResult {
         return handleResult;
     }
 
-    private HandleResult unapplyHydration(ExecutionResultNode node,
+    private HandleResult unapplyHydration(ExecutionId executionId, ExecutionResultNode node,
                                           List<FieldTransformation> transformations,
                                           UnapplyEnvironment unapplyEnvironment,
                                           Map<String, FieldTransformation> fieldIdToTransformation,
-                                          FieldTransformation transformation,
+                                          NadelContext nadelContext, FieldTransformation transformation,
                                           TransformationMetadata transformationMetadata,
                                           ResultCounter resultCounter
     ) {
-        HandleResult handleResult = HandleResult.newHandleResultWithSiblings();
-
-        TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, fieldIdToTransformation, transformationMetadata);
-        ExecutionResultNode withoutTransformedFields = splittedNodes.getT1();
-        assertTrue(splittedNodes.getT2().size() == 1, () -> "only one split tree expected atm");
-        ExecutionResultNode nodesWithTransformedFields = getSingleMapValue(splittedNodes.getT2());
-
-        UnapplyResult unapplyResult = transformation.unapplyResultNode(nodesWithTransformedFields, transformations, unapplyEnvironment);
-
-        // For every list node, it's children will also have a renamed type so the type rename count is decremented based on
-        // the size of it's children.
-        // //E.g. /foo , /foo[0], /foo[1], /foo[2] => type rename count becomes -2, -1, 0, 1
-        int typeDecrementValue = unapplyResult.getNode() instanceof ListExecutionResultNode ? -unapplyResult.getNode().getChildren().size() : -1;
-        checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, resultCounter, typeDecrementValue);
-
-        if (withoutTransformedFields != null) {
-            handleResult.changedNode = mapNode(withoutTransformedFields, unapplyEnvironment, resultCounter);
-            handleResult.siblings.add(unapplyResult.getNode());
-            handleResult.traversalControl = TraversalControl.CONTINUE;
-            return handleResult;
-        } else {
-            handleResult.changedNode = unapplyResult.getNode();
-            handleResult.traversalControl = unapplyResult.getTraversalControl();
-            return handleResult;
-        }
+        return null;
     }
 
     private TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splitTreeByTransformationDefinition(
