@@ -3,7 +3,9 @@ package graphql.nadel.engine
 import graphql.AssertException
 import graphql.ErrorType
 import graphql.GraphQLError
+import graphql.GraphqlErrorBuilder
 import graphql.execution.nextgen.ExecutionHelper
+import graphql.language.SourceLocation
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
@@ -15,10 +17,12 @@ import graphql.nadel.StrategyTestHelper
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.normalized.NormalizedQueryField
 import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLSchema
 
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
 import static graphql.language.AstPrinter.printAstCompact
@@ -2113,6 +2117,127 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     }
 
+    def "top level field error is inserted with all information"() {
+        given:
+        def underlyingSchema = TestUtil.schema("""
+        type Query {
+            foo: String  
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl("""
+        service service1 {
+            type Query {
+                foo: String
+            }
+        }
+        """)
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
+
+        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
+
+        def expectedError = GraphqlErrorBuilder.newError()
+                .message("Hello world")
+                .path(["test", "hello"])
+                .extensions([test: "Hello there"])
+                .location(new SourceLocation(12, 34))
+                .errorType(ErrorType.DataFetchingException)
+                .build()
+
+        def serviceExecutionHooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+                completedFuture(Optional.of(expectedError))
+            }
+        }
+
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def query = "{foo}"
+        def executionData = createExecutionData(query, overallSchema)
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        resultData(response) == [foo: null]
+
+        def actualErrors = resultErrors(response)
+        actualErrors.size() == 1
+
+        def actualError = actualErrors[0]
+        actualError.message == expectedError.message
+        actualError.path == expectedError.path
+        actualError.extensions == expectedError.extensions
+        actualError.locations == expectedError.locations
+        actualError.errorType == expectedError.errorType
+    }
+
+    def "top level field error does not redact other top level fields"() {
+        given:
+        def underlyingSchema = TestUtil.schema("""
+        type Query {
+            foo: String
+        }
+        """)
+
+        def overallSchema = TestUtil.schemaFromNdsl("""
+        service service1 {
+            type Query {
+                foo: String
+            }
+        }
+        """)
+        def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
+
+        def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
+        def fieldInfos = topLevelFieldInfo(fooFieldDefinition, service)
+
+        def expectedError = GraphqlErrorBuilder.newError()
+                .message("Hello world")
+                .path(["test", "hello"])
+                .build()
+
+        def serviceExecutionHooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+                if (normalizedField.getResultKey() == "foo") {
+                    completedFuture(Optional.of(expectedError))
+                } else {
+                    completedFuture(Optional.empty())
+                }
+            }
+        }
+
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def executionData = createExecutionData(query, overallSchema)
+
+        def expectedQuery1 = "query nadel_2_service {bar:foo}"
+        def response1 = new ServiceExecutionResult([bar: "boo"])
+
+        when:
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+
+        then:
+        1 * service1Execution.execute({ ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            printAstCompact(sep.query) == expectedQuery1
+        }) >> completedFuture(response1)
+
+        resultData(response) == [foo: null, bar: "boo"]
+
+        def errors = resultErrors(response)
+        errors.size() == 1
+        errors[0].message == expectedError.message
+        errors[0].path == expectedError.path
+
+        where:
+        _ | query // Depending on how it the final tree gets merged, the old code would sometimes pass too
+        _ | "{bar: foo foo}"
+        _ | "{foo bar: foo}"
+    }
 
 }
 
