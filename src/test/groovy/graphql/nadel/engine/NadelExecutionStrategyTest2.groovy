@@ -2125,13 +2125,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl([service1 : """
         service service1 {
             type Query {
                 foo: String
             }
         }
-        """)
+        """])
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -2182,13 +2182,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl([service1 :"""
         service service1 {
             type Query {
                 foo: String
             }
         }
-        """)
+        """])
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
