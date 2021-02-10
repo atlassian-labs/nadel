@@ -29,7 +29,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = '1.7.25'
-def graphqlJavaVersion = '2020-11-03T09-12-52-fda0f999'
+def graphqlJavaVersion = '16.2'
 
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
@@ -97,6 +97,7 @@ dependencies {
     graphqlJavaSource('com.graphql-java:graphql-java:' + graphqlJavaVersion + ':sources') {
         transitive = false
     }
+    compile 'com.google.guava:guava:28.0-jre'
     compile 'com.graphql-java:graphql-java:' + graphqlJavaVersion
     compile 'org.antlr:antlr4-runtime:4.7.1'
     compile 'org.slf4j:slf4j-api:' + slf4jVersion
@@ -111,7 +112,6 @@ dependencies {
     testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.6'
     testCompile 'org.openjdk.jmh:jmh-core:1.21'
     testCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
-    testCompile 'com.google.guava:guava:28.0-jre'
 }
 
 compileJava.source file("build/generated-src"), sourceSets.main.java

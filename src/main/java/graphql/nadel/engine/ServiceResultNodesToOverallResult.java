@@ -3,8 +3,8 @@ package graphql.nadel.engine;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.ExecutionId;
-import graphql.execution.ResultPath;
 import graphql.execution.MergedField;
+import graphql.execution.ResultPath;
 import graphql.language.AbstractNode;
 import graphql.nadel.Tuples;
 import graphql.nadel.TuplesTwo;
@@ -320,7 +320,7 @@ public class ServiceResultNodesToOverallResult {
                                             NadelContext nadelContext,
                                             TransformationMetadata transformationMetadata,
                                             ResultCounter resultCounter) {
-        Map<AbstractNode, List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
+        Map<AbstractNode, ? extends List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
 
         TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, fieldIdToTransformation, transformationMetadata);
         ExecutionResultNode notTransformedTree = splittedNodes.getT1();

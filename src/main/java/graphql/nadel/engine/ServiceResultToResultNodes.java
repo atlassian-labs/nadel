@@ -60,7 +60,7 @@ public class ServiceResultToResultNodes {
         // Get random data that's required
         ElapsedTime zeroElapsedTime = ElapsedTime.newElapsedTime().start().stop().build();
         List<String> fieldIds = query.getFieldIds(topLevelField);
-        ExecutionPath path = ExecutionPath.rootPath().segment(topLevelField.getResultKey());
+        ResultPath path = ResultPath.rootPath().segment(topLevelField.getResultKey());
 
         LeafExecutionResultNode nullTopLevelField = createNullERN(topLevelField, path, fieldIds, zeroElapsedTime);
         return RootExecutionResultNode.newRootExecutionResultNode()

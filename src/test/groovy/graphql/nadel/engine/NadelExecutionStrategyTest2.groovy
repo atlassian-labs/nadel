@@ -934,7 +934,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def executionData = createExecutionData(query, [:], overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -1036,7 +1036,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def executionData = createExecutionData(query, [:], overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -2057,7 +2057,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def executionData = createExecutionData(query, [:], overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
@@ -2125,7 +2125,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         then:
         resultData(response) == [foo: null]
@@ -2185,7 +2185,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         def response1 = new ServiceExecutionResult([bar: "boo"])
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         then:
         1 * service1Execution.execute({ ServiceExecutionParameters sep ->
