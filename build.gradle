@@ -69,10 +69,11 @@ task generateAntrlToJavaSource {
             into 'build/generated-src/antlr/main/graphql/nadel/parser'
         }
         def replacePatterns = [
-                'package graphql.parser;'                         : 'package graphql.nadel.parser;\nimport graphql.parser.MultiSourceReader;\nimport graphql.parser.AntlrHelper;',
+                'package graphql.parser;'                        : 'package graphql.nadel.parser;\nimport graphql.parser.MultiSourceReader;\nimport graphql.parser.AntlrHelper;',
                 'import graphql.parser.antlr.GraphqlParser;'     : 'import graphql.nadel.parser.antlr.StitchingDSLParser;',
                 'import graphql.parser.antlr.GraphqlLexer;'      : 'import graphql.nadel.parser.antlr.StitchingDSLLexer;',
                 'import graphql.parser.antlr.GraphqlBaseVisitor;': 'import graphql.nadel.parser.antlr.StitchingDSLBaseVisitor;',
+                'import com.google.common.collect.ImmutableList;': 'import graphql.com.google.common.collect.ImmutableList;',
                 'GraphqlBaseVisitor<Void>'                       : 'StitchingDSLBaseVisitor<Void>',
                 'GraphqlParser'                                  : 'StitchingDSLParser',
                 'GraphqlLexer'                                   : 'StitchingDSLLexer',
@@ -97,11 +98,10 @@ dependencies {
     graphqlJavaSource('com.graphql-java:graphql-java:' + graphqlJavaVersion + ':sources') {
         transitive = false
     }
-    compile 'com.google.guava:guava:28.0-jre'
     compile 'com.graphql-java:graphql-java:' + graphqlJavaVersion
-    compile 'org.antlr:antlr4-runtime:4.7.1'
+    compile 'org.antlr:antlr4-runtime:4.8'
     compile 'org.slf4j:slf4j-api:' + slf4jVersion
-    antlr "org.antlr:antlr4:4.7.1"
+    antlr "org.antlr:antlr4:4.8"
     testCompile group: 'junit', name: 'junit', version: '4.11'
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
     testCompile 'org.codehaus.groovy:groovy-all:2.5.1'
@@ -112,6 +112,7 @@ dependencies {
     testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.6'
     testCompile 'org.openjdk.jmh:jmh-core:1.21'
     testCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
+    testCompile 'com.google.guava:guava:28.0-jre'
 }
 
 compileJava.source file("build/generated-src"), sourceSets.main.java
