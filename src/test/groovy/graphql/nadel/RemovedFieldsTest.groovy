@@ -2,18 +2,26 @@ package graphql.nadel
 
 import graphql.GraphQLError
 import graphql.execution.AbortExecutionException
-import graphql.language.Field
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.normalized.NormalizedQueryField
+import graphql.nadel.result.ResultComplexityAggregator
 import graphql.nadel.testutils.TestUtil
 import graphql.nadel.testutils.harnesses.IssuesCommentsUsersHarness
-import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLSchema
+
+import java.util.concurrent.CompletableFuture
 
 import static graphql.nadel.Nadel.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 
 class RemovedFieldsTest extends StrategyTestHelper {
 
-    def "hydrated field in query is removed"() {
+    GraphQLSchema overallSchema = TestUtil.schemaFromNdsl(IssuesCommentsUsersHarness.ndsl)
+    def issueSchema = TestUtil.schema(IssuesCommentsUsersHarness.ISSUES_SDL)
+    def commentSchema = TestUtil.schema(IssuesCommentsUsersHarness.COMMENTS_SDL)
+    def userServiceSchema = TestUtil.schema(IssuesCommentsUsersHarness.USERS_SDL)
+
+    def "field is removed from hydrated field"() {
         given:
         def query = """
         {
@@ -25,134 +33,159 @@ class RemovedFieldsTest extends StrategyTestHelper {
             }
         }
         """
-        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
 
-        Nadel nadel = newNadel()
-                .dsl(IssuesCommentsUsersHarness.ndsl)
-                .serviceExecutionFactory(serviceExecutionFactory)
-                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["userId"]))
-                .build()
+        def expectedQuery1 = """query nadel_2_CommentService {commentById(id:"C1") {authorId}}"""
+        def expectedQuery2 = """query nadel_2_UserService {userById(id:"fred") {displayName}}"""
+        Map response1 = [commentById: [authorId: "fred"]]
+        Map response2 = [userById: [displayName: "Display name of Fred"]]
 
+        Map response
+        List<GraphQLError> errors
         when:
-        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
-
+        (response, errors) = test2Services(
+                overallSchema,
+                "CommentService",
+                commentSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["commentById"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                createServiceExecutionHooksWithFieldRemoval(["userId"]),
+                Mock(ResultComplexityAggregator)
+        )
         then:
-        result.data == [commentById: [author: [displayName: "Display name of fred", userId: null]]]
-        result.errors.size() == 1
-        result.errors[0].message.contains("removed field")
+        response == [commentById: [author: [displayName: "Display name of Fred", userId: null]]]
+        errors.size() == 1
+        errors[0].message.contains("removed field")
     }
 
-    def "field in non-hydrated query is removed"() {
+    def "all fields are removed from hydrated field"() {
         given:
         def query = """
         {
             commentById(id:"C1") {
-                id
-                created
+                author {
+                    displayName
+                    userId
+                }
             }
         }
         """
-        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
 
-        Nadel nadel = newNadel()
-                .dsl(IssuesCommentsUsersHarness.ndsl)
-                .serviceExecutionFactory(serviceExecutionFactory)
-                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["id"]))
-                .build()
+        def expectedQuery1 = """query nadel_2_CommentService {commentById(id:"C1") {authorId}}"""
+        def expectedQuery2 = """query nadel_2_UserService {userById(id:"fred") {empty_selection_set_typename__UUID:__typename}}"""
+        Map response1 = [commentById: [authorId: "fred"]]
+        Map response2 = [userById: [empty_selection_set_typename__UUID: "Query"]]
 
+        Map response
+        List<GraphQLError> errors
         when:
-        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
-
+        (response, errors) = test2Services(
+                overallSchema,
+                "CommentService",
+                commentSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["commentById"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                createServiceExecutionHooksWithFieldRemoval(["userId", "displayName"]),
+                Mock(ResultComplexityAggregator)
+        )
         then:
-        result.data == [commentById: [created: "1969-08-08@C1", id: null]]
+        response == [commentById: [author: [displayName: null, userId: null]]]
+        errors.size() == 2
+        errors[0].message.contains("removed field")
+        errors[1].message.contains("removed field")
     }
 
-    def "field is removed from non-hydrated field in query"() {
+    def "hydrated field is removed"() {
         given:
         def query = """
-        { 
-            issueById(id : "I1") { 
+        {
+            commentById(id:"C1") {
+                author {
+                    displayName
+                    userId
+                }
+            }
+        }
+        """
+
+        def expectedQuery1 = """query nadel_2_CommentService {commentById(id:"C1") {empty_selection_set_typename__UUID:__typename}}"""
+        Map response1 = [commentById: [authorId: "fred"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "CommentService",
+                commentSchema,
+                query,
+                ["commentById"],
+                expectedQuery1,
+                response1,
+                createServiceExecutionHooksWithFieldRemoval(["author"]),
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [commentById: [author: null]]
+        errors.size() == 1
+        errors[0].message.contains("removed field")
+    }
+
+    def "nested hydrated field is removed"() {
+        given:
+        def query = """
+        {
+            issueById(id : "I1") {
                 comments {
                     author {
-                        displayName 
+                        displayName
                     }
                 }
             } 
         }
         """
-        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
 
-        Nadel nadel = newNadel()
-                .dsl(IssuesCommentsUsersHarness.ndsl)
-                .serviceExecutionFactory(serviceExecutionFactory)
-                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["author"]))
-                .build()
+        def expectedQuery1 = """query nadel_2_IssueService {issueById(id:"I1") {commentIds}}"""
+        def expectedQuery2 = """query nadel_2_CommentService {commentById(id:"C1") {empty_selection_set_typename__UUID:__typename}}"""
+        Map response1 = [issueById: [commentIds: ["C1"]]]
+        Map response2 = [commentById: [empty_selection_set_typename__UUID: "Query"]]
 
+        Map response
+        List<GraphQLError> errors
         when:
-        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
-
+        (response, errors) = test2Services(
+                overallSchema,
+                "IssueService",
+                issueSchema,
+                "CommentService",
+                commentSchema,
+                query,
+                ["issueById"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                createServiceExecutionHooksWithFieldRemoval(["author"]),
+                Mock(ResultComplexityAggregator)
+        )
         then:
-        // What should the expected outcome of this be?
-        // [issueById:[comments:[null, null, null]]?
-        // [issueById:[comments:null]?
-        // [issueById:null]?
-        // [issueById:[comments:[[author:null], [author:null], [author:null]]]] ?
-        result.data != [issueById: [comments: [[author: null], [author: null], [author: null]]]]
+        response == [issueById: [comments: [[author: null]]]]
+        errors.size() == 1
+        errors[0].message == "removed field"
     }
 
-    //query validation error message appears from graphql-java due to empty query
-    // if all fields are removed in top level field, then child fields are hidden and only the top field is returned with null
-    def "all non-hydrated fields in query are removed"() {
-        given:
-        def query = """
-        {
-            commentById(id:"C1") {
-                id
-                created
-                commentText
-            }
-        }
-        """
-        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
-
-        Nadel nadel = newNadel()
-                .dsl(IssuesCommentsUsersHarness.ndsl)
-                .serviceExecutionFactory(serviceExecutionFactory)
-                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["created", "commentText", "id"]))
-                .build()
-
-        when:
-        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
-
-        then:
-        result.data == [commentById: null]
-    }
-
-    def "top level field is removed"() {
-        given:
-        def query = """
-        {
-            commentById(id:"C1") {
-                id
-            }
-        }
-        """
-        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
-
-        Nadel nadel = newNadel()
-                .dsl(IssuesCommentsUsersHarness.ndsl)
-                .serviceExecutionFactory(serviceExecutionFactory)
-                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["commentById"]))
-                .build()
-
-        when:
-        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
-
-        then:
-        result.data == [commentById: null]
-    }
-
-    def "nested hydrated field in query is removed"() {
+    def "field is removed from nested hydrated field"() {
         given:
         def query = '''
         {
@@ -198,7 +231,279 @@ class RemovedFieldsTest extends StrategyTestHelper {
                             [commentText: "Text of C4", author: [displayName: "Display name of jed", userId: null]],
                             [commentText: "Text of C6", author: [displayName: "Display name of ted", userId: null]]]]],
         ]
+        result.errors.size() == 6
+        result.errors.every { it.message.contains("removed field") }
+    }
 
+    def "field with selections is removed"() {
+        given:
+        def query = """
+        { 
+            issueById(id : "I1") {
+                id
+                epic {
+                    id
+                    title
+                } 
+            } 
+        }
+        """
+        def expectedQuery1 = """query nadel_2_IssueService {issueById(id:"I1") {id}}"""
+        Map response1 = [issueById: [id: "I1"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "IssueService",
+                issueSchema,
+                query,
+                ["issueById"],
+                expectedQuery1,
+                response1,
+                createServiceExecutionHooksWithFieldRemoval(["epic"]),
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [issueById: [id: "I1", epic: null]]
+        errors.size() == 1
+        errors[0].message == "removed field"
+    }
+
+    def "field in a selection set is removed"() {
+        given:
+        def query = """
+        { 
+            issueById(id : "I1") {
+                id
+                epic {
+                    id
+                    title
+                }
+            }
+        }
+        """
+        def expectedQuery1 = """query nadel_2_IssueService {issueById(id:"I1") {id epic {id}}}"""
+        Map response1 = [issueById: [id: "I1", epic: [id: "E1"]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "IssueService",
+                issueSchema,
+                query,
+                ["issueById"],
+                expectedQuery1,
+                response1,
+                createServiceExecutionHooksWithFieldRemoval(["title"]),
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [issueById: [id: "I1", epic: [id: "E1", title: null]]]
+        errors.size() == 1
+        errors[0].message == "removed field"
+    }
+
+    def "the only field in a selection set is removed"() {
+        given:
+        def query = """
+        {
+            issueById(id : "I1") {
+                id
+                epic {
+                    title
+                }
+            }
+        }
+        """
+
+        def expectedQuery1 = """query nadel_2_IssueService {issueById(id:"I1") {id epic {empty_selection_set_typename__UUID:__typename}}}"""
+        Map response1 = [issueById: [id: "I1", epic: [empty_selection_set_typename__UUID: "Query"]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "IssueService",
+                issueSchema,
+                query,
+                ["issueById"],
+                expectedQuery1,
+                response1,
+                createServiceExecutionHooksWithFieldRemoval(["title"]),
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [issueById: [id: "I1", epic: [title: null]]]
+        errors.size() == 1
+        errors[0].message == "removed field"
+    }
+
+    def "all fields in a selection set are removed"() {
+        given:
+        def query = """
+        {
+            issueById(id : "I1") {
+                id
+                epic {
+                    title
+                    description
+                }
+            }
+        }
+        """
+
+        def expectedQuery1 = """query nadel_2_IssueService {issueById(id:"I1") {id epic {empty_selection_set_typename__UUID:__typename}}}"""
+        Map response1 = [issueById: [id: "I1", epic: [empty_selection_set_typename__UUID: "Query"]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "IssueService",
+                issueSchema,
+                query,
+                ["issueById"],
+                expectedQuery1,
+                response1,
+                createServiceExecutionHooksWithFieldRemoval(["title", "description"]),
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [issueById: [id: "I1", epic: [title: null, description: null]]]
+        errors.size() == 2
+        errors[0].message == "removed field"
+        errors[1].message == "removed field"
+    }
+
+    def "field in non-hydrated query is removed"() {
+        given:
+        def query = """
+        {
+            commentById(id:"C1") {
+                id
+                created
+            }
+        }
+        """
+
+        def expectedQuery1 = """query nadel_2_CommentService {commentById(id:"C1") {id}}"""
+        Map response1 = [commentById: [id: "C1"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "CommentService",
+                commentSchema,
+                query,
+                ["commentById"],
+                expectedQuery1,
+                response1,
+                createServiceExecutionHooksWithFieldRemoval(["created"]),
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [commentById: [id: "C1", created: null]]
+        errors.size() == 1
+        errors[0].message == "removed field"
+    }
+
+    def "all non-hydrated fields in query are removed"() {
+        given:
+        def query = """
+        {
+            commentById(id:"C1") {
+                id
+                created
+                commentText
+            }
+        }
+        """
+
+        def expectedQuery1 = """query nadel_2_CommentService {commentById(id:"C1") {empty_selection_set_typename__UUID:__typename}}"""
+        Map response1 = [commentById: [empty_selection_set_typename__UUID: "Query"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "CommentService",
+                commentSchema,
+                query,
+                ["commentById"],
+                expectedQuery1,
+                response1,
+                createServiceExecutionHooksWithFieldRemoval(["id", "created", "commentText"]),
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [commentById: ["id": null, "created": null, "commentText": null]]
+        errors.size() == 3
+        errors.every { it.message.contains("removed field") }
+    }
+
+    def "top level field is removed"() {
+        given:
+        def query = """
+        {
+            commentById(id:"C1") {
+                id
+            }
+        }
+        """
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
+
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["commentById"]))
+                .build()
+
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
+        then:
+        result.data == [commentById: null]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
+    }
+
+    def "one of top level fields is removed"() {
+        given:
+        def query = """
+        {
+            commentById(id:"C1") {
+                id
+            }
+            
+            issues {
+                key
+            }
+        }
+        """
+        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
+
+        Nadel nadel = newNadel()
+                .dsl(IssuesCommentsUsersHarness.ndsl)
+                .serviceExecutionFactory(serviceExecutionFactory)
+                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["commentById"]))
+                .build()
+
+        when:
+        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+
+        then:
+        result.data == [commentById: null, issues: [[key: "WORK-I1"], [key: "WORK-I2"]]]
+        result.errors.size() == 1
+        result.errors[0].message.contains("removed field")
     }
 
     def "top level field in batched query is removed"() {
@@ -218,23 +523,32 @@ class RemovedFieldsTest extends StrategyTestHelper {
         }
         '''
 
+        def expectedQuery1 = """query nadel_2_IssueService {issues {key}}"""
+        Map response1 = [issues: [[key: "WORK-I1"], [key: "WORK-I2"]]]
 
-        def serviceExecutionFactory = IssuesCommentsUsersHarness.serviceFactoryWithDelay(2)
-
-        Nadel nadel = newNadel()
-                .dsl(IssuesCommentsUsersHarness.ndsl)
-                .serviceExecutionFactory(serviceExecutionFactory)
-                .serviceExecutionHooks(createServiceExecutionHooksWithFieldRemoval(["comments"]))
-                .build()
-
+        Map response
+        List<GraphQLError> errors
         when:
-        def result = nadel.execute(newNadelExecutionInput().query(query)).join()
+        (response, errors) = test1Service(
+                overallSchema,
+                "IssueService",
+                issueSchema,
+                query,
+                ["issues"],
+                expectedQuery1,
+                response1,
+                createServiceExecutionHooksWithFieldRemoval(["comments"]),
+                Mock(ResultComplexityAggregator)
+        )
 
         then:
-        result.data == [issues: [
+        response == [issues: [
                 [key: "WORK-I1", comments: null],
                 [key: "WORK-I2", comments: null]]]
 
+        errors.size() == 2
+        errors[0].message.contains("removed field")
+        errors[1].message.contains("removed field")
     }
 
 
@@ -242,18 +556,113 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         return new ServiceExecutionHooks() {
             @Override
-            Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
-                if (fieldsToRemove.contains(field.getName())) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+                if (fieldsToRemove.contains(normalizedField.getName())) {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
-                    return Optional.of(new AbortExecutionException("removed field"))
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
                 }
-                return Optional.empty();
+                return CompletableFuture.completedFuture(Optional.empty())
             }
         }
     }
 
-    def "restricted field inside hydration via fragments used twice"() {
+    def setupFragmentTests() {
+        GraphQLSchema overallSchema = TestUtil.schemaFromNdsl('''
+        service Issues {
+            type Query {
+                issue: Issue
+            }
+            type Issue {
+                id: ID
+                relatedIssue: Issue                 
+                restricted: String
+            }
+        }
+        ''')
+        GraphQLSchema issueSchema = TestUtil.schema("""
+        type Query {
+            issue : Issue
+        }
+        type Issue {
+            id: ID
+            relatedIssue: Issue                 
+            restricted: String
+        }
+        """)
+        def query = "{issue { ...IssueFragment relatedIssue { ...IssueFragment }}} fragment IssueFragment on Issue { id restricted }"
+
+        return [overallSchema, issueSchema, query]
+    }
+
+    def "restricted field via fragments used twice"() {
         given:
+        def (GraphQLSchema overallSchema, GraphQLSchema issueSchema, String query) = setupFragmentTests()
+
+        def hooks = createServiceExecutionHooksWithFieldRemoval(["restricted"])
+
+        def expectedQuery1 = """query nadel_2_Issues {issue {...IssueFragment relatedIssue {...IssueFragment}}} fragment IssueFragment on Issue {id}"""
+        def response1 = [issue: [id: "ID1", relatedIssue: [id: "ID2"]]]
+
+        def overallResponse = [issue: [id: "ID1", restricted: null, relatedIssue: [id: "ID2", restricted: null]]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test1Service(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.size() == 2
+        errors[0].message.contains("removed field")
+        errors[1].message.contains("removed field")
+    }
+
+    def "restricted single field via fragments used twice"() {
+        given:
+        def (GraphQLSchema overallSchema, GraphQLSchema issueSchema, String query) = setupFragmentTests()
+
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+                if (normalizedField.getName() == "restricted" && normalizedField.getParent().getName() == "issue") {
+                    //temporary GraphQLError ->  need to implement a field permissions denied error
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
+                }
+                return CompletableFuture.completedFuture(Optional.empty())
+            }
+        }
+
+        def expectedQuery1 = "query nadel_2_Issues {issue {...IssueFragment relatedIssue {...IssueFragment}}} fragment IssueFragment on Issue {id restricted}"
+        def response1 = [issue: [id: "ID1", restricted: "secret", relatedIssue: [id: "ID2", restricted: "secret"]]]
+
+        def overallResponse = [issue: [id: "ID1", restricted: null, relatedIssue: [id: "ID2", restricted: "secret"]]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test1Service(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.size() == 1
+        errors[0].message.contains("removed field")
+    }
+
+    def setupFragmentHydrationTests() {
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Issues {
             type Query {
@@ -297,30 +706,28 @@ class RemovedFieldsTest extends StrategyTestHelper {
         """)
         def query = "{issue { ...IssueFragment relatedIssue { ...IssueFragment }}} fragment IssueFragment on Issue {id author {id restricted}}"
 
+        return [overallSchema, issueSchema, userServiceSchema, query]
+    }
+
+    def "restricted field inside hydration via fragments used twice"() {
+        given:
+        def (GraphQLSchema overallSchema, GraphQLSchema issueSchema, GraphQLSchema userServiceSchema, String query) = setupFragmentHydrationTests()
+
+        ServiceExecutionHooks hooks = createServiceExecutionHooksWithFieldRemoval(["restricted"])
+
         def expectedQuery1 = "query nadel_2_Issues {issue {...IssueFragment relatedIssue {...IssueFragment}}} fragment IssueFragment on Issue {id authorId}"
         def response1 = [issue: [id: "ID1", authorId: "USER-1", relatedIssue: [id: "ID2", authorId: "USER-2"]]]
 
         def expectedQuery2 = "query nadel_2_UserService {usersById(id:[\"USER-1\",\"USER-2\"]) {id object_identifier__UUID:id}}"
-        def response2 = [usersById: [[id: "USER-1", object_identifier__UUID: "USER-1"], [id: "USER-2", object_identifier__UUID: "USER-2"]]]
+        def response2 = [usersById: [
+                [id: "USER-1", object_identifier__UUID: "USER-1"],
+                [id: "USER-2", object_identifier__UUID: "USER-2"]
+        ]]
 
         def overallResponse = [issue: [id: "ID1", author: [id: "USER-1", restricted: null], relatedIssue: [id: "ID2", author: [id: "USER-2", restricted: null]]]]
 
-        def hooks = new ServiceExecutionHooks() {
-            @Override
-            Optional<GraphQLError> isFieldAllowed(Field field, GraphQLFieldDefinition fieldDefinitionOverall, Object userSuppliedContext) {
-                if (fieldDefinitionOverall.getName() == "restricted") {
-                    //temporary GraphQLError ->  need to implement a field permissions denied error
-                    return Optional.of(new AbortExecutionException("removed field"))
-                }
-                return Optional.empty();
-            }
-        }
-
-
-        Map response
-        List<GraphQLError> errors
         when:
-        (response, errors) = test2Services(
+        def (Map response, List<GraphQLError> errors) = test2Services(
                 overallSchema,
                 "Issues",
                 issueSchema,
@@ -332,15 +739,62 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 response1,
                 expectedQuery2,
                 response2,
-                hooks
+                hooks,
+                Mock(ResultComplexityAggregator)
         )
         then:
         response == overallResponse
         errors.size() == 2
         errors[0].message.contains("removed field")
         errors[1].message.contains("removed field")
+    }
 
+    def "restricted single field inside hydration via fragments used twice"() {
+        given:
+        def (GraphQLSchema overallSchema, GraphQLSchema issueSchema, GraphQLSchema userServiceSchema, String query) = setupFragmentHydrationTests()
 
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+                if (normalizedField.getName() == "restricted" && normalizedField.getParent().getParent().getName() == "issue") {
+                    //temporary GraphQLError ->  need to implement a field permissions denied error
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
+                }
+                return CompletableFuture.completedFuture(Optional.empty())
+            }
+        }
+
+        def expectedQuery1 = "query nadel_2_Issues {issue {...IssueFragment relatedIssue {...IssueFragment}}} fragment IssueFragment on Issue {id authorId}"
+        def response1 = [issue: [id: "ID1", authorId: "USER-1", relatedIssue: [id: "ID2", authorId: "USER-2"]]]
+
+        def expectedQuery2 = "query nadel_2_UserService {usersById(id:[\"USER-1\",\"USER-2\"]) {id restricted object_identifier__UUID:id}}"
+        def response2 = [usersById: [
+                [id: "USER-1", restricted: "superSecret", object_identifier__UUID: "USER-1"],
+                [id: "USER-2", restricted: "secret", object_identifier__UUID: "USER-2"]
+        ]]
+
+        def overallResponse = [issue: [id: "ID1", author: [id: "USER-1", restricted: null], relatedIssue: [id: "ID2", author: [id: "USER-2", restricted: "secret"]]]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.size() == 1
+        errors[0].message.contains("removed field")
     }
 
 }

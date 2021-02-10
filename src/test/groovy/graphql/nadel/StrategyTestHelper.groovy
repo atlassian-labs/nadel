@@ -35,7 +35,8 @@ class StrategyTestHelper extends Specification {
                           String expectedQuery1,
                           Map response1,
                           ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
-                          Map variables = [:]
+                          Map variables = [:],
+                          ResultComplexityAggregator resultComplexityAggregator
     ) {
         def response1ServiceResult = new ServiceExecutionResult(response1)
 
@@ -65,7 +66,7 @@ class StrategyTestHelper extends Specification {
 
         def executionData = createExecutionData(query, variables, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), Mock(ResultComplexityAggregator))
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         assert calledService1
 
@@ -86,7 +87,8 @@ class StrategyTestHelper extends Specification {
                            String expectedQuery2,
                            Map response2,
                            ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
-                           Map variables = [:]
+                           Map variables = [:],
+                           ResultComplexityAggregator resultComplexityAggregator
     ) {
 
         def response1ServiceResult = new ServiceExecutionResult(response1)
@@ -126,12 +128,16 @@ class StrategyTestHelper extends Specification {
 
         def executionData = createExecutionData(query, variables, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), Mock(ResultComplexityAggregator))
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         assert calledService1
         assert calledService2
 
         return [resultData(response), resultErrors(response)]
+    }
+
+    ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema) {
+        createExecutionData(query, [:], overallSchema)
     }
 
     ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema, Map variables) {

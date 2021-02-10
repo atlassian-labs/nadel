@@ -13,11 +13,15 @@ import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
+import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.TransformationMetadata.NormalizedFieldAndError;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
+import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.result.ExecutionResultNode;
 import graphql.nadel.result.ResultComplexityAggregator;
 import graphql.nadel.result.RootExecutionResultNode;
@@ -30,6 +34,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
@@ -37,6 +42,7 @@ import static graphql.Assert.assertNotNull;
 import static graphql.nadel.result.RootExecutionResultNode.newRootExecutionResultNode;
 import static graphql.nadel.util.FpKit.map;
 import static java.lang.String.format;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 
 @Internal
@@ -45,11 +51,10 @@ public class NadelExecutionStrategy {
     private final ExecutionStepInfoFactory executionStepInfoFactory = new ExecutionStepInfoFactory();
     private final ServiceResultNodesToOverallResult serviceResultNodesToOverallResult = new ServiceResultNodesToOverallResult();
     private final OverallQueryTransformer queryTransformer = new OverallQueryTransformer();
-
+    private final ServiceResultToResultNodes resultToResultNode = new ServiceResultToResultNodes();
 
     private final FieldInfos fieldInfos;
     private final GraphQLSchema overallSchema;
-    private final NadelInstrumentation instrumentation;
     private final ServiceExecutor serviceExecutor;
     private final HydrationInputResolver hydrationInputResolver;
     private final ServiceExecutionHooks serviceExecutionHooks;
@@ -62,7 +67,6 @@ public class NadelExecutionStrategy {
                                   NadelInstrumentation instrumentation,
                                   ServiceExecutionHooks serviceExecutionHooks) {
         this.overallSchema = overallSchema;
-        this.instrumentation = instrumentation;
         assertNotEmpty(services);
         this.fieldInfos = fieldInfos;
         this.serviceExecutionHooks = serviceExecutionHooks;
@@ -95,8 +99,6 @@ public class NadelExecutionStrategy {
                         log.debug("NadelExecutionStrategy time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
                     });
         }).whenComplete(this::possiblyLogException);
-
-
     }
 
     private Map<Service, Object> serviceContextsByService(List<OneServiceExecution> oneServiceExecutions) {
@@ -126,7 +128,6 @@ public class NadelExecutionStrategy {
         return Async.each(result);
     }
 
-
     private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(
             ExecutionContext executionContext,
             NadelContext nadelContext,
@@ -147,65 +148,108 @@ public class NadelExecutionStrategy {
             // take the original query and transform it into the underlying query needed for that top level field
             //
             GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
-            QueryTransformationResult queryTransform = queryTransformer
+            CompletableFuture<QueryTransformationResult> transformedQueryCF = queryTransformer
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
+            resultNodes.add(transformedQueryCF.thenCompose(transformedQuery -> {
+                Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getFieldIdToTransformation();
+                Map<String, String> typeRenameMappings = transformedQuery.getTypeRenameMappings();
 
-            Map<String, FieldTransformation> fieldIdToTransformation = queryTransform.getFieldIdToTransformation();
-            Map<String, String> typeRenameMappings = queryTransform.getTypeRenameMappings();
+                ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, transformedQuery.getVariableValues());
 
-            ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, queryTransform.getVariableValues());
+                Optional<GraphQLError> maybeFieldForbiddenError = getForbiddenTopLevelFieldError(esi, transformedQuery);
+                // If field is forbidden, do NOT execute it
+                if (maybeFieldForbiddenError.isPresent()) {
+                    GraphQLError fieldForbiddenError = maybeFieldForbiddenError.get();
+                    return CompletableFuture.completedFuture(getForbiddenTopLevelFieldResult(nadelContext, esi, fieldForbiddenError));
+                }
 
+                CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
+                        .execute(newExecutionContext, transformedQuery, service, operation, serviceContext, false);
 
-            CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
-                    .execute(newExecutionContext, queryTransform, service, operation, serviceContext, false);
+                CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
+                        .thenApply(resultNode -> {
+                            if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+                                BenchmarkContext benchmarkContext = (BenchmarkContext) nadelContext.getUserSuppliedContext();
+                                benchmarkContext.serviceResultNodesToOverallResult.executionId = newExecutionContext.getExecutionId();
+                                benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
+                                benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
+                                benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
+                                benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
+                                benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
+                                benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
+                                benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = transformedQuery.getRemovedFieldMap();
+                            }
+                            return (RootExecutionResultNode) serviceResultNodesToOverallResult
+                                    .convert(newExecutionContext.getExecutionId(),
+                                            resultNode,
+                                            overallSchema,
+                                            resultNode,
+                                            fieldIdToTransformation,
+                                            typeRenameMappings,
+                                            nadelContext,
+                                            transformedQuery.getRemovedFieldMap());
+                        });
 
-            CompletableFuture<RootExecutionResultNode> convertedResult = serviceCallResult
-                    .thenApply(resultNode -> {
-                        if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
-                            BenchmarkContext benchmarkContext = (BenchmarkContext) nadelContext.getUserSuppliedContext();
-                            benchmarkContext.serviceResultNodesToOverallResult.executionId = newExecutionContext.getExecutionId();
-                            benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
-                            benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
-                            benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
-                            benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
-                            benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
-                            benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
-                            benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = queryTransform.getRemovedFieldMap();
-                        }
-                        return (RootExecutionResultNode) serviceResultNodesToOverallResult
-                                .convert(newExecutionContext.getExecutionId(),
-                                        resultNode,
-                                        overallSchema,
-                                        resultNode,
-                                        fieldIdToTransformation,
-                                        typeRenameMappings,
-                                        nadelContext,
-                                        queryTransform.getRemovedFieldMap());
-                    });
+                //set the result node count for this service
+                convertedResult.thenAccept(rootExecutionResultNode -> {
+                    resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount());
+                    resultComplexityAggregator.incrementFieldRenameCount(rootExecutionResultNode.getTotalFieldRenameCount());
+                    resultComplexityAggregator.incrementTypeRenameCount(rootExecutionResultNode.getTotalTypeRenameCount());
+                });
 
-            //set the result node count for this service
-            convertedResult.thenAccept(rootExecutionResultNode -> resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount()));
+                CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult
+                        .thenCompose(rootResultNode -> {
+                            ResultRewriteParams resultRewriteParams = ResultRewriteParams.newParameters()
+                                    .from(executionContext)
+                                    .service(service)
+                                    .serviceContext(serviceContext)
+                                    .executionStepInfo(esi)
+                                    .resultNode(rootResultNode)
+                                    .build();
+                            return serviceExecutionHooks.resultRewrite(resultRewriteParams);
+                        });
 
-            CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult
-                    .thenCompose(rootResultNode -> {
-                        ResultRewriteParams resultRewriteParams = ResultRewriteParams.newParameters()
-                                .from(executionContext)
-                                .service(service)
-                                .serviceContext(serviceContext)
-                                .executionStepInfo(esi)
-                                .resultNode(rootResultNode)
-                                .build();
-                        return serviceExecutionHooks.resultRewrite(resultRewriteParams);
-                    });
-
-
-            resultNodes.add(serviceResult);
-
+                return serviceResult;
+            }));
         }
         return resultNodes;
     }
 
+    /**
+     * A top level field error is present if the field should not be executed and an
+     * error should be put in lieu. We check this before calling out to the underlying
+     * service. This error is usually present when the field has been forbidden by
+     * {@link ServiceExecutionHooks#isFieldForbidden(NormalizedQueryField, Object)}.
+     *
+     * @param esi              the {@link ExecutionStepInfo} for the top level field
+     * @param transformedQuery the query for that specific top level field
+     * @return a {@link GraphQLError} if the field was forbidden before, otherwise empty
+     */
+    private Optional<GraphQLError> getForbiddenTopLevelFieldError(ExecutionStepInfo esi, QueryTransformationResult transformedQuery) {
+        GraphQLFieldDefinition fieldDefinition = esi.getFieldDefinition();
+        String topLevelFieldId = NodeId.getId(fieldDefinition);
+        return transformedQuery.getRemovedFieldMap()
+                .getRemovedFieldById(topLevelFieldId)
+                .map(NormalizedFieldAndError::getError);
+    }
+
+    /**
+     * Creates the {@link RootExecutionResultNode} for a forbidden field. In that
+     * case the underlying service should not be called and we would fill the
+     * overall GraphQL response with an error for that specific top level field.
+     *
+     * @param nadelContext context for the execution
+     * @param esi          the {@link ExecutionStepInfo} for the top level field
+     * @param error        the {@link GraphQLError} to put in the overall response
+     * @return {@link RootExecutionResultNode} with the specified top level field nulled out and with the given GraphQL error
+     */
+    private RootExecutionResultNode getForbiddenTopLevelFieldResult(NadelContext nadelContext, ExecutionStepInfo esi, GraphQLError error) {
+        String topLevelFieldResultKey = esi.getResultKey();
+        NormalizedQueryFromAst overallQuery = nadelContext.getNormalizedOverallQuery();
+        NormalizedQueryField topLevelField = overallQuery.getTopLevelField(topLevelFieldResultKey);
+        return resultToResultNode.createResultWithNullTopLevelField(overallQuery, topLevelField, singletonList(error), emptyMap());
+    }
 
     @SuppressWarnings("unused")
     private <T> void possiblyLogException(T result, Throwable exception) {
@@ -234,8 +278,8 @@ public class NadelExecutionStrategy {
             List<GraphQLError> errors = new ArrayList<>();
             map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
             map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
-            Map<String,Object> extensions = new LinkedHashMap<>();
-            rootNodes.forEach( node -> extensions.putAll(node.getExtensions()));
+            Map<String, Object> extensions = new LinkedHashMap<>();
+            rootNodes.forEach(node -> extensions.putAll(node.getExtensions()));
             return newRootExecutionResultNode()
                     .children(mergedChildren)
                     .errors(errors)
@@ -243,7 +287,6 @@ public class NadelExecutionStrategy {
                     .build();
         });
     }
-
 
     private static class OneServiceExecution {
 
@@ -258,7 +301,6 @@ public class NadelExecutionStrategy {
         final ExecutionStepInfo stepInfo;
     }
 
-
     private Service getServiceForFieldDefinition(GraphQLFieldDefinition fieldDefinition) {
         FieldInfo info = assertNotNull(fieldInfos.getInfo(fieldDefinition), () -> String.format("no field info for field %s", fieldDefinition.getName()));
         return info.getService();
@@ -266,7 +308,7 @@ public class NadelExecutionStrategy {
 
     private String buildOperationName(Service service, ExecutionContext executionContext) {
         // to help with downstream debugging we put our name and their name in the operation
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        NadelContext nadelContext = executionContext.getContext();
         if (nadelContext.getOriginalOperationName() != null) {
             return format("nadel_2_%s_%s", service.getName(), nadelContext.getOriginalOperationName());
         } else {
@@ -275,9 +317,8 @@ public class NadelExecutionStrategy {
     }
 
     private NadelContext getNadelContext(ExecutionContext executionContext) {
-        return (NadelContext) executionContext.getContext();
+        return executionContext.getContext();
     }
-
 }
 
 

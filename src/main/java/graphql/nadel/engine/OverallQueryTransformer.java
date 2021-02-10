@@ -1,6 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.Internal;
+import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.MergedField;
 import graphql.language.AstNodeAdapter;
@@ -18,21 +19,26 @@ import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.engine.transformation.FieldTransformation;
+import graphql.nadel.engine.transformation.OverallTypeInfo;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
 import graphql.nadel.engine.transformation.TransformationMetadata;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLCompositeType;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLNamedOutputType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.idl.TypeInfo;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
 import graphql.util.TreeTransformer;
+import graphql.util.TreeTransformerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,9 +49,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import static graphql.language.OperationDefinition.newOperationDefinition;
 import static graphql.language.SelectionSet.newSelectionSet;
+import static graphql.nadel.dsl.NodeId.getId;
 import static graphql.nadel.engine.UnderlyingTypeContext.newUnderlyingTypeContext;
 import static graphql.nadel.util.FpKit.map;
 import static graphql.nadel.util.Util.getTypeMappingDefinitionFor;
@@ -59,7 +67,7 @@ public class OverallQueryTransformer {
     private final RecordOverallTypeInformation recordOverallTypeInformation = new RecordOverallTypeInformation();
 
 
-    QueryTransformationResult transformHydratedTopLevelField(
+    CompletableFuture<QueryTransformationResult> transformHydratedTopLevelField(
             ExecutionContext executionContext,
             GraphQLSchema underlyingSchema,
             String operationName,
@@ -90,7 +98,7 @@ public class OverallQueryTransformer {
         }
 
         Map<String, VariableDefinition> variableDefinitionMap = FpKit.getByName(executionContext.getOperationDefinition().getVariableDefinitions(), VariableDefinition::getName);
-        NodeVisitorStub nodeVisitorStub = new NodeVisitorStub() {
+        NodeVisitorStub collectReferencedVariables = new NodeVisitorStub() {
             @Override
             public TraversalControl visitVariableReference(VariableReference variableReference, TraverserContext<Node> context) {
                 String name = variableReference.getName();
@@ -100,10 +108,10 @@ public class OverallQueryTransformer {
         };
 
         NodeTraverser nodeTraverser = new NodeTraverser();
-        nodeTraverser.depthFirst(nodeVisitorStub, topLevelField);
+        nodeTraverser.depthFirst(collectReferencedVariables, topLevelField);
 
 
-        SelectionSet topLevelFieldSelectionSet = transformNode(
+        CompletableFuture<SelectionSet> topLevelFieldSelectionSetCF = transformNode(
                 executionContext,
                 underlyingSchema,
                 selectionSet,
@@ -119,60 +127,67 @@ public class OverallQueryTransformer {
                 serviceContext,
                 removedFieldMap
         );
+        Field finalTopLevelField = topLevelField;
+        return topLevelFieldSelectionSetCF.thenCompose(topLevelFieldSelectionSet -> {
 
-        Field transformedRootField = topLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
+            Field transformedRootField = finalTopLevelField.transform(builder -> builder.selectionSet(topLevelFieldSelectionSet));
 
 
-        transformedRootField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
+            transformedRootField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
+            transformedRootField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
 
-        if (isSynthetic) {
-            Field tempTransformedRootLevelField = transformedRootField;
-            transformedRootField = rootField.transform(builder -> builder.selectionSet(newSelectionSet().selection(tempTransformedRootLevelField).build()));
-        }
+            if (isSynthetic) {
+                Field tempTransformedRootLevelField = transformedRootField;
+                transformedRootField = rootField.transform(builder -> builder.selectionSet(newSelectionSet().selection(tempTransformedRootLevelField).build()));
+            }
 
-        List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
-        List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
+            List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
+            List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
 
-        Map<String, FragmentDefinition> transformedFragments = transformFragments(executionContext,
-                underlyingSchema,
-                executionContext.getFragmentsByName(),
-                fieldIdToTransformation,
-                typeRenameMappings,
-                referencedFragmentNames,
-                referencedVariables,
-                serviceExecutionHooks,
-                variableValues,
-                service,
-                serviceContext,
-                removedFieldMap);
+            CompletableFuture<Map<String, FragmentDefinition>> transformedFragmentsCF = transformFragments(executionContext,
+                    underlyingSchema,
+                    executionContext.getFragmentsByName(),
+                    fieldIdToTransformation,
+                    typeRenameMappings,
+                    referencedFragmentNames,
+                    referencedVariables,
+                    serviceExecutionHooks,
+                    variableValues,
+                    service,
+                    serviceContext,
+                    removedFieldMap);
+            Field finalTransformedRootField = transformedRootField;
+            return transformedFragmentsCF.thenApply(transformedFragments -> {
 
-        SelectionSet newOperationSelectionSet = newSelectionSet().selection(transformedRootField).build();
-        OperationDefinition operationDefinition = newOperationDefinition()
-                .name(operationName)
-                .operation(operation.getAstOperation())
-                .selectionSet(newOperationSelectionSet)
-                .variableDefinitions(variableDefinitions)
-                .build();
+                SelectionSet newOperationSelectionSet = newSelectionSet().selection(finalTransformedRootField).build();
+                OperationDefinition operationDefinition = newOperationDefinition()
+                        .name(operationName)
+                        .operation(operation.getAstOperation())
+                        .selectionSet(newOperationSelectionSet)
+                        .variableDefinitions(variableDefinitions)
+                        .build();
 
-        Document newDocument = newDocument(operationDefinition, transformedFragments);
+                Document newDocument = newDocument(operationDefinition, transformedFragments);
 
-        MergedField transformedMergedField = MergedField.newMergedField(transformedRootField).build();
-        long elapsedTime = System.currentTimeMillis() - startTime;
-        log.debug("OverallQueryTransformer.transformHydratedTopLevelField time: {}, executionId: {}", elapsedTime, executionContext.getExecutionId());
-        return new QueryTransformationResult(
-                newDocument,
-                operationDefinition,
-                Collections.singletonList(transformedMergedField),
-                typeRenameMappings,
-                referencedVariableNames,
-                fieldIdToTransformation,
-                transformedFragments,
-                variableValues,
-                removedFieldMap);
+                MergedField transformedMergedField = MergedField.newMergedField(finalTransformedRootField).build();
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                log.debug("OverallQueryTransformer.transformHydratedTopLevelField time: {}, executionId: {}", elapsedTime, executionContext.getExecutionId());
+                return new QueryTransformationResult(
+                        newDocument,
+                        operationDefinition,
+                        Collections.singletonList(transformedMergedField),
+                        typeRenameMappings,
+                        referencedVariableNames,
+                        fieldIdToTransformation,
+                        transformedFragments,
+                        variableValues,
+                        removedFieldMap);
+            });
+        });
 
     }
 
-    QueryTransformationResult transformMergedFields(
+    CompletableFuture<QueryTransformationResult> transformMergedFields(
             ExecutionContext executionContext,
             GraphQLSchema underlyingSchema,
             String operationName, Operation operation,
@@ -190,15 +205,15 @@ public class OverallQueryTransformer {
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
         TransformationMetadata removedFieldMap = new TransformationMetadata();
 
-        List<MergedField> transformedMergedFields = new ArrayList<>();
-        List<Field> transformedFields = new ArrayList<>();
+        List<CompletableFuture<Field>> transformedFieldsCF = new ArrayList<>();
 
         for (MergedField mergedField : mergedFields) {
             List<Field> fields = mergedField.getFields();
 
-            List<Field> transformed = map(fields, field -> {
+            List<CompletableFuture<Field>> transformedCF = map(fields, field -> {
                 GraphQLObjectType rootType = operation.getRootType(executionContext.getGraphQLSchema());
-                Field newField = transformNode(
+
+                CompletableFuture<Field> newFieldCF = transformNode(
                         executionContext,
                         underlyingSchema,
                         field,
@@ -214,62 +229,66 @@ public class OverallQueryTransformer {
                         serviceContext,
                         removedFieldMap
                 );
-                // Case happens when the high level field is removed
-                if (newField == null) {
-                    newField = field.transform(builder -> builder.selectionSet(SelectionSet.newSelectionSet().build()));
-                }
-                // if all child fields of the high level field are removed then the top-level field is nulled
+                return newFieldCF.thenApply(newField -> {
+                    // Case happens when the high level field is removed
+                    if (newField == null) {
+                        newField = field.transform(builder -> builder.selectionSet(SelectionSet.newSelectionSet().build()));
+                    }
+                    // if all child fields of the high level field are removed then the top-level field is nulled
+                    GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
+                    newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
+                    return newField;
 
-                GraphQLOutputType fieldType = rootType.getFieldDefinition(field.getName()).getType();
-                newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
-                return newField;
+                });
             });
-            transformedFields.addAll(transformed);
-            MergedField transformedMergedField = MergedField.newMergedField(transformed).build();
-            transformedMergedFields.add(transformedMergedField);
-
+            transformedFieldsCF.addAll(transformedCF);
         }
-        List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
-        List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
+        return Async.each(transformedFieldsCF).thenCompose(transformedFields -> {
+            List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
+            List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
 
-        // create a new Document including referenced Fragments
-        SelectionSet newSelectionSet = newSelectionSet(transformedFields).build();
+            // create a new Document including referenced Fragments
+            SelectionSet newSelectionSet = newSelectionSet(transformedFields).build();
 
-        OperationDefinition operationDefinition = newOperationDefinition()
-                .operation(operation.getAstOperation())
-                .name(operationName)
-                .selectionSet(newSelectionSet)
-                .variableDefinitions(variableDefinitions)
-                .build();
+            OperationDefinition operationDefinition = newOperationDefinition()
+                    .operation(operation.getAstOperation())
+                    .name(operationName)
+                    .selectionSet(newSelectionSet)
+                    .variableDefinitions(variableDefinitions)
+                    .build();
 
-        Map<String, FragmentDefinition> transformedFragments = transformFragments(
-                executionContext,
-                underlyingSchema,
-                executionContext.getFragmentsByName(),
-                fieldIdToTransformation,
-                typeRenameMappings,
-                fragmentsDirectlyReferenced,
-                referencedVariables,
-                serviceExecutionHooks,
-                variableValues,
-                service,
-                serviceContext,
-                removedFieldMap);
+            CompletableFuture<Map<String, FragmentDefinition>> transformedFragmentsCF = transformFragments(
+                    executionContext,
+                    underlyingSchema,
+                    executionContext.getFragmentsByName(),
+                    fieldIdToTransformation,
+                    typeRenameMappings,
+                    fragmentsDirectlyReferenced,
+                    referencedVariables,
+                    serviceExecutionHooks,
+                    variableValues,
+                    service,
+                    serviceContext,
+                    removedFieldMap);
+            return transformedFragmentsCF.thenApply(transformedFragments -> {
+                Document newDocument = newDocument(operationDefinition, transformedFragments);
 
-        Document newDocument = newDocument(operationDefinition, transformedFragments);
+                List<MergedField> transformedMergedFields = map(transformedFields, transformed -> MergedField.newMergedField(transformed).build());
+                long elapsedTime = System.currentTimeMillis() - startTime;
+                log.debug("OverallQueryTransformer.transformMergedFields time: {}, executionId: {}", elapsedTime, executionContext.getExecutionId());
+                return new QueryTransformationResult(
+                        newDocument,
+                        operationDefinition,
+                        transformedMergedFields,
+                        typeRenameMappings,
+                        referencedVariableNames,
+                        fieldIdToTransformation,
+                        transformedFragments,
+                        variableValues,
+                        removedFieldMap);
+            });
+        });
 
-        long elapsedTime = System.currentTimeMillis() - startTime;
-        log.debug("OverallQueryTransformer.transformMergedFields time: {}, executionId: {}", elapsedTime, executionContext.getExecutionId());
-        return new QueryTransformationResult(
-                newDocument,
-                operationDefinition,
-                transformedMergedFields,
-                typeRenameMappings,
-                referencedVariableNames,
-                fieldIdToTransformation,
-                transformedFragments,
-                variableValues,
-                removedFieldMap);
     }
 
     private Document newDocument(OperationDefinition operationDefinition, Map<String, FragmentDefinition> transformedFragments) {
@@ -282,57 +301,105 @@ public class OverallQueryTransformer {
     }
 
 
-    private Map<String, FragmentDefinition> transformFragments(ExecutionContext executionContext,
-                                                               GraphQLSchema underlyingSchema,
-                                                               Map<String, FragmentDefinition> fragments,
-                                                               Map<String, FieldTransformation> transformationByResultField,
-                                                               Map<String, String> typeRenameMappings,
-                                                               Set<String> referencedFragmentNames,
-                                                               Map<String, VariableDefinition> referencedVariables,
-                                                               ServiceExecutionHooks serviceExecutionHooks,
-                                                               Map<String, Object> variableValues,
-                                                               Service service,
-                                                               Object serviceContext,
-                                                               TransformationMetadata removedFieldMap) {
+    private CompletableFuture<Map<String, FragmentDefinition>> transformFragments(ExecutionContext executionContext,
+                                                                                  GraphQLSchema underlyingSchema,
+                                                                                  Map<String, FragmentDefinition> fragments,
+                                                                                  Map<String, FieldTransformation> transformationByResultField,
+                                                                                  Map<String, String> typeRenameMappings,
+                                                                                  Set<String> referencedFragmentNames,
+                                                                                  Map<String, VariableDefinition> referencedVariables,
+                                                                                  ServiceExecutionHooks serviceExecutionHooks,
+                                                                                  Map<String, Object> variableValues,
+                                                                                  Service service,
+                                                                                  Object serviceContext,
+                                                                                  TransformationMetadata removedFieldMap) {
 
-        Set<String> fragmentsToTransform = new LinkedHashSet<>(referencedFragmentNames);
-        Set<FragmentDefinition> transformedFragments = new LinkedHashSet<>();
-        while (!fragmentsToTransform.isEmpty()) {
-            String fragmentName = fragmentsToTransform.iterator().next();
-            Set<String> newReferencedFragments = new LinkedHashSet<>();
-            FragmentDefinition transformedFragment = transformFragmentDefinition(
+        Set<String> fragmentsToTransform = Collections.synchronizedSet(new LinkedHashSet<>(referencedFragmentNames));
+        Set<FragmentDefinition> transformedFragmentsInput = Collections.synchronizedSet(new LinkedHashSet<>());
+        return transformFragmentImpl(
+                executionContext,
+                underlyingSchema,
+                fragments,
+                transformationByResultField,
+                typeRenameMappings,
+                referencedVariables,
+                serviceExecutionHooks,
+                variableValues,
+                service,
+                serviceContext,
+                removedFieldMap,
+                fragmentsToTransform,
+                transformedFragmentsInput).
+                thenApply(transformedFragments -> groupingByUniqueKey(transformedFragmentsInput, FragmentDefinition::getName));
+    }
+
+    private CompletableFuture<Set<FragmentDefinition>> transformFragmentImpl(ExecutionContext executionContext,
+                                                                             GraphQLSchema underlyingSchema,
+                                                                             Map<String, FragmentDefinition> fragments,
+                                                                             Map<String, FieldTransformation> transformationByResultField,
+                                                                             Map<String, String> typeRenameMappings,
+                                                                             Map<String, VariableDefinition> referencedVariables,
+                                                                             ServiceExecutionHooks serviceExecutionHooks,
+                                                                             Map<String, Object> variableValues,
+                                                                             Service service,
+                                                                             Object serviceContext,
+                                                                             TransformationMetadata removedFieldMap,
+                                                                             Set<String> fragmentsToTransform,
+                                                                             Set<FragmentDefinition> transformedFragments) {
+        if (fragmentsToTransform.isEmpty()) {
+            return CompletableFuture.completedFuture(transformedFragments);
+        }
+
+        String fragmentName = fragmentsToTransform.iterator().next();
+        Set<String> newReferencedFragments = new LinkedHashSet<>();
+        CompletableFuture<FragmentDefinition> transformedFragmentCF = transformFragmentDefinition(
+                executionContext,
+                underlyingSchema,
+                fragments.get(fragmentName),
+                transformationByResultField,
+                typeRenameMappings,
+                newReferencedFragments,
+                referencedVariables,
+                serviceExecutionHooks,
+                variableValues,
+                service,
+                serviceContext,
+                removedFieldMap
+        );
+        return transformedFragmentCF.thenCompose(transformedFragment -> {
+            fragmentsToTransform.remove(fragmentName);
+            transformedFragments.add(transformedFragment);
+            fragmentsToTransform.addAll(newReferencedFragments);
+            return transformFragmentImpl(
                     executionContext,
                     underlyingSchema,
-                    fragments.get(fragmentName),
+                    fragments,
                     transformationByResultField,
                     typeRenameMappings,
-                    newReferencedFragments,
                     referencedVariables,
                     serviceExecutionHooks,
                     variableValues,
                     service,
                     serviceContext,
-                    removedFieldMap
-            );
-            transformedFragments.add(transformedFragment);
-            fragmentsToTransform.addAll(newReferencedFragments);
-            fragmentsToTransform.remove(fragmentName);
-        }
-        return groupingByUniqueKey(transformedFragments, FragmentDefinition::getName);
+                    removedFieldMap,
+                    fragmentsToTransform,
+                    transformedFragments);
+        });
     }
 
-    private FragmentDefinition transformFragmentDefinition(ExecutionContext executionContext,
-                                                           GraphQLSchema underlyingSchema,
-                                                           FragmentDefinition fragmentDefinitionWithoutTypeInfo,
-                                                           Map<String, FieldTransformation> transformationByResultField,
-                                                           Map<String, String> typeRenameMappings,
-                                                           Set<String> referencedFragmentNames,
-                                                           Map<String, VariableDefinition> referencedVariables,
-                                                           ServiceExecutionHooks serviceExecutionHooks,
-                                                           Map<String, Object> variableValues,
-                                                           Service service,
-                                                           Object serviceContext,
-                                                           TransformationMetadata removedFieldMap
+
+    private CompletableFuture<FragmentDefinition> transformFragmentDefinition(ExecutionContext executionContext,
+                                                                              GraphQLSchema underlyingSchema,
+                                                                              FragmentDefinition fragmentDefinitionWithoutTypeInfo,
+                                                                              Map<String, FieldTransformation> transformationByResultField,
+                                                                              Map<String, String> typeRenameMappings,
+                                                                              Set<String> referencedFragmentNames,
+                                                                              Map<String, VariableDefinition> referencedVariables,
+                                                                              ServiceExecutionHooks serviceExecutionHooks,
+                                                                              Map<String, Object> variableValues,
+                                                                              Service service,
+                                                                              Object serviceContext,
+                                                                              TransformationMetadata removedFieldMap
     ) {
         NadelContext nadelContext = executionContext.getContext();
 
@@ -341,35 +408,40 @@ public class OverallQueryTransformer {
                 executionContext.getGraphQLSchema(),
                 null);
 
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext);
 
-        Transformer transformer = new Transformer(
-                executionContext,
-                underlyingSchema,
-                transformationByResultField,
-                typeRenameMappings,
-                referencedFragmentNames,
-                referencedVariables,
-                nadelContext,
-                serviceExecutionHooks,
-                overallTypeInformation,
-                variableValues,
-                service,
-                serviceContext,
-                removedFieldMap
-        );
-        Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
-        rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext().build());
-        TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
-        Node newNode = treeTransformer.transform(fragmentDefinitionWithoutTypeInfo, new TraverserVisitorStub<Node>() {
-                    @Override
-                    public TraversalControl enter(TraverserContext<Node> context) {
-                        return context.thisNode().accept(context, transformer);
-                    }
-                },
-                rootVars
-        );
-        //noinspection unchecked
-        return (FragmentDefinition) newNode;
+        return asyncIsFieldForbidden.getForbiddenFields(fragmentDefinitionWithoutTypeInfo).thenApply(forbiddenFields -> {
+
+            Transformer transformer = new Transformer(
+                    executionContext,
+                    underlyingSchema,
+                    transformationByResultField,
+                    typeRenameMappings,
+                    referencedFragmentNames,
+                    referencedVariables,
+                    nadelContext,
+                    serviceExecutionHooks,
+                    overallTypeInformation,
+                    variableValues,
+                    service,
+                    serviceContext,
+                    removedFieldMap,
+                    forbiddenFields
+            );
+            Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
+            rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext().build());
+            TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
+            Node newNode = treeTransformer.transform(fragmentDefinitionWithoutTypeInfo, new TraverserVisitorStub<Node>() {
+                        @Override
+                        public TraversalControl enter(TraverserContext<Node> context) {
+                            return context.thisNode().accept(context, transformer);
+                        }
+                    },
+                    rootVars
+            );
+            //noinspection unchecked
+            return (FragmentDefinition) newNode;
+        });
     }
 
     private List<VariableDefinition> buildReferencedVariableDefinitions(Map<String, VariableDefinition> referencedVariables,
@@ -392,59 +464,106 @@ public class OverallQueryTransformer {
         return variableDefinitions;
     }
 
-    private <T extends Node> T transformNode(ExecutionContext executionContext,
-                                             GraphQLSchema underlyingSchema,
-                                             T nodeWithoutTypeInfo,
-                                             GraphQLCompositeType parentTypeOverall,
-                                             Map<String, FieldTransformation> fieldIdToTransformation,
-                                             Map<String, String> typeRenameMappings,
-                                             Set<String> referencedFragmentNames,
-                                             Map<String, VariableDefinition> referencedVariables,
-                                             NadelContext nadelContext,
-                                             ServiceExecutionHooks serviceExecutionHooks,
-                                             Map<String, Object> variableValues,
-                                             Service service,
-                                             Object serviceContext,
-                                             TransformationMetadata removedFieldMap) {
+    private <T extends Node> CompletableFuture<T> transformNode(ExecutionContext executionContext,
+                                                                GraphQLSchema underlyingSchema,
+                                                                T nodeWithoutTypeInfo,
+                                                                GraphQLCompositeType parentTypeOverall,
+                                                                Map<String, FieldTransformation> fieldIdToTransformation,
+                                                                Map<String, String> typeRenameMappings,
+                                                                Set<String> referencedFragmentNames,
+                                                                Map<String, VariableDefinition> referencedVariables,
+                                                                NadelContext nadelContext,
+                                                                ServiceExecutionHooks serviceExecutionHooks,
+                                                                Map<String, Object> variableValues,
+                                                                Service service,
+                                                                Object serviceContext,
+                                                                TransformationMetadata removedFieldMap
+    ) {
         OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
                 nodeWithoutTypeInfo,
                 executionContext.getGraphQLSchema(),
                 parentTypeOverall);
 
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext);
 
-        Transformer transformer = new Transformer(
-                executionContext,
-                underlyingSchema,
-                fieldIdToTransformation,
-                typeRenameMappings,
-                referencedFragmentNames,
-                referencedVariables,
-                nadelContext,
-                serviceExecutionHooks,
-                overallTypeInformation,
-                variableValues,
-                service,
-                serviceContext,
-                removedFieldMap
-        );
-        Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
-        String underlyingParentName = getUnderlyingTypeNameAndRecordMapping(parentTypeOverall, typeRenameMappings);
-        GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(underlyingParentName);
-        rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext()
-                .outputTypeUnderlying(underlyingSchemaParent)
-                .build());
-        TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
-        Node newNode = treeTransformer.transform(nodeWithoutTypeInfo, new TraverserVisitorStub<Node>() {
+        return asyncIsFieldForbidden.getForbiddenFields(nodeWithoutTypeInfo).thenApply(forbiddenFields -> {
+            Transformer transformer = new Transformer(
+                    executionContext,
+                    underlyingSchema,
+                    fieldIdToTransformation,
+                    typeRenameMappings,
+                    referencedFragmentNames,
+                    referencedVariables,
+                    nadelContext,
+                    serviceExecutionHooks,
+                    overallTypeInformation,
+                    variableValues,
+                    service,
+                    serviceContext,
+                    removedFieldMap,
+                    forbiddenFields
+            );
+            Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
+            String underlyingParentName = getUnderlyingTypeNameAndRecordMapping(parentTypeOverall, typeRenameMappings);
+            GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(underlyingParentName);
+            rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext()
+                    .outputTypeUnderlying(underlyingSchemaParent)
+                    .build());
+            TreeTransformer<Node> treeTransformer = new TreeTransformer<>(AstNodeAdapter.AST_NODE_ADAPTER);
+            Node newNode = treeTransformer.transform(nodeWithoutTypeInfo, new TraverserVisitorStub<Node>() {
+                        @Override
+                        public TraversalControl enter(TraverserContext<Node> context) {
+                            return context.thisNode().accept(context, transformer);
+                        }
+                    },
+                    rootVars
+            );
+
+            if (removedFieldMap.hasRemovedFields()) {
+                newNode = addUnderscoreTypeNameToEmptySelectionSets(nadelContext, overallTypeInformation, rootVars, treeTransformer, newNode);
+            }
+            //noinspection unchecked
+            return (T) newNode;
+
+        });
+
+    }
+
+    private Node addUnderscoreTypeNameToEmptySelectionSets(NadelContext nadelContext,
+                                                           OverallTypeInformation<?> overallTypeInformation,
+                                                           Map<Class<?>, Object> rootVars,
+                                                           TreeTransformer<Node> treeTransformer,
+                                                           Node field
+    ) {
+        if (field == null) {
+            return null;
+        }
+        NodeVisitorStub addDummyFieldToEmptySubSelectsVisitor = new NodeVisitorStub() {
+
+            @Override
+            public TraversalControl visitField(Field node, TraverserContext<Node> context) {
+                OverallTypeInfo overallTypeInfo = overallTypeInformation.getOverallTypeInfo(getId(node));
+                if (overallTypeInfo == null) {
+                    return TraversalControl.CONTINUE;
+                }
+                GraphQLFieldDefinition fieldDefinitionOverall = overallTypeInfo.getFieldDefinition();
+                GraphQLNamedOutputType fieldTypeOverall = (GraphQLNamedOutputType) GraphQLTypeUtil.unwrapAll(fieldDefinitionOverall.getType());
+                Field newField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(nadelContext, node, fieldTypeOverall);
+                if (newField != node) {
+                    TreeTransformerUtil.changeNode(context, newField);
+                }
+                return TraversalControl.CONTINUE;
+            }
+        };
+
+        return treeTransformer.transform(field, new TraverserVisitorStub<Node>() {
                     @Override
                     public TraversalControl enter(TraverserContext<Node> context) {
-                        return context.thisNode().accept(context, transformer);
+                        return context.thisNode().accept(context, addDummyFieldToEmptySubSelectsVisitor);
                     }
                 },
                 rootVars
         );
-
-        //noinspection unchecked
-        return (T) newNode;
     }
 
     private String getUnderlyingTypeNameAndRecordMapping(GraphQLCompositeType typeOverall, Map<String, String> typeRenameMappings) {

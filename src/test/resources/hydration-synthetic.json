@@ -38,6 +38,7 @@
                   "topLevelField": "resolveId",
                   "syntheticField": "resolver",
                   "objectIdentifier": "id",
+                  "objectMatchByIndex": false,
                   "arguments": [
                     {
                       "name": "otherId",

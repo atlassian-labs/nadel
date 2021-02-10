@@ -26,6 +26,8 @@ public abstract class ExecutionResultNode {
     private final Map<String, Object> extensions;
     private final ElapsedTime elapsedTime;
     private final int totalNodeCount;
+    private final int totalFieldRenameCount;
+    private final int totalTypeRenameCount;
 
     private final ResultPath executionPath;
 
@@ -47,6 +49,8 @@ public abstract class ExecutionResultNode {
         this.extensions = builderBase.extensions;
         this.elapsedTime = builderBase.elapsedTime;
         this.totalNodeCount = builderBase.totalNodeCount;
+        this.totalFieldRenameCount = builderBase.totalFieldRenameCount;
+        this.totalTypeRenameCount = builderBase.totalTypeRenameCount;
         this.executionPath = assertNotNull(builderBase.executionPath);
 
         this.alias = builderBase.alias;
@@ -115,6 +119,13 @@ public abstract class ExecutionResultNode {
         return totalNodeCount;
     }
 
+    public int getTotalFieldRenameCount() {
+        return totalFieldRenameCount;
+    }
+
+    public int getTotalTypeRenameCount() {
+        return totalTypeRenameCount;
+    }
 
     public ResultPath getResultPath() {
         return executionPath;
@@ -141,7 +152,6 @@ public abstract class ExecutionResultNode {
     public ExecutionResultNode withNodeCount(int nodeCount) {
         return transform(builder -> builder.totalNodeCount(nodeCount));
     }
-
 
     @Override
     public String toString() {
@@ -171,6 +181,8 @@ public abstract class ExecutionResultNode {
         private GraphQLFieldDefinition fieldDefinition;
         private GraphQLObjectType objectType;
         private int totalNodeCount;
+        private int totalFieldRenameCount;
+        private int totalTypeRenameCount;
 
 
         public BuilderBase() {
@@ -191,6 +203,8 @@ public abstract class ExecutionResultNode {
             this.fieldDefinition = existing.fieldDefinition;
             this.objectType = existing.objectType;
             this.totalNodeCount = existing.totalNodeCount;
+            this.totalFieldRenameCount = existing.totalFieldRenameCount;
+            this.totalTypeRenameCount = existing.totalTypeRenameCount;
         }
 
         public abstract ExecutionResultNode build();
@@ -274,5 +288,14 @@ public abstract class ExecutionResultNode {
             return (T) this;
         }
 
+        public T totalFieldRenameCount(int totalFieldRenameCount) {
+            this.totalFieldRenameCount = totalFieldRenameCount;
+            return (T) this;
+        }
+
+        public T totalTypeRenameCount(int totalTypeRenameCount) {
+            this.totalTypeRenameCount = totalTypeRenameCount;
+            return (T) this;
+        }
     }
 }

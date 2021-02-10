@@ -26,7 +26,7 @@ import java.util.List;
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.engine.HydrationInputNode.newHydrationInputNode;
-import static graphql.nadel.engine.transformation.FieldUtils.geFirstLeafNode;
+import static graphql.nadel.engine.transformation.FieldUtils.getFirstLeafNode;
 import static graphql.nadel.engine.transformation.FieldUtils.mapChildren;
 import static graphql.nadel.util.FpKit.filter;
 import static graphql.util.TreeTransformerUtil.changeNode;
@@ -34,12 +34,10 @@ import static graphql.util.TreeTransformerUtil.changeNode;
 @Internal
 public class HydrationTransformation extends FieldTransformation {
 
-
-    private UnderlyingServiceHydration underlyingServiceHydration;
+    private final UnderlyingServiceHydration underlyingServiceHydration;
 
     ExecutionResultNodeMapper executionResultNodeMapper = new ExecutionResultNodeMapper();
     PathMapper pathMapper = new PathMapper();
-
 
     public HydrationTransformation(UnderlyingServiceHydration underlyingServiceHydration) {
         this.underlyingServiceHydration = underlyingServiceHydration;
@@ -90,6 +88,8 @@ public class HydrationTransformation extends FieldTransformation {
             if (node.getChildren().size() == 0) {
                 return handleEmptyList((ListExecutionResultNode) node, allTransformations, environment, matchingNormalizedOverallField);
             }
+            // Update the environment.parent to current node
+            environment.parentNode = node;
             ExecutionResultNode child = node.getChildren().get(0);
             if (child instanceof LeafExecutionResultNode) {
                 return handleListOfLeafs((ListExecutionResultNode) node, allTransformations, environment, matchingNormalizedOverallField);
@@ -100,8 +100,7 @@ public class HydrationTransformation extends FieldTransformation {
             }
         }
 
-        LeafExecutionResultNode leafNode =
-                geFirstLeafNode(node);
+        LeafExecutionResultNode leafNode = getFirstLeafNode(node);
         LeafExecutionResultNode changedNode = unapplyLeafNode(leafNode, allTransformations, environment, matchingNormalizedOverallField);
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
@@ -130,10 +129,8 @@ public class HydrationTransformation extends FieldTransformation {
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
 
-
     private UnapplyResult handleListOfLeafs(ListExecutionResultNode listExecutionResultNode, List<FieldTransformation> allTransformations, UnapplyEnvironment environment, NormalizedQueryField matchingNormalizedField) {
         ExecutionResultNode mappedNode = mapToOverallFieldAndTypes(listExecutionResultNode, allTransformations, matchingNormalizedField);
-
 
         List<ExecutionResultNode> newChildren = new ArrayList<>();
         for (ExecutionResultNode leafNode : listExecutionResultNode.getChildren()) {
@@ -143,7 +140,6 @@ public class HydrationTransformation extends FieldTransformation {
         ExecutionResultNode changedNode = mappedNode.withNewChildren(newChildren);
         return new UnapplyResult(changedNode, TraversalControl.ABORT);
     }
-
 
     private LeafExecutionResultNode unapplyLeafNode(LeafExecutionResultNode leafNode,
                                                     List<FieldTransformation> allTransformations,
@@ -170,5 +166,4 @@ public class HydrationTransformation extends FieldTransformation {
                     .build();
         }
     }
-
 }

@@ -11,6 +11,7 @@ import graphql.util.TraverserVisitorStub
 import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
+import static graphql.nadel.engine.ArtificialFieldUtils.TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.leaf
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.list
 import static graphql.nadel.testutils.ExecutionResultNodeUtil.object
@@ -21,7 +22,8 @@ import static graphql.nadel.testutils.TestUtil.mkField
 class ArtificialFieldUtilsTest extends Specification {
 
     def context = NadelContext.newContext().build()
-    def underscoreTypeNameAlias = context.underscoreTypeNameAlias
+    def underscoreTypeNameAlias = TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + context.underscoreTypeNameAlias
+    def underscoreTypeNameAliasOnEmptySelections = "empty_selection_set_" + context.underscoreTypeNameAlias
     def interfaceType = GraphQLInterfaceType.newInterface().name("I").build()
     def objectType = GraphQLObjectType.newObject().name("O").build()
 
@@ -58,6 +60,46 @@ class ArtificialFieldUtilsTest extends Specification {
         AstPrinter.printAstCompact(newField) == """pet {name title ... {__typename} $underscoreTypeNameAlias:__typename}"""
     }
 
+    def "test that underscore type alias is added on empty selection sets"() {
+
+        def petField = mkField('''
+            pet
+        ''')
+
+        when:
+        def newField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(context, petField, objectType)
+        then:
+        AstPrinter.printAstCompact(newField) == """pet {$underscoreTypeNameAliasOnEmptySelections:__typename}"""
+    }
+
+    def "test that underscore type alias for empty selections is not added if alias for interfaces is already present"() {
+
+        def petField = mkField("""
+            pet {
+                $underscoreTypeNameAlias:__typename
+            }
+        """)
+
+        when:
+        def newField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(context, petField, objectType)
+        then:
+        AstPrinter.printAstCompact(newField) == """pet {$underscoreTypeNameAlias:__typename}"""
+    }
+
+    def "test that underscore type alias for empty selections is not added if it is already present"() {
+
+        def petField = mkField("""
+            pet {
+                $underscoreTypeNameAliasOnEmptySelections:__typename
+            }
+        """)
+
+        when:
+        def newField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(context, petField, interfaceType)
+        then:
+        AstPrinter.printAstCompact(newField) == """pet {$underscoreTypeNameAliasOnEmptySelections:__typename}"""
+    }
+
     def "test that underscore type alias is skipped on object"() {
 
         def petField = mkField('''
@@ -73,7 +115,7 @@ class ArtificialFieldUtilsTest extends Specification {
         AstPrinter.printAstCompact(newField) == """pet {name title}"""
     }
 
-    def "test that it removes the aliased field but leaves the specific one alone"() {
+    def "test that it removes the aliased fields but leaves the specific one alone"() {
 
         def startingNode = root([
                 object("pet", [
@@ -89,6 +131,11 @@ class ArtificialFieldUtilsTest extends Specification {
                                         leaf("name"),
                                         leaf("title"),
                                 ]),
+                                object("Z", [
+                                        leaf("__typename", underscoreTypeNameAliasOnEmptySelections),
+                                        leaf("name"),
+                                        leaf("title"),
+                                ])
                         ])
                 ])
         ])
@@ -105,6 +152,10 @@ class ArtificialFieldUtilsTest extends Specification {
                                         __typename: "__typenameVal",
                                         name      : "nameVal",
                                         title     : "titleVal",
+                                ],
+                                [
+                                        name : "nameVal",
+                                        title: "titleVal",
                                 ],
                                 [
                                         name : "nameVal",

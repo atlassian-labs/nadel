@@ -63,6 +63,10 @@ public class Util {
         return GraphQLTypeUtil.unwrapAll(fieldOutputType) instanceof GraphQLInterfaceType || fieldOutputType instanceof GraphQLUnionType;
     }
 
+    public static boolean isScalar(GraphQLOutputType fieldOutputType) {
+        return GraphQLTypeUtil.unwrapAll(fieldOutputType) instanceof GraphQLScalarType;
+    }
+
     public static TypeMappingDefinition getTypeMappingDefinitionFor(GraphQLType type) {
         TypeMappingDefinition typeMappingDefinition = null;
         if (type instanceof GraphQLObjectType) {

@@ -99,9 +99,11 @@ class ServiceExecutionHooksTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schema("""
-        type Query {
-            foo(id: String): String
+        def overallSchema = TestUtil.schemaFromNdsl("""
+        service service1 {
+            type Query {
+                foo(id: String): String
+            }
         }
         """)
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
@@ -171,9 +173,11 @@ class ServiceExecutionHooksTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schema("""
-        type Query {
-            foo(id: String): String
+        def overallSchema = TestUtil.schemaFromNdsl("""
+        service service1 {
+            type Query {
+                foo(id: String): String
+            }
         }
         """)
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
@@ -228,9 +232,11 @@ class ServiceExecutionHooksTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schema("""
-        type Query {
-            foo: String
+        def overallSchema = TestUtil.schemaFromNdsl("""
+        service service1 {
+            type Query {
+                foo: String
+            }
         }
         """)
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")

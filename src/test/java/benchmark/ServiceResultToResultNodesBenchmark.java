@@ -103,8 +103,6 @@ public class ServiceResultToResultNodesBenchmark {
         BenchmarkContext.ServiceResultToResultNodesArgs resultToResultNodesArgs = nadelInstance.benchmarkContext.serviceResultToResultNodesArgs;
         RootExecutionResultNode result = nadelInstance.serviceResultToResultNodes.resultToResultNode(
                 resultToResultNodesArgs.executionContextForService,
-                resultToResultNodesArgs.underlyingRootStepInfo,
-                resultToResultNodesArgs.transformedMergedFields,
                 resultToResultNodesArgs.serviceExecutionResult,
                 resultToResultNodesArgs.elapsedTime,
                 resultToResultNodesArgs.normalizedQuery);
