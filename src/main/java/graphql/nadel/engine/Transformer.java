@@ -81,7 +81,7 @@ public class Transformer extends NodeVisitorStub {
     final Map<String, String> typeRenameMappings;
     final Set<String> referencedFragmentNames;
     final Map<String, VariableDefinition> referencedVariables;
-    final List<String> hintTypenameMappings;
+    final List<String> hintTypenames;
     final NadelContext nadelContext;
     private final Map<String, VariableDefinition> variableDefinitions;
     final ServiceExecutionHooks serviceExecutionHooks;
@@ -99,7 +99,7 @@ public class Transformer extends NodeVisitorStub {
                        Map<String, String> typeRenameMappings,
                        Set<String> referencedFragmentNames,
                        Map<String, VariableDefinition> referencedVariables,
-                       List<String> hintTypenameMappings,
+                       List<String> hintTypenames,
                        NadelContext nadelContext,
                        ServiceExecutionHooks serviceExecutionHooks,
                        OverallTypeInformation overallTypeInformation,
@@ -115,7 +115,7 @@ public class Transformer extends NodeVisitorStub {
         this.typeRenameMappings = typeRenameMappings;
         this.referencedFragmentNames = referencedFragmentNames;
         this.referencedVariables = referencedVariables;
-        this.hintTypenameMappings = hintTypenameMappings;
+        this.hintTypenames = hintTypenames;
         this.nadelContext = nadelContext;
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.overallTypeInformation = overallTypeInformation;
@@ -303,7 +303,7 @@ public class Transformer extends NodeVisitorStub {
         Field changedNode = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, field, fieldType);
         if (changedNode != field) {
             TreeTransformerUtil.changeNode(traverserContext, changedNode);
-            hintTypenameMappings.add(changedNode.getName());
+            hintTypenames.add(changedNode.getName());
         }
     }
 
