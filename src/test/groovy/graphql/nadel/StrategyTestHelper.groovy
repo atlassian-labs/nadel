@@ -136,6 +136,10 @@ class StrategyTestHelper extends Specification {
         return [resultData(response), resultErrors(response)]
     }
 
+    ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema) {
+        createExecutionData(query, [:], overallSchema)
+    }
+
     ExecutionHelper.ExecutionData createExecutionData(String query, GraphQLSchema overallSchema, Map variables) {
         createExecutionData(query, variables, overallSchema)
     }
