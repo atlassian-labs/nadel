@@ -270,7 +270,7 @@ public class HydrationInputResolver {
 
             CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
                     .execute(executionContext, queryTransformationResult, service, operation,
-                            serviceContexts.get(service), true);
+                            serviceContexts.get(service), service.getUnderlyingSchema(), true);
 
             return serviceResult
                     .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
@@ -411,7 +411,7 @@ public class HydrationInputResolver {
 
         return queryTransformationResultCF.thenCompose(queryTransformationResult -> {
             return serviceExecutor
-                    .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), true)
+                    .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), service.getUnderlyingSchema(), true)
                     .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, hydrationInputs, resultNode, queryTransformationResult, resultComplexityAggregator))
                     .whenComplete(this::possiblyLogException);
         });

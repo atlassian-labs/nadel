@@ -173,12 +173,11 @@ public class NadelExecutionStrategy {
                     return CompletableFuture.completedFuture(getSkippedServiceCallResult(nadelContext, esi, executionContext, topLevelFieldError));
                 }
 
-                CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
-                        .execute(newExecutionContext, queryTransform, service, operation, serviceContext, false);
-
                 CompletableFuture<RootExecutionResultNode> convertedResult;
 
                 if (fieldIdToTransformation.size() > 0 || typeRenameMappings.size() > 0 || queryTransform.getRemovedFieldMap().hasRemovedFields() || queryTransform.getHintTypenameMap().size() > 0) {
+                    CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
+                            .execute(newExecutionContext, queryTransform, service, operation, serviceContext, service.getUnderlyingSchema(), false);
                     convertedResult = serviceCallResult
                             .thenApply(resultNode -> {
                                 if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
@@ -209,8 +208,8 @@ public class NadelExecutionStrategy {
                         resultComplexityAggregator.incrementFieldRenameCount(rootExecutionResultNode.getTotalFieldRenameCount());
                         resultComplexityAggregator.incrementTypeRenameCount(rootExecutionResultNode.getTotalTypeRenameCount());
                     });
-                } else { // Skip work because no hydrations and no renames
-                    convertedResult = serviceCallResult;
+                } else { // Skip work because no transformations detected. All ExecutionResultNodes reference the overall schema
+                    convertedResult = serviceExecutor.execute(newExecutionContext, queryTransform, service, operation, serviceContext, overallSchema, false);
                     resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);
                 }
 
