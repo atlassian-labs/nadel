@@ -4,7 +4,7 @@ import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
-import graphql.execution.ExecutionPath;
+import graphql.execution.ResultPath;
 import graphql.language.Argument;
 import graphql.language.ArrayValue;
 import graphql.language.Field;
@@ -77,13 +77,13 @@ public class HydrationInputResolver {
     private final GraphQLSchema overallSchema;
     private final ServiceExecutor serviceExecutor;
     private final ServiceExecutionHooks serviceExecutionHooks;
-    private final Set<ExecutionPath> hydrationInputPaths;
+    private final Set<ResultPath> hydrationInputPaths;
 
     public HydrationInputResolver(List<Service> services,
                                   GraphQLSchema overallSchema,
                                   ServiceExecutor serviceExecutor,
                                   ServiceExecutionHooks serviceExecutionHooks,
-                                  Set<ExecutionPath> hydrationInputPaths) {
+                                  Set<ResultPath> hydrationInputPaths) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.serviceExecutor = serviceExecutor;
@@ -568,7 +568,7 @@ public class HydrationInputResolver {
                 .objectType(inputNode.getObjectType())
                 .alias(inputNode.getAlias())
                 .fieldIds(inputNode.getFieldIds())
-                .executionPath(inputNode.getExecutionPath())
+                .executionPath(inputNode.getResultPath())
                 .fieldDefinition(inputNode.getFieldDefinition())
                 .completedValue(null)
                 .elapsedTime(elapsedTime)

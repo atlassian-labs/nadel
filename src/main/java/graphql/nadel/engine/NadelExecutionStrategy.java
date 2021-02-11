@@ -4,10 +4,10 @@ import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
-import graphql.execution.ExecutionPath;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
+import graphql.execution.ResultPath;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.nadel.BenchmarkContext;
 import graphql.nadel.FieldInfo;
@@ -140,7 +140,7 @@ public class NadelExecutionStrategy {
             Operation operation,
             List<OneServiceExecution> oneServiceExecutions,
             ResultComplexityAggregator resultComplexityAggregator,
-            Set<ExecutionPath> hydrationInputPaths) {
+            Set<ResultPath> hydrationInputPaths) {
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
@@ -309,10 +309,10 @@ public class NadelExecutionStrategy {
         final ExecutionStepInfo stepInfo;
     }
 
-    public static class ExecutionPathSet extends LinkedHashSet<ExecutionPath> {
+    public static class ExecutionPathSet extends LinkedHashSet<ResultPath> {
         @Override
-        public boolean add(ExecutionPath executionPath) {
-            ExecutionPath path = executionPath;
+        public boolean add(ResultPath executionPath) {
+            ResultPath path = executionPath;
             while (path != null) {
                 path = path.getParent();
                 super.add(path);
