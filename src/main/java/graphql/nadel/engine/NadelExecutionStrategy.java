@@ -166,7 +166,7 @@ public class NadelExecutionStrategy {
 
                 CompletableFuture<RootExecutionResultNode> convertedResult;
 
-                if (fieldIdToTransformation.size() > 0 || typeRenameMappings.size() > 0 || transformedQuery.getRemovedFieldMap().hasRemovedFields() || transformedQuery.getHintTypenameMap().size() > 0) {
+                if (requiresTransformationProcessing(transformedQuery)) {
                     CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
                             .execute(newExecutionContext, transformedQuery, service, operation, serviceContext, service.getUnderlyingSchema(), false);
                     convertedResult = serviceCallResult
@@ -325,6 +325,14 @@ public class NadelExecutionStrategy {
 
     private NadelContext getNadelContext(ExecutionContext executionContext) {
         return executionContext.getContext();
+    }
+
+    private boolean requiresTransformationProcessing(QueryTransformationResult transformedQuery) {
+        return transformedQuery.getFieldIdToTransformation().size() > 0 ||
+               transformedQuery.getTypeRenameMappings().size() > 0 ||
+               transformedQuery.getRemovedFieldMap().hasRemovedFields() ||
+               transformedQuery.getHintTypenames().size() > 0;
+
     }
 }
 

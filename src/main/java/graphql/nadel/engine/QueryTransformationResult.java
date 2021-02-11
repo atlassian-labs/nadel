@@ -94,6 +94,6 @@ public class QueryTransformationResult {
         return removedFieldMap;
     }
 
-    public List<String> getHintTypenameMap() { return hintTypenames; }
+    public List<String> getHintTypenames() { return hintTypenames; }
 }
 
