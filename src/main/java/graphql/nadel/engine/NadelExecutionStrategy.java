@@ -312,10 +312,10 @@ public class NadelExecutionStrategy {
     public static class ExecutionPathSet extends LinkedHashSet<ResultPath> {
         @Override
         public boolean add(ResultPath executionPath) {
-            ResultPath path = executionPath;
+            ResultPath path = executionPath.getParent();
             while (path != null) {
-                path = path.getParent();
                 super.add(path);
+                path = path.getParent();
             }
             return super.add(executionPath);
         }
