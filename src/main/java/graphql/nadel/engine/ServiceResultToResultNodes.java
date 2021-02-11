@@ -5,7 +5,7 @@ import graphql.Scalars;
 import graphql.SerializationError;
 import graphql.TypeMismatchError;
 import graphql.execution.ExecutionContext;
-import graphql.execution.ExecutionPath;
+import graphql.execution.ResultPath;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
@@ -60,7 +60,7 @@ public class ServiceResultToResultNodes {
         // Get random data that's required
         ElapsedTime zeroElapsedTime = ElapsedTime.newElapsedTime().start().stop().build();
         List<String> fieldIds = query.getFieldIds(topLevelField);
-        ExecutionPath path = ExecutionPath.rootPath().segment(topLevelField.getResultKey());
+        ResultPath path = ResultPath.rootPath().segment(topLevelField.getResultKey());
 
         LeafExecutionResultNode nullTopLevelField = createNullERN(topLevelField, path, fieldIds, zeroElapsedTime);
         return RootExecutionResultNode.newRootExecutionResultNode()
@@ -104,12 +104,12 @@ public class ServiceResultToResultNodes {
                                                         NormalizedQueryFromAst normalizedQueryFromAst) {
         List<NormalizedQueryField> topLevelFields = normalizedQueryFromAst.getTopLevelFields();
 
-        ExecutionPath rootPath = ExecutionPath.rootPath();
+        ResultPath rootPath = ResultPath.rootPath();
         Object source = serviceExecutionResult.getData();
 
         List<ExecutionResultNode> children = new ArrayList<>(topLevelFields.size());
         for (NormalizedQueryField topLevelField : topLevelFields) {
-            ExecutionPath path = rootPath.segment(topLevelField.getResultKey());
+            ResultPath path = rootPath.segment(topLevelField.getResultKey());
             List<String> fieldIds = normalizedQueryFromAst.getFieldIds(topLevelField);
 
             ExecutionResultNode executionResultNode = fetchAndAnalyzeField(executionContext, source, topLevelField, normalizedQueryFromAst, path, fieldIds, elapsedTime);
@@ -122,7 +122,7 @@ public class ServiceResultToResultNodes {
                                                      Object source,
                                                      NormalizedQueryField normalizedQueryField,
                                                      NormalizedQueryFromAst normalizedQueryFromAst,
-                                                     ExecutionPath executionPath,
+                                                     ResultPath executionPath,
                                                      List<String> fieldIds,
                                                      ElapsedTime elapsedTime) {
         Object fetchedValue = fetchValue(source, normalizedQueryField.getResultKey());
@@ -142,7 +142,7 @@ public class ServiceResultToResultNodes {
                                              Object fetchedValue,
                                              NormalizedQueryField normalizedQueryField,
                                              NormalizedQueryFromAst normalizedQueryFromAst,
-                                             ExecutionPath executionPath,
+                                             ResultPath executionPath,
                                              List<String> fieldIds,
                                              ElapsedTime elapsedTime) {
         return analyzeFetchedValueImpl(executionContext, fetchedValue, normalizedQueryField, normalizedQueryFromAst, normalizedQueryField.getFieldDefinition().getType(), executionPath, fieldIds, elapsedTime);
@@ -153,7 +153,7 @@ public class ServiceResultToResultNodes {
                                                         NormalizedQueryField normalizedQueryField,
                                                         NormalizedQueryFromAst normalizedQueryFromAst,
                                                         GraphQLOutputType curType,
-                                                        ExecutionPath executionPath,
+                                                        ResultPath executionPath,
                                                         List<String> fieldIds,
                                                         ElapsedTime elapsedTime) {
 
@@ -184,13 +184,13 @@ public class ServiceResultToResultNodes {
                                                     NormalizedQueryFromAst normalizedQueryFromAst,
                                                     GraphQLObjectType resolvedType,
                                                     Object completedValue,
-                                                    ExecutionPath executionPath,
+                                                    ResultPath executionPath,
                                                     ElapsedTime elapsedTime) {
 
         List<ExecutionResultNode> nodeChildren = new ArrayList<>(normalizedField.getChildren().size());
         for (NormalizedQueryField child : normalizedField.getChildren()) {
             if (child.getObjectType() == resolvedType) {
-                ExecutionPath pathForChild = executionPath.segment(child.getResultKey());
+                ResultPath pathForChild = executionPath.segment(child.getResultKey());
                 List<String> fieldIds = normalizedQueryFromAst.getFieldIds(child);
                 ExecutionResultNode childNode = fetchAndAnalyzeField(context, completedValue, child, normalizedQueryFromAst, pathForChild, fieldIds, elapsedTime);
                 nodeChildren.add(childNode);
@@ -214,7 +214,7 @@ public class ServiceResultToResultNodes {
                                             GraphQLList curType,
                                             NormalizedQueryField normalizedQueryField,
                                             NormalizedQueryFromAst normalizedQueryFromAst,
-                                            ExecutionPath executionPath,
+                                            ResultPath executionPath,
                                             List<String> fieldIds,
                                             ElapsedTime elapsedTime) {
 
@@ -238,7 +238,7 @@ public class ServiceResultToResultNodes {
     }
 
     private LeafExecutionResultNode createNullERNWithNullableError(NormalizedQueryField normalizedQueryField,
-                                                                   ExecutionPath executionPath,
+                                                                   ResultPath executionPath,
                                                                    List<String> fieldIds,
                                                                    ElapsedTime elapsedTime,
                                                                    NonNullableFieldWasNullError nonNullableFieldWasNullError) {
@@ -257,7 +257,7 @@ public class ServiceResultToResultNodes {
     }
 
     private LeafExecutionResultNode createNullERN(NormalizedQueryField normalizedQueryField,
-                                                  ExecutionPath executionPath,
+                                                  ResultPath executionPath,
                                                   List<String> fieldIds,
                                                   ElapsedTime elapsedTime) {
         return newLeafExecutionResultNode()
@@ -279,13 +279,13 @@ public class ServiceResultToResultNodes {
                                                GraphQLList currentType,
                                                NormalizedQueryField normalizedQueryField,
                                                NormalizedQueryFromAst normalizedQueryFromAst,
-                                               ExecutionPath executionPath,
+                                               ResultPath executionPath,
                                                List<String> fieldIds,
                                                ElapsedTime elapsedTime) {
         List<ExecutionResultNode> children = new ArrayList<>();
         int index = 0;
         for (Object item : iterableValues) {
-            ExecutionPath indexedPath = executionPath.segment(index);
+            ResultPath indexedPath = executionPath.segment(index);
             children.add(analyzeFetchedValueImpl(executionContext, item, normalizedQueryField, normalizedQueryFromAst, (GraphQLOutputType) GraphQLTypeUtil.unwrapOne(currentType), indexedPath, fieldIds, elapsedTime));
             index++;
         }
@@ -325,7 +325,7 @@ public class ServiceResultToResultNodes {
     private ExecutionResultNode analyzeScalarValue(Object toAnalyze,
                                                    GraphQLScalarType scalarType,
                                                    NormalizedQueryField normalizedQueryField,
-                                                   ExecutionPath executionPath,
+                                                   ResultPath executionPath,
                                                    List<String> fieldIds,
                                                    ElapsedTime elapsedTime) {
         Object serialized;
@@ -378,7 +378,7 @@ public class ServiceResultToResultNodes {
     private ExecutionResultNode analyzeEnumValue(Object toAnalyze,
                                                  GraphQLEnumType enumType,
                                                  NormalizedQueryField normalizedQueryField,
-                                                 ExecutionPath executionPath,
+                                                 ResultPath executionPath,
                                                  List<String> fieldIds,
                                                  ElapsedTime elapsedTime) {
         Object serialized;

@@ -66,7 +66,7 @@ class StrategyTestHelper extends Specification {
 
         def executionData = createExecutionData(query, variables, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         assert calledService1
 
@@ -118,7 +118,7 @@ class StrategyTestHelper extends Specification {
 
         def executionData = createExecutionData(query, variables, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         assert calledService1
         assert call == nCalls - 1
@@ -180,7 +180,7 @@ class StrategyTestHelper extends Specification {
 
         def executionData = createExecutionData(query, variables, overallSchema)
 
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         assert calledService1
         assert calledService2

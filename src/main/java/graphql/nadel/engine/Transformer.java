@@ -245,7 +245,7 @@ public class Transformer extends NodeVisitorStub {
 
             String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField, this.transformationMetadata.getMetadataByFieldId());
             fieldIdToTransformation.put(fieldId, transformation);
-            transformationToFieldId.put(transformation, changedField.getAdditionalData().get("id"));
+            transformationToFieldId.put(transformation, getId(changedField));
             if (transformation instanceof FieldRenameTransformation) {
                 maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);
             }

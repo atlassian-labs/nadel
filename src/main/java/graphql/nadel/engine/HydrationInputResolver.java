@@ -4,6 +4,7 @@ import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
+import graphql.execution.ResultPath;
 import graphql.language.Argument;
 import graphql.language.ArrayValue;
 import graphql.language.Field;
@@ -77,15 +78,18 @@ public class HydrationInputResolver {
     private final GraphQLSchema overallSchema;
     private final ServiceExecutor serviceExecutor;
     private final ServiceExecutionHooks serviceExecutionHooks;
+    private final Set<ResultPath> hydrationInputPaths;
 
     public HydrationInputResolver(List<Service> services,
                                   GraphQLSchema overallSchema,
                                   ServiceExecutor serviceExecutor,
-                                  ServiceExecutionHooks serviceExecutionHooks) {
+                                  ServiceExecutionHooks serviceExecutionHooks,
+                                  Set<ResultPath> hydrationInputPaths) {
         this.services = services;
         this.overallSchema = overallSchema;
         this.serviceExecutor = serviceExecutor;
         this.serviceExecutionHooks = serviceExecutionHooks;
+        this.hydrationInputPaths = hydrationInputPaths;
     }
 
 
@@ -93,7 +97,7 @@ public class HydrationInputResolver {
                                                                             ExecutionResultNode node,
                                                                             Map<Service, Object> serviceContexts,
                                                                             ResultComplexityAggregator resultComplexityAggregator) {
-        Set<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(node);
+        Set<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(node, hydrationInputPaths);
         if (hydrationInputZippers.size() == 0) {
             return CompletableFuture.completedFuture(node);
         }
@@ -372,7 +376,9 @@ public class HydrationInputResolver {
                         transformationToFieldId,
                         typeRenameMappings,
                         nadelContext,
-                        queryTransformationResult.getRemovedFieldMap());
+                        queryTransformationResult.getRemovedFieldMap(),
+                        hydrationInputPaths);
+
         String serviceName = hydrationTransformation.getUnderlyingServiceHydration().getServiceName();
         resultComplexityAggregator.incrementServiceNodeCount(serviceName, firstTopLevelResultNode.getTotalNodeCount());
         resultComplexityAggregator.incrementTypeRenameCount(firstTopLevelResultNode.getTotalTypeRenameCount());
@@ -567,7 +573,8 @@ public class HydrationInputResolver {
                         transformationToFieldId,
                         typeRenameMappings,
                         getNadelContext(executionContext),
-                        queryTransformationResult.getRemovedFieldMap());
+                        queryTransformationResult.getRemovedFieldMap(),
+                        hydrationInputPaths);
 
                 String serviceName = hydrationInputNode.getHydrationTransformation().getUnderlyingServiceHydration().getServiceName();
                 int nodeCount = overallResultNode.getTotalNodeCount();
@@ -594,7 +601,7 @@ public class HydrationInputResolver {
                 .objectType(inputNode.getObjectType())
                 .alias(inputNode.getAlias())
                 .fieldIds(inputNode.getFieldIds())
-                .executionPath(inputNode.getExecutionPath())
+                .executionPath(inputNode.getResultPath())
                 .fieldDefinition(inputNode.getFieldDefinition())
                 .completedValue(null)
                 .isNull(true)
@@ -640,7 +647,7 @@ public class HydrationInputResolver {
 
     private String buildOperationName(Service service, ExecutionContext executionContext) {
         // to help with downstream debugging we put our name and their name in the operation
-        NadelContext nadelContext = (NadelContext) executionContext.getContext();
+        NadelContext nadelContext = executionContext.getContext();
         if (nadelContext.getOriginalOperationName() != null) {
             return format("nadel_2_%s_%s", service.getName(), nadelContext.getOriginalOperationName());
         } else {
