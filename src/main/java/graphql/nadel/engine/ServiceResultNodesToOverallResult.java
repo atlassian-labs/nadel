@@ -510,9 +510,7 @@ public class ServiceResultNodesToOverallResult {
             if (definition instanceof UnderlyingServiceHydration) {
                 for (ExecutionResultNode child : directParentNode.getChildren()) {
                     // Makes sure no unnecessary traversals occur
-                    if (getFieldIdsWithTransformationIds(child, transformationIds, transformationMetadata).size() == 0) {
-                        continue;
-                    } else {
+                    if (getFieldIdsWithTransformationIds(child, transformationIds, transformationMetadata).size() != 0) {
                         ExecutionResultNode resultNode = nodesWithTransformationIds(child, transformationIds, transformationMetadata);
                         treesByDefinition.get(definition).add(resultNode);
                     }
