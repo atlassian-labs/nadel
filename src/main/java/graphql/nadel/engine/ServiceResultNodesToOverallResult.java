@@ -253,9 +253,6 @@ public class ServiceResultNodesToOverallResult {
             result = HandleResult.simple(mapNode(node, unapplyEnvironment, resultCounter));
         } else {
             result = unapplyTransformations(executionId, node, transformations, unapplyEnvironment, fieldIdTransformation, nadelContext, transformationMetadata, resultCounter, hydrationInputPaths);
-            if (transformations.get(0) instanceof HydrationTransformation) {
-                hydrationInputPaths.add(result.changedNode.getExecutionPath());
-            }
         }
 
         if (result.changedNode instanceof ObjectExecutionResultNode && !(parentNode instanceof HydrationInputNode)) {
@@ -314,7 +311,7 @@ public class ServiceResultNodesToOverallResult {
         FieldTransformation transformation = transformations.get(0);
 
         if (transformation instanceof HydrationTransformation) {
-            handleResult = unapplyHydration(node, transformations, unapplyEnvironment, fieldIdToTransformation, transformation, transformationMetadata, resultCounter);
+            handleResult = unapplyHydration(node, transformations, unapplyEnvironment, fieldIdToTransformation, transformation, transformationMetadata, resultCounter, hydrationInputPaths);
         } else if (transformation instanceof FieldRenameTransformation) {
             handleResult = unapplyFieldRename(executionId, node, transformations, unapplyEnvironment, fieldIdToTransformation, nadelContext, transformationMetadata, resultCounter, hydrationInputPaths);
         } else {
@@ -342,7 +339,9 @@ public class ServiceResultNodesToOverallResult {
         for (AbstractNode definition : nodesWithTransformedFields.keySet()) {
             List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
             UnapplyResult unapplyResult = transformationsForDefinition.get(0).unapplyResultNode(nodesWithTransformedFields.get(definition), transformationsForDefinition, unapplyEnvironment);
-
+            if (transformationsForDefinition.get(0) instanceof HydrationTransformation) {
+                hydrationInputPaths.add(unapplyResult.getNode().getExecutionPath());
+            }
             // typeDecrementAmount = 0 because for a field rename it's children will not know about the underlying type.
             checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, resultCounter, 0);
 
@@ -411,7 +410,8 @@ public class ServiceResultNodesToOverallResult {
                                           Map<String, FieldTransformation> fieldIdToTransformation,
                                           FieldTransformation transformation,
                                           TransformationMetadata transformationMetadata,
-                                          ResultCounter resultCounter
+                                          ResultCounter resultCounter,
+                                          Set<ExecutionPath> hydrationInputPaths
     ) {
         HandleResult handleResult = HandleResult.newHandleResultWithSiblings();
 
@@ -427,6 +427,7 @@ public class ServiceResultNodesToOverallResult {
         // //E.g. /foo , /foo[0], /foo[1], /foo[2] => type rename count becomes -2, -1, 0, 1
         int typeDecrementValue = unapplyResult.getNode() instanceof ListExecutionResultNode ? -unapplyResult.getNode().getChildren().size() : -1;
         checkForTypeRename(unapplyResult.getNode().getFieldDefinition(), node.getFieldDefinition(), unapplyEnvironment.typeRenameMappings, resultCounter, typeDecrementValue);
+        hydrationInputPaths.add(unapplyResult.getNode().getExecutionPath());
 
         if (withoutTransformedFields != null) {
             handleResult.changedNode = mapNode(withoutTransformedFields, unapplyEnvironment, resultCounter);
