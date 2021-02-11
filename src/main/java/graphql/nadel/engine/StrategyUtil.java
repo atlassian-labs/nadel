@@ -40,7 +40,7 @@ public class StrategyUtil {
     }
 
 
-    public static Set<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(ExecutionResultNode roots) {
+    public static Set<NodeZipper<ExecutionResultNode>> getHydrationInputNodes(ExecutionResultNode roots, Set<ResultPath> hydrationInputPaths) {
         Comparator<NodeZipper<ExecutionResultNode>> comparator = (node1, node2) -> {
             if (node1 == node2) {
                 return 0;
@@ -62,13 +62,18 @@ public class StrategyUtil {
         Set<NodeZipper<ExecutionResultNode>> result = Collections.synchronizedSet(new TreeSet<>(comparator));
 
         Traverser<ExecutionResultNode> traverser = Traverser.depthFirst(ExecutionResultNode::getChildren);
+
         traverser.traverse(roots, new TraverserVisitorStub<ExecutionResultNode>() {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 if (context.thisNode() instanceof HydrationInputNode) {
                     result.add(new NodeZipper<>(context.thisNode(), context.getBreadcrumbs(), RESULT_NODE_ADAPTER));
                 }
-                return TraversalControl.CONTINUE;
+                if (hydrationInputPaths.contains(context.thisNode().getResultPath())) {
+                    return TraversalControl.CONTINUE;
+                } else {
+                    return TraversalControl.ABORT;
+                }
             }
 
         });
