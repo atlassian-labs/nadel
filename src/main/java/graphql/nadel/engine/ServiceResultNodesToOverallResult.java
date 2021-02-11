@@ -9,6 +9,7 @@ import graphql.language.AbstractNode;
 import graphql.nadel.Tuples;
 import graphql.nadel.TuplesTwo;
 import graphql.nadel.dsl.NodeId;
+import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.engine.transformation.TransformationMetadata;
@@ -71,7 +72,7 @@ public class ServiceResultNodesToOverallResult {
                                        NadelContext nadelContext,
                                        TransformationMetadata transformationMetadata,
                                        Set<ResultPath> hydrationInputPaths) {
-        return convertImpl(executionId, resultNode, null, overallSchema, correctRootNode, false, false, fieldIdToTransformation, typeRenameMappings, false, nadelContext, transformationMetadata, hydrationInputPaths);
+        return convertImpl(executionId, resultNode, null, overallSchema, correctRootNode, false, false, fieldIdToTransformation,transformationToFieldId, typeRenameMappings, false, nadelContext, transformationMetadata, hydrationInputPaths);
     }
 
     public ExecutionResultNode convertChildren(ExecutionId executionId,
@@ -87,7 +88,7 @@ public class ServiceResultNodesToOverallResult {
                                                NadelContext nadelContext,
                                                TransformationMetadata transformationMetadata,
                                                Set<ResultPath> hydrationInputPaths) {
-        return convertImpl(executionId, root, normalizedRootField, overallSchema, correctRootNode, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, true, nadelContext, transformationMetadata, hydrationInputPaths);
+        return convertImpl(executionId, root, normalizedRootField, overallSchema, correctRootNode, isHydrationTransformation, batched, fieldIdToTransformation, transformationToFieldId, typeRenameMappings, true, nadelContext, transformationMetadata, hydrationInputPaths);
     }
 
     private ExecutionResultNode convertImpl(ExecutionId executionId,
@@ -506,12 +507,18 @@ public class ServiceResultNodesToOverallResult {
         for (AbstractNode definition : transformationIdsByTransformationDefinition.keySet()) {
             Set<String> transformationIds = transformationIdsByTransformationDefinition.get(definition);
             treesByDefinition.putIfAbsent(definition, new ArrayList<>());
-
-            for (ExecutionResultNode child : directParentNode.getChildren()) {
-                ExecutionResultNode resultNode = nodesWithTransformationIds(child, transformationIds, transformationMetadata);
-                if (resultNode != null) {
-                    treesByDefinition.get(definition).add(resultNode);
+            if (definition instanceof UnderlyingServiceHydration) {
+                for (ExecutionResultNode child : directParentNode.getChildren()) {
+                    // Makes sure no unnecessary traversals occur
+                    if (getFieldIdsWithTransformationIds(child, transformationIds, transformationMetadata).size() == 0) {
+                        continue;
+                    } else {
+                        ExecutionResultNode resultNode = nodesWithTransformationIds(child, transformationIds, transformationMetadata);
+                        treesByDefinition.get(definition).add(resultNode);
+                    }
                 }
+            } else {
+                treesByDefinition.get(definition).add(nodesWithTransformationIds(executionResultNode, transformationIds, transformationMetadata));
             }
         }
         ExecutionResultNode treeWithout = nodesWithTransformationIds(executionResultNode, null, transformationMetadata);

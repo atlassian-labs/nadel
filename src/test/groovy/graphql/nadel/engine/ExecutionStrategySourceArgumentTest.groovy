@@ -590,6 +590,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
               } 
               type Issue {
                  author: User => hydrated from Issues.users(id: $source.accountId, userId: $source.authorId) object identified by userId
+                 user: User
               }
               type User {
                  id: ID!
@@ -606,6 +607,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
               type Issue {
                 authorId: ID
                 accountId: ID
+                user: User
               }
               type User {
                  id: ID!
