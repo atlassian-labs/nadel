@@ -408,7 +408,7 @@ public class OverallQueryTransformer {
                 executionContext.getGraphQLSchema(),
                 null);
 
-        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext, overallTypeInformation);
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext);
 
         return asyncIsFieldForbidden.getForbiddenFields(fragmentDefinitionWithoutTypeInfo).thenApply(forbiddenFields -> {
 
@@ -484,7 +484,7 @@ public class OverallQueryTransformer {
                 executionContext.getGraphQLSchema(),
                 parentTypeOverall);
 
-        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext, overallTypeInformation);
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext);
 
         return asyncIsFieldForbidden.getForbiddenFields(nodeWithoutTypeInfo).thenApply(forbiddenFields -> {
             Transformer transformer = new Transformer(

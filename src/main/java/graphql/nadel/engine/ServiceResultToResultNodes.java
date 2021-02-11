@@ -41,28 +41,61 @@ import static graphql.schema.GraphQLTypeUtil.isList;
 
 public class ServiceResultToResultNodes {
 
-
     private static final Logger log = LoggerFactory.getLogger(ServiceResultToResultNodes.class);
 
+    /**
+     * Creates a {@link RootExecutionResultNode} with the specified top level field
+     * set to null and with the given GraphQL errors and extensions put in the result.
+     *
+     * @param query         the query being executed (can be overall query)
+     * @param topLevelField the top level field to null out
+     * @param errors        the errors to put into the overall result
+     * @param extensions    the extensions to put into the overall result
+     * @return the overall result constructed as per the above description
+     */
+    public RootExecutionResultNode createResultWithNullTopLevelField(NormalizedQueryFromAst query,
+                                                                     NormalizedQueryField topLevelField,
+                                                                     List<GraphQLError> errors,
+                                                                     Map<String, Object> extensions) {
+        // Get random data that's required
+        ElapsedTime zeroElapsedTime = ElapsedTime.newElapsedTime().start().stop().build();
+        List<String> fieldIds = query.getFieldIds(topLevelField);
+        ExecutionPath path = ExecutionPath.rootPath().segment(topLevelField.getResultKey());
+
+        LeafExecutionResultNode nullTopLevelField = createNullERN(topLevelField, path, fieldIds, zeroElapsedTime);
+        return RootExecutionResultNode.newRootExecutionResultNode()
+                .errors(errors)
+                .extensions(extensions)
+                .elapsedTime(zeroElapsedTime)
+                .addChild(nullTopLevelField)
+                .build();
+    }
 
     public RootExecutionResultNode resultToResultNode(ExecutionContext executionContext,
                                                       ServiceExecutionResult serviceExecutionResult,
                                                       ElapsedTime elapsedTimeForServiceCall,
-                                                      NormalizedQueryFromAst normalizedQueryFromAst
-    ) {
+                                                      NormalizedQueryFromAst normalizedQueryFromAst) {
         long startTime = System.currentTimeMillis();
 
-        List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
-        Map<String, Object> extensions = serviceExecutionResult.getExtensions();
+        RootExecutionResultNode rootExecutionResultNodeNoData = resultNodeWithoutData(serviceExecutionResult, elapsedTimeForServiceCall);
+        RootExecutionResultNode rootExecutionResultNode = fetchTopLevelFields(rootExecutionResultNodeNoData, executionContext, serviceExecutionResult, elapsedTimeForServiceCall, normalizedQueryFromAst);
 
-        RootExecutionResultNode rootNode = RootExecutionResultNode.newRootExecutionResultNode().errors(errors).extensions(extensions).elapsedTime(elapsedTimeForServiceCall).build();
-
-        RootExecutionResultNode rootExecutionResultNode = fetchTopLevelFields(rootNode, executionContext, serviceExecutionResult, elapsedTimeForServiceCall, normalizedQueryFromAst);
         long elapsedTime = System.currentTimeMillis() - startTime;
         log.debug("ServiceResultToResultNodes time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
+
         return rootExecutionResultNode;
     }
 
+    private RootExecutionResultNode resultNodeWithoutData(ServiceExecutionResult serviceExecutionResult, ElapsedTime elapsedTimeForServiceCall) {
+        List<GraphQLError> errors = ErrorUtil.createGraphQlErrorsFromRawErrors(serviceExecutionResult.getErrors());
+        Map<String, Object> extensions = serviceExecutionResult.getExtensions();
+
+        return RootExecutionResultNode.newRootExecutionResultNode()
+                .errors(errors)
+                .extensions(extensions)
+                .elapsedTime(elapsedTimeForServiceCall)
+                .build();
+    }
 
     private RootExecutionResultNode fetchTopLevelFields(RootExecutionResultNode rootNode,
                                                         ExecutionContext executionContext,
@@ -84,7 +117,6 @@ public class ServiceResultToResultNodes {
         }
         return (RootExecutionResultNode) rootNode.withNewChildren(children);
     }
-
 
     private ExecutionResultNode fetchAndAnalyzeField(ExecutionContext context,
                                                      Object source,
@@ -142,7 +174,6 @@ public class ServiceResultToResultNodes {
             return analyzeEnumValue(toAnalyze, (GraphQLEnumType) curType, normalizedQueryField, executionPath, fieldIds, elapsedTime);
         }
 
-
         GraphQLObjectType resolvedObjectType = resolveType(executionContext, toAnalyze, curType);
         return resolveObject(executionContext, normalizedQueryField, fieldIds, normalizedQueryFromAst, resolvedObjectType, toAnalyze, executionPath, elapsedTime);
     }
@@ -175,9 +206,7 @@ public class ServiceResultToResultNodes {
                 .children(nodeChildren)
                 .elapsedTime(elapsedTime)
                 .build();
-
     }
-
 
     private ExecutionResultNode analyzeList(ExecutionContext executionContext,
                                             Object toAnalyze,
@@ -265,7 +294,6 @@ public class ServiceResultToResultNodes {
                 .build();
     }
 
-
     private GraphQLObjectType resolveType(ExecutionContext executionContext, Object source, GraphQLType curType) {
         if (curType instanceof GraphQLObjectType) {
             return (GraphQLObjectType) curType;
@@ -284,10 +312,7 @@ public class ServiceResultToResultNodes {
         GraphQLObjectType objectType = executionContext.getGraphQLSchema().getObjectType(typeName.toString());
         assertNotNull(objectType, () -> String.format("There must be an underlying graphql object type called '%s'", typeName));
         return objectType;
-
-
     }
-
 
     private ExecutionResultNode analyzeScalarValue(Object toAnalyze,
                                                    GraphQLScalarType scalarType,
@@ -326,7 +351,6 @@ public class ServiceResultToResultNodes {
                 .fieldIds(fieldIds)
                 .elapsedTime(elapsedTime)
                 .build();
-
     }
 
     protected Object serializeScalarValue(Object toAnalyze, GraphQLScalarType scalarType) throws CoercingSerializeException {
@@ -372,6 +396,4 @@ public class ServiceResultToResultNodes {
                 .elapsedTime(elapsedTime)
                 .build();
     }
-
-
 }
