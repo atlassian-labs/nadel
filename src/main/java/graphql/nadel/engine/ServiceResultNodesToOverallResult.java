@@ -71,7 +71,7 @@ public class ServiceResultNodesToOverallResult {
                                        NadelContext nadelContext,
                                        TransformationMetadata transformationMetadata,
                                        Set<ResultPath> hydrationInputPaths) {
-        return convertImpl(executionId, resultNode, null, overallSchema, correctRootNode, false, false, fieldIdToTransformation,transformationToFieldId, typeRenameMappings, false, nadelContext, transformationMetadata, hydrationInputPaths);
+        return convertImpl(executionId, resultNode, null, overallSchema, correctRootNode, false, false, fieldIdToTransformation, typeRenameMappings, false, nadelContext, transformationMetadata, hydrationInputPaths);
     }
 
     public ExecutionResultNode convertChildren(ExecutionId executionId,
@@ -87,7 +87,7 @@ public class ServiceResultNodesToOverallResult {
                                                NadelContext nadelContext,
                                                TransformationMetadata transformationMetadata,
                                                Set<ResultPath> hydrationInputPaths) {
-        return convertImpl(executionId, root, normalizedRootField, overallSchema, correctRootNode, isHydrationTransformation, batched, fieldIdToTransformation, transformationToFieldId, typeRenameMappings, true, nadelContext, transformationMetadata, hydrationInputPaths);
+        return convertImpl(executionId, root, normalizedRootField, overallSchema, correctRootNode, isHydrationTransformation, batched, fieldIdToTransformation, typeRenameMappings, true, nadelContext, transformationMetadata, hydrationInputPaths);
     }
 
     private ExecutionResultNode convertImpl(ExecutionId executionId,
