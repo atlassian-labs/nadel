@@ -300,7 +300,7 @@ public class ServiceResultNodesToOverallResult {
                                                 TransformationMetadata transformationMetadata,
                                                 ResultCounter resultCounter) {
 
-        Map<AbstractNode, ImmutableList<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
+        Map<AbstractNode, ? extends List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
         TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, fieldIdToTransformation, transformationMetadata);
         ExecutionResultNode notTransformedTree = splittedNodes.getT1();
         Map<AbstractNode, ExecutionResultNode> nodesWithTransformedFields = splittedNodes.getT2();
