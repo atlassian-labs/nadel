@@ -1269,9 +1269,9 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
               }
               
         """)
-        def query = """{ foo { fooUsers {fooId owner assignee { name}}}}"""
+        def query = """{ foo { fooUsers {fooId  assignee { name} owner}}}"""
 
-        def expectedQuery1 = "query nadel_2_Foo {foo {fooUsers {fooId issue {name} issue {assignee {accountId}} issue {assignee {name}}}}}"
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooUsers {fooId issue {assignee {accountId}} issue {assignee {name}} issue {name}}}}"
         def response1 = [foo: [fooUsers: [[fooId:"id1", issue:[name: "Peter Pettigrew", assignee:[accountId:"one", name:"Jack"]]]]]]
         def expectedQuery2 = "query nadel_2_Foo {people(userIds:[\"one\"],names:[\"Jack\"]) {name object_identifier__UUID:userId}}"
         def response2 = [people: [[name: "Jack Pepper", object_identifier__UUID: "one"]]]
@@ -1694,7 +1694,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         def executionData = createExecutionData(query, overallSchema)
 
         when:
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
 
         then:
