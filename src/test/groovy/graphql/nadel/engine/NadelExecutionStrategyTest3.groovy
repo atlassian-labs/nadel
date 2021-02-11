@@ -1,31 +1,16 @@
 package graphql.nadel.engine
 
-import graphql.ExecutionInput
+
 import graphql.GraphQLError
-import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.nadel.*
+import graphql.nadel.DefinitionRegistry
+import graphql.nadel.ServiceExecution
+import graphql.nadel.StrategyTestHelper
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.result.ResultComplexityAggregator
-import graphql.nadel.result.ResultNodesUtil
-import graphql.nadel.result.RootExecutionResultNode
-import graphql.nadel.schema.UnderlyingWiringFactory
-import graphql.nadel.testutils.MockedWiringFactory
 import graphql.nadel.testutils.TestUtil
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLSchema
-import graphql.schema.idl.RuntimeWiring
-import graphql.schema.idl.SchemaGenerator
-import graphql.schema.idl.SchemaParser
-
-import java.util.concurrent.CompletableFuture
-
-import static graphql.language.AstPrinter.printAstCompact
-import static graphql.nadel.testutils.TestUtil.createNormalizedQuery
-import static graphql.nadel.testutils.TestUtil.parseQuery
-import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelExecutionStrategyTest3 extends StrategyTestHelper {
 
@@ -90,10 +75,10 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
         def query = """{ foo {renamedField details { name}}}"""
 
         def expectedQuery1 = "query nadel_2_Foo {foo {issue {field} issue {fooId}}}"
-        def response1 = [foo: [issue:[field:"field", fooId: "ID"]]]
+        def response1 = [foo: [issue: [field: "field", fooId: "ID"]]]
         def expectedQuery2 = "query nadel_2_Foo {detail(detailIds:\"ID\") {name}}"
         def response2 = [detail: [name: "apple"]]
-        def overallResponse = [foo: [renamedField:"field", details: [name: "apple"]]]
+        def overallResponse = [foo: [renamedField: "field", details: [name: "apple"]]]
 
 
         Map response
@@ -159,8 +144,8 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
         def query = """{ foo {  issue {fooDetail {name}} renamedField}}"""
 
         def expectedQuery1 = "query nadel_2_Foo {foo {issue {fooDetail {name}} issue {field}}}"
-        def response1 = [foo: [issue:[field:"field", fooDetail: [name:"fooName"]]]]
-        def overallResponse = [foo:[issue:[fooDetail:[name:"fooName"]], renamedField:"field"]]
+        def response1 = [foo: [issue: [field: "field", fooDetail: [name: "fooName"]]]]
+        def overallResponse = [foo: [issue: [fooDetail: [name: "fooName"]], renamedField: "field"]]
 
 
         Map response
@@ -234,7 +219,7 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
         def expectedQuery3 = "query nadel_2_Foo {detail(detailId:\"ID\") {name}}"
         def response3 = [detail: [name: "apple"]]
 
-        def overallResponse = [foo:[issue:[field:"field_name"], detail:[name:"apple"]]]
+        def overallResponse = [foo: [issue: [field: "field_name"], detail: [name: "apple"]]]
 
 
         Map response
@@ -303,13 +288,13 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
         def query = """{ foo {issue {field} detail { name} renamedField}}"""
 
         def expectedQuery1 = "query nadel_2_Foo {foo {issue {fooId} issue {fooId} issue {field}}}"
-        def response1 = [foo: [issue:[fooId: "ID", field:"field1"]]]
+        def response1 = [foo: [issue: [fooId: "ID", field: "field1"]]]
         def expectedQuery2 = "query nadel_2_Foo {issue(issueId:\"ID\") {field}}"
         def response2 = [issue: [field: "field_name"]]
         def expectedQuery3 = "query nadel_2_Foo {detail(detailId:\"ID\") {name}}"
         def response3 = [detail: [name: "apple"]]
 
-        def overallResponse = [foo:[issue:[field:"field_name"], detail:[name:"apple"], renamedField:"field1"]]
+        def overallResponse = [foo: [issue: [field: "field_name"], detail: [name: "apple"], renamedField: "field1"]]
 
 
         Map response
@@ -330,9 +315,6 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
         errors.size() == 0
         response == overallResponse
     }
-
-
-
 
 
 }

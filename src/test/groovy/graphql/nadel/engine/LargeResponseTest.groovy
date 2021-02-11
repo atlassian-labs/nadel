@@ -186,7 +186,7 @@ type ActivityUser {
         when:
         long time = System.currentTimeMillis();
         def response
-        response = nadelExecutionStrategy.execute(executionData.executionContext, executionData.fieldSubSelection, resultComplexityAggregator)
+        response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
 
         def data = resultData(response)

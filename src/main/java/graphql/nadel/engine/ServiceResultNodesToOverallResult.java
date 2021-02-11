@@ -2,9 +2,10 @@ package graphql.nadel.engine;
 
 import graphql.GraphQLError;
 import graphql.Internal;
+import graphql.com.google.common.collect.ImmutableList;
 import graphql.execution.ExecutionId;
-import graphql.execution.ExecutionPath;
 import graphql.execution.MergedField;
+import graphql.execution.ResultPath;
 import graphql.language.AbstractNode;
 import graphql.nadel.Tuples;
 import graphql.nadel.TuplesTwo;
@@ -275,8 +276,8 @@ public class ServiceResultNodesToOverallResult {
                                                              MergedField mergedField,
                                                              NormalizedQueryField normalizedQueryField,
                                                              GraphQLError error) {
-        ExecutionPath parentPath = parent.getExecutionPath();
-        ExecutionPath executionPath = parentPath.segment(normalizedQueryField.getResultKey());
+        ResultPath parentPath = parent.getResultPath();
+        ResultPath executionPath = parentPath.segment(normalizedQueryField.getResultKey());
 
         LeafExecutionResultNode removedNode = LeafExecutionResultNode.newLeafExecutionResultNode()
                 .executionPath(executionPath)
@@ -299,7 +300,7 @@ public class ServiceResultNodesToOverallResult {
                                                 TransformationMetadata transformationMetadata,
                                                 ResultCounter resultCounter) {
 
-        Map<AbstractNode, List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
+        Map<AbstractNode, ImmutableList<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
         TuplesTwo<ExecutionResultNode, Map<AbstractNode, ExecutionResultNode>> splittedNodes = splitTreeByTransformationDefinition(node, fieldIdToTransformation, transformationMetadata);
         ExecutionResultNode notTransformedTree = splittedNodes.getT1();
         Map<AbstractNode, ExecutionResultNode> nodesWithTransformedFields = splittedNodes.getT2();
@@ -326,6 +327,7 @@ public class ServiceResultNodesToOverallResult {
 
         HandleResult handleResult = HandleResult.newHandleResultWithSiblings();
         boolean first = true;
+        // the not transformed part should simply continue to be converted
         if (notTransformedTree != null) {
             ExecutionResultNode mappedNode = mapNode(notTransformedTree, unapplyEnvironment, resultCounter);
             mappedNode = convertChildren(executionId,
@@ -457,7 +459,7 @@ public class ServiceResultNodesToOverallResult {
         List<String> notTransformedFields = new ArrayList<>();
         for (String fieldId : node.getFieldIds()) {
 
-            if (node.getExecutionPath().isListSegment()) {
+            if (node.getResultPath().isListSegment()) {
                 notTransformedFields.add(fieldId);
                 continue;
             }
