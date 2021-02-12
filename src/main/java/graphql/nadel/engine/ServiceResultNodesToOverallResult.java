@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -323,12 +324,12 @@ public class ServiceResultNodesToOverallResult {
                                                 ResultCounter resultCounter,
                                                 Set<ResultPath> hydrationInputPaths) {
 
-        if (isArtificialHydrationNode(node.getFieldIds(), transformationToFieldId.get(transformations.get(0)))) {
+        if (isArtificialHydrationNode(node.getFieldIds(), new HashSet<String>(transformationToFieldId.values()))) {
             return null;
         }
 
         Map<AbstractNode, ? extends List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
-        TuplesTwo<ExecutionResultNode, Map<AbstractNode, List<ExecutionResultNode>>> splittedNodes = splitTreeByTransformationDefinition(node, directParentNode, fieldIdToTransformation, transformationMetadata);
+        TuplesTwo<ExecutionResultNode, Map<AbstractNode, List<ExecutionResultNode>>> splittedNodes = splitTreeByTransformationDefinition(node, directParentNode, fieldIdToTransformation,transformationToFieldId, transformationMetadata);
         ExecutionResultNode notTransformedTree = splittedNodes.getT1();
         Map<AbstractNode, List<ExecutionResultNode>> nodesWithTransformedFields = splittedNodes.getT2();
 
@@ -487,6 +488,7 @@ public class ServiceResultNodesToOverallResult {
             ExecutionResultNode executionResultNode,
             ExecutionResultNode directParentNode,
             Map<String, FieldTransformation> fieldIdToTransformation,
+            Map<FieldTransformation, String> transformationToFieldId,
             TransformationMetadata transformationMetadata) {
         if (executionResultNode instanceof RootExecutionResultNode) {
             return Tuples.of(executionResultNode, emptyMap());
@@ -498,9 +500,13 @@ public class ServiceResultNodesToOverallResult {
             List<String> transformationIds = FieldMetadataUtil.getRootOfTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId());
             for (String transformationId : transformationIds) {
                 FieldTransformation fieldTransformation = assertNotNull(fieldIdToTransformation.get(transformationId));
-                AbstractNode definition = fieldTransformation.getDefinition();
-                transformationIdsByTransformationDefinition.putIfAbsent(definition, new LinkedHashSet<>());
-                transformationIdsByTransformationDefinition.get(definition).add(transformationId);
+                // This checks that the current fieldTransformation is for this specific fieldID as we can have a n:1 mapping of transformations to fieldIds
+                // due to multiple source arguments
+                if (transformationToFieldId.containsKey(fieldTransformation) && transformationToFieldId.get(fieldTransformation) == fieldId) {
+                    AbstractNode definition = fieldTransformation.getDefinition();
+                    transformationIdsByTransformationDefinition.putIfAbsent(definition, new LinkedHashSet<>());
+                    transformationIdsByTransformationDefinition.get(definition).add(transformationId);
+                }
             }
         }
         Map<AbstractNode, List<ExecutionResultNode>> treesByDefinition = new LinkedHashMap<>();
@@ -614,9 +620,9 @@ public class ServiceResultNodesToOverallResult {
         return assertShouldNeverHappen("Can't find normalized query field");
     }
 
-    private boolean isArtificialHydrationNode(List<String> fieldIds, String transformationToFieldId) {
-        for (String fieldId : fieldIds) {
-            if (transformationToFieldId.equals(fieldId)) return false;
+    private boolean isArtificialHydrationNode(List<String> fieldIds, Set<String> transformationToFieldIds) {
+        if (fieldIds.stream().anyMatch(transformationToFieldIds::contains)) {
+            return false;
         }
         return true;
     }

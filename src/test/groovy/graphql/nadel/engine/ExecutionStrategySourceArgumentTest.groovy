@@ -1620,7 +1620,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
-    def "same primary source and secondary source for 2 hydrations"() {
+    def "swapped primary source and secondary source for 2 hydrations"() {
         given:
         def overallSchema = TestUtil.schemaFromNdsl('''
         service Foo {
@@ -1629,7 +1629,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
               } 
               type Foo {
                  issue: Issue => hydrated from Foo.issue(issueId: $source.fooId, id2: $source.fooId2)
-                 detail: Detail => hydrated from Foo.detail(detailId: $source.fooId, id2: $source.fooId2)
+                 detail: Detail => hydrated from Foo.detail(detailId: $source.fooId2, id2: $source.fooId)
               }
               type Detail {
                  detailId: ID!
@@ -1666,11 +1666,11 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
     """)
         def query = """{ foo {issue {field} detail { name}}}"""
 
-        def expectedQuery1 = "query nadel_2_Foo {foo {fooId fooId2 fooId fooId2}}"
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooId fooId2 fooId2 fooId}}"
         def response1 = [foo: [fooId: "ID", fooId2:"ID2"]]
         def expectedQuery2 = "query nadel_2_Foo {issue(issueId:\"ID\",id2:\"ID2\") {field}}"
         def response2 = [issue: [field: "field_name"]]
-        def expectedQuery3 = "query nadel_2_Foo {detail(detailId:\"ID\",id2:\"ID2\") {name}}"
+        def expectedQuery3 = "query nadel_2_Foo {detail(detailId:\"ID2\",id2:\"ID\") {name}}"
         def response3 = [detail: [name: "apple"]]
 
         def overallResponse = [foo: [issue: [field: "field_name"], detail: [name: "apple"]]]
