@@ -1620,6 +1620,84 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         response == overallResponse
     }
 
+    def "same primary source and secondary source for 2 hydrations"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl('''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 issue: Issue => hydrated from Foo.issue(issueId: $source.fooId, id2: $source.fooId2)
+                 detail: Detail => hydrated from Foo.detail(detailId: $source.fooId, id2: $source.fooId2)
+              }
+              type Detail {
+                 detailId: ID!
+                 name: String
+              }
+              type Issue {
+                fooId: ID
+                field: String
+              }
+
+        }
+        ''')
+        def underlyingSchema = TestUtil.schema("""
+          type Query {
+            foo: Foo 
+            detail(detailId: ID, id2: ID): Detail
+            issue(issueId: ID, id2: ID): Issue
+          } 
+          type Foo {
+            field: String
+            fooId: ID
+            fooId2: ID
+            issue: Issue
+          }
+          
+          type Issue {
+            fooId: ID
+            field: String
+          }
+          type Detail {
+             detailId: ID!
+             name: String
+          }
+    """)
+        def query = """{ foo {issue {field} detail { name}}}"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {fooId fooId2 fooId fooId2}}"
+        def response1 = [foo: [fooId: "ID", fooId2:"ID2"]]
+        def expectedQuery2 = "query nadel_2_Foo {issue(issueId:\"ID\",id2:\"ID2\") {field}}"
+        def response2 = [issue: [field: "field_name"]]
+        def expectedQuery3 = "query nadel_2_Foo {detail(detailId:\"ID\",id2:\"ID2\") {name}}"
+        def response3 = [detail: [name: "apple"]]
+
+        def overallResponse = [foo: [issue: [field: "field_name"], detail: [name: "apple"]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2, expectedQuery3],
+                [response1, response2, response3],
+                3,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+
+
+
     def "batching hydration with three list sources"() {
         given:
         def issueSchema = TestUtil.schema("""
