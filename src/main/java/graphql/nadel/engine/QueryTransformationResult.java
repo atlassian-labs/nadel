@@ -25,37 +25,28 @@ public class QueryTransformationResult {
     // used when the underlying raw result is converted into a tree
     private final List<MergedField> transformedMergedFields;
 
-    // needed when the underlying result tree is mapped back
-    private final Map<String, FieldTransformation> fieldIdToTransformation;
-    // needed when the underlying result tree is mapped back
-    private final Map<String, String> typeRenameMappings;
-    // store artificial fields created to support interfaces and unions
-    private final List<String> hintTypenames;
-
     private final Map<String, Object> variableValues;
 
     private final TransformationMetadata removedFieldMap;
 
+    private final TransformationState transformations;
+
     public QueryTransformationResult(Document document,
                                      OperationDefinition operationDefinition,
                                      List<MergedField> transformedMergedFields,
-                                     Map<String, String> typeRenameMappings,
                                      List<String> referencedVariables,
-                                     List<String> hintTypenames,
-                                     Map<String, FieldTransformation> fieldIdToTransformation,
                                      Map<String, FragmentDefinition> transformedFragments,
                                      Map<String, Object> variableValues,
-                                     TransformationMetadata removedFieldMap) {
+                                     TransformationMetadata removedFieldMap,
+                                     TransformationState transformations) {
         this.document = document;
         this.operationDefinition = operationDefinition;
         this.transformedMergedFields = transformedMergedFields;
         this.referencedVariables = referencedVariables;
-        this.hintTypenames = hintTypenames;
-        this.fieldIdToTransformation = fieldIdToTransformation;
         this.transformedFragments = transformedFragments;
-        this.typeRenameMappings = typeRenameMappings;
         this.variableValues = variableValues;
         this.removedFieldMap = removedFieldMap;
+        this.transformations = transformations;
     }
 
     public Document getDocument() {
@@ -75,7 +66,7 @@ public class QueryTransformationResult {
     }
 
     public Map<String, FieldTransformation> getFieldIdToTransformation() {
-        return fieldIdToTransformation;
+        return transformations.getFieldIdToTransformation();
     }
 
     public Map<String, FragmentDefinition> getTransformedFragments() {
@@ -83,7 +74,7 @@ public class QueryTransformationResult {
     }
 
     public Map<String, String> getTypeRenameMappings() {
-        return typeRenameMappings;
+        return transformations.getTypeRenameMappings();
     }
 
     public Map<String, Object> getVariableValues() {
@@ -94,6 +85,8 @@ public class QueryTransformationResult {
         return removedFieldMap;
     }
 
-    public List<String> getHintTypenames() { return hintTypenames; }
+    public List<String> getHintTypenames() {
+        return transformations.getHintTypenames();
+    }
 }
 

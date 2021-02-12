@@ -77,11 +77,8 @@ public class Transformer extends NodeVisitorStub {
 
     final ExecutionContext executionContext;
     final GraphQLSchema underlyingSchema;
-    final Map<String, FieldTransformation> fieldIdToTransformation;
-    final Map<String, String> typeRenameMappings;
     final Set<String> referencedFragmentNames;
     final Map<String, VariableDefinition> referencedVariables;
-    final List<String> hintTypenames;
     final NadelContext nadelContext;
     private final Map<String, VariableDefinition> variableDefinitions;
     final ServiceExecutionHooks serviceExecutionHooks;
@@ -91,15 +88,12 @@ public class Transformer extends NodeVisitorStub {
     private Service service;
     private Object serviceContext;
     private Map<String, Object> variableValues;
-
+    private TransformationState transformations;
 
     public Transformer(ExecutionContext executionContext,
                        GraphQLSchema underlyingSchema,
-                       Map<String, FieldTransformation> fieldIdToTransformation,
-                       Map<String, String> typeRenameMappings,
                        Set<String> referencedFragmentNames,
                        Map<String, VariableDefinition> referencedVariables,
-                       List<String> hintTypenames,
                        NadelContext nadelContext,
                        ServiceExecutionHooks serviceExecutionHooks,
                        OverallTypeInformation overallTypeInformation,
@@ -107,15 +101,12 @@ public class Transformer extends NodeVisitorStub {
                        Service service,
                        Object serviceContext,
                        TransformationMetadata transformationMetadata,
-                       Map<NormalizedQueryField, GraphQLError> forbiddenFields
-    ) {
+                       Map<NormalizedQueryField, GraphQLError> forbiddenFields,
+                       TransformationState transformations) {
         this.executionContext = executionContext;
         this.underlyingSchema = underlyingSchema;
-        this.fieldIdToTransformation = fieldIdToTransformation;
-        this.typeRenameMappings = typeRenameMappings;
         this.referencedFragmentNames = referencedFragmentNames;
         this.referencedVariables = referencedVariables;
-        this.hintTypenames = hintTypenames;
         this.nadelContext = nadelContext;
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.overallTypeInformation = overallTypeInformation;
@@ -126,6 +117,7 @@ public class Transformer extends NodeVisitorStub {
         this.variableValues = variableValues;
         this.service = service;
         this.serviceContext = serviceContext;
+        this.transformations = transformations;
     }
 
     @Override
@@ -244,7 +236,7 @@ public class Transformer extends NodeVisitorStub {
 
 
             String fieldId = FieldMetadataUtil.getUniqueRootFieldId(changedField, this.transformationMetadata.getMetadataByFieldId());
-            fieldIdToTransformation.put(fieldId, transformation);
+            transformations.putFieldIdToTransformation(fieldId, transformation);
 
             if (transformation instanceof FieldRenameTransformation) {
                 maybeAddUnderscoreTypeName(context, changedField, fieldTypeOverall);
@@ -303,7 +295,7 @@ public class Transformer extends NodeVisitorStub {
         Field changedNode = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, field, fieldType);
         if (changedNode != field) {
             TreeTransformerUtil.changeNode(traverserContext, changedNode);
-            hintTypenames.add(changedNode.getName());
+            transformations.addHintTypename(changedNode.getName());
         }
     }
 
@@ -377,7 +369,7 @@ public class Transformer extends NodeVisitorStub {
 
     private TypeMappingDefinition recordTypeRename(TypeMappingDefinition typeMappingDefinition) {
         if (typeMappingDefinition != null) {
-            typeRenameMappings.put(typeMappingDefinition.getUnderlyingName(), typeMappingDefinition.getOverallName());
+            transformations.putTypeRenameMapping(typeMappingDefinition.getUnderlyingName(), typeMappingDefinition.getOverallName());
         }
         return typeMappingDefinition;
     }

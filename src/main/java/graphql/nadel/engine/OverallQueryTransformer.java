@@ -18,7 +18,6 @@ import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.TypeMappingDefinition;
-import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.OverallTypeInfo;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
@@ -81,13 +80,10 @@ public class OverallQueryTransformer {
     ) {
         long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
-        Map<String, FieldTransformation> fieldIdToTransformation = new LinkedHashMap<>();
-        Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
-        List<String> hintTypenames = new ArrayList<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
         TransformationMetadata removedFieldMap = new TransformationMetadata();
-
+        TransformationState transformations = new TransformationState();
 
         NadelContext nadelContext = executionContext.getContext();
 
@@ -117,17 +113,15 @@ public class OverallQueryTransformer {
                 underlyingSchema,
                 selectionSet,
                 topLevelFieldTypeOverall,
-                fieldIdToTransformation,
-                typeRenameMappings,
                 referencedFragmentNames,
                 referencedVariables,
-                hintTypenames,
                 nadelContext,
                 serviceExecutionHooks,
                 variableValues,
                 service,
                 serviceContext,
-                removedFieldMap
+                removedFieldMap,
+                transformations
         );
         Field finalTopLevelField = topLevelField;
         return topLevelFieldSelectionSetCF.thenCompose(topLevelFieldSelectionSet -> {
@@ -136,7 +130,7 @@ public class OverallQueryTransformer {
 
             Field maybeTransformedRootField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
             if (maybeTransformedRootField != transformedRootField) {
-                hintTypenames.add(maybeTransformedRootField.getName());
+                transformations.addHintTypename(maybeTransformedRootField.getName());
             }
             transformedRootField = maybeTransformedRootField;
             transformedRootField = ArtificialFieldUtils.maybeAddEmptySelectionSetUnderscoreTypeName(nadelContext, transformedRootField, topLevelFieldTypeOverall);
@@ -146,22 +140,20 @@ public class OverallQueryTransformer {
                 transformedRootField = rootField.transform(builder -> builder.selectionSet(newSelectionSet().selection(tempTransformedRootLevelField).build()));
             }
 
-            List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
+            List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), transformations.getTypeRenameMappings());
             List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
 
             CompletableFuture<Map<String, FragmentDefinition>> transformedFragmentsCF = transformFragments(executionContext,
                     underlyingSchema,
                     executionContext.getFragmentsByName(),
-                    fieldIdToTransformation,
-                    typeRenameMappings,
                     referencedFragmentNames,
                     referencedVariables,
-                    hintTypenames,
                     serviceExecutionHooks,
                     variableValues,
                     service,
                     serviceContext,
-                    removedFieldMap);
+                    removedFieldMap,
+                    transformations);
             Field finalTransformedRootField = transformedRootField;
             return transformedFragmentsCF.thenApply(transformedFragments -> {
 
@@ -182,13 +174,11 @@ public class OverallQueryTransformer {
                         newDocument,
                         operationDefinition,
                         Collections.singletonList(transformedMergedField),
-                        typeRenameMappings,
                         referencedVariableNames,
-                        hintTypenames,
-                        fieldIdToTransformation,
                         transformedFragments,
                         variableValues,
-                        removedFieldMap);
+                        removedFieldMap,
+                        transformations);
             });
         });
 
@@ -206,12 +196,10 @@ public class OverallQueryTransformer {
         long startTime = System.currentTimeMillis();
         NadelContext nadelContext = executionContext.getContext();
         Set<String> fragmentsDirectlyReferenced = new LinkedHashSet<>();
-        Map<String, FieldTransformation> fieldIdToTransformation = new LinkedHashMap<>();
-        Map<String, String> typeRenameMappings = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
-        List<String> hintTypenames = new ArrayList<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
         TransformationMetadata removedFieldMap = new TransformationMetadata();
+        TransformationState transformations = new TransformationState();
 
         List<CompletableFuture<Field>> transformedFieldsCF = new ArrayList<>();
 
@@ -226,17 +214,15 @@ public class OverallQueryTransformer {
                         underlyingSchema,
                         field,
                         rootType,
-                        fieldIdToTransformation,
-                        typeRenameMappings,
                         fragmentsDirectlyReferenced,
                         referencedVariables,
-                        hintTypenames,
                         nadelContext,
                         serviceExecutionHooks,
                         variableValues,
                         service,
                         serviceContext,
-                        removedFieldMap
+                        removedFieldMap,
+                        transformations
                 );
                 return newFieldCF.thenApply(newField -> {
                     // Case happens when the high level field is removed
@@ -248,7 +234,7 @@ public class OverallQueryTransformer {
 
                     Field maybeNewField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(nadelContext, newField, fieldType);
                     if (maybeNewField != newField) {
-                        hintTypenames.add(maybeNewField.getName());
+                        transformations.addHintTypename(maybeNewField.getName());
                     }
                     newField = maybeNewField;
                     return newField;
@@ -258,7 +244,7 @@ public class OverallQueryTransformer {
             transformedFieldsCF.addAll(transformedCF);
         }
         return Async.each(transformedFieldsCF).thenCompose(transformedFields -> {
-            List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), typeRenameMappings);
+            List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), transformations.getTypeRenameMappings());
             List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
 
             // create a new Document including referenced Fragments
@@ -275,16 +261,14 @@ public class OverallQueryTransformer {
                     executionContext,
                     underlyingSchema,
                     executionContext.getFragmentsByName(),
-                    fieldIdToTransformation,
-                    typeRenameMappings,
                     fragmentsDirectlyReferenced,
                     referencedVariables,
-                    hintTypenames,
                     serviceExecutionHooks,
                     variableValues,
                     service,
                     serviceContext,
-                    removedFieldMap);
+                    removedFieldMap,
+                    transformations);
             return transformedFragmentsCF.thenApply(transformedFragments -> {
                 Document newDocument = newDocument(operationDefinition, transformedFragments);
 
@@ -295,13 +279,11 @@ public class OverallQueryTransformer {
                         newDocument,
                         operationDefinition,
                         transformedMergedFields,
-                        typeRenameMappings,
                         referencedVariableNames,
-                        hintTypenames,
-                        fieldIdToTransformation,
                         transformedFragments,
                         variableValues,
-                        removedFieldMap);
+                        removedFieldMap,
+                        transformations);
             });
         });
 
@@ -320,16 +302,14 @@ public class OverallQueryTransformer {
     private CompletableFuture<Map<String, FragmentDefinition>> transformFragments(ExecutionContext executionContext,
                                                                                   GraphQLSchema underlyingSchema,
                                                                                   Map<String, FragmentDefinition> fragments,
-                                                                                  Map<String, FieldTransformation> transformationByResultField,
-                                                                                  Map<String, String> typeRenameMappings,
                                                                                   Set<String> referencedFragmentNames,
                                                                                   Map<String, VariableDefinition> referencedVariables,
-                                                                                  List<String> hintTypenames,
                                                                                   ServiceExecutionHooks serviceExecutionHooks,
                                                                                   Map<String, Object> variableValues,
                                                                                   Service service,
                                                                                   Object serviceContext,
-                                                                                  TransformationMetadata removedFieldMap) {
+                                                                                  TransformationMetadata removedFieldMap,
+                                                                                  TransformationState transformations) {
 
         Set<String> fragmentsToTransform = Collections.synchronizedSet(new LinkedHashSet<>(referencedFragmentNames));
         Set<FragmentDefinition> transformedFragmentsInput = Collections.synchronizedSet(new LinkedHashSet<>());
@@ -337,34 +317,30 @@ public class OverallQueryTransformer {
                 executionContext,
                 underlyingSchema,
                 fragments,
-                transformationByResultField,
-                typeRenameMappings,
                 referencedVariables,
-                hintTypenames,
                 serviceExecutionHooks,
                 variableValues,
                 service,
                 serviceContext,
                 removedFieldMap,
                 fragmentsToTransform,
-                transformedFragmentsInput).
+                transformedFragmentsInput,
+                transformations).
                 thenApply(transformedFragments -> groupingByUniqueKey(transformedFragmentsInput, FragmentDefinition::getName));
     }
 
     private CompletableFuture<Set<FragmentDefinition>> transformFragmentImpl(ExecutionContext executionContext,
                                                                              GraphQLSchema underlyingSchema,
                                                                              Map<String, FragmentDefinition> fragments,
-                                                                             Map<String, FieldTransformation> transformationByResultField,
-                                                                             Map<String, String> typeRenameMappings,
                                                                              Map<String, VariableDefinition> referencedVariables,
-                                                                             List<String> hintTypenames,
                                                                              ServiceExecutionHooks serviceExecutionHooks,
                                                                              Map<String, Object> variableValues,
                                                                              Service service,
                                                                              Object serviceContext,
                                                                              TransformationMetadata removedFieldMap,
                                                                              Set<String> fragmentsToTransform,
-                                                                             Set<FragmentDefinition> transformedFragments) {
+                                                                             Set<FragmentDefinition> transformedFragments,
+                                                                             TransformationState transformations) {
         if (fragmentsToTransform.isEmpty()) {
             return CompletableFuture.completedFuture(transformedFragments);
         }
@@ -375,16 +351,14 @@ public class OverallQueryTransformer {
                 executionContext,
                 underlyingSchema,
                 fragments.get(fragmentName),
-                transformationByResultField,
-                typeRenameMappings,
                 newReferencedFragments,
                 referencedVariables,
-                hintTypenames,
                 serviceExecutionHooks,
                 variableValues,
                 service,
                 serviceContext,
-                removedFieldMap
+                removedFieldMap,
+                transformations
         );
         return transformedFragmentCF.thenCompose(transformedFragment -> {
             fragmentsToTransform.remove(fragmentName);
@@ -394,35 +368,29 @@ public class OverallQueryTransformer {
                     executionContext,
                     underlyingSchema,
                     fragments,
-                    transformationByResultField,
-                    typeRenameMappings,
                     referencedVariables,
-                    hintTypenames,
                     serviceExecutionHooks,
                     variableValues,
                     service,
                     serviceContext,
                     removedFieldMap,
                     fragmentsToTransform,
-                    transformedFragments);
+                    transformedFragments,
+                    transformations);
         });
     }
-
 
     private CompletableFuture<FragmentDefinition> transformFragmentDefinition(ExecutionContext executionContext,
                                                                               GraphQLSchema underlyingSchema,
                                                                               FragmentDefinition fragmentDefinitionWithoutTypeInfo,
-                                                                              Map<String, FieldTransformation> transformationByResultField,
-                                                                              Map<String, String> typeRenameMappings,
                                                                               Set<String> referencedFragmentNames,
                                                                               Map<String, VariableDefinition> referencedVariables,
-                                                                              List<String> hintTypenames,
                                                                               ServiceExecutionHooks serviceExecutionHooks,
                                                                               Map<String, Object> variableValues,
                                                                               Service service,
                                                                               Object serviceContext,
-                                                                              TransformationMetadata removedFieldMap
-    ) {
+                                                                              TransformationMetadata removedFieldMap,
+                                                                              TransformationState transformations) {
         NadelContext nadelContext = executionContext.getContext();
 
         OverallTypeInformation<FragmentDefinition> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
@@ -437,11 +405,8 @@ public class OverallQueryTransformer {
             Transformer transformer = new Transformer(
                     executionContext,
                     underlyingSchema,
-                    transformationByResultField,
-                    typeRenameMappings,
                     referencedFragmentNames,
                     referencedVariables,
-                    hintTypenames,
                     nadelContext,
                     serviceExecutionHooks,
                     overallTypeInformation,
@@ -449,7 +414,8 @@ public class OverallQueryTransformer {
                     service,
                     serviceContext,
                     removedFieldMap,
-                    forbiddenFields
+                    forbiddenFields,
+                    transformations
             );
             Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
             rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext().build());
@@ -491,18 +457,15 @@ public class OverallQueryTransformer {
                                                                 GraphQLSchema underlyingSchema,
                                                                 T nodeWithoutTypeInfo,
                                                                 GraphQLCompositeType parentTypeOverall,
-                                                                Map<String, FieldTransformation> fieldIdToTransformation,
-                                                                Map<String, String> typeRenameMappings,
                                                                 Set<String> referencedFragmentNames,
                                                                 Map<String, VariableDefinition> referencedVariables,
-                                                                List<String> hintTypenames,
                                                                 NadelContext nadelContext,
                                                                 ServiceExecutionHooks serviceExecutionHooks,
                                                                 Map<String, Object> variableValues,
                                                                 Service service,
                                                                 Object serviceContext,
-                                                                TransformationMetadata removedFieldMap
-    ) {
+                                                                TransformationMetadata removedFieldMap,
+                                                                TransformationState transformations) {
         OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
                 nodeWithoutTypeInfo,
                 executionContext.getGraphQLSchema(),
@@ -514,11 +477,8 @@ public class OverallQueryTransformer {
             Transformer transformer = new Transformer(
                     executionContext,
                     underlyingSchema,
-                    fieldIdToTransformation,
-                    typeRenameMappings,
                     referencedFragmentNames,
                     referencedVariables,
-                    hintTypenames,
                     nadelContext,
                     serviceExecutionHooks,
                     overallTypeInformation,
@@ -526,10 +486,11 @@ public class OverallQueryTransformer {
                     service,
                     serviceContext,
                     removedFieldMap,
-                    forbiddenFields
+                    forbiddenFields,
+                    transformations
             );
             Map<Class<?>, Object> rootVars = new LinkedHashMap<>();
-            String underlyingParentName = getUnderlyingTypeNameAndRecordMapping(parentTypeOverall, typeRenameMappings);
+            String underlyingParentName = getUnderlyingTypeNameAndRecordMapping(parentTypeOverall, transformations.getTypeRenameMappings());
             GraphQLOutputType underlyingSchemaParent = (GraphQLOutputType) underlyingSchema.getType(underlyingParentName);
             rootVars.put(UnderlyingTypeContext.class, newUnderlyingTypeContext()
                     .outputTypeUnderlying(underlyingSchemaParent)
