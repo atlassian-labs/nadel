@@ -159,7 +159,6 @@ public class NadelExecutionStrategy {
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
             resultNodes.add(transformedQueryCF.thenCompose(transformedQuery -> {
-//                TODO remove these variables - consider if still necessary
                 Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getFieldIdToTransformation();
                 Map<String, String> typeRenameMappings = transformedQuery.getTypeRenameMappings();
 
@@ -185,13 +184,11 @@ public class NadelExecutionStrategy {
                                     benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
                                     benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
                                     benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
-//                                    TODO update benchmark after merge conflict resolution
-//                                    benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
-//                                    benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
+                                    benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
+                                    benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
                                     benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
-//                                    benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = transformedQuery.getRemovedFieldMap();
+                                    benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = transformedQuery.getRemovedFieldMap();
                                 }
-// TODO consider whether to retain the fieldIDToTransformation
                                 return (RootExecutionResultNode) serviceResultNodesToOverallResult
                                         .convert(newExecutionContext.getExecutionId(),
                                                 resultNode,
