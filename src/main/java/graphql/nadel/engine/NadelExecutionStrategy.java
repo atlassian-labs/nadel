@@ -7,6 +7,7 @@ import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
+import graphql.execution.ResultPath;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.nadel.BenchmarkContext;
 import graphql.nadel.FieldInfo;
@@ -32,9 +33,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
@@ -58,6 +61,7 @@ public class NadelExecutionStrategy {
     private final ServiceExecutor serviceExecutor;
     private final HydrationInputResolver hydrationInputResolver;
     private final ServiceExecutionHooks serviceExecutionHooks;
+    private final ExecutionPathSet hydrationInputPaths;
 
     private static final Logger log = LoggerFactory.getLogger(NadelExecutionStrategy.class);
 
@@ -71,7 +75,8 @@ public class NadelExecutionStrategy {
         this.fieldInfos = fieldInfos;
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.serviceExecutor = new ServiceExecutor(instrumentation);
-        this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks);
+        this.hydrationInputPaths = new ExecutionPathSet();
+        this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks, hydrationInputPaths);
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection, ResultComplexityAggregator resultComplexityAggregator) {
@@ -80,10 +85,11 @@ public class NadelExecutionStrategy {
         NadelContext nadelContext = getNadelContext(executionContext);
         Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
         CompletableFuture<List<OneServiceExecution>> oneServiceExecutionsCF = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
+
         return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
             Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
             List<CompletableFuture<RootExecutionResultNode>> resultNodes =
-                    executeTopLevelFields(executionContext, nadelContext, operation, oneServiceExecutions, resultComplexityAggregator);
+                    executeTopLevelFields(executionContext, nadelContext, operation, oneServiceExecutions, resultComplexityAggregator, hydrationInputPaths);
 
             CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
             return rootResult
@@ -133,7 +139,8 @@ public class NadelExecutionStrategy {
             NadelContext nadelContext,
             Operation operation,
             List<OneServiceExecution> oneServiceExecutions,
-            ResultComplexityAggregator resultComplexityAggregator) {
+            ResultComplexityAggregator resultComplexityAggregator,
+            Set<ResultPath> hydrationInputPaths) {
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
@@ -152,6 +159,7 @@ public class NadelExecutionStrategy {
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
             resultNodes.add(transformedQueryCF.thenCompose(transformedQuery -> {
+//                TODO remove these variables - consider if still necessary
                 Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getFieldIdToTransformation();
                 Map<String, String> typeRenameMappings = transformedQuery.getTypeRenameMappings();
 
@@ -177,11 +185,13 @@ public class NadelExecutionStrategy {
                                     benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
                                     benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
                                     benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
-                                    benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
-                                    benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
+//                                    TODO update benchmark after merge conflict resolution
+//                                    benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
+//                                    benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
                                     benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
-                                    benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = transformedQuery.getRemovedFieldMap();
+//                                    benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = transformedQuery.getRemovedFieldMap();
                                 }
+// TODO consider whether to retain the fieldIDToTransformation
                                 return (RootExecutionResultNode) serviceResultNodesToOverallResult
                                         .convert(newExecutionContext.getExecutionId(),
                                                 resultNode,
@@ -190,10 +200,11 @@ public class NadelExecutionStrategy {
                                                 fieldIdToTransformation,
                                                 typeRenameMappings,
                                                 nadelContext,
-                                                transformedQuery.getRemovedFieldMap());
+                                                transformedQuery.getRemovedFieldMap(),
+                                                hydrationInputPaths);
                             });
 
-                    //set the result node count for this service
+                    // Set the result node count for this service
                     convertedResult.thenAccept(rootExecutionResultNode -> {
                         resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount());
                         resultComplexityAggregator.incrementFieldRenameCount(rootExecutionResultNode.getTotalFieldRenameCount());
@@ -307,6 +318,19 @@ public class NadelExecutionStrategy {
         final Object serviceContext;
         final ExecutionStepInfo stepInfo;
     }
+
+    public static class ExecutionPathSet extends LinkedHashSet<ResultPath> {
+        @Override
+        public boolean add(ResultPath executionPath) {
+            ResultPath path = executionPath.getParent();
+            while (path != null) {
+                super.add(path);
+                path = path.getParent();
+            }
+            return super.add(executionPath);
+        }
+    }
+
 
     private Service getServiceForFieldDefinition(GraphQLFieldDefinition fieldDefinition) {
         FieldInfo info = assertNotNull(fieldInfos.getInfo(fieldDefinition), () -> String.format("no field info for field %s", fieldDefinition.getName()));
