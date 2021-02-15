@@ -29,7 +29,6 @@ import java.util.Map;
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.introspection.Introspection.DirectiveLocation.ENUM;
-import static graphql.introspection.Introspection.DirectiveLocation.ENUM_VALUE;
 import static graphql.introspection.Introspection.DirectiveLocation.FIELD_DEFINITION;
 import static graphql.introspection.Introspection.DirectiveLocation.INPUT_OBJECT;
 import static graphql.introspection.Introspection.DirectiveLocation.INTERFACE;
@@ -48,7 +47,6 @@ import static java.util.Collections.emptyMap;
 
 public class NadelDirectives {
 
-    static final DirectiveDefinition HIDE_DIRECTIVE_DEFINITION;
     static final DirectiveDefinition RENAMED_DIRECTIVE_DEFINITION;
     static final DirectiveDefinition HYDRATED_DIRECTIVE_DEFINITION;
     static final InputObjectTypeDefinition NADEL_HYDRATION_ARGUMENT_DEFINITION;
@@ -70,19 +68,6 @@ public class NadelDirectives {
                                 .description(createDescription("The type to be renamed"))
                                 .type(nonNull("String"))
                                 .build())
-                .build();
-
-        HIDE_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-                .name("hide")
-                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-                .directiveLocation(newDirectiveLocation().name(OBJECT.name()).build())
-                .directiveLocation(newDirectiveLocation().name(INTERFACE.name()).build())
-                .directiveLocation(newDirectiveLocation().name(UNION.name()).build())
-                .directiveLocation(newDirectiveLocation().name(INPUT_OBJECT.name()).build())
-                .directiveLocation(newDirectiveLocation().name(SCALAR.name()).build())
-                .directiveLocation(newDirectiveLocation().name(ENUM.name()).build())
-                .directiveLocation(newDirectiveLocation().name(ENUM_VALUE.name()).build())
-                .description(createDescription("This allows you to hide a type or fields in the overall schema"))
                 .build();
 
         NADEL_HYDRATION_ARGUMENT_DEFINITION = InputObjectTypeDefinition.newInputObjectDefinition()

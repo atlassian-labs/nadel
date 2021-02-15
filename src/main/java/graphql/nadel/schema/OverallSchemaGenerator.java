@@ -62,7 +62,6 @@ public class OverallSchemaGenerator {
         overallRegistry.add(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION);
         overallRegistry.add(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION);
         overallRegistry.add(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION);
-        overallRegistry.add(NadelDirectives.HIDE_DIRECTIVE_DEFINITION);
 
         for (SDLDefinition<?> definition : allDefinitions) {
             Optional<GraphQLError> error = overallRegistry.add(definition);

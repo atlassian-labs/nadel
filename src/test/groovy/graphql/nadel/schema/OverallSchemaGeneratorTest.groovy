@@ -404,7 +404,6 @@ class OverallSchemaGeneratorTest extends Specification {
 
         then:
         result.getDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.getName())
-        result.getDirective(NadelDirectives.HIDE_DIRECTIVE_DEFINITION.getName())
         result.getDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.getName())
         result.getType(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION.getName())
     }
