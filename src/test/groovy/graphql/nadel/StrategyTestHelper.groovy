@@ -205,6 +205,7 @@ class StrategyTestHelper extends Specification {
         def nadelContext = NadelContext.newContext()
                 .artificialFieldsUUID("UUID")
                 .normalizedOverallQuery(normalizedQuery)
+                .nadelExecutionHints(NadelExecutionHints.newHints().optimizeExecution(true).build())
                 .build()
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(query)

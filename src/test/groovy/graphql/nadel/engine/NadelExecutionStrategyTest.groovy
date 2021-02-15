@@ -7,6 +7,7 @@ import graphql.execution.nextgen.ExecutionHelper
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
@@ -1205,6 +1206,7 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         def nadelContext = NadelContext.newContext()
                 .artificialFieldsUUID("UUID")
                 .normalizedOverallQuery(normalizedQuery)
+                .nadelExecutionHints(NadelExecutionHints.newHints().optimizeExecution(true).build())
                 .build()
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(query)
