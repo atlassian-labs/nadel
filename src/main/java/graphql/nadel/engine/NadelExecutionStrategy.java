@@ -173,7 +173,11 @@ public class NadelExecutionStrategy {
 
                 CompletableFuture<RootExecutionResultNode> convertedResult;
 
-                if (requiresTransformationProcessing(transformedQuery)) {
+                if (nadelContext.getOptimizeExecutionFlag() && !requiresTransformationProcessing(transformedQuery)) {
+                    convertedResult = serviceExecutor
+                            .execute(newExecutionContext, transformedQuery, service, operation, serviceContext, overallSchema, false);
+                    resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);
+                } else {
                     CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
                             .execute(newExecutionContext, transformedQuery, service, operation, serviceContext, service.getUnderlyingSchema(), false);
                     convertedResult = serviceCallResult
@@ -207,10 +211,6 @@ public class NadelExecutionStrategy {
                         resultComplexityAggregator.incrementFieldRenameCount(rootExecutionResultNode.getTotalFieldRenameCount());
                         resultComplexityAggregator.incrementTypeRenameCount(rootExecutionResultNode.getTotalTypeRenameCount());
                     });
-                } else { // Skip work because no transformations detected. All ExecutionResultNodes reference the overall schema
-                    convertedResult = serviceExecutor
-                            .execute(newExecutionContext, transformedQuery, service, operation, serviceContext, overallSchema, false);
-                    resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);
                 }
 
                 CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult
