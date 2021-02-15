@@ -18,18 +18,21 @@ public class NadelExecutionInput {
     private final Map<String, Object> variables;
     private final String artificialFieldsUUID;
     private final ExecutionId executionId;
+    private final NadelExecutionHints nadelExecutionHints;
 
     private NadelExecutionInput(String query,
                                 String operationName,
                                 Object context, Map<String, Object> variables,
                                 String artificialFieldsUUID,
-                                ExecutionId executionId) {
+                                ExecutionId executionId,
+                                NadelExecutionHints nadelExecutionHints) {
         this.query = requireNonNull(query);
         this.operationName = operationName;
         this.context = context;
         this.variables = requireNonNull(variables);
         this.artificialFieldsUUID = artificialFieldsUUID;
         this.executionId = executionId;
+        this.nadelExecutionHints = nadelExecutionHints;
     }
 
     public static Builder newNadelExecutionInput() {
@@ -62,6 +65,10 @@ public class NadelExecutionInput {
         return executionId;
     }
 
+    public NadelExecutionHints getNadelExecutionHints() {
+        return nadelExecutionHints;
+    }
+
     public static class Builder {
         private String query;
         private String operationName;
@@ -69,6 +76,7 @@ public class NadelExecutionInput {
         private Map<String, Object> variables = new LinkedHashMap<>();
         private String artificialFieldsUUID;
         private ExecutionId executionId;
+        private NadelExecutionHints nadelExecutionHints = NadelExecutionHints.newHints().build();
 
         private Builder() {
         }
@@ -103,9 +111,13 @@ public class NadelExecutionInput {
             return this;
         }
 
+        public Builder nadelExecutionHints(NadelExecutionHints nadelExecutionHints) {
+            this.nadelExecutionHints = nadelExecutionHints;
+            return this;
+        }
 
         public NadelExecutionInput build() {
-            return new NadelExecutionInput(query, operationName, context, variables, artificialFieldsUUID, executionId);
+            return new NadelExecutionInput(query, operationName, context, variables, artificialFieldsUUID, executionId, nadelExecutionHints);
         }
 
     }
