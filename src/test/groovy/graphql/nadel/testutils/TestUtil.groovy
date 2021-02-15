@@ -353,7 +353,7 @@ class TestUtil {
                 .build()
         ExecutionHelper executionHelper = new ExecutionHelper()
         def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput, null)
-        [executionData.executionContext, executionData.fieldSubSelection]
+        [executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext)]
     }
 
 

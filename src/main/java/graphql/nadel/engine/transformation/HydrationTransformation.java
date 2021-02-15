@@ -1,7 +1,7 @@
 package graphql.nadel.engine.transformation;
 
 import graphql.Internal;
-import graphql.execution.ExecutionPath;
+import graphql.execution.ResultPath;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
@@ -147,7 +147,7 @@ public class HydrationTransformation extends FieldTransformation {
                                                     NormalizedQueryField matchingNormalizedField) {
 
         leafNode = (LeafExecutionResultNode) mapToOverallFieldAndTypes(leafNode, allTransformations, matchingNormalizedField);
-        ExecutionPath executionPath = pathMapper.mapPath(leafNode.getExecutionPath(), leafNode.getResultKey(), environment);
+        ResultPath executionPath = pathMapper.mapPath(leafNode.getResultPath(), leafNode.getResultKey(), environment);
         leafNode = leafNode.transform(builder -> builder.executionPath(executionPath));
 
         if (leafNode.isNullValue()) {
@@ -159,7 +159,7 @@ public class HydrationTransformation extends FieldTransformation {
                     .fieldIds(leafNode.getFieldIds())
                     .objectType(leafNode.getObjectType())
                     .fieldDefinition(leafNode.getFieldDefinition())
-                    .executionPath(leafNode.getExecutionPath())
+                    .executionPath(leafNode.getResultPath())
                     .completedValue(leafNode.getCompletedValue())
                     .elapsedTime(leafNode.getElapsedTime())
                     .normalizedField(matchingNormalizedField)

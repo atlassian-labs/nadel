@@ -109,7 +109,8 @@ public class ServiceResultNodesToOverallBenchmark {
                 args.fieldIdToTransformation,
                 args.typeRenameMappings,
                 args.nadelContext,
-                args.transformationMetadata);
+                args.transformationMetadata,
+                args.hydrationInputPaths);
         return result;
     }
 
