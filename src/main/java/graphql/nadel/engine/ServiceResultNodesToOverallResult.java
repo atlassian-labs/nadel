@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -409,11 +410,23 @@ public class ServiceResultNodesToOverallResult {
             }
         }
         Map<AbstractNode, ExecutionResultNode> treesByDefinition = new LinkedHashMap<>();
-        for (AbstractNode definition : transformationIdsByTransformationDefinition.keySet()) {
-            Set<String> transformationIds = transformationIdsByTransformationDefinition.get(definition);
-            treesByDefinition.put(definition, nodesWithTransformationIds(executionResultNode, transformationIds, transformationMetadata));
+        Set<AbstractNode> definitions = transformationIdsByTransformationDefinition.keySet();
+        ExecutionResultNode treeWithout;
+        // skips 2 traversals if there is ONLY 1 transformation AND there is no tree without transformations
+        // otherwise continue as normal. This speeds up the execution in most cases of field renames
+        if (transformationIdsByTransformationDefinition.keySet().size() == 1) {
+            treesByDefinition.put(definitions.iterator().next(), executionResultNode);
+        } else {
+            for (AbstractNode definition : definitions) {
+                Set<String> transformationIds = transformationIdsByTransformationDefinition.get(definition);
+                treesByDefinition.put(definition, nodesWithTransformationIds(executionResultNode, transformationIds, transformationMetadata));
+            }
         }
-        ExecutionResultNode treeWithout = nodesWithTransformationIds(executionResultNode, null, transformationMetadata);
+        if (getFieldIdsWithoutTransformationId(executionResultNode, transformationMetadata).size() == 0) {
+            treeWithout = null;
+        } else {
+            treeWithout = nodesWithTransformationIds(executionResultNode, null, transformationMetadata);
+        }
         return Tuples.of(treeWithout, treesByDefinition);
     }
 
@@ -441,6 +454,16 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private List<String> getFieldIdsWithoutTransformationId(ExecutionResultNode node, TransformationMetadata transformationMetadata) {
+//        List<String> ids = new ArrayList<>();
+//        for (String fieldId : node.getFieldIds()) {
+//            List<String> transformationIds = FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId());
+//            if (transformationIds.size() == 0) {
+//                ids.add(fieldId);
+//            }
+//        }
+//        return ids;
+//        return node.getFieldIds().stream().filter(fieldId -> .size() == 0).collect(Collectors.toList());
+
         return node.getFieldIds().stream().filter(fieldId -> FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId()).size() == 0).collect(Collectors.toList());
     }
 
