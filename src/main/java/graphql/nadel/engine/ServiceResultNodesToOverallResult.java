@@ -452,16 +452,6 @@ public class ServiceResultNodesToOverallResult {
     }
 
     private List<String> getFieldIdsWithoutTransformationId(ExecutionResultNode node, TransformationMetadata transformationMetadata) {
-//        List<String> ids = new ArrayList<>();
-//        for (String fieldId : node.getFieldIds()) {
-//            List<String> transformationIds = FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId());
-//            if (transformationIds.size() == 0) {
-//                ids.add(fieldId);
-//            }
-//        }
-//        return ids;
-//        return node.getFieldIds().stream().filter(fieldId -> .size() == 0).collect(Collectors.toList());
-
         return node.getFieldIds().stream().filter(fieldId -> FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId()).size() == 0).collect(Collectors.toList());
     }
 
