@@ -414,18 +414,16 @@ public class ServiceResultNodesToOverallResult {
         ExecutionResultNode treeWithout;
         // skips 2 traversals if there is ONLY 1 transformation AND there is no tree without transformations
         // otherwise continue as normal. This speeds up the execution in most cases of field renames
-        if (transformationIdsByTransformationDefinition.keySet().size() == 1) {
+        if (transformationIdsByTransformationDefinition.keySet().size() == 1
+                && getFieldIdsWithoutTransformationId(executionResultNode, transformationMetadata).size() == 0) {
             treesByDefinition.put(definitions.iterator().next(), executionResultNode);
+            treeWithout = null;
         } else {
+            treeWithout = nodesWithTransformationIds(executionResultNode, null, transformationMetadata);
             for (AbstractNode definition : definitions) {
                 Set<String> transformationIds = transformationIdsByTransformationDefinition.get(definition);
                 treesByDefinition.put(definition, nodesWithTransformationIds(executionResultNode, transformationIds, transformationMetadata));
             }
-        }
-        if (getFieldIdsWithoutTransformationId(executionResultNode, transformationMetadata).size() == 0) {
-            treeWithout = null;
-        } else {
-            treeWithout = nodesWithTransformationIds(executionResultNode, null, transformationMetadata);
         }
         return Tuples.of(treeWithout, treesByDefinition);
     }
