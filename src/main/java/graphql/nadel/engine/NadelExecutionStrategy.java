@@ -161,6 +161,7 @@ public class NadelExecutionStrategy {
             resultNodes.add(transformedQueryCF.thenCompose(transformedQuery -> {
                 Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getFieldIdToTransformation();
                 Map<String, String> typeRenameMappings = transformedQuery.getTypeRenameMappings();
+                Map<FieldTransformation, String> transformationToFieldId = transformedQuery.getTransformationToFieldId();
 
                 ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, transformedQuery.getVariableValues());
 
@@ -193,6 +194,7 @@ public class NadelExecutionStrategy {
                                             overallSchema,
                                             resultNode,
                                             fieldIdToTransformation,
+                                            transformationToFieldId,
                                             typeRenameMappings,
                                             nadelContext,
                                             transformedQuery.getRemovedFieldMap(),
