@@ -432,8 +432,8 @@ public class ServiceResultNodesToOverallResult {
 
         for (ExecutionResultNode hydrationNode : nodesWithTransformedFields) {
             Object value = hydrationNode.getCompletedValue();
-            String valueKey = hydrationNode.getValueKey();
-            completedValues.put(valueKey, value);
+            String resultKey = hydrationNode.getResultKey();
+            completedValues.put(resultKey, value);
 
             if (hydrationNode.getResultPath().equals(primaryNode.getResultPath())) {
                 primaryNode = hydrationNode;

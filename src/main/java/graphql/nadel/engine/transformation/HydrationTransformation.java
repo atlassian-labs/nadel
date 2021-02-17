@@ -172,7 +172,6 @@ public class HydrationTransformation extends FieldTransformation {
                     .fieldDefinition(leafNode.getFieldDefinition())
                     .executionPath(leafNode.getResultPath())
                     .completedValue(leafNode.getCompletedValue())
-                    .valueKey(leafNode.getValueKey())
                     .elapsedTime(leafNode.getElapsedTime())
                     .normalizedField(matchingNormalizedField)
                     .build();

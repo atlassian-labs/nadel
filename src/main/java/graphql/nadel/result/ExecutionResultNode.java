@@ -20,7 +20,6 @@ import static java.util.Collections.emptyMap;
 public abstract class ExecutionResultNode {
 
     private final Object completedValue;
-    private final String valueKey;
     private final NonNullableFieldWasNullError nonNullableFieldWasNullError;
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
@@ -44,7 +43,6 @@ public abstract class ExecutionResultNode {
      */
     protected ExecutionResultNode(BuilderBase builderBase) {
         this.completedValue = builderBase.completedValue;
-        this.valueKey = builderBase.valueKey;
         this.children = Collections.unmodifiableList(assertNotNull(builderBase.children));
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(builderBase.errors);
@@ -81,9 +79,6 @@ public abstract class ExecutionResultNode {
         return completedValue;
     }
 
-    public String getValueKey() {
-        return valueKey;
-    }
 
     public boolean isNullValue() {
         return completedValue == null;
@@ -145,9 +140,6 @@ public abstract class ExecutionResultNode {
         return transform(builder -> builder.completedValue(completedValue));
     }
 
-    public ExecutionResultNode withNewValueKey(String valueKey) {
-        return transform(builder -> builder.valueKey(valueKey));
-    }
 
     public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
         return transform(builder -> builder.errors(errors));
@@ -171,7 +163,6 @@ public abstract class ExecutionResultNode {
                 ", name=" + (fieldDefinition != null ? fieldDefinition.getName() : "null") +
                 ", alias=" + alias +
                 ", completedValue=" + completedValue +
-                ", valueKey=" + valueKey +
                 ", nonNullableFieldWasNullError=" + nonNullableFieldWasNullError +
                 ", children.size=" + children.size() +
                 ", errors=" + errors +
@@ -180,7 +171,6 @@ public abstract class ExecutionResultNode {
 
     public abstract static class BuilderBase<T extends BuilderBase<T>> {
         protected Object completedValue;
-        private String valueKey;
         protected NonNullableFieldWasNullError nonNullableFieldWasNullError;
         protected List<ExecutionResultNode> children = new ArrayList<>();
         protected List<GraphQLError> errors = new ArrayList<>();
@@ -203,7 +193,6 @@ public abstract class ExecutionResultNode {
 
         public BuilderBase(ExecutionResultNode existing) {
             this.completedValue = existing.getCompletedValue();
-            this.valueKey = existing.getValueKey();
             this.nonNullableFieldWasNullError = existing.getNonNullableFieldWasNullError();
             this.children.addAll(existing.getChildren());
             this.errors.addAll(existing.getErrors());
@@ -227,10 +216,6 @@ public abstract class ExecutionResultNode {
             return (T) this;
         }
 
-        public T valueKey(String valueKey) {
-            this.valueKey = valueKey;
-            return (T) this;
-        }
 
         public T nonNullableFieldWasNullError(NonNullableFieldWasNullError nonNullableFieldWasNullError) {
             this.nonNullableFieldWasNullError = nonNullableFieldWasNullError;
