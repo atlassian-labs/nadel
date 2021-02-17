@@ -21,7 +21,6 @@ public abstract class ExecutionResultNode {
 
     private final Object completedValue;
     private final String valueKey;
-    private final boolean isNull;
     private final NonNullableFieldWasNullError nonNullableFieldWasNullError;
     private final List<ExecutionResultNode> children;
     private final List<GraphQLError> errors;
@@ -47,7 +46,6 @@ public abstract class ExecutionResultNode {
         this.completedValue = builderBase.completedValue;
         this.valueKey = builderBase.valueKey;
         this.children = Collections.unmodifiableList(assertNotNull(builderBase.children));
-        this.isNull = builderBase.isNull;
         children.forEach(Assert::assertNotNull);
         this.errors = Collections.unmodifiableList(builderBase.errors);
         this.extensions = builderBase.extensions;
@@ -88,7 +86,7 @@ public abstract class ExecutionResultNode {
     }
 
     public boolean isNullValue() {
-        return (isNull || completedValue == null);
+        return completedValue == null;
     }
 
     public String getResultKey() {
@@ -182,7 +180,6 @@ public abstract class ExecutionResultNode {
 
     public abstract static class BuilderBase<T extends BuilderBase<T>> {
         protected Object completedValue;
-        private boolean isNull;
         private String valueKey;
         protected NonNullableFieldWasNullError nonNullableFieldWasNullError;
         protected List<ExecutionResultNode> children = new ArrayList<>();
@@ -206,7 +203,6 @@ public abstract class ExecutionResultNode {
 
         public BuilderBase(ExecutionResultNode existing) {
             this.completedValue = existing.getCompletedValue();
-            this.isNull = existing.isNull;
             this.valueKey = existing.getValueKey();
             this.nonNullableFieldWasNullError = existing.getNonNullableFieldWasNullError();
             this.children.addAll(existing.getChildren());
@@ -228,11 +224,6 @@ public abstract class ExecutionResultNode {
 
         public T completedValue(Object completedValue) {
             this.completedValue = completedValue;
-            return (T) this;
-        }
-
-        public T isNull(boolean isNull) {
-            this.isNull = isNull;
             return (T) this;
         }
 

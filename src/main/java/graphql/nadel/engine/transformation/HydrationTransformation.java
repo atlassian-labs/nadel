@@ -162,7 +162,7 @@ public class HydrationTransformation extends FieldTransformation {
         leafNode = leafNode.transform(builder -> builder.executionPath(executionPath));
 
         if (leafNode.isNullValue()) {
-            return (LeafExecutionResultNode) leafNode.withNewCompletedValue(null);
+            return leafNode;
         } else {
             return newHydrationInputNode()
                     .hydrationTransformation(this)

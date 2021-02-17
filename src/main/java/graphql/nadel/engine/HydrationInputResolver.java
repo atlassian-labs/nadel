@@ -604,7 +604,6 @@ public class HydrationInputResolver {
                 .executionPath(inputNode.getResultPath())
                 .fieldDefinition(inputNode.getFieldDefinition())
                 .completedValue(null)
-                .isNull(true)
                 .elapsedTime(elapsedTime)
                 .build();
     }
