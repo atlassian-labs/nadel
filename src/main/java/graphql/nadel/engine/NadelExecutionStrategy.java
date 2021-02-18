@@ -161,6 +161,7 @@ public class NadelExecutionStrategy {
             resultNodes.add(transformedQueryCF.thenCompose(transformedQuery -> {
                 Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getFieldIdToTransformation();
                 Map<String, String> typeRenameMappings = transformedQuery.getTypeRenameMappings();
+                Map<FieldTransformation, String> transformationToFieldId = transformedQuery.getTransformationToFieldId();
 
                 ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, transformedQuery.getVariableValues());
 
@@ -199,13 +200,14 @@ public class NadelExecutionStrategy {
                                                 overallSchema,
                                                 resultNode,
                                                 fieldIdToTransformation,
+                                                transformationToFieldId,
                                                 typeRenameMappings,
                                                 nadelContext,
                                                 transformedQuery.getRemovedFieldMap(),
                                                 hydrationInputPaths);
                             });
 
-                    // Set the result node count for this service
+                    // Set the result node count for this service.
                     convertedResult.thenAccept(rootExecutionResultNode -> {
                         resultComplexityAggregator.incrementServiceNodeCount(service.getName(), rootExecutionResultNode.getTotalNodeCount());
                         resultComplexityAggregator.incrementFieldRenameCount(rootExecutionResultNode.getTotalFieldRenameCount());

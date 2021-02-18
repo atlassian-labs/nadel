@@ -18,6 +18,7 @@ import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.TypeMappingDefinition;
+import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.OverallTypeInfo;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
@@ -80,6 +81,7 @@ public class OverallQueryTransformer {
     ) {
         long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
+        Map<FieldTransformation, String> transformationToFieldId = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
         TransformationMetadata removedFieldMap = new TransformationMetadata();
@@ -113,6 +115,7 @@ public class OverallQueryTransformer {
                 underlyingSchema,
                 selectionSet,
                 topLevelFieldTypeOverall,
+                transformationToFieldId,
                 referencedFragmentNames,
                 referencedVariables,
                 nadelContext,
@@ -146,6 +149,7 @@ public class OverallQueryTransformer {
             CompletableFuture<Map<String, FragmentDefinition>> transformedFragmentsCF = transformFragments(executionContext,
                     underlyingSchema,
                     executionContext.getFragmentsByName(),
+                    transformationToFieldId,
                     referencedFragmentNames,
                     referencedVariables,
                     serviceExecutionHooks,
@@ -175,6 +179,7 @@ public class OverallQueryTransformer {
                         operationDefinition,
                         Collections.singletonList(transformedMergedField),
                         referencedVariableNames,
+                        transformationToFieldId,
                         transformedFragments,
                         variableValues,
                         removedFieldMap,
@@ -196,6 +201,7 @@ public class OverallQueryTransformer {
         long startTime = System.currentTimeMillis();
         NadelContext nadelContext = executionContext.getContext();
         Set<String> fragmentsDirectlyReferenced = new LinkedHashSet<>();
+        Map<FieldTransformation, String> transformationToFieldId = new LinkedHashMap<>();
         Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
         TransformationMetadata removedFieldMap = new TransformationMetadata();
@@ -214,6 +220,7 @@ public class OverallQueryTransformer {
                         underlyingSchema,
                         field,
                         rootType,
+                        transformationToFieldId,
                         fragmentsDirectlyReferenced,
                         referencedVariables,
                         nadelContext,
@@ -261,6 +268,7 @@ public class OverallQueryTransformer {
                     executionContext,
                     underlyingSchema,
                     executionContext.getFragmentsByName(),
+                    transformationToFieldId,
                     fragmentsDirectlyReferenced,
                     referencedVariables,
                     serviceExecutionHooks,
@@ -280,6 +288,7 @@ public class OverallQueryTransformer {
                         operationDefinition,
                         transformedMergedFields,
                         referencedVariableNames,
+                        transformationToFieldId,
                         transformedFragments,
                         variableValues,
                         removedFieldMap,
@@ -302,6 +311,7 @@ public class OverallQueryTransformer {
     private CompletableFuture<Map<String, FragmentDefinition>> transformFragments(ExecutionContext executionContext,
                                                                                   GraphQLSchema underlyingSchema,
                                                                                   Map<String, FragmentDefinition> fragments,
+                                                                                  Map<FieldTransformation, String> transformationToFieldId,
                                                                                   Set<String> referencedFragmentNames,
                                                                                   Map<String, VariableDefinition> referencedVariables,
                                                                                   ServiceExecutionHooks serviceExecutionHooks,
@@ -317,6 +327,7 @@ public class OverallQueryTransformer {
                 executionContext,
                 underlyingSchema,
                 fragments,
+                transformationToFieldId,
                 referencedVariables,
                 serviceExecutionHooks,
                 variableValues,
@@ -332,6 +343,7 @@ public class OverallQueryTransformer {
     private CompletableFuture<Set<FragmentDefinition>> transformFragmentImpl(ExecutionContext executionContext,
                                                                              GraphQLSchema underlyingSchema,
                                                                              Map<String, FragmentDefinition> fragments,
+                                                                             Map<FieldTransformation, String> transformationToFieldId,
                                                                              Map<String, VariableDefinition> referencedVariables,
                                                                              ServiceExecutionHooks serviceExecutionHooks,
                                                                              Map<String, Object> variableValues,
@@ -351,6 +363,7 @@ public class OverallQueryTransformer {
                 executionContext,
                 underlyingSchema,
                 fragments.get(fragmentName),
+                transformationToFieldId,
                 newReferencedFragments,
                 referencedVariables,
                 serviceExecutionHooks,
@@ -368,6 +381,7 @@ public class OverallQueryTransformer {
                     executionContext,
                     underlyingSchema,
                     fragments,
+                    transformationToFieldId,
                     referencedVariables,
                     serviceExecutionHooks,
                     variableValues,
@@ -383,6 +397,7 @@ public class OverallQueryTransformer {
     private CompletableFuture<FragmentDefinition> transformFragmentDefinition(ExecutionContext executionContext,
                                                                               GraphQLSchema underlyingSchema,
                                                                               FragmentDefinition fragmentDefinitionWithoutTypeInfo,
+                                                                              Map<FieldTransformation, String> transformationToFieldId,
                                                                               Set<String> referencedFragmentNames,
                                                                               Map<String, VariableDefinition> referencedVariables,
                                                                               ServiceExecutionHooks serviceExecutionHooks,
@@ -405,6 +420,7 @@ public class OverallQueryTransformer {
             Transformer transformer = new Transformer(
                     executionContext,
                     underlyingSchema,
+                    transformationToFieldId,
                     referencedFragmentNames,
                     referencedVariables,
                     nadelContext,
@@ -457,6 +473,7 @@ public class OverallQueryTransformer {
                                                                 GraphQLSchema underlyingSchema,
                                                                 T nodeWithoutTypeInfo,
                                                                 GraphQLCompositeType parentTypeOverall,
+                                                                Map<FieldTransformation, String> transformationToFieldId,
                                                                 Set<String> referencedFragmentNames,
                                                                 Map<String, VariableDefinition> referencedVariables,
                                                                 NadelContext nadelContext,
@@ -477,6 +494,7 @@ public class OverallQueryTransformer {
             Transformer transformer = new Transformer(
                     executionContext,
                     underlyingSchema,
+                    transformationToFieldId,
                     referencedFragmentNames,
                     referencedVariables,
                     nadelContext,
