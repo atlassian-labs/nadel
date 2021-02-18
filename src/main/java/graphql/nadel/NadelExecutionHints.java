@@ -1,5 +1,8 @@
 package graphql.nadel;
 
+import graphql.PublicApi;
+
+@PublicApi
 public class NadelExecutionHints {
     private final boolean optimizeExecution;
 

@@ -18,7 +18,6 @@ import graphql.language.VariableReference;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.TypeMappingDefinition;
-import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.OverallTypeInfo;
 import graphql.nadel.engine.transformation.OverallTypeInformation;
 import graphql.nadel.engine.transformation.RecordOverallTypeInformation;
