@@ -79,6 +79,7 @@ public abstract class ExecutionResultNode {
         return completedValue;
     }
 
+
     public boolean isNullValue() {
         return completedValue == null;
     }
@@ -138,6 +139,7 @@ public abstract class ExecutionResultNode {
     public ExecutionResultNode withNewCompletedValue(Object completedValue) {
         return transform(builder -> builder.completedValue(completedValue));
     }
+
 
     public ExecutionResultNode withNewErrors(List<GraphQLError> errors) {
         return transform(builder -> builder.errors(errors));
