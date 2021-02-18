@@ -84,7 +84,7 @@ public class LargeRenamedResponseBenchmark {
     @Benchmark
     @Warmup(iterations = 2)
     @Measurement(iterations = 3, time = 10)
-    @Threads(8)
+    @Threads(1)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public ExecutionResult benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {

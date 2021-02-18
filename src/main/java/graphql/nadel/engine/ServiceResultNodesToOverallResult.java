@@ -1,6 +1,5 @@
 package graphql.nadel.engine;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.ExecutionId;
@@ -325,6 +324,11 @@ public class ServiceResultNodesToOverallResult {
                                                 Set<ResultPath> hydrationInputPaths) {
 
         if (isArtificialHydrationNode(node.getFieldIds(), new HashSet<String>(transformationToFieldId.values()))) {
+            if (getFieldIdsWithoutTransformationId(node, transformationMetadata).size() != 0) {
+                HandleResult handleResult = HandleResult.simple(nodesWithTransformationIds(node, null, transformationMetadata));
+                handleResult.traversalControl = TraversalControl.ABORT;
+                return handleResult;
+            }
             return null;
         }
 
@@ -516,41 +520,40 @@ public class ServiceResultNodesToOverallResult {
                 }
             }
         }
-        // TODO merge this with master and get it working
 
-//        Map<AbstractNode, List<ExecutionResultNode>> treesByDefinition = new LinkedHashMap<>();
-//        Set<AbstractNode> definitions = transformationIdsByTransformationDefinition.keySet();
-//        ExecutionResultNode treeWithout;
-//        // skips 2 traversals if there is ONLY 1 transformation AND there is no tree without transformations
-//        // otherwise continue as normal. This speeds up the execution in most cases of field renames
-//        for (AbstractNode definition : definitions) {
-//            Set<String> transformationIds = transformationIdsByTransformationDefinition.get(definition);
-//            treesByDefinition.putIfAbsent(definition, new ArrayList<>());
-//            if (canSkipTraversal(definitions, executionResultNode, transformationMetadata)) {
-//                treesByDefinition.get(definition).add(executionResultNode);
-//                treeWithout = null;
-//            } else {
-//                treesByDefinition.get(definition).add(nodesWithTransformationIds(executionResultNode, transformationIds, transformationMetadata));
-//            }
-//
-//            if (definition instanceof UnderlyingServiceHydration) {
-//                for (ExecutionResultNode child : directParentNode.getChildren()) {
-//                    // Makes sure no unnecessary traversals occur
-//                    if (getFieldIdsWithTransformationIds(child, transformationIds, transformationMetadata).size() != 0
-//                            && child != executionResultNode
-//                    ) {
-//                        ExecutionResultNode resultNode = nodesWithTransformationIds(child, transformationIds, transformationMetadata);
-//                        treesByDefinition.get(definition).add(resultNode);
-//                    }
-//                }
-//            }
-//        }
-//
-//        return Tuples.of(treeWithout, treesByDefinition);
+        Map<AbstractNode, List<ExecutionResultNode>> treesByDefinition = new LinkedHashMap<>();
+        Set<AbstractNode> definitions = transformationIdsByTransformationDefinition.keySet();
+        // skips 2 traversals if there is ONLY 1 rename transformation AND there is no tree without transformations
+        // otherwise continue as normal. This speeds up the execution in most cases of field renames
+        boolean canSkipTraversal = canSkipTraversal(definitions, executionResultNode, transformationMetadata);
+        if (canSkipTraversal) {
+            treesByDefinition.put(definitions.iterator().next(), singletonList(executionResultNode));
+        } else {
+            for (AbstractNode definition : definitions) {
+                Set<String> transformationIds = transformationIdsByTransformationDefinition.get(definition);
+                treesByDefinition.putIfAbsent(definition, new ArrayList<>());
+                treesByDefinition.get(definition).add(nodesWithTransformationIds(executionResultNode, transformationIds, transformationMetadata));
+
+                if (definition instanceof UnderlyingServiceHydration) {
+                    for (ExecutionResultNode child : directParentNode.getChildren()) {
+                        // Makes sure no unnecessary traversals occur
+                        if (getFieldIdsWithTransformationIds(child, transformationIds, transformationMetadata).size() != 0
+                                && child != executionResultNode
+                        ) {
+                            ExecutionResultNode resultNode = nodesWithTransformationIds(child, transformationIds, transformationMetadata);
+                            treesByDefinition.get(definition).add(resultNode);
+                        }
+                    }
+                }
+            }
+        }
+        ExecutionResultNode treeWithout = canSkipTraversal ? null : nodesWithTransformationIds(executionResultNode, null, transformationMetadata);
+        return Tuples.of(treeWithout, treesByDefinition);
     }
 
     private boolean canSkipTraversal(Set<AbstractNode> definitions, ExecutionResultNode executionResultNode, TransformationMetadata transformationMetadata) {
         return definitions.size() == 1 &&
+                !(definitions.iterator().next() instanceof UnderlyingServiceHydration) &&
                 getFieldIdsWithoutTransformationId(executionResultNode, transformationMetadata).size() == 0;
     }
 
