@@ -9,11 +9,14 @@ import java.util.Map;
 
 public class TransformationState {
     final Map<String, FieldTransformation> fieldIdToTransformation;
+    // needed when the underlying result tree is mapped back
+    final Map<FieldTransformation, String> transformationToFieldId;
     final Map<String, String> typeRenameMappings;
     final List<String> hintTypenames;
 
     public TransformationState() {
         this.fieldIdToTransformation = new LinkedHashMap<>();
+        this.transformationToFieldId = new LinkedHashMap<>();
         this.typeRenameMappings = new LinkedHashMap<>();
         this.hintTypenames = new ArrayList<>();
     }
@@ -21,6 +24,10 @@ public class TransformationState {
     public Map<String, FieldTransformation> getFieldIdToTransformation() {
         return fieldIdToTransformation;
     }
+
+    public Map<FieldTransformation, String> getTransformationToFieldId() {
+        return transformationToFieldId;
+    };
 
     public Map<String, String> getTypeRenameMappings() {
         return typeRenameMappings;
@@ -32,6 +39,10 @@ public class TransformationState {
 
     public void putFieldIdToTransformation(String fieldId, FieldTransformation transformation) {
         fieldIdToTransformation.put(fieldId, transformation);
+    }
+
+    public void putTransformationToFieldId(FieldTransformation transformation, String fieldId) {
+        transformationToFieldId.put(transformation, fieldId);
     }
 
     public void putTypeRenameMapping(String underlyingName, String overallName) {
