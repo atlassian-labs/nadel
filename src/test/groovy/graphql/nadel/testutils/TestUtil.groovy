@@ -338,7 +338,7 @@ class TestUtil {
                 .originalOperationName(query, null)
                 .normalizedOverallQuery(normalizedQuery)
                 .artificialFieldsUUID("UUID")
-                .nadelExecutionHints(NadelExecutionHints.newHints().optimizeExecution(true).build())
+                .nadelExecutionHints(NadelExecutionHints.newHints().optimizeOnNoTransformations(true).build())
                 .build()
         ExecutionInput executionInput = newExecutionInput()
                 .query(AstPrinter.printAst(query))

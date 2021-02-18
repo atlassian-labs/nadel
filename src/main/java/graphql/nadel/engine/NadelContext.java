@@ -69,8 +69,8 @@ public class NadelContext {
         return normalizedOverallQuery;
     }
 
-    public boolean getOptimizeExecutionFlag() {
-        return nadelExecutionHints.getOptimizeExecutionFlag();
+    public boolean getOptimizeOnNoTransformationsFlag() {
+        return nadelExecutionHints.getOptimizeOnNoTransformationsFlag();
     }
 
     public static class Builder {
