@@ -53,6 +53,10 @@ public class NadelContext {
         return originalOperationName;
     }
 
+    public NadelExecutionHints getNadelExecutionHints() {
+        return nadelExecutionHints;
+    }
+
     public static Builder newContext() {
         return new Builder();
     }
@@ -67,10 +71,6 @@ public class NadelContext {
 
     public NormalizedQueryFromAst getNormalizedOverallQuery() {
         return normalizedOverallQuery;
-    }
-
-    public boolean isOptimizeOnNoTransformations() {
-        return nadelExecutionHints.isOptimizeOnNoTransformations();
     }
 
     public static class Builder {

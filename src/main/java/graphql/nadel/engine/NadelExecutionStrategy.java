@@ -174,7 +174,7 @@ public class NadelExecutionStrategy {
 
                 CompletableFuture<RootExecutionResultNode> convertedResult;
 
-                if (nadelContext.isOptimizeOnNoTransformations() && !requiresTransformationProcessing(transformedQuery)) {
+                if (skipTransformationProcessing(nadelContext, transformedQuery)) {
                     convertedResult = serviceExecutor
                             .execute(newExecutionContext, transformedQuery, service, operation, serviceContext, overallSchema, false);
                     resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);
@@ -350,12 +350,12 @@ public class NadelExecutionStrategy {
         return executionContext.getContext();
     }
 
-    private boolean requiresTransformationProcessing(QueryTransformationResult transformedQuery) {
-        return transformedQuery.getFieldIdToTransformation().size() > 0 ||
-               transformedQuery.getTypeRenameMappings().size() > 0 ||
-               transformedQuery.getRemovedFieldMap().hasRemovedFields() ||
-               transformedQuery.getHintTypenames().size() > 0;
-
+    private boolean skipTransformationProcessing(NadelContext nadelContext, QueryTransformationResult transformedQuery) {
+        return nadelContext.getNadelExecutionHints().isOptimizeOnNoTransformations() &&
+                transformedQuery.getFieldIdToTransformation().size() == 0 &&
+                transformedQuery.getTypeRenameMappings().size() == 0 &&
+                !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
+                transformedQuery.getHintTypenames().size() == 0;
     }
 }
 

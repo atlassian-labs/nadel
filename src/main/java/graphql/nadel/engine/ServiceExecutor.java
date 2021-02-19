@@ -71,7 +71,7 @@ public class ServiceExecutor {
         ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformerResult, serviceContext, isHydrationCall);
         ExecutionContext executionContextForService = buildServiceExecutionContext(executionContext, underlyingSchema, serviceExecutionParameters);
 
-        ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(service.getUnderlyingSchema(), operation);
+        ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(underlyingSchema, operation);
 
         // When ServiceResultNodesToOverallResult execution is skipped, the ExecutionResultNodes will reference the overall schema
         NormalizedQueryFromAst normalizedQuery = normalizedQueryFactory.createNormalizedQuery(schema, serviceExecutionParameters.getQuery(),
