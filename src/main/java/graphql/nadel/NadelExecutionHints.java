@@ -6,8 +6,8 @@ import graphql.PublicApi;
 public class NadelExecutionHints {
     private final boolean optimizeOnNoTransformations;
 
-    private NadelExecutionHints(boolean optimizeOnNoTransformations) {
-        this.optimizeOnNoTransformations = optimizeOnNoTransformations;
+    private NadelExecutionHints(Builder builder) {
+        this.optimizeOnNoTransformations = builder.optimizeOnNoTransformations;
     }
 
     public static Builder newHints() {
@@ -30,7 +30,7 @@ public class NadelExecutionHints {
         }
 
         public NadelExecutionHints build() {
-            return new NadelExecutionHints(optimizeOnNoTransformations);
+            return new NadelExecutionHints(this);
         }
     }
 }
