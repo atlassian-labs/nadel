@@ -8,10 +8,13 @@ import java.util.List;
 import java.util.Map;
 
 public class TransformationState {
+    // needed when the underlying result tree is mapped back
     final Map<String, FieldTransformation> fieldIdToTransformation;
     // needed when the underlying result tree is mapped back
     final Map<FieldTransformation, String> transformationToFieldId;
+    // needed when the underlying result tree is mapped back
     final Map<String, String> typeRenameMappings;
+    // store artificial fields created to support interfaces and unions
     final List<String> hintTypenames;
 
     public TransformationState() {
