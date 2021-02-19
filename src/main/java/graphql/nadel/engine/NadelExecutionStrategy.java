@@ -174,7 +174,7 @@ public class NadelExecutionStrategy {
 
                 CompletableFuture<RootExecutionResultNode> convertedResult;
 
-                if (nadelContext.getOptimizeOnNoTransformationsFlag() && !requiresTransformationProcessing(transformedQuery)) {
+                if (nadelContext.isOptimizeOnNoTransformations() && !requiresTransformationProcessing(transformedQuery)) {
                     convertedResult = serviceExecutor
                             .execute(newExecutionContext, transformedQuery, service, operation, serviceContext, overallSchema, false);
                     resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);

@@ -14,7 +14,7 @@ public class NadelExecutionHints {
         return new Builder();
     }
 
-    public boolean getOptimizeOnNoTransformationsFlag() {
+    public boolean isOptimizeOnNoTransformations() {
         return optimizeOnNoTransformations;
     }
 
