@@ -65,20 +65,12 @@ public class QueryTransformationResult {
         return referencedVariables;
     }
 
-    public Map<String, FieldTransformation> getFieldIdToTransformation() {
-        return transformations.getFieldIdToTransformation();
-    }
-
-    public Map<FieldTransformation, String> getTransformationToFieldId() {
-        return transformations.getTransformationToFieldId();
+    public TransformationState getTransformations() {
+        return transformations;
     }
 
     public Map<String, FragmentDefinition> getTransformedFragments() {
         return transformedFragments;
-    }
-
-    public Map<String, String> getTypeRenameMappings() {
-        return transformations.getTypeRenameMappings();
     }
 
     public Map<String, Object> getVariableValues() {

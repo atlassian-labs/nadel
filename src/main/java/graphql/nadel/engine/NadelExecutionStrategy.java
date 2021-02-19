@@ -159,9 +159,9 @@ public class NadelExecutionStrategy {
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
             resultNodes.add(transformedQueryCF.thenCompose(transformedQuery -> {
-                Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getFieldIdToTransformation();
-                Map<String, String> typeRenameMappings = transformedQuery.getTypeRenameMappings();
-                Map<FieldTransformation, String> transformationToFieldId = transformedQuery.getTransformationToFieldId();
+                Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getTransformations().getFieldIdToTransformation();
+                Map<String, String> typeRenameMappings = transformedQuery.getTransformations().getTypeRenameMappings();
+                Map<FieldTransformation, String> transformationToFieldId = transformedQuery.getTransformations().getTransformationToFieldId();
 
                 ExecutionContext newExecutionContext = buildServiceVariableOverrides(executionContext, transformedQuery.getVariableValues());
 
@@ -351,11 +351,12 @@ public class NadelExecutionStrategy {
     }
 
     private boolean skipTransformationProcessing(NadelContext nadelContext, QueryTransformationResult transformedQuery) {
+        TransformationState transformations = transformedQuery.getTransformations();
         return nadelContext.getNadelExecutionHints().isOptimizeOnNoTransformations() &&
-                transformedQuery.getFieldIdToTransformation().size() == 0 &&
-                transformedQuery.getTypeRenameMappings().size() == 0 &&
+                transformations.getFieldIdToTransformation().size() == 0 &&
+                transformations.getTypeRenameMappings().size() == 0 &&
                 !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
-                transformedQuery.getHintTypenames().size() == 0;
+                transformations.getHintTypenames().size() == 0;
     }
 }
 

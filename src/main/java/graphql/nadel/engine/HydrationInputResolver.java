@@ -352,10 +352,10 @@ public class HydrationInputResolver {
                                                                               ResultComplexityAggregator resultComplexityAggregator
     ) {
 
-        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getFieldIdToTransformation();
-        Map<FieldTransformation, String> transformationToFieldId = queryTransformationResult.getTransformationToFieldId();
+        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformations().getFieldIdToTransformation();
+        Map<FieldTransformation, String> transformationToFieldId = queryTransformationResult.getTransformations().getTransformationToFieldId();
 
-        Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
+        Map<String, String> typeRenameMappings = queryTransformationResult.getTransformations().getTypeRenameMappings();
         assertTrue(rootResultNode.getChildren().size() == 1, () -> "expected rootResultNode to only have 1 child.");
 
         ExecutionResultNode root = rootResultNode.getChildren().get(0);
@@ -539,10 +539,10 @@ public class HydrationInputResolver {
         }
 
         List<ExecutionResultNode> result = new ArrayList<>();
-        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getFieldIdToTransformation();
-        Map<FieldTransformation, String> transformationToFieldId = queryTransformationResult.getTransformationToFieldId();
+        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformations().getFieldIdToTransformation();
+        Map<FieldTransformation, String> transformationToFieldId = queryTransformationResult.getTransformations().getTransformationToFieldId();
 
-        Map<String, String> typeRenameMappings = queryTransformationResult.getTypeRenameMappings();
+        Map<String, String> typeRenameMappings = queryTransformationResult.getTransformations().getTypeRenameMappings();
 
         boolean first = true;
         for (int i = 0; i < hydrationInputNodes.size(); i++) {
