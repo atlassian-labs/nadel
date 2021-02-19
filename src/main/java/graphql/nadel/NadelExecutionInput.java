@@ -6,6 +6,7 @@ import graphql.execution.ExecutionId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static graphql.Assert.assertNotNull;
 import static graphql.GraphQLContext.newContext;
 import static java.util.Objects.requireNonNull;
 
@@ -112,7 +113,7 @@ public class NadelExecutionInput {
         }
 
         public Builder nadelExecutionHints(NadelExecutionHints nadelExecutionHints) {
-            this.nadelExecutionHints = nadelExecutionHints;
+            this.nadelExecutionHints = assertNotNull(nadelExecutionHints);
             return this;
         }
 
