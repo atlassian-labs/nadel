@@ -110,7 +110,7 @@ type ActivityUser {
 """
         def underlyingSchema = TestUtil.schema(schema)
 
-        def overallSchema = TestUtil.schemaFromNdsl("service activity { $schema }")
+        def overallSchema = TestUtil.schemaFromNdsl([activity: "service activity { $schema }"])
         def myActivitiesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("myActivities")
 
         def service1 = new Service("activity", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)

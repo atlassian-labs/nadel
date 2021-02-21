@@ -37,7 +37,8 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
 
     def "renamed and hydrated query using same underlying source"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -51,7 +52,7 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -102,7 +103,7 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
 
     def "renamed field with normal field using same source"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -121,7 +122,7 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -169,7 +170,7 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
 
     def "same source for 2 hydrations"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -188,7 +189,7 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
               }
 
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
           type Query {
             foo: Foo 
@@ -243,7 +244,7 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
 
     def "same source for 2 nested hydrations and a rename"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -263,7 +264,7 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
               }
 
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
           type Query {
             foo: Foo 

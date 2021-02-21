@@ -41,7 +41,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     def "underlying service returns null for non-nullable field"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues: '''
         service Issues {
             type Query {
                 issue: Issue
@@ -50,7 +50,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 id: ID!
             }
         }
-        ''')
+        '''])
         def issueSchema = TestUtil.schema("""
             type Query {
                 issue: Issue
@@ -89,7 +89,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     def "non-nullable field error bubbles up"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues: '''
         service Issues {
             type Query {
                 issue: Issue!
@@ -98,7 +98,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 id: ID!
             }
         }
-        ''')
+        '''])
         def issueSchema = TestUtil.schema("""
             type Query {
                 issue: Issue!
@@ -138,7 +138,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     def "non-nullable field error in lists bubbles up to the top"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues: '''
         service Issues {
             type Query {
                 issues: [Issue!]!
@@ -147,7 +147,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 id: ID!
             }
         }
-        ''')
+        '''])
         def issueSchema = TestUtil.schema("""
             type Query {
                 issues: [Issue!]!
@@ -185,7 +185,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     def "non-nullable field error in lists bubbles up"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues: '''
         service Issues {
             type Query {
                 issues: [[[Issue!]!]]
@@ -194,7 +194,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 id: ID!
             }
         }
-        ''')
+        '''])
         def issueSchema = TestUtil.schema("""
             type Query {
                 issues: [[[Issue!]!]]
@@ -233,7 +233,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     def "a lot of renames"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Boards: '''
         service Boards {
             type Query {
                 boardScope: BoardScope
@@ -253,7 +253,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 enabled: Boolean!
             }
         }
-        ''')
+        '''])
         def boardSchema = TestUtil.schema("""
             type Query {
                 boardScope: BoardScope
@@ -306,7 +306,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     def "fragment referenced twice from inside Query and inside another Fragment"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo: '''
         service Foo {
               type Query {
                 foo: Bar 
@@ -315,7 +315,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                  id: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Bar 
@@ -376,7 +376,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issues     : '''
         service Issues {
             type Query {
                 issues: [Issue]
@@ -386,6 +387,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 author(extraArg: String): User => hydrated from UserService.usersQuery.usersByIds(extraArg1: $argument.extraArg1, extraArg2: $argument.extraArg2, id: $source.authorId) object identified by id, batch size 2
             }
         }
+        ''',
+                UserService: '''
         service UserService {
             type Query {
                 usersQuery: UsersQuery
@@ -398,7 +401,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 name: String
             }
         }
-        ''')
+        '''])
         def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
 
         def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -473,7 +476,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issues     : '''
         service Issues {
             type Query {
                 issues: [Issue]
@@ -487,6 +491,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 name: String
             }
         }
+        ''',
+                UserService: '''
         service UserService {
             type Query {
                 usersQuery: UserQuery
@@ -499,7 +505,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 name: String
             }
         }
-        ''')
+        '''])
         def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
 
         def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -577,7 +583,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issues     : '''
         service Issues {
             type Query {
                 issues: [Issue]
@@ -587,6 +594,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 authors: [RenamedUser] => hydrated from UserService.usersQuery.usersByIds(id: $source.authors.authorId) object identified by id, batch size 2
             }
         }
+        ''',
+                UserService: ''' 
         service UserService {
             type Query {
                 usersQuery: RenamedUserQuery
@@ -599,7 +608,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 name: String
             }
         }
-        ''')
+        '''])
         def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
 
         def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -682,7 +691,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([
+                TestBoard: '''
         service TestBoard {
             type Query {
                 board(id: ID) : SoftwareBoard
@@ -698,7 +708,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 assignee: User => hydrated from Users.usersQuery.users(accountIds: $source.issue.assignee.accountId) object identified by accountId, batch size 3
             }
         }
-       
+        ''',
+                Users    : '''
         service Users {
             type Query {
                 usersQuery: UserQuery
@@ -710,7 +721,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 accountId: ID
             }
         }
-        ''')
+        '''])
 
         def query = '''{
                         board(id:1) {
@@ -786,7 +797,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         """)
 
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issue      : '''
         service Issue {
             type Query {
                 issue: Issue
@@ -795,7 +807,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 id: ID
             }
         }
-            
+        ''',
+                Association: '''
         service Association {
             type Query {
                 association(id: ID, filter: Filter): Association
@@ -814,7 +827,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             } 
        
         }
-        ''')
+        '''])
 
         def query = '''{
                         issue {
@@ -881,7 +894,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([IssueService: '''
         service IssueService {
            type DevOpsIssue => renamed from Issue {
                id: ID
@@ -900,7 +913,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                devOpsIssue(id: ID): DevOpsIssue => renamed from issue
            }
         }
-        ''')
+        '''])
 
         def fieldDef = overallSchema.getQueryType().getFieldDefinition("devOpsRelationships")
         def service1 = new Service("IssueService", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -984,7 +997,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Bar: '''
          service Bar {
              type Query {
                  bar: Bar 
@@ -995,7 +1008,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                  nestedBar: Bar => hydrated from Bar.barById(id: $source.barId)
              }
          }
-        ''')
+        '''])
 
         def fieldDef = overallSchema.getQueryType().getFieldDefinition("bar")
         def service1 = new Service("Bar", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -1089,7 +1102,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         """)
 
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issue      : '''
         service Issue {
             type Query {
                 issue: Issue
@@ -1098,7 +1112,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 id: ID
             }
         }
-            
+        ''',
+                Association: '''
         service Association {
             type Query {
                 association(id: ID, filter: Filter): RenamedAssociation
@@ -1117,7 +1132,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             } 
        
         }
-        ''')
+        '''])
 
         def query = '''query MyQuery($filter: Filter){
                         issue {
@@ -1203,7 +1218,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         """)
 
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issue      : '''
         service Issue {
             type Query {
                 synth: Synth
@@ -1215,7 +1231,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 id: ID
             }
         }
-
+        ''',
+                Association: '''
         service Association {
             type Query {
                 association(id: ID, filter: Filter): AssociationConnection
@@ -1242,7 +1259,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
             }
 
         }
-        ''')
+        '''])
 
         def query = '''{
                         synth {
@@ -1297,7 +1314,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     def "query with three nested hydrations and simple data and lots of renames"() {
 
-        def nsdl = TestUtil.schemaFromNdsl('''
+        def nsdl = TestUtil.schemaFromNdsl([
+                Foo: '''
          service Foo {
             type Query{
                 fooz: [Fooz]  => renamed from foos
@@ -1317,6 +1335,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 fooPhone: Int => renamed from phone
             }
          }
+         ''',
+                Bar: '''
          service Bar {
             type Query{
                 ibar: Bar => renamed from bar 
@@ -1336,7 +1356,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 barPhone: Int => renamed from phone
             }
          }
-        ''')
+        '''])
         def underlyingSchema1 = TestUtil.schema("""
             type Query{
                 foos: [Foo]  
@@ -1438,10 +1458,10 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
         then:
         response == [fooz: [
-                            [fooDetails:[fooName:"smith", fooAge:1, fooContact:[fooEmail:"test", fooPhone:1]],
-                             bar:[barName:"Bar 1", nestedBar:[barName:"NestedBarName1", nestedBar:[barName:"NestedBarName2", barDetails:[barAge:1, barContact:[barEmail:"test", barPhone:1]]]]]]
-                            ]
-                    ]
+                [fooDetails: [fooName: "smith", fooAge: 1, fooContact: [fooEmail: "test", fooPhone: 1]],
+                 bar       : [barName: "Bar 1", nestedBar: [barName: "NestedBarName1", nestedBar: [barName: "NestedBarName2", barDetails: [barAge: 1, barContact: [barEmail: "test", barPhone: 1]]]]]]
+        ]
+        ]
         resultComplexityAggregator.getTypeRenamesCount() == 5
         resultComplexityAggregator.getFieldRenamesCount() == 15
     }
@@ -1467,7 +1487,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues     : '''
         service Issues {
             type Query {
                 issues: [Issue]
@@ -1477,6 +1497,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) using indexes, batch size 5
             }
         }
+        ''',
+                                                     UserService: '''                
         service UserService {
             type Query {
                 usersByIds(ids: [ID]): [User]
@@ -1486,7 +1508,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 name: String
             }
         }
-        ''')
+        '''])
 
         def query = '{issues {id authors {name} }}'
         def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
@@ -1546,7 +1568,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issues     : '''
         service Issues {
             type Query {
                 issues: [Issue]
@@ -1556,6 +1579,9 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) using indexes, batch size 5
             }
         }
+                ''',
+                UserService: '''                
+
         service UserService {
             type Query {
                 usersByIds(ids: [ID]): [User]
@@ -1565,7 +1591,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 name: String
             }
         }
-        ''')
+        '''])
 
         def query = '{issues {id authors {name} }}'
         def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
@@ -1625,7 +1651,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues     : '''
         service Issues {
             type Query {
                 issues: [Issue]
@@ -1635,6 +1661,9 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds)  using indexes, batch size 5
             }
         }
+                ''',
+                                                     UserService: '''                
+
         service UserService {
             type Query {
                 usersByIds(ids: [ID]): [User]
@@ -1644,7 +1673,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 name: String
             }
         }
-        ''')
+        '''])
 
         def query = '{issues {id authors {name} }}'
         def expectedQuery1 = "query nadel_2_Issues {issues {id authorIds}}"
@@ -1700,7 +1729,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues     : '''
         service Issues {
             type Query {
                 issues: [Issue]
@@ -1710,6 +1739,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 authors: [User] => hydrated from UserService.usersByIssueIds(issueIds: $source.id) using indexes, batch size 5
             }
         }
+        ''',
+                                                     UserService: '''                
         service UserService {
             type Query {
                 usersByIssueIds(issueIds: [ID]): [[User]]
@@ -1719,7 +1750,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 name: String
             }
         }
-        ''')
+        '''])
 
         def query = '{issues {id authors {name} }}'
         def expectedQuery1 = "query nadel_2_Issues {issues {id id}}"
@@ -1779,7 +1810,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues     : '''
         service Issues {
             type Query {
                 issues: [Issue]
@@ -1789,6 +1820,8 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 authors: [User] => hydrated from UserService.usersByIssueIds(issueIds: $source.id) using indexes, batch size 5
             }
         }
+        ''',
+                                                     UserService: '''                
         service UserService {
             type Query {
                 echo: String
@@ -1798,7 +1831,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 name: String
             }
         }
-        ''')
+        '''])
 
         def query = '{issues {id authors {name} }}'
         def expectedQuery1 = "query nadel_2_Issues {issues {id id}}"
@@ -1901,7 +1934,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
     def "renamed list inside renamed list"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([IssuesService: '''
          service IssuesService {
             type Query {
                 renamedIssue: [RenamedIssue] => renamed from issue
@@ -1920,7 +1953,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                 renamedDate: String => renamed from date
             }
          }
-        ''')
+        '''])
         def boardSchema = TestUtil.schema("""
             type Query {
                 issue: [Issue]
@@ -2002,7 +2035,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([IssueService: '''
         service IssueService {
            type DevOpsIssue => renamed from Issue {
                id: ID
@@ -2023,7 +2056,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
                devOpsRelationships: DevOpsRelationshipConnection => renamed from relationships
            }
         }
-        ''')
+        '''])
 
         def fieldDef = overallSchema.getQueryType().getFieldDefinition("devOpsRelationships")
         def service1 = new Service("IssueService", issueSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -2092,13 +2125,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl([service1 : """
         service service1 {
             type Query {
                 foo: String
             }
         }
-        """)
+        """])
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -2149,13 +2182,13 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl([service1 :"""
         service service1 {
             type Query {
                 foo: String
             }
         }
-        """)
+        """])
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
