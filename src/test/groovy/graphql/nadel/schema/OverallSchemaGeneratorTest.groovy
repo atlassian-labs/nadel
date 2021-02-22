@@ -258,6 +258,9 @@ class OverallSchemaGeneratorTest extends Specification {
             it.name
         } == ['x', 'y', 'z']
 
+        // source location is generated
+        schema.getQueryType().getDefinition() != null
+        schema.getQueryType().getDefinition().getSourceLocation() != null
     }
 
     def "only extend Query works"() {

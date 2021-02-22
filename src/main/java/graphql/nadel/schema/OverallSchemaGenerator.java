@@ -7,6 +7,7 @@ import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.SchemaDefinition;
+import graphql.language.SourceLocation;
 import graphql.nadel.DefinitionRegistry;
 import graphql.nadel.Operation;
 import graphql.schema.GraphQLSchema;
@@ -54,7 +55,10 @@ public class OverallSchemaGenerator {
         fieldsMapByType.keySet().forEach(key -> {
             List<FieldDefinition> fields = fieldsMapByType.get(key);
             if (fields.size() > 0) {
-                overallRegistry.add(newObjectTypeDefinition().name(key.getDisplayName()).fieldDefinitions(fields).build());
+                overallRegistry.add(newObjectTypeDefinition()
+                        .name(key.getDisplayName())
+                        .sourceLocation(new SourceLocation(-1,-1,"generated"))
+                        .fieldDefinitions(fields).build());
             }
         });
 
