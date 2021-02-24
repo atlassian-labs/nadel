@@ -70,7 +70,7 @@ public class LargeRenamedResponseBenchmark {
                 }
             };
             String nsdl = readFromClasspath("renamed_large_response_benchmark_schema.nadel");
-            nadel = Nadel.newNadel().dsl(nsdl).serviceExecutionFactory(serviceExecutionFactory).build();
+            nadel = Nadel.newNadel().dsl("activity", nsdl).serviceExecutionFactory(serviceExecutionFactory).build();
             query = readFromClasspath("large_renamed_response_benchmark_query.graphql");
         }
 
