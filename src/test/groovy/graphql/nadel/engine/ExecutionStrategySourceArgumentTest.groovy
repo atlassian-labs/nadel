@@ -1,9 +1,13 @@
 package graphql.nadel.engine
 
-
 import graphql.GraphQLError
 import graphql.execution.nextgen.ExecutionHelper
-import graphql.nadel.*
+import graphql.nadel.DefinitionRegistry
+import graphql.nadel.Service
+import graphql.nadel.ServiceExecution
+import graphql.nadel.ServiceExecutionParameters
+import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.StrategyTestHelper
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
@@ -29,7 +33,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "single source that hydrates a list object for list type"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -43,7 +47,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -87,7 +91,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "list source that hydrates an object for list type"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -101,7 +105,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -152,7 +156,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "single source that hydrates an object for list type"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -165,7 +169,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -209,7 +213,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "single nested source with a null hydration input value"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -222,7 +226,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -268,7 +272,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "list source with a null value that hydrates a list of objects"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -281,7 +285,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -331,7 +335,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "list source that returns an overall null hydration value"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -344,7 +348,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -393,7 +397,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "one source value that hydrates a list of objects with nested id"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -411,7 +415,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                 name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -473,7 +477,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "a list source combined with a single source throws assert exception"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Songs:'''
         service Songs {
               type Query {
                 music: Music
@@ -487,7 +491,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 music: Music 
@@ -528,7 +532,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "a single source with a list source that throws an assert exception"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Songs:'''
         service Songs {
               type Query {
                 music: Music
@@ -542,7 +546,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 music: Music 
@@ -583,7 +587,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two single sources that return a list object"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -598,7 +602,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -646,7 +650,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two list sources that return a list object"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -660,7 +664,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -712,7 +716,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "2 list sources that hydrates a list but secondary source has null field"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -726,7 +730,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -776,7 +780,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "2 list sources that hydrates a list but secondary source has less values"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -790,7 +794,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -841,7 +845,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two list sources that return a single object for list type"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -855,7 +859,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -908,7 +912,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two single sources that hydrates a single object and has second source in query"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -924,7 +928,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -970,7 +974,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two single sources that hydrates a single object where secondary source is null"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -984,7 +988,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -1030,7 +1034,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "three single sources that hydrates a single object"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
               type Query {
                 issue: Issue
@@ -1044,7 +1048,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 issue: Issue 
@@ -1092,7 +1096,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two single sources that hydrates a single object with nested id field"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 bar: Bar
@@ -1106,7 +1110,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 bar: Bar 
@@ -1157,7 +1161,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two list sources that hydrates a list object with nested id fields"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 bar: Bar
@@ -1171,7 +1175,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 bar: Bar 
@@ -1222,7 +1226,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two single source values inside a list of objects with nested ids and a rename"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -1241,7 +1245,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -1302,7 +1306,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two single source values where primary source value is null"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -1321,7 +1325,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -1380,7 +1384,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two single source values where source path is uneven"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -1399,7 +1403,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -1462,7 +1466,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "three list source values with nested ids in the same parent path and a null hydration input value"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -1480,7 +1484,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -1546,7 +1550,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "two list source values with nested ids in the same parent path"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -1564,7 +1568,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                  name: String
               }
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
               type Query {
                 foo: Foo 
@@ -1624,7 +1628,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
 
     def "swapped primary source and secondary source for 2 hydrations"() {
         given:
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Foo:'''
         service Foo {
               type Query {
                 foo: Foo
@@ -1643,7 +1647,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
               }
 
         }
-        ''')
+        '''])
         def underlyingSchema = TestUtil.schema("""
           type Query {
             foo: Foo 
@@ -1722,7 +1726,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl('''
+        def overallSchema = TestUtil.schemaFromNdsl([Issues:'''
         service Issues {
             type Query {
                 issues: [Issue]
@@ -1732,6 +1736,8 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                 authors: [User] => hydrated from UserService.usersByIds(id: $source.authorIds, names: $source.names, related: $source.links) object identified by id
             }
         }
+        ''',
+                                                     UserService:'''
         service UserService {
             type Query {
                 usersByIds(id: [ID],names: [String], related: [String]): [User] default batch size 3
@@ -1740,7 +1746,7 @@ class ExecutionStrategySourceArgumentTest extends StrategyTestHelper {
                 id: ID
             }
         }
-        ''')
+        '''])
         def issuesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("issues")
 
         def service1 = new Service("Issues", issueSchema, service1Execution, serviceDefinition, definitionRegistry)

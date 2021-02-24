@@ -12,6 +12,7 @@ import graphql.language.StringValue
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
@@ -80,7 +81,8 @@ class ServiceExecutionHooksTest extends Specification {
 
         def nadelContext = NadelContext.newContext()
                 .artificialFieldsUUID("UUID")
-        .normalizedOverallQuery(normalizedQuery)
+                .normalizedOverallQuery(normalizedQuery)
+                .nadelExecutionHints(NadelExecutionHints.newHints().optimizeOnNoTransformations(true).build())
                 .build()
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(query)
@@ -99,13 +101,13 @@ class ServiceExecutionHooksTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl([service1:"""
         service service1 {
             type Query {
                 foo(id: String): String
             }
         }
-        """)
+        """])
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -173,13 +175,13 @@ class ServiceExecutionHooksTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl([service1:"""
         service service1 {
             type Query {
                 foo(id: String): String
             }
         }
-        """)
+        """])
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -232,13 +234,13 @@ class ServiceExecutionHooksTest extends Specification {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl("""
+        def overallSchema = TestUtil.schemaFromNdsl([service1:"""
         service service1 {
             type Query {
                 foo: String
             }
         }
-        """)
+        """])
         def fooFieldDefinition = overallSchema.getQueryType().getFieldDefinition("foo")
 
         def service = new Service("service", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)

@@ -6,6 +6,7 @@ import graphql.execution.nextgen.ExecutionHelper
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionResult
@@ -110,7 +111,7 @@ type ActivityUser {
 """
         def underlyingSchema = TestUtil.schema(schema)
 
-        def overallSchema = TestUtil.schemaFromNdsl("service activity { $schema }")
+        def overallSchema = TestUtil.schemaFromNdsl([activity: "service activity { $schema }"])
         def myActivitiesFieldDefinition = overallSchema.getQueryType().getFieldDefinition("myActivities")
 
         def service1 = new Service("activity", underlyingSchema, service1Execution, serviceDefinition, definitionRegistry)
@@ -199,8 +200,10 @@ type ActivityUser {
         def document = parseQuery(query)
         def normalizedQuery = createNormalizedQuery(overallSchema, document)
 
-        def nadelContext = NadelContext.newContext().artificialFieldsUUID("UUID")
+        def nadelContext = NadelContext.newContext()
+                .artificialFieldsUUID("UUID")
                 .normalizedOverallQuery(normalizedQuery)
+                .nadelExecutionHints(NadelExecutionHints.newHints().optimizeOnNoTransformations(true).build())
                 .build()
         def executionInput = ExecutionInput.newExecutionInput().query(query)
                 .context(nadelContext)
