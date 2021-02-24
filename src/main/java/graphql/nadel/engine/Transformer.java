@@ -21,7 +21,9 @@ import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.ExtendedFieldDefinition;
+import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.TypeMappingDefinition;
+import graphql.nadel.dsl.UnderlyingServiceHydration;
 import graphql.nadel.engine.transformation.ApplyEnvironment;
 import graphql.nadel.engine.transformation.ApplyResult;
 import graphql.nadel.engine.transformation.FieldRenameTransformation;
@@ -34,6 +36,7 @@ import graphql.nadel.hooks.NewVariableValue;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.nadel.schema.NadelDirectives;
 import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLCompositeType;
@@ -420,6 +423,17 @@ public class Transformer extends NodeVisitorStub {
 
 
     private FieldTransformation createTransformation(GraphQLFieldDefinition fieldDefinitionOverallSchema) {
+
+        UnderlyingServiceHydration hydration = NadelDirectives.createUnderlyingServiceHydration(fieldDefinitionOverallSchema);
+        if (hydration != null) {
+            return new HydrationTransformation(hydration);
+        }
+
+        FieldMappingDefinition mappingDefinition = NadelDirectives.createFieldMapping(fieldDefinitionOverallSchema);
+        if (mappingDefinition != null) {
+            return new FieldRenameTransformation(mappingDefinition);
+        }
+
         graphql.nadel.dsl.FieldTransformation definition = transformationDefinitionForField(fieldDefinitionOverallSchema.getDefinition());
 
         if (definition == null) {
