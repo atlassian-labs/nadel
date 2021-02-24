@@ -523,8 +523,7 @@ public class ServiceResultNodesToOverallResult {
 
         Map<AbstractNode, List<ExecutionResultNode>> treesByDefinition = new LinkedHashMap<>();
         Set<AbstractNode> definitions = transformationIdsByTransformationDefinition.keySet();
-        // skips 2 traversals if there is ONLY 1 rename transformation AND there is no tree without transformations
-        // otherwise continue as normal. This speeds up the execution in most cases of field renames
+
         boolean canSkipTraversal = canSkipTraversal(definitions, executionResultNode, transformationMetadata);
         if (canSkipTraversal) {
             treesByDefinition.put(definitions.iterator().next(), singletonList(executionResultNode));
@@ -551,6 +550,9 @@ public class ServiceResultNodesToOverallResult {
         return Tuples.of(treeWithout, treesByDefinition);
     }
 
+    /**
+     * Skips 2 sub-tree traversals if there is ONLY 1 rename transformation and 0 not-transformed sub-trees
+     */
     private boolean canSkipTraversal(Set<AbstractNode> definitions, ExecutionResultNode executionResultNode, TransformationMetadata transformationMetadata) {
         return definitions.size() == 1 &&
                 !(definitions.iterator().next() instanceof UnderlyingServiceHydration) &&
