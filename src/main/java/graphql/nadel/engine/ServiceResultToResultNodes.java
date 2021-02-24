@@ -126,7 +126,7 @@ public class ServiceResultToResultNodes {
                                                      List<String> fieldIds,
                                                      ElapsedTime elapsedTime) {
         Object fetchedValue = fetchValue(source, normalizedQueryField.getResultKey());
-        return analyseValue(context, fetchedValue, normalizedQueryField, normalizedQueryFromAst, executionPath, fieldIds, elapsedTime);
+        return analyzeValue(context, fetchedValue, normalizedQueryField, normalizedQueryFromAst, executionPath, fieldIds, elapsedTime);
     }
 
     private Object fetchValue(Object source, String key) {
@@ -138,7 +138,7 @@ public class ServiceResultToResultNodes {
         return map.get(key);
     }
 
-    private ExecutionResultNode analyseValue(ExecutionContext executionContext,
+    private ExecutionResultNode analyzeValue(ExecutionContext executionContext,
                                              Object fetchedValue,
                                              NormalizedQueryField normalizedQueryField,
                                              NormalizedQueryFromAst normalizedQueryFromAst,
