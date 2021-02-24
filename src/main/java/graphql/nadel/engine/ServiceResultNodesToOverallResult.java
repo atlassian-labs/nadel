@@ -333,7 +333,7 @@ public class ServiceResultNodesToOverallResult {
         }
 
         Map<AbstractNode, ? extends List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
-        TuplesTwo<ExecutionResultNode, Map<AbstractNode, List<ExecutionResultNode>>> splittedNodes = splitTreeByTransformationDefinition(node, directParentNode, fieldIdToTransformation, transformationToFieldId, transformationMetadata);
+        TuplesTwo<ExecutionResultNode, Map<AbstractNode, List<ExecutionResultNode>>> splittedNodes = splitTreeByTransformationDefinition(node, directParentNode, fieldIdToTransformation, transformationToFieldId, transformationMetadata, nadelContext);
         ExecutionResultNode notTransformedTree = splittedNodes.getT1();
         Map<AbstractNode, List<ExecutionResultNode>> nodesWithTransformedFields = splittedNodes.getT2();
 
@@ -500,7 +500,8 @@ public class ServiceResultNodesToOverallResult {
             ExecutionResultNode directParentNode,
             Map<String, FieldTransformation> fieldIdToTransformation,
             Map<FieldTransformation, String> transformationToFieldId,
-            TransformationMetadata transformationMetadata) {
+            TransformationMetadata transformationMetadata,
+            NadelContext nadelContext) {
         if (executionResultNode instanceof RootExecutionResultNode) {
             return Tuples.of(executionResultNode, emptyMap());
         }
@@ -524,7 +525,7 @@ public class ServiceResultNodesToOverallResult {
         Map<AbstractNode, List<ExecutionResultNode>> treesByDefinition = new LinkedHashMap<>();
         Set<AbstractNode> definitions = transformationIdsByTransformationDefinition.keySet();
 
-        boolean canSkipTraversal = canSkipTraversal(definitions, executionResultNode, transformationMetadata);
+        boolean canSkipTraversal = canSkipTraversal(definitions, executionResultNode, transformationMetadata, nadelContext);
         if (canSkipTraversal) {
             treesByDefinition.put(definitions.iterator().next(), singletonList(executionResultNode));
         } else {
@@ -553,8 +554,9 @@ public class ServiceResultNodesToOverallResult {
     /**
      * Skips 2 sub-tree traversals if there is ONLY 1 rename transformation and 0 not-transformed sub-trees
      */
-    private boolean canSkipTraversal(Set<AbstractNode> definitions, ExecutionResultNode executionResultNode, TransformationMetadata transformationMetadata) {
-        return definitions.size() == 1 &&
+    private boolean canSkipTraversal(Set<AbstractNode> definitions, ExecutionResultNode executionResultNode, TransformationMetadata transformationMetadata, NadelContext nadelContext) {
+        return nadelContext.getNadelExecutionHints().isOptimizeOnNoTransformations() &&
+                definitions.size() == 1 &&
                 !(definitions.iterator().next() instanceof UnderlyingServiceHydration) &&
                 getFieldIdsWithoutTransformationId(executionResultNode, transformationMetadata).size() == 0;
     }
