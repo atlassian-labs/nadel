@@ -601,7 +601,7 @@ public class HydrationInputResolver {
                 .objectType(inputNode.getObjectType())
                 .alias(inputNode.getAlias())
                 .fieldIds(inputNode.getFieldIds())
-                .executionPath(inputNode.getResultPath())
+                .resultPath(inputNode.getResultPath())
                 .fieldDefinition(inputNode.getFieldDefinition())
                 .completedValue(null)
                 .elapsedTime(elapsedTime)
