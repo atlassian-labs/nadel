@@ -254,6 +254,7 @@ public class ServiceResultNodesToOverallResult {
 
         UnapplyEnvironment unapplyEnvironment = new UnapplyEnvironment(
                 correctParentNode,
+                directParentNode,
                 isHydrationTransformation,
                 batched,
                 typeRenameMappings,
@@ -300,7 +301,7 @@ public class ServiceResultNodesToOverallResult {
         ResultPath executionPath = parentPath.segment(normalizedQueryField.getResultKey());
 
         LeafExecutionResultNode removedNode = LeafExecutionResultNode.newLeafExecutionResultNode()
-                .executionPath(executionPath)
+                .resultPath(executionPath)
                 .alias(mergedField.getSingleField().getAlias())
                 .fieldIds(NodeId.getIds(mergedField))
                 .objectType(normalizedQueryField.getObjectType())
@@ -333,7 +334,7 @@ public class ServiceResultNodesToOverallResult {
         }
 
         Map<AbstractNode, ? extends List<FieldTransformation>> transformationByDefinition = groupingBy(transformations, FieldTransformation::getDefinition);
-        TuplesTwo<ExecutionResultNode, Map<AbstractNode, List<ExecutionResultNode>>> splittedNodes = splitTreeByTransformationDefinition(node, directParentNode, fieldIdToTransformation, transformationToFieldId, transformationMetadata, nadelContext);
+        TuplesTwo<ExecutionResultNode, Map<AbstractNode, List<ExecutionResultNode>>> splittedNodes = splitTreeByTransformationDefinition(node, unapplyEnvironment.directParentNode, fieldIdToTransformation, transformationToFieldId, transformationMetadata, nadelContext);
         ExecutionResultNode notTransformedTree = splittedNodes.getT1();
         Map<AbstractNode, List<ExecutionResultNode>> nodesWithTransformedFields = splittedNodes.getT2();
 
@@ -376,7 +377,7 @@ public class ServiceResultNodesToOverallResult {
                     mappedNode,
                     null,
                     unapplyEnvironment.overallSchema,
-                    unapplyEnvironment.parentNode,
+                    unapplyEnvironment.correctParentNode,
                     unapplyEnvironment.isHydrationTransformation,
                     unapplyEnvironment.batched,
                     fieldIdToTransformation,
