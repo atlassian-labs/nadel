@@ -284,11 +284,20 @@ public class ServiceResultNodesToOverallResult {
             normalizedQueryField = getNormalizedQueryFieldForResultNode(resultNode, nadelContext.getNormalizedOverallQuery());
         }
         List<NormalizedFieldAndError> removedFields = transformationMetadata.getRemovedFieldsForParent(normalizedQueryField);
-        for (NormalizedFieldAndError normalizedFieldAndError : removedFields) {
-            MergedField mergedField = nadelContext.getNormalizedOverallQuery().getMergedFieldByNormalizedFields().get(normalizedFieldAndError.getNormalizedField());
-            LeafExecutionResultNode newChild = createRemovedFieldResult(resultNode, mergedField, normalizedFieldAndError.getNormalizedField(), normalizedFieldAndError.getError());
-            resultNode = resultNode.transform(b -> b.addChild(newChild));
+
+        if (!removedFields.isEmpty()) {
+            boolean isFirstNode = isFirstNode(resultNode);
+
+            for (NormalizedFieldAndError normalizedFieldAndError : removedFields) {
+                NormalizedQueryField field = normalizedFieldAndError.getNormalizedField();
+                GraphQLError error = isFirstNode ? normalizedFieldAndError.getError() : null;
+
+                MergedField mergedField = nadelContext.getNormalizedOverallQuery().getMergedFieldByNormalizedFields().get(field);
+                LeafExecutionResultNode newChild = createRemovedFieldResult(resultNode, mergedField, field, error);
+                resultNode = resultNode.transform(b -> b.addChild(newChild));
+            }
         }
+
         return resultNode;
     }
 
@@ -306,7 +315,7 @@ public class ServiceResultNodesToOverallResult {
                 .objectType(normalizedQueryField.getObjectType())
                 .fieldDefinition(normalizedQueryField.getFieldDefinition())
                 .completedValue(null)
-                .errors(singletonList(error))
+                .errors(error != null ? singletonList(error) : emptyList())
                 .build();
         return removedNode;
     }
@@ -681,5 +690,33 @@ public class ServiceResultNodesToOverallResult {
             HandleResult handleResult = new HandleResult(executionResultNode, emptyList(), TraversalControl.CONTINUE);
             return handleResult;
         }
+    }
+
+    /**
+     * @see #isFirstNode(ResultPath)
+     */
+    private boolean isFirstNode(ObjectExecutionResultNode node) {
+        ResultPath path = node.getResultPath();
+        return isFirstNode(path);
+    }
+
+    /**
+     * Returns whether in the entire {@link ResultPath} all the indices are 0 i.e. for this specific path, it
+     * represents the first Node.
+     *
+     * @param resultPath the path to the node in question
+     * @return whether the node at the given path is the first node
+     */
+    private boolean isFirstNode(ResultPath resultPath) {
+        ResultPath segment = resultPath;
+        while (segment != null) {
+            if (segment.isListSegment() && segment.getSegmentIndex() != 0) {
+                return false;
+            }
+
+            segment = segment.getParent();
+        }
+
+        return true;
     }
 }
