@@ -552,7 +552,6 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
 
     ServiceExecutionHooks createServiceExecutionHooksWithFieldRemoval(List<String> fieldsToRemove) {
-
         return new ServiceExecutionHooks() {
             @Override
             CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
@@ -689,16 +688,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
         """)
         def query = "{issues {id restricted}}"
 
-        def hooks = new ServiceExecutionHooks() {
-            @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
-                if (normalizedField.getName() == "restricted" && normalizedField.getParent().getName() == "issues") {
-                    //temporary GraphQLError ->  need to implement a field permissions denied error
-                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
-                }
-                return CompletableFuture.completedFuture(Optional.empty())
-            }
-        }
+        def hooks = createServiceExecutionHooksWithFieldRemoval(["restricted"])
 
         def expectedQuery1 = "query nadel_2_Issues {issues {id}}"
         def response1 = [issues: [[id: "test-1",], [id: "test-2",], [id: "test-3",]]]
