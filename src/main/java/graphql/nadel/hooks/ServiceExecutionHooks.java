@@ -2,6 +2,7 @@ package graphql.nadel.hooks;
 
 import graphql.GraphQLError;
 import graphql.PublicSpi;
+import graphql.execution.ExecutionContext;
 import graphql.nadel.engine.HooksVisitArgumentValueEnvironment;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.RootExecutionResultNode;
@@ -34,10 +35,15 @@ public interface ServiceExecutionHooks {
      * When a field is forbidden, the field is set to null and a GraphQL error is inserted into the overall response.
      *
      * @param normalizedField     the field in question
+     * @param executionContext    for context into the query execution
      * @param userSuppliedContext the context supplied to Nadel in {@link graphql.nadel.NadelExecutionInput}
      * @return an error if the field should be omitted, empty optional otherwise
      */
-    default CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, Object userSuppliedContext) {
+    default CompletableFuture<Optional<GraphQLError>> isFieldForbidden(
+            NormalizedQueryField normalizedField,
+            ExecutionContext executionContext,
+            Object userSuppliedContext
+    ) {
         return CompletableFuture.completedFuture(Optional.empty());
     }
 
