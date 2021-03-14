@@ -4,6 +4,7 @@ import graphql.Internal;
 import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.MergedField;
+import graphql.language.Argument;
 import graphql.language.AstNodeAdapter;
 import graphql.language.Document;
 import graphql.language.Field;
@@ -121,7 +122,8 @@ public class OverallQueryTransformer {
                 service,
                 serviceContext,
                 removedFieldMap,
-                transformations
+                transformations,
+                topLevelField.getArguments()
         );
         Field finalTopLevelField = topLevelField;
         return topLevelFieldSelectionSetCF.thenCompose(topLevelFieldSelectionSet -> {
@@ -222,7 +224,8 @@ public class OverallQueryTransformer {
                         service,
                         serviceContext,
                         removedFieldMap,
-                        transformations
+                        transformations,
+                        Collections.emptyList()
                 );
                 return newFieldCF.thenApply(newField -> {
                     // Case happens when the high level field is removed
@@ -398,7 +401,7 @@ public class OverallQueryTransformer {
                 executionContext.getGraphQLSchema(),
                 null);
 
-        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, executionContext, nadelContext);
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, executionContext, nadelContext, Collections.emptyList());
 
         return asyncIsFieldForbidden.getForbiddenFields(fragmentDefinitionWithoutTypeInfo).thenApply(forbiddenFields -> {
 
@@ -465,13 +468,14 @@ public class OverallQueryTransformer {
                                                                 Service service,
                                                                 Object serviceContext,
                                                                 TransformationMetadata removedFieldMap,
-                                                                TransformationState transformations) {
+                                                                TransformationState transformations,
+                                                                List<Argument> hydrationRootArguments) {
         OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
                 nodeWithoutTypeInfo,
                 executionContext.getGraphQLSchema(),
                 parentTypeOverall);
 
-        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, executionContext, nadelContext);
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, executionContext, nadelContext, hydrationRootArguments);
 
         return asyncIsFieldForbidden.getForbiddenFields(nodeWithoutTypeInfo).thenApply(forbiddenFields -> {
             Transformer transformer = new Transformer(

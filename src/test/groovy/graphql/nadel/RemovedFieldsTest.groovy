@@ -3,6 +3,7 @@ package graphql.nadel
 import graphql.GraphQLError
 import graphql.execution.AbortExecutionException
 import graphql.execution.ExecutionContext
+import graphql.language.Argument
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.normalized.NormalizedQueryField
 import graphql.nadel.result.ResultComplexityAggregator
@@ -555,7 +556,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
     ServiceExecutionHooks createServiceExecutionHooksWithFieldRemoval(List<String> fieldsToRemove) {
         return new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, ExecutionContext executionContext, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, List<Argument> hydrationRootArguments, ExecutionContext executionContext, Object userSuppliedContext) {
                 if (fieldsToRemove.contains(normalizedField.getName())) {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
@@ -629,7 +630,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, ExecutionContext executionContext, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, List<Argument> hydrationRootArguments, ExecutionContext executionContext, Object userSuppliedContext) {
                 if (normalizedField.getName() == "restricted" && normalizedField.getParent().getName() == "issue") {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
@@ -807,7 +808,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, ExecutionContext executionContext, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, List<Argument> hydrationRootArguments, ExecutionContext executionContext, Object userSuppliedContext) {
                 if (normalizedField.getName() == "restricted" && normalizedField.getParent().getParent().getName() == "issue") {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
