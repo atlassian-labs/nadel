@@ -56,6 +56,10 @@ public class DefinitionRegistry {
         return getOpsDefinitions(Operation.MUTATION);
     }
 
+    public List<ObjectTypeDefinition> getSubscriptionType() {
+        return getOpsDefinitions(Operation.SUBSCRIPTION);
+    }
+
     private List<ObjectTypeDefinition> getOpsDefinitions(Operation operation) {
         String type = getOperationTypeName(operation);
         return getDefinition(type, ObjectTypeDefinition.class);

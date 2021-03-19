@@ -164,6 +164,18 @@ public class Execution {
                     }
                 }
             }
+
+            List<ObjectTypeDefinition> subscriptionTypeDefinitions = service.getDefinitionRegistry().getSubscriptionType();
+            if (subscriptionTypeDefinitions != null) {
+                for (ObjectTypeDefinition subscriptionTypeDefinition : subscriptionTypeDefinitions) {
+                    GraphQLObjectType schemaSubscriptionType = overallSchema.getSubscriptionType();
+                    for (FieldDefinition fieldDefinition : subscriptionTypeDefinition.getFieldDefinitions()) {
+                        GraphQLFieldDefinition graphQLFieldDefinition = schemaSubscriptionType.getFieldDefinition(fieldDefinition.getName());
+                        FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
+                        fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+                    }
+                }
+            }
         }
         return new FieldInfos(fieldInfoByDefinition);
     }
