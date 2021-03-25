@@ -14,6 +14,7 @@ import graphql.execution.instrumentation.InstrumentationState;
 import graphql.execution.preparsed.NoOpPreparsedDocumentProvider;
 import graphql.execution.preparsed.PreparsedDocumentEntry;
 import graphql.execution.preparsed.PreparsedDocumentProvider;
+import graphql.introspection.IntrospectionWithDirectivesSupport;
 import graphql.language.Document;
 import graphql.nadel.dsl.CommonDefinition;
 import graphql.nadel.dsl.ServiceDefinition;
@@ -153,6 +154,7 @@ public class Nadel {
                 .map(Service::getDefinitionRegistry)
                 .collect(toList());
         GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory);
+        schema = new IntrospectionWithDirectivesSupport().apply(schema);
 
         GraphQLSchema newSchema = schemaTransformationHook.apply(schema);
 
