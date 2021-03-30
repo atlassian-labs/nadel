@@ -55,6 +55,10 @@ class NadelE2ETest extends Specification {
             type Mutation {
                 hello: String  
             }
+            type Subscription {
+                onWorldUpdate: World
+                onAnotherUpdate: World
+            }
          }
         ''']
 
@@ -68,6 +72,10 @@ class NadelE2ETest extends Specification {
             }
             type Mutation {
                 hello: String
+            }
+            type Subscription {
+                onWorldUpdate: World
+                onAnotherUpdate: World
             }
         ''')
 
@@ -439,6 +447,33 @@ class NadelE2ETest extends Specification {
         1 * delegatedExecution.execute(_) >> { args ->
             ServiceExecutionParameters params = args[0]
             assert printAstCompact(params.query) == "mutation nadel_2_MyService_M {hello}"
+            completedFuture(new ServiceExecutionResult(data))
+        }
+        result.join().data == data
+    }
+
+    def 'subscription can be executed'() {
+
+        def query = '''
+        subscription M{ onWorldUpdate {id} }
+        '''
+
+        given:
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .build()
+        def data = [onWorldUpdate: null]
+        when:
+        def result = nadel.execute(nadelExecutionInput)
+
+        then:
+        1 * delegatedExecution.execute(_) >> { args ->
+            ServiceExecutionParameters params = args[0]
+            assert printAstCompact(params.query) == "subscription nadel_2_MyService_M {onWorldUpdate {id}}"
             completedFuture(new ServiceExecutionResult(data))
         }
         result.join().data == data
