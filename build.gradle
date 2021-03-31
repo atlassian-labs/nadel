@@ -1,17 +1,8 @@
 import java.text.SimpleDateFormat
 
-buildscript {
-    repositories {
-        jcenter()
-    }
-
-    dependencies {
-        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:latest.release"
-    }
-}
-
 plugins {
     id "com.jfrog.artifactory" version '4.16.1'
+    id "biz.aQute.bnd.builder" version "5.3.0"
 }
 
 apply plugin: 'java'
@@ -20,7 +11,6 @@ apply plugin: 'maven-publish'
 apply plugin: 'com.jfrog.artifactory'
 apply plugin: 'signing'
 apply plugin: 'antlr'
-apply plugin: 'osgi'
 
 def getDevelopmentVersion() {
     def output = new StringBuilder()
@@ -50,15 +40,16 @@ group = 'com.atlassian'
 
 repositories {
     mavenLocal()
-    maven { url "http://dl.bintray.com/andimarek/graphql-java" }
     mavenCentral()
-    jcenter()
 }
 
 apply plugin: 'groovy'
 
 jar {
     from "LICENSE"
+    manifest {
+        attributes('Automatic-Module-Name': 'nadel')
+    }
 }
 
 task extractGraphqlGrammar(type: Copy) {
@@ -256,6 +247,6 @@ tasks.withType(PublishToMavenRepository) {
 }
 
 task myWrapper(type: Wrapper) {
-    gradleVersion = '5.6.4'
+    gradleVersion = '6.8.3'
     distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
 }
