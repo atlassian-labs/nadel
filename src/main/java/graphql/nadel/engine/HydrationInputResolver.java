@@ -214,6 +214,7 @@ public class HydrationInputResolver {
         } else {
             topLevelFieldDefinition = ((GraphQLObjectType) service.getUnderlyingSchema().getQueryType().getFieldDefinition(syntheticFieldName).getType()).getFieldDefinition(topLevelFieldName);
         }
+        assertNotNull(topLevelFieldDefinition, () -> String.format("field '%s' definition not found", topLevelFieldName));
 
         return isList(unwrapNonNull(topLevelFieldDefinition.getType()));
     }

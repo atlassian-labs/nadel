@@ -301,7 +301,10 @@ class NadelE2ETest extends Specification {
 
                 completedFuture(hydrationResult1_2)
 
-        result.errors[0].message == "hydration field does not exist. Please check the hydration field in the .nadel schema"
+//        TODO syntax - how to intercept the error during e2e test
+        def e = thrown CompletionException
+        e.cause instanceof AssertException
+        e.cause.message == "field 'doesNotExist' definition not found"
     }
 
     def "query with three nested hydrations"() {
