@@ -12,8 +12,6 @@ jobs:
       ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
       SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
       SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-      MAVEN_CENTRAL_USER: ${{ secrets.MAVEN_CENTRAL_USER }}
-      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v1
