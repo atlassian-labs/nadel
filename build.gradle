@@ -227,7 +227,7 @@ artifactory {
             password = System.env.ARTIFACTORY_API_KEY
         }
         defaults {
-            publications('maven')
+            publications('graphqlJava')
             publishIvy = false
             // This needs to be "false", otherwise, the artifactory plugin will try to publish
             // a build info file to Artifactory and fail because we don't have the permissions to do that.
