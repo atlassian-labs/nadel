@@ -1,14 +1,16 @@
 import java.text.SimpleDateFormat
 
 plugins {
-    id "com.jfrog.bintray" version "1.8.4"
+    id "com.jfrog.artifactory" version '4.16.1'
+    id "biz.aQute.bnd.builder" version "5.3.0"
 }
 
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
+apply plugin: 'signing'
 apply plugin: 'antlr'
-apply plugin: 'osgi'
 
 def getDevelopmentVersion() {
     def output = new StringBuilder()
@@ -33,19 +35,21 @@ def graphqlJavaVersion = '2021-03-22T20-02-28-3a701a0f'
 
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
-group = 'com.graphql-java'
+group = 'com.atlassian'
 
 
 repositories {
     mavenLocal()
-    maven { url "http://dl.bintray.com/andimarek/graphql-java" }
     mavenCentral()
 }
 
 apply plugin: 'groovy'
 
 jar {
-    from "LICENSE.md"
+    from "LICENSE"
+    manifest {
+        attributes('Automatic-Module-Name': 'nadel')
+    }
 }
 
 task extractGraphqlGrammar(type: Copy) {
@@ -157,19 +161,7 @@ allprojects {
 }
 
 publishing {
-//    repositories {
-//        maven {
-//            name = "GitHubPackages"
-//            url = uri("https://maven.pkg.github.com/graphql-java/nadel")
-//            credentials {
-//                username = 'andimarek'
-//                password = System.getenv("GITHUB_TOKEN")
-//            }
-//        }
-//    }
-
     publications {
-
         graphqlJava(MavenPublication) {
             version version
             from components.java
@@ -180,6 +172,9 @@ publishing {
             artifact javadocJar {
                 classifier "javadoc"
             }
+            groupId project.group
+            artifactId 'nadel'
+            version project.version
             pom.withXml {
                 // The ANTLR-related code below--introdcued in `1ac98bf`--addresses an issue with
                 // the Gradle ANTLR plugin. `1ac98bf` can be reverted and this comment removed once
@@ -196,15 +191,15 @@ publishing {
                     description 'GraphqL Java'
                     url "https://github.com/graphql-java/nadel"
                     scm {
-                        url "https://github.com/graphql-java/nadel"
-                        connection "https://github.com/graphql-java/nadel"
-                        developerConnection "https://github.com/graphql-java/nadel"
+                        url "https://github.com/atlassian-labs/nadel"
+                        connection "https://github.com/atlassian-labs/nadel"
+                        developerConnection "https://github.com/atlassian-labs/nadel"
                     }
                     licenses {
                         license {
-                            name 'MIT'
-                            url 'https://github.com/graphql-java/nadel/blob/master/LICENSE.md'
-                            distribution 'repo'
+                            name "Apache License 2.0"
+                            url "http://www.apache.org/licenses/"
+                            distribution "repo"
                         }
                     }
                     developers {
@@ -213,41 +208,37 @@ publishing {
                             name 'Andreas Marek'
                         }
                     }
+                    scm {
+                        url "https://github.com/atlassian-labs/nadel"
+                    }
                 }
             }
         }
     }
 }
 
+artifactory {
+    publish {
+        contextUrl = 'https://packages.atlassian.com/'
 
-bintray {
-    user = System.env.BINTRAY_USER ?: project["bintray.user"]
-    key = System.env.BINTRAY_API_KEY ?: project["bintray.key"]
-    publications = ['graphqlJava']
-    publish = true
-    pkg {
-        repo = 'nadel'
-        name = 'nadel'
-        desc = 'GraphQL stitching DSL'
-        licenses = ['MIT']
-        vcsUrl = 'https://github.com/graphql-java/nadel'
-
-        version {
-            name = project.version
-            desc = project.description
-            released = new Date()
-            vcsTag = 'v' + project.version
-            gpg {
-                sign = true
-            }
-            mavenCentralSync {
-                sync = true
-                user = System.env.MAVEN_CENTRAL_USER
-                password = System.env.MAVEN_CENTRAL_PASSWORD
-                close = '1'
-            }
+        repository {
+            repoKey = 'maven-central'
+            username = System.env.ARTIFACTORY_USERNAME
+            password = System.env.ARTIFACTORY_API_KEY
+        }
+        defaults {
+            publications('maven')
+            publishIvy = false
+            // This needs to be "false", otherwise, the artifactory plugin will try to publish
+            // a build info file to Artifactory and fail because we don't have the permissions to do that.
+            publishBuildInfo = false
         }
     }
+}
+
+signing {
+    useInMemoryPgpKeys("$System.env.SIGNING_KEY", "$System.env.SIGNING_PASSWORD")
+    sign publishing.publications.graphqlJava
 }
 
 // all publish tasks depend on the build task
@@ -255,11 +246,7 @@ tasks.withType(PublishToMavenRepository) {
     dependsOn build
 }
 
-
 task myWrapper(type: Wrapper) {
-    gradleVersion = '4.10.2'
-    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
+    gradleVersion = '6.8.3'
+    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
 }
-
-
-
