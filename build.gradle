@@ -208,9 +208,6 @@ publishing {
                             name 'Andreas Marek'
                         }
                     }
-                    scm {
-                        url "https://github.com/atlassian-labs/nadel"
-                    }
                 }
             }
         }
