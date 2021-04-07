@@ -22,23 +22,25 @@ class RemovedFieldsTest extends StrategyTestHelper {
     def commentSchema = TestUtil.schema(IssuesCommentsUsersHarness.COMMENTS_SDL)
     def userServiceSchema = TestUtil.schema(IssuesCommentsUsersHarness.USERS_SDL)
 
-    def "field is removed from hydrated field"() {
+    def "MVB: REPLICATE THE BUG"() {
         given:
         def query = """
         {
             commentById(id:"C1") {
                 author {
                     displayName
+                }
+                author {
                     userId
                 }
             }
         }
         """
 
-        def expectedQuery1 = """query nadel_2_CommentService {commentById(id:"C1") {authorId}}"""
-        def expectedQuery2 = """query nadel_2_UserService {userById(id:"fred") {displayName}}"""
+        def expectedQuery1 = """query nadel_2_CommentService {commentById(id:"C1") {authorId authorId}}"""
+        def expectedQuery2 = """query nadel_2_UserService {userById(id:"fred") {userId displayName}}"""
         Map response1 = [commentById: [authorId: "fred"]]
-        Map response2 = [userById: [displayName: "Display name of Fred"]]
+        Map response2 = [userById: [displayName: "Display name of Fred", userId: "fred"]]
 
         Map response
         List<GraphQLError> errors
@@ -55,13 +57,12 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 response1,
                 expectedQuery2,
                 response2,
-                createServiceExecutionHooksWithFieldRemoval(["userId"]),
+                createServiceExecutionHooksWithFieldRemoval(["lol"]),
                 Mock(ResultComplexityAggregator)
         )
         then:
-        response == [commentById: [author: [displayName: "Display name of Fred", userId: null]]]
-        errors.size() == 1
-        errors[0].message.contains("removed field")
+        response == [commentById: [author: [displayName: "Display name of Fred"]]]
+        errors.size() == 0
     }
 
     def "all fields are removed from hydrated field"() {
