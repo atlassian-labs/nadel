@@ -58,6 +58,8 @@ public enum Operation {
                 return assertNotNull(schema.getQueryType());
             case MUTATION:
                 return assertNotNull(schema.getMutationType());
+            case SUBSCRIPTION:
+                return assertNotNull(schema.getSubscriptionType());
             default:
                 return assertShouldNeverHappen();
         }
