@@ -285,26 +285,26 @@ class NadelE2ETest extends Specification {
         ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
         ServiceExecutionResult hydrationResult1_1 = new ServiceExecutionResult(hydrationDataBatch1)
         ServiceExecutionResult hydrationResult1_2 = new ServiceExecutionResult(hydrationDataBatch2)
-        when:
-        def result = nadel.execute(nadelExecutionInput)
 
-        then:
-        1 * serviceExecution1.execute(_) >>
+        serviceExecution1.execute(_) >>
 
                 completedFuture(topLevelResult)
 
-        1 * serviceExecution2.execute(_) >>
+        serviceExecution2.execute(_) >>
 
                 completedFuture(hydrationResult1_1)
 
-        1 * serviceExecution2.execute(_) >>
+        serviceExecution2.execute(_) >>
 
                 completedFuture(hydrationResult1_2)
 
-//        TODO syntax - how to intercept the error during e2e test
-        def e = thrown CompletionException
-        e.cause instanceof AssertException
-        e.cause.message == "field 'doesNotExist' definition not found"
+        when:
+        def result = nadel.execute(nadelExecutionInput).get()
+        println(result)
+
+        then:
+        def e = thrown(Exception)
+        e.cause.message == "hydration field 'doesNotExist' does not exist in underlying schema in service 'Bar'"
     }
 
     def "query with three nested hydrations"() {
