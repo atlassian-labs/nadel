@@ -300,7 +300,6 @@ class NadelE2ETest extends Specification {
 
         when:
         def result = nadel.execute(nadelExecutionInput).get()
-        println(result)
 
         then:
         def e = thrown(Exception)
