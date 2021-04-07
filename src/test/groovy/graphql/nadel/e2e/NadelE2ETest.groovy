@@ -220,6 +220,100 @@ class NadelE2ETest extends Specification {
         er.extensions.containsKey("resultComplexity")
     }
 
+    def "test batch hydration null pointer when hydrated query field does not exist"() {
+
+        def nsdl = [
+                Foo: '''
+         service Foo {
+            type Query{
+                foos: [Foo]  
+            } 
+            type Foo {
+                name: String
+                bar: Bar => hydrated from Bar.doesNotExist(id: $source.barId) object identified by barId, batch size 2
+            }
+         }
+         ''',
+                Bar: '''
+         service Bar {
+            type Query{
+                bar: Bar 
+            } 
+            type Bar {
+                barId: ID
+                name: String 
+            }
+         }
+        ''']
+        def underlyingSchema1 = typeDefinitions('''
+            type Query{
+                foos: [Foo]  
+            } 
+            type Foo {
+                name: String
+                barId: ID
+            }
+        ''')
+        def underlyingSchema2 = typeDefinitions('''
+            type Query{
+                bar: Bar 
+                barsById(id: [ID]): [Bar]
+            } 
+            type Bar {
+                barId: ID
+                name: String
+                nestedBarId: ID
+            }
+        ''')
+
+        def query = '''
+                { foos { bar { name } } }
+        '''
+        ServiceExecution serviceExecution1 = Mock(ServiceExecution)
+        ServiceExecution serviceExecution2 = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                Foo: new Tuple2(serviceExecution1, underlyingSchema1),
+                Bar: new Tuple2(serviceExecution2, underlyingSchema2)]
+        )
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        def topLevelData = [foos: [[barId: "bar1"], [barId: "bar2"], [barId: "bar3"]]]
+        def hydrationDataBatch1 = [barsById: [[object_identifier__UUID: "bar1", name: "Bar 1"], [object_identifier__UUID: "bar2", name: "Bar 2"]]]
+        def hydrationDataBatch2 = [barsById: [[object_identifier__UUID: "bar3", name: "Bar 3"]]]
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(topLevelData)
+        ServiceExecutionResult hydrationResult1_1 = new ServiceExecutionResult(hydrationDataBatch1)
+        ServiceExecutionResult hydrationResult1_2 = new ServiceExecutionResult(hydrationDataBatch2)
+
+        serviceExecution1.execute(_) >>
+
+                completedFuture(topLevelResult)
+
+        serviceExecution2.execute(_) >>
+
+                completedFuture(hydrationResult1_1)
+
+        serviceExecution2.execute(_) >>
+
+                completedFuture(hydrationResult1_2)
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).get()
+
+        then:
+        def e = thrown(Exception)
+        e.cause.message == "hydration field 'doesNotExist' does not exist in underlying schema in service 'Bar'"
+    }
+
     def "query with three nested hydrations"() {
 
         def nsdl = [
