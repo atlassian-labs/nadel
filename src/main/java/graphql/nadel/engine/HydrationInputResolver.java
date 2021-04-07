@@ -214,6 +214,7 @@ public class HydrationInputResolver {
         } else {
             topLevelFieldDefinition = ((GraphQLObjectType) service.getUnderlyingSchema().getQueryType().getFieldDefinition(syntheticFieldName).getType()).getFieldDefinition(topLevelFieldName);
         }
+        assertNotNull(topLevelFieldDefinition, () -> String.format("hydration field '%s' does not exist in underlying schema in service '%s'", topLevelFieldName, service.getName()));
 
         return isList(unwrapNonNull(topLevelFieldDefinition.getType()));
     }
