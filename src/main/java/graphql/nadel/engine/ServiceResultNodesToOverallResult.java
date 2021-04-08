@@ -358,8 +358,7 @@ public class ServiceResultNodesToOverallResult {
             List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
             List<ExecutionResultNode> transformedNodes = tuple.getT3();
 
-//            FieldTransformation transformation = transformationsForDefinition.get(0);
-            FieldTransformation transformation = fieldIdToTransformation.get(transformedNodes.get(0).getFieldIds().get(0));
+            FieldTransformation transformation = tuple.getT2();
 
             boolean isHydrationTransformation = transformation instanceof HydrationTransformation;
             ExecutionResultNode resultNode = transformedNodes.get(0);
@@ -542,9 +541,10 @@ public class ServiceResultNodesToOverallResult {
         Set<AbstractNode> definitions = transformationIdsByTransformationDefinition.keySet();
 
         ArrayList<TuplesThree<AbstractNode, FieldTransformation, List<ExecutionResultNode>>> tuples = new ArrayList<>();
-        boolean canSkipTraversal = canSkipTraversal(definitions, executionResultNode, transformationMetadata, nadelContext);
+        boolean canSkipTraversal = canSkipTraversal(definitions, transformationIdsByTransformationDefinition, executionResultNode, transformationMetadata, nadelContext);
         if (canSkipTraversal) {
-            tuples.add(Tuples.of(definitions.iterator().next(), singletonList(executionResultNode)));
+            FieldTransformation fieldTransformation = transformationIdToTransformation.get(transformationIdsByTransformationDefinition.keySet().iterator().next());
+            tuples.add(Tuples.of(definitions.iterator().next(), fieldTransformation, singletonList(executionResultNode)));
         } else {
             for (AbstractNode definition : definitions) {
                 Set<String> transformationIds = transformationIdsByTransformationDefinition.get(definition);
@@ -572,9 +572,14 @@ public class ServiceResultNodesToOverallResult {
     /**
      * Skips 2 sub-tree traversals if there is ONLY 1 rename transformation and 0 not-transformed sub-trees
      */
-    private boolean canSkipTraversal(Set<AbstractNode> definitions, ExecutionResultNode executionResultNode, TransformationMetadata transformationMetadata, NadelContext nadelContext) {
+    private boolean canSkipTraversal(Set<AbstractNode> definitions,
+                                     Map<AbstractNode, Set<String>> transformationIdsByTransformationDefinition,
+                                     ExecutionResultNode executionResultNode,
+                                     TransformationMetadata transformationMetadata,
+                                     NadelContext nadelContext) {
         return nadelContext.getNadelExecutionHints().isOptimizeOnNoTransformations() &&
                 definitions.size() == 1 &&
+                transformationIdsByTransformationDefinition.values().size() == 1 &&
                 !(definitions.iterator().next() instanceof UnderlyingServiceHydration) &&
                 getFieldIdsWithoutTransformationId(executionResultNode, transformationMetadata).size() == 0;
     }
