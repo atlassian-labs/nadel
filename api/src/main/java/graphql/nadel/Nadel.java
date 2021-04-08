@@ -24,6 +24,7 @@ import graphql.schema.idl.WiringFactory;
 
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 
+import static graphql.nadel.Nadel.Builder.defaultEngineFactory;
 import static graphql.nadel.util.Util.buildServiceRegistry;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -161,6 +163,13 @@ public class Nadel {
         return engine.execute(nadelExecutionInput);
     }
 
+    /**
+     * @return a builder of Nadel objects
+     */
+    public static Nadel.Builder newNadel() {
+        return new Nadel.Builder().engineFactory(defaultEngineFactory);
+    }
+
     public static class Builder {
         private final Map<String, Reader> serviceNDSLs = new LinkedHashMap<>();
         private ServiceExecutionFactory serviceExecutionFactory;
@@ -174,7 +183,27 @@ public class Nadel {
         private WiringFactory overallWiringFactory = new NeverWiringFactory();
         private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
         private SchemaTransformationHook schemaTransformationHook = SchemaTransformationHook.IDENTITY;
+
+        static NadelExecutionEngineFactory defaultEngineFactory;
         private NadelExecutionEngineFactory engineFactory;
+
+        static {
+            try {
+                Class<?> klass = Class.forName("graphql.nadel.NadelEngine");
+                Constructor<?> declaredConstructor = klass.getDeclaredConstructor(Nadel.class);
+                declaredConstructor.setAccessible(true);
+                defaultEngineFactory = (nadel) -> {
+                    try {
+                        return (NadelExecutionEngine) declaredConstructor.newInstance(nadel);
+                    } catch (ReflectiveOperationException e) {
+                        throw new RuntimeException("Unable to create Nadel engine", e);
+                    }
+                };
+            } catch (ClassNotFoundException ignored) {
+            } catch (ReflectiveOperationException e) {
+                throw new RuntimeException("Unable to create default Nadel engine factory", e);
+            }
+        }
 
         public Builder dsl(String serviceName, Reader nsdl) {
             requireNonNull(nsdl);
