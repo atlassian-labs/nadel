@@ -355,7 +355,7 @@ public class ServiceResultNodesToOverallResult {
         for (TuplesThree<AbstractNode, FieldTransformation, List<ExecutionResultNode>> tuple : tuples) {
             AbstractNode definition = tuple.getT1();
 
-            List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
+//            List<FieldTransformation> transformationsForDefinition = transformationByDefinition.get(definition);
             List<ExecutionResultNode> transformedNodes = tuple.getT3();
 
             FieldTransformation transformation = tuple.getT2();
@@ -366,7 +366,7 @@ public class ServiceResultNodesToOverallResult {
             if (isHydrationTransformation) {
                 resultNode = mergeHydrationNodes(transformedNodes, resultNode);
             }
-            UnapplyResult unapplyResult = transformation.unapplyResultNode(resultNode, transformationsForDefinition, unapplyEnvironment);
+            UnapplyResult unapplyResult = transformation.unapplyResultNode(resultNode, singletonList(transformation), unapplyEnvironment);
 
             if (isHydrationTransformation) {
                 // For every list node, it's children will also have a renamed type so the type rename count is decremented based on

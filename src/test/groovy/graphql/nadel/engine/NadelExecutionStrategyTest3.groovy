@@ -433,5 +433,78 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
         response == overallResponse
     }
 
+    def "MVB"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl([Foo: '''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 issue: Issue => hydrated from Foo.issue(issueId: $source.issueId)
+              }
+              type Issue {
+                id: ID
+                name: String
+                desc: String
+              }
+
+        }
+        '''])
+        def underlyingSchema = TestUtil.schema("""
+          type Query {
+            foo: Foo 
+            issue(issueId: ID): Issue
+          } 
+          type Foo {
+            issueId: ID
+          }
+          
+          type Issue {
+            id: ID
+            name: String
+            desc: String
+          }
+    """)
+        def query = """
+                    { 
+                        foo {
+                            issue {
+                                name
+                            } 
+                            issue {
+                                desc
+                            }
+                        }
+                    }"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {issueId issueId}}"
+        def response1 = [foo: [issueId: "ISSUE-1"]]
+        def expectedQuery2 = "query nadel_2_Foo {issue(issueId:\"ISSUE-1\") {name}}"
+        def response2 = [issue: [name: "I AM A NAME"]]
+        def expectedQuery3 = "query nadel_2_Foo {issue(issueId:\"ISSUE-1\") {desc}}"
+        def response3 = [issue: [desc: "I AM A DESC"]]
+
+        def overallResponse = [foo: [issue: [name: "I AM A NAME", desc: "I AM A DESC"]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2, expectedQuery3],
+                [response1, response2, response3],
+                3,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
 
 }
