@@ -2,6 +2,8 @@ package graphql.nadel;
 
 import graphql.PublicApi;
 import graphql.execution.ExecutionId;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -13,20 +15,30 @@ import static java.util.Objects.requireNonNull;
 @PublicApi
 public class NadelExecutionInput {
 
+    @NotNull
     private final String query;
+    @Nullable
     private final String operationName;
+    @Nullable
     private final Object context;
+    @NotNull
     private final Map<String, Object> variables;
+    @Nullable
     private final String artificialFieldsUUID;
+    @Nullable
     private final ExecutionId executionId;
+    @NotNull
     private final NadelExecutionHints nadelExecutionHints;
 
-    private NadelExecutionInput(String query,
-                                String operationName,
-                                Object context, Map<String, Object> variables,
-                                String artificialFieldsUUID,
-                                ExecutionId executionId,
-                                NadelExecutionHints nadelExecutionHints) {
+    private NadelExecutionInput(
+            String query,
+            @Nullable String operationName,
+            @Nullable Object context,
+            Map<String, Object> variables,
+            @Nullable String artificialFieldsUUID,
+            @Nullable ExecutionId executionId,
+            @NotNull NadelExecutionHints nadelExecutionHints
+    ) {
         this.query = requireNonNull(query);
         this.operationName = operationName;
         this.context = context;
@@ -40,32 +52,40 @@ public class NadelExecutionInput {
         return new Builder();
     }
 
+    @NotNull
     public String getQuery() {
         return query;
     }
 
+    @Nullable
     public String getArtificialFieldsUUID() {
         return artificialFieldsUUID;
     }
 
+    @Nullable
     public String getOperationName() {
         return operationName;
     }
 
+    @Nullable
     public Object getContext() {
         return context;
     }
 
+    @NotNull
     public Map<String, Object> getVariables() {
         return new LinkedHashMap<>(variables);
     }
+
     /**
      * @return Id that will be/was used to execute this operation.
      */
+    @Nullable
     public ExecutionId getExecutionId() {
         return executionId;
     }
 
+    @NotNull
     public NadelExecutionHints getNadelExecutionHints() {
         return nadelExecutionHints;
     }
@@ -120,6 +140,5 @@ public class NadelExecutionInput {
         public NadelExecutionInput build() {
             return new NadelExecutionInput(query, operationName, context, variables, artificialFieldsUUID, executionId, nadelExecutionHints);
         }
-
     }
 }

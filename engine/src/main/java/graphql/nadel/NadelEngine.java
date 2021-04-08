@@ -25,6 +25,7 @@ import graphql.parser.InvalidSyntaxException;
 import graphql.schema.GraphQLSchema;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +65,7 @@ public class NadelEngine implements NadelExecutionEngine {
         this.introspectionRunner = nadel.introspectionRunner;
     }
 
+    @NotNull
     @Override
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
         long startTime = System.currentTimeMillis();

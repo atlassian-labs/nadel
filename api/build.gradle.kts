@@ -67,9 +67,9 @@ dependencies {
     "graphqlJavaSource"("com.graphql-java:graphql-java:$graphqlJavaVersion:sources") {
         isTransitive = false
     }
-    "implementation"("com.graphql-java:graphql-java:$graphqlJavaVersion")
-    "implementation"("org.antlr:antlr4-runtime:4.8")
-    "implementation"("org.slf4j:slf4j-api:$slf4jVersion")
+    api("com.graphql-java:graphql-java:$graphqlJavaVersion")
+    implementation("org.antlr:antlr4-runtime:4.8")
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
     "antlr"("org.antlr:antlr4:4.8")
 }
 
@@ -85,7 +85,5 @@ tasks.generateGrammarSource {
 
 // compileJava.source file("build/generated-src"), sourceSets.main.java
 tasks.compileJava {
-    source(file("build/generated-src").also {
-        println(it.absolutePath)
-    })
+    source(file("build/generated-src"))
 }
