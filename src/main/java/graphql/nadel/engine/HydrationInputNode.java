@@ -1,6 +1,7 @@
 package graphql.nadel.engine;
 
 import graphql.Internal;
+import graphql.language.SelectionSet;
 import graphql.nadel.engine.transformation.HydrationTransformation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.result.ExecutionResultNode;
@@ -15,12 +16,14 @@ public class HydrationInputNode extends LeafExecutionResultNode {
 
     private final HydrationTransformation hydrationTransformation;
     private final NormalizedQueryField normalizedField;
+    private final SelectionSet selectionSet;
 
 
     private HydrationInputNode(Builder builder) {
         super(builder, null);
         this.hydrationTransformation = builder.hydrationTransformation;
         this.normalizedField = builder.normalizedField;
+        this.selectionSet = builder.selectionSet;
         assertNotNull(getFieldDefinition());
     }
 
@@ -36,6 +39,9 @@ public class HydrationInputNode extends LeafExecutionResultNode {
         return normalizedField;
     }
 
+    public SelectionSet getSelectionSet() {
+        return selectionSet;
+    }
 
     @Override
     public <T extends BuilderBase<T>> HydrationInputNode transform(Consumer<T> builderConsumer) {
@@ -49,6 +55,7 @@ public class HydrationInputNode extends LeafExecutionResultNode {
         private HydrationTransformation hydrationTransformation;
         private NormalizedQueryField normalizedField;
         private ExecutionResultNode parent;
+        private SelectionSet selectionSet;
 
         public Builder() {
 
@@ -58,6 +65,7 @@ public class HydrationInputNode extends LeafExecutionResultNode {
             super(existing);
             this.hydrationTransformation = existing.getHydrationTransformation();
             this.normalizedField = existing.getNormalizedField();
+            this.selectionSet = existing.selectionSet;
         }
 
         public Builder hydrationTransformation(HydrationTransformation hydrationTransformation) {
@@ -70,10 +78,16 @@ public class HydrationInputNode extends LeafExecutionResultNode {
             return this;
         }
 
+        public Builder selectionSet(SelectionSet selectionSet) {
+            this.selectionSet = selectionSet;
+            return this;
+        }
+
         @Override
         public HydrationInputNode build() {
             return new HydrationInputNode(this);
         }
+
     }
 
 
