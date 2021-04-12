@@ -433,5 +433,225 @@ class NadelExecutionStrategyTest3 extends StrategyTestHelper {
         response == overallResponse
     }
 
+    def "repeated hydrated fields on the same level"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl([Foo: '''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 issue: Issue => hydrated from Foo.issue(issueId: $source.issueId)
+              }
+              type Issue {
+                id: ID
+                name: String
+                desc: String
+              }
+
+        }
+        '''])
+        def underlyingSchema = TestUtil.schema("""
+          type Query {
+            foo: Foo 
+            issue(issueId: ID): Issue
+          } 
+          type Foo {
+            issueId: ID
+          }
+          
+          type Issue {
+            id: ID
+            name: String
+            desc: String
+          }
+    """)
+        def query = """
+                    { 
+                        foo {
+                            issue {
+                                name
+                            } 
+                            issue {
+                                desc
+                            }
+                        }
+                    }"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {issueId issueId}}"
+        def response1 = [foo: [issueId: "ISSUE-1"]]
+        def expectedQuery2 = "query nadel_2_Foo {issue(issueId:\"ISSUE-1\") {name desc}}"
+        def response2 = [issue: [name: "I AM A NAME", desc: "I AM A DESC"]]
+
+        def overallResponse = [foo: [issue: [name: "I AM A NAME", desc: "I AM A DESC"]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "repeated hydrated fields on the same level. overlapping fields in the query"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl([Foo: '''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 issue: Issue => hydrated from Foo.issue(issueId: $source.issueId)
+              }
+              type Issue {
+                id: ID
+                name: String
+                desc: String
+                summary: String
+              }
+
+        }
+        '''])
+        def underlyingSchema = TestUtil.schema("""
+          type Query {
+            foo: Foo 
+            issue(issueId: ID): Issue
+          } 
+          type Foo {
+            issueId: ID
+          }
+          
+          type Issue {
+            id: ID
+            name: String
+            desc: String
+            summary: String
+          }
+    """)
+        def query = """
+                    { 
+                        foo {
+                            issue {
+                                name
+                                summary
+                            } 
+                            issue {
+                                desc
+                                summary
+                            }
+                        }
+                    }"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {issueId issueId}}"
+        def response1 = [foo: [issueId: "ISSUE-1"]]
+        def expectedQuery2 = "query nadel_2_Foo {issue(issueId:\"ISSUE-1\") {name summary desc summary}}"
+        def response2 = [issue: [name: "I AM A NAME", desc: "I AM A DESC", summary: "I AM A SUMMARY"]]
+
+        def overallResponse = [foo: [issue: [name: "I AM A NAME", desc: "I AM A DESC", summary: "I AM A SUMMARY"]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "repeated hydrated fields on the same level when using batch hydration"() {
+        given:
+        def overallSchema = TestUtil.schemaFromNdsl([Foo: '''
+        service Foo {
+              type Query {
+                foo: Foo
+              } 
+              type Foo {
+                 issue: Issue => hydrated from Foo.issues(issueIds: $source.issueId)
+              }
+              type Issue {
+                id: ID
+                name: String
+                desc: String
+              }
+
+        }
+        '''])
+        def underlyingSchema = TestUtil.schema("""
+          type Query {
+            foo: Foo 
+            issues(issueIds: [ID!]): [Issue!]
+          } 
+          type Foo {
+            issueId: ID
+          }
+          
+          type Issue {
+            id: ID
+            name: String
+            desc: String
+          }
+    """)
+        def query = """
+                    { 
+                        foo {
+                            issue {
+                                name
+                            } 
+                            issue {
+                                desc
+                            }
+                        }
+                    }"""
+
+        def expectedQuery1 = "query nadel_2_Foo {foo {issueId issueId}}"
+        def response1 = [foo: [issueId: "ISSUE-1"]]
+        def expectedQuery2 = "query nadel_2_Foo {issues(issueIds:[\"ISSUE-1\"]) {name desc object_identifier__UUID:id}}"
+        def response2 = [issues: [[name: "I AM A NAME", desc: "I AM A DESC", object_identifier__UUID: "ISSUE-1"]]]
+
+        def overallResponse = [foo: [issue: [name: "I AM A NAME", desc: "I AM A DESC"]]]
+
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1ServiceWithNHydration(
+                overallSchema,
+                "Foo",
+                underlyingSchema,
+                query,
+                ["foo"],
+                [expectedQuery1, expectedQuery2],
+                [response1, response2],
+                2,
+                resultComplexityAggregator
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
 
 }
