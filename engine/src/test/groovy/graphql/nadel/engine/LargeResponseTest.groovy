@@ -6,12 +6,12 @@ import graphql.execution.nextgen.ExecutionHelper
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.engine.NadelContext
-import graphql.nadel.engine.NadelExecutionHints
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.result.ResultComplexityAggregator

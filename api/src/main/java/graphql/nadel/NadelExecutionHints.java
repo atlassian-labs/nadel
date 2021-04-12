@@ -1,4 +1,4 @@
-package graphql.nadel.engine;
+package graphql.nadel;
 
 import graphql.PublicApi;
 

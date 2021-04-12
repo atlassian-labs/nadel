@@ -6,7 +6,6 @@ import graphql.execution.ExecutionId
 import graphql.execution.nextgen.ExecutionHelper
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.engine.NadelContext
-import graphql.nadel.engine.NadelExecutionHints
 import graphql.nadel.engine.NadelExecutionStrategy
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation

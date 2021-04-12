@@ -1,6 +1,7 @@
 package graphql.nadel.engine
 
 import graphql.language.AstPrinter
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.result.LeafExecutionResultNode
 import graphql.schema.GraphQLInterfaceType
