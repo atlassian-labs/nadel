@@ -60,9 +60,9 @@ subprojects {
                 artifact javadocJar {
                     classifier "javadoc"
                 }
-                groupId project.group
+                groupId rootProject.group
                 artifactId project.name
-                version project.version
+                version rootProject.version
                 pom.withXml {
                     // The ANTLR-related code below--introdcued in `1ac98bf`--addresses an issue with
                     // the Gradle ANTLR plugin. `1ac98bf` can be reverted and this comment removed once

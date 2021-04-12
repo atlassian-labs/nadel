@@ -50,5 +50,4 @@ public interface HooksVisitArgumentValueEnvironment {
     TraverserContext<Node> getTraverserContext();
 
     Map<String, Object> getVariables();
-
 }

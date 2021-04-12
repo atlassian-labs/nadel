@@ -1,8 +1,9 @@
-package graphql.nadel;
+package graphql.nadel.engine;
 
 import graphql.Internal;
 import graphql.language.Document;
 import graphql.language.OperationDefinition;
+import graphql.nadel.NadelExecutionHints;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
 
 import java.util.Optional;
