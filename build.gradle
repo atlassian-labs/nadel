@@ -38,6 +38,13 @@ gradle.buildFinished { buildResult ->
     println "*******************************"
 }
 
+allprojects {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
 subprojects {
     apply plugin: "java"
     apply plugin: "java-library"
