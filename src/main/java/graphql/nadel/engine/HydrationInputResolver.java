@@ -246,7 +246,7 @@ public class HydrationInputResolver {
         Service service = getService(underlyingServiceHydration);
 
         Field topLevelField = createSingleHydrationTopLevelField(hydrationInputNode,
-                originalField.getSelectionSet(),
+                hydrationInputNode.getSelectionSet(),
                 underlyingServiceHydration,
                 topLevelFieldName,
                 underlyingServiceHydration.getSyntheticField(),
@@ -446,7 +446,7 @@ public class HydrationInputResolver {
         List<Argument> allArguments = getBatchArguments(hydrationInputs, originalField, underlyingServiceHydration);
 
         Field topLevelField = newField(topLevelFieldName)
-                .selectionSet(originalField.getSelectionSet())
+                .selectionSet(hydrationInputs.get(0).getSelectionSet())
                 .additionalData(NodeId.ID, UUID.randomUUID().toString())
                 .arguments(allArguments)
                 .build();

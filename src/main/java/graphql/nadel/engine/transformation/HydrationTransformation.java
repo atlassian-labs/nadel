@@ -5,6 +5,7 @@ import graphql.execution.ResultPath;
 import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
+import graphql.language.SelectionSet;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
@@ -166,11 +167,18 @@ public class HydrationTransformation extends FieldTransformation {
         ResultPath executionPath = pathMapper.mapPath(leafNode.getResultPath(), leafNode.getResultKey(), environment);
         leafNode = leafNode.transform(builder -> builder.resultPath(executionPath));
 
+        SelectionSet.Builder selectionSetBuilder = SelectionSet.newSelectionSet();
+        for (FieldTransformation fieldTransformation : allTransformations) {
+            fieldTransformation.getOriginalField().getSelectionSet().getSelections().forEach(selectionSetBuilder::selection);
+        }
+        SelectionSet selectionSet = selectionSetBuilder.build();
+
         if (leafNode.isNullValue()) {
             return leafNode;
         } else {
             return newHydrationInputNode()
                     .hydrationTransformation(this)
+                    .selectionSet(selectionSet)
                     .alias(leafNode.getAlias())
                     .fieldIds(leafNode.getFieldIds())
                     .objectType(leafNode.getObjectType())

@@ -602,7 +602,7 @@ public class ServiceResultNodesToOverallResult {
                                                                   node, Set<String> transformationIds, TransformationMetadata transformationMetadata) {
         return node.getFieldIds().stream().filter(fieldId -> {
             List<String> transformationIdsForField = FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId());
-            return transformationIdsForField.containsAll(transformationIds);
+            return transformationIdsForField.stream().anyMatch(transformationIds::contains);
         }).collect(Collectors.toList());
     }
 
