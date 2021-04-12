@@ -1,2 +1,2 @@
 rootProject.name = "nadel"
-include("api", "engine", "engine-nextgen")
+include("nadel", "api", "engine", "engine-nextgen")

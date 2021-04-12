@@ -1,182 +1,42 @@
-import java.text.SimpleDateFormat
-
 plugins {
-    id "com.jfrog.artifactory" version '4.16.1'
-    id "biz.aQute.bnd.builder" version "5.3.0"
+    id "com.jfrog.artifactory"
+    id "biz.aQute.bnd.builder"
 }
 
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.artifactory'
-apply plugin: 'signing'
-
-def getDevelopmentVersion() {
-    def output = new StringBuilder()
-    def error = new StringBuilder()
-    def gitShortHash = 'git rev-parse --short HEAD'.execute()
-    gitShortHash.waitForProcessOutput(output, error)
-    def gitHash = output.toString().trim()
-    if (gitHash.isEmpty()) {
-        println "git hash is empty: error: ${error.toString()}"
-        throw new IllegalStateException("git hash could not be determined")
-    }
-    def version = new SimpleDateFormat('yyyy-MM-dd\'T\'HH-mm-ss').format(new Date()) + "-" + gitHash
-    println "created development version: $version"
-    version
-}
+apply plugin: "java"
+apply plugin: "maven"
+apply plugin: "maven-publish"
+apply plugin: "com.jfrog.artifactory"
+apply plugin: "signing"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-def slf4jVersion = '1.7.25'
-def graphqlJavaVersion = '2021-03-22T20-02-28-3a701a0f'
+def slf4jVersion = "1.7.25"
+def graphqlJavaVersion = "2021-03-22T20-02-28-3a701a0f"
 
-def releaseVersion = System.env.RELEASE_VERSION
-version = releaseVersion ? releaseVersion : getDevelopmentVersion()
-group = 'com.atlassian'
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
-apply plugin: 'groovy'
+apply plugin: "groovy"
 
 jar {
     from "LICENSE"
     manifest {
-        attributes('Automatic-Module-Name': 'nadel')
+        attributes("Automatic-Module-Name": "nadel")
     }
 }
 
 dependencies {
-    compile project(':api')
-    compile 'com.graphql-java:graphql-java:' + graphqlJavaVersion
-    compile 'org.slf4j:slf4j-api:' + slf4jVersion
-    testCompile group: 'junit', name: 'junit', version: '4.11'
-    testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
-    testCompile 'org.codehaus.groovy:groovy-all:2.5.1'
-    testCompile 'cglib:cglib-nodep:3.1'
-    testCompile 'org.objenesis:objenesis:2.1'
-    testCompile 'com.google.code.gson:gson:2.8.0'
-    testCompile 'org.slf4j:slf4j-simple:' + slf4jVersion
-    testCompile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.6'
-    testCompile 'org.openjdk.jmh:jmh-core:1.21'
-    testCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
-    testCompile 'com.google.guava:guava:28.0-jre'
-}
-
-task sourcesJar(type: Jar) {
-    dependsOn classes
-    classifier 'sources'
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-javadoc {
-    options.encoding = 'UTF-8'
-}
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
-}
-
-allprojects {
-    tasks.withType(Javadoc) {
-        exclude('**/antlr/**')
-    }
-}
-
-publishing {
-    publications {
-        graphqlJava(MavenPublication) {
-            version version
-            from components.java
-
-            artifact sourcesJar {
-                classifier "sources"
-            }
-            artifact javadocJar {
-                classifier "javadoc"
-            }
-            groupId project.group
-            artifactId 'nadel'
-            version project.version
-            pom.withXml {
-                // The ANTLR-related code below--introdcued in `1ac98bf`--addresses an issue with
-                // the Gradle ANTLR plugin. `1ac98bf` can be reverted and this comment removed once
-                // that issue is fixed and Gradle upgraded. See https://goo.gl/L92KiF and https://goo.gl/FY0PVR.
-                Node pomNode = asNode()
-                pomNode.dependencies.'*'.findAll() {
-                    it.artifactId.text() == 'antlr4'
-                }.each() {
-                    it.parent().remove(it)
-                }
-                pomNode.children().last() + {
-                    resolveStrategy = Closure.DELEGATE_FIRST
-                    name 'nadel'
-                    description 'GraphqL Java'
-                    url "https://github.com/graphql-java/nadel"
-                    scm {
-                        url "https://github.com/atlassian-labs/nadel"
-                        connection "https://github.com/atlassian-labs/nadel"
-                        developerConnection "https://github.com/atlassian-labs/nadel"
-                    }
-                    licenses {
-                        license {
-                            name "Apache License 2.0"
-                            url "http://www.apache.org/licenses/"
-                            distribution "repo"
-                        }
-                    }
-                    developers {
-                        developer {
-                            id 'andimarek'
-                            name 'Andreas Marek'
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-artifactory {
-    publish {
-        contextUrl = 'https://packages.atlassian.com/'
-
-        repository {
-            repoKey = 'maven-central'
-            username = System.env.ARTIFACTORY_USERNAME
-            password = System.env.ARTIFACTORY_API_KEY
-        }
-        defaults {
-            publications('graphqlJava')
-            publishIvy = false
-            // This needs to be "false", otherwise, the artifactory plugin will try to publish
-            // a build info file to Artifactory and fail because we don't have the permissions to do that.
-            publishBuildInfo = false
-        }
-    }
-}
-
-signing {
-    useInMemoryPgpKeys("$System.env.SIGNING_KEY", "$System.env.SIGNING_PASSWORD")
-    sign publishing.publications.graphqlJava
-}
-
-// all publish tasks depend on the build task
-tasks.withType(PublishToMavenRepository) {
-    dependsOn build
-}
-
-task myWrapper(type: Wrapper) {
-    gradleVersion = '6.8.3'
-    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
+    implementation project(path: ":api", configuration: "default")
+    implementation "com.graphql-java:graphql-java:" + graphqlJavaVersion
+    implementation "org.slf4j:slf4j-api:" + slf4jVersion
+    testImplementation group: "junit", name: "junit", version: "4.11"
+    testImplementation "org.spockframework:spock-core:1.0-groovy-2.4"
+    testImplementation "org.codehaus.groovy:groovy-all:2.5.1"
+    testImplementation "cglib:cglib-nodep:3.1"
+    testImplementation "org.objenesis:objenesis:2.1"
+    testImplementation "com.google.code.gson:gson:2.8.0"
+    testImplementation "org.slf4j:slf4j-simple:" + slf4jVersion
+    testImplementation group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.9.6"
+    testImplementation "org.openjdk.jmh:jmh-core:1.21"
+    testImplementation "org.openjdk.jmh:jmh-generator-annprocess:1.21"
+    testImplementation "com.google.guava:guava:28.0-jre"
 }
