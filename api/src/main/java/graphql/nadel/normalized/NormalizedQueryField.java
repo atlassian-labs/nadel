@@ -1,6 +1,5 @@
 package graphql.nadel.normalized;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.language.Argument;
 import graphql.schema.GraphQLFieldDefinition;
@@ -12,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static graphql.Assert.assertNotNull;
+import static graphql.schema.GraphQLTypeUtil.simplePrint;
 import static java.util.Collections.singletonList;
 
 @Internal
@@ -32,7 +33,7 @@ public class NormalizedQueryField {
         this.alias = builder.alias;
         this.arguments = builder.arguments;
         this.objectType = builder.objectType;
-        this.fieldDefinition = Assert.assertNotNull(builder.fieldDefinition);
+        this.fieldDefinition = assertNotNull(builder.fieldDefinition);
         this.children = builder.children;
         this.level = builder.level;
         this.parent = builder.parent;
@@ -112,7 +113,7 @@ public class NormalizedQueryField {
         if (getAlias() != null) {
             result.append(getAlias()).append(": ");
         }
-        return result + objectType.getName() + "." + fieldDefinition.getName() + ": " + GraphQLTypeUtil.simplePrint(fieldDefinition.getType()) +
+        return result + objectType.getName() + "." + fieldDefinition.getName() + ": " + simplePrint(fieldDefinition.getType()) +
                 " (conditional: " + this.isConditional + ")";
     }
 

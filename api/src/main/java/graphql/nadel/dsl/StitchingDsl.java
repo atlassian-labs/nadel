@@ -1,6 +1,5 @@
 package graphql.nadel.dsl;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
@@ -19,9 +18,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static graphql.Assert.assertNotNull;
+
 @Internal
 public class StitchingDsl extends AbstractNode<StitchingDsl> {
-
 
     private final ServiceDefinition serviceDefinition;
     private final CommonDefinition commonDefinition;
@@ -36,7 +36,6 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
         this.commonDefinition = commonDefinition;
         this.sdlDefinitions = definitions;
     }
-
 
     public ServiceDefinition getServiceDefinition() {
         return serviceDefinition;
@@ -61,7 +60,6 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
         }
         nodes.addAll(sdlDefinitions);
         return nodes;
-
     }
 
     @Override
@@ -73,7 +71,6 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     public StitchingDsl withNewChildren(NodeChildrenContainer newChildren) {
         return null;
     }
-
 
     @Override
     public boolean isEqualTo(Node node) {
@@ -89,7 +86,6 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
         return null;
     }
-
 
     public static Builder newStitchingDSL() {
         return new Builder();
@@ -121,7 +117,7 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
         }
 
         public Builder additionalData(Map<String, String> additionalData) {
-            this.additionalData = Assert.assertNotNull(additionalData);
+            this.additionalData = assertNotNull(additionalData);
             return this;
         }
 
@@ -155,7 +151,6 @@ public class StitchingDsl extends AbstractNode<StitchingDsl> {
             this.definitions.addAll(definitions);
             return this;
         }
-
 
         public StitchingDsl build() {
             return new StitchingDsl(serviceDefinition, commonDefinition, definitions, sourceLocation, comments, ignoredChars, additionalData);

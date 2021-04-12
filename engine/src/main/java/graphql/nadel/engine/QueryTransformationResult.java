@@ -5,7 +5,6 @@ import graphql.execution.MergedField;
 import graphql.language.Document;
 import graphql.language.FragmentDefinition;
 import graphql.language.OperationDefinition;
-import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.TransformationMetadata;
 
 import java.util.List;

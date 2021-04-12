@@ -1,8 +1,7 @@
 package graphql.nadel.testutils
 
-
-import graphql.execution.ResultPath
 import graphql.execution.ExecutionStepInfo
+import graphql.execution.ResultPath
 import graphql.execution.nextgen.result.ResolvedValue
 import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.result.LeafExecutionResultNode

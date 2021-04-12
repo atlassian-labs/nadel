@@ -13,7 +13,6 @@ import graphql.language.NullValue;
 import graphql.language.SelectionSet;
 import graphql.language.StringValue;
 import graphql.language.Value;
-import graphql.nadel.engine.NadelContext;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.ExtendedFieldDefinition;

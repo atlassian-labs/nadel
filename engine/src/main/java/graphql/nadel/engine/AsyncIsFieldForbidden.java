@@ -4,7 +4,6 @@ import graphql.GraphQLError;
 import graphql.execution.ExecutionContext;
 import graphql.language.Field;
 import graphql.language.Node;
-import graphql.nadel.engine.NadelContext;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
 

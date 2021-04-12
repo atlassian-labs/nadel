@@ -1,10 +1,9 @@
 package graphql.nadel.engine
 
-
 import graphql.execution.ExecutionContext
-import graphql.execution.ResultPath
 import graphql.execution.ExecutionStepInfo
 import graphql.execution.MergedField
+import graphql.execution.ResultPath
 import graphql.execution.nextgen.FieldSubSelection
 import graphql.language.AstPrinter
 import graphql.language.Document

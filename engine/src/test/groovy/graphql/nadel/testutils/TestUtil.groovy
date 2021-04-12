@@ -25,13 +25,13 @@ import graphql.language.ScalarTypeDefinition
 import graphql.language.SelectionSet
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.NSDLParser
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelGraphQLParser
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.NadelContext
+import graphql.nadel.engine.NadelContext
+import graphql.nadel.engine.NadelExecutionHints
 import graphql.nadel.normalized.NormalizedQueryFactory
 import graphql.nadel.normalized.NormalizedQueryFromAst
 import graphql.nadel.schema.NeverWiringFactory

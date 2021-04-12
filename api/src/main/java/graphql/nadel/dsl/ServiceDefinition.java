@@ -1,6 +1,5 @@
 package graphql.nadel.dsl;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
@@ -19,6 +18,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
 
 @Internal
 public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
@@ -101,7 +102,7 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
         }
 
         public Builder additionalData(Map<String, String> additionalData) {
-            this.additionalData = Assert.assertNotNull(additionalData);
+            this.additionalData = assertNotNull(additionalData);
             return this;
         }
 
@@ -131,13 +132,8 @@ public class ServiceDefinition extends AbstractNode<ServiceDefinition> {
             return this;
         }
 
-
         public ServiceDefinition build() {
             return new ServiceDefinition(name, definitions, sourceLocation, comments, ignoredChars, additionalData);
-
         }
-
     }
-
-
 }

@@ -7,14 +7,14 @@ import graphql.execution.nextgen.ExecutionHelper
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
-import graphql.nadel.NadelContext
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.StrategyTestHelper
 import graphql.nadel.dsl.ServiceDefinition
+import graphql.nadel.engine.NadelContext
+import graphql.nadel.engine.NadelExecutionHints
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.result.ResultComplexityAggregator
@@ -66,7 +66,7 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl([service1:"""
+        def overallSchema = TestUtil.schemaFromNdsl([service1: """
         service service1 {
             type Query {
                 foo: String
@@ -108,7 +108,7 @@ class NadelExecutionStrategyTest extends StrategyTestHelper {
         }
         """)
 
-        def overallSchema = TestUtil.schemaFromNdsl([service1:"""
+        def overallSchema = TestUtil.schemaFromNdsl([service1: """
         service service1 {
             type Query {
                 foo: [String]
@@ -2982,7 +2982,7 @@ fragment F1 on TestingCharacter {
                         }'''
 
         def expectedQuery1 = "query nadel_2_TestBoard {board(id:1) {id issueChildren {id issue {assignee {accountId}}}}}"
-        def data1 = [board: [id: "1", issueChildren: [[id:"a1", issue: [assignee: [accountId: "1"]]], [id:"a2", issue: [assignee: [accountId: "2"]]], [id:"a3", issue: [assignee: [accountId: "3"]]]]]]
+        def data1 = [board: [id: "1", issueChildren: [[id: "a1", issue: [assignee: [accountId: "1"]]], [id: "a2", issue: [assignee: [accountId: "2"]]], [id: "a3", issue: [assignee: [accountId: "3"]]]]]]
         def response1 = new ServiceExecutionResult(data1)
 
         def expectedQuery2 = "query nadel_2_Users {users(accountIds:[\"1\",\"2\",\"3\"]) {accountId object_identifier__UUID:accountId}}"
@@ -3011,7 +3011,7 @@ fragment F1 on TestingCharacter {
             printAstCompact(sep.query) == expectedQuery2
         }) >> completedFuture(response2)
 
-        resultData(response) == [board: [id: "1", cardChildren: [ [id:"a1",assignee: [accountId: "1"]], [id:"a2", assignee: [accountId: "2"]], [id:"a3", assignee: [accountId: "3"]]]]]
+        resultData(response) == [board: [id: "1", cardChildren: [[id: "a1", assignee: [accountId: "1"]], [id: "a2", assignee: [accountId: "2"]], [id: "a3", assignee: [accountId: "3"]]]]]
         resultComplexityAggregator.getFieldRenamesCount() == 1
         resultComplexityAggregator.getTypeRenamesCount() == 2
     }

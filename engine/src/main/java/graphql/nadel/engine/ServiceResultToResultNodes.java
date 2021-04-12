@@ -6,7 +6,6 @@ import graphql.SerializationError;
 import graphql.TypeMismatchError;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ResultPath;
-import graphql.nadel.engine.NadelContext;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;

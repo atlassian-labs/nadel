@@ -1,5 +1,6 @@
 package graphql.nadel.normalized;
 
+
 import graphql.Assert;
 import graphql.Internal;
 import graphql.execution.ConditionalNodes;
@@ -28,6 +29,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static graphql.Assert.assertNotNull;
+import static graphql.introspection.Introspection.SchemaMetaFieldDef;
+import static graphql.introspection.Introspection.TypeMetaFieldDef;
+import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 
 
 /**
@@ -145,7 +151,7 @@ public class FieldCollectorNormalizedQuery {
             return;
         }
         visitedFragments.add(fragmentSpread.getName());
-        FragmentDefinition fragmentDefinition = Assert.assertNotNull(parameters.getFragmentsByName().get(fragmentSpread.getName()));
+        FragmentDefinition fragmentDefinition = assertNotNull(parameters.getFragmentsByName().get(fragmentSpread.getName()));
 
         if (!conditionalNodes.shouldInclude(parameters.getVariables(), fragmentDefinition.getDirectives())) {
             return;
@@ -203,14 +209,14 @@ public class FieldCollectorNormalizedQuery {
 
             } else {
                 GraphQLFieldDefinition fieldDefinition;
-                if (field.getName().equals(Introspection.TypeNameMetaFieldDef.getName())) {
-                    fieldDefinition = Introspection.TypeNameMetaFieldDef;
+                if (field.getName().equals(TypeNameMetaFieldDef.getName())) {
+                    fieldDefinition = TypeNameMetaFieldDef;
                 } else if (field.getName().equals(Introspection.SchemaMetaFieldDef.getName())) {
-                    fieldDefinition = Introspection.SchemaMetaFieldDef;
+                    fieldDefinition = SchemaMetaFieldDef;
                 } else if (field.getName().equals(Introspection.TypeMetaFieldDef.getName())) {
-                    fieldDefinition = Introspection.TypeMetaFieldDef;
+                    fieldDefinition = TypeMetaFieldDef;
                 } else {
-                    fieldDefinition = Assert.assertNotNull(objectType.getFieldDefinition(field.getName()), () -> String.format("no field with name %s found in object %s", field.getName(), objectType.getName()));
+                    fieldDefinition = assertNotNull(objectType.getFieldDefinition(field.getName()), () -> String.format("no field with name %s found in object %s", field.getName(), objectType.getName()));
                 }
                 NormalizedQueryField newFieldWTC = NormalizedQueryField.newQueryExecutionField()
                         .alias(field.getAlias())

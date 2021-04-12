@@ -1,6 +1,5 @@
 package graphql.nadel.instrumentation;
 
-import graphql.Assert;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.execution.Async;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import static graphql.Assert.assertNotNull;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -38,7 +38,7 @@ public class ChainedNadelInstrumentation implements NadelInstrumentation {
     private final List<NadelInstrumentation> instrumentations;
 
     public ChainedNadelInstrumentation(List<NadelInstrumentation> instrumentations) {
-        this.instrumentations = Assert.assertNotNull(instrumentations);
+        this.instrumentations = assertNotNull(instrumentations);
     }
 
     public List<NadelInstrumentation> getInstrumentations() {

@@ -19,7 +19,6 @@ import graphql.language.TypeName;
 import graphql.language.Value;
 import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
-import graphql.nadel.engine.NadelContext;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.ExtendedFieldDefinition;
 import graphql.nadel.dsl.FieldMappingDefinition;

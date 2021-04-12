@@ -1,6 +1,5 @@
 package graphql.nadel.engine
 
-import graphql.nadel.NadelContext
 import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
 

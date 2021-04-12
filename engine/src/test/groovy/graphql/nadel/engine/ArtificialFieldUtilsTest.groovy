@@ -1,8 +1,6 @@
 package graphql.nadel.engine
 
 import graphql.language.AstPrinter
-import graphql.nadel.NadelContext
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.result.ExecutionResultNode
 import graphql.nadel.result.LeafExecutionResultNode
 import graphql.schema.GraphQLInterfaceType
@@ -24,8 +22,8 @@ import static graphql.nadel.testutils.TestUtil.mkField
 class ArtificialFieldUtilsTest extends Specification {
 
     def context = NadelContext.newContext()
-                              .nadelExecutionHints(NadelExecutionHints.newHints().optimizeOnNoTransformations(true).build())
-                              .build()
+            .nadelExecutionHints(NadelExecutionHints.newHints().optimizeOnNoTransformations(true).build())
+            .build()
     def underscoreTypeNameAlias = TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + context.underscoreTypeNameAlias
     def underscoreTypeNameAliasOnEmptySelections = "empty_selection_set_" + context.underscoreTypeNameAlias
     def interfaceType = GraphQLInterfaceType.newInterface().name("I").build()

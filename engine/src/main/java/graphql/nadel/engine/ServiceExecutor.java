@@ -10,7 +10,6 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.FragmentDefinition;
 import graphql.nadel.BenchmarkContext;
-import graphql.nadel.engine.NadelContext;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
