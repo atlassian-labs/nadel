@@ -6,7 +6,6 @@ import graphql.PublicApi;
 import graphql.execution.instrumentation.DocumentAndVariables;
 import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
-import graphql.execution.instrumentation.SimpleInstrumentationContext;
 import graphql.language.Document;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
@@ -18,6 +17,8 @@ import graphql.validation.ValidationError;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
+import static graphql.execution.instrumentation.SimpleInstrumentationContext.noOp;
 
 /**
  * Provides the capability to instrument the execution steps of a Nadel GraphQL query.
@@ -51,7 +52,7 @@ public interface NadelInstrumentation {
      * @return a non null {@link InstrumentationContext} object that will be called back when the step ends
      */
     default InstrumentationContext<ExecutionResult> beginQueryExecution(NadelInstrumentationQueryExecutionParameters parameters) {
-        return SimpleInstrumentationContext.noOp();
+        return noOp();
     }
 
     /**
@@ -61,7 +62,7 @@ public interface NadelInstrumentation {
      * @return a non null {@link InstrumentationContext} object that will be called back when the step ends
      */
     default InstrumentationContext<Document> beginParse(NadelInstrumentationQueryExecutionParameters parameters) {
-        return SimpleInstrumentationContext.noOp();
+        return noOp();
     }
 
     /**
@@ -71,7 +72,7 @@ public interface NadelInstrumentation {
      * @return a non null {@link InstrumentationContext} object that will be called back when the step ends
      */
     default InstrumentationContext<List<ValidationError>> beginValidation(NadelNadelInstrumentationQueryValidationParameters parameters) {
-        return SimpleInstrumentationContext.noOp();
+        return noOp();
     }
 
     /**
@@ -81,7 +82,7 @@ public interface NadelInstrumentation {
      * @return a non null {@link InstrumentationContext} object that will be called back when the step ends
      */
     default InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
-        return SimpleInstrumentationContext.noOp();
+        return noOp();
     }
 
     /**

@@ -1,6 +1,5 @@
 package graphql.nadel.dsl;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.language.Comment;
 import graphql.language.Description;
@@ -17,6 +16,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
 
 @Internal
 public class ExtendedFieldDefinition extends FieldDefinition {
@@ -99,7 +100,7 @@ public class ExtendedFieldDefinition extends FieldDefinition {
 
 
         public Builder additionalData(Map<String, String> additionalData) {
-            this.additionalData = Assert.assertNotNull(additionalData);
+            this.additionalData = assertNotNull(additionalData);
             return this;
         }
 

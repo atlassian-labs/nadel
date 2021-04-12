@@ -3,6 +3,7 @@ package graphql.nadel.e2e
 import graphql.AssertException
 import graphql.ErrorType
 import graphql.GraphQLError
+import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
@@ -944,7 +945,6 @@ class NadelE2ETest extends Specification {
 
     }
 
-    @Ignore
     def "makes timing metrics available"() {
         def nsdl = [
                 service1: '''
@@ -1076,7 +1076,6 @@ class NadelE2ETest extends Specification {
         rootResultNode.getChildren()[0].getChildren()[0].elapsedTime.duration.toMillis() > 250
     }
 
-    @Ignore
     def "can instrument root execution result"() {
         given:
         def query = """

@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
+
 @Internal
 public class OverallSchemaGenerator {
 
@@ -57,7 +59,7 @@ public class OverallSchemaGenerator {
         fieldsMapByType.keySet().forEach(key -> {
             List<FieldDefinition> fields = fieldsMapByType.get(key);
             if (fields.size() > 0) {
-                overallRegistry.add(ObjectTypeDefinition.newObjectTypeDefinition()
+                overallRegistry.add(newObjectTypeDefinition()
                         .name(key.getDisplayName())
                         .sourceLocation(new SourceLocation(-1, -1, "generated"))
                         .fieldDefinitions(fields).build());
@@ -133,5 +135,4 @@ public class OverallSchemaGenerator {
                 })
                 .forEach(allDefinitions::add);
     }
-
 }

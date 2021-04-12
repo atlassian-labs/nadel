@@ -1,6 +1,5 @@
 package graphql.nadel.normalized;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.execution.MergedField;
 import graphql.nadel.dsl.NodeId;
@@ -8,6 +7,9 @@ import graphql.nadel.dsl.NodeId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
+import static graphql.Assert.assertNull;
 
 @Internal
 public class NormalizedQueryFromAst {
@@ -50,11 +52,11 @@ public class NormalizedQueryFromAst {
 
         for (NormalizedQueryField candidate : getTopLevelFields()) {
             if (candidate.getResultKey().equals(topLevelFieldResultKey)) {
-                Assert.assertNull(topLevelField, () -> "Found more than one normalized top level field with the same name");
+                assertNull(topLevelField, () -> "Found more than one normalized top level field with the same name");
                 topLevelField = candidate;
             }
         }
-        Assert.assertNotNull(topLevelField, () -> "Could not find top level field");
+        assertNotNull(topLevelField, () -> "Could not find top level field");
 
         return topLevelField;
     }

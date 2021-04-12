@@ -1,7 +1,6 @@
 package graphql.nadel;
 
 import graphql.Internal;
-import graphql.nadel.NadelExecutionHints;
 
 @Internal
 public class NadelExecutionParams {

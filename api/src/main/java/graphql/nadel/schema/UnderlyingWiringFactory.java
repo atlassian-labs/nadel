@@ -1,6 +1,5 @@
 package graphql.nadel.schema;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.nadel.engine.NadelContext;
 import graphql.schema.DataFetcher;
@@ -17,6 +16,9 @@ import graphql.schema.idl.UnionWiringEnvironment;
 import graphql.schema.idl.WiringFactory;
 
 import java.util.Map;
+
+import static graphql.Assert.assertNotNull;
+import static graphql.Assert.assertTrue;
 
 /**
  * This underlying wiring factory has special type resolver support that is needed by Nadel.
@@ -57,16 +59,16 @@ public class UnderlyingWiringFactory implements WiringFactory {
             String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
 
             Object source = env.getObject();
-            Assert.assertTrue(source instanceof Map, () -> "The Nadel result object MUST be a Map");
+            assertTrue(source instanceof Map, () -> "The Nadel result object MUST be a Map");
 
             Map<String, Object> sourceMap = (Map<String, Object>) source;
-            Assert.assertTrue(sourceMap.containsKey(underscoreTypeNameAlias), () -> "The Nadel result object for interfaces and unions MUST have an aliased __typename in them");
+            assertTrue(sourceMap.containsKey(underscoreTypeNameAlias), () -> "The Nadel result object for interfaces and unions MUST have an aliased __typename in them");
 
             Object typeName = sourceMap.get(underscoreTypeNameAlias);
-            Assert.assertNotNull(typeName, () -> "The Nadel result object for interfaces and unions MUST have an aliased__typename with a non null value in them");
+            assertNotNull(typeName, () -> "The Nadel result object for interfaces and unions MUST have an aliased__typename with a non null value in them");
 
             GraphQLObjectType objectType = env.getSchema().getObjectType(typeName.toString());
-            Assert.assertNotNull(objectType, () -> String.format("There must be an underlying graphql object type called '%s'", typeName));
+            assertNotNull(objectType, () -> String.format("There must be an underlying graphql object type called '%s'", typeName));
             return objectType;
         };
     }

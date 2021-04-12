@@ -35,7 +35,6 @@ import graphql.util.TraversalControl
 import graphql.util.TraverserContext
 import graphql.util.TraverserVisitor
 import graphql.util.TreeTransformerUtil
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -226,7 +225,6 @@ class ServiceExecutionHooksTest extends Specification {
         } as ServiceExecutionParameters) >> completedFuture(new ServiceExecutionResult(null))
     }
 
-    @Ignore
     def "service result can be modified"() {
         given:
         def underlyingSchema = TestUtil.schema("""
