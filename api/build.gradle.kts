@@ -41,7 +41,7 @@ task("generateAntrlToJavaSource") {
                 "GraphqlParser" to "StitchingDSLParser",
                 "GraphqlLexer" to "StitchingDSLLexer"
         )
-        val sourceFile = File("api/build/generated-src/antlr/main/graphql/nadel/parser/GraphqlAntlrToLanguage.java")
+        val sourceFile = File(project.projectDir, "build/generated-src/antlr/main/graphql/nadel/parser/GraphqlAntlrToLanguage.java")
 
         val content = sourceFile.readText()
                 .let {
