@@ -13,6 +13,5 @@ docs/_build/
 \.classpath
 \.project
 \.settings/
-core/src/main/antlr/Graphql*.g4
 .DS_STORE
 gen

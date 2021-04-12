@@ -1,5 +1,2 @@
 # These are sourced from GraphQL Java so we should ignore them
-Graphql.g4
-GraphqlCommon.g4
-GraphqlOperation.g4
-GraphqlSDL.g4
+Graphql*.g4
