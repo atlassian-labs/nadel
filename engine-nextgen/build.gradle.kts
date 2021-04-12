@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":api"))
+    implementation(project(":nadel-api"))
 
     api(kotlin("stdlib"))
     api(kotlin("reflect"))

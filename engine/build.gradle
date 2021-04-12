@@ -25,7 +25,7 @@ jar {
 }
 
 dependencies {
-    implementation project(path: ":api", configuration: "default")
+    implementation project(path: ":nadel-api", configuration: "default")
     implementation "com.graphql-java:graphql-java:" + graphqlJavaVersion
     implementation "org.slf4j:slf4j-api:" + slf4jVersion
     testImplementation group: "junit", name: "junit", version: "4.11"

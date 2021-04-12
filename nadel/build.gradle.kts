@@ -4,6 +4,6 @@ plugins {
 }
 
 dependencies {
-    api(project(":api"))
-    api(project(":engine"))
+    api(project(":nadel-api"))
+    api(project(":nadel-engine"))
 }

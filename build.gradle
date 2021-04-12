@@ -23,7 +23,7 @@ def getDevelopmentVersion() {
 
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
-group = "com.graphql-java"
+group = "com.atlassian"
 
 subprojects {
     apply plugin: "java"
