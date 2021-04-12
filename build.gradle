@@ -25,6 +25,19 @@ def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
 group = "com.atlassian"
 
+gradle.buildFinished { buildResult ->
+    println "*******************************"
+    println "*"
+    if (buildResult.failure != null) {
+        println "* FAILURE - ${buildResult.failure}"
+    } else {
+        println "* SUCCESS"
+    }
+    println "* Version: $version"
+    println "*"
+    println "*******************************"
+}
+
 subprojects {
     apply plugin: "java"
     apply plugin: "java-library"
@@ -139,4 +152,9 @@ subprojects {
             }
         }
     }
+}
+
+task myWrapper(type: Wrapper) {
+    gradleVersion = '6.8.3'
+    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
 }
