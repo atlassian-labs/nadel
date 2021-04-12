@@ -8,8 +8,6 @@ import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.WiringFactory;
 import graphql.schema.idl.errors.SchemaProblem;
 
-import static java.lang.String.format;
-
 @Internal
 public class UnderlyingSchemaGenerator {
 

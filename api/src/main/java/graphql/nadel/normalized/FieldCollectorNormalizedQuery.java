@@ -1,6 +1,5 @@
 package graphql.nadel.normalized;
 
-
 import graphql.Assert;
 import graphql.Internal;
 import graphql.execution.ConditionalNodes;
@@ -29,11 +28,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static graphql.Assert.assertNotNull;
-import static graphql.introspection.Introspection.SchemaMetaFieldDef;
-import static graphql.introspection.Introspection.TypeMetaFieldDef;
-import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 
 
 /**

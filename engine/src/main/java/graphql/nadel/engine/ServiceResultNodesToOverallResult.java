@@ -6,7 +6,7 @@ import graphql.execution.ExecutionId;
 import graphql.execution.MergedField;
 import graphql.execution.ResultPath;
 import graphql.language.AbstractNode;
-import graphql.nadel.NadelContext;
+import graphql.nadel.engine.NadelContext;
 import graphql.nadel.Tuples;
 import graphql.nadel.TuplesTwo;
 import graphql.nadel.dsl.NodeId;

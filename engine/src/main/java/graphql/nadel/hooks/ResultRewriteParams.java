@@ -7,22 +7,27 @@ import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionStepInfo;
 import graphql.nadel.Service;
 import graphql.nadel.engine.NadelContext;
+import graphql.nadel.result.RootExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 
 @PublicApi
-public class CreateServiceContextParams {
+public class ResultRewriteParams {
     private final Service service;
     private final ExecutionStepInfo executionStepInfo;
     private final ExecutionId executionId;
     private final GraphQLSchema schema;
-    private final NadelContext context;
+    private final NadelContext nadelContext;
+    private final Object serviceContext;
+    private final RootExecutionResultNode resultNode;
 
-    private CreateServiceContextParams(Builder builder) {
+    private ResultRewriteParams(Builder builder) {
         this.service = builder.service;
         this.executionStepInfo = builder.executionStepInfo;
         this.executionId = builder.executionId;
         this.schema = builder.schema;
-        this.context = builder.context;
+        this.nadelContext = builder.nadelContext;
+        this.serviceContext = builder.serviceContext;
+        this.resultNode = builder.resultNode;
     }
 
     public Service getService() {
@@ -41,8 +46,16 @@ public class CreateServiceContextParams {
         return schema;
     }
 
-    public NadelContext getContext() {
-        return context;
+    public NadelContext getNadelContext() {
+        return nadelContext;
+    }
+
+    public Object getServiceContext() {
+        return serviceContext;
+    }
+
+    public RootExecutionResultNode getResultNode() {
+        return resultNode;
     }
 
     public static Builder newParameters() {
@@ -54,7 +67,9 @@ public class CreateServiceContextParams {
         private ExecutionStepInfo executionStepInfo;
         private ExecutionId executionId;
         private GraphQLSchema schema;
-        private NadelContext context;
+        private Object serviceContext;
+        private NadelContext nadelContext;
+        private RootExecutionResultNode resultNode;
 
         public Builder service(Service service) {
             this.service = service;
@@ -66,16 +81,26 @@ public class CreateServiceContextParams {
             return this;
         }
 
+        public Builder serviceContext(Object serviceContext) {
+            this.serviceContext = serviceContext;
+            return this;
+        }
+
+        public Builder resultNode(RootExecutionResultNode resultNode) {
+            this.resultNode = resultNode;
+            return this;
+        }
+
         @Internal
         public Builder from(ExecutionContext executionContext) {
             this.executionId = executionContext.getExecutionId();
             this.schema = executionContext.getGraphQLSchema();
-            this.context = (NadelContext) executionContext.getContext();
+            this.nadelContext = (NadelContext) executionContext.getContext();
             return this;
         }
 
-        public CreateServiceContextParams build() {
-            return new CreateServiceContextParams(this);
+        public ResultRewriteParams build() {
+            return new ResultRewriteParams(this);
         }
     }
 }

@@ -1,6 +1,5 @@
 package graphql.nadel.dsl;
 
-import graphql.Assert;
 import graphql.Internal;
 import graphql.language.AbstractNode;
 import graphql.language.Comment;
@@ -15,6 +14,8 @@ import graphql.util.TraverserContext;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static graphql.Assert.assertTrue;
 
 @Internal
 public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHydration> {
@@ -39,7 +40,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
                                       Map<String, String> additionalData
     ) {
         super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
-        Assert.assertTrue(!objectIndexed ^ objectIdentifier == null, () -> "An object identifier cannot be provided if the hydration is by index");
+        assertTrue(!objectIndexed ^ objectIdentifier == null, () -> "An object identifier cannot be provided if the hydration is by index");
 
         this.serviceName = serviceName;
         this.topLevelField = topLevelField;
@@ -49,7 +50,6 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
         this.batchSize = batchSize;
         this.syntheticField = syntheticField;
     }
-
 
     public Integer getBatchSize() {
         return batchSize;
@@ -99,7 +99,6 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
     public UnderlyingServiceHydration deepCopy() {
         return null;
     }
-
 
     @Override
     public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {

@@ -12,13 +12,14 @@ import graphql.execution.nextgen.FieldSubSelection;
 import graphql.nadel.BenchmarkContext;
 import graphql.nadel.FieldInfo;
 import graphql.nadel.FieldInfos;
-import graphql.nadel.NadelContext;
 import graphql.nadel.Operation;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.transformation.FieldTransformation;
 import graphql.nadel.engine.transformation.TransformationMetadata.NormalizedFieldAndError;
 import graphql.nadel.hooks.CreateServiceContextParams;
+import graphql.nadel.hooks.EngineServiceExecutionHooks;
+import graphql.nadel.hooks.ResultRewriteParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.normalized.NormalizedQueryField;
@@ -216,16 +217,19 @@ public class NadelExecutionStrategy {
                 }
 
                 CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult;
-                // .thenCompose(rootResultNode -> {
-                //     ResultRewriteParams resultRewriteParams = ResultRewriteParams.newParameters()
-                //             .from(executionContext)
-                //             .service(service)
-                //             .serviceContext(serviceContext)
-                //             .executionStepInfo(esi)
-                //             .resultNode(rootResultNode)
-                //             .build();
-                //     return serviceExecutionHooks.resultRewrite(resultRewriteParams);
-                // });
+
+                if (serviceExecutionHooks instanceof EngineServiceExecutionHooks) {
+                    serviceResult = serviceResult.thenCompose((rootResultNode) -> {
+                        ResultRewriteParams resultRewriteParams = ResultRewriteParams.newParameters()
+                                .from(executionContext)
+                                .service(service)
+                                .serviceContext(serviceContext)
+                                .executionStepInfo(esi)
+                                .resultNode(rootResultNode)
+                                .build();
+                        return ((EngineServiceExecutionHooks) serviceExecutionHooks).resultRewrite(resultRewriteParams);
+                    });
+                }
 
                 return serviceResult;
             }));

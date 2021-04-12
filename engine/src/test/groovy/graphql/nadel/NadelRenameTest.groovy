@@ -1,7 +1,10 @@
 package graphql.nadel
 
 import graphql.nadel.hooks.CreateServiceContextParams
+import graphql.nadel.hooks.EngineServiceExecutionHooks
+import graphql.nadel.hooks.ResultRewriteParams
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
 
@@ -118,16 +121,16 @@ class NadelRenameTest extends Specification {
     def delegatedExecution = Mock(ServiceExecution)
     def serviceFactory = TestUtil.serviceFactory(delegatedExecution, simpleUnderlyingSchema)
 
-    ServiceExecutionHooks traversingExecutionHooks = new ServiceExecutionHooks() {
+    ServiceExecutionHooks traversingExecutionHooks = new EngineServiceExecutionHooks() {
         @Override
         CompletableFuture<Object> createServiceContext(CreateServiceContextParams params) {
             return completedFuture(null)
         }
 
-        // @Override
-        // CompletableFuture<RootExecutionResultNode> resultRewrite(ResultRewriteParams params) {
-        //     return completedFuture(params.getResultNode());
-        // }
+        @Override
+        CompletableFuture<RootExecutionResultNode> resultRewrite(ResultRewriteParams params) {
+            return completedFuture(params.getResultNode())
+        }
     }
 
     def nadel = newNadel()

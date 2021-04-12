@@ -12,7 +12,7 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.EngineNadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.result.ResultNodesUtil
@@ -1021,12 +1021,12 @@ class NadelE2ETest extends Specification {
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
                 .executionIdProvider(idProvider)
-                .instrumentation(new NadelInstrumentation() {
-                    // @Override
-                    // RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
-                    //     rootResultNode = rootExecutionResultNode
-                    //     return rootExecutionResultNode
-                    // }
+                .instrumentation(new EngineNadelInstrumentation() {
+                    @Override
+                    RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
+                        rootResultNode = rootExecutionResultNode
+                        return rootExecutionResultNode
+                    }
                 })
                 .build()
 
@@ -1091,7 +1091,7 @@ class NadelE2ETest extends Specification {
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
                 .serviceExecutionFactory(serviceFactory)
-                .instrumentation(new NadelInstrumentation() {
+                .instrumentation(new EngineNadelInstrumentation() {
                     @Override
                     InstrumentationState createState(NadelInstrumentationCreateStateParameters parameters) {
                         return new InstrumentationState() {
@@ -1102,14 +1102,14 @@ class NadelE2ETest extends Specification {
                         }
                     }
 
-                    // @Override
-                    // RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
-                    //     originalExecutionResult = rootExecutionResultNode
-                    //     instrumentationParams = parameters
-                    //     return rootExecutionResultNode.withNewErrors([
-                    //             GraphqlErrorException.newErrorException().message("instrumented-error").build()
-                    //     ])
-                    // }
+                    @Override
+                    RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
+                        originalExecutionResult = rootExecutionResultNode
+                        instrumentationParams = parameters
+                        return rootExecutionResultNode.withNewErrors([
+                                GraphqlErrorException.newErrorException().message("instrumented-error").build()
+                        ])
+                    }
                 })
                 .build()
 

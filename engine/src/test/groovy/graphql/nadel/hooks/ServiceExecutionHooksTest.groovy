@@ -12,23 +12,28 @@ import graphql.language.StringValue
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.FieldInfo
 import graphql.nadel.FieldInfos
-import graphql.nadel.NadelContext
-import graphql.nadel.NadelExecutionHints
+import graphql.nadel.engine.NadelContext
+import graphql.nadel.engine.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.ServiceDefinition
 import graphql.nadel.engine.NadelExecutionStrategy
+import graphql.nadel.engine.ResultNodesTransformer
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.normalized.NormalizedQueryFactory
+import graphql.nadel.result.ExecutionResultNode
+import graphql.nadel.result.LeafExecutionResultNode
 import graphql.nadel.result.ResultComplexityAggregator
+import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.testutils.ExecutionResultNodeUtil
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
+import graphql.util.TraverserVisitor
 import graphql.util.TreeTransformerUtil
 import spock.lang.Ignore
 import spock.lang.Specification
@@ -58,7 +63,7 @@ class ServiceExecutionHooksTest extends Specification {
         definitionRegistry = Mock(DefinitionRegistry)
         instrumentation = new NadelInstrumentation() {}
         serviceExecutionHooks = new ServiceExecutionHooks() {}
-        resultComplexityAggregator = new ResultComplexityAggregator();
+        resultComplexityAggregator = new ResultComplexityAggregator()
     }
 
     FieldInfos topLevelFieldInfo(GraphQLFieldDefinition fieldDefinition, Service service) {
@@ -121,9 +126,9 @@ class ServiceExecutionHooksTest extends Specification {
             NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
                 if (env.getUnderlyingInputValueDefinition().getName() == "id") {
                     StringValue newValue = StringValue.newStringValue().value("modified").build()
-                    TreeTransformerUtil.changeNode(env.getTraverserContext(), newValue);
+                    TreeTransformerUtil.changeNode(env.getTraverserContext(), newValue)
                 }
-                return null;
+                return null
             }
 
             CompletableFuture<QueryRewriteResult> queryRewrite(QueryRewriteParams params) {
@@ -244,36 +249,36 @@ class ServiceExecutionHooksTest extends Specification {
 
         def serviceContext = "Service-Context"
 
-        def serviceExecutionHooks = new ServiceExecutionHooks() {
+        def serviceExecutionHooks = new EngineServiceExecutionHooks() {
             @Override
             CompletableFuture<Object> createServiceContext(CreateServiceContextParams params) {
                 return completedFuture(serviceContext)
             }
 
-            // @Override
-            // CompletableFuture<RootExecutionResultNode> resultRewrite(ResultRewriteParams params) {
-            //     def resultNode = params.resultNode
-            //
-            //     def transformer = new ResultNodesTransformer()
-            //     def result = transformer.transform(resultNode, new TraverserVisitor<ExecutionResultNode>() {
-            //         @Override
-            //         TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
-            //             if (context.thisNode() instanceof LeafExecutionResultNode) {
-            //                 LeafExecutionResultNode leafExecutionResultNode = context.thisNode()
-            //                 def completedValue = leafExecutionResultNode.getCompletedValue()
-            //                 def newNode = leafExecutionResultNode.withNewCompletedValue(completedValue + "-CHANGED")
-            //                 return TreeTransformerUtil.changeNode(context, newNode)
-            //             }
-            //             return TraversalControl.CONTINUE
-            //         }
-            //
-            //         @Override
-            //         TraversalControl leave(TraverserContext<ExecutionResultNode> context) {
-            //             return TraversalControl.CONTINUE
-            //         }
-            //     })
-            //     return completedFuture(result)
-            // }
+            @Override
+            CompletableFuture<RootExecutionResultNode> resultRewrite(ResultRewriteParams params) {
+                def resultNode = params.resultNode
+
+                def transformer = new ResultNodesTransformer()
+                def result = transformer.transform(resultNode, new TraverserVisitor<ExecutionResultNode>() {
+                    @Override
+                    TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
+                        if (context.thisNode() instanceof LeafExecutionResultNode) {
+                            LeafExecutionResultNode leafExecutionResultNode = context.thisNode()
+                            def completedValue = leafExecutionResultNode.getCompletedValue()
+                            def newNode = leafExecutionResultNode.withNewCompletedValue(completedValue + "-CHANGED")
+                            return TreeTransformerUtil.changeNode(context, newNode)
+                        }
+                        return TraversalControl.CONTINUE
+                    }
+
+                    @Override
+                    TraversalControl leave(TraverserContext<ExecutionResultNode> context) {
+                        return TraversalControl.CONTINUE
+                    }
+                })
+                return completedFuture(result)
+            }
         }
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
 

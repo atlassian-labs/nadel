@@ -29,8 +29,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
-
 @Internal
 public class OverallSchemaGenerator {
 

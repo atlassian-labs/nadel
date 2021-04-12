@@ -2,6 +2,7 @@ package graphql.nadel;
 
 import graphql.PublicApi;
 import graphql.execution.ExecutionId;
+import graphql.nadel.engine.NadelExecutionHints;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

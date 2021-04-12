@@ -4,7 +4,7 @@ import graphql.Internal;
 import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.SelectionSet;
-import graphql.nadel.NadelContext;
+import graphql.nadel.engine.NadelContext;
 import graphql.nadel.dsl.NodeId;
 import graphql.nadel.util.Util;
 import graphql.schema.GraphQLOutputType;

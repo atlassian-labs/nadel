@@ -2,7 +2,7 @@ package graphql.nadel.schema;
 
 import graphql.Assert;
 import graphql.Internal;
-import graphql.nadel.NadelContext;
+import graphql.nadel.engine.NadelContext;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetcherFactory;
 import graphql.schema.GraphQLObjectType;

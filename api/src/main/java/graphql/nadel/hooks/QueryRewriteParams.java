@@ -5,8 +5,8 @@ import graphql.execution.ExecutionId;
 import graphql.execution.ExecutionStepInfo;
 import graphql.language.Document;
 import graphql.language.FragmentDefinition;
-import graphql.nadel.NadelContext;
 import graphql.nadel.Service;
+import graphql.nadel.engine.NadelContext;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 
