@@ -126,7 +126,7 @@ public class Execution {
                 if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
                     ((BenchmarkContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
                 }
-                rootResultNode = instrumentation.instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
+                rootResultNode = instrumentation.instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, normalizedQueryFromAst, instrumentationState));
                 ExecutionResult executionResult = withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);
                 return executionResult;
             });
