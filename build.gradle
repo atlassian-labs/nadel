@@ -95,7 +95,7 @@ subprojects {
                     }
                     pomNode.children().last() + {
                         resolveStrategy = DELEGATE_FIRST
-                        name "nadel"
+                        name project.name
                         url "https://github.com/atlassian-labs/nadel"
                         scm {
                             url "https://github.com/atlassian-labs/nadel"
@@ -151,10 +151,10 @@ subprojects {
                 password = System.env.ARTIFACTORY_API_KEY
             }
             defaults {
-                publications(project.name)
+                publications("nadel")
                 publishIvy = false
                 // This needs to be "false", otherwise, the artifactory plugin will try to publish
-                // a build info file to Artifactory and fail because we don"t have the permissions to do that.
+                // a build info file to Artifactory and fail because we don't have the permissions to do that.
                 publishBuildInfo = false
             }
         }
