@@ -1,1 +1,9 @@
-rootProject.name = 'nadel'
+rootProject.name = "nadel"
+include("nadel", "api", "engine", "engine-nextgen")
+
+// Prefix every project name with nadel
+rootProject.children.forEach { project ->
+    if (project.name != "nadel") {
+        project.name = "nadel-${project.name}"
+    }
+}

@@ -1,0 +1,2 @@
+# These are sourced from GraphQL Java so we should ignore them
+Graphql*.g4
