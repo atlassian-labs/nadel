@@ -48,10 +48,10 @@ public class Execution {
     private final GraphQLSchema overallSchema;
     private final NadelInstrumentation instrumentation;
     private final IntrospectionRunner introspectionRunner;
-    private final ExecutionHelper executionHelper = new ExecutionHelper();
     private final NadelExecutionStrategy nadelExecutionStrategy;
 
-    private NormalizedQueryFactory normalizedQueryFactory = new NormalizedQueryFactory();
+    private final ExecutionHelper executionHelper = new ExecutionHelper();
+    private final NormalizedQueryFactory normalizedQueryFactory = new NormalizedQueryFactory();
 
     public Execution(List<Service> services,
                      GraphQLSchema overallSchema,
@@ -109,7 +109,9 @@ public class Execution {
         ExecutionContext executionContext = executionData.executionContext;
         FieldSubSelection fieldSubSelection = executionHelper.getFieldSubSelection(executionContext);
 
-        InstrumentationContext<ExecutionResult> instrumentationCtx = instrumentation.beginExecute(new NadelInstrumentationExecuteOperationParameters(executionContext, instrumentationState));
+        NadelInstrumentationExecuteOperationParameters executeOperationParameters =
+                new NadelInstrumentationExecuteOperationParameters(executionContext, normalizedQueryFromAst, instrumentationState);
+        InstrumentationContext<ExecutionResult> instrumentationCtx = instrumentation.beginExecute(executeOperationParameters);
 
         CompletableFuture<ExecutionResult> result;
         ResultComplexityAggregator resultComplexityAggregator = new ResultComplexityAggregator();
@@ -128,7 +130,7 @@ public class Execution {
                     ((BenchmarkContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
                 }
                 if (instrumentation instanceof EngineNadelInstrumentation) {
-                    rootResultNode = ((EngineNadelInstrumentation) instrumentation).instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
+                    rootResultNode = ((EngineNadelInstrumentation) instrumentation).instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, normalizedQueryFromAst, instrumentationState));
                 }
                 return withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);
             });
