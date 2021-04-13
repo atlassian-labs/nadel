@@ -130,7 +130,7 @@ public class Execution {
                     ((BenchmarkContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
                 }
                 if (instrumentation instanceof EngineNadelInstrumentation) {
-                    rootResultNode = ((EngineNadelInstrumentation) instrumentation).instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
+                    rootResultNode = ((EngineNadelInstrumentation) instrumentation).instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, normalizedQueryFromAst, instrumentationState));
                 }
                 return withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);
             });
