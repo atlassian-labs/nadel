@@ -13,7 +13,7 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.instrumentation.EngineNadelInstrumentation
+import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.engine.result.ResultNodesUtil
 import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.engine.testutils.TestUtil
@@ -1020,7 +1020,7 @@ class NadelE2ETest extends Specification {
                 .dsl(nsdl)
                 .serviceExecutionFactory(serviceFactory)
                 .executionIdProvider(idProvider)
-                .instrumentation(new EngineNadelInstrumentation() {
+                .instrumentation(new NadelEngineInstrumentation() {
                     @Override
                     RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
                         rootResultNode = rootExecutionResultNode
@@ -1089,7 +1089,7 @@ class NadelE2ETest extends Specification {
         Nadel nadel = newNadel()
                 .dsl(simpleNDSL)
                 .serviceExecutionFactory(serviceFactory)
-                .instrumentation(new EngineNadelInstrumentation() {
+                .instrumentation(new NadelEngineInstrumentation() {
                     @Override
                     InstrumentationState createState(NadelInstrumentationCreateStateParameters parameters) {
                         return new InstrumentationState() {

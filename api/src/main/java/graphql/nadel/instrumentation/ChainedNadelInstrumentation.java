@@ -34,7 +34,6 @@ import static java.util.stream.Collectors.toList;
  * @see graphql.nadel.instrumentation.NadelInstrumentation
  */
 public class ChainedNadelInstrumentation implements NadelInstrumentation {
-
     private final List<NadelInstrumentation> instrumentations;
 
     public ChainedNadelInstrumentation(List<NadelInstrumentation> instrumentations) {
@@ -132,7 +131,7 @@ public class ChainedNadelInstrumentation implements NadelInstrumentation {
         return serviceExecution;
     }
 
-    private static class ChainedInstrumentationState implements InstrumentationState {
+    protected static class ChainedInstrumentationState implements InstrumentationState {
         private final Map<NadelInstrumentation, InstrumentationState> instrumentationStates;
 
         private ChainedInstrumentationState(List<NadelInstrumentation> instrumentations, NadelInstrumentationCreateStateParameters parameters) {
@@ -145,8 +144,7 @@ public class ChainedNadelInstrumentation implements NadelInstrumentation {
         }
     }
 
-    private static class ChainedInstrumentationContext<T> implements InstrumentationContext<T> {
-
+    protected static class ChainedInstrumentationContext<T> implements InstrumentationContext<T> {
         private final List<InstrumentationContext<T>> contexts;
 
         ChainedInstrumentationContext(List<InstrumentationContext<T>> contexts) {

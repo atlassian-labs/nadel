@@ -7,8 +7,6 @@ import java.util.function.Consumer;
 
 @Internal
 public class RootExecutionResultNode extends ObjectExecutionResultNode {
-
-
     private RootExecutionResultNode(Builder builder) {
         super(builder, null);
     }
