@@ -13,13 +13,13 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.instrumentation.EngineNadelInstrumentation
+import graphql.nadel.engine.instrumentation.EngineNadelInstrumentation
+import graphql.nadel.engine.result.ResultNodesUtil
+import graphql.nadel.engine.result.RootExecutionResultNode
+import graphql.nadel.engine.testutils.TestUtil
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
-import graphql.nadel.result.ResultNodesUtil
-import graphql.nadel.result.RootExecutionResultNode
 import graphql.nadel.schema.SchemaTransformationHook
-import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
@@ -29,7 +29,6 @@ import graphql.schema.SchemaTransformer
 import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
-import spock.lang.Ignore
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -38,7 +37,7 @@ import java.util.concurrent.CompletionException
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.NadelEngine.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
-import static graphql.nadel.testutils.TestUtil.typeDefinitions
+import static graphql.nadel.engine.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
