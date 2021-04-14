@@ -1,5 +1,6 @@
 package graphql.nadel.engine.instrumentation;
 
+import graphql.execution.instrumentation.InstrumentationState;
 import graphql.nadel.engine.result.RootExecutionResultNode;
 import graphql.nadel.instrumentation.ChainedNadelInstrumentation;
 import graphql.nadel.instrumentation.NadelInstrumentation;
@@ -17,7 +18,8 @@ public class ChainedNadelEngineInstrumentation extends ChainedNadelInstrumentati
         for (NadelInstrumentation instrumentation : getInstrumentations()) {
             if (instrumentation instanceof NadelEngineInstrumentation) {
                 NadelEngineInstrumentation nadelEngineInstrumentation = (NadelEngineInstrumentation) instrumentation;
-                rootExecutionResultNode = nadelEngineInstrumentation.instrumentRootExecutionResult(rootExecutionResultNode, parameters);
+                InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
+                rootExecutionResultNode = nadelEngineInstrumentation.instrumentRootExecutionResult(rootExecutionResultNode, parameters.withNewState(state));
             }
         }
         return rootExecutionResultNode;

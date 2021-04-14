@@ -44,7 +44,7 @@ public class ChainedNadelInstrumentation implements NadelInstrumentation {
         return new ArrayList<>(instrumentations);
     }
 
-    private InstrumentationState getStateFor(NadelInstrumentation instrumentation, InstrumentationState parametersInstrumentationState) {
+    protected InstrumentationState getStateFor(NadelInstrumentation instrumentation, InstrumentationState parametersInstrumentationState) {
         ChainedInstrumentationState chainedInstrumentationState = (ChainedInstrumentationState) parametersInstrumentationState;
         return chainedInstrumentationState.getState(instrumentation);
     }
