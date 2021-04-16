@@ -8,16 +8,16 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.testutils.MockServiceExecution
-import graphql.nadel.testutils.TestUtil
+import graphql.nadel.engine.testutils.MockServiceExecution
+import graphql.nadel.engine.testutils.TestUtil
 import graphql.schema.idl.TypeDefinitionRegistry
 import spock.lang.Specification
 
 import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.NadelEngine.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
-import static graphql.nadel.testutils.TestUtil.serviceFactory
-import static graphql.nadel.testutils.TestUtil.typeDefinitions
+import static graphql.nadel.engine.testutils.TestUtil.serviceFactory
+import static graphql.nadel.engine.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ESyntheticHydrationTest extends Specification {
