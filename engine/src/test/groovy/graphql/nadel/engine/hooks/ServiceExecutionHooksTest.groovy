@@ -87,7 +87,7 @@ class ServiceExecutionHooksTest extends Specification {
         def nadelContext = NadelContext.newContext()
                 .artificialFieldsUUID("UUID")
                 .normalizedOverallQuery(normalizedQuery)
-                .nadelExecutionHints(NadelExecutionHints.newHints().optimizeOnNoTransformations(true).build())
+                .nadelExecutionHints(NadelExecutionHints.newHints().build())
                 .build()
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(query)

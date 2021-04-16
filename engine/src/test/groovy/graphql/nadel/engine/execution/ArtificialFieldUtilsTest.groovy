@@ -24,7 +24,7 @@ import static graphql.nadel.engine.testutils.TestUtil.mkField
 class ArtificialFieldUtilsTest extends Specification {
 
     def context = NadelContext.newContext()
-            .nadelExecutionHints(NadelExecutionHints.newHints().optimizeOnNoTransformations(true).build())
+            .nadelExecutionHints(NadelExecutionHints.newHints().build())
             .build()
     def underscoreTypeNameAlias = TYPE_NAME_ALIAS_PREFIX_FOR_INTERFACES_AND_UNIONS + context.underscoreTypeNameAlias
     def underscoreTypeNameAliasOnEmptySelections = "empty_selection_set_" + context.underscoreTypeNameAlias
