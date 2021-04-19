@@ -9,6 +9,7 @@ import graphql.execution.MergedField;
 import graphql.execution.instrumentation.InstrumentationState;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.language.Document;
+import graphql.nadel.NadelExecutionParams;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.engine.execution.NadelExecutionStrategy;
