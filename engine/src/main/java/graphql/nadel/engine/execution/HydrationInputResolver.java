@@ -13,7 +13,7 @@ import graphql.language.NullValue;
 import graphql.language.SelectionSet;
 import graphql.language.StringValue;
 import graphql.language.Value;
-import graphql.nadel.Operation;
+import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.ExtendedFieldDefinition;
 import graphql.nadel.dsl.NodeId;
@@ -253,7 +253,7 @@ public class HydrationInputResolver {
                 originalField);
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
-        Operation operation = Operation.QUERY;
+        OperationKind operationKind = OperationKind.QUERY;
         String operationName = buildOperationName(service, executionContext);
 
         boolean isSyntheticHydration = underlyingServiceHydration.getSyntheticField() != null;
@@ -262,7 +262,7 @@ public class HydrationInputResolver {
                         executionContext,
                         service.getUnderlyingSchema(),
                         operationName,
-                        operation,
+                        operationKind,
                         topLevelField,
                         topLevelFieldType,
                         serviceExecutionHooks,
@@ -274,7 +274,7 @@ public class HydrationInputResolver {
         return queryTransformationResultCF.thenCompose(queryTransformationResult -> {
 
             CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
-                    .execute(executionContext, queryTransformationResult, service, operation,
+                    .execute(executionContext, queryTransformationResult, service, operationKind,
                             serviceContexts.get(service), service.getUnderlyingSchema(), true);
 
             return serviceResult
@@ -409,7 +409,7 @@ public class HydrationInputResolver {
                 underlyingServiceHydration);
         GraphQLCompositeType topLevelFieldType = (GraphQLCompositeType) unwrapAll(hydrationTransformation.getOriginalFieldType());
 
-        Operation operation = Operation.QUERY;
+        OperationKind operationKind = OperationKind.QUERY;
         String operationName = buildOperationName(service, executionContext);
 
         boolean isSyntheticHydration = underlyingServiceHydration.getSyntheticField() != null;
@@ -417,7 +417,7 @@ public class HydrationInputResolver {
                 .transformHydratedTopLevelField(
                         executionContext,
                         service.getUnderlyingSchema(),
-                        operationName, operation,
+                        operationName, operationKind,
                         topLevelField,
                         topLevelFieldType,
                         serviceExecutionHooks,
@@ -429,7 +429,7 @@ public class HydrationInputResolver {
 
         return queryTransformationResultCF.thenCompose(queryTransformationResult -> {
             return serviceExecutor
-                    .execute(executionContext, queryTransformationResult, service, operation, serviceContexts.get(service), service.getUnderlyingSchema(), true)
+                    .execute(executionContext, queryTransformationResult, service, operationKind, serviceContexts.get(service), service.getUnderlyingSchema(), true)
                     .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, hydrationInputs, resultNode, queryTransformationResult, resultComplexityAggregator))
                     .whenComplete(this::possiblyLogException);
         });

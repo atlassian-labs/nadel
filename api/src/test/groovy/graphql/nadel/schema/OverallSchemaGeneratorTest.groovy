@@ -1,7 +1,7 @@
 package graphql.nadel.schema
 
 import graphql.GraphQLException
-import graphql.nadel.Operation
+import graphql.nadel.OperationKind
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLObjectType
 import spock.lang.Specification
@@ -163,13 +163,13 @@ class OverallSchemaGeneratorTest extends Specification {
         when:
         def resultList
         switch (opsType) {
-            case Operation.QUERY.name:
+            case OperationKind.QUERY.name:
                 resultList = schema.getQueryType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
-            case Operation.MUTATION.name:
+            case OperationKind.MUTATION.name:
                 resultList = schema.getMutationType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
-            case Operation.SUBSCRIPTION.name:
+            case OperationKind.SUBSCRIPTION.name:
                 resultList = schema.getSubscriptionType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
             case "directives":

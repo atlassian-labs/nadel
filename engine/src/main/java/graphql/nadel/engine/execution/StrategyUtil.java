@@ -4,7 +4,7 @@ import graphql.Assert;
 import graphql.Internal;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ResultPath;
-import graphql.nadel.Operation;
+import graphql.nadel.OperationKind;
 import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.result.ExecutionResultNode;
 import graphql.schema.GraphQLSchema;
@@ -80,8 +80,8 @@ public class StrategyUtil {
         return result;
     }
 
-    public static ExecutionStepInfo createRootExecutionStepInfo(GraphQLSchema graphQLSchema, Operation operation) {
-        ExecutionStepInfo executionInfo = newExecutionStepInfo().type(operation.getRootType(graphQLSchema)).path(ResultPath.rootPath()).build();
+    public static ExecutionStepInfo createRootExecutionStepInfo(GraphQLSchema graphQLSchema, OperationKind operationKind) {
+        ExecutionStepInfo executionInfo = newExecutionStepInfo().type(operationKind.getRootType(graphQLSchema)).path(ResultPath.rootPath()).build();
         return executionInfo;
     }
 

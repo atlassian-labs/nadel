@@ -13,7 +13,7 @@ import graphql.language.SDLDefinition;
 import graphql.language.SchemaDefinition;
 import graphql.language.SourceLocation;
 import graphql.nadel.DefinitionRegistry;
-import graphql.nadel.Operation;
+import graphql.nadel.OperationKind;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
@@ -44,8 +44,8 @@ public class OverallSchemaGenerator {
 
     private TypeDefinitionRegistry createTypeRegistry(List<DefinitionRegistry> serviceRegistries, DefinitionRegistry commonTypes) {
         //TODO: this merging not completely correct for example schema definition nodes are not handled correctly
-        Map<Operation, List<FieldDefinition>> fieldsMapByType = new LinkedHashMap<>();
-        Arrays.stream(Operation.values()).forEach(
+        Map<OperationKind, List<FieldDefinition>> fieldsMapByType = new LinkedHashMap<>();
+        Arrays.stream(OperationKind.values()).forEach(
                 value -> fieldsMapByType.put(value, new ArrayList<>()));
 
         TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
@@ -101,8 +101,8 @@ public class OverallSchemaGenerator {
         );
     }
 
-    private void collectTypes(Map<Operation, List<FieldDefinition>> fieldsMapByType, List<SDLDefinition<?>> allDefinitions, DefinitionRegistry definitionRegistry) {
-        Map<Operation, List<ObjectTypeDefinition>> opTypes = definitionRegistry.getOperationMap();
+    private void collectTypes(Map<OperationKind, List<FieldDefinition>> fieldsMapByType, List<SDLDefinition<?>> allDefinitions, DefinitionRegistry definitionRegistry) {
+        Map<OperationKind, List<ObjectTypeDefinition>> opTypes = definitionRegistry.getOperationMap();
         Set<String> opTypeNames = new HashSet<>(3);
 
         opTypes.keySet().forEach(opType -> {
