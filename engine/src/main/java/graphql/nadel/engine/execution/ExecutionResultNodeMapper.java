@@ -15,9 +15,6 @@ import graphql.schema.GraphQLTypeUtil;
 import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
-import static graphql.introspection.Introspection.SchemaMetaFieldDef;
-import static graphql.introspection.Introspection.TypeMetaFieldDef;
-import static graphql.introspection.Introspection.TypeNameMetaFieldDef;
 
 @Internal
 public class ExecutionResultNodeMapper {
@@ -63,15 +60,15 @@ public class ExecutionResultNodeMapper {
 
     public static GraphQLFieldDefinition getFieldDef(GraphQLSchema schema, GraphQLCompositeType parentType, String fieldName) {
         if (schema.getQueryType() == parentType) {
-            if (fieldName.equals(SchemaMetaFieldDef.getName())) {
-                return SchemaMetaFieldDef;
+            if (fieldName.equals(schema.getIntrospectionSchemaFieldDefinition().getName())) {
+                return schema.getIntrospectionSchemaFieldDefinition();
             }
-            if (fieldName.equals(TypeMetaFieldDef.getName())) {
-                return TypeMetaFieldDef;
+            if (fieldName.equals(schema.getIntrospectionTypeFieldDefinition().getName())) {
+                return schema.getIntrospectionTypeFieldDefinition();
             }
         }
-        if (fieldName.equals(TypeNameMetaFieldDef.getName())) {
-            return TypeNameMetaFieldDef;
+        if (fieldName.equals(schema.getIntrospectionTypenameFieldDefinition().getName())) {
+            return schema.getIntrospectionTypenameFieldDefinition();
         }
         GraphQLFieldsContainer fieldsContainer = (GraphQLFieldsContainer) parentType;
         GraphQLFieldDefinition fieldDefinition = schema.getCodeRegistry().getFieldVisibility().getFieldDefinition(fieldsContainer, fieldName);
