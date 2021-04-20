@@ -1,22 +1,34 @@
 package graphql.nadel
 
+import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl
+import graphql.execution.instrumentation.InstrumentationState
+import graphql.language.Document
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import java.util.concurrent.CompletableFuture
 
 class KotlinEngine(nadel: Nadel) : NadelExecutionEngine {
-    override fun execute(input: NadelExecutionInput): CompletableFuture<ExecutionResult> {
+    override fun execute(
+        executionInput: ExecutionInput,
+        queryDocument: Document,
+        instrumentationState: InstrumentationState?,
+        nadelExecutionParams: NadelExecutionParams
+    ): CompletableFuture<ExecutionResult> {
         return GlobalScope.async {
-            executeAsync(input)
+            executeCoroutine(executionInput, queryDocument, instrumentationState)
         }.asCompletableFuture()
     }
 
-    private suspend fun executeAsync(input: NadelExecutionInput): ExecutionResult {
+    private suspend fun executeCoroutine(
+        input: ExecutionInput,
+        queryDocument: Document,
+        instrumentationState: InstrumentationState?
+    ): ExecutionResult {
         return ExecutionResultImpl.newExecutionResult()
-                .build()
+            .build()
     }
 
     companion object {
