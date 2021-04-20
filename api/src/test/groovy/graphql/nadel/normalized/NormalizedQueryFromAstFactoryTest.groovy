@@ -1,7 +1,6 @@
 package graphql.nadel.normalized
 
 import graphql.GraphQL
-import graphql.introspection.Introspection
 import graphql.language.Document
 import graphql.language.Field
 import graphql.language.FragmentDefinition
@@ -772,15 +771,15 @@ type Dog implements Animal{
         expect:
         normalizedFieldsByFieldId.size() == 14
         normalizedFieldsByFieldId.get(getId(typeNameField))[0].objectType.name == "Query"
-        normalizedFieldsByFieldId.get(getId(typeNameField))[0].fieldDefinition == Introspection.TypeNameMetaFieldDef
+        normalizedFieldsByFieldId.get(getId(typeNameField))[0].fieldDefinition == graphQLSchema.getIntrospectionTypenameFieldDefinition()
         normalizedFieldsByFieldId.get(getId(aliasedTypeName))[0].alias == "alias"
-        normalizedFieldsByFieldId.get(getId(aliasedTypeName))[0].fieldDefinition == Introspection.TypeNameMetaFieldDef
+        normalizedFieldsByFieldId.get(getId(aliasedTypeName))[0].fieldDefinition == graphQLSchema.getIntrospectionTypenameFieldDefinition()
 
         normalizedFieldsByFieldId.get(getId(schemaField))[0].objectType.name == "Query"
-        normalizedFieldsByFieldId.get(getId(schemaField))[0].fieldDefinition == Introspection.SchemaMetaFieldDef
+        normalizedFieldsByFieldId.get(getId(schemaField))[0].fieldDefinition == graphQLSchema.getIntrospectionSchemaFieldDefinition()
 
         normalizedFieldsByFieldId.get(getId(typeField))[0].objectType.name == "Query"
-        normalizedFieldsByFieldId.get(getId(typeField))[0].fieldDefinition == Introspection.TypeMetaFieldDef
+        normalizedFieldsByFieldId.get(getId(typeField))[0].fieldDefinition == graphQLSchema.getIntrospectionTypeFieldDefinition()
 
     }
 
