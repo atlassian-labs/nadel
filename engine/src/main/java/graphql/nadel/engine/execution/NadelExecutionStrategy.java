@@ -356,11 +356,10 @@ public class NadelExecutionStrategy {
 
     private boolean skipTransformationProcessing(NadelContext nadelContext, QueryTransformationResult transformedQuery) {
         TransformationState transformations = transformedQuery.getTransformations();
-        return nadelContext.getNadelExecutionHints().isOptimizeOnNoTransformations() &&
-                transformations.getFieldIdToTransformation().size() == 0 &&
-                transformations.getTypeRenameMappings().size() == 0 &&
-                !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
-                transformations.getHintTypenames().size() == 0;
+        return transformations.getFieldIdToTransformation().size() == 0 &&
+               transformations.getTypeRenameMappings().size() == 0 &&
+               !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
+               transformations.getHintTypenames().size() == 0;
     }
 }
 

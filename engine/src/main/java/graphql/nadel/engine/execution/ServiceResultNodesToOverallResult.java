@@ -566,10 +566,9 @@ public class ServiceResultNodesToOverallResult {
      * Skips 2 sub-tree traversals if there is ONLY 1 rename transformation and 0 not-transformed sub-trees
      */
     private boolean canSkipTraversal(Set<AbstractNode> definitions, ExecutionResultNode executionResultNode, TransformationMetadata transformationMetadata, NadelContext nadelContext) {
-        return nadelContext.getNadelExecutionHints().isOptimizeOnNoTransformations() &&
-                definitions.size() == 1 &&
-                !(definitions.iterator().next() instanceof UnderlyingServiceHydration) &&
-                getFieldIdsWithoutTransformationId(executionResultNode, transformationMetadata).size() == 0;
+        return definitions.size() == 1 &&
+               !(definitions.iterator().next() instanceof UnderlyingServiceHydration) &&
+               getFieldIdsWithoutTransformationId(executionResultNode, transformationMetadata).size() == 0;
     }
 
     private ExecutionResultNode nodesWithTransformationIds(ExecutionResultNode
