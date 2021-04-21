@@ -23,7 +23,6 @@ public class ErrorUtil {
     }
 
     public static GraphQLError createGraphqlErrorFromRawError(Map<String, Object> rawError) {
-
         GraphqlErrorBuilder errorBuilder = GraphqlErrorBuilder.newError();
         errorBuilder.message(String.valueOf(rawError.get("message")));
         errorBuilder.errorType(ErrorType.DataFetchingException);
