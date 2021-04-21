@@ -106,9 +106,9 @@ class NadelInstrumentationTest extends Specification {
             }
 
             @Override
-            InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+            CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
                 instrumentationExecuteCalled = true
-                noOp()
+                CompletableFuture.completedFuture(noOp())
             }
         }
 
@@ -180,10 +180,11 @@ class NadelInstrumentationTest extends Specification {
             }
 
             @Override
-            InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+            CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
                 instrumentationExecuteCalled++
-                noOp()
+                CompletableFuture.completedFuture(noOp())
             }
+
         }
 
         ChainedNadelInstrumentation chainedInstrumentation = new ChainedNadelInstrumentation(
@@ -237,7 +238,7 @@ class NadelInstrumentationTest extends Specification {
         NadelInstrumentation instrumentation = new NadelInstrumentation() {
 
             @Override
-            InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+            CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
                 throw new AbortExecutionException("beginExecute")
             }
 

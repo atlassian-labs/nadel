@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static java.util.stream.Collectors.toList;
@@ -85,13 +86,21 @@ public class ChainedNadelInstrumentation implements NadelInstrumentation {
     }
 
     @Override
-    public InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
-        return new ChainedInstrumentationContext<>(instrumentations.stream()
+    public CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+        List<CompletableFuture<InstrumentationContext<ExecutionResult>>> contextFutures = instrumentations.stream()
                 .map(instrumentation -> {
                     InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
                     return instrumentation.beginExecute(parameters.withNewState(state));
                 })
-                .collect(toList()));
+                .collect(toList());
+        return sequence(contextFutures).thenApply(ChainedInstrumentationContext::new);
+    }
+
+    private static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]))
+                .thenApply(ignore -> futures.stream()
+                        .map(CompletableFuture::join)
+                        .collect(Collectors.toList()));
     }
 
     @Override

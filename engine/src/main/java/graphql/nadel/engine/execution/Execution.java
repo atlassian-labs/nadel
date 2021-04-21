@@ -112,35 +112,40 @@ public class Execution {
 
         NadelInstrumentationExecuteOperationParameters executeOperationParameters =
                 new NadelInstrumentationExecuteOperationParameters(executionContext, normalizedQueryFromAst, instrumentationState);
-        InstrumentationContext<ExecutionResult> instrumentationCtx = instrumentation.beginExecute(executeOperationParameters);
+        CompletableFuture<InstrumentationContext<ExecutionResult>> instrumentationCtxFuture = instrumentation.beginExecute(executeOperationParameters);
 
-        CompletableFuture<ExecutionResult> result;
-        ResultComplexityAggregator resultComplexityAggregator = new ResultComplexityAggregator();
-        if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
-            result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, executionInput);
-        } else {
-            if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
-                BenchmarkContext.NadelExecutionStrategyArgs args = ((BenchmarkContext) nadelContext.getUserSuppliedContext()).nadelExecutionStrategyArgs;
-                args.executionContext = executionContext;
-                args.fieldSubSelection = fieldSubSelection;
-                args.resultComplexityAggregator = resultComplexityAggregator;
-            }
-            CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection, resultComplexityAggregator);
-            result = resultNodes.thenApply(rootResultNode -> {
+        ExecutionInput finalExecutionInput = executionInput;
+
+        return instrumentationCtxFuture.thenCompose(instrumentationCtx -> {
+
+            CompletableFuture<ExecutionResult> result;
+            ResultComplexityAggregator resultComplexityAggregator = new ResultComplexityAggregator();
+            if (introspectionRunner.isIntrospectionQuery(executionContext, fieldSubSelection)) {
+                result = introspectionRunner.runIntrospection(executionContext, fieldSubSelection, finalExecutionInput);
+            } else {
                 if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
-                    ((BenchmarkContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
+                    BenchmarkContext.NadelExecutionStrategyArgs args = ((BenchmarkContext) nadelContext.getUserSuppliedContext()).nadelExecutionStrategyArgs;
+                    args.executionContext = executionContext;
+                    args.fieldSubSelection = fieldSubSelection;
+                    args.resultComplexityAggregator = resultComplexityAggregator;
                 }
-                if (instrumentation instanceof NadelEngineInstrumentation) {
-                    rootResultNode = ((NadelEngineInstrumentation) instrumentation).instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, normalizedQueryFromAst, instrumentationState));
-                }
-                return withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);
-            });
-        }
+                CompletableFuture<RootExecutionResultNode> resultNodes = nadelExecutionStrategy.execute(executionContext, fieldSubSelection, resultComplexityAggregator);
+                result = resultNodes.thenApply(rootResultNode -> {
+                    if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
+                        ((BenchmarkContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
+                    }
+                    if (instrumentation instanceof NadelEngineInstrumentation) {
+                        rootResultNode = ((NadelEngineInstrumentation) instrumentation).instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, normalizedQueryFromAst, instrumentationState));
+                    }
+                    return withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);
+                });
+            }
 
-        // note this happens NOW - not when the result completes
-        instrumentationCtx.onDispatched(result);
-        result = result.whenComplete(instrumentationCtx::onCompleted);
-        return result;
+            // note this happens NOW - not when the result completes
+            instrumentationCtx.onDispatched(result);
+            result = result.whenComplete(instrumentationCtx::onCompleted);
+            return result;
+        });
     }
 
     private FieldInfos createFieldsInfos() {

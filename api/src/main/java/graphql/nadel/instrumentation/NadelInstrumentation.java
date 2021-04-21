@@ -81,8 +81,8 @@ public interface NadelInstrumentation {
      * @param parameters the parameters to this step
      * @return a non null {@link InstrumentationContext} object that will be called back when the step ends
      */
-    default InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
-        return noOp();
+    default CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+        return CompletableFuture.completedFuture(noOp());
     }
 
     /**
