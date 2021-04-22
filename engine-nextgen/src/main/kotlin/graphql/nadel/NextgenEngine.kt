@@ -25,7 +25,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
 
-class KotlinEngine(nadel: Nadel) : NadelExecutionEngine {
+class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val schema = nadel.overallSchema
     private val fieldInfos = GraphQLFieldInfos(nadel.overallSchema, nadel.services)
     private val queryPlanner = GraphQLQueryPlanner.create(nadel.overallSchema)
@@ -138,7 +138,7 @@ class KotlinEngine(nadel: Nadel) : NadelExecutionEngine {
     companion object {
         @JvmStatic
         fun newNadel(): Nadel.Builder {
-            return Nadel.Builder().engineFactory(::KotlinEngine)
+            return Nadel.Builder().engineFactory(::NextgenEngine)
         }
     }
 }
