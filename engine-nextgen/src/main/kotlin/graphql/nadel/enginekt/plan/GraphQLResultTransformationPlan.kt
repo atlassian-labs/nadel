@@ -4,7 +4,7 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.transform.result.GraphQLResultTransform
 import graphql.normalized.NormalizedField
 
-data class GraphQLQueryPlan(
+data class GraphQLResultTransformationPlan(
     val resultTransformations: List<GraphQLResultTransformIntent>
 )
 

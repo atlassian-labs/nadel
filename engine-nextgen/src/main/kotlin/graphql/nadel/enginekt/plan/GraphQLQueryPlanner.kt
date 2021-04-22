@@ -13,8 +13,8 @@ class GraphQLQueryPlanner(
         userContext: Any?,
         service: Service,
         field: NormalizedField,
-    ): GraphQLQueryPlan {
-        return GraphQLQueryPlan(
+    ): GraphQLResultTransformationPlan {
+        return GraphQLResultTransformationPlan(
             getResultTransformsRecursively(userContext, service, field)
         )
     }

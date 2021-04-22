@@ -10,7 +10,7 @@ import graphql.language.OperationDefinition
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.normalized.NormalizedQueryToDocument
 import graphql.nadel.enginekt.plan.GraphQLQueryPlanner
-import graphql.nadel.enginekt.plan.GraphQLQueryPlan
+import graphql.nadel.enginekt.plan.GraphQLResultTransformationPlan
 import graphql.nadel.enginekt.schema.GraphQLFieldInfos
 import graphql.nadel.enginekt.transform.query.GraphQLQueryTransformer
 import graphql.nadel.enginekt.util.singleOfType
@@ -120,7 +120,10 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         ).asDeferred().await()
     }
 
-    private fun postProcess(queryPlan: GraphQLQueryPlan, result: ServiceExecutionResult): ServiceExecutionResult {
+    private fun postProcess(
+        queryPlan: GraphQLResultTransformationPlan,
+        result: ServiceExecutionResult
+    ): ServiceExecutionResult {
         // TODO: run through schema and result transformer here
         return result
     }
