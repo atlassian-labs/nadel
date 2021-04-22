@@ -9,7 +9,7 @@ import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.MergedField;
 import graphql.language.FragmentDefinition;
-import graphql.nadel.Operation;
+import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.ServiceExecutionParameters;
@@ -59,7 +59,7 @@ public class ServiceExecutor {
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext,
                                                               QueryTransformationResult queryTransformerResult,
                                                               Service service,
-                                                              Operation operation,
+                                                              OperationKind operationKind,
                                                               Object serviceContext,
                                                               GraphQLSchema schema,
                                                               boolean isHydrationCall) {
@@ -72,7 +72,7 @@ public class ServiceExecutor {
         ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformerResult, serviceContext, isHydrationCall);
         ExecutionContext executionContextForService = buildServiceExecutionContext(executionContext, underlyingSchema, serviceExecutionParameters);
 
-        ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(underlyingSchema, operation);
+        ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(underlyingSchema, operationKind);
 
         // When ServiceResultNodesToOverallResult execution is skipped, the ExecutionResultNodes will reference the overall schema
         NormalizedQueryFromAst normalizedQuery = normalizedQueryFactory.createNormalizedQuery(schema, serviceExecutionParameters.getQuery(),

@@ -8,7 +8,7 @@ import graphql.execution.nextgen.FieldSubSelection
 import graphql.language.AstPrinter
 import graphql.language.Document
 import graphql.language.Field
-import graphql.nadel.Operation
+import graphql.nadel.OperationKind
 import graphql.nadel.Service
 import graphql.nadel.dsl.NodeId
 import graphql.nadel.engine.testutils.TestUtil
@@ -127,7 +127,7 @@ class OverallQueryTransformerTest extends Specification {
             ''')
 
         when:
-        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query, Operation.MUTATION, "M")
+        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query, OperationKind.MUTATION, "M")
 
         then:
         AstPrinter.printAstCompact(delegateQuery) == "mutation M {hAlias:hello}"
@@ -267,7 +267,7 @@ class OverallQueryTransformerTest extends Specification {
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
         def transformer = new OverallQueryTransformer()
         def serviceExecutionHooks = new ServiceExecutionHooks() {}
-        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchemaExampleService, null, Operation.QUERY, fields, serviceExecutionHooks, null, null)
+        def transformationResult = transformer.transformMergedFields(executionContext, underlyingSchemaExampleService, null, OperationKind.QUERY, fields, serviceExecutionHooks, null, null)
         when:
         def document = transformationResult.get().document
 
@@ -280,7 +280,7 @@ class OverallQueryTransformerTest extends Specification {
     private static Document doTransform(GraphQLSchema overallSchema,
                                         GraphQLSchema underlyingSchema,
                                         Document query,
-                                        Operation operation = Operation.QUERY,
+                                        OperationKind operation = OperationKind.QUERY,
                                         String operationName = null) {
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext

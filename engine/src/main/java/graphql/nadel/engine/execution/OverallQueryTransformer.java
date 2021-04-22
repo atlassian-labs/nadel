@@ -15,7 +15,7 @@ import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
 import graphql.language.VariableDefinition;
 import graphql.language.VariableReference;
-import graphql.nadel.Operation;
+import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.engine.NadelContext;
@@ -71,7 +71,7 @@ public class OverallQueryTransformer {
             ExecutionContext executionContext,
             GraphQLSchema underlyingSchema,
             String operationName,
-            Operation operation,
+            OperationKind operationKind,
             Field rootField,
             GraphQLCompositeType topLevelFieldTypeOverall,
             ServiceExecutionHooks serviceExecutionHooks,
@@ -161,7 +161,7 @@ public class OverallQueryTransformer {
                 SelectionSet newOperationSelectionSet = newSelectionSet().selection(finalTransformedRootField).build();
                 OperationDefinition operationDefinition = newOperationDefinition()
                         .name(operationName)
-                        .operation(operation.getAstOperation())
+                        .operation(operationKind.getAstOperation())
                         .selectionSet(newOperationSelectionSet)
                         .variableDefinitions(variableDefinitions)
                         .build();
@@ -188,7 +188,7 @@ public class OverallQueryTransformer {
     CompletableFuture<QueryTransformationResult> transformMergedFields(
             ExecutionContext executionContext,
             GraphQLSchema underlyingSchema,
-            String operationName, Operation operation,
+            String operationName, OperationKind operationKind,
             List<MergedField> mergedFields,
             ServiceExecutionHooks serviceExecutionHooks,
             Service service,
@@ -208,7 +208,7 @@ public class OverallQueryTransformer {
             List<Field> fields = mergedField.getFields();
 
             List<CompletableFuture<Field>> transformedCF = map(fields, field -> {
-                GraphQLObjectType rootType = operation.getRootType(executionContext.getGraphQLSchema());
+                GraphQLObjectType rootType = operationKind.getRootType(executionContext.getGraphQLSchema());
 
                 CompletableFuture<Field> newFieldCF = transformNode(
                         executionContext,
@@ -252,7 +252,7 @@ public class OverallQueryTransformer {
             SelectionSet newSelectionSet = newSelectionSet(transformedFields).build();
 
             OperationDefinition operationDefinition = newOperationDefinition()
-                    .operation(operation.getAstOperation())
+                    .operation(operationKind.getAstOperation())
                     .name(operationName)
                     .selectionSet(newSelectionSet)
                     .variableDefinitions(variableDefinitions)

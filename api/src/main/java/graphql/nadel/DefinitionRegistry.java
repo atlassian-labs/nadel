@@ -44,29 +44,29 @@ public class DefinitionRegistry {
         return (SchemaDefinition) definitionsByClass.get(SchemaDefinition.class).get(0);
     }
 
-    public Map<Operation, List<ObjectTypeDefinition>> getOperationMap() {
-        return Stream.of(Operation.values()).collect(HashMap::new, (m, v) -> m.put(v, getOpsDefinitions(v)), HashMap::putAll);
+    public Map<OperationKind, List<ObjectTypeDefinition>> getOperationMap() {
+        return Stream.of(OperationKind.values()).collect(HashMap::new, (m, v) -> m.put(v, getOpsDefinitions(v)), HashMap::putAll);
     }
 
     public List<ObjectTypeDefinition> getQueryType() {
-        return getOpsDefinitions(Operation.QUERY);
+        return getOpsDefinitions(OperationKind.QUERY);
     }
 
     public List<ObjectTypeDefinition> getMutationType() {
-        return getOpsDefinitions(Operation.MUTATION);
+        return getOpsDefinitions(OperationKind.MUTATION);
     }
 
     public List<ObjectTypeDefinition> getSubscriptionType() {
-        return getOpsDefinitions(Operation.SUBSCRIPTION);
+        return getOpsDefinitions(OperationKind.SUBSCRIPTION);
     }
 
-    private List<ObjectTypeDefinition> getOpsDefinitions(Operation operation) {
-        String type = getOperationTypeName(operation);
+    private List<ObjectTypeDefinition> getOpsDefinitions(OperationKind operationKind) {
+        String type = getOperationTypeName(operationKind);
         return getDefinition(type, ObjectTypeDefinition.class);
     }
 
-    public String getOperationTypeName(Operation operation) {
-        String operationName = operation.getName(); // e.g. query, mutation etc.
+    public String getOperationTypeName(OperationKind operationKind) {
+        String operationName = operationKind.getName(); // e.g. query, mutation etc.
 
         // Check the schema definition for the operation type
         // i.e. we are trying to find MyOwnQueryType in: schema { query: MyOwnQueryType }
@@ -81,7 +81,7 @@ public class DefinitionRegistry {
         }
 
         // This is the default name if there is no schema definition
-        return operation.getDisplayName();
+        return operationKind.getDisplayName();
     }
 
     private <T extends SDLDefinition> List<T> getDefinition(String name, Class<? extends T> clazz) {
