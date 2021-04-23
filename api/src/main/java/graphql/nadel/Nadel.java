@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -207,17 +208,29 @@ public class Nadel {
 
             InstrumentationContext<ExecutionResult> executionInstrumentation = instrumentation.beginQueryExecution(instrumentationParameters);
 
-            CompletableFuture<ExecutionResult> executionResult = parseValidateAndExecute(executionInput, overallSchema, instrumentationState, nadelExecutionParams);
-            //
-            // finish up instrumentation
-            executionResult = executionResult.whenComplete(executionInstrumentation::onCompleted);
-            //
-            // allow instrumentation to tweak the result
-            executionResult = executionResult.thenCompose(result -> instrumentation.instrumentExecutionResult(result, instrumentationParameters));
-            return executionResult.whenComplete((executionResult1, throwable) -> {
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                log.debug("Finished execution in {} ms, executionId: {}", elapsedTime, nadelExecutionInput.getExecutionId());
-            });
+            return parseValidateAndExecute(executionInput, overallSchema, instrumentationState, nadelExecutionParams)
+                    //
+                    // finish up instrumentation
+                    .whenComplete(executionInstrumentation::onCompleted)
+                    .exceptionally(throwable -> {
+                        if (throwable instanceof AbortExecutionException) {
+                            AbortExecutionException abortException = (AbortExecutionException) throwable;
+                            return abortException.toExecutionResult();
+                        } else if (throwable instanceof CompletionException && throwable.getCause() instanceof AbortExecutionException) {
+                            AbortExecutionException abortException = (AbortExecutionException) throwable.getCause();
+                            return abortException.toExecutionResult();
+                        } else if (throwable instanceof RuntimeException) {
+                            throw (RuntimeException) throwable;
+                        }
+                        throw new RuntimeException(throwable);
+                    })
+                    //
+                    // allow instrumentation to tweak the result
+                    .thenCompose(result -> instrumentation.instrumentExecutionResult(result, instrumentationParameters))
+                    .whenComplete((executionResult, throwable) -> {
+                        long elapsedTime = System.currentTimeMillis() - startTime;
+                        log.debug("Finished execution in {} ms, executionId: {}", elapsedTime, nadelExecutionInput.getExecutionId());
+                    });
         } catch (AbortExecutionException abortException) {
             return instrumentation.instrumentExecutionResult(abortException.toExecutionResult(), instrumentationParameters);
         }
