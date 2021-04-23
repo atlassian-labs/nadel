@@ -9,7 +9,7 @@ import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.ResultPath;
 import graphql.execution.nextgen.FieldSubSelection;
-import graphql.nadel.Operation;
+import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.BenchmarkContext;
@@ -85,13 +85,13 @@ public class NadelExecutionStrategy {
         long startTime = System.currentTimeMillis();
         ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
         NadelContext nadelContext = getNadelContext(executionContext);
-        Operation operation = Operation.fromAst(executionContext.getOperationDefinition().getOperation());
+        OperationKind operationKind = OperationKind.fromAst(executionContext.getOperationDefinition().getOperation());
         CompletableFuture<List<OneServiceExecution>> oneServiceExecutionsCF = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
 
         return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
             Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
             List<CompletableFuture<RootExecutionResultNode>> resultNodes =
-                    executeTopLevelFields(executionContext, nadelContext, operation, oneServiceExecutions, resultComplexityAggregator, hydrationInputPaths);
+                    executeTopLevelFields(executionContext, nadelContext, operationKind, oneServiceExecutions, resultComplexityAggregator, hydrationInputPaths);
 
             CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
             return rootResult
@@ -139,7 +139,7 @@ public class NadelExecutionStrategy {
     private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(
             ExecutionContext executionContext,
             NadelContext nadelContext,
-            Operation operation,
+            OperationKind operationKind,
             List<OneServiceExecution> oneServiceExecutions,
             ResultComplexityAggregator resultComplexityAggregator,
             Set<ResultPath> hydrationInputPaths) {
@@ -158,7 +158,7 @@ public class NadelExecutionStrategy {
             //
             GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
             CompletableFuture<QueryTransformationResult> transformedQueryCF = queryTransformer
-                    .transformMergedFields(executionContext, underlyingSchema, operationName, operation, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
+                    .transformMergedFields(executionContext, underlyingSchema, operationName, operationKind, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
             resultNodes.add(transformedQueryCF.thenCompose(transformedQuery -> {
                 Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getTransformations().getFieldIdToTransformation();
@@ -178,11 +178,11 @@ public class NadelExecutionStrategy {
 
                 if (skipTransformationProcessing(nadelContext, transformedQuery)) {
                     convertedResult = serviceExecutor
-                            .execute(newExecutionContext, transformedQuery, service, operation, serviceContext, overallSchema, false);
+                            .execute(newExecutionContext, transformedQuery, service, operationKind, serviceContext, overallSchema, false);
                     resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);
                 } else {
                     CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
-                            .execute(newExecutionContext, transformedQuery, service, operation, serviceContext, service.getUnderlyingSchema(), false);
+                            .execute(newExecutionContext, transformedQuery, service, operationKind, serviceContext, service.getUnderlyingSchema(), false);
                     convertedResult = serviceCallResult
                             .thenApply(resultNode -> {
                                 if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {

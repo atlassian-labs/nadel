@@ -9,7 +9,7 @@ import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
 
 @Internal
-public enum Operation {
+public enum OperationKind {
     QUERY("query", "Query", OperationDefinition.Operation.QUERY),
     MUTATION("mutation", "Mutation", OperationDefinition.Operation.MUTATION),
     SUBSCRIPTION("subscription", "Subscription", OperationDefinition.Operation.SUBSCRIPTION);
@@ -18,7 +18,7 @@ public enum Operation {
     private final String displayName;
     private final OperationDefinition.Operation astOperation;
 
-    Operation(String name, String displayName, OperationDefinition.Operation astOperation) {
+    OperationKind(String name, String displayName, OperationDefinition.Operation astOperation) {
         this.displayName = displayName;
         this.name = name;
         this.astOperation = astOperation;
@@ -36,7 +36,7 @@ public enum Operation {
         return astOperation;
     }
 
-    public static Operation fromAst(OperationDefinition.Operation operation) {
+    public static OperationKind fromAst(OperationDefinition.Operation operation) {
         if (operation == null) {
             return QUERY;
         }

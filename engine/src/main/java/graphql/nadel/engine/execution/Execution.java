@@ -111,7 +111,7 @@ public class Execution {
         FieldSubSelection fieldSubSelection = executionHelper.getFieldSubSelection(executionContext);
 
         NadelInstrumentationExecuteOperationParameters executeOperationParameters =
-                new NadelInstrumentationExecuteOperationParameters(executionContext, normalizedQueryFromAst, instrumentationState);
+                new NadelInstrumentationExecuteOperationParameters(normalizedQueryFromAst, instrumentationState);
         CompletableFuture<InstrumentationContext<ExecutionResult>> instrumentationCtxFuture = instrumentation.beginExecute(executeOperationParameters);
 
         ExecutionInput finalExecutionInput = executionInput;
