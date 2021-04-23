@@ -1214,7 +1214,6 @@ class NadelE2ETest extends Specification {
 
         instrumentationParams != null
         instrumentationParams.instrumentationState == "test-instrumentation-state"
-        instrumentationParams.executionContext.operationDefinition.name == "OpName"
     }
 
     def "execution is aborted when beginExecute completes exceptionally using chained instrumentation"() {
