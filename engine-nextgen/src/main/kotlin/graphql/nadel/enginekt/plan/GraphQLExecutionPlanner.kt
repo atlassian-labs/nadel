@@ -5,7 +5,7 @@ import graphql.nadel.enginekt.transform.result.GraphQLResultTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-class GraphQLQueryPlanner(
+class GraphQLExecutionPlanner(
     private val overallSchema: GraphQLSchema,
     private val resultTransforms: List<GraphQLResultTransform>,
 ) {
@@ -13,9 +13,10 @@ class GraphQLQueryPlanner(
         userContext: Any?,
         service: Service,
         field: NormalizedField,
-    ): GraphQLResultTransformationPlan {
-        return GraphQLResultTransformationPlan(
-            getResultTransformsRecursively(userContext, service, field)
+    ): GraphQLExecutionPlan {
+        return GraphQLExecutionPlan(
+            emptyList(),
+            getResultTransformsRecursively(userContext, service, field),
         )
     }
 
@@ -23,7 +24,7 @@ class GraphQLQueryPlanner(
         userContext: Any?,
         service: Service,
         field: NormalizedField,
-    ): List<GraphQLResultTransformIntent> {
+    ): List<GraphQLResultTransformation> {
         return getResultTransforms(userContext, service, field) + field.children.flatMap {
             getResultTransformsRecursively(userContext, service, field = it)
         }
@@ -33,10 +34,10 @@ class GraphQLQueryPlanner(
         userContext: Any?,
         service: Service,
         field: NormalizedField,
-    ): List<GraphQLResultTransformIntent> {
+    ): List<GraphQLResultTransformation> {
         return resultTransforms.mapNotNull {
             if (it.isApplicable(userContext, overallSchema, service, field)) {
-                GraphQLResultTransformIntent(service, field, it)
+                GraphQLResultTransformation(service, field, it)
             } else {
                 null
             }
@@ -44,8 +45,8 @@ class GraphQLQueryPlanner(
     }
 
     companion object {
-        fun create(overallSchema: GraphQLSchema): GraphQLQueryPlanner {
-            return GraphQLQueryPlanner(overallSchema, emptyList())
+        fun create(overallSchema: GraphQLSchema): GraphQLExecutionPlanner {
+            return GraphQLExecutionPlanner(overallSchema, emptyList())
         }
     }
 }
