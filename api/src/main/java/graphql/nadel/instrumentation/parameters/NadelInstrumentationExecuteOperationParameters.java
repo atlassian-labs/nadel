@@ -3,7 +3,12 @@ package graphql.nadel.instrumentation.parameters;
 
 import graphql.PublicApi;
 import graphql.execution.instrumentation.InstrumentationState;
+import graphql.language.Document;
+import graphql.language.OperationDefinition;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.schema.GraphQLSchema;
+
+import java.util.Map;
 
 /**
  * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
@@ -13,13 +18,24 @@ import graphql.nadel.normalized.NormalizedQueryFromAst;
 public class NadelInstrumentationExecuteOperationParameters {
     private final InstrumentationState instrumentationState;
     private final NormalizedQueryFromAst normalizedQueryFromAst;
+    private final Document document;
+    private final GraphQLSchema graphQLSchema;
+    private final Map<String, Object> variables;
+    private final OperationDefinition operationDefinition;
 
     public NadelInstrumentationExecuteOperationParameters(
             NormalizedQueryFromAst normalizedQueryFromAst,
-            InstrumentationState instrumentationState
-    ) {
+            Document document,
+            GraphQLSchema graphQLSchema,
+            Map<String, Object> variables,
+            OperationDefinition operationDefinition,
+            InstrumentationState instrumentationState) {
         this.instrumentationState = instrumentationState;
         this.normalizedQueryFromAst = normalizedQueryFromAst;
+        this.document = document;
+        this.graphQLSchema = graphQLSchema;
+        this.variables = variables;
+        this.operationDefinition = operationDefinition;
     }
 
     /**
@@ -29,7 +45,7 @@ public class NadelInstrumentationExecuteOperationParameters {
      * @return a new parameters object with the new state
      */
     public NadelInstrumentationExecuteOperationParameters withNewState(InstrumentationState instrumentationState) {
-        return new NadelInstrumentationExecuteOperationParameters(normalizedQueryFromAst, instrumentationState);
+        return new NadelInstrumentationExecuteOperationParameters(normalizedQueryFromAst, document, graphQLSchema, variables, operationDefinition, instrumentationState);
     }
 
     public NormalizedQueryFromAst getNormalizedQueryFromAst() {
@@ -39,5 +55,21 @@ public class NadelInstrumentationExecuteOperationParameters {
     public <T extends InstrumentationState> T getInstrumentationState() {
         //noinspection unchecked
         return (T) instrumentationState;
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public GraphQLSchema getGraphQLSchema() {
+        return graphQLSchema;
+    }
+
+    public Map<String, Object> getVariables() {
+        return variables;
+    }
+
+    public OperationDefinition getOperationDefinition() {
+        return operationDefinition;
     }
 }
