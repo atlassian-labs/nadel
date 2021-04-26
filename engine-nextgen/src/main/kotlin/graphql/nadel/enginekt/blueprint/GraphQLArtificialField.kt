@@ -1,15 +1,19 @@
 package graphql.nadel.enginekt.blueprint
 
-sealed class GraphQLArtificialField
+import graphql.schema.FieldCoordinates
+
+sealed class GraphQLArtificialField {
+    abstract val location: FieldCoordinates
+}
 
 data class GraphQLHydrationField(
-    val name: String,
+    override val location: FieldCoordinates,
     val sourceService: String,
     val pathToSourceField: List<String>,
 ) : GraphQLArtificialField()
 
 data class GraphQLBatchHydrationField(
-    val name: String,
+    override val location: FieldCoordinates,
     val sourceService: String,
     val pathToSourceField: List<String>,
     val batchSize: Int,
@@ -18,6 +22,6 @@ data class GraphQLBatchHydrationField(
 ) : GraphQLArtificialField()
 
 class GraphQLPullField(
-    val name: String,
-    val path: List<String>,
+    override val location: FieldCoordinates,
+    val pathToSourceField: List<String>,
 ) : GraphQLArtificialField()
