@@ -1,11 +1,13 @@
 package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
+import graphql.nadel.enginekt.blueprint.GraphQLExecutionBlueprint
 import graphql.nadel.enginekt.transform.result.GraphQLResultTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
 class GraphQLExecutionPlanner(
+    private val executionBlueprint: GraphQLExecutionBlueprint,
     private val overallSchema: GraphQLSchema,
     private val resultTransforms: List<GraphQLResultTransform>,
 ) {
@@ -45,8 +47,15 @@ class GraphQLExecutionPlanner(
     }
 
     companion object {
-        fun create(overallSchema: GraphQLSchema): GraphQLExecutionPlanner {
-            return GraphQLExecutionPlanner(overallSchema, emptyList())
+        fun create(
+            executionBlueprint: GraphQLExecutionBlueprint,
+            overallSchema: GraphQLSchema,
+        ): GraphQLExecutionPlanner {
+            return GraphQLExecutionPlanner(
+                executionBlueprint,
+                overallSchema,
+                emptyList()
+            )
         }
     }
 }
