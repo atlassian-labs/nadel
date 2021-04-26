@@ -106,9 +106,9 @@ class NadelInstrumentationTest extends Specification {
             }
 
             @Override
-            InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+            CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
                 instrumentationExecuteCalled = true
-                noOp()
+                CompletableFuture.completedFuture(noOp())
             }
         }
 
@@ -180,10 +180,11 @@ class NadelInstrumentationTest extends Specification {
             }
 
             @Override
-            InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+            CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
                 instrumentationExecuteCalled++
-                noOp()
+                CompletableFuture.completedFuture(noOp())
             }
+
         }
 
         ChainedNadelInstrumentation chainedInstrumentation = new ChainedNadelInstrumentation(
@@ -237,7 +238,7 @@ class NadelInstrumentationTest extends Specification {
         NadelInstrumentation instrumentation = new NadelInstrumentation() {
 
             @Override
-            InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+            CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
                 throw new AbortExecutionException("beginExecute")
             }
 
@@ -252,6 +253,36 @@ class NadelInstrumentationTest extends Specification {
 
         when:
         def er = nadel.execute(nadelExecutionInput).join()
+
+        then:
+
+        er.errors.size() == 1
+        er.errors[0].message == "beginExecute"
+        er.data == "enhanced beginExecute"
+
+
+        when:
+
+        instrumentation = new NadelInstrumentation() {
+
+            @Override
+            CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+                return CompletableFuture.completedFuture(null)
+                        .thenCompose({
+                            throw new AbortExecutionException("beginExecute")
+                        })
+            }
+
+            @Override
+            CompletableFuture<ExecutionResult> instrumentExecutionResult(ExecutionResult executionResult, NadelInstrumentationQueryExecutionParameters parameters) {
+                def newEr = ExecutionResultImpl.newExecutionResult().from(executionResult).data("enhanced beginExecute").build()
+                return completedFuture(newEr)
+            }
+        }
+
+        nadel = mkNadelWith(instrumentation)
+
+        er = nadel.execute(nadelExecutionInput).join()
 
         then:
 

@@ -85,13 +85,14 @@ public class ChainedNadelInstrumentation implements NadelInstrumentation {
     }
 
     @Override
-    public InstrumentationContext<ExecutionResult> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
-        return new ChainedInstrumentationContext<>(instrumentations.stream()
-                .map(instrumentation -> {
+    public CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+        CompletableFuture<List<InstrumentationContext<ExecutionResult>>> listCompletableFuture = Async.eachSequentially(instrumentations,
+                (instrumentation, index, previousResults) -> {
                     InstrumentationState state = getStateFor(instrumentation, parameters.getInstrumentationState());
                     return instrumentation.beginExecute(parameters.withNewState(state));
-                })
-                .collect(toList()));
+                });
+
+        return listCompletableFuture.thenApply(ChainedInstrumentationContext::new);
     }
 
     @Override

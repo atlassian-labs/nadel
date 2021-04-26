@@ -2,11 +2,16 @@ package graphql.nadel.e2e
 
 import graphql.AssertException
 import graphql.ErrorType
+import graphql.ExecutionResult
+import graphql.ExecutionResultImpl
 import graphql.GraphQLError
 import graphql.GraphqlErrorException
+import graphql.execution.AbortExecutionException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
+import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.execution.instrumentation.SimpleInstrumentationContext
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
@@ -17,8 +22,12 @@ import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.engine.result.ResultNodesUtil
 import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.engine.testutils.TestUtil
+import graphql.nadel.instrumentation.ChainedNadelInstrumentation
+import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
@@ -1136,6 +1145,142 @@ class NadelE2ETest extends Specification {
         instrumentationParams.executionContext.operationDefinition.name == "OpName"
         originalExecutionResult != null
         ResultNodesUtil.toExecutionResult(originalExecutionResult).errors.isEmpty()
+    }
+
+    def "execution is aborted when beginExecute completes exceptionally"() {
+        given:
+        def query = """
+        query OpName {
+            hello {
+                name
+            }
+        }
+        """
+        NadelInstrumentationExecuteOperationParameters instrumentationParams
+        ExecutionResult resultBeforeFinalInstrumentation
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .instrumentation(new NadelInstrumentation() {
+
+                    @Override
+                    InstrumentationState createState(NadelInstrumentationCreateStateParameters parameters) {
+                        return new InstrumentationState() {
+                            @Override
+                            boolean equals(Object object) {
+                                object == "test-instrumentation-state"
+                            }
+                        }
+                    }
+
+                    @Override
+                    CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+                        instrumentationParams = parameters
+                        CompletableFuture.supplyAsync { throw new AbortExecutionException("instrumented-error") }
+                    }
+
+                    @Override
+                    CompletableFuture<ExecutionResult> instrumentExecutionResult(ExecutionResult executionResult, NadelInstrumentationQueryExecutionParameters parameters) {
+                        resultBeforeFinalInstrumentation = executionResult
+                        completedFuture(
+                                new ExecutionResultImpl.Builder()
+                                        .from(executionResult)
+                                        .addExtension("instrumentedExtension", "dummy extension")
+                                        .build())
+                    }
+                })
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .operationName("OpName")
+                .build()
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        0 * delegatedExecution.execute(_)
+
+        resultBeforeFinalInstrumentation.errors.size() == 1
+        resultBeforeFinalInstrumentation.errors[0].message == "instrumented-error"
+        resultBeforeFinalInstrumentation.data == null
+        resultBeforeFinalInstrumentation.extensions == null
+
+        result.errors.size() == 1
+        result.errors[0].message == "instrumented-error"
+        result.data == null
+        result.extensions == [instrumentedExtension: "dummy extension"]
+
+        instrumentationParams != null
+        instrumentationParams.instrumentationState == "test-instrumentation-state"
+    }
+
+    def "execution is aborted when beginExecute completes exceptionally using chained instrumentation"() {
+        given:
+        def query = """
+        query OpName {
+            hello {
+                name
+            }
+        }
+        """
+        def firstBeginExecuteCalled = 0
+        def secondBeginExecuteCalled = 0
+        def firstInstrumentExecutionResultCalled = 0
+        def secondInstrumentExecutionResultCalled = 0
+
+        def firstInstrumentation = new NadelInstrumentation() {
+            @Override
+            CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+                firstBeginExecuteCalled++
+                CompletableFuture.supplyAsync { throw new AbortExecutionException("instrumented-error") }
+            }
+
+            @Override
+            CompletableFuture<ExecutionResult> instrumentExecutionResult(ExecutionResult executionResult, NadelInstrumentationQueryExecutionParameters parameters) {
+                firstInstrumentExecutionResultCalled++
+                completedFuture(executionResult)
+            }
+        }
+
+        def secondInstrumentation = new NadelInstrumentation() {
+            @Override
+            CompletableFuture<InstrumentationContext<ExecutionResult>> beginExecute(NadelInstrumentationExecuteOperationParameters parameters) {
+                secondBeginExecuteCalled++
+                completedFuture(SimpleInstrumentationContext.noOp())
+            }
+
+            @Override
+            CompletableFuture<ExecutionResult> instrumentExecutionResult(ExecutionResult executionResult, NadelInstrumentationQueryExecutionParameters parameters) {
+                secondInstrumentExecutionResultCalled++
+                completedFuture(executionResult)
+            }
+        }
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .instrumentation(new ChainedNadelInstrumentation([firstInstrumentation, secondInstrumentation]))
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .operationName("OpName")
+                .build()
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).join()
+
+        then:
+        0 * delegatedExecution.execute(_)
+        firstBeginExecuteCalled == 1
+        secondBeginExecuteCalled == 0
+        firstInstrumentExecutionResultCalled == 1
+        secondInstrumentExecutionResultCalled == 1
+
+        result.errors.size() == 1
+        result.errors[0].message == "instrumented-error"
+        result.data == null
     }
 
     def "object type from underlying schema is removed"() {
