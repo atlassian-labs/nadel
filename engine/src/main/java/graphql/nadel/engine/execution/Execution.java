@@ -110,8 +110,7 @@ public class Execution {
         ExecutionContext executionContext = executionData.executionContext;
         FieldSubSelection fieldSubSelection = executionHelper.getFieldSubSelection(executionContext);
 
-        NadelInstrumentationExecuteOperationParameters executeOperationParameters =
-                new NadelInstrumentationExecuteOperationParameters(normalizedQueryFromAst, instrumentationState);
+        NadelInstrumentationExecuteOperationParameters executeOperationParameters = buildInstrumentationParameters(instrumentationState, normalizedQueryFromAst, executionContext);
         CompletableFuture<InstrumentationContext<ExecutionResult>> instrumentationCtxFuture = instrumentation.beginExecute(executeOperationParameters);
 
         ExecutionInput finalExecutionInput = executionInput;
@@ -146,6 +145,18 @@ public class Execution {
             result = result.whenComplete(instrumentationCtx::onCompleted);
             return result;
         });
+    }
+
+    private static NadelInstrumentationExecuteOperationParameters buildInstrumentationParameters(
+            InstrumentationState instrumentationState, NormalizedQueryFromAst normalizedQueryFromAst, ExecutionContext executionContext
+    ) {
+        return new NadelInstrumentationExecuteOperationParameters(
+                normalizedQueryFromAst,
+                executionContext.getDocument(),
+                executionContext.getGraphQLSchema(),
+                executionContext.getVariables(),
+                executionContext.getOperationDefinition(),
+                instrumentationState);
     }
 
     private FieldInfos createFieldsInfos() {
