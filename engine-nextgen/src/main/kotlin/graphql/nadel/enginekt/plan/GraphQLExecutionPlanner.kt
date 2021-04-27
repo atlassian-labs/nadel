@@ -5,6 +5,7 @@ import graphql.nadel.enginekt.blueprint.GraphQLExecutionBlueprint
 import graphql.nadel.enginekt.transform.result.GraphQLResultTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
+import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
 class GraphQLExecutionPlanner(
     private val executionBlueprint: GraphQLExecutionBlueprint,
@@ -14,25 +15,38 @@ class GraphQLExecutionPlanner(
     fun generate(
         userContext: Any?,
         service: Service,
-        field: NormalizedField,
+        rootField: NormalizedField,
     ): GraphQLExecutionPlan {
+        val schemaTransformations = mutableListOf<GraphQLSchemaTransformation>()
+        val resultTransformations = mutableListOf<GraphQLResultTransformation>()
+
+        traverseQueryTree(rootField) { field ->
+            schemaTransformations += getSchemaTransformations(field)
+            resultTransformations += getResultTransformations(userContext, service, field)
+        }
+
         return GraphQLExecutionPlan(
-            emptyList(),
-            getResultTransformsRecursively(userContext, service, field),
+            schemaTransformations.groupBy { it.field },
+            resultTransformations.groupBy { it.field },
         )
     }
 
-    private fun getResultTransformsRecursively(
-        userContext: Any?,
-        service: Service,
-        field: NormalizedField,
-    ): List<GraphQLResultTransformation> {
-        return getResultTransforms(userContext, service, field) + field.children.flatMap {
-            getResultTransformsRecursively(userContext, service, field = it)
-        }
+    private fun getSchemaTransformations(field: NormalizedField): List<GraphQLSchemaTransformation> {
+        val coordinates = createFieldCoordinates(field.objectType.name, field.name)
+
+        return listOfNotNull(
+            when (val underlyingField = executionBlueprint.underlyingFields[coordinates]) {
+                null -> null
+                else -> GraphQLUnderlyingFieldTransformation(field, underlyingField)
+            },
+            when (val underlyingType = executionBlueprint.underlyingTypes[field.objectType.name]) {
+                null -> null
+                else -> GraphQLUnderlyingTypeTransformation(field, underlyingType)
+            }
+        )
     }
 
-    private fun getResultTransforms(
+    private fun getResultTransformations(
         userContext: Any?,
         service: Service,
         field: NormalizedField,
@@ -43,6 +57,13 @@ class GraphQLExecutionPlanner(
             } else {
                 null
             }
+        }
+    }
+
+    private fun traverseQueryTree(root: NormalizedField, consumer: (NormalizedField) -> Unit) {
+        consumer(root)
+        root.children.forEach {
+            traverseQueryTree(it, consumer)
         }
     }
 
