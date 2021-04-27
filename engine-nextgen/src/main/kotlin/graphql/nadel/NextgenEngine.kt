@@ -8,6 +8,7 @@ import graphql.language.Document
 import graphql.language.NodeUtil
 import graphql.language.OperationDefinition
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
+import graphql.nadel.enginekt.blueprint.GraphQLExecutionBlueprintFactory
 import graphql.nadel.enginekt.normalized.NormalizedQueryToDocument
 import graphql.nadel.enginekt.plan.GraphQLExecutionPlanner
 import graphql.nadel.enginekt.plan.GraphQLExecutionPlan
@@ -27,9 +28,10 @@ import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
-    private val schema = nadel.overallSchema
+    private val overallSchema = nadel.overallSchema
     private val fieldInfos = GraphQLFieldInfos(nadel.overallSchema, nadel.services)
-    private val executionPlanner = GraphQLExecutionPlanner.create(nadel.overallSchema)
+    private val executionBlueprint = GraphQLExecutionBlueprintFactory.create(overallSchema)
+    private val executionPlanner = GraphQLExecutionPlanner.create(executionBlueprint, nadel.overallSchema)
     private val queryTransformer = GraphQLQueryTransformer.create(nadel.overallSchema)
     private val instrumentation = nadel.instrumentation
     private val normalizedQueryToDocument = NormalizedQueryToDocument()
@@ -53,7 +55,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     ): ExecutionResult {
 
         val query = NormalizedQueryTreeFactory.createNormalizedQuery(
-            schema,
+            overallSchema,
             queryDocument,
             executionInput.operationName,
             executionInput.variables,
