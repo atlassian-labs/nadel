@@ -3,7 +3,7 @@ package graphql.nadel.enginekt.blueprint
 import graphql.schema.FieldCoordinates
 
 data class NadelExecutionBlueprint(
-    val underlyingFields: Map<FieldCoordinates, NadelRenameInstruction>,
-    val underlyingTypes: Map<String, NadelUnderlyingType>,
+    val underlyingFields: Map<FieldCoordinates, NadelFieldRenameInstruction>,
+    val underlyingTypes: Map<String, NadelTypeRenameInstruction>,
     val artificialFields: Map<FieldCoordinates, NadelInstruction>,
 )

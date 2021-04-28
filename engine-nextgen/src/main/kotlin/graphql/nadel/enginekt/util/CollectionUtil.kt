@@ -30,9 +30,12 @@ inline fun <K, E> Iterable<E>.toMap(crossinline keyExtractor: (E) -> K): Map<K, 
 
 inline fun <K, E> Sequence<E>.toMap(crossinline keyExtractor: (E) -> K): Map<K, E> {
     val map = mutableMapOf<K, E>()
+    var count = 0
     forEach {
         map[keyExtractor(it)] = it
+        count++
     }
+    require(map.size == count)
     return Collections.unmodifiableMap(map)
 }
 

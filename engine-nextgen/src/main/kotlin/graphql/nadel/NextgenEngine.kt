@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val overallSchema = nadel.overallSchema
     private val fieldInfos = GraphQLFieldInfos(nadel.overallSchema, nadel.services)
-    private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema)
+    private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema, nadel.services)
     private val executionPlanner = GraphQLExecutionPlanner.create(executionBlueprint, nadel.overallSchema)
     private val queryTransformer = GraphQLQueryTransformer.create(nadel.overallSchema)
     private val instrumentation = nadel.instrumentation
@@ -111,7 +111,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         val underlyingQuery = schemaTransformer.transformQuery(executionPlan, transformedQuery)
         val document = normalizedQueryToDocument.toDocument(underlyingQuery)
 
-        return service.serviceExecution.execute(
+        val serviceResult = service.serviceExecution.execute(
             newServiceExecutionParameters()
                 .query(document)
                 .context(executionInput.context)
@@ -124,6 +124,8 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
                 .hydrationCall(false)
                 .build()
         ).asDeferred().await()
+
+        return schemaTransformer.transformResult(executionPlan, serviceResult)
     }
 
     private fun postProcess(
