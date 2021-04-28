@@ -1,6 +1,6 @@
 package graphql.nadel.enginekt.blueprint
 
-data class GraphQLUnderlyingType(
+data class NadelUnderlyingType(
     val overallName: String,
     val underlyingName: String,
 )
