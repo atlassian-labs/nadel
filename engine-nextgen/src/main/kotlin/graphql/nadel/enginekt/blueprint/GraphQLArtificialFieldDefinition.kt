@@ -7,24 +7,24 @@ sealed class GraphQLArtificialFieldDefinition {
     abstract val location: FieldCoordinates
 }
 
-data class GraphQLHydrationFieldDefinition(
-    override val location: FieldCoordinates,
-    val sourceService: String,
-    val pathToSourceField: List<String>,
-    val arguments: List<HydrationArgument>,
+data class GraphQLHydrationBPI(
+        override val location: FieldCoordinates,
+        val sourceService: String,
+        val pathToSourceField: List<String>,
+        val arguments: List<HydrationArgument>,
 ) : GraphQLArtificialFieldDefinition()
 
-data class GraphQLBatchHydrationFieldDefinition(
-    override val location: FieldCoordinates,
-    val sourceService: String,
-    val pathToSourceField: List<String>,
-    val arguments: List<HydrationArgument>,
-    val batchSize: Int,
-    val objectIdentifier: String,
-    val matchByIndex: Boolean,
+data class GraphQLBatchHydrationBPI(
+        override val location: FieldCoordinates,
+        val sourceService: String,
+        val pathToSourceField: List<String>,
+        val arguments: List<HydrationArgument>,
+        val batchSize: Int,
+        val objectIdentifier: String,
+        val matchByIndex: Boolean,
 ) : GraphQLArtificialFieldDefinition()
 
-class GraphQLPullFieldDefinition(
-    override val location: FieldCoordinates,
-    val pathToSourceField: List<String>,
+class GraphQLComplexRenameBPI(
+        override val location: FieldCoordinates,
+        val pathToSourceField: List<String>,
 ) : GraphQLArtificialFieldDefinition()

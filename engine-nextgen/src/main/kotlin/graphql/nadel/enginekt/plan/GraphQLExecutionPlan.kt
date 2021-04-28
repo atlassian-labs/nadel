@@ -1,7 +1,7 @@
 package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
-import graphql.nadel.enginekt.blueprint.GraphQLUnderlyingField
+import graphql.nadel.enginekt.blueprint.GraphQLRenameBPI
 import graphql.nadel.enginekt.blueprint.GraphQLUnderlyingType
 import graphql.nadel.enginekt.transform.result.GraphQLResultTransform
 import graphql.normalized.NormalizedField
@@ -26,12 +26,12 @@ data class GraphQLUnderlyingTypeTransformation(
 }
 
 data class GraphQLUnderlyingFieldTransformation(
-    override val field: NormalizedField,
-    val underlyingField: GraphQLUnderlyingField,
+        override val field: NormalizedField,
+        val renameBPI: GraphQLRenameBPI,
 ) : GraphQLSchemaTransformation() {
     init {
         // Field must be in terms of overall schema so predicate must return true
-        require(field.name == underlyingField.overallName)
+        require(field.name == renameBPI.overallName)
     }
 }
 
