@@ -8,10 +8,10 @@ import graphql.language.Document
 import graphql.language.NodeUtil
 import graphql.language.OperationDefinition
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
-import graphql.nadel.enginekt.blueprint.GraphQLExecutionBlueprintFactory
+import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.normalized.NormalizedQueryToDocument
 import graphql.nadel.enginekt.plan.GraphQLExecutionPlanner
-import graphql.nadel.enginekt.plan.GraphQLExecutionPlan
+import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.schema.GraphQLFieldInfos
 import graphql.nadel.enginekt.transform.query.GraphQLQueryTransformer
 import graphql.nadel.enginekt.transform.schema.GraphQLSchemaTransformer
@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val overallSchema = nadel.overallSchema
     private val fieldInfos = GraphQLFieldInfos(nadel.overallSchema, nadel.services)
-    private val executionBlueprint = GraphQLExecutionBlueprintFactory.create(overallSchema)
+    private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema)
     private val executionPlanner = GraphQLExecutionPlanner.create(executionBlueprint, nadel.overallSchema)
     private val queryTransformer = GraphQLQueryTransformer.create(nadel.overallSchema)
     private val instrumentation = nadel.instrumentation
@@ -103,7 +103,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
     private suspend fun executeService(
         service: Service,
-        executionPlan: GraphQLExecutionPlan,
+        executionPlan: NadelExecutionPlan,
         topLevelField: NormalizedField,
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
@@ -127,7 +127,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     }
 
     private fun postProcess(
-        executionPlan: GraphQLExecutionPlan,
+        executionPlan: NadelExecutionPlan,
         result: ServiceExecutionResult
     ): ServiceExecutionResult {
         // TODO: run through schema and result transformer here

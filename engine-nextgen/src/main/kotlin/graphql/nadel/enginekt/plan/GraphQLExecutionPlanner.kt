@@ -1,14 +1,14 @@
 package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
-import graphql.nadel.enginekt.blueprint.GraphQLExecutionBlueprint
+import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.transform.result.GraphQLResultTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
 class GraphQLExecutionPlanner(
-    private val executionBlueprint: GraphQLExecutionBlueprint,
+    private val executionBlueprint: NadelExecutionBlueprint,
     private val overallSchema: GraphQLSchema,
     private val resultTransforms: List<GraphQLResultTransform>,
 ) {
@@ -16,8 +16,8 @@ class GraphQLExecutionPlanner(
         userContext: Any?,
         service: Service,
         rootField: NormalizedField,
-    ): GraphQLExecutionPlan {
-        val schemaTransformations = mutableListOf<GraphQLSchemaTransformation>()
+    ): NadelExecutionPlan {
+        val schemaTransformations = mutableListOf<NadelSchemaTransformation>()
         val resultTransformations = mutableListOf<GraphQLResultTransformation>()
 
         traverseQueryTree(rootField) { field ->
@@ -25,23 +25,23 @@ class GraphQLExecutionPlanner(
             resultTransformations += getResultTransformations(userContext, service, field)
         }
 
-        return GraphQLExecutionPlan(
+        return NadelExecutionPlan(
             schemaTransformations.groupBy { it.field },
             resultTransformations.groupBy { it.field },
         )
     }
 
-    private fun getSchemaTransformations(field: NormalizedField): List<GraphQLSchemaTransformation> {
+    private fun getSchemaTransformations(field: NormalizedField): List<NadelSchemaTransformation> {
         val coordinates = createFieldCoordinates(field.objectType.name, field.name)
 
         return listOfNotNull(
             when (val underlyingField = executionBlueprint.underlyingFields[coordinates]) {
                 null -> null
-                else -> GraphQLUnderlyingFieldTransformation(field, underlyingField)
+                else -> NadelUnderlyingFieldTransformation(field, underlyingField)
             },
             when (val underlyingType = executionBlueprint.underlyingTypes[field.objectType.name]) {
                 null -> null
-                else -> GraphQLUnderlyingTypeTransformation(field, underlyingType)
+                else -> NadelUnderlyingTypeTransformation(field, underlyingType)
             }
         )
     }
@@ -69,7 +69,7 @@ class GraphQLExecutionPlanner(
 
     companion object {
         fun create(
-            executionBlueprint: GraphQLExecutionBlueprint,
+            executionBlueprint: NadelExecutionBlueprint,
             overallSchema: GraphQLSchema,
         ): GraphQLExecutionPlanner {
             return GraphQLExecutionPlanner(

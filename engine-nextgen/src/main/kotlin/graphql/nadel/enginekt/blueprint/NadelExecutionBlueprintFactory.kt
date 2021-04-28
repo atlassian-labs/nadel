@@ -1,6 +1,5 @@
 package graphql.nadel.enginekt.blueprint
 
-import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
 import graphql.nadel.dsl.InputObjectTypeDefinitionWithTransformation
 import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation
@@ -8,8 +7,8 @@ import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.schema.GraphQLSchema
 
-object GraphQLExecutionBlueprintFactory {
-    fun create(overallSchema: GraphQLSchema): GraphQLExecutionBlueprint {
+object NadelExecutionBlueprintFactory {
+    fun create(overallSchema: GraphQLSchema): NadelExecutionBlueprint {
         val underlyingTypes = getUnderlyingTypes(overallSchema)
         val underlyingFields = getUnderlyingFields(overallSchema)
 
@@ -21,7 +20,7 @@ object GraphQLExecutionBlueprintFactory {
             .asSequence()
     }
 
-    private fun getUnderlyingTypes(overallSchema: GraphQLSchema): List<GraphQLUnderlyingType> {
+    private fun getUnderlyingTypes(overallSchema: GraphQLSchema): List<NadelUnderlyingType> {
         return overallSchema.typeMap.values.mapNotNull { type ->
             when (val def = type.definition) {
                 is ObjectTypeDefinitionWithTransformation -> getUnderlyingType(def.typeMappingDefinition)
@@ -33,8 +32,8 @@ object GraphQLExecutionBlueprintFactory {
         }
     }
 
-    private fun getUnderlyingType(typeMappingDefinition: TypeMappingDefinition): GraphQLUnderlyingType {
-        return GraphQLUnderlyingType(
+    private fun getUnderlyingType(typeMappingDefinition: TypeMappingDefinition): NadelUnderlyingType {
+        return NadelUnderlyingType(
             overallName = typeMappingDefinition.overallName,
             underlyingName = typeMappingDefinition.underlyingName,
         )

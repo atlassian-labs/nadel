@@ -1,18 +1,18 @@
 package graphql.nadel.enginekt.transform.schema
 
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.enginekt.plan.GraphQLExecutionPlan
+import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.normalized.NormalizedField
 
 class GraphQLSchemaTransformer(
     private val queryTransformer: GraphQLSchemaQueryTransformer = GraphQLSchemaQueryTransformer(),
     private val resultTransformer: GraphQLSchemaResultTransformer = GraphQLSchemaResultTransformer(),
 ) {
-    fun transformQuery(executionPlan: GraphQLExecutionPlan, normalizedField: NormalizedField): NormalizedField {
+    fun transformQuery(executionPlan: NadelExecutionPlan, normalizedField: NormalizedField): NormalizedField {
         return queryTransformer.transform(executionPlan, normalizedField)
     }
 
-    fun transformResult(executionPlan: GraphQLExecutionPlan, result: ServiceExecutionResult): ServiceExecutionResult {
+    fun transformResult(executionPlan: NadelExecutionPlan, result: ServiceExecutionResult): ServiceExecutionResult {
         return resultTransformer.transform(executionPlan, result)
     }
 }

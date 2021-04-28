@@ -6,7 +6,6 @@ data class HydrationArgument(
 )
 
 sealed class HydrationArgumentValueSource {
-    data class ConstantValue(val value: Any?) : HydrationArgumentValueSource()
 
     data class FieldValue(val pathToField: List<String>) : HydrationArgumentValueSource()
 
