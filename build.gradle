@@ -165,3 +165,25 @@ task myWrapper(type: Wrapper) {
     gradleVersion = '6.8.3'
     distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
 }
+
+configurations {
+    ktlint
+}
+
+dependencies {
+    ktlint "com.pinterest:ktlint:0.39.0"
+}
+
+task ktlintFormat(type: JavaExec, group: "formatting") {
+    description = "Fix Kotlin code style deviations"
+    classpath = configurations.ktlint
+    main = "com.pinterest.ktlint.Main"
+    args "-F", "src/**/*.kt"
+}
+
+task ktlintSetCodeStyle(type: JavaExec) {
+    description = "Apply Kotlin formatter style"
+    classpath = configurations.ktlint
+    main = "com.pinterest.ktlint.Main"
+    args "applyToIDEAProject", "-y"
+}
