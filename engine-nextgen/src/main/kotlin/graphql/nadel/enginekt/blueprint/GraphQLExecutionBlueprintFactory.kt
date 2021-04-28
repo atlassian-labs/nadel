@@ -1,6 +1,5 @@
 package graphql.nadel.enginekt.blueprint
 
-import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
 import graphql.nadel.dsl.InputObjectTypeDefinitionWithTransformation
 import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation

@@ -1,6 +1,10 @@
 package graphql.nadel.enginekt.util
 
-import java.util.Collections
+import java.util.*
+import kotlin.collections.HashMap
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 
 /**
  * Like [singleOrNull] but the single item must be of type [T].

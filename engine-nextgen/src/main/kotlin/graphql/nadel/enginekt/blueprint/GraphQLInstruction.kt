@@ -8,23 +8,23 @@ sealed class GraphQLInstruction {
 }
 
 data class GraphQLHydrationInstruction(
-        override val location: FieldCoordinates,
-        val sourceService: String,
-        val pathToSourceField: List<String>,
-        val arguments: List<HydrationArgument>,
+    override val location: FieldCoordinates,
+    val sourceService: String,
+    val pathToSourceField: List<String>,
+    val arguments: List<HydrationArgument>,
 ) : GraphQLInstruction()
 
 data class GraphQLBatchHydrationInstruction(
-        override val location: FieldCoordinates,
-        val sourceService: String,
-        val pathToSourceField: List<String>,
-        val arguments: List<HydrationArgument>,
-        val batchSize: Int,
-        val objectIdentifier: String,
-        val matchByIndex: Boolean,
+    override val location: FieldCoordinates,
+    val sourceService: String,
+    val pathToSourceField: List<String>,
+    val arguments: List<HydrationArgument>,
+    val batchSize: Int,
+    val objectIdentifier: String,
+    val matchByIndex: Boolean,
 ) : GraphQLInstruction()
 
 class GraphQLDeepRenameInstruction(
-        override val location: FieldCoordinates,
-        val pathToSourceField: List<String>,
+    override val location: FieldCoordinates,
+    val pathToSourceField: List<String>,
 ) : GraphQLInstruction()

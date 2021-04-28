@@ -10,8 +10,8 @@ import graphql.language.OperationDefinition
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.blueprint.GraphQLExecutionBlueprintFactory
 import graphql.nadel.enginekt.normalized.NormalizedQueryToDocument
-import graphql.nadel.enginekt.plan.GraphQLExecutionPlanner
 import graphql.nadel.enginekt.plan.GraphQLExecutionPlan
+import graphql.nadel.enginekt.plan.GraphQLExecutionPlanner
 import graphql.nadel.enginekt.schema.GraphQLFieldInfos
 import graphql.nadel.enginekt.transform.query.GraphQLQueryTransformer
 import graphql.nadel.enginekt.transform.schema.GraphQLSchemaTransformer
