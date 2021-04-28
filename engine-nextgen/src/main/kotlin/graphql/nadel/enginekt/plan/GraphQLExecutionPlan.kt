@@ -1,8 +1,8 @@
 package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
-import graphql.nadel.enginekt.blueprint.GraphQLRenameInstruction
 import graphql.nadel.enginekt.blueprint.GraphQLUnderlyingType
+import graphql.nadel.enginekt.blueprint.NadelRenameInstruction
 import graphql.nadel.enginekt.transform.result.GraphQLResultTransform
 import graphql.normalized.NormalizedField
 
@@ -27,7 +27,7 @@ data class GraphQLUnderlyingTypeTransformation(
 
 data class GraphQLUnderlyingFieldTransformation(
         override val field: NormalizedField,
-        val renameInstruction: GraphQLRenameInstruction,
+        val renameInstruction: NadelRenameInstruction,
 ) : GraphQLSchemaTransformation() {
     init {
         // Field must be in terms of overall schema so predicate must return true

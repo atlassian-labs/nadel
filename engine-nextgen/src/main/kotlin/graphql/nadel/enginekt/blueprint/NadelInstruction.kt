@@ -3,18 +3,18 @@ package graphql.nadel.enginekt.blueprint
 import graphql.nadel.enginekt.blueprint.hydration.HydrationArgument
 import graphql.schema.FieldCoordinates
 
-sealed class GraphQLInstruction {
+sealed class NadelInstruction {
     abstract val location: FieldCoordinates
 }
 
-data class GraphQLHydrationInstruction(
+data class NadelHydrationInstruction(
     override val location: FieldCoordinates,
     val sourceService: String,
     val pathToSourceField: List<String>,
     val arguments: List<HydrationArgument>,
-) : GraphQLInstruction()
+) : NadelInstruction()
 
-data class GraphQLBatchHydrationInstruction(
+data class NadelBatchHydrationInstruction(
     override val location: FieldCoordinates,
     val sourceService: String,
     val pathToSourceField: List<String>,
@@ -22,9 +22,9 @@ data class GraphQLBatchHydrationInstruction(
     val batchSize: Int,
     val objectIdentifier: String,
     val matchByIndex: Boolean,
-) : GraphQLInstruction()
+) : NadelInstruction()
 
-class GraphQLDeepRenameInstruction(
+class NadelDeepRenameInstruction(
     override val location: FieldCoordinates,
     val pathToSourceField: List<String>,
-) : GraphQLInstruction()
+) : NadelInstruction()
