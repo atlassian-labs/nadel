@@ -1,6 +1,6 @@
 package graphql.nadel.enginekt.blueprint
 
-data class GraphQLRenameBPI(
+data class GraphQLRenameInstruction(
         val overallName: String,
         val underlyingName: String,
 )

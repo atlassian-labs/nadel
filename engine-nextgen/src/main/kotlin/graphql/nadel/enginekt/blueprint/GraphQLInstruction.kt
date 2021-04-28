@@ -3,18 +3,18 @@ package graphql.nadel.enginekt.blueprint
 import graphql.nadel.enginekt.blueprint.hydration.HydrationArgument
 import graphql.schema.FieldCoordinates
 
-sealed class GraphQLArtificialFieldDefinition {
+sealed class GraphQLInstruction {
     abstract val location: FieldCoordinates
 }
 
-data class GraphQLHydrationBPI(
+data class GraphQLHydrationInstruction(
         override val location: FieldCoordinates,
         val sourceService: String,
         val pathToSourceField: List<String>,
         val arguments: List<HydrationArgument>,
-) : GraphQLArtificialFieldDefinition()
+) : GraphQLInstruction()
 
-data class GraphQLBatchHydrationBPI(
+data class GraphQLBatchHydrationInstruction(
         override val location: FieldCoordinates,
         val sourceService: String,
         val pathToSourceField: List<String>,
@@ -22,9 +22,9 @@ data class GraphQLBatchHydrationBPI(
         val batchSize: Int,
         val objectIdentifier: String,
         val matchByIndex: Boolean,
-) : GraphQLArtificialFieldDefinition()
+) : GraphQLInstruction()
 
-class GraphQLComplexRenameBPI(
+class GraphQLDeepRenameInstruction(
         override val location: FieldCoordinates,
         val pathToSourceField: List<String>,
-) : GraphQLArtificialFieldDefinition()
+) : GraphQLInstruction()
