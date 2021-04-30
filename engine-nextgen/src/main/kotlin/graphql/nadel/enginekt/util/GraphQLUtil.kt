@@ -2,6 +2,17 @@ package graphql.nadel.enginekt.util
 
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.nadel.OperationKind
+import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLSchema
+
+fun GraphQLSchema.getOperationType(kind: OperationKind): GraphQLObjectType? {
+    return when (kind) {
+        OperationKind.QUERY -> queryType
+        OperationKind.MUTATION -> mutationType
+        OperationKind.SUBSCRIPTION -> subscriptionType
+    }
+}
 
 fun GraphQLFieldsContainer.getFieldAt(
     pathToField: List<String>,

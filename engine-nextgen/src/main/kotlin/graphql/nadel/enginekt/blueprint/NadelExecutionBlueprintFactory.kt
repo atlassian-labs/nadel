@@ -17,6 +17,7 @@ import graphql.nadel.enginekt.blueprint.hydration.HydrationBatchMatchStrategy
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.toMap
 import graphql.nadel.schema.NadelDirectives
+import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLSchema
@@ -43,7 +44,7 @@ object NadelExecutionBlueprintFactory {
     }
 
     private fun getInstructions(overallSchema: GraphQLSchema, services: List<Service>): List<NadelInstruction> {
-        return overallSchema.typeMap
+        return overallSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLFieldsContainer>()
             .flatMap { type ->
@@ -51,7 +52,7 @@ object NadelExecutionBlueprintFactory {
                     .asSequence()
                     // Get the field mapping def
                     .mapNotNull { field ->
-                        when (val mappingDefinition = getFieldDefinitionMapping(field)) {
+                        when (val mappingDefinition = getFieldMappingDefinition(field)) {
                             null -> when (val hydration = getUnderlyingServiceHydration(field)) {
                                 null -> null
                                 else -> getHydrationField(services, type, field, hydration)
@@ -136,7 +137,7 @@ object NadelExecutionBlueprintFactory {
         }
     }
 
-    private fun getFieldDefinitionMapping(field: GraphQLFieldDefinition): FieldMappingDefinition? {
+    private fun getFieldMappingDefinition(field: GraphQLFieldDefinition): FieldMappingDefinition? {
         val extendedDef = field.definition as? ExtendedFieldDefinition
         return extendedDef?.fieldTransformation?.fieldMappingDefinition
             ?: NadelDirectives.createFieldMapping(field)
@@ -149,22 +150,16 @@ object NadelExecutionBlueprintFactory {
     }
 
     private fun getFieldRenameInstructions(overallSchema: GraphQLSchema): Sequence<NadelFieldRenameInstruction> {
-        return overallSchema.typeMap
+        return overallSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLFieldsContainer>()
             .flatMap { type ->
                 type.fields
                     .asSequence()
-                    // Get the field mapping def
                     .mapNotNull { field ->
-                        when (val def = field.definition) {
-                            is ExtendedFieldDefinition -> field to def.fieldTransformation.fieldMappingDefinition
-                            else -> null
-                        }
-                    }
-                    .mapNotNull { (field, mappingDefinition) ->
+                        val mappingDefinition = getFieldMappingDefinition(field)
                         // Only handle basic renames
-                        when (mappingDefinition.inputPath.size) {
+                        when (mappingDefinition?.inputPath?.size) {
                             1 -> getUnderlyingField(type, field, mappingDefinition)
                             else -> null
                         }
@@ -187,15 +182,21 @@ object NadelExecutionBlueprintFactory {
     private fun getTypeRenameInstructions(overallSchema: GraphQLSchema): Sequence<NadelTypeRenameInstruction> {
         return overallSchema.typeMap.values
             .asSequence()
-            .mapNotNull { type ->
-                when (val def = type.definition) {
-                    is ObjectTypeDefinitionWithTransformation -> getUnderlyingType(def.typeMappingDefinition)
-                    is InterfaceTypeDefinitionWithTransformation -> getUnderlyingType(def.typeMappingDefinition)
-                    is InputObjectTypeDefinitionWithTransformation -> getUnderlyingType(def.typeMappingDefinition)
-                    is EnumTypeDefinitionWithTransformation -> getUnderlyingType(def.typeMappingDefinition)
-                    else -> null
-                }
+            .filterIsInstance<GraphQLDirectiveContainer>()
+            .mapNotNull(::getTypeRenameInstruction)
+    }
+
+    private fun getTypeRenameInstruction(type: GraphQLDirectiveContainer): NadelTypeRenameInstruction? {
+        return when (val def = type.definition) {
+            is ObjectTypeDefinitionWithTransformation -> getUnderlyingType(def.typeMappingDefinition)
+            is InterfaceTypeDefinitionWithTransformation -> getUnderlyingType(def.typeMappingDefinition)
+            is InputObjectTypeDefinitionWithTransformation -> getUnderlyingType(def.typeMappingDefinition)
+            is EnumTypeDefinitionWithTransformation -> getUnderlyingType(def.typeMappingDefinition)
+            else -> when (val typeMappingDef = NadelDirectives.createTypeMapping(type)) {
+                null -> null
+                else -> getUnderlyingType(typeMappingDef)
             }
+        }
     }
 
     private fun getUnderlyingType(typeMappingDefinition: TypeMappingDefinition): NadelTypeRenameInstruction {
