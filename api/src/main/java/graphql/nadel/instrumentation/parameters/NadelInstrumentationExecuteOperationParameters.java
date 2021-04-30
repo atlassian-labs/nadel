@@ -22,6 +22,7 @@ public class NadelInstrumentationExecuteOperationParameters {
     private final GraphQLSchema graphQLSchema;
     private final Map<String, Object> variables;
     private final OperationDefinition operationDefinition;
+    private final Object context;
 
     public NadelInstrumentationExecuteOperationParameters(
             NormalizedQueryFromAst normalizedQueryFromAst,
@@ -29,13 +30,16 @@ public class NadelInstrumentationExecuteOperationParameters {
             GraphQLSchema graphQLSchema,
             Map<String, Object> variables,
             OperationDefinition operationDefinition,
-            InstrumentationState instrumentationState) {
+            InstrumentationState instrumentationState,
+            Object context
+    ) {
         this.instrumentationState = instrumentationState;
         this.normalizedQueryFromAst = normalizedQueryFromAst;
         this.document = document;
         this.graphQLSchema = graphQLSchema;
         this.variables = variables;
         this.operationDefinition = operationDefinition;
+        this.context = context;
     }
 
     /**
@@ -45,7 +49,7 @@ public class NadelInstrumentationExecuteOperationParameters {
      * @return a new parameters object with the new state
      */
     public NadelInstrumentationExecuteOperationParameters withNewState(InstrumentationState instrumentationState) {
-        return new NadelInstrumentationExecuteOperationParameters(normalizedQueryFromAst, document, graphQLSchema, variables, operationDefinition, instrumentationState);
+        return new NadelInstrumentationExecuteOperationParameters(normalizedQueryFromAst, document, graphQLSchema, variables, operationDefinition, instrumentationState, context);
     }
 
     public NormalizedQueryFromAst getNormalizedQueryFromAst() {
@@ -71,5 +75,9 @@ public class NadelInstrumentationExecuteOperationParameters {
 
     public OperationDefinition getOperationDefinition() {
         return operationDefinition;
+    }
+
+    public Object getContext() {
+        return context;
     }
 }

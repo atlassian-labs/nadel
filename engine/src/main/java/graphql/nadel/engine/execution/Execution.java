@@ -156,7 +156,8 @@ public class Execution {
                 executionContext.getGraphQLSchema(),
                 executionContext.getVariables(),
                 executionContext.getOperationDefinition(),
-                instrumentationState);
+                instrumentationState,
+                executionContext.getContext());
     }
 
     private FieldInfos createFieldsInfos() {
