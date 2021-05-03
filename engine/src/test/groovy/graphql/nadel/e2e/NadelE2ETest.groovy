@@ -14,6 +14,7 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.SimpleInstrumentationContext
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
+import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
@@ -38,7 +39,6 @@ import graphql.schema.SchemaTransformer
 import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
-import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -762,7 +762,8 @@ class NadelE2ETest extends Specification {
         given:
         def transformer = new SchemaTransformationHook() {
             @Override
-            GraphQLSchema apply(GraphQLSchema originalSchema) {
+            GraphQLSchema apply(GraphQLSchema originalSchema, List<Service> services) {
+                assert services[0].name == "MyService"
                 return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {
                     @Override
                     TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext<GraphQLSchemaElement> context) {
@@ -1342,34 +1343,6 @@ class NadelE2ETest extends Specification {
         e.cause instanceof AssertException
         e.cause.message == "Schema mismatch: The underlying schema is missing required interface type Mars"
 
-    }
-
-
-    def "Nadel transformer works as expected"() {
-
-        given:
-        Nadel nadel = newNadel()
-                .dsl(simpleNDSL)
-                .serviceExecutionFactory(serviceFactory)
-                .build()
-
-
-        when:
-        def newSchema = SchemaTransformer.transformSchema(nadel.getOverallSchema(), new GraphQLTypeVisitorStub() {
-            @Override
-            TraversalControl visitGraphQLObjectType(GraphQLObjectType node, TraverserContext<GraphQLSchemaElement> context) {
-                def newNode = node.transform({ bld -> bld.name(node.getName().toUpperCase()) })
-                return TreeTransformerUtil.changeNode(context, newNode)
-            }
-        })
-        Nadel nadel2 = nadel.transform({ transformer -> transformer.overallSchema(newSchema) })
-
-        then:
-        nadel.getOverallSchema().getObjectType("WORLD") == null
-        nadel.getOverallSchema().getObjectType("World") != null
-
-        nadel2.getOverallSchema().getObjectType("WORLD") != null
-        nadel2.getOverallSchema().getObjectType("World") == null
     }
 
 }
