@@ -52,6 +52,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -111,6 +112,26 @@ public class Nadel {
         this.overallSchema = createOverallSchema();
 
         this.engine = engineFactory.create(this);
+    }
+
+    private Nadel(Nadel originalNadel, Transformer transformer) {
+        this.serviceExecutionFactory = originalNadel.serviceExecutionFactory;
+        this.instrumentation = originalNadel.instrumentation;
+        this.serviceExecutionHooks = originalNadel.serviceExecutionHooks;
+        this.preparsedDocumentProvider = originalNadel.preparsedDocumentProvider;
+        this.executionIdProvider = originalNadel.executionIdProvider;
+        this.schemaTransformationHook = originalNadel.schemaTransformationHook;
+
+        this.introspectionRunner = originalNadel.introspectionRunner;
+        this.overallWiringFactory = originalNadel.overallWiringFactory;
+        this.underlyingWiringFactory = originalNadel.underlyingWiringFactory;
+        this.stitchingDsls = originalNadel.stitchingDsls;
+        this.services = originalNadel.services;
+        this.commonTypes = originalNadel.commonTypes;
+        this.engine = originalNadel.engine;
+
+        // things allowed to be transformed at this stage
+        this.overallSchema = transformer.overallSchema;
     }
 
     private Map<String, StitchingDsl> createDSLs(Map<String, Reader> serviceNDSLs) {
@@ -316,6 +337,46 @@ public class Nadel {
         return new Nadel.Builder().engineFactory(defaultEngineFactory);
     }
 
+    /**
+     * This allows you to transform a subset of the Nadel properties
+     *
+     * @param transformerConsumer the consumer callback
+     *
+     * @return a new Nadel instance with some properties changed
+     */
+    public Nadel transform(Consumer<Transformer> transformerConsumer) {
+        Transformer transformer = new Transformer(this);
+        transformerConsumer.accept(transformer);
+        return transformer.build();
+    }
+
+    /**
+     * A Nadel.Transformer allows you to change only some of the Nadel properties.  Contrast this
+     * with {@link Builder} which allows you to create a Nadel from a lot of complex inputs.
+     */
+    public static class Transformer {
+        private final Nadel originalNadel;
+        private GraphQLSchema overallSchema;
+
+        private Transformer(Nadel originalNadel) {
+            this.originalNadel = originalNadel;
+            this.overallSchema = originalNadel.overallSchema;
+        }
+
+        public Transformer overallSchema(GraphQLSchema schema) {
+            this.overallSchema = schema;
+            return this;
+        }
+
+        public Nadel build() {
+            return new Nadel(originalNadel, this);
+        }
+    }
+
+    /**
+     * A Nadel.Builder allows you to build a Nadel instance from complex inputs.  Contrast this
+     * with {@link Transformer} which allows you to only change a few properties.
+     */
     public static class Builder {
         private final Map<String, Reader> serviceNDSLs = new LinkedHashMap<>();
         private ServiceExecutionFactory serviceExecutionFactory;

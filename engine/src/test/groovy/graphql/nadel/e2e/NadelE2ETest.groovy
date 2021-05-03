@@ -38,6 +38,7 @@ import graphql.schema.SchemaTransformer
 import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
+import graphql.util.TreeTransformerUtil
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -1343,5 +1344,32 @@ class NadelE2ETest extends Specification {
 
     }
 
+
+    def "Nadel transformer works as expected"() {
+
+        given:
+        Nadel nadel = newNadel()
+                .dsl(simpleNDSL)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+
+
+        when:
+        def newSchema = SchemaTransformer.transformSchema(nadel.getOverallSchema(), new GraphQLTypeVisitorStub() {
+            @Override
+            TraversalControl visitGraphQLObjectType(GraphQLObjectType node, TraverserContext<GraphQLSchemaElement> context) {
+                def newNode = node.transform({ bld -> bld.name(node.getName().toUpperCase()) })
+                return TreeTransformerUtil.changeNode(context, newNode)
+            }
+        })
+        Nadel nadel2 = nadel.transform({ transformer -> transformer.overallSchema(newSchema) })
+
+        then:
+        nadel.getOverallSchema().getObjectType("WORLD") == null
+        nadel.getOverallSchema().getObjectType("World") != null
+
+        nadel2.getOverallSchema().getObjectType("WORLD") != null
+        nadel2.getOverallSchema().getObjectType("World") == null
+    }
 
 }
