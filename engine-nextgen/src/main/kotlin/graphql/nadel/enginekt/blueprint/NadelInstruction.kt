@@ -1,7 +1,7 @@
 package graphql.nadel.enginekt.blueprint
 
-import graphql.nadel.enginekt.blueprint.hydration.HydrationArgument
-import graphql.nadel.enginekt.blueprint.hydration.HydrationBatchMatchStrategy
+import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
 import graphql.schema.FieldCoordinates
 
 sealed class NadelInstruction {
@@ -12,16 +12,16 @@ data class NadelHydrationInstruction(
     override val location: FieldCoordinates,
     val sourceService: String,
     val pathToSourceField: List<String>,
-    val arguments: List<HydrationArgument>,
+    val arguments: List<NadelHydrationArgument>,
 ) : NadelInstruction()
 
 data class NadelBatchHydrationInstruction(
     override val location: FieldCoordinates,
     val sourceService: String,
     val pathToSourceField: List<String>,
-    val arguments: List<HydrationArgument>,
+    val arguments: List<NadelHydrationArgument>,
     val batchSize: Int,
-    val batchMatchStrategy: HydrationBatchMatchStrategy,
+    val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
 ) : NadelInstruction()
 
 class NadelDeepRenameInstruction(

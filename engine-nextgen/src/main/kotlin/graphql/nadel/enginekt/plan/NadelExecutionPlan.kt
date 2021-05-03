@@ -3,7 +3,7 @@ package graphql.nadel.enginekt.plan
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelFieldRenameInstruction
 import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
-import graphql.nadel.enginekt.transform.result.GraphQLResultTransform
+import graphql.nadel.enginekt.transform.result.NadelResultTransform
 import graphql.normalized.NormalizedField
 
 data class NadelExecutionPlan(
@@ -38,5 +38,5 @@ data class NadelUnderlyingFieldTransformation(
 data class GraphQLResultTransformation(
     val service: Service,
     val field: NormalizedField,
-    val transform: GraphQLResultTransform,
+    val transform: NadelResultTransform,
 )

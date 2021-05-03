@@ -8,12 +8,12 @@ import graphql.nadel.enginekt.util.getOperationType
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.schema.GraphQLFieldDefinition
 
-data class GraphQLFieldInfos(
-    private val queryTopLevelFields: Map<String, GraphQLFieldInfo>,
-    private val mutationTopLevelFields: Map<String, GraphQLFieldInfo>,
-    private val subscriptionTopLevelFields: Map<String, GraphQLFieldInfo>,
+data class NadelFieldInfos(
+    private val queryTopLevelFields: Map<String, NadelFieldInfo>,
+    private val mutationTopLevelFields: Map<String, NadelFieldInfo>,
+    private val subscriptionTopLevelFields: Map<String, NadelFieldInfo>,
 ) {
-    fun getFieldInfo(operationKind: OperationKind, topLevelFieldName: String): GraphQLFieldInfo? {
+    fun getFieldInfo(operationKind: OperationKind, topLevelFieldName: String): NadelFieldInfo? {
         return when (operationKind) {
             OperationKind.QUERY -> queryTopLevelFields[topLevelFieldName]
             OperationKind.MUTATION -> mutationTopLevelFields[topLevelFieldName]
@@ -22,8 +22,8 @@ data class GraphQLFieldInfos(
     }
 
     companion object {
-        fun create(services: List<Service>): GraphQLFieldInfos {
-            return GraphQLFieldInfos(
+        fun create(services: List<Service>): NadelFieldInfos {
+            return NadelFieldInfos(
                 getInfosFromServices(services, OperationKind.QUERY),
                 getInfosFromServices(services, OperationKind.MUTATION),
                 getInfosFromServices(services, OperationKind.SUBSCRIPTION),
@@ -33,7 +33,7 @@ data class GraphQLFieldInfos(
         private fun getInfosFromServices(
             services: List<Service>,
             operationKind: OperationKind,
-        ): Map<String, GraphQLFieldInfo> {
+        ): Map<String, NadelFieldInfo> {
             return mapFrom(
                 services.flatMap forService@{ service ->
                     val underlyingOperationType = service.underlyingSchema.getOperationType(operationKind)
@@ -43,7 +43,7 @@ data class GraphQLFieldInfos(
                     underlyingOperationType.fieldDefinitions.mapNotNull forField@{ underlyingField ->
                         val overallField = getOverallField(service, operationKind, underlyingField)
                             ?: return@forField null
-                        overallField.name to GraphQLFieldInfo(service, operationKind, overallField)
+                        overallField.name to NadelFieldInfo(service, operationKind, overallField)
                     }
                 }
             )

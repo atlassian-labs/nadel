@@ -4,7 +4,7 @@ import graphql.nadel.Service
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-interface GraphQLResultTransform {
+interface NadelResultTransform {
     fun isApplicable(
         userContext: Any?,
         overallSchema: GraphQLSchema,

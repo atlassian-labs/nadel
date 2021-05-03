@@ -1,7 +1,6 @@
 package graphql.nadel.enginekt.util
 
-import java.util.*
-import kotlin.collections.HashMap
+import java.util.Collections
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
