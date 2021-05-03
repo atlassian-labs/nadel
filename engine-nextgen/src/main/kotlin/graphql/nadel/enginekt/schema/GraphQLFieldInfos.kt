@@ -39,6 +39,7 @@ data class GraphQLFieldInfos(
                     val underlyingOperationType = service.underlyingSchema.getOperationType(operationKind)
                         ?: return@forService emptyList()
 
+                    // TODO: determine what to do for underlying fields - those will conflict as Map keys
                     underlyingOperationType.fieldDefinitions.mapNotNull forField@{ underlyingField ->
                         val overallField = getOverallField(service, operationKind, underlyingField)
                             ?: return@forField null
