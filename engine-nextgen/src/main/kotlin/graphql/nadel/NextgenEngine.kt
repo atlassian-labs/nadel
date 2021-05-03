@@ -53,7 +53,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         queryDocument: Document,
         instrumentationState: InstrumentationState?
     ): ExecutionResult {
-
         val query = NormalizedQueryTreeFactory.createNormalizedQuery(
             overallSchema,
             queryDocument,
