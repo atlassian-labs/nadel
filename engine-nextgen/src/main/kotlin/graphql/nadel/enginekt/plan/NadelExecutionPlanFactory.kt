@@ -2,17 +2,21 @@ package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
-import graphql.nadel.enginekt.transform.result.GraphQLResultTransform
+import graphql.nadel.enginekt.transform.result.NadelResultTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
-class GraphQLExecutionPlanner(
+class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelExecutionBlueprint,
     private val overallSchema: GraphQLSchema,
-    private val resultTransforms: List<GraphQLResultTransform>,
+    private val resultTransforms: List<NadelResultTransform>,
 ) {
-    fun generate(
+    /**
+     * This derives an execution plan from with the main input parameters being the
+     * [rootField] and [executionBlueprint].
+     */
+    fun create(
         userContext: Any?,
         service: Service,
         rootField: NormalizedField,
@@ -71,8 +75,8 @@ class GraphQLExecutionPlanner(
         fun create(
             executionBlueprint: NadelExecutionBlueprint,
             overallSchema: GraphQLSchema,
-        ): GraphQLExecutionPlanner {
-            return GraphQLExecutionPlanner(
+        ): NadelExecutionPlanFactory {
+            return NadelExecutionPlanFactory(
                 executionBlueprint,
                 overallSchema,
                 emptyList()

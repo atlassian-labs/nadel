@@ -4,9 +4,9 @@ import graphql.nadel.dsl.ExtendedFieldDefinition
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-class GraphQLQueryTransformer(
+class NadelQueryTransformer(
     private val overallSchema: GraphQLSchema,
-    private val transforms: List<GraphQLQueryTransform>,
+    private val transforms: List<NadelQueryTransform>,
 ) {
     fun transform(
         userContext: Any?,
@@ -19,8 +19,8 @@ class GraphQLQueryTransformer(
     }
 
     companion object {
-        fun create(overallSchema: GraphQLSchema): GraphQLQueryTransformer {
-            return GraphQLQueryTransformer(overallSchema, transforms = emptyList())
+        fun create(overallSchema: GraphQLSchema): NadelQueryTransformer {
+            return NadelQueryTransformer(overallSchema, transforms = emptyList())
         }
     }
 }
