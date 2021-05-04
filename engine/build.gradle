@@ -39,4 +39,5 @@ dependencies {
     testImplementation "org.openjdk.jmh:jmh-core:1.21"
     testImplementation "org.openjdk.jmh:jmh-generator-annprocess:1.21"
     testImplementation "com.google.guava:guava:28.0-jre"
+    testImplementation project(path: ":nadel-engine-nextgen")
 }

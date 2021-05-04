@@ -25,9 +25,13 @@ internal class NadelExecutionPlanFactory(
         val schemaTransformations = mutableListOf<NadelSchemaTransformation>()
         val resultTransformations = mutableListOf<GraphQLResultTransformation>()
 
-        traverseQueryTree(rootField) { field ->
-            schemaTransformations += getSchemaTransformations(field)
-            resultTransformations += getResultTransformations(userContext, service, field)
+        try {
+            traverseQueryTree(rootField) { field ->
+                schemaTransformations += getSchemaTransformations(field)
+                resultTransformations += getResultTransformations(userContext, service, field)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
 
         return NadelExecutionPlan(

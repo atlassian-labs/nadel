@@ -7,6 +7,7 @@ import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.get
 import graphql.nadel.enginekt.transform.result.NadelResultCopyInstruction
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.NadelResultRemoveInstruction
 import graphql.nadel.enginekt.transform.result.NadelResultTransform
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.JsonMap
@@ -44,10 +45,17 @@ class NadelDeepRenameResultTransform : NadelResultTransform {
 
             listOf(
                 NadelResultCopyInstruction(
-                    subjectPath = toCopy.path,
+                    subjectPath = parentNode.path + toCopy.path,
                     destinationPath = parentNode.path + deepRenameInstruction.location.fieldName,
+                ),
+                NadelResultRemoveInstruction(
+                    subjectPath = parentNode.path + deepRenameInstruction.pathToSourceField.first(),
                 ),
             )
         }
     }
+}
+
+object RemoveUnusedSelection {
+    // TODO
 }
