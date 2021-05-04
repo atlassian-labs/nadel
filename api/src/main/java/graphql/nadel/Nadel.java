@@ -1,5 +1,6 @@
 package graphql.nadel;
 
+import graphql.Assert;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
@@ -48,7 +49,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -460,7 +460,7 @@ public class Nadel {
                 executionEngine = engineFactory.create(nadelStep1);
             }
 
-            Objects.requireNonNull(executionEngine, "The engine factory must return an engine instance");
+            Assert.assertNotNull(executionEngine, () -> "The engine factory must return an engine instance");
             return new Nadel(nadelStep1, executionEngine);
         }
     }
