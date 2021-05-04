@@ -5,34 +5,41 @@ import graphql.nadel.enginekt.blueprint.NadelBatchHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelHydrationInstruction
+import graphql.nadel.enginekt.blueprint.getForField
 import graphql.nadel.enginekt.transform.query.deepRename.NadelDeepRenameQueryTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
-import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 internal class NadelQueryTransformer(
     private val overallSchema: GraphQLSchema,
     private val executionBlueprint: NadelExecutionBlueprint,
     private val deepRenameTransform: NadelDeepRenameQueryTransform,
 ) {
+    // TODO: refactor so this is based on execution plan rather than blueprint directly
     fun transform(
-        userContext: Any?,
         service: Service,
         field: NormalizedField,
     ): List<NormalizedField> {
-        val fieldCoordinates = makeFieldCoordinates(field.objectType, field.fieldDefinition)
-
-        return when (val fieldInstruction = executionBlueprint.fieldInstructions[fieldCoordinates]) {
+        return when (val fieldInstruction = executionBlueprint.fieldInstructions.getForField(field)) {
             is NadelHydrationInstruction -> TODO()
             is NadelBatchHydrationInstruction -> TODO()
             is NadelDeepRenameInstruction -> deepRenameTransform.transform(
+                transformer = this,
                 service,
                 overallSchema,
                 executionBlueprint,
                 field,
                 fieldInstruction,
             )
-            null -> listOf(field)
+            null -> listOf(
+                field.transform {
+                    it.children(
+                        field.children.flatMap { child ->
+                            transform(service, field = child)
+                        }
+                    )
+                }
+            )
         }
     }
 

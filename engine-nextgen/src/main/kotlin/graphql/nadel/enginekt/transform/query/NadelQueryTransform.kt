@@ -6,8 +6,9 @@ import graphql.nadel.enginekt.blueprint.NadelInstruction
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-interface NadelQueryTransform<Instruction : NadelInstruction> {
+internal interface NadelQueryTransform<Instruction : NadelInstruction> {
     fun transform(
+        transformer: NadelQueryTransformer,
         service: Service,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,

@@ -110,7 +110,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         topLevelField: NormalizedField,
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
-        val transformedQuery = queryTransformer.transform(executionInput.context, service, topLevelField).single()
+        val transformedQuery = queryTransformer.transform(service, topLevelField).single()
         val underlyingQuery = schemaTransformer.transformQuery(executionPlan, transformedQuery)
         val document = normalizedQueryToDocument.toDocument(underlyingQuery)
 

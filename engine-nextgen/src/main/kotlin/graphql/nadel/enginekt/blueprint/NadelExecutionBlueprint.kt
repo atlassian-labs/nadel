@@ -10,6 +10,6 @@ data class NadelExecutionBlueprint(
     val fieldInstructions: Map<FieldCoordinates, NadelInstruction>,
 )
 
-operator fun <T> Map<FieldCoordinates, T>.get(key: NormalizedField): T? {
+fun <T> Map<FieldCoordinates, T>.getForField(key: NormalizedField): T? {
     return this[makeFieldCoordinates(key.objectType, key.fieldDefinition)]
 }

@@ -6,7 +6,6 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLUnionType
-import java.util.function.Consumer
 
 object NadelPathToField {
     fun getField(

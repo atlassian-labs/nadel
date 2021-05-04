@@ -3,13 +3,15 @@ package graphql.nadel.enginekt.transform.query.deepRename
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
-import graphql.nadel.enginekt.transform.query.NadelPathToField.getField
+import graphql.nadel.enginekt.transform.query.NadelPathToField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransform
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRenameInstruction> {
+internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRenameInstruction> {
     override fun transform(
+        transformer: NadelQueryTransformer,
         service: Service,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
@@ -18,6 +20,7 @@ class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRenameInstruc
     ): List<NormalizedField> {
         return listOf(
             makeDeepSelection(
+                transformer,
                 service,
                 field,
                 deepRename = instruction,
@@ -26,15 +29,18 @@ class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRenameInstruc
     }
 
     private fun makeDeepSelection(
+        transformer: NadelQueryTransformer,
         service: Service,
         field: NormalizedField,
         deepRename: NadelDeepRenameInstruction,
     ): NormalizedField {
-        return getField(
+        return NadelPathToField.getField(
             schema = service.underlyingSchema,
             parentType = field.objectType,
             pathToSourceField = deepRename.pathToSourceField,
-            sourceFieldChildren = field.children,
+            sourceFieldChildren = field.children.flatMap { child ->
+                transformer.transform(service, field = child)
+            },
         )
     }
 }
