@@ -8,7 +8,7 @@ import graphql.nadel.enginekt.util.getOperationType
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.schema.GraphQLFieldDefinition
 
-data class NadelFieldInfos(
+internal data class NadelFieldInfos(
     private val queryTopLevelFields: Map<String, NadelFieldInfo>,
     private val mutationTopLevelFields: Map<String, NadelFieldInfo>,
     private val subscriptionTopLevelFields: Map<String, NadelFieldInfo>,

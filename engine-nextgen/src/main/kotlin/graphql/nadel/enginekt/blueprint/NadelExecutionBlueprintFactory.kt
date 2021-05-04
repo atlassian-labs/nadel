@@ -24,7 +24,7 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
 import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
-object NadelExecutionBlueprintFactory {
+internal object NadelExecutionBlueprintFactory {
     fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelExecutionBlueprint {
         val typeRenameInstructions = getTypeRenameInstructions(overallSchema).toMap {
             it.overallName

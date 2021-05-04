@@ -14,6 +14,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
+import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.transform.schema.NadelSchemaTransformer
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.util.ErrorUtil
@@ -32,7 +33,8 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val fieldInfos = NadelFieldInfos.create(nadel.services)
     private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema, nadel.services)
     private val executionPlanner = NadelExecutionPlanFactory.create(executionBlueprint, nadel.overallSchema)
-    private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema)
+    private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema, executionBlueprint)
+    private val resultTransformer = NadelResultTransformer(nadel.overallSchema, executionBlueprint)
     private val instrumentation = nadel.instrumentation
     private val normalizedQueryToDocument = NormalizedQueryToDocument()
     private val schemaTransformer = NadelSchemaTransformer()
@@ -88,7 +90,9 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         val executionPlan = executionPlanner.create(executionInput.context, service, topLevelField)
 
         val executionResult = postProcess(
+            userContext = executionInput.context,
             executionPlan,
+            service,
             executeService(service, executionPlan, topLevelField, executionInput),
         )
 
@@ -106,7 +110,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         topLevelField: NormalizedField,
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
-        val transformedQuery = queryTransformer.transform(executionInput.context, topLevelField).single()
+        val transformedQuery = queryTransformer.transform(executionInput.context, service, topLevelField).single()
         val underlyingQuery = schemaTransformer.transformQuery(executionPlan, transformedQuery)
         val document = normalizedQueryToDocument.toDocument(underlyingQuery)
 
@@ -128,11 +132,12 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     }
 
     private fun postProcess(
+        userContext: Any?,
         executionPlan: NadelExecutionPlan,
+        service: Service,
         result: ServiceExecutionResult
     ): ServiceExecutionResult {
-        // TODO: run through schema and result transformer here
-        return result
+        return resultTransformer.transform(userContext, executionPlan, service, result)
     }
 
     private fun getOperationKind(queryDocument: Document, operationName: String?): OperationKind {

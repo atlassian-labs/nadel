@@ -107,3 +107,10 @@ fun AnyMutableMap.hackPutAll(map: AnyMap) {
     @Suppress("UNCHECKED_CAST")
     (this as MutableMap<Any?, Any?>).putAll(map)
 }
+
+fun <T : Any> List<T>.emptyOrSingle(): T? {
+    return when {
+        isEmpty() -> null
+        else -> single()
+    }
+}

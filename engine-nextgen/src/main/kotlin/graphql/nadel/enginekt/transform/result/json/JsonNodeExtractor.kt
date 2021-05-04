@@ -15,13 +15,13 @@ object JsonNodeExtractor {
 
     fun getNodesAt(rootNode: JsonNode, queryResultKeyPath: List<String>, flatten: Boolean = false): List<JsonNode> {
         // This is a breadth-first search
-        return queryResultKeyPath.foldIndexed(listOf(rootNode)) { index, queue, segment ->
+        return queryResultKeyPath.foldIndexed(listOf(rootNode)) { index, queue, pathSegment ->
             val atEnd = index == queryResultKeyPath.lastIndex
             // For all the nodes, get the next node according to the segment value
             // We use flatMap as one node may be a list with more than one node to explore
             queue.flatMap { node ->
                 // At the end when we see lists we do NOT want to flatten them for BFS queue
-                getNodes(node, segment, flattenLists = !atEnd || flatten)
+                getNodes(node, pathSegment, flattenLists = !atEnd || flatten)
             }
         }
     }

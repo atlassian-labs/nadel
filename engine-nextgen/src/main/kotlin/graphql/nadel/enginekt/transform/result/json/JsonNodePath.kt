@@ -13,6 +13,10 @@ data class JsonNodePath(
         return copy(segments = segments + JsonNodePathSegment.Int(segment))
     }
 
+    fun dropLast(n: Int): JsonNodePath {
+        return copy(segments = segments.dropLast(n))
+    }
+
     companion object {
         val root = JsonNodePath(segments = emptyList())
     }
