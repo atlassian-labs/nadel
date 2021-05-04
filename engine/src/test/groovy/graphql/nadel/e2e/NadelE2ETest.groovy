@@ -14,6 +14,7 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.execution.instrumentation.SimpleInstrumentationContext
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
+import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
@@ -761,7 +762,8 @@ class NadelE2ETest extends Specification {
         given:
         def transformer = new SchemaTransformationHook() {
             @Override
-            GraphQLSchema apply(GraphQLSchema originalSchema) {
+            GraphQLSchema apply(GraphQLSchema originalSchema, List<Service> services) {
+                assert services[0].name == "MyService"
                 return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {
                     @Override
                     TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext<GraphQLSchemaElement> context) {
@@ -1342,6 +1344,5 @@ class NadelE2ETest extends Specification {
         e.cause.message == "Schema mismatch: The underlying schema is missing required interface type Mars"
 
     }
-
 
 }
