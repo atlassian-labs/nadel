@@ -11,7 +11,7 @@ interface NadelResultInstructionWithSubject {
         get() = subjectPath.segments.last().value as String
 }
 
-data class NadelResultSetInstuction(
+data class NadelResultSetInstruction(
     override val subjectPath: JsonNodePath,
     val newValue: Any?,
 ) : NadelResultInstruction(), NadelResultInstructionWithSubject

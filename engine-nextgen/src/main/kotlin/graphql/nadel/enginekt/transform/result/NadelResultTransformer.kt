@@ -47,7 +47,7 @@ internal class NadelResultTransformer(
     private fun mutate(result: ServiceExecutionResult, transformations: List<NadelResultInstruction>) {
         val mutations = transformations.map { transformation ->
             when (transformation) {
-                is NadelResultSetInstuction -> prepareSet(result.data, transformation)
+                is NadelResultSetInstruction -> prepareSet(result.data, transformation)
                 is NadelResultRemoveInstruction -> prepareRemove(result.data, transformation)
                 is NadelResultCopyInstruction -> prepareCopy(result.data, transformation)
             }
@@ -67,7 +67,7 @@ internal class NadelResultTransformer(
             .forEach(result.data::cleanup)
     }
 
-    private fun prepareSet(data: JsonMap, instruction: NadelResultSetInstuction): DataMutation {
+    private fun prepareSet(data: JsonMap, instruction: NadelResultSetInstruction): DataMutation {
         val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
         val subjectKey = instruction.subjectKey
 

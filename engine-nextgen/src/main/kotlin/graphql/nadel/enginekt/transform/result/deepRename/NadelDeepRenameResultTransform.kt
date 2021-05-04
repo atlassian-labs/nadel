@@ -7,9 +7,9 @@ import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.get
 import graphql.nadel.enginekt.transform.result.NadelResultCopyInstruction
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.NadelResultRemoveInstruction
 import graphql.nadel.enginekt.transform.result.NadelResultTransform
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
+import graphql.nadel.enginekt.transform.result.util.RemoveUnusedField
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.normalized.NormalizedField
@@ -38,24 +38,22 @@ class NadelDeepRenameResultTransform : NadelResultTransform {
         val deepRenameInstruction = executionBlueprint.fieldInstructions[field] as NadelDeepRenameInstruction
 
         return parentNodes.flatMap { parentNode ->
-            @Suppress("UNCHECKED_CAST")
-            val parentMap = parentNode.value as JsonMap? ?: return@flatMap emptyList()
-            val toCopy = JsonNodeExtractor.getNodesAt(parentMap, deepRenameInstruction.pathToSourceField)
+            @Suppress("UNCHECKED_CAST") // Ensure the result is a Map, return if null
+            parentNode.value as JsonMap? ?: return@flatMap emptyList()
+
+            val toCopy = JsonNodeExtractor.getNodesAt(parentNode, deepRenameInstruction.pathToSourceField)
                 .emptyOrSingle() ?: return@flatMap emptyList()
 
             listOf(
                 NadelResultCopyInstruction(
-                    subjectPath = parentNode.path + toCopy.path,
+                    subjectPath = toCopy.path,
                     destinationPath = parentNode.path + deepRenameInstruction.location.fieldName,
                 ),
-                NadelResultRemoveInstruction(
-                    subjectPath = parentNode.path + deepRenameInstruction.pathToSourceField.first(),
-                ),
+            ) + RemoveUnusedField.getInstructions(
+                node = parentNode,
+                originalSelection = field,
+                pathToField = deepRenameInstruction.pathToSourceField,
             )
         }
     }
-}
-
-object RemoveUnusedSelection {
-    // TODO
 }
