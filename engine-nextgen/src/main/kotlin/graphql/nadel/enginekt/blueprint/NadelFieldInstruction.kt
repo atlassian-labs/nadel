@@ -4,27 +4,32 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrate
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
 import graphql.schema.FieldCoordinates
 
-sealed class NadelInstruction {
+sealed class NadelFieldInstruction {
     abstract val location: FieldCoordinates
 }
 
-data class NadelHydrationInstruction(
+data class NadelHydrationFieldInstruction(
     override val location: FieldCoordinates,
     val sourceService: String,
     val pathToSourceField: List<String>,
     val arguments: List<NadelHydrationArgument>,
-) : NadelInstruction()
+) : NadelFieldInstruction()
 
-data class NadelBatchHydrationInstruction(
+data class NadelBatchHydrationFieldInstruction(
     override val location: FieldCoordinates,
     val sourceService: String,
     val pathToSourceField: List<String>,
     val arguments: List<NadelHydrationArgument>,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
-) : NadelInstruction()
+) : NadelFieldInstruction()
 
-class NadelDeepRenameInstruction(
+class NadelDeepRenameFieldInstruction(
     override val location: FieldCoordinates,
     val pathToSourceField: List<String>,
-) : NadelInstruction()
+) : NadelFieldInstruction()
+
+class NadelRenameFieldInstruction(
+    override val location: FieldCoordinates,
+    val underlyingName: String,
+) : NadelFieldInstruction()

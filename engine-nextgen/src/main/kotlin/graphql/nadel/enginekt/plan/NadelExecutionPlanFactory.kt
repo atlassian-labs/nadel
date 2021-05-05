@@ -2,12 +2,13 @@ package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
+import graphql.nadel.enginekt.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.enginekt.transform.result.NadelResultTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
-class NadelExecutionPlanFactory(
+internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelExecutionBlueprint,
     private val overallSchema: GraphQLSchema,
     private val resultTransforms: List<NadelResultTransform>,
@@ -22,7 +23,7 @@ class NadelExecutionPlanFactory(
         rootField: NormalizedField,
     ): NadelExecutionPlan {
         val schemaTransformations = mutableListOf<NadelSchemaTransformation>()
-        val resultTransformations = mutableListOf<GraphQLResultTransformation>()
+        val resultTransformations = mutableListOf<NadelResultTransformation>()
 
         traverseQueryTree(rootField) { field ->
             schemaTransformations += getSchemaTransformations(field)
@@ -39,13 +40,13 @@ class NadelExecutionPlanFactory(
         val coordinates = createFieldCoordinates(field.objectType.name, field.name)
 
         return listOfNotNull(
-            when (val underlyingField = executionBlueprint.underlyingFields[coordinates]) {
-                null -> null
-                else -> NadelUnderlyingFieldTransformation(field, underlyingField)
+            when (val fieldInstruction = executionBlueprint.fieldInstructions[coordinates]) {
+                is NadelRenameFieldInstruction -> NadelUnderlyingFieldTransformation(field, fieldInstruction)
+                else -> null
             },
-            when (val underlyingType = executionBlueprint.underlyingTypes[field.objectType.name]) {
+            when (val typeInstruction = executionBlueprint.typeInstructions[field.objectType.name]) {
                 null -> null
-                else -> NadelUnderlyingTypeTransformation(field, underlyingType)
+                else -> NadelUnderlyingTypeTransformation(field, typeInstruction)
             }
         )
     }
@@ -54,10 +55,10 @@ class NadelExecutionPlanFactory(
         userContext: Any?,
         service: Service,
         field: NormalizedField,
-    ): List<GraphQLResultTransformation> {
+    ): List<NadelResultTransformation> {
         return resultTransforms.mapNotNull {
             if (it.isApplicable(userContext, overallSchema, service, field)) {
-                GraphQLResultTransformation(service, field, it)
+                NadelResultTransformation(service, field, it)
             } else {
                 null
             }

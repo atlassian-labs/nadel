@@ -4,7 +4,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.normalized.NormalizedField
 
-class NadelSchemaTransformer(
+internal class NadelSchemaTransformer(
     private val queryTransformer: NadelSchemaQueryTransformer = NadelSchemaQueryTransformer(),
     private val resultTransformer: NadelSchemaResultTransformer = NadelSchemaResultTransformer(),
 ) {
