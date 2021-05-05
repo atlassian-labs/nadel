@@ -1,7 +1,7 @@
 package graphql.nadel.enginekt.transform.query.deepRename
 
 import graphql.nadel.Service
-import graphql.nadel.enginekt.blueprint.NadelDeepRenameInstruction
+import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelPathToField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransform
@@ -9,14 +9,14 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRenameInstruction> {
+internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRenameFieldInstruction> {
     override fun transform(
         transformer: NadelQueryTransformer,
         service: Service,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
         field: NormalizedField,
-        instruction: NadelDeepRenameInstruction,
+        instruction: NadelDeepRenameFieldInstruction,
     ): List<NormalizedField> {
         return listOf(
             createDeepField(
@@ -32,7 +32,7 @@ internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRena
         transformer: NadelQueryTransformer,
         service: Service,
         field: NormalizedField,
-        deepRename: NadelDeepRenameInstruction,
+        deepRename: NadelDeepRenameFieldInstruction,
     ): NormalizedField {
         return NadelPathToField.createField(
             schema = service.underlyingSchema,

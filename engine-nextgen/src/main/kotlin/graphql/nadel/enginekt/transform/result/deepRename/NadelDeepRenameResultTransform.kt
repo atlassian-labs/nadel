@@ -2,7 +2,7 @@ package graphql.nadel.enginekt.transform.result.deepRename
 
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.enginekt.blueprint.NadelDeepRenameInstruction
+import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getForField
 import graphql.nadel.enginekt.transform.result.NadelResultCopyInstruction
@@ -23,7 +23,7 @@ class NadelDeepRenameResultTransform : NadelResultTransform {
         service: Service,
         field: NormalizedField
     ): Boolean {
-        return executionBlueprint.fieldInstructions.getForField(field) is NadelDeepRenameInstruction
+        return executionBlueprint.fieldInstructions.getForField(field) is NadelDeepRenameFieldInstruction
     }
 
     override fun getInstructions(
@@ -35,7 +35,8 @@ class NadelDeepRenameResultTransform : NadelResultTransform {
         result: ServiceExecutionResult
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(result.data, field.listOfResultKeys.dropLast(1))
-        val deepRenameInstruction = executionBlueprint.fieldInstructions.getForField(field) as NadelDeepRenameInstruction
+        val deepRenameInstruction = executionBlueprint.fieldInstructions.getForField(field)
+            as NadelDeepRenameFieldInstruction
 
         return parentNodes.flatMap { parentNode ->
             @Suppress("UNCHECKED_CAST") // Ensure the result is a Map, return if null

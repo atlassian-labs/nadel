@@ -1,10 +1,11 @@
 package graphql.nadel.enginekt.transform.query
 
 import graphql.nadel.Service
-import graphql.nadel.enginekt.blueprint.NadelBatchHydrationInstruction
-import graphql.nadel.enginekt.blueprint.NadelDeepRenameInstruction
+import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
+import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.NadelHydrationInstruction
+import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
+import graphql.nadel.enginekt.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.getForField
 import graphql.nadel.enginekt.transform.query.deepRename.NadelDeepRenameQueryTransform
 import graphql.normalized.NormalizedField
@@ -21,9 +22,10 @@ internal class NadelQueryTransformer(
         field: NormalizedField,
     ): List<NormalizedField> {
         return when (val fieldInstruction = executionBlueprint.fieldInstructions.getForField(field)) {
-            is NadelHydrationInstruction -> TODO()
-            is NadelBatchHydrationInstruction -> TODO()
-            is NadelDeepRenameInstruction -> deepRenameTransform.transform(
+            is NadelRenameFieldInstruction -> TODO()
+            is NadelHydrationFieldInstruction -> TODO()
+            is NadelBatchHydrationFieldInstruction -> TODO()
+            is NadelDeepRenameFieldInstruction -> deepRenameTransform.transform(
                 transformer = this,
                 service,
                 overallSchema,
