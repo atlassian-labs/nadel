@@ -47,7 +47,7 @@ class NadelDeepRenameResultTransform : NadelResultTransform {
             listOf(
                 NadelResultCopyInstruction(
                     subjectPath = toCopy.path,
-                    destinationPath = parentNode.path + deepRenameInstruction.location.fieldName,
+                    destinationPath = parentNode.path + field.resultKey,
                 ),
             ) + RemoveUnusedField.getInstructions(
                 node = parentNode,

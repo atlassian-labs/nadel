@@ -8,13 +8,13 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLUnionType
 
 object NadelPathToField {
-    fun getField(
+    fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
         pathToSourceField: List<String>,
         sourceFieldChildren: List<NormalizedField>,
     ): List<NormalizedField> {
-        return getField(
+        return createField(
             schema,
             parentType,
             pathToSourceField,
@@ -23,13 +23,13 @@ object NadelPathToField {
         )
     }
 
-    fun getField(
+    fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
         pathToSourceField: List<String>,
         sourceFieldChildren: List<NormalizedField>,
     ): NormalizedField {
-        return getField(
+        return createField(
             schema,
             parentType,
             pathToSourceField,
@@ -38,7 +38,7 @@ object NadelPathToField {
         )
     }
 
-    private fun getField(
+    private fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
         pathToSourceField: List<String>,
@@ -47,7 +47,7 @@ object NadelPathToField {
     ): List<NormalizedField> {
         return when (parentType) {
             is GraphQLInterfaceType -> schema.getImplementations(parentType).map { objectType: GraphQLObjectType ->
-                getField(
+                createField(
                     schema,
                     parentType = objectType,
                     pathToSourceField,
@@ -56,7 +56,7 @@ object NadelPathToField {
                 )
             }
             is GraphQLUnionType -> parentType.types.flatMap { typeInUnion: GraphQLOutputType ->
-                getField(
+                createField(
                     schema,
                     parentType = typeInUnion,
                     pathToSourceField,
@@ -65,7 +65,7 @@ object NadelPathToField {
                 )
             }
             is GraphQLObjectType -> listOf(
-                getField(
+                createField(
                     schema,
                     parentType,
                     pathToSourceField,
@@ -77,7 +77,7 @@ object NadelPathToField {
         }
     }
 
-    private fun getField(
+    private fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
         pathToSourceField: List<String>,
@@ -86,6 +86,7 @@ object NadelPathToField {
     ): NormalizedField {
         val fieldName = pathToSourceField[pathToSourceFieldIndex]
         val fieldDef = parentType.getFieldDefinition(fieldName)
+            ?: error("No definition for ${parentType.name}.$fieldName")
 
         return NormalizedField.newQueryExecutionField()
             .objectType(parentType)
@@ -94,7 +95,7 @@ object NadelPathToField {
                 if (pathToSourceFieldIndex == pathToSourceField.lastIndex) {
                     sourceFieldChildren
                 } else {
-                    getField(
+                    createField(
                         schema,
                         parentType = fieldDef.type,
                         pathToSourceField,

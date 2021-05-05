@@ -19,7 +19,7 @@ internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRena
         instruction: NadelDeepRenameInstruction,
     ): List<NormalizedField> {
         return listOf(
-            makeDeepSelection(
+            createDeepField(
                 transformer,
                 service,
                 field,
@@ -28,13 +28,13 @@ internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRena
         )
     }
 
-    private fun makeDeepSelection(
+    private fun createDeepField(
         transformer: NadelQueryTransformer,
         service: Service,
         field: NormalizedField,
         deepRename: NadelDeepRenameInstruction,
     ): NormalizedField {
-        return NadelPathToField.getField(
+        return NadelPathToField.createField(
             schema = service.underlyingSchema,
             parentType = field.objectType,
             pathToSourceField = deepRename.pathToSourceField,
