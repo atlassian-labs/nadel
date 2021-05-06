@@ -33,7 +33,8 @@ public interface ServiceExecutionHooks {
      * When a field is forbidden, the field is set to null and a GraphQL error is inserted into the overall response.
      *
      * @param normalizedField     the field in question
-     * @param hydrationArguments query variables and arguments supplied to the top level field of the hydration
+     * @param hydrationArguments  arguments supplied to the top level field of the hydration
+     * @param variables           query variables
      * @param userSuppliedContext the context supplied to Nadel in {@link graphql.nadel.NadelExecutionInput}
      * @return an error if the field should be omitted, empty optional otherwise
      */
