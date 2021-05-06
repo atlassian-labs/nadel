@@ -21,6 +21,7 @@ internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRena
         return listOf(
             createDeepField(
                 transformer,
+                executionBlueprint,
                 service,
                 field,
                 deepRename = instruction,
@@ -30,13 +31,21 @@ internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRena
 
     private fun createDeepField(
         transformer: NadelQueryTransformer,
+        blueprint: NadelExecutionBlueprint,
         service: Service,
         field: NormalizedField,
         deepRename: NadelDeepRenameFieldInstruction,
     ): NormalizedField {
+        val underlyingTypeName = field.objectType.name.let { overallTypeName ->
+            blueprint.typeInstructions[overallTypeName]?.underlyingName ?: overallTypeName
+        }
+
+        val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
+            ?: error("No underlying object type")
+
         return NadelPathToField.createField(
             schema = service.underlyingSchema,
-            parentType = field.objectType,
+            parentType = underlyingObjectType,
             pathToSourceField = deepRename.pathToSourceField,
             sourceFieldChildren = field.children.flatMap { child ->
                 transformer.transform(service, field = child)
