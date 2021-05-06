@@ -2,11 +2,11 @@ package graphql.nadel.engine
 
 import graphql.GraphQLError
 import graphql.execution.AbortExecutionException
-import graphql.execution.ExecutionContext
 import graphql.nadel.Nadel
 import graphql.nadel.engine.result.ResultComplexityAggregator
 import graphql.nadel.engine.testutils.TestUtil
 import graphql.nadel.engine.testutils.harnesses.IssuesCommentsUsersHarness
+import graphql.nadel.hooks.HydrationArguments
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.normalized.NormalizedQueryField
 import graphql.schema.GraphQLSchema
@@ -556,7 +556,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
     ServiceExecutionHooks createServiceExecutionHooksWithFieldRemoval(List<String> fieldsToRemove) {
         return new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, ExecutionContext executionContext, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
                 if (fieldsToRemove.contains(normalizedField.getName())) {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
@@ -630,7 +630,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, ExecutionContext executionContext, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
                 if (normalizedField.getName() == "restricted" && normalizedField.getParent().getName() == "issue") {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
@@ -808,7 +808,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, ExecutionContext executionContext, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
                 if (normalizedField.getName() == "restricted" && normalizedField.getParent().getParent().getName() == "issue") {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
@@ -842,12 +842,382 @@ class RemovedFieldsTest extends StrategyTestHelper {
                 expectedQuery2,
                 response2,
                 hooks,
+                [:],
                 Mock(ResultComplexityAggregator)
         )
         then:
         response == overallResponse
         errors.size() == 1
         errors[0].message.contains("removed field")
+    }
+
+    def "restrict fields based on hydration arguments"() {
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issues     : '''
+                    service Issues {
+                        type Query {
+                            issue(id: ID): Issue
+                        }
+                        type Issue {
+                            id: ID
+                            author(productId: ID): User => hydrated from UserService.userById(id: $source.authorId) object identified by id
+                        }
+                    }
+        ''',
+                UserService: '''
+                    service UserService {
+                        type Query {
+                            userById(id: ID): User
+                        }
+                        type User {
+                            id: ID
+                            restricted: String
+                        }                      
+                    }
+        '''])
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue(id: ID) : Issue
+        }
+        type Issue {
+            id: ID
+            authorId: ID
+               
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            userById(id: ID): User
+        }
+        type User {
+            id: ID
+            restricted: String
+        }
+        """)
+        def query = '{issue(id: "ISSUE-1") { id author { id restricted }} }'
+        given:
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+                if (normalizedField.getName() != "restricted") {
+                    return CompletableFuture.completedFuture(Optional.empty())
+                }
+                if (hydrationArguments.hydrationRootAstArguments.any { it.value?.value == "USER-SECRET" }) {
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
+                }
+                return CompletableFuture.completedFuture(Optional.empty())
+            }
+        }
+
+        def expectedQuery1 = 'query nadel_2_Issues {issue(id:"ISSUE-1") {id authorId}}'
+        def response1 = [issue: [id: "ISSUE-1", authorId: userId]]
+
+        def response2 = [userById: [id: userId, restricted: "superSecret"]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.collect { it.message } == errorMessages
+
+        where:
+        userId        || expectedQuery2                                                         | overallResponse                                                                | errorMessages
+        "USER-SECRET" || 'query nadel_2_UserService {userById(id:"USER-SECRET") {id}}'          | [issue: [id: "ISSUE-1", author: [id: "USER-SECRET", restricted: null]]]        | ["removed field"]
+        "USER-OPEN"   || 'query nadel_2_UserService {userById(id:"USER-OPEN") {id restricted}}' | [issue: [id: "ISSUE-1", author: [id: "USER-OPEN", restricted: "superSecret"]]] | []
+    }
+
+    def "restrict fields based on hydration arguments when hydrating through a synthetic field"() {
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issues     : '''
+                    service Issues {
+                        type Query {
+                            issue(id: ID): Issue
+                        }
+                        type Issue {
+                            id: ID
+                            author(productId: ID): User => hydrated from UserService.userQuery.userById(id: $source.authorId) object identified by id
+                        }
+                    }
+        ''',
+                UserService: '''
+                    service UserService {
+                        type Query {
+                            userQuery: UserQuery
+                        }
+                        
+                        type UserQuery {
+                            userById(id: ID): User
+                        }
+                        type User {
+                            id: ID
+                            restricted: String
+                        }                      
+                    }
+        '''])
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue(id: ID) : Issue
+        }
+        type Issue {
+            id: ID
+            authorId: ID
+               
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            userQuery: UserQuery
+        }
+        
+        type UserQuery {
+            userById(id: ID): User
+        }
+        
+        type User {
+            id: ID
+            restricted: String
+        }
+        """)
+        def query = '{issue(id: "ISSUE-1") { id author { id restricted }} }'
+        given:
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+                if (normalizedField.getName() != "restricted") {
+                    return CompletableFuture.completedFuture(Optional.empty())
+                }
+                if (hydrationArguments.hydrationRootAstArguments.any { it.value?.value == "USER-SECRET" }) {
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
+                }
+                return CompletableFuture.completedFuture(Optional.empty())
+            }
+        }
+
+        def expectedQuery1 = 'query nadel_2_Issues {issue(id:"ISSUE-1") {id authorId}}'
+        def response1 = [issue: [id: "ISSUE-1", authorId: userId]]
+
+        def response2 = [userQuery: [userById: [id: userId, restricted: "superSecret"]]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.collect { it.message } == errorMessages
+
+        where:
+        userId        || expectedQuery2                                                                     | overallResponse                                                                | errorMessages
+        "USER-SECRET" || 'query nadel_2_UserService {userQuery {userById(id:"USER-SECRET") {id}}}'          | [issue: [id: "ISSUE-1", author: [id: "USER-SECRET", restricted: null]]]        | ["removed field"]
+        "USER-OPEN"   || 'query nadel_2_UserService {userQuery {userById(id:"USER-OPEN") {id restricted}}}' | [issue: [id: "ISSUE-1", author: [id: "USER-OPEN", restricted: "superSecret"]]] | []
+    }
+
+    def "restrict fields based on hydration arguments with variables"() {
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issues     : '''
+                    service Issues {
+                        type Query {
+                            issue(id: ID): Issue
+                        }
+                        type Issue {
+                            id: ID
+                            author(productId: ID): User => hydrated from UserService.userById(id: $source.authorId, productId: $argument.productId) object identified by id
+                        }
+                    }
+        ''',
+                UserService: '''
+                    service UserService {
+                        type Query {
+                            userById(id: ID, productId: ID): User
+                        }
+                        type User {
+                            id: ID
+                            restricted: String
+                        }
+                    }
+        '''])
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue(id: ID) : Issue
+        }
+        type Issue {
+            id: ID
+            authorId: ID
+               
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            userById(id: ID): User
+        }
+        type User {
+            id: ID
+            restricted: String
+        }
+        """)
+        def query = 'query issueQ($productId: ID) {issue(id: "ISSUE-1") { id author(productId: $productId) { id restricted }} }'
+        given:
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+                if (normalizedField.getName() == "restricted" && variables.get("productId") == "restrictedProduct") {
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
+                }
+                return CompletableFuture.completedFuture(Optional.empty())
+            }
+        }
+
+        def expectedQuery1 = 'query nadel_2_Issues {issue(id:"ISSUE-1") {id authorId}}'
+        def response1 = [issue: [id: "ISSUE-1", authorId: 'USER-1']]
+
+        def response2 = [userById: [id: "USER-1", restricted: "superSecret"]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                hooks,
+                [productId: productId],
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.collect { it.message } == errorMessages
+
+        where:
+        productId           || expectedQuery2                                                                                          | overallResponse                                                             | errorMessages
+        "restrictedProduct" || 'query nadel_2_UserService($productId:ID) {userById(id:"USER-1",productId:$productId) {id}}'            | [issue: [id: "ISSUE-1", author: [id: "USER-1", restricted: null]]]          | ["removed field"]
+        "openProduct"       || 'query nadel_2_UserService($productId:ID) {userById(id:"USER-1",productId:$productId) {id restricted}}' | [issue: [id: "ISSUE-1", author: [id: "USER-1", restricted: "superSecret"]]] | []
+    }
+
+    def "restrict fields based on directives on hydration arguments"() {
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issues     : '''
+                    service Issues {
+                        type Query {
+                            issue(id: ID): Issue
+                        }
+                        type Issue {
+                            id: ID
+                            author(productId: ID): User => hydrated from UserService.userById(id: $source.authorId) object identified by id
+                        }
+                    }
+        ''',
+                UserService: '''
+                    service UserService {
+                        type Query {
+                            userById(id: ID @secret): User
+                        }
+                        type User {
+                            id: ID
+                            restricted: String
+                        }
+                        directive @secret on ARGUMENT_DEFINITION                      
+                    }
+                '''])
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue(id: ID) : Issue
+        }
+        type Issue {
+            id: ID
+            authorId: ID
+               
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            userById(id: ID): User
+        }
+        type User {
+            id: ID
+            restricted: String
+        }
+        """)
+        def query = '{issue(id: "ISSUE-1") { id author { id restricted }} }'
+
+        given:
+        def _hideSecret = hideSecret
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+                if (!_hideSecret) {
+                    return CompletableFuture.completedFuture(Optional.empty())
+                }
+                if (normalizedField.getName() != "restricted") {
+                    return CompletableFuture.completedFuture(Optional.empty())
+                }
+                if (hydrationArguments.hydrationRootGqlArguments.any { it.getDirective("secret") != null }) {
+                    return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
+                }
+                return CompletableFuture.completedFuture(Optional.empty())
+            }
+        }
+
+        def expectedQuery1 = 'query nadel_2_Issues {issue(id:"ISSUE-1") {id authorId}}'
+        def response1 = [issue: [id: "ISSUE-1", authorId: "USER-1"]]
+
+        def response2 = [userById: [id: "USER-1", restricted: "superSecret"]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == overallResponse
+        errors.collect { it.message } == errorMessages
+
+        where:
+        hideSecret || expectedQuery2                                                      | overallResponse                                                             | errorMessages
+        true       || 'query nadel_2_UserService {userById(id:"USER-1") {id}}'            | [issue: [id: "ISSUE-1", author: [id: "USER-1", restricted: null]]]          | ["removed field"]
+        false      || 'query nadel_2_UserService {userById(id:"USER-1") {id restricted}}' | [issue: [id: "ISSUE-1", author: [id: "USER-1", restricted: "superSecret"]]] | []
     }
 
 }

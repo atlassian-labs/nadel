@@ -1,10 +1,10 @@
 package graphql.nadel.engine.execution;
 
 import graphql.GraphQLError;
-import graphql.execution.ExecutionContext;
 import graphql.language.Field;
 import graphql.language.Node;
 import graphql.nadel.engine.NadelContext;
+import graphql.nadel.hooks.HydrationArguments;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
 
@@ -22,13 +22,20 @@ public class AsyncIsFieldForbidden {
 
     private final Map<NormalizedQueryField, GraphQLError> fieldsToErrors = new ConcurrentHashMap<>();
     private final ServiceExecutionHooks serviceExecutionHooks;
-    private final ExecutionContext executionContext;
     private final NadelContext nadelContext;
+    private final HydrationArguments hydrationArguments;
+    private final Map<String, Object> variables;
 
-    public AsyncIsFieldForbidden(ServiceExecutionHooks serviceExecutionHooks, ExecutionContext executionContext, NadelContext nadelContext) {
+    public AsyncIsFieldForbidden(
+            ServiceExecutionHooks serviceExecutionHooks,
+            NadelContext nadelContext,
+            HydrationArguments hydrationArguments,
+            Map<String, Object> variables
+    ) {
         this.serviceExecutionHooks = serviceExecutionHooks;
-        this.executionContext = executionContext;
         this.nadelContext = nadelContext;
+        this.hydrationArguments = hydrationArguments;
+        this.variables = variables;
     }
 
     public CompletableFuture<Map<NormalizedQueryField, GraphQLError>> getForbiddenFields(Node<?> root) {
@@ -50,7 +57,7 @@ public class AsyncIsFieldForbidden {
         if (field.getName().equals(TypeNameMetaFieldDef.getName())) {
             return CompletableFuture.completedFuture(null);
         }
-        return serviceExecutionHooks.isFieldForbidden(field, executionContext, nadelContext.getUserSuppliedContext())
+        return serviceExecutionHooks.isFieldForbidden(field, hydrationArguments, variables, nadelContext.getUserSuppliedContext())
                 .thenCompose(graphQLError -> {
                     if (graphQLError.isPresent()) {
                         fieldsToErrors.put(field, graphQLError.get());

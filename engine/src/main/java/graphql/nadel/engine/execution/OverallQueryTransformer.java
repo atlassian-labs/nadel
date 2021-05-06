@@ -23,8 +23,10 @@ import graphql.nadel.engine.execution.transformation.OverallTypeInfo;
 import graphql.nadel.engine.execution.transformation.OverallTypeInformation;
 import graphql.nadel.engine.execution.transformation.RecordOverallTypeInformation;
 import graphql.nadel.engine.execution.transformation.TransformationMetadata;
+import graphql.nadel.hooks.HydrationArguments;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.util.FpKit;
+import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLCompositeType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLNamedOutputType;
@@ -48,6 +50,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -95,6 +98,8 @@ public class OverallQueryTransformer {
             selectionSet = topLevelField.getSelectionSet();
         }
 
+        HydrationArguments hydrationArguments = getHydrationArguments(executionContext, operationKind, rootField, topLevelField, isSynthetic);
+
         Map<String, VariableDefinition> variableDefinitionMap = FpKit.getByName(executionContext.getOperationDefinition().getVariableDefinitions(), VariableDefinition::getName);
         NodeVisitorStub collectReferencedVariables = new NodeVisitorStub() {
             @Override
@@ -107,7 +112,6 @@ public class OverallQueryTransformer {
 
         NodeTraverser nodeTraverser = new NodeTraverser();
         nodeTraverser.depthFirst(collectReferencedVariables, topLevelField);
-
 
         CompletableFuture<SelectionSet> topLevelFieldSelectionSetCF = transformNode(
                 executionContext,
@@ -122,7 +126,8 @@ public class OverallQueryTransformer {
                 service,
                 serviceContext,
                 removedFieldMap,
-                transformations
+                transformations,
+                hydrationArguments
         );
         Field finalTopLevelField = topLevelField;
         return topLevelFieldSelectionSetCF.thenCompose(topLevelFieldSelectionSet -> {
@@ -185,6 +190,24 @@ public class OverallQueryTransformer {
 
     }
 
+    private static HydrationArguments getHydrationArguments(ExecutionContext executionContext, OperationKind operation, Field rootField, Field topLevelField, boolean isSynthetic) {
+        final List<GraphQLArgument> hydrationGqlArguments;
+        if (isSynthetic) {
+            hydrationGqlArguments = Optional.ofNullable(
+                    operation.getRootType(executionContext.getGraphQLSchema())
+                            .getFieldDefinition(rootField.getName()))
+                    .map(fieldDefinition -> ((GraphQLObjectType) fieldDefinition.getType()).getFieldDefinition(topLevelField.getName()))
+                    .map(GraphQLFieldDefinition::getArguments)
+                    .orElse(Collections.emptyList());
+        } else {
+            hydrationGqlArguments = Optional.ofNullable(operation.getRootType(executionContext.getGraphQLSchema())
+                    .getFieldDefinition(topLevelField.getName()))
+                    .map(GraphQLFieldDefinition::getArguments)
+                    .orElse(Collections.emptyList());
+        }
+        return new HydrationArguments(hydrationGqlArguments, topLevelField.getArguments());
+    }
+
     CompletableFuture<QueryTransformationResult> transformMergedFields(
             ExecutionContext executionContext,
             GraphQLSchema underlyingSchema,
@@ -223,7 +246,8 @@ public class OverallQueryTransformer {
                         service,
                         serviceContext,
                         removedFieldMap,
-                        transformations
+                        transformations,
+                        HydrationArguments.empty()
                 );
                 return newFieldCF.thenApply(newField -> {
                     // Case happens when the high level field is removed
@@ -399,7 +423,7 @@ public class OverallQueryTransformer {
                 executionContext.getGraphQLSchema(),
                 null);
 
-        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, executionContext, nadelContext);
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext, HydrationArguments.empty(), variableValues);
 
         return asyncIsFieldForbidden.getForbiddenFields(fragmentDefinitionWithoutTypeInfo).thenApply(forbiddenFields -> {
 
@@ -466,13 +490,14 @@ public class OverallQueryTransformer {
                                                                 Service service,
                                                                 Object serviceContext,
                                                                 TransformationMetadata removedFieldMap,
-                                                                TransformationState transformations) {
+                                                                TransformationState transformations,
+                                                                HydrationArguments hydrationArguments) {
         OverallTypeInformation<T> overallTypeInformation = recordOverallTypeInformation.recordOverallTypes(
                 nodeWithoutTypeInfo,
                 executionContext.getGraphQLSchema(),
                 parentTypeOverall);
 
-        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, executionContext, nadelContext);
+        AsyncIsFieldForbidden asyncIsFieldForbidden = new AsyncIsFieldForbidden(serviceExecutionHooks, nadelContext, hydrationArguments, variableValues);
 
         return asyncIsFieldForbidden.getForbiddenFields(nodeWithoutTypeInfo).thenApply(forbiddenFields -> {
             Transformer transformer = new Transformer(
