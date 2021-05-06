@@ -36,12 +36,16 @@ internal class NadelQueryTransformer(
             null -> listOf(
                 field.transform {
                     it.children(
-                        field.children.flatMap { child ->
-                            transform(service, field = child)
-                        }
+                        transform(service, field.children)
                     )
                 }
             )
+        }
+    }
+
+    fun transform(service: Service, fields: List<NormalizedField>): List<NormalizedField> {
+        return fields.flatMap {
+            transform(service, it)
         }
     }
 

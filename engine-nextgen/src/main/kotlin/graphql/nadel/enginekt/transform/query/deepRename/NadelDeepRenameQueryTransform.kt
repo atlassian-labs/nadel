@@ -46,10 +46,8 @@ internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRena
         return NadelPathToField.createField(
             schema = service.underlyingSchema,
             parentType = underlyingObjectType,
-            pathToSourceField = deepRename.pathToSourceField,
-            sourceFieldChildren = field.children.flatMap { child ->
-                transformer.transform(service, field = child)
-            },
+            pathToField = deepRename.pathToSourceField,
+            fieldChildren = transformer.transform(service, field.children),
         )
     }
 }

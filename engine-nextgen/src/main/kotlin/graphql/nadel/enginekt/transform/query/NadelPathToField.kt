@@ -11,66 +11,66 @@ object NadelPathToField {
     fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
-        pathToSourceField: List<String>,
-        sourceFieldChildren: List<NormalizedField>,
+        pathToField: List<String>,
+        fieldChildren: List<NormalizedField>,
     ): List<NormalizedField> {
         return createField(
             schema,
             parentType,
-            pathToSourceField,
-            sourceFieldChildren,
-            pathToSourceFieldIndex = 0,
+            pathToField,
+            fieldChildren,
+            pathToFieldIndex = 0,
         )
     }
 
     fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
-        pathToSourceField: List<String>,
-        sourceFieldChildren: List<NormalizedField>,
+        pathToField: List<String>,
+        fieldChildren: List<NormalizedField>,
     ): NormalizedField {
         return createField(
             schema,
             parentType,
-            pathToSourceField,
-            sourceFieldChildren,
-            pathToSourceFieldIndex = 0,
+            pathToField,
+            fieldChildren,
+            pathToFieldIndex = 0,
         )
     }
 
     private fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
-        pathToSourceField: List<String>,
-        sourceFieldChildren: List<NormalizedField>,
-        pathToSourceFieldIndex: Int,
+        pathToField: List<String>,
+        fieldChildren: List<NormalizedField>,
+        pathToFieldIndex: Int,
     ): List<NormalizedField> {
         return when (parentType) {
             is GraphQLInterfaceType -> schema.getImplementations(parentType).map { objectType: GraphQLObjectType ->
                 createField(
                     schema,
                     parentType = objectType,
-                    pathToSourceField,
-                    sourceFieldChildren,
-                    pathToSourceFieldIndex,
+                    pathToField,
+                    fieldChildren,
+                    pathToFieldIndex,
                 )
             }
             is GraphQLUnionType -> parentType.types.flatMap { typeInUnion: GraphQLOutputType ->
                 createField(
                     schema,
                     parentType = typeInUnion,
-                    pathToSourceField,
-                    sourceFieldChildren,
-                    pathToSourceFieldIndex,
+                    pathToField,
+                    fieldChildren,
+                    pathToFieldIndex,
                 )
             }
             is GraphQLObjectType -> listOf(
                 createField(
                     schema,
                     parentType,
-                    pathToSourceField,
-                    sourceFieldChildren,
-                    pathToSourceFieldIndex,
+                    pathToField,
+                    fieldChildren,
+                    pathToFieldIndex,
                 )
             )
             else -> error("Unknown type '${parentType.javaClass.name}'")
@@ -80,11 +80,11 @@ object NadelPathToField {
     private fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
-        pathToSourceField: List<String>,
-        sourceFieldChildren: List<NormalizedField>,
-        pathToSourceFieldIndex: Int,
+        pathToField: List<String>,
+        fieldChildren: List<NormalizedField>,
+        pathToFieldIndex: Int,
     ): NormalizedField {
-        val fieldName = pathToSourceField[pathToSourceFieldIndex]
+        val fieldName = pathToField[pathToFieldIndex]
         val fieldDef = parentType.getFieldDefinition(fieldName)
             ?: error("No definition for ${parentType.name}.$fieldName")
 
@@ -92,15 +92,15 @@ object NadelPathToField {
             .objectType(parentType)
             .fieldDefinition(fieldDef)
             .children(
-                if (pathToSourceFieldIndex == pathToSourceField.lastIndex) {
-                    sourceFieldChildren
+                if (pathToFieldIndex == pathToField.lastIndex) {
+                    fieldChildren
                 } else {
                     createField(
                         schema,
                         parentType = fieldDef.type,
-                        pathToSourceField,
-                        sourceFieldChildren,
-                        pathToSourceFieldIndex = pathToSourceFieldIndex + 1,
+                        pathToField,
+                        fieldChildren,
+                        pathToFieldIndex = pathToFieldIndex + 1,
                     )
                 }
             )
