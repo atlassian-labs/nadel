@@ -1,11 +1,11 @@
 package graphql.nadel.enginekt.schema
 
+import graphql.language.FieldDefinition
 import graphql.nadel.OperationKind
 import graphql.nadel.Service
-import graphql.schema.GraphQLFieldDefinition
 
-data class GraphQLFieldInfo(
+data class NadelFieldInfo(
     val service: Service,
     val operationKind: OperationKind,
-    val field: GraphQLFieldDefinition,
+    val fieldDef: FieldDefinition,
 )

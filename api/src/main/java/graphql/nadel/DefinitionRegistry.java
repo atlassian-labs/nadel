@@ -8,6 +8,8 @@ import graphql.language.OperationTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.SchemaDefinition;
 import graphql.language.TypeDefinition;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,12 +19,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyList;
+
 @Internal
 public class DefinitionRegistry {
-
-    private List<SDLDefinition> definitions = new ArrayList<>();
-    private Map<Class<? extends SDLDefinition>, List<SDLDefinition>> definitionsByClass = new LinkedHashMap<>();
-    private Map<String, List<SDLDefinition>> definitionsByName = new LinkedHashMap<>();
+    private final List<SDLDefinition> definitions = new ArrayList<>();
+    private final Map<Class<? extends SDLDefinition>, List<SDLDefinition>> definitionsByClass = new LinkedHashMap<>();
+    private final Map<String, List<SDLDefinition>> definitionsByName = new LinkedHashMap<>();
 
     public void add(SDLDefinition sdlDefinition) {
         definitions.add(sdlDefinition);
@@ -36,7 +39,6 @@ public class DefinitionRegistry {
         }
     }
 
-
     public SchemaDefinition getSchemaDefinition() {
         if (!definitionsByClass.containsKey(SchemaDefinition.class)) {
             return null;
@@ -48,23 +50,28 @@ public class DefinitionRegistry {
         return Stream.of(OperationKind.values()).collect(HashMap::new, (m, v) -> m.put(v, getOpsDefinitions(v)), HashMap::putAll);
     }
 
+    @NotNull
     public List<ObjectTypeDefinition> getQueryType() {
         return getOpsDefinitions(OperationKind.QUERY);
     }
 
+    @NotNull
     public List<ObjectTypeDefinition> getMutationType() {
         return getOpsDefinitions(OperationKind.MUTATION);
     }
 
+    @NotNull
     public List<ObjectTypeDefinition> getSubscriptionType() {
         return getOpsDefinitions(OperationKind.SUBSCRIPTION);
     }
 
+    @NotNull
     private List<ObjectTypeDefinition> getOpsDefinitions(OperationKind operationKind) {
         String type = getOperationTypeName(operationKind);
         return getDefinition(type, ObjectTypeDefinition.class);
     }
 
+    @Nullable
     public String getOperationTypeName(OperationKind operationKind) {
         String operationName = operationKind.getName(); // e.g. query, mutation etc.
 
@@ -84,17 +91,18 @@ public class DefinitionRegistry {
         return operationKind.getDisplayName();
     }
 
+    @NotNull
     private <T extends SDLDefinition> List<T> getDefinition(String name, Class<? extends T> clazz) {
         List<SDLDefinition> sdlDefinitions = definitionsByName.get(name);
         if (sdlDefinitions == null) {
-            return null;
+            return emptyList();
         }
         List<SDLDefinition> result = sdlDefinitions.stream().filter(clazz::isInstance).collect(Collectors.toList());
         return (List<T>) result;
     }
 
+    @NotNull
     public List<SDLDefinition> getDefinitions() {
         return definitions;
     }
-
 }

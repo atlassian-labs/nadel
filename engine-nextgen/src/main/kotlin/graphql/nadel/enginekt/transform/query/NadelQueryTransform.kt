@@ -4,7 +4,7 @@ import graphql.nadel.Service
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-interface GraphQLQueryTransform {
+interface NadelQueryTransform {
     fun transform(
         service: Service,
         overallSchema: GraphQLSchema,

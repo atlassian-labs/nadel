@@ -1,7 +1,6 @@
 package graphql.nadel.enginekt.util
 
-import java.util.*
-import kotlin.collections.HashMap
+import java.util.Collections
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.set
@@ -30,9 +29,12 @@ inline fun <K, E> Iterable<E>.toMap(crossinline keyExtractor: (E) -> K): Map<K, 
 
 inline fun <K, E> Sequence<E>.toMap(crossinline keyExtractor: (E) -> K): Map<K, E> {
     val map = mutableMapOf<K, E>()
+    var count = 0
     forEach {
         map[keyExtractor(it)] = it
+        count++
     }
+    require(map.size == count)
     return Collections.unmodifiableMap(map)
 }
 

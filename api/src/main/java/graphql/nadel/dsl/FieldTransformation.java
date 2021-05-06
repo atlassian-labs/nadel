@@ -10,6 +10,7 @@ import graphql.language.NodeVisitor;
 import graphql.language.SourceLocation;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +34,12 @@ public class FieldTransformation extends AbstractNode<FieldTransformation> {
         this.underlyingServiceHydration = underlyingServiceHydration;
     }
 
+    @Nullable
     public FieldMappingDefinition getFieldMappingDefinition() {
         return fieldMappingDefinition;
     }
 
+    @Nullable
     public UnderlyingServiceHydration getUnderlyingServiceHydration() {
         return underlyingServiceHydration;
     }
