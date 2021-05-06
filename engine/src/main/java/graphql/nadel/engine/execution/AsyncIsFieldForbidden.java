@@ -7,6 +7,7 @@ import graphql.nadel.engine.NadelContext;
 import graphql.nadel.hooks.HydrationArguments;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -20,17 +21,22 @@ import static graphql.nadel.util.FpKit.map;
 
 public class AsyncIsFieldForbidden {
 
+    @NotNull
     private final Map<NormalizedQueryField, GraphQLError> fieldsToErrors = new ConcurrentHashMap<>();
+    @NotNull
     private final ServiceExecutionHooks serviceExecutionHooks;
+    @NotNull
     private final NadelContext nadelContext;
+    @NotNull
     private final HydrationArguments hydrationArguments;
+    @NotNull
     private final Map<String, Object> variables;
 
     public AsyncIsFieldForbidden(
-            ServiceExecutionHooks serviceExecutionHooks,
-            NadelContext nadelContext,
-            HydrationArguments hydrationArguments,
-            Map<String, Object> variables
+            @NotNull ServiceExecutionHooks serviceExecutionHooks,
+            @NotNull NadelContext nadelContext,
+            @NotNull HydrationArguments hydrationArguments,
+            @NotNull Map<String, Object> variables
     ) {
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.nadelContext = nadelContext;
@@ -38,6 +44,7 @@ public class AsyncIsFieldForbidden {
         this.variables = variables;
     }
 
+    @NotNull
     public CompletableFuture<Map<NormalizedQueryField, GraphQLError>> getForbiddenFields(Node<?> root) {
         List<NormalizedQueryField> normalisedFields = getNormalisedFields(root);
         List<CompletableFuture<Void>> visitNormalisedFields = map(normalisedFields, this::visitField);
