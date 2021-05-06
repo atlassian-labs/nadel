@@ -58,7 +58,7 @@ class NadelE2ETest extends Specification {
 
         def nsdl = [IssueService: '''
          service IssueService {
-            type Query{
+            type Query {
                 issue: Issue
             } 
             type Issue {
@@ -67,7 +67,7 @@ class NadelE2ETest extends Specification {
          }
         ''']
         def underlyingSchema = typeDefinitions('''
-            type Query{
+            type Query {
                 issue: Issue 
                 
             } 
@@ -97,7 +97,7 @@ class NadelE2ETest extends Specification {
                 .artificialFieldsUUID("uuid")
                 .build()
 
-        def data1 = [issue: [detail: [detailName: "My Issue"]]]
+        def data1 = [issue: [__typename: "Issue", detail: [detailName: "My Issue"]]]
         // TODO: assert query equality
         1 * serviceExecution.execute(_) >> completedFuture(new ServiceExecutionResult(data1))
 
