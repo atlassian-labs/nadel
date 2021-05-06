@@ -105,11 +105,5 @@ object NadelPathToField {
                 }
             )
             .build()
-            .also { nf ->
-                // Fixup parents
-                nf.children.forEach {
-                    it.replaceParent(nf)
-                }
-            }
     }
 }

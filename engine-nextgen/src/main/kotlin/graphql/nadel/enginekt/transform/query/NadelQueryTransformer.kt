@@ -8,6 +8,7 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.getForField
 import graphql.nadel.enginekt.transform.query.deepRename.NadelDeepRenameQueryTransform
+import graphql.nadel.enginekt.util.copy
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
@@ -16,11 +17,28 @@ internal class NadelQueryTransformer(
     private val executionBlueprint: NadelExecutionBlueprint,
     private val deepRenameTransform: NadelDeepRenameQueryTransform,
 ) {
-    // TODO: refactor so this is based on execution plan rather than blueprint directly
-    fun transform(
+    /**
+     * Use this function.
+     */
+    fun transformQuery(
         service: Service,
         field: NormalizedField,
     ): List<NormalizedField> {
+        return transformField(service, field).also { rootFields ->
+            fixParentRefs(parent = null, rootFields)
+        }
+    }
+
+    /**
+     * API for transforms, do not use outside of transformer classes.
+     *
+     * @see [transformQuery]
+     */
+    internal fun transformField(
+        service: Service,
+        field: NormalizedField,
+    ): List<NormalizedField> {
+        // TODO: refactor so this is based on execution plan rather than blueprint directly
         return when (val fieldInstruction = executionBlueprint.fieldInstructions.getForField(field)) {
             is NadelRenameFieldInstruction -> TODO()
             is NadelHydrationFieldInstruction -> TODO()
@@ -34,18 +52,31 @@ internal class NadelQueryTransformer(
                 fieldInstruction,
             )
             null -> listOf(
-                field.transform {
-                    it.children(
-                        transform(service, field.children)
-                    )
-                }
+                field.copy(
+                    children = transformFields(service, field.children),
+                )
             )
         }
     }
 
-    fun transform(service: Service, fields: List<NormalizedField>): List<NormalizedField> {
+    /**
+     * API for transforms, do not use outside of transformer classes.
+     *
+     * @see [transformQuery]
+     */
+    internal fun transformFields(service: Service, fields: List<NormalizedField>): List<NormalizedField> {
         return fields.flatMap {
-            transform(service, it)
+            transformField(service, it)
+        }
+    }
+
+    private fun fixParentRefs(
+        parent: NormalizedField?,
+        transformFields: List<NormalizedField>
+    ) {
+        transformFields.forEach {
+            it.replaceParent(parent)
+            fixParentRefs(parent = it, it.children)
         }
     }
 

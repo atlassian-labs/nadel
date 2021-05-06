@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.util
 
 import graphql.nadel.OperationKind
+import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
@@ -34,3 +35,22 @@ private fun GraphQLFieldsContainer.getFieldAt(
     }
 }
 
+fun NormalizedField.copy(
+    objectType: GraphQLObjectType = this.objectType,
+    alias: String = this.alias,
+    arguments: Map<String, Any?> = this.arguments,
+    fieldDefinition: GraphQLFieldDefinition = this.fieldDefinition,
+    children: List<NormalizedField> = this.children,
+    level: Int = this.level,
+    parent: NormalizedField = this.parent,
+): NormalizedField {
+    return transform { builder ->
+        builder.objectType(objectType)
+            .alias(alias)
+            .arguments(arguments)
+            .fieldDefinition(fieldDefinition)
+            .children(children)
+            .level(level)
+            .parent(parent)
+    }
+}
