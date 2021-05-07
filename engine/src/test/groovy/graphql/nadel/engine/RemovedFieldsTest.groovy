@@ -940,6 +940,94 @@ class RemovedFieldsTest extends StrategyTestHelper {
         "USER-OPEN"   || 'query nadel_2_UserService {userById(id:"USER-OPEN") {id restricted}}' | [issue: [id: "ISSUE-1", author: [id: "USER-OPEN", restricted: "superSecret"]]] | []
     }
 
+    def "hydration arguments are empty when the hydration definition exists only in the underlying schema and not in the overall"() {
+        def overallSchema = TestUtil.schemaFromNdsl([
+                Issues     : '''
+                    service Issues {
+                        type Query {
+                            issue(id: ID): Issue
+                        }
+                        type Issue {
+                            id: ID
+                            author(productId: ID): User => hydrated from UserService.userById(id: $source.authorId) object identified by id
+                        }
+                    }
+        ''',
+                UserService: '''
+                    service UserService {
+                        type Query {
+                          foo: String
+                        }
+                        type User {
+                            id: ID
+                            restricted: String
+                        }                      
+                    }
+        '''])
+        def issueSchema = TestUtil.schema("""
+        type Query {
+            issue(id: ID) : Issue
+        }
+        type Issue {
+            id: ID
+            authorId: ID
+               
+        }
+        """)
+        def userServiceSchema = TestUtil.schema("""
+        type Query {
+            userById(id: ID): User
+                 foo: String
+        }
+        type User {
+            id: ID
+            restricted: String
+        }
+        """)
+        def query = '{issue(id: "ISSUE-1") { id author { id restricted }} }'
+        List<HydrationArguments> hydrationArgumentsFromAllCallsToIsFieldForbidden = []
+        given:
+        def hooks = new ServiceExecutionHooks() {
+            @Override
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+                hydrationArgumentsFromAllCallsToIsFieldForbidden.add(hydrationArguments)
+                return CompletableFuture.completedFuture(Optional.empty())
+            }
+        }
+
+        def expectedQuery1 = 'query nadel_2_Issues {issue(id:"ISSUE-1") {id authorId}}'
+        def response1 = [issue: [id: "ISSUE-1", authorId: userId]]
+
+        def response2 = [userById: [id: userId, restricted: "superSecret"]]
+
+        when:
+        def (Map response, List<GraphQLError> errors) = test2Services(
+                overallSchema,
+                "Issues",
+                issueSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["issue"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                hooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        def areThereAnyNonEmpty = hydrationArgumentsFromAllCallsToIsFieldForbidden.any { !it.hydrationRootAstArguments.isEmpty() || !it.hydrationRootGqlArguments.isEmpty() }
+        areThereAnyNonEmpty == false
+
+        response == overallResponse
+        errors.collect { it.message } == errorMessages
+
+        where:
+        userId      || expectedQuery2                                                         | overallResponse                                                                | errorMessages
+        "USER-OPEN" || 'query nadel_2_UserService {userById(id:"USER-OPEN") {id restricted}}' | [issue: [id: "ISSUE-1", author: [id: "USER-OPEN", restricted: "superSecret"]]] | []
+    }
+
     def "restrict fields based on hydration arguments when hydrating through a synthetic field"() {
         def overallSchema = TestUtil.schemaFromNdsl([
                 Issues     : '''

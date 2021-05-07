@@ -16,7 +16,11 @@ public class HydrationArguments {
     private final List<Argument> hydrationRootAstArguments;
 
     public HydrationArguments(List<GraphQLArgument> hydrationRootGqlArguments, List<Argument> hydrationRootAstArguments) {
-        if (hydrationRootGqlArguments == null || hydrationRootAstArguments == null) {
+        if (hydrationRootAstArguments == null ||
+                hydrationRootGqlArguments == null ||
+                hydrationRootAstArguments.isEmpty() ||
+                hydrationRootGqlArguments.isEmpty()
+        ) {
             this.hydrationRootGqlArguments = Collections.emptyList();
             this.hydrationRootAstArguments = Collections.emptyList();
         } else {
