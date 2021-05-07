@@ -47,9 +47,9 @@ internal class NadelResultTransformer(
     private fun mutate(result: ServiceExecutionResult, transformations: List<NadelResultInstruction>) {
         val mutations = transformations.map { transformation ->
             when (transformation) {
-                is NadelResultSetInstruction -> prepareSet(result.data, transformation)
-                is NadelResultRemoveInstruction -> prepareRemove(result.data, transformation)
-                is NadelResultCopyInstruction -> prepareCopy(result.data, transformation)
+                is NadelResultInstruction.Set -> prepareSet(result.data, transformation)
+                is NadelResultInstruction.Remove -> prepareRemove(result.data, transformation)
+                is NadelResultInstruction.Copy -> prepareCopy(result.data, transformation)
             }
         }
 
@@ -60,14 +60,14 @@ internal class NadelResultTransformer(
             .asSequence()
             .mapNotNull {
                 when (it) {
-                    is NadelResultRemoveInstruction -> it.subjectPath
+                    is NadelResultInstruction.Remove -> it.subjectPath
                     else -> null
                 }
             }
             .forEach(result.data::cleanup)
     }
 
-    private fun prepareSet(data: JsonMap, instruction: NadelResultSetInstruction): DataMutation {
+    private fun prepareSet(data: JsonMap, instruction: NadelResultInstruction.Set): DataMutation {
         val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
         val subjectKey = instruction.subjectKey
 
@@ -77,7 +77,7 @@ internal class NadelResultTransformer(
         }
     }
 
-    private fun prepareRemove(data: JsonMap, instruction: NadelResultRemoveInstruction): DataMutation {
+    private fun prepareRemove(data: JsonMap, instruction: NadelResultInstruction.Remove): DataMutation {
         val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
         val subjectKey = instruction.subjectKey
 
@@ -93,7 +93,7 @@ internal class NadelResultTransformer(
         }
     }
 
-    private fun prepareCopy(data: JsonMap, instruction: NadelResultCopyInstruction): DataMutation {
+    private fun prepareCopy(data: JsonMap, instruction: NadelResultInstruction.Copy): DataMutation {
         val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
         val dataToCopy = parent[instruction.subjectKey]
 

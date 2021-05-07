@@ -5,7 +5,6 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getForField
-import graphql.nadel.enginekt.transform.result.NadelResultCopyInstruction
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.NadelResultTransform
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -46,7 +45,7 @@ class NadelDeepRenameResultTransform : NadelResultTransform {
                 .emptyOrSingle() ?: return@flatMap emptyList()
 
             listOf(
-                NadelResultCopyInstruction(
+                NadelResultInstruction.Copy(
                     subjectPath = toCopy.path,
                     destinationPath = parentNode.path + field.resultKey,
                 ),

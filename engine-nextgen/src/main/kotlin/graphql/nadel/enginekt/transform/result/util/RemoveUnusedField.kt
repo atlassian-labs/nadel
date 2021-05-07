@@ -1,7 +1,6 @@
 package graphql.nadel.enginekt.transform.result.util
 
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.NadelResultRemoveInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.JsonMap
@@ -23,7 +22,7 @@ object RemoveUnusedField {
 
         return JsonNodeExtractor.getNodesAt(node, pathToUnused)
             .map {
-                NadelResultRemoveInstruction(it.path)
+                NadelResultInstruction.Remove(it.path)
             }
     }
 
