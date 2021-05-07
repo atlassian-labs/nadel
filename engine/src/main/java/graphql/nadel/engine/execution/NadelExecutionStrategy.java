@@ -242,7 +242,7 @@ public class NadelExecutionStrategy {
      * A top level field error is present if the field should not be executed and an
      * error should be put in lieu. We check this before calling out to the underlying
      * service. This error is usually present when the field has been forbidden by
-     * {@link ServiceExecutionHooks#isFieldForbidden(NormalizedQueryField, ExecutionContext, Object)}.
+     * {@link ServiceExecutionHooks#isFieldForbidden}.
      *
      * @param esi              the {@link ExecutionStepInfo} for the top level field
      * @param transformedQuery the query for that specific top level field

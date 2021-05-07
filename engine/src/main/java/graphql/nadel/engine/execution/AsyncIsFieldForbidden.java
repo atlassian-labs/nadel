@@ -1,12 +1,13 @@
 package graphql.nadel.engine.execution;
 
 import graphql.GraphQLError;
-import graphql.execution.ExecutionContext;
 import graphql.language.Field;
 import graphql.language.Node;
 import graphql.nadel.engine.NadelContext;
+import graphql.nadel.hooks.HydrationArguments;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -20,17 +21,30 @@ import static graphql.nadel.util.FpKit.map;
 
 public class AsyncIsFieldForbidden {
 
+    @NotNull
     private final Map<NormalizedQueryField, GraphQLError> fieldsToErrors = new ConcurrentHashMap<>();
+    @NotNull
     private final ServiceExecutionHooks serviceExecutionHooks;
-    private final ExecutionContext executionContext;
+    @NotNull
     private final NadelContext nadelContext;
+    @NotNull
+    private final HydrationArguments hydrationArguments;
+    @NotNull
+    private final Map<String, Object> variables;
 
-    public AsyncIsFieldForbidden(ServiceExecutionHooks serviceExecutionHooks, ExecutionContext executionContext, NadelContext nadelContext) {
+    public AsyncIsFieldForbidden(
+            @NotNull ServiceExecutionHooks serviceExecutionHooks,
+            @NotNull NadelContext nadelContext,
+            @NotNull HydrationArguments hydrationArguments,
+            @NotNull Map<String, Object> variables
+    ) {
         this.serviceExecutionHooks = serviceExecutionHooks;
-        this.executionContext = executionContext;
         this.nadelContext = nadelContext;
+        this.hydrationArguments = hydrationArguments;
+        this.variables = variables;
     }
 
+    @NotNull
     public CompletableFuture<Map<NormalizedQueryField, GraphQLError>> getForbiddenFields(Node<?> root) {
         List<NormalizedQueryField> normalisedFields = getNormalisedFields(root);
         List<CompletableFuture<Void>> visitNormalisedFields = map(normalisedFields, this::visitField);
@@ -50,7 +64,7 @@ public class AsyncIsFieldForbidden {
         if (field.getName().equals(TypeNameMetaFieldDef.getName())) {
             return CompletableFuture.completedFuture(null);
         }
-        return serviceExecutionHooks.isFieldForbidden(field, executionContext, nadelContext.getUserSuppliedContext())
+        return serviceExecutionHooks.isFieldForbidden(field, hydrationArguments, variables, nadelContext.getUserSuppliedContext())
                 .thenCompose(graphQLError -> {
                     if (graphQLError.isPresent()) {
                         fieldsToErrors.put(field, graphQLError.get());

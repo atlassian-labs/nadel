@@ -4,7 +4,6 @@ import graphql.AssertException
 import graphql.ErrorType
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
-import graphql.execution.ExecutionContext
 import graphql.execution.nextgen.ExecutionHelper
 import graphql.language.SourceLocation
 import graphql.nadel.DefinitionRegistry
@@ -18,6 +17,7 @@ import graphql.nadel.engine.FieldInfos
 import graphql.nadel.engine.StrategyTestHelper
 import graphql.nadel.engine.result.ResultComplexityAggregator
 import graphql.nadel.engine.testutils.TestUtil
+import graphql.nadel.hooks.HydrationArguments
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.normalized.NormalizedQueryField
@@ -2148,7 +2148,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, ExecutionContext executionContext, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
                 completedFuture(Optional.of(expectedError))
             }
         }
@@ -2202,7 +2202,7 @@ class NadelExecutionStrategyTest2 extends StrategyTestHelper {
 
         def serviceExecutionHooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, ExecutionContext executionContext, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
                 if (normalizedField.getResultKey() == "foo") {
                     completedFuture(Optional.of(expectedError))
                 } else {
