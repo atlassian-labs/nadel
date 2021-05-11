@@ -4,12 +4,12 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelPathToField
-import graphql.nadel.enginekt.transform.query.NadelQueryTransform
+import graphql.nadel.enginekt.transform.query.NadelFieldInstructionTransform
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRenameFieldInstruction> {
+internal class NadelDeepRenameFieldTransform : NadelFieldInstructionTransform<NadelDeepRenameFieldInstruction> {
     override fun transform(
         transformer: NadelQueryTransformer,
         service: Service,

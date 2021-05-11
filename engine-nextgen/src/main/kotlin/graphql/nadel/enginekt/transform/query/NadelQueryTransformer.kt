@@ -7,7 +7,7 @@ import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.getForField
-import graphql.nadel.enginekt.transform.query.deepRename.NadelDeepRenameQueryTransform
+import graphql.nadel.enginekt.transform.query.deepRename.NadelDeepRenameFieldTransform
 import graphql.nadel.enginekt.util.copy
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
@@ -15,7 +15,7 @@ import graphql.schema.GraphQLSchema
 internal class NadelQueryTransformer(
     private val overallSchema: GraphQLSchema,
     private val executionBlueprint: NadelExecutionBlueprint,
-    private val deepRenameTransform: NadelDeepRenameQueryTransform,
+    private val deepRenameTransform: NadelDeepRenameFieldTransform,
 ) {
     /**
      * Use this function.
@@ -54,7 +54,7 @@ internal class NadelQueryTransformer(
             null -> listOf(
                 field.copy(
                     children = transformFields(service, field.children),
-                )
+                ),
             )
         }
     }
@@ -72,7 +72,7 @@ internal class NadelQueryTransformer(
 
     private fun fixParentRefs(
         parent: NormalizedField?,
-        transformFields: List<NormalizedField>
+        transformFields: List<NormalizedField>,
     ) {
         transformFields.forEach {
             it.replaceParent(parent)
@@ -85,7 +85,7 @@ internal class NadelQueryTransformer(
             return NadelQueryTransformer(
                 overallSchema,
                 executionBlueprint,
-                deepRenameTransform = NadelDeepRenameQueryTransform(),
+                deepRenameTransform = NadelDeepRenameFieldTransform(),
             )
         }
     }
