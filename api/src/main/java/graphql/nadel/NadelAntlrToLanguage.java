@@ -1,14 +1,19 @@
 package graphql.nadel;
 
 import graphql.Internal;
+import graphql.language.Argument;
+import graphql.language.BooleanValue;
+import graphql.language.Directive;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.InputObjectTypeDefinition;
+import graphql.language.IntValue;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.NodeBuilder;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.ScalarTypeDefinition;
+import graphql.language.StringValue;
 import graphql.language.UnionTypeDefinition;
 import graphql.nadel.dsl.CommonDefinition;
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation;
@@ -34,12 +39,14 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.RuleContext;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.nadel.dsl.ExtendedFieldDefinition.newExtendedFieldDefinition;
@@ -131,7 +138,62 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         ExtendedFieldDefinition.Builder builder = newExtendedFieldDefinition(fieldDefinition);
         addCommonData(builder, ctx);
         if (ctx.fieldTransformation() != null) {
-            builder.fieldTransformation(createFieldTransformation(ctx.fieldTransformation()));
+            FieldTransformation fieldTransformation = createFieldTransformation(ctx.fieldTransformation());
+            builder.fieldTransformation(fieldTransformation);
+
+            if (fieldTransformation.getFieldMappingDefinition() != null) {
+                String path = String.join(".", fieldTransformation.getFieldMappingDefinition().getInputPath());
+                builder.directive(Directive.newDirective()
+                        .name("renamed")
+                        .argument(Argument.newArgument()
+                                .name("from")
+                                .value(new StringValue(path))
+                                .build())
+                        .build());
+            }
+
+            if (fieldTransformation.getUnderlyingServiceHydration() != null) {
+                UnderlyingServiceHydration hydration = fieldTransformation.getUnderlyingServiceHydration();
+                String field = Stream.of(hydration.getSyntheticField(), hydration.getTopLevelField())
+                        .filter((string) -> string != null && !string.isEmpty())
+                        .collect(Collectors.joining("."));
+
+                Directive.Builder hydrated = Directive.newDirective()
+                        .name("hydrated")
+                        .argument(Argument.newArgument()
+                                .name("service")
+                                .value(new StringValue(hydration.getServiceName()))
+                                .build())
+                        .argument(Argument.newArgument()
+                                .name("field")
+                                .value(new StringValue(field))
+                                .build());
+
+                String objectIdentifier = hydration.getObjectIdentifier();
+                if (objectIdentifier != null) {
+                    hydrated.argument(Argument.newArgument()
+                            .name("identifiedBy")
+                            .value(new StringValue(objectIdentifier))
+                            .build());
+                }
+
+                if (hydration.isObjectMatchByIndex()) {
+                    hydrated.argument(Argument.newArgument()
+                            .name("indexed")
+                            .value(new BooleanValue(true))
+                            .build());
+                }
+
+                if (hydration.getBatchSize() != null) {
+                    int batchSize = hydration.getBatchSize();
+                    hydrated.argument(Argument.newArgument()
+                            .name("batchSize")
+                            .value(new IntValue(BigInteger.valueOf(batchSize)))
+                            .build());
+                }
+
+                builder.directive(hydrated.build());
+            }
         }
         if (ctx.addFieldInfo() != null) {
             builder.defaultBatchSize(Integer.parseInt(ctx.addFieldInfo().defaultBatchSize().intValue().getText()));
@@ -203,6 +265,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         addCommonData(builder, ctx);
         return builder
                 .typeMappingDefinition(typeMappingDefinition)
+                .directive(createTypeMappingDirective(typeMappingDefinition))
                 .build();
     }
 
@@ -217,6 +280,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         addCommonData(builder, ctx);
         return builder
                 .typeMappingDefinition(typeMappingDefinition)
+                .directive(createTypeMappingDirective(typeMappingDefinition))
                 .build();
     }
 
@@ -231,6 +295,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         addCommonData(builder, ctx);
         return builder
                 .typeMappingDefinition(typeMappingDefinition)
+                .directive(createTypeMappingDirective(typeMappingDefinition))
                 .build();
     }
 
@@ -245,6 +310,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         addCommonData(builder, ctx);
         return builder
                 .typeMappingDefinition(typeMappingDefinition)
+                .directive(createTypeMappingDirective(typeMappingDefinition))
                 .build();
     }
 
@@ -259,6 +325,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         addCommonData(builder, ctx);
         return builder
                 .typeMappingDefinition(typeMappingDefinition)
+                .directive(createTypeMappingDirective(typeMappingDefinition))
                 .build();
     }
 
@@ -273,6 +340,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         addCommonData(builder, ctx);
         return builder
                 .typeMappingDefinition(typeMappingDefinition)
+                .directive(createTypeMappingDirective(typeMappingDefinition))
                 .build();
     }
 
@@ -284,12 +352,24 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         return typeMappingDefinition;
     }
 
-    private RemoteArgumentDefinition createRemoteArgumentDefinition(StitchingDSLParser.RemoteArgumentPairContext
-                                                                            remoteArgumentPairContext) {
+    private RemoteArgumentDefinition createRemoteArgumentDefinition(
+            StitchingDSLParser.RemoteArgumentPairContext remoteArgumentPairContext) {
         return new RemoteArgumentDefinition(remoteArgumentPairContext.name().getText(),
                 createRemoteArgumentSource(remoteArgumentPairContext.remoteArgumentSource()),
                 getSourceLocation(remoteArgumentPairContext),
                 additionalIdData());
+    }
+
+    private Directive createTypeMappingDirective(TypeMappingDefinition typeMappingDefinition) {
+        String underlyingName = typeMappingDefinition.getUnderlyingName();
+
+        return Directive.newDirective()
+                .name("renamed")
+                .argument(Argument.newArgument()
+                        .name("from")
+                        .value(new StringValue(underlyingName))
+                        .build())
+                .build();
     }
 
     private RemoteArgumentSource createRemoteArgumentSource(StitchingDSLParser.RemoteArgumentSourceContext ctx) {

@@ -74,9 +74,8 @@ public class ExtendedFieldDefinition extends FieldDefinition {
             this.type = existing.getType();
             this.description = existing.getDescription();
             this.inputValueDefinitions = existing.getInputValueDefinitions();
-            this.directives = existing.getDirectives();
+            this.directives = new ArrayList<>(existing.getDirectives());
         }
-
 
         public Builder sourceLocation(SourceLocation sourceLocation) {
             this.sourceLocation = sourceLocation;
