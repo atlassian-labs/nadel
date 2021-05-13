@@ -2,6 +2,7 @@ package graphql.nadel;
 
 import graphql.Internal;
 import graphql.language.Argument;
+import graphql.language.ArrayValue;
 import graphql.language.BooleanValue;
 import graphql.language.Directive;
 import graphql.language.EnumTypeDefinition;
@@ -10,7 +11,9 @@ import graphql.language.InputObjectTypeDefinition;
 import graphql.language.IntValue;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.NodeBuilder;
+import graphql.language.ObjectField;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.ObjectValue;
 import graphql.language.SDLDefinition;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.StringValue;
@@ -189,6 +192,45 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
                     hydrated.argument(Argument.newArgument()
                             .name("batchSize")
                             .value(new IntValue(BigInteger.valueOf(batchSize)))
+                            .build());
+                }
+
+                if (!hydration.getArguments().isEmpty()) {
+                    ArrayValue.Builder arrayBuilder = ArrayValue.newArrayValue();
+                    for (RemoteArgumentDefinition argument : hydration.getArguments()) {
+                        final String type;
+                        switch (argument.getRemoteArgumentSource().getSourceType()) {
+                            case OBJECT_FIELD:
+                                type = "$source";
+                                break;
+                            case FIELD_ARGUMENT:
+                                type = "$argument";
+                                break;
+                            case CONTEXT:
+                                type = "$context";
+                                break;
+                            default:
+                                throw new IllegalStateException("Unknown remote argument type");
+                        }
+                        String argValue = Stream.concat(Stream.of(type), argument.getRemoteArgumentSource().getPath().stream())
+                                .collect(Collectors.joining("."));
+
+                        String argumentName = argument.getName();
+                        arrayBuilder.value(ObjectValue.newObjectValue()
+                                .objectField(ObjectField.newObjectField()
+                                        .name("name")
+                                        .value(new StringValue(argumentName))
+                                        .build())
+                                .objectField(ObjectField.newObjectField()
+                                        .name("value")
+                                        .value(new StringValue(argValue))
+                                        .build())
+                                .build());
+                    }
+
+                    hydrated.argument(Argument.newArgument()
+                            .name("arguments")
+                            .value(arrayBuilder.build())
                             .build());
                 }
 
