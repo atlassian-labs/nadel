@@ -11,6 +11,7 @@ import graphql.execution.ResultPath;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
+import graphql.nadel.TestDumper;
 import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.BenchmarkContext;
 import graphql.nadel.engine.FieldInfo;
@@ -22,6 +23,7 @@ import graphql.nadel.engine.hooks.EngineServiceExecutionHooks;
 import graphql.nadel.engine.hooks.ResultRewriteParams;
 import graphql.nadel.engine.result.ExecutionResultNode;
 import graphql.nadel.engine.result.ResultComplexityAggregator;
+import graphql.nadel.engine.result.ResultNodesUtil;
 import graphql.nadel.engine.result.RootExecutionResultNode;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
@@ -79,34 +81,45 @@ public class NadelExecutionStrategy {
         this.serviceExecutor = new ServiceExecutor(instrumentation);
         this.hydrationInputPaths = new ExecutionPathSet();
         this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks, hydrationInputPaths);
+
+        TestDumper.setOverallSchema(overallSchema);
+        TestDumper.setServices(services);
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection, ResultComplexityAggregator resultComplexityAggregator) {
+        TestDumper.setExecutionInput(executionContext.getExecutionInput());
+
         long startTime = System.currentTimeMillis();
         ExecutionStepInfo rootExecutionStepInfo = fieldSubSelection.getExecutionStepInfo();
         NadelContext nadelContext = getNadelContext(executionContext);
         OperationKind operationKind = OperationKind.fromAst(executionContext.getOperationDefinition().getOperation());
         CompletableFuture<List<OneServiceExecution>> oneServiceExecutionsCF = prepareServiceExecution(executionContext, fieldSubSelection, rootExecutionStepInfo);
 
-        return oneServiceExecutionsCF.thenCompose(oneServiceExecutions -> {
-            Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
-            List<CompletableFuture<RootExecutionResultNode>> resultNodes =
-                    executeTopLevelFields(executionContext, nadelContext, operationKind, oneServiceExecutions, resultComplexityAggregator, hydrationInputPaths);
+        return oneServiceExecutionsCF
+                .thenCompose(oneServiceExecutions -> {
+                    Map<Service, Object> serviceContextsByService = serviceContextsByService(oneServiceExecutions);
+                    List<CompletableFuture<RootExecutionResultNode>> resultNodes =
+                            executeTopLevelFields(executionContext, nadelContext, operationKind, oneServiceExecutions, resultComplexityAggregator, hydrationInputPaths);
 
-            CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
-            return rootResult
-                    .thenCompose(
-                            //
-                            // all the nodes that are hydrated need to make new service calls to get their eventual value
-                            //
-                            rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, rootExecutionResultNode, serviceContextsByService, resultComplexityAggregator)
-                                    .thenApply(resultNode -> (RootExecutionResultNode) resultNode))
-                    .whenComplete((resultNode, throwable) -> {
-                        possiblyLogException(resultNode, throwable);
-                        long elapsedTime = System.currentTimeMillis() - startTime;
-                        log.debug("NadelExecutionStrategy time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
-                    });
-        }).whenComplete(this::possiblyLogException);
+                    CompletableFuture<RootExecutionResultNode> rootResult = mergeTrees(resultNodes);
+                    return rootResult
+                            .thenCompose(
+                                    //
+                                    // all the nodes that are hydrated need to make new service calls to get their eventual value
+                                    //
+                                    rootExecutionResultNode -> hydrationInputResolver.resolveAllHydrationInputs(executionContext, rootExecutionResultNode, serviceContextsByService, resultComplexityAggregator)
+                                            .thenApply(resultNode -> (RootExecutionResultNode) resultNode))
+                            .whenComplete((resultNode, throwable) -> {
+                                possiblyLogException(resultNode, throwable);
+                                long elapsedTime = System.currentTimeMillis() - startTime;
+                                log.debug("NadelExecutionStrategy time: {} ms, executionId: {}", elapsedTime, executionContext.getExecutionId());
+                            });
+                })
+                .whenComplete(this::possiblyLogException)
+                .whenComplete((rootResultNode, throwable) -> {
+                    TestDumper.setResponse(ResultNodesUtil.toExecutionResult(rootResultNode));
+                    TestDumper.setThrowable(throwable);
+                });
     }
 
     private Map<Service, Object> serviceContextsByService(List<OneServiceExecution> oneServiceExecutions) {
@@ -357,9 +370,9 @@ public class NadelExecutionStrategy {
     private boolean skipTransformationProcessing(NadelContext nadelContext, QueryTransformationResult transformedQuery) {
         TransformationState transformations = transformedQuery.getTransformations();
         return transformations.getFieldIdToTransformation().size() == 0 &&
-               transformations.getTypeRenameMappings().size() == 0 &&
-               !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
-               transformations.getHintTypenames().size() == 0;
+                transformations.getTypeRenameMappings().size() == 0 &&
+                !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
+                transformations.getHintTypenames().size() == 0;
     }
 }
 

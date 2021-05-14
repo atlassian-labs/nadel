@@ -1,5 +1,6 @@
 package graphql.nadel.engine
 
+
 import graphql.ExecutionInput
 import graphql.GraphQLError
 import graphql.execution.ExecutionId
@@ -10,10 +11,8 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.TestDumper
 import graphql.nadel.dsl.ServiceDefinition
-import graphql.nadel.engine.FieldInfo
-import graphql.nadel.engine.FieldInfos
-import graphql.nadel.engine.NadelContext
 import graphql.nadel.engine.execution.NadelExecutionStrategy
 import graphql.nadel.engine.result.ResultComplexityAggregator
 import graphql.nadel.engine.result.ResultNodesUtil
@@ -22,6 +21,11 @@ import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLSchema
+import org.jetbrains.annotations.NotNull
+import org.junit.Rule
+import org.junit.rules.TestRule
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -32,6 +36,21 @@ import static graphql.nadel.engine.testutils.TestUtil.parseQuery
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class StrategyTestHelper extends Specification {
+
+    @Rule
+    public final TestRule watcher = new TestWatcher() {
+        @Override
+        protected void starting(Description description) {
+            println "Starting test: " + description.methodName
+        }
+
+        @Override
+        protected void finished(@NotNull Description description) {
+            println "Finishing test: " + description.methodName
+            TestDumper.dump(description.methodName)
+            TestDumper.reset()
+        }
+    }
 
     ExecutionHelper executionHelper = new ExecutionHelper()
 
@@ -89,7 +108,7 @@ class StrategyTestHelper extends Specification {
                                         List<String> expectedQueries,
                                         List<Map> responses,
                                         int nCalls,
-                                        ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks () {},
+                                        ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
                                         Map variables = [:],
                                         ResultComplexityAggregator resultComplexityAggregator
     ) {

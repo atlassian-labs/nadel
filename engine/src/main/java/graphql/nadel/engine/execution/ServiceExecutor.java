@@ -14,6 +14,7 @@ import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.ServiceExecutionParameters;
 import graphql.nadel.ServiceExecutionResult;
+import graphql.nadel.TestDumper;
 import graphql.nadel.engine.BenchmarkContext;
 import graphql.nadel.engine.NadelContext;
 import graphql.nadel.engine.result.ElapsedTime;
@@ -96,6 +97,9 @@ public class ServiceExecutor {
             Assert.assertNotNull(executeReturnValue, () -> "service execution returned null");
 
             CompletableFuture<Data> result = executeReturnValue
+                    .whenComplete((serviceExecutionResult, throwable) -> {
+                        TestDumper.addServiceCall(serviceExecutionParameters, serviceExecutionResult);
+                    })
                     .thenApply((serviceExecutionResult) -> {
                         ElapsedTime elapsedTime = elapsedTimeBuilder.stop().build();
                         return Data.newData().set(ElapsedTime.class, elapsedTime).set(ServiceExecutionResult.class, serviceExecutionResult).build();
