@@ -175,7 +175,7 @@ class OverallQueryTransformerTest extends Specification {
             ''')
 
         when:
-        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query)
+        def delegateQuery = doTransform(schema, underlyingSchemaExampleService, query, OperationKind.QUERY, null, [usedVariable: "hello"])
 
         then:
         AstPrinter.printAstCompact(delegateQuery) ==
@@ -281,10 +281,11 @@ class OverallQueryTransformerTest extends Specification {
                                         GraphQLSchema underlyingSchema,
                                         Document query,
                                         OperationKind operation = OperationKind.QUERY,
-                                        String operationName = null) {
+                                        String operationName = null,
+                                        Map variables = [:]) {
         FieldSubSelection fieldSubSelection
         ExecutionContext executionContext
-        (executionContext, fieldSubSelection) = TestUtil.executionData(overallSchema, query)
+        (executionContext, fieldSubSelection) = TestUtil.executionData(overallSchema, query, variables)
 
         List<MergedField> fields = new ArrayList<>(fieldSubSelection.getSubFields().values())
 
