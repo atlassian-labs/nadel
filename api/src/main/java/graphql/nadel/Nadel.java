@@ -1,5 +1,6 @@
 package graphql.nadel;
 
+import graphql.Assert;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
@@ -48,7 +49,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -56,7 +56,6 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import static graphql.execution.instrumentation.DocumentAndVariables.newDocumentAndVariables;
-import static graphql.nadel.Nadel.Builder.defaultEngineFactory;
 import static graphql.nadel.util.Util.buildServiceRegistry;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
@@ -83,7 +82,6 @@ public class Nadel {
     final OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
 
     private Nadel(
-            NadelExecutionEngineFactory engineFactory,
             Map<String, Reader> serviceNDSLs,
             ServiceExecutionFactory serviceExecutionFactory,
             NadelInstrumentation instrumentation,
@@ -110,7 +108,25 @@ public class Nadel {
         this.commonTypes = createCommonTypes();
         this.overallSchema = createOverallSchema();
 
-        this.engine = engineFactory.create(this);
+        this.engine = null;
+    }
+
+    private Nadel(Nadel originalNadel, NadelExecutionEngine engine) {
+        this.serviceExecutionFactory = originalNadel.serviceExecutionFactory;
+        this.instrumentation = originalNadel.instrumentation;
+        this.serviceExecutionHooks = originalNadel.serviceExecutionHooks;
+        this.preparsedDocumentProvider = originalNadel.preparsedDocumentProvider;
+        this.executionIdProvider = originalNadel.executionIdProvider;
+        this.schemaTransformationHook = originalNadel.schemaTransformationHook;
+
+        this.introspectionRunner = originalNadel.introspectionRunner;
+        this.overallWiringFactory = originalNadel.overallWiringFactory;
+        this.underlyingWiringFactory = originalNadel.underlyingWiringFactory;
+        this.stitchingDsls = originalNadel.stitchingDsls;
+        this.services = originalNadel.services;
+        this.commonTypes = originalNadel.commonTypes;
+        this.overallSchema = originalNadel.overallSchema;
+        this.engine = engine;
     }
 
     private Map<String, StitchingDsl> createDSLs(Map<String, Reader> serviceNDSLs) {
@@ -161,7 +177,7 @@ public class Nadel {
                 .collect(toList());
         GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory);
 
-        GraphQLSchema newSchema = schemaTransformationHook.apply(schema);
+        GraphQLSchema newSchema = schemaTransformationHook.apply(schema, this.services);
 
         //
         // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
@@ -313,7 +329,7 @@ public class Nadel {
      * @return a builder of Nadel objects
      */
     public static Nadel.Builder newNadel() {
-        return new Nadel.Builder().engineFactory(defaultEngineFactory);
+        return new Nadel.Builder();
     }
 
     public static class Builder {
@@ -329,23 +345,20 @@ public class Nadel {
         private WiringFactory overallWiringFactory = new NeverWiringFactory();
         private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
         private SchemaTransformationHook schemaTransformationHook = SchemaTransformationHook.IDENTITY;
-
-        static NadelExecutionEngineFactory defaultEngineFactory;
         private NadelExecutionEngineFactory engineFactory;
 
-        static {
+        private NadelExecutionEngine buildDefaultEngine(Nadel nadel) {
             try {
                 Class<?> klass = Class.forName("graphql.nadel.NadelEngine");
                 Constructor<?> declaredConstructor = klass.getDeclaredConstructor(Nadel.class);
                 declaredConstructor.setAccessible(true);
-                defaultEngineFactory = (nadel) -> {
-                    try {
-                        return (NadelExecutionEngine) declaredConstructor.newInstance(nadel);
-                    } catch (ReflectiveOperationException e) {
-                        throw new RuntimeException("Unable to create Nadel engine", e);
-                    }
-                };
+                try {
+                    return (NadelExecutionEngine) declaredConstructor.newInstance(nadel);
+                } catch (ReflectiveOperationException e) {
+                    throw new RuntimeException("Unable to create Nadel engine", e);
+                }
             } catch (ClassNotFoundException ignored) {
+                throw new RuntimeException("Unable to create Nadel engine from known class graphql.nadel.NadelEngine");
             } catch (ReflectiveOperationException e) {
                 throw new RuntimeException("Unable to create default Nadel engine factory", e);
             }
@@ -428,10 +441,7 @@ public class Nadel {
         }
 
         public Nadel build() {
-            Objects.requireNonNull(engineFactory, "Nadel execution engine must be supplied");
-
-            return new Nadel(
-                    engineFactory,
+            Nadel nadelStep1 = new Nadel(
                     serviceNDSLs,
                     serviceExecutionFactory,
                     instrumentation,
@@ -442,6 +452,16 @@ public class Nadel {
                     overallWiringFactory,
                     underlyingWiringFactory,
                     schemaTransformationHook);
+
+            NadelExecutionEngine executionEngine;
+            if (engineFactory == null) {
+                executionEngine = buildDefaultEngine(nadelStep1);
+            } else {
+                executionEngine = engineFactory.create(nadelStep1);
+            }
+
+            Assert.assertNotNull(executionEngine, () -> "The engine factory must return an engine instance");
+            return new Nadel(nadelStep1, executionEngine);
         }
     }
 }
