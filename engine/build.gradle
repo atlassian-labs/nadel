@@ -29,6 +29,7 @@ dependencies {
     implementation "com.graphql-java:graphql-java:" + graphqlJavaVersion
     implementation "org.slf4j:slf4j-api:" + slf4jVersion
 
+    implementation "com.google.code.gson:gson:2.8.6"
     implementation "com.fasterxml.jackson.core:jackson-databind:2.9.6"
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.6"
 

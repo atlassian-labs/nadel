@@ -238,7 +238,11 @@ class StrategyTestHelper extends Specification {
                 .context(nadelContext)
                 .build()
         ExecutionHelper.ExecutionData executionData = executionHelper.createExecutionData(document, overallSchema, ExecutionId.generate(), executionInput, null)
-        executionData
+        new ExecutionHelper.ExecutionData().tap {
+            executionContext = executionData.executionContext.transform {
+                it.executionInput(executionInput)
+            }
+        }
     }
 
     Object resultData(CompletableFuture<RootExecutionResultNode> response) {

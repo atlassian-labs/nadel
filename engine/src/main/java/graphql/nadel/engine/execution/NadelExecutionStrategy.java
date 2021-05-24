@@ -82,7 +82,6 @@ public class NadelExecutionStrategy {
         this.hydrationInputPaths = new ExecutionPathSet();
         this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks, hydrationInputPaths);
 
-        TestDumper.setOverallSchema(overallSchema);
         TestDumper.setServices(services);
     }
 

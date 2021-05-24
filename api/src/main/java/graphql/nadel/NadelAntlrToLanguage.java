@@ -212,7 +212,10 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
                             default:
                                 throw new IllegalStateException("Unknown remote argument type");
                         }
-                        String argValue = Stream.concat(Stream.of(type), argument.getRemoteArgumentSource().getPath().stream())
+                        List<String> remoteArgPath = argument.getRemoteArgumentSource().getPath();
+                        String remoteArgName = argument.getRemoteArgumentSource().getName();
+
+                        String argValue = Stream.concat(Stream.of(type), remoteArgPath != null ? remoteArgPath.stream() : Stream.of(remoteArgName))
                                 .collect(Collectors.joining("."));
 
                         String argumentName = argument.getName();

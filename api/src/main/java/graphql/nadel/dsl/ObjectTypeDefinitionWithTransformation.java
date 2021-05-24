@@ -1,6 +1,7 @@
 package graphql.nadel.dsl;
 
 import graphql.Internal;
+import graphql.com.google.common.collect.ImmutableList;
 import graphql.language.Comment;
 import graphql.language.Description;
 import graphql.language.Directive;
@@ -127,7 +128,10 @@ public class ObjectTypeDefinitionWithTransformation extends ObjectTypeDefinition
         }
 
         public Builder directive(Directive directive) {
-            this.directives.add(directive);
+            this.directives = ImmutableList.<Directive>builder()
+                    .addAll(directives)
+                    .add(directive)
+                    .build();
             return this;
         }
 

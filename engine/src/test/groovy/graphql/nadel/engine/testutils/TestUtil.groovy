@@ -31,6 +31,7 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.TestDumper
 import graphql.nadel.engine.NadelContext
 import graphql.nadel.normalized.NormalizedQueryFactory
 import graphql.nadel.normalized.NormalizedQueryFromAst
@@ -206,6 +207,8 @@ class TestUtil {
     }
 
     static GraphQLSchema schemaFromNdsl(Map<String, String> serviceDSLs) {
+        TestDumper.setOverallSchema(serviceDSLs)
+
         def defRegistries = []
         for (Map.Entry<String, String> e : serviceDSLs.entrySet()) {
             def serviceName = e.getKey()
