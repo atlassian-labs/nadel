@@ -1,0 +1,100 @@
+name: hydration inside a renamed field
+overallSchema:
+  Bar: |
+    service Bar {
+      type Query {
+        barById(id: ID!): RenamedBar
+      }
+      type RenamedBar => renamed from Bar {
+        id: ID!
+      }
+    }
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Foo => renamed from fooOriginal
+      }
+      type Foo {
+        id: ID!
+        fooBar: RenamedBar => hydrated from Bar.barById(id: $source.fooBarId)
+      }
+    }
+services:
+  Bar: |
+    type Bar {
+      id: ID
+    }
+
+    type Query {
+      barById(id: ID!): Bar
+    }
+  Foo: |
+    type Foo {
+      fooBarId: ID
+      id: ID!
+    }
+
+    type Query {
+      fooOriginal: Foo
+    }
+query: |
+  query {
+    foo {
+      id
+      fooBar {
+        id
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Foo {
+        fooOriginal {
+          id
+          fooBarId
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Foo
+  response: |-
+    {
+      "data" : {
+        "fooOriginal" : {
+          "id" : "Foo",
+          "fooBarId" : "hydrated-bar"
+        }
+      },
+      "extensions" : { }
+    }
+- request:
+    query: |
+      query nadel_2_Bar {
+        barById(id: "hydrated-bar") {
+          id
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Bar
+  response: |-
+    {
+      "data" : {
+        "barById" : {
+          "id" : "hydrated-bar"
+        }
+      },
+      "extensions" : { }
+    }
+response: |-
+  {
+    "data" : {
+      "foo" : {
+        "id" : "Foo",
+        "fooBar" : {
+          "id" : "hydrated-bar"
+        }
+      }
+    },
+    "extensions" : { }
+  }

@@ -1,0 +1,103 @@
+name: __typename is correctly passed on and artificial typename is removed
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        issues : [AbstractIssue]
+      }
+      interface AbstractIssue {
+        id: ID
+      }
+      type Issue implements AbstractIssue{
+        id: ID
+        authorIds: [ID]
+      }
+    }
+services:
+  Issues: |
+    interface AbstractIssue {
+      id: ID
+    }
+
+    type Issue implements AbstractIssue {
+      authorIds: [ID]
+      id: ID
+    }
+
+    type Query {
+      issues: [AbstractIssue]
+    }
+query: |
+  query {
+    issues {
+      __typename
+      id
+      ... on Issue {
+        authorIds
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Issues {
+        issues {
+          __typename
+          id
+          ... on Issue {
+            authorIds
+          }
+          type_hint_typename__UUID: __typename
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Issues
+  response: |-
+    {
+      "data" : {
+        "issues" : [
+          {
+            "id" : "ISSUE-1",
+            "authorIds" : [
+              "USER-1",
+              "USER-2"
+            ],
+            "__typename" : "Issue",
+            "type_hint_typename__UUID" : "Issue"
+          },
+          {
+            "id" : "ISSUE-2",
+            "authorIds" : [
+              "USER-3"
+            ],
+            "__typename" : "Issue",
+            "type_hint_typename__UUID" : "Issue"
+          }
+        ]
+      },
+      "extensions" : { }
+    }
+response: |-
+  {
+    "data" : {
+      "issues" : [
+        {
+          "__typename" : "Issue",
+          "id" : "ISSUE-1",
+          "authorIds" : [
+            "USER-1",
+            "USER-2"
+          ]
+        },
+        {
+          "__typename" : "Issue",
+          "id" : "ISSUE-2",
+          "authorIds" : [
+            "USER-3"
+          ]
+        }
+      ]
+    },
+    "extensions" : { }
+  }

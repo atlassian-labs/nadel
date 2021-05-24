@@ -1,0 +1,83 @@
+name: deep rename of list of list
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        details: [IssueDetail]
+      }
+      type IssueDetail {
+        labels: [[String]] => renamed from issue.labels
+      }
+    }
+services:
+  Issues: |
+    type Issue {
+      labels: [[String]]
+    }
+
+    type IssueDetail {
+      issue: Issue
+    }
+
+    type Query {
+      details: [IssueDetail]
+    }
+query: |
+  query {
+    details {
+      labels
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Issues {
+        details {
+          issue {
+            labels
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Issues
+  response: |-
+    {
+      "data" : {
+        "details" : [
+          {
+            "issue" : {
+              "labels" : [
+                [
+                  "label1",
+                  "label2"
+                ],
+                [
+                  "label3"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "extensions" : { }
+    }
+response: |-
+  {
+    "data" : {
+      "details" : [
+        {
+          "labels" : [
+            [
+              "label1",
+              "label2"
+            ],
+            [
+              "label3"
+            ]
+          ]
+        }
+      ]
+    },
+    "extensions" : { }
+  }

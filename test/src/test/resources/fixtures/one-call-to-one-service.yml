@@ -1,0 +1,38 @@
+name: one call to one service
+overallSchema:
+  service1: |
+    service service1 {
+      type Query {
+        foo: String
+      }
+    }
+services:
+  service: |
+    type Query {
+      foo: String
+    }
+query: |
+  query {
+    foo
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_service {
+        foo
+      }
+    variables: {}
+    operationName: nadel_2_service
+  response: |-
+    {
+      "data" : null,
+      "extensions" : { }
+    }
+response: |-
+  {
+    "data" : {
+      "foo" : null
+    },
+    "extensions" : { }
+  }

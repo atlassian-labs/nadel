@@ -1,0 +1,106 @@
+name: hydration call forwards error
+overallSchema:
+  service2: |
+    service service2 {
+      type Query {
+        barById(id: ID): Bar
+      }
+      type Bar {
+        id: ID
+        name: String
+      }
+    }
+  service1: |
+    service service1 {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        id: ID
+        bar: Bar => hydrated from service2.barById(id: $source.barId)
+      }
+    }
+services:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID): Bar
+    }
+  service1: |
+    type Foo {
+      barId: ID
+      id: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_service1 {
+        foo {
+          barId
+        }
+      }
+    variables: {}
+    operationName: nadel_2_service1
+  response: |-
+    {
+      "data" : {
+        "foo" : {
+          "barId" : "barId1"
+        }
+      },
+      "extensions" : { }
+    }
+- request:
+    query: |
+      query nadel_2_service2 {
+        barById(id: "barId1") {
+          name
+        }
+      }
+    variables: {}
+    operationName: nadel_2_service2
+  response: |-
+    {
+      "errors" : [
+        {
+          "message" : "Some error occurred"
+        }
+      ],
+      "data" : null,
+      "extensions" : { }
+    }
+response: |-
+  {
+    "errors" : [
+      {
+        "message" : "Some error occurred",
+        "locations" : [ ],
+        "extensions" : {
+          "classification" : "DataFetchingException"
+        }
+      }
+    ],
+    "data" : {
+      "foo" : {
+        "bar" : null
+      }
+    },
+    "extensions" : { }
+  }

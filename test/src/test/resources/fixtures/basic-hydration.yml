@@ -1,0 +1,105 @@
+name: basic hydration
+overallSchema:
+  service2: |
+    service service2 {
+      type Query {
+        barById(id: ID): Bar
+      }
+      type Bar {
+        id: ID
+        name: String
+      }
+    }
+  service1: |
+    service service1 {
+      type Query {
+        foo(id : ID): Foo
+      }
+      type Foo {
+        id: ID
+        bar: Bar => hydrated from service2.barById(id: $source.barId)
+        barLongerInput: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)
+      }
+    }
+services:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID): Bar
+    }
+  service1: |
+    type Foo {
+      barId: ID
+      fooDetails: FooDetails
+      id: ID
+    }
+
+    type FooDetails {
+      externalBarId: ID
+    }
+
+    type Query {
+      foo(id: ID): Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_service1 {
+        foo {
+          barId
+        }
+      }
+    variables: {}
+    operationName: nadel_2_service1
+  response: |-
+    {
+      "data" : {
+        "foo" : {
+          "barId" : "barId"
+        }
+      },
+      "extensions" : { }
+    }
+- request:
+    query: |
+      query nadel_2_service2 {
+        barById(id: "barId") {
+          name
+        }
+      }
+    variables: {}
+    operationName: nadel_2_service2
+  response: |-
+    {
+      "data" : {
+        "barById" : {
+          "id" : "barId",
+          "name" : "Bar1"
+        }
+      },
+      "extensions" : { }
+    }
+response: |-
+  {
+    "data" : {
+      "foo" : {
+        "bar" : {
+          "name" : "Bar1"
+        }
+      }
+    },
+    "extensions" : { }
+  }

@@ -1,0 +1,61 @@
+name: rename with first path element returning null
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        name: String => renamed from details.name
+      }
+    }
+services:
+  Issues: |
+    type Issue {
+      details: IssueDetails
+    }
+
+    type IssueDetails {
+      name: String
+    }
+
+    type Query {
+      issue: Issue
+    }
+query: |
+  query {
+    issue {
+      name
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Issues {
+        issue {
+          details {
+            name
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Issues
+  response: |-
+    {
+      "data" : {
+        "issue" : {
+          "details" : null
+        }
+      },
+      "extensions" : { }
+    }
+response: |-
+  {
+    "data" : {
+      "issue" : {
+        "name" : null
+      }
+    },
+    "extensions" : { }
+  }

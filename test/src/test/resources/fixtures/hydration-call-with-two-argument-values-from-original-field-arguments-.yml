@@ -1,0 +1,111 @@
+name: 'hydration call with two argument values from original field arguments '
+overallSchema:
+  UserService: |
+    service UserService {
+      type Query {
+        usersByIds(extraArg1: String, extraArg2: Int, id: [ID]): [User]
+      }
+      type User {
+        id: ID
+        name: String
+      }
+    }
+  Issues: |
+    service Issues {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        author(extraArg: String): User => hydrated from UserService.usersByIds(extraArg1: $argument.extraArg1, extraArg2: $argument.extraArg2, id: $source.authorId) object identified by id, batch size 2
+      }
+    }
+services:
+  UserService: |
+    type Query {
+      usersByIds(extraArg1: String, extraArg2: Int, id: [ID]): [User]
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Issue {
+      authorId: ID
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      author(extraArg1: "extraArg1", extraArg2: 10) {
+        name
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Issues {
+        issues {
+          id
+          authorId
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Issues
+  response: |-
+    {
+      "data" : {
+        "issues" : [
+          {
+            "id" : "ISSUE-1",
+            "authorId" : "USER-1"
+          }
+        ]
+      },
+      "extensions" : { }
+    }
+- request:
+    query: |
+      query nadel_2_UserService {
+        usersByIds(id: ["USER-1"], extraArg1: "extraArg1", extraArg2: 10) {
+          name
+          object_identifier__UUID: id
+        }
+      }
+    variables: {}
+    operationName: nadel_2_UserService
+  response: |-
+    {
+      "data" : {
+        "usersByIds" : [
+          {
+            "id" : "USER-1",
+            "name" : "User 1",
+            "object_identifier__UUID" : "USER-1"
+          }
+        ]
+      },
+      "extensions" : { }
+    }
+response: |-
+  {
+    "data" : {
+      "issues" : [
+        {
+          "id" : "ISSUE-1",
+          "author" : {
+            "name" : "User 1"
+          }
+        }
+      ]
+    },
+    "extensions" : { }
+  }
