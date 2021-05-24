@@ -74,7 +74,7 @@ dependencies {
 
     testImplementation("junit:junit:4.11")
     testImplementation("org.spockframework:spock-core:1.0-groovy-2.4")
-    testImplementation("org.codehaus.groovy:groovy-all:2.5.1")
+    testImplementation("org.codehaus.groovy:groovy:2.5.1")
     testImplementation("cglib:cglib-nodep:3.1")
     testImplementation("org.objenesis:objenesis:2.1")
     testImplementation("com.google.code.gson:gson:2.8.0")
