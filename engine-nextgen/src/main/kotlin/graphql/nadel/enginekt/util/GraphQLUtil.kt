@@ -36,13 +36,13 @@ private fun GraphQLFieldsContainer.getFieldAt(
 }
 
 fun NormalizedField.copy(
-    objectType: GraphQLObjectType = this.objectType,
-    alias: String = this.alias,
-    arguments: Map<String, Any?> = this.arguments,
-    fieldDefinition: GraphQLFieldDefinition = this.fieldDefinition,
-    children: List<NormalizedField> = this.children,
-    level: Int = this.level,
-    parent: NormalizedField = this.parent,
+        objectType: GraphQLObjectType = this.objectType,
+        alias: String? = this.alias,
+        arguments: Map<String, Any?> = this.arguments,
+        fieldDefinition: GraphQLFieldDefinition = this.fieldDefinition,
+        children: List<NormalizedField> = this.children,
+        level: Int = this.level,
+        parent: NormalizedField? = this.parent,
 ): NormalizedField {
     return transform { builder ->
         builder.objectType(objectType)
