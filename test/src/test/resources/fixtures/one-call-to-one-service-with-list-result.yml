@@ -26,21 +26,21 @@ calls:
     operationName: nadel_2_service
   response: |-
     {
-      "data" : {
-        "foo" : [
+      "data": {
+        "foo": [
           "foo1",
           "foo2"
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "foo" : [
+    "data": {
+      "foo": [
         "foo1",
         "foo2"
       ]
     },
-    "extensions" : { }
+    "extensions": {}
   }

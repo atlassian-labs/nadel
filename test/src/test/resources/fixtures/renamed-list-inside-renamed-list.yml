@@ -1,0 +1,99 @@
+name: renamed list inside renamed list
+overallSchema:
+  IssuesService: |
+    service IssuesService {
+      type Query {
+        renamedIssue: [RenamedIssue] => renamed from issue
+      }
+      type RenamedIssue => renamed from Issue {
+        renamedTicket: RenamedTicket => renamed from ticket
+      }
+      type RenamedTicket => renamed from Ticket  {
+        renamedTicketTypes: [RenamedTicketType]  => renamed from ticketTypes
+      }
+      type RenamedTicketType => renamed from TicketType {
+        renamedId: String => renamed from id
+        renamedDate: String => renamed from date
+      }
+    }
+services:
+  IssuesService: |
+    type Issue {
+      ticket: Ticket
+    }
+
+    type Query {
+      issue: [Issue]
+    }
+
+    type Ticket {
+      ticketTypes: [TicketType]
+    }
+
+    type TicketType {
+      date: String
+      id: String
+    }
+query: |
+  query {
+    renamedIssue {
+      renamedTicket {
+        renamedTicketTypes {
+          renamedId
+          renamedDate
+        }
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_IssuesService {
+        issue {
+          ticket {
+            ticketTypes {
+              id
+              date
+            }
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_IssuesService
+  response: |-
+    {
+      "data": {
+        "issue": [
+          {
+            "ticket": {
+              "ticketTypes": [
+                {
+                  "id": "1",
+                  "date": "20/11/2020"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "data": {
+      "renamedIssue": [
+        {
+          "renamedTicket": {
+            "renamedTicketTypes": [
+              {
+                "renamedId": "1",
+                "renamedDate": "20/11/2020"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "extensions": {}
+  }

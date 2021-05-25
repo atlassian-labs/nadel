@@ -79,21 +79,21 @@ calls:
     operationName: nadel_2_testing
   response: |-
     {
-      "data" : {
-        "testing" : {
-          "movies" : [
+      "data": {
+        "testing": {
+          "movies": [
             {
-              "id" : "M1",
-              "name" : "Movie 1",
-              "characterIds" : [
+              "id": "M1",
+              "name": "Movie 1",
+              "characterIds": [
                 "C1",
                 "C2"
               ]
             },
             {
-              "id" : "M2",
-              "name" : "Movie 2",
-              "characterIds" : [
+              "id": "M2",
+              "name": "Movie 2",
+              "characterIds": [
                 "C1",
                 "C2",
                 "C3"
@@ -102,7 +102,7 @@ calls:
           ]
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -117,26 +117,26 @@ calls:
     operationName: nadel_2_testing
   response: |-
     {
-      "data" : {
-        "characters" : [
+      "data": {
+        "characters": [
           {
-            "id" : "C1",
-            "name" : "Luke",
-            "object_identifier__UUID" : "C1"
+            "id": "C1",
+            "name": "Luke",
+            "object_identifier__UUID": "C1"
           },
           {
-            "id" : "C2",
-            "name" : "Leia",
-            "object_identifier__UUID" : "C2"
+            "id": "C2",
+            "name": "Leia",
+            "object_identifier__UUID": "C2"
           },
           {
-            "id" : "C1",
-            "name" : "Luke",
-            "object_identifier__UUID" : "C1"
+            "id": "C1",
+            "name": "Luke",
+            "object_identifier__UUID": "C1"
           }
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -151,61 +151,61 @@ calls:
     operationName: nadel_2_testing
   response: |-
     {
-      "data" : {
-        "characters" : [
+      "data": {
+        "characters": [
           {
-            "id" : "C2",
-            "name" : "Leia",
-            "object_identifier__UUID" : "C2"
+            "id": "C2",
+            "name": "Leia",
+            "object_identifier__UUID": "C2"
           },
           {
-            "id" : "C3",
-            "name" : "Anakin",
-            "object_identifier__UUID" : "C3"
+            "id": "C3",
+            "name": "Anakin",
+            "object_identifier__UUID": "C3"
           }
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "testing" : {
-        "movies" : [
+    "data": {
+      "testing": {
+        "movies": [
           {
-            "id" : "M1",
-            "name" : "Movie 1",
-            "characters" : [
+            "id": "M1",
+            "name": "Movie 1",
+            "characters": [
               {
-                "id" : "C1",
-                "name" : "Luke"
+                "id": "C1",
+                "name": "Luke"
               },
               {
-                "id" : "C2",
-                "name" : "Leia"
+                "id": "C2",
+                "name": "Leia"
               }
             ]
           },
           {
-            "id" : "M2",
-            "name" : "Movie 2",
-            "characters" : [
+            "id": "M2",
+            "name": "Movie 2",
+            "characters": [
               {
-                "id" : "C1",
-                "name" : "Luke"
+                "id": "C1",
+                "name": "Luke"
               },
               {
-                "id" : "C2",
-                "name" : "Leia"
+                "id": "C2",
+                "name": "Leia"
               },
               {
-                "id" : "C3",
-                "name" : "Anakin"
+                "id": "C3",
+                "name": "Anakin"
               }
             ]
           }
         ]
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

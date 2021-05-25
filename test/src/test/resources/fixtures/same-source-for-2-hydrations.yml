@@ -1,0 +1,125 @@
+name: same source for 2 hydrations
+overallSchema:
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        issue: Issue => hydrated from Foo.issue(issueId: $source.fooId)
+        detail: Detail => hydrated from Foo.detail(detailId: $source.fooId)
+      }
+      type Detail {
+        detailId: ID!
+        name: String
+      }
+      type Issue {
+        fooId: ID
+        field: String
+      }
+    }
+services:
+  Foo: |
+    type Detail {
+      detailId: ID!
+      name: String
+    }
+
+    type Foo {
+      field: String
+      fooId: ID
+      issue: Issue
+    }
+
+    type Issue {
+      field: String
+      fooId: ID
+    }
+
+    type Query {
+      detail(detailId: ID): Detail
+      foo: Foo
+      issue(issueId: ID): Issue
+    }
+query: |
+  query {
+    foo {
+      issue {
+        field
+      }
+      detail {
+        name
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Foo {
+        foo {
+          fooId
+          fooId
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Foo
+  response: |-
+    {
+      "data": {
+        "foo": {
+          "fooId": "ID"
+        }
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_Foo {
+        issue(issueId: "ID") {
+          field
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Foo
+  response: |-
+    {
+      "data": {
+        "issue": {
+          "field": "field_name"
+        }
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_Foo {
+        detail(detailId: "ID") {
+          name
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Foo
+  response: |-
+    {
+      "data": {
+        "detail": {
+          "name": "apple"
+        }
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "data": {
+      "foo": {
+        "issue": {
+          "field": "field_name"
+        },
+        "detail": {
+          "name": "apple"
+        }
+      }
+    },
+    "extensions": {}
+  }

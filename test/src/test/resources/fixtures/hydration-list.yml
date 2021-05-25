@@ -61,16 +61,16 @@ calls:
     operationName: nadel_2_service1
   response: |-
     {
-      "data" : {
-        "foo" : {
-          "barId" : [
+      "data": {
+        "foo": {
+          "barId": [
             "barId1",
             "barId2",
             "barId3"
           ]
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -84,13 +84,13 @@ calls:
     operationName: nadel_2_service2
   response: |-
     {
-      "data" : {
-        "barById" : {
-          "id" : "barId1",
-          "name" : "Bar1"
+      "data": {
+        "barById": {
+          "id": "barId1",
+          "name": "Bar1"
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -104,13 +104,13 @@ calls:
     operationName: nadel_2_service2
   response: |-
     {
-      "data" : {
-        "barById" : {
-          "id" : "barId2",
-          "name" : "Bar3"
+      "data": {
+        "barById": {
+          "id": "barId2",
+          "name": "Bar3"
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -124,33 +124,33 @@ calls:
     operationName: nadel_2_service2
   response: |-
     {
-      "data" : {
-        "barById" : {
-          "id" : "barId3",
-          "name" : "Bar4"
+      "data": {
+        "barById": {
+          "id": "barId3",
+          "name": "Bar4"
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "foo" : {
-        "bar" : [
+    "data": {
+      "foo": {
+        "bar": [
           {
-            "id" : "barId1",
-            "name" : "Bar1"
+            "id": "barId1",
+            "name": "Bar1"
           },
           {
-            "id" : "barId2",
-            "name" : "Bar3"
+            "id": "barId2",
+            "name": "Bar3"
           },
           {
-            "id" : "barId3",
-            "name" : "Bar4"
+            "id": "barId3",
+            "name": "Bar4"
           }
         ]
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

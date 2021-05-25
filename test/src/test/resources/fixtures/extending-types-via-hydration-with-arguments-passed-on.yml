@@ -1,0 +1,106 @@
+name: extending types via hydration with arguments passed on
+overallSchema:
+  Issue: |
+    service Issue {
+      type Query {
+        issue: Issue
+      }
+      type Issue  {
+        id: ID
+      }
+    }
+  Association: |
+    service Association {
+      type Query {
+        association(id: ID, filter: Filter): Association
+      }
+      input Filter  {
+        name: String
+      }
+      type Association {
+        id: ID
+        nameOfAssociation: String
+      }
+      extend type Issue {
+        association(filter:Filter): Association => hydrated from Association.association(id: $source.id, filter: $argument.filter)
+      }
+    }
+services:
+  Issue: |
+    type Issue {
+      id: ID
+    }
+
+    type Query {
+      issue: Issue
+    }
+  Association: |
+    type Association {
+      id: ID
+      nameOfAssociation: String
+    }
+
+    type Query {
+      association(filter: Filter, id: ID): Association
+    }
+
+    input Filter {
+      name: String
+    }
+query: |
+  query {
+    issue {
+      association(filter: {name : "value"}) {
+        nameOfAssociation
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Issue {
+        issue {
+          id
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Issue
+  response: |-
+    {
+      "data": {
+        "issue": {
+          "id": "ISSUE-1"
+        }
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_Association {
+        association(id: "ISSUE-1", filter: {name : "value"}) {
+          nameOfAssociation
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Association
+  response: |-
+    {
+      "data": {
+        "association": {
+          "nameOfAssociation": "ASSOC NAME"
+        }
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "data": {
+      "issue": {
+        "association": {
+          "nameOfAssociation": "ASSOC NAME"
+        }
+      }
+    },
+    "extensions": {}
+  }

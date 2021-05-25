@@ -55,49 +55,49 @@ calls:
     operationName: nadel_2_Issues
   response: |-
     {
-      "data" : {
-        "issues" : [
+      "data": {
+        "issues": [
           {
-            "id" : "ISSUE-1",
-            "authorIds" : [
+            "id": "ISSUE-1",
+            "authorIds": [
               "USER-1",
               "USER-2"
             ],
-            "__typename" : "Issue",
-            "type_hint_typename__UUID" : "Issue"
+            "__typename": "Issue",
+            "type_hint_typename__UUID": "Issue"
           },
           {
-            "id" : "ISSUE-2",
-            "authorIds" : [
+            "id": "ISSUE-2",
+            "authorIds": [
               "USER-3"
             ],
-            "__typename" : "Issue",
-            "type_hint_typename__UUID" : "Issue"
+            "__typename": "Issue",
+            "type_hint_typename__UUID": "Issue"
           }
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "issues" : [
+    "data": {
+      "issues": [
         {
-          "__typename" : "Issue",
-          "id" : "ISSUE-1",
-          "authorIds" : [
+          "__typename": "Issue",
+          "id": "ISSUE-1",
+          "authorIds": [
             "USER-1",
             "USER-2"
           ]
         },
         {
-          "__typename" : "Issue",
-          "id" : "ISSUE-2",
-          "authorIds" : [
+          "__typename": "Issue",
+          "id": "ISSUE-2",
+          "authorIds": [
             "USER-3"
           ]
         }
       ]
     },
-    "extensions" : { }
+    "extensions": {}
   }

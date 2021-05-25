@@ -131,7 +131,7 @@ fun Assertion.Builder<JsonMap>.assertJsonTree(
                 is Number -> get { value }.isEqualTo(expectedValue)
                 is String -> get { value }.isEqualTo(expectedValue)
                 is Boolean -> get { value }.isEqualTo(expectedValue)
-                null -> get { value }.describedAs { "${this@describedAs}" }.isNull()
+                null -> get { value }.isNull()
                 else -> error("Unknown type ${expectedValue.javaClass}")
             }
         } then {
@@ -148,10 +148,14 @@ private data class TestFixture(
     val variables: Map<String, Any?>,
     val calls: List<ServiceCall>,
     @JsonProperty("response")
-    private val responseJsonString: String,
+    private val responseJsonString: String?,
 ) {
-    val response: JsonMap by lazy {
-        jsonObjectMapper.readValue(responseJsonString)
+    val response: Map<String, Any?> by lazy {
+        if (responseJsonString != null) {
+            jsonObjectMapper.readValue(responseJsonString)
+        } else {
+            emptyMap()
+        }
     }
 }
 

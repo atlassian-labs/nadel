@@ -60,13 +60,13 @@ calls:
     operationName: nadel_2_Foo
   response: |-
     {
-      "data" : {
-        "fooOriginal" : {
-          "id" : "Foo",
-          "fooBarId" : "hydrated-bar"
+      "data": {
+        "fooOriginal": {
+          "id": "Foo",
+          "fooBarId": "hydrated-bar"
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -79,22 +79,22 @@ calls:
     operationName: nadel_2_Bar
   response: |-
     {
-      "data" : {
-        "barById" : {
-          "id" : "hydrated-bar"
+      "data": {
+        "barById": {
+          "id": "hydrated-bar"
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "foo" : {
-        "id" : "Foo",
-        "fooBar" : {
-          "id" : "hydrated-bar"
+    "data": {
+      "foo": {
+        "id": "Foo",
+        "fooBar": {
+          "id": "hydrated-bar"
         }
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

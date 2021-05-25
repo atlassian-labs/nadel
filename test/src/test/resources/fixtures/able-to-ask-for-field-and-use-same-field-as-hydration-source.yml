@@ -1,0 +1,113 @@
+name: able to ask for field and use same field as hydration source
+overallSchema:
+  Bar: |
+    service Bar {
+      type Query {
+        bar: Bar
+      }
+      type Bar {
+        barId: ID
+        name: String
+        nestedBar: Bar => hydrated from Bar.barById(id: $source.barId)
+      }
+    }
+services:
+  Bar: |
+    type Bar {
+      barId: ID
+      name: String
+    }
+
+    type Query {
+      bar: Bar
+      barById(id: ID): Bar
+    }
+query: |
+  query {
+    bar {
+      barId
+      nestedBar {
+        nestedBar {
+          barId
+        }
+        barId
+      }
+      name
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Bar {
+        bar {
+          barId
+          barId
+          name
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Bar
+  response: |-
+    {
+      "data": {
+        "bar": {
+          "barId": "1",
+          "name": "Test"
+        }
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_Bar {
+        barById(id: "1") {
+          barId
+          barId
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Bar
+  response: |-
+    {
+      "data": {
+        "barById": {
+          "barId": "1"
+        }
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_Bar {
+        barById(id: "1") {
+          barId
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Bar
+  response: |-
+    {
+      "data": {
+        "barById": {
+          "barId": "1"
+        }
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "data": {
+      "bar": {
+        "barId": "1",
+        "nestedBar": {
+          "barId": "1",
+          "nestedBar": {
+            "barId": "1"
+          }
+        },
+        "name": "Test"
+      }
+    },
+    "extensions": {}
+  }

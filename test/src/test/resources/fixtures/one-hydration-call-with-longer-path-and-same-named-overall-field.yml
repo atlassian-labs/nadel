@@ -79,24 +79,24 @@ calls:
     operationName: nadel_2_Issues
   response: |-
     {
-      "data" : {
-        "issues" : [
+      "data": {
+        "issues": [
           {
-            "id" : "ISSUE-1",
-            "authorDetails" : [
+            "id": "ISSUE-1",
+            "authorDetails": [
               {
-                "authorId" : "USER-1",
-                "name" : "User 1"
+                "authorId": "USER-1",
+                "name": "User 1"
               },
               {
-                "authorId" : "USER-2",
-                "name" : "User 2"
+                "authorId": "USER-2",
+                "name": "User 2"
               }
             ]
           }
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -110,46 +110,46 @@ calls:
     operationName: nadel_2_UserService
   response: |-
     {
-      "data" : {
-        "usersByIds" : [
+      "data": {
+        "usersByIds": [
           {
-            "id" : "USER-1",
-            "name" : "User 1",
-            "object_identifier__UUID" : "USER-1"
+            "id": "USER-1",
+            "name": "User 1",
+            "object_identifier__UUID": "USER-1"
           },
           {
-            "id" : "USER-2",
-            "name" : "User 2",
-            "object_identifier__UUID" : "USER-2"
+            "id": "USER-2",
+            "name": "User 2",
+            "object_identifier__UUID": "USER-2"
           }
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "issues" : [
+    "data": {
+      "issues": [
         {
-          "id" : "ISSUE-1",
-          "authorDetails" : [
+          "id": "ISSUE-1",
+          "authorDetails": [
             {
-              "name" : "User 1"
+              "name": "User 1"
             },
             {
-              "name" : "User 2"
+              "name": "User 2"
             }
           ],
-          "authors" : [
+          "authors": [
             {
-              "id" : "USER-1"
+              "id": "USER-1"
             },
             {
-              "id" : "USER-2"
+              "id": "USER-2"
             }
           ]
         }
       ]
     },
-    "extensions" : { }
+    "extensions": {}
   }

@@ -1,0 +1,180 @@
+name: extending types via hydration returning a connection
+overallSchema:
+  Issue: |
+    service Issue {
+      type Query {
+        synth: Synth
+      }
+      type Synth {
+        issue: Issue
+      }
+      type Issue  {
+        id: ID
+      }
+    }
+  Association: |
+    service Association {
+      type Query {
+        association(id: ID, filter: Filter): AssociationConnection
+      }
+      type AssociationConnection {
+        nodes: [Association]
+      }
+      input Filter  {
+        name: String
+      }
+      type Association {
+        id: ID
+        nameOfAssociation: String
+        page: Page => hydrated from Association.pages.page(id: $source.pageId)
+      }
+      type Page {
+        id: ID
+      }
+      extend type Issue {
+        association(filter:Filter): AssociationConnection => hydrated from Association.association(id: $source.id, filter: $argument.filter)
+      }
+    }
+services:
+  Issue: |
+    type Issue {
+      id: ID
+    }
+
+    type Query {
+      synth: Synth
+    }
+
+    type Synth {
+      issue: Issue
+    }
+  Association: |
+    type Association {
+      id: ID
+      nameOfAssociation: String
+      pageId: ID
+    }
+
+    type AssociationConnection {
+      nodes: [Association]
+    }
+
+    type Page {
+      id: ID
+    }
+
+    type Pages {
+      page(id: ID): Page
+    }
+
+    type Query {
+      association(filter: Filter, id: ID): AssociationConnection
+      pages: Pages
+    }
+
+    input Filter {
+      name: String
+    }
+query: |
+  query {
+    synth {
+      issue {
+        association(filter: {name : "value"}) {
+          nodes {
+            page {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Issue {
+        synth {
+          issue {
+            id
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Issue
+  response: |-
+    {
+      "data": {
+        "synth": {
+          "issue": {
+            "id": "ISSUE-1"
+          }
+        }
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_Association {
+        association(id: "ISSUE-1", filter: {name : "value"}) {
+          nodes {
+            pageId
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Association
+  response: |-
+    {
+      "data": {
+        "association": {
+          "nodes": [
+            {
+              "pageId": "1"
+            }
+          ]
+        }
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_Association {
+        pages {
+          page(id: "1") {
+            id
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Association
+  response: |-
+    {
+      "data": {
+        "pages": {
+          "page": {
+            "id": "1"
+          }
+        }
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "data": {
+      "synth": {
+        "issue": {
+          "association": {
+            "nodes": [
+              {
+                "page": {
+                  "id": "1"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "extensions": {}
+  }

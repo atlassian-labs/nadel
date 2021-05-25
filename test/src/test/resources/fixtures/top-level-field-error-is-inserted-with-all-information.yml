@@ -1,0 +1,43 @@
+name: top level field error is inserted with all information
+overallSchema:
+  service1: |
+    service service1 {
+      type Query {
+        foo: String
+      }
+    }
+services:
+  service: |
+    type Query {
+      foo: String
+    }
+query: |
+  query {
+    foo
+  }
+variables: {}
+calls: []
+response: |-
+  {
+    "errors": [
+      {
+        "message": "Hello world",
+        "locations": [
+          {
+            "line": 12,
+            "column": 34
+          }
+        ],
+        "path": [
+          "test",
+          "hello"
+        ],
+        "extensions": {
+          "test": "Hello there",
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "data": {},
+    "extensions": {}
+  }

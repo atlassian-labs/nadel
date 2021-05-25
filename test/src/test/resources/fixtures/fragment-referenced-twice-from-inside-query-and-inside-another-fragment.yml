@@ -1,0 +1,77 @@
+name: fragment referenced twice from inside Query and inside another Fragment
+overallSchema:
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Bar
+      }
+      type Bar {
+        id: String
+      }
+    }
+services:
+  Foo: |
+    type Bar {
+      id: String
+    }
+
+    type Query {
+      foo: Bar
+    }
+query: |
+  query {
+    foo {
+      id
+      ...F2
+      ...F1
+    }
+  }
+
+  fragment F2 on Bar {
+    id
+  }
+
+  fragment F1 on Bar {
+    id
+    ...F2
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Foo {
+        foo {
+          id
+          ...F2
+          ...F1
+        }
+      }
+
+      fragment F2 on Bar {
+        id
+      }
+
+      fragment F1 on Bar {
+        id
+        ...F2
+      }
+    variables: {}
+    operationName: nadel_2_Foo
+  response: |-
+    {
+      "data": {
+        "foo": {
+          "id": "ID"
+        }
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "data": {
+      "foo": {
+        "id": "ID"
+      }
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,105 @@
+name: renamed and hydrated query using same underlying source
+overallSchema:
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        renamedField: String => renamed from issue.field
+        details: [Detail] => hydrated from Foo.detail(detailIds: $source.issue.fooId)
+      }
+      type Detail {
+        detailId: ID!
+        name: String
+      }
+    }
+services:
+  Foo: |
+    type Detail {
+      detailId: ID!
+      name: String
+    }
+
+    type Foo {
+      field: String
+      fooId: ID
+      issue: Issue
+    }
+
+    type Issue {
+      field: String
+      fooId: ID
+    }
+
+    type Query {
+      detail(detailIds: [ID]): Detail
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      renamedField
+      details {
+        name
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Foo {
+        foo {
+          issue {
+            field
+          }
+          issue {
+            fooId
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Foo
+  response: |-
+    {
+      "data": {
+        "foo": {
+          "issue": {
+            "field": "field",
+            "fooId": "ID"
+          }
+        }
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_Foo {
+        detail(detailIds: "ID") {
+          name
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Foo
+  response: |-
+    {
+      "data": {
+        "detail": {
+          "name": "apple"
+        }
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "data": {
+      "foo": {
+        "renamedField": "field",
+        "details": {
+          "name": "apple"
+        }
+      }
+    },
+    "extensions": {}
+  }

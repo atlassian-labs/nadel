@@ -64,29 +64,29 @@ calls:
     operationName: nadel_2_Issues
   response: |-
     {
-      "data" : {
-        "issue" : {
-          "id" : "ISSUE-1",
-          "authorDetails" : {
-            "authorId" : "USER-1",
-            "name" : "User 1",
-            "extraInfo" : "extra 1"
+      "data": {
+        "issue": {
+          "id": "ISSUE-1",
+          "authorDetails": {
+            "authorId": "USER-1",
+            "name": "User 1",
+            "extraInfo": "extra 1"
           }
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "issue" : {
-        "id" : "ISSUE-1",
-        "authorId" : "USER-1",
-        "authorName" : "User 1",
-        "details" : {
-          "extra" : "extra 1"
+    "data": {
+      "issue": {
+        "id": "ISSUE-1",
+        "authorId": "USER-1",
+        "authorName": "User 1",
+        "details": {
+          "extra": "extra 1"
         }
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

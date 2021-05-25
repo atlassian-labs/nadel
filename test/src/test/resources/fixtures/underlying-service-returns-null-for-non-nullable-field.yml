@@ -1,0 +1,61 @@
+name: underlying service returns null for non-nullable field
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        id: ID!
+      }
+    }
+services:
+  Issues: |
+    type Issue {
+      id: ID!
+    }
+
+    type Query {
+      issue: Issue
+    }
+query: |
+  query {
+    issue {
+      id
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Issues {
+        issue {
+          id
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Issues
+  response: |-
+    {
+      "data": {
+        "issue": {}
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "errors": [
+      {
+        "message": "The field at path \u0027/issue/id\u0027 was declared as a non null type, but the code involved in retrieving data has wrongly returned a null value.  The graphql specification requires that the parent field be set to null, or if that is non nullable that it bubble up null to its parent and so on. The non-nullable type is \u0027ID\u0027.",
+        "path": [
+          "issue",
+          "id"
+        ],
+        "extensions": {
+          "classification": "NullValueInNonNullableField"
+        }
+      }
+    ],
+    "data": {},
+    "extensions": {}
+  }

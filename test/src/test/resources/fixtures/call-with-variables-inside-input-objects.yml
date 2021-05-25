@@ -35,15 +35,15 @@ calls:
     operationName: nadel_2_MyService
   response: |-
     {
-      "data" : {
-        "hello" : "world"
+      "data": {
+        "hello": "world"
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "hello" : "world"
+    "data": {
+      "hello": "world"
     },
-    "extensions" : { }
+    "extensions": {}
   }

@@ -77,49 +77,49 @@ calls:
     operationName: nadel_2_Issues
   response: |-
     {
-      "data" : {
-        "boardScope" : {
-          "board" : {
-            "issueChildren" : [
+      "data": {
+        "boardScope": {
+          "board": {
+            "issueChildren": [
               {
-                "id" : "1234",
-                "issue" : {
-                  "key" : "abc",
-                  "summary" : "Summary 1"
+                "id": "1234",
+                "issue": {
+                  "key": "abc",
+                  "summary": "Summary 1"
                 }
               },
               {
-                "id" : "456",
-                "issue" : {
-                  "key" : "def",
-                  "summary" : "Summary 2"
+                "id": "456",
+                "issue": {
+                  "key": "def",
+                  "summary": "Summary 2"
                 }
               }
             ]
           }
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "boardScope" : {
-        "board" : {
-          "cardChildren" : [
+    "data": {
+      "boardScope": {
+        "board": {
+          "cardChildren": [
             {
-              "id" : "1234",
-              "key" : "abc",
-              "summary" : "Summary 1"
+              "id": "1234",
+              "key": "abc",
+              "summary": "Summary 1"
             },
             {
-              "id" : "456",
-              "key" : "def",
-              "summary" : "Summary 2"
+              "id": "456",
+              "key": "def",
+              "summary": "Summary 2"
             }
           ]
         }
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

@@ -68,14 +68,14 @@ calls:
     operationName: nadel_2_service1
   response: |-
     {
-      "data" : {
-        "foo" : {
-          "fooDetails" : {
-            "externalBarId" : "barId"
+      "data": {
+        "foo": {
+          "fooDetails": {
+            "externalBarId": "barId"
           }
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -88,22 +88,22 @@ calls:
     operationName: nadel_2_service2
   response: |-
     {
-      "data" : {
-        "barById" : {
-          "id" : "barId",
-          "name" : "Bar1"
+      "data": {
+        "barById": {
+          "id": "barId",
+          "name": "Bar1"
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "foo" : {
-        "barLongerInput" : {
-          "name" : "Bar1"
+    "data": {
+      "foo": {
+        "barLongerInput": {
+          "name": "Bar1"
         }
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

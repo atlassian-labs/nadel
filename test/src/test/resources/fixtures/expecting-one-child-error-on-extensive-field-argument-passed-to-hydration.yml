@@ -88,38 +88,38 @@ calls:
     operationName: nadel_2_TestBoard
   response: |-
     {
-      "data" : {
-        "board" : {
-          "id" : "1",
-          "issueChildren" : [
+      "data": {
+        "board": {
+          "id": "1",
+          "issueChildren": [
             {
-              "id" : "a1",
-              "issue" : {
-                "assignee" : {
-                  "accountId" : "1"
+              "id": "a1",
+              "issue": {
+                "assignee": {
+                  "accountId": "1"
                 }
               }
             },
             {
-              "id" : "a2",
-              "issue" : {
-                "assignee" : {
-                  "accountId" : "2"
+              "id": "a2",
+              "issue": {
+                "assignee": {
+                  "accountId": "2"
                 }
               }
             },
             {
-              "id" : "a3",
-              "issue" : {
-                "assignee" : {
-                  "accountId" : "3"
+              "id": "a3",
+              "issue": {
+                "assignee": {
+                  "accountId": "3"
                 }
               }
             }
           ]
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -133,50 +133,50 @@ calls:
     operationName: nadel_2_Users
   response: |-
     {
-      "data" : {
-        "users" : [
+      "data": {
+        "users": [
           {
-            "accountId" : "1",
-            "object_identifier__UUID" : "1"
+            "accountId": "1",
+            "object_identifier__UUID": "1"
           },
           {
-            "accountId" : "2",
-            "object_identifier__UUID" : "2"
+            "accountId": "2",
+            "object_identifier__UUID": "2"
           },
           {
-            "accountId" : "3",
-            "object_identifier__UUID" : "3"
+            "accountId": "3",
+            "object_identifier__UUID": "3"
           }
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "board" : {
-        "id" : "1",
-        "cardChildren" : [
+    "data": {
+      "board": {
+        "id": "1",
+        "cardChildren": [
           {
-            "id" : "a1",
-            "assignee" : {
-              "accountId" : "1"
+            "id": "a1",
+            "assignee": {
+              "accountId": "1"
             }
           },
           {
-            "id" : "a2",
-            "assignee" : {
-              "accountId" : "2"
+            "id": "a2",
+            "assignee": {
+              "accountId": "2"
             }
           },
           {
-            "id" : "a3",
-            "assignee" : {
-              "accountId" : "3"
+            "id": "a3",
+            "assignee": {
+              "accountId": "3"
             }
           }
         ]
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

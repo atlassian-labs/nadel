@@ -1,0 +1,166 @@
+name: one synthetic hydration call with longer path and same named overall field
+overallSchema:
+  UserService: |
+    service UserService {
+      type Query {
+        usersQuery: UserQuery
+      }
+      type UserQuery {
+        usersByIds(id: [ID]): [User]
+      }
+      type User {
+        id: ID
+        name: String
+      }
+    }
+  Issues: |
+    service Issues {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        authorDetails: [AuthorDetail]
+        authors: [User] => hydrated from UserService.usersQuery.usersByIds(id: $source.authorDetails.authorId) object identified by id, batch size 2
+      }
+      type AuthorDetail {
+        name: String
+      }
+    }
+services:
+  UserService: |
+    type Query {
+      usersQuery: UserQuery
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+
+    type UserQuery {
+      usersByIds(id: [ID]): [User]
+    }
+  Issues: |
+    type AuthorDetail {
+      authorId: ID
+      name: String
+    }
+
+    type Issue {
+      authorDetails: [AuthorDetail]
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      authors {
+        id
+      }
+      authorDetails {
+        name
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_Issues {
+        issues {
+          id
+          authorDetails {
+            authorId
+          }
+          authorDetails {
+            name
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Issues
+  response: |-
+    {
+      "data": {
+        "issues": [
+          {
+            "id": "ISSUE-1",
+            "authorDetails": [
+              {
+                "authorId": "USER-1",
+                "name": "User 1"
+              },
+              {
+                "authorId": "USER-2",
+                "name": "User 2"
+              }
+            ]
+          }
+        ]
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_UserService {
+        usersQuery {
+          usersByIds(id: ["USER-1", "USER-2"]) {
+            id
+            object_identifier__UUID: id
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_UserService
+  response: |-
+    {
+      "data": {
+        "usersQuery": {
+          "usersByIds": [
+            {
+              "id": "USER-1",
+              "name": "User 1",
+              "object_identifier__UUID": "USER-1"
+            },
+            {
+              "id": "USER-2",
+              "name": "User 2",
+              "object_identifier__UUID": "USER-2"
+            }
+          ]
+        }
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authorDetails": [
+            {
+              "name": "User 1"
+            },
+            {
+              "name": "User 2"
+            }
+          ],
+          "authors": [
+            {
+              "id": "USER-1"
+            },
+            {
+              "id": "USER-2"
+            }
+          ]
+        }
+      ]
+    },
+    "extensions": {}
+  }

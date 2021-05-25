@@ -43,21 +43,17 @@ calls:
     operationName: nadel_2_Issues
   response: |-
     {
-      "data" : {
-        "issue" : {
-          "details" : {
-            "name" : null
-          }
+      "data": {
+        "issue": {
+          "details": {}
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "issue" : {
-        "name" : null
-      }
+    "data": {
+      "issue": {}
     },
-    "extensions" : { }
+    "extensions": {}
   }

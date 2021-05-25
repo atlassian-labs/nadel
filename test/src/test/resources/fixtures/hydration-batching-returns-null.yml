@@ -60,16 +60,16 @@ calls:
     operationName: nadel_2_service1
   response: |-
     {
-      "data" : {
-        "foo" : {
-          "barId" : [
+      "data": {
+        "foo": {
+          "barId": [
             "barId1",
             "barId2",
             "barId3"
           ]
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -83,19 +83,18 @@ calls:
     operationName: nadel_2_service2
   response: |-
     {
-      "data" : null,
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "foo" : {
-        "bar" : [
+    "data": {
+      "foo": {
+        "bar": [
           null,
           null,
           null
         ]
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

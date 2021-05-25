@@ -82,12 +82,12 @@ calls:
     operationName: nadel_2_service1
   response: |-
     {
-      "data" : {
-        "foo" : {
-          "barId" : "barId"
+      "data": {
+        "foo": {
+          "barId": "barId"
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -101,23 +101,23 @@ calls:
     operationName: nadel_2_service2
   response: |-
     {
-      "data" : {
-        "barById" : {
-          "id" : "barId",
-          "name" : "Bar1"
+      "data": {
+        "barById": {
+          "id": "barId",
+          "name": "Bar1"
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "foo" : {
-        "bar" : {
-          "id" : "barId",
-          "name" : "Bar1"
+    "data": {
+      "foo": {
+        "bar": {
+          "id": "barId",
+          "name": "Bar1"
         }
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

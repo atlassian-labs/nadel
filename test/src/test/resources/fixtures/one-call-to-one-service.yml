@@ -26,13 +26,10 @@ calls:
     operationName: nadel_2_service
   response: |-
     {
-      "data" : null,
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "foo" : null
-    },
-    "extensions" : { }
+    "data": {},
+    "extensions": {}
   }

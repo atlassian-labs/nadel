@@ -60,16 +60,16 @@ calls:
     operationName: nadel_2_service1
   response: |-
     {
-      "data" : {
-        "foo" : {
-          "barId" : [
+      "data": {
+        "foo": {
+          "barId": [
             "barId1",
             "barId2",
             "barId3"
           ]
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -83,33 +83,32 @@ calls:
     operationName: nadel_2_service2
   response: |-
     {
-      "errors" : [
+      "errors": [
         {
-          "message" : "Some error occurred"
+          "message": "Some error occurred"
         }
       ],
-      "data" : null,
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "errors" : [
+    "errors": [
       {
-        "message" : "Some error occurred",
-        "locations" : [ ],
-        "extensions" : {
-          "classification" : "DataFetchingException"
+        "message": "Some error occurred",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
         }
       }
     ],
-    "data" : {
-      "foo" : {
-        "bar" : [
+    "data": {
+      "foo": {
+        "bar": [
           null,
           null,
           null
         ]
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

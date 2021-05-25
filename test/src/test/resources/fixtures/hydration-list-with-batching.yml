@@ -60,16 +60,16 @@ calls:
     operationName: nadel_2_service1
   response: |-
     {
-      "data" : {
-        "foo" : {
-          "barId" : [
+      "data": {
+        "foo": {
+          "barId": [
             "barId1",
             "barId2",
             "barId3"
           ]
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -83,40 +83,40 @@ calls:
     operationName: nadel_2_service2
   response: |-
     {
-      "data" : {
-        "barsById" : [
+      "data": {
+        "barsById": [
           {
-            "object_identifier__UUID" : "barId1",
-            "name" : "Bar1"
+            "object_identifier__UUID": "barId1",
+            "name": "Bar1"
           },
           {
-            "object_identifier__UUID" : "barId2",
-            "name" : "Bar2"
+            "object_identifier__UUID": "barId2",
+            "name": "Bar2"
           },
           {
-            "object_identifier__UUID" : "barId3",
-            "name" : "Bar3"
+            "object_identifier__UUID": "barId3",
+            "name": "Bar3"
           }
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "foo" : {
-        "bar" : [
+    "data": {
+      "foo": {
+        "bar": [
           {
-            "name" : "Bar1"
+            "name": "Bar1"
           },
           {
-            "name" : "Bar2"
+            "name": "Bar2"
           },
           {
-            "name" : "Bar3"
+            "name": "Bar3"
           }
         ]
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

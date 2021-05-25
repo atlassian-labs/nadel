@@ -73,17 +73,17 @@ calls:
     operationName: nadel_2_Issues
   response: |-
     {
-      "data" : {
-        "issues" : [
+      "data": {
+        "issues": [
           {
-            "id" : "ISSUE-1"
+            "id": "ISSUE-1"
           },
           {
-            "id" : "ISSUE-2"
+            "id": "ISSUE-2"
           }
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 - request:
     query: |
@@ -101,29 +101,29 @@ calls:
     operationName: nadel_2_UserService
   response: |-
     {
-      "data" : {
-        "user" : {
-          "id" : "USER-1",
-          "name" : "User 1"
+      "data": {
+        "user": {
+          "id": "USER-1",
+          "name": "User 1"
         }
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "issues" : [
+    "data": {
+      "issues": [
         {
-          "id" : "ISSUE-1"
+          "id": "ISSUE-1"
         },
         {
-          "id" : "ISSUE-2"
+          "id": "ISSUE-2"
         }
       ],
-      "user" : {
-        "id" : "USER-1",
-        "name" : "User 1"
+      "user": {
+        "id": "USER-1",
+        "name": "User 1"
       }
     },
-    "extensions" : { }
+    "extensions": {}
   }

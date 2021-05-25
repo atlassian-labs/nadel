@@ -62,49 +62,49 @@ calls:
     operationName: nadel_2_Issues
   response: |-
     {
-      "data" : {
-        "issues" : [
+      "data": {
+        "issues": [
           {
-            "id" : "ISSUE-1",
-            "authorDetails" : {
-              "name" : {
-                "fName" : "George",
-                "lName" : "Smith"
+            "id": "ISSUE-1",
+            "authorDetails": {
+              "name": {
+                "fName": "George",
+                "lName": "Smith"
               }
             }
           },
           {
-            "id" : "ISSUE-2",
-            "authorDetails" : {
-              "name" : {
-                "fName" : "Elizabeth",
-                "lName" : "Windsor"
+            "id": "ISSUE-2",
+            "authorDetails": {
+              "name": {
+                "fName": "Elizabeth",
+                "lName": "Windsor"
               }
             }
           }
         ]
       },
-      "extensions" : { }
+      "extensions": {}
     }
 response: |-
   {
-    "data" : {
-      "issues" : [
+    "data": {
+      "issues": [
         {
-          "id" : "ISSUE-1",
-          "authorName" : {
-            "firstName" : "George",
-            "lastName" : "Smith"
+          "id": "ISSUE-1",
+          "authorName": {
+            "firstName": "George",
+            "lastName": "Smith"
           }
         },
         {
-          "id" : "ISSUE-2",
-          "authorName" : {
-            "firstName" : "Elizabeth",
-            "lastName" : "Windsor"
+          "id": "ISSUE-2",
+          "authorName": {
+            "firstName": "Elizabeth",
+            "lastName": "Windsor"
           }
         }
       ]
     },
-    "extensions" : { }
+    "extensions": {}
   }

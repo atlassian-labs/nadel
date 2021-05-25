@@ -1,0 +1,185 @@
+name: Expecting one child Error on extensive field argument passed to synthetic hydration
+overallSchema:
+  TestBoard: |
+    service TestBoard {
+      type Query {
+        board(id: ID) : SoftwareBoard
+      }
+      type SoftwareBoard => renamed from Board {
+        id: ID
+        cardChildren: [SoftwareCard] => renamed from issueChildren
+      }
+      type SoftwareCard => renamed from Card {
+        id: ID
+        assignee: User => hydrated from Users.usersQuery.users(accountIds: $source.issue.assignee.accountId) object identified by accountId, batch size 3
+      }
+    }
+  Users: |
+    service Users {
+      type Query {
+        usersQuery: UserQuery
+      }
+      type UserQuery {
+        users(accountIds: [ID]): [User]
+      }
+      type User {
+        accountId: ID
+      }
+    }
+services:
+  TestBoard: |
+    type Board {
+      id: ID
+      issueChildren: [Card]
+    }
+
+    type Card {
+      id: ID
+      issue: Issue
+    }
+
+    type Issue {
+      assignee: TestUser
+      id: ID
+    }
+
+    type Query {
+      board(id: ID): Board
+    }
+
+    type TestUser {
+      accountId: String
+    }
+  Users: |
+    type Query {
+      usersQuery: UserQuery
+    }
+
+    type User {
+      accountId: ID
+    }
+
+    type UserQuery {
+      users(accountIds: [ID]): [User]
+    }
+query: |
+  query {
+    board(id: 1) {
+      id
+      cardChildren {
+        assignee {
+          accountId
+        }
+      }
+    }
+  }
+variables: {}
+calls:
+- request:
+    query: |
+      query nadel_2_TestBoard {
+        board(id: 1) {
+          id
+          issueChildren {
+            issue {
+              assignee {
+                accountId
+              }
+            }
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_TestBoard
+  response: |-
+    {
+      "data": {
+        "board": {
+          "id": "1",
+          "issueChildren": [
+            {
+              "issue": {
+                "assignee": {
+                  "accountId": "1"
+                }
+              }
+            },
+            {
+              "issue": {
+                "assignee": {
+                  "accountId": "2"
+                }
+              }
+            },
+            {
+              "issue": {
+                "assignee": {
+                  "accountId": "3"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "extensions": {}
+    }
+- request:
+    query: |
+      query nadel_2_Users {
+        usersQuery {
+          users(accountIds: ["1", "2", "3"]) {
+            accountId
+            object_identifier__UUID: accountId
+          }
+        }
+      }
+    variables: {}
+    operationName: nadel_2_Users
+  response: |-
+    {
+      "data": {
+        "usersQuery": {
+          "users": [
+            {
+              "accountId": "1",
+              "object_identifier__UUID": "1"
+            },
+            {
+              "accountId": "2",
+              "object_identifier__UUID": "2"
+            },
+            {
+              "accountId": "3",
+              "object_identifier__UUID": "3"
+            }
+          ]
+        }
+      },
+      "extensions": {}
+    }
+response: |-
+  {
+    "data": {
+      "board": {
+        "id": "1",
+        "cardChildren": [
+          {
+            "assignee": {
+              "accountId": "1"
+            }
+          },
+          {
+            "assignee": {
+              "accountId": "2"
+            }
+          },
+          {
+            "assignee": {
+              "accountId": "3"
+            }
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }
