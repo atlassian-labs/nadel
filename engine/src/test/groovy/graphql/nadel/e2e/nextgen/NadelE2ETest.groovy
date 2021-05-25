@@ -1,14 +1,14 @@
 package graphql.nadel.e2e.nextgen
 
-import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionInput
-import graphql.nadel.NextgenEngine
-import graphql.nadel.ServiceExecution
-import graphql.nadel.ServiceExecutionFactory
-import graphql.nadel.ServiceExecutionResult
+
+import graphql.GraphQLError
+import graphql.nadel.*
+import graphql.nadel.engine.result.ResultComplexityAggregator
 import graphql.nadel.engine.testutils.TestUtil
+import graphql.nadel.hooks.ServiceExecutionHooks
 import spock.lang.Specification
 
+import static graphql.language.AstPrinter.printAstCompact
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import static graphql.nadel.engine.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
@@ -66,10 +66,9 @@ class NadelE2ETest extends Specification {
             }
          }
         ''']
-        def underlyingSchema = typeDefinitions('''
+        def underlyingSchema = '''
             type Query {
                 issue: Issue 
-                
             } 
             type Issue {
                 detail: IssueDetails
@@ -77,19 +76,55 @@ class NadelE2ETest extends Specification {
             type IssueDetails {
                 detailName: String
             }
-        ''')
-        ServiceExecution serviceExecution = Mock(ServiceExecution)
-
-        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
-                IssueService: new Tuple2(serviceExecution, underlyingSchema)]
-        )
-
-        given:
+        '''
         def query = '''
         { issue { name } } 
         '''
+        def expectedQuery = '''query {... on Query {issue {... on Issue {detail {... on IssueDetails {detailName}}}}}}'''
+        def overallResponse = [issue: [name: "My Issue"]]
+        def serviceResponse = [issue: [__typename: "Issue", detail: [detailName: "My Issue"]]]
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    Object[] test1Service(Map<String, String> overallSchema,
+                          String serviceOneName,
+                          String underlyingSchema,
+                          String query,
+                          String expectedQuery,
+                          Map serviceResponse,
+                          ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
+                          Map variables = [:],
+                          ResultComplexityAggregator resultComplexityAggregator = null
+    ) {
+        def response1ServiceResult = new ServiceExecutionResult(serviceResponse)
+
+
+        boolean calledService1 = false
+        ServiceExecution serviceExecution = { ServiceExecutionParameters sep ->
+            println printAstCompact(sep.query)
+            calledService1 = true
+            assert printAstCompact(sep.query) == expectedQuery
+            return completedFuture(response1ServiceResult)
+        }
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                (serviceOneName): new Tuple2(serviceExecution, typeDefinitions(underlyingSchema))]
+        )
         Nadel nadel = NextgenEngine.newNadel()
-                .dsl(nsdl)
+                .dsl(overallSchema)
                 .serviceExecutionFactory(serviceFactory)
                 .build()
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
@@ -97,14 +132,14 @@ class NadelE2ETest extends Specification {
                 .artificialFieldsUUID("uuid")
                 .build()
 
-        def data1 = [issue: [__typename: "Issue", detail: [detailName: "My Issue"]]]
-        // TODO: assert query equality
-        1 * serviceExecution.execute(_) >> completedFuture(new ServiceExecutionResult(data1))
 
-        when:
-        def result = nadel.execute(nadelExecutionInput)
+        def response = nadel.execute(nadelExecutionInput)
 
-        then:
-        result.join().data == [issue: [name: "My Issue"]]
+        def executionResult = response.get()
+        assert calledService1
+
+        return [executionResult.getData(), executionResult.getErrors()]
     }
+
+
 }

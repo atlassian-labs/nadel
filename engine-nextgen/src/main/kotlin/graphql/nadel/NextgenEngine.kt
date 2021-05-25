@@ -19,7 +19,7 @@ import graphql.nadel.enginekt.transform.schema.NadelSchemaResultTransformer
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.NormalizedField
-import graphql.normalized.NormalizedQueryToAstCompiler
+import graphql.normalized.NormalizedQueryToAstCompiler.compileToDocument
 import graphql.normalized.NormalizedQueryTreeFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -27,7 +27,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
-import java.util.Collections
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
@@ -112,7 +111,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     ): ServiceExecutionResult {
         val transformedQuery = queryTransformer.transformQuery(service, topLevelField).single()
         val underlyingQuery = NadelSchemaQueryTransformer().transform(executionPlan, transformedQuery)
-        val document = NormalizedQueryToAstCompiler.compileToDocument(Collections.singletonList(underlyingQuery))
+        val document = compileToDocument(listOf(underlyingQuery))
 
         val serviceResult = service.serviceExecution.execute(
             newServiceExecutionParameters()
