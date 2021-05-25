@@ -42,18 +42,19 @@ internal class NadelExecutionPlanFactory(
     }
 
     private fun getSchemaTransformations(field: NormalizedField): List<NadelSchemaTransformation> {
-        val coordinates = createFieldCoordinates(field.objectType.name, field.name)
-
-        return listOfNotNull(
-            when (val fieldInstruction = executionBlueprint.fieldInstructions[coordinates]) {
-                is NadelRenameFieldInstruction -> NadelUnderlyingFieldTransformation(field, fieldInstruction)
-                else -> null
-            },
-            when (val typeInstruction = executionBlueprint.typeInstructions[field.objectType.name]) {
-                null -> null
-                else -> NadelUnderlyingTypeTransformation(field, typeInstruction)
-            }
-        )
+        return field.objectTypeNames.flatMap {
+            val coordinates = createFieldCoordinates(it, field.name)
+            return listOfNotNull(
+                when (val fieldInstruction = executionBlueprint.fieldInstructions[coordinates]) {
+                    is NadelRenameFieldInstruction -> NadelUnderlyingFieldTransformation(field, fieldInstruction)
+                    else -> null
+                },
+                when (val typeInstruction = executionBlueprint.typeInstructions[it]) {
+                    null -> null
+                    else -> NadelUnderlyingTypeTransformation(field, typeInstruction)
+                }
+            )
+        }
     }
 
     private fun getResultTransformations(

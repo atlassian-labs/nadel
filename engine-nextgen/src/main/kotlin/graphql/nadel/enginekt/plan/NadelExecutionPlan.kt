@@ -21,7 +21,7 @@ internal data class NadelUnderlyingTypeTransformation(
 ) : NadelSchemaTransformation() {
     init {
         // Field must be in terms of overall schema so predicate must return true
-        require(field.objectType.name == typeRenameInstruction.overallName)
+        require(field.objectTypeNames.contains(typeRenameInstruction.overallName))
     }
 }
 

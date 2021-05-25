@@ -1,20 +1,8 @@
 package graphql.nadel.schema;
 
 import graphql.Assert;
-import graphql.language.BooleanValue;
-import graphql.language.Description;
-import graphql.language.DirectiveDefinition;
-import graphql.language.InputObjectTypeDefinition;
-import graphql.language.IntValue;
-import graphql.language.NonNullType;
-import graphql.language.SourceLocation;
-import graphql.language.StringValue;
-import graphql.language.TypeName;
-import graphql.nadel.dsl.FieldMappingDefinition;
-import graphql.nadel.dsl.RemoteArgumentDefinition;
-import graphql.nadel.dsl.RemoteArgumentSource;
-import graphql.nadel.dsl.TypeMappingDefinition;
-import graphql.nadel.dsl.UnderlyingServiceHydration;
+import graphql.language.*;
+import graphql.nadel.dsl.*;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLDirectiveContainer;
@@ -28,20 +16,12 @@ import java.util.Map;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
-import static graphql.introspection.Introspection.DirectiveLocation.ENUM;
-import static graphql.introspection.Introspection.DirectiveLocation.FIELD_DEFINITION;
-import static graphql.introspection.Introspection.DirectiveLocation.INPUT_OBJECT;
-import static graphql.introspection.Introspection.DirectiveLocation.INTERFACE;
-import static graphql.introspection.Introspection.DirectiveLocation.OBJECT;
-import static graphql.introspection.Introspection.DirectiveLocation.SCALAR;
-import static graphql.introspection.Introspection.DirectiveLocation.UNION;
+import static graphql.introspection.Introspection.DirectiveLocation.*;
 import static graphql.language.DirectiveLocation.newDirectiveLocation;
 import static graphql.language.InputValueDefinition.newInputValueDefinition;
 import static graphql.language.ListType.newListType;
 import static graphql.language.TypeName.newTypeName;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.CONTEXT;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
+import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
@@ -157,7 +137,7 @@ public class NadelDirectives {
             objectIdentifier = null; // we cant have both but it has a default
         }
         int batchSize = getDirectiveValue(directive, "batchSize", Integer.class, 200);
-        List<RemoteArgumentDefinition> arguments = createArgs(directive.getArgument("arguments").getValue());
+        List<RemoteArgumentDefinition> arguments = createArgs((List<Object>) directive.getArgument("arguments").getArgumentValue().getValue());
 
         List<String> fieldNames = dottedString(field);
         assertTrue(fieldNames.size() >= 1);
@@ -181,7 +161,7 @@ public class NadelDirectives {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<RemoteArgumentDefinition> createArgs(Object arguments) {
+    private static List<RemoteArgumentDefinition> createArgs(List<Object> arguments) {
         List<RemoteArgumentDefinition> remoteArgumentDefinitions = new ArrayList<>();
         List<Object> args = (List<Object>) arguments;
         for (Object arg : args) {
@@ -255,7 +235,7 @@ public class NadelDirectives {
     private static <T> T getDirectiveValue(GraphQLDirective directive, String name, Class<T> clazz) {
         GraphQLArgument argument = directive.getArgument(name);
         assertNotNull(argument, () -> String.format("The @%s directive argument '%s argument MUST be present - how is this possible?", directive.getName(), name));
-        Object value = argument.getValue();
+        Object value = argument.getArgumentValue().getValue();
         return clazz.cast(value);
     }
 

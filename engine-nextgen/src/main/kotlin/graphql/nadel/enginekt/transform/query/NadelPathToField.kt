@@ -5,7 +5,6 @@ import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLUnionType
 
 object NadelPathToField {
     fun createField(
@@ -89,8 +88,8 @@ object NadelPathToField {
             ?: error("No definition for ${parentType.name}.$fieldName")
 
         return NormalizedField.newQueryExecutionField()
-            .objectType(parentType)
-            .fieldDefinition(fieldDef)
+            .objectTypeNames(listOf(parentType.name))
+            .fieldName(fieldName)
             .children(
                 if (pathToFieldIndex == pathToField.lastIndex) {
                     fieldChildren

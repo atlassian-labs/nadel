@@ -9,7 +9,6 @@ import graphql.language.NodeUtil
 import graphql.language.OperationDefinition
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
-import graphql.nadel.enginekt.normalized.NormalizedQueryToDocument
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
@@ -19,6 +18,7 @@ import graphql.nadel.enginekt.transform.schema.NadelSchemaTransformer
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.NormalizedField
+import graphql.normalized.NormalizedQueryToAstCompiler
 import graphql.normalized.NormalizedQueryTreeFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -26,6 +26,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
+import java.util.Collections
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
@@ -36,7 +37,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema, executionBlueprint)
     private val resultTransformer = NadelResultTransformer(nadel.overallSchema, executionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val normalizedQueryToDocument = NormalizedQueryToDocument()
     private val schemaTransformer = NadelSchemaTransformer()
 
     override fun execute(
@@ -112,7 +112,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     ): ServiceExecutionResult {
         val transformedQuery = queryTransformer.transformQuery(service, topLevelField).single()
         val underlyingQuery = schemaTransformer.transformQuery(executionPlan, transformedQuery)
-        val document = normalizedQueryToDocument.toDocument(underlyingQuery)
+        val document = NormalizedQueryToAstCompiler.compileToDocument(Collections.singletonList(underlyingQuery))
 
         val serviceResult = service.serviceExecution.execute(
             newServiceExecutionParameters()
