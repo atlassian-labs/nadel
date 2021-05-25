@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm")
 }
@@ -14,4 +16,13 @@ dependencies {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.apply {
+        jvmTarget = "1.8"
+        freeCompilerArgs = listOf("-progressive", "-java-parameters")
+    }
+    sourceCompatibility = "1.8"
+    targetCompatibility = "1.8"
 }

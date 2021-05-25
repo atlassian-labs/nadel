@@ -13,11 +13,20 @@ import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.util.AnyList
+import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.tests.util.keysEqual
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
 import kotlinx.coroutines.future.await
+import strikt.api.Assertion
+import strikt.api.expectThat
+import strikt.assertions.all
+import strikt.assertions.isA
+import strikt.assertions.isEqualTo
+import strikt.assertions.isNull
 import java.io.File
 import java.util.concurrent.CompletableFuture
 import graphql.parser.Parser as DocumentParser
@@ -49,7 +58,9 @@ private suspend fun execute(fixture: TestFixture) {
             override fun getServiceExecution(serviceName: String): ServiceExecution {
                 return ServiceExecution { params ->
                     val incomingQuery = AstPrinter.printAst(
-                        astSorter.sort(params.query)
+                        astSorter.sort(
+                            params.query,
+                        ),
                     )
                     val call = fixture.calls.single {
                         AstPrinter.printAst(it.request.document) == incomingQuery
@@ -76,7 +87,57 @@ private suspend fun execute(fixture: TestFixture) {
         .build())
         .await()
 
-    println(jsonObjectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(response.toSpecification()))
+    // TODO: check extensions one day - right now they don't match up as dumped tests weren't fully E2E but tests are
+    assertJsonTree(
+        expected = fixture.response.let {
+            mapOf(
+                "data" to it["data"],
+                "errors" to (it["errors"] ?: emptyList<JsonMap>()),
+                // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
+            )
+        },
+        actual = response.toSpecification().let {
+            mapOf(
+                "data" to it["data"],
+                "errors" to (it["errors"] ?: emptyList<JsonMap>()),
+                // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
+            )
+        },
+    )
+}
+
+fun assertJsonTree(expected: JsonMap, actual: JsonMap) {
+    return expectThat(actual) {
+        assertJsonTree(expected = expected)
+    }
+}
+
+fun Assertion.Builder<JsonMap>.assertJsonTree(
+    expected: JsonMap,
+) {
+    keysEqual(expected.keys)
+
+    get { entries }.all {
+        // JSON map needs String keys
+        get { key }.isA<String>()
+
+        compose("value") { entry ->
+            when (val expectedValue = expected[entry.key]) {
+                is AnyMap -> get { value }.isA<JsonMap>().and {
+                    @Suppress("UNCHECKED_CAST")
+                    this@and.assertJsonTree(expectedValue as JsonMap)
+                }
+                is AnyList -> get { value }.and { }
+                is Number -> get { value }.isEqualTo(expectedValue)
+                is String -> get { value }.isEqualTo(expectedValue)
+                is Boolean -> get { value }.isEqualTo(expectedValue)
+                null -> get { value }.describedAs { "${this@describedAs}" }.isNull()
+                else -> error("Unknown type ${expectedValue.javaClass}")
+            }
+        } then {
+            if (allPassed || failedCount == 0) pass() else fail()
+        }
+    }
 }
 
 private data class TestFixture(
