@@ -14,7 +14,8 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
-import graphql.nadel.enginekt.transform.schema.NadelSchemaTransformer
+import graphql.nadel.enginekt.transform.schema.NadelSchemaQueryTransformer
+import graphql.nadel.enginekt.transform.schema.NadelSchemaResultTransformer
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.NormalizedField
@@ -37,7 +38,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema, executionBlueprint)
     private val resultTransformer = NadelResultTransformer(nadel.overallSchema, executionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val schemaTransformer = NadelSchemaTransformer()
 
     override fun execute(
         executionInput: ExecutionInput,
@@ -111,7 +111,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
         val transformedQuery = queryTransformer.transformQuery(service, topLevelField).single()
-        val underlyingQuery = schemaTransformer.transformQuery(executionPlan, transformedQuery)
+        val underlyingQuery = NadelSchemaQueryTransformer().transform(executionPlan, transformedQuery)
         val document = NormalizedQueryToAstCompiler.compileToDocument(Collections.singletonList(underlyingQuery))
 
         val serviceResult = service.serviceExecution.execute(
@@ -128,7 +128,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
                 .build()
         ).asDeferred().await()
 
-        return schemaTransformer.transformResult(executionPlan, serviceResult)
+        return NadelSchemaResultTransformer().transform(executionPlan, serviceResult)
     }
 
     private fun postProcess(
