@@ -32,7 +32,7 @@ object RemoveUnusedField {
         pathToField: List<String>,
         pathToFieldIndex: Int = 0,
     ): List<String>? {
-        val typeName = parentMap[typeNameFieldName] ?: error("Type name required to work")
+        val typeName = parentMap[typeNameFieldName] ?: return emptyList()
         val fieldName = pathToField[pathToFieldIndex]
 
         val existingField = parentField.children.find {

@@ -69,7 +69,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         val results = query.topLevelFields.map { topLevelField ->
             coroutineScope {
                 async {
-                    execute(topLevelField, operationKind, executionInput)
+                    executeTopLevelField(topLevelField, operationKind, executionInput)
                 }
             }
         }.awaitAll()
@@ -77,23 +77,19 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         return mergeTrees(results)
     }
 
-    private suspend fun execute(
+    private suspend fun executeTopLevelField(
         topLevelField: NormalizedField,
         operationKind: OperationKind,
         executionInput: ExecutionInput,
     ): ExecutionResult {
+        // todo: we need to support different services on the second level
         val topLevelFieldInfo = fieldInfos.getFieldInfo(operationKind, topLevelField.name)
             ?: throw UnsupportedOperationException("Unknown top level field ${operationKind.displayName}.${topLevelField.name}")
         val service = topLevelFieldInfo.service
 
         val executionPlan = executionPlanner.create(executionInput.context, service, topLevelField)
-
-        val executionResult = postProcess(
-            userContext = executionInput.context,
-            executionPlan,
-            service,
-            executeService(service, executionPlan, topLevelField, executionInput),
-        )
+        val result = executeService(service, executionPlan, topLevelField, executionInput)
+        val executionResult = resultTransformer.transform(executionInput.context, executionPlan, service, result)
 
         @Suppress("UNCHECKED_CAST")
         return ExecutionResultImpl.newExecutionResult()
@@ -130,14 +126,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         return NadelSchemaResultTransformer().transform(executionPlan, serviceResult)
     }
 
-    private fun postProcess(
-        userContext: Any?,
-        executionPlan: NadelExecutionPlan,
-        service: Service,
-        result: ServiceExecutionResult
-    ): ServiceExecutionResult {
-        return resultTransformer.transform(userContext, executionPlan, service, result)
-    }
 
     private fun getOperationKind(queryDocument: Document, operationName: String?): OperationKind {
         val operation = NodeUtil.getOperation(queryDocument, operationName)
