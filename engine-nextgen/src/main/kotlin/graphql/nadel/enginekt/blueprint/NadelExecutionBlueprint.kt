@@ -10,5 +10,7 @@ data class NadelExecutionBlueprint(
 )
 
 fun <T> Map<FieldCoordinates, T>.getForField(key: NormalizedField): T? {
-    return this[makeFieldCoordinates(key.objectType, key.fieldDefinition)]
+    return key.objectTypeNames.mapNotNull {
+        this[makeFieldCoordinates(it, key.fieldName)]
+    }.singleOrNull()
 }

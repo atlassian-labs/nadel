@@ -45,19 +45,11 @@ object NadelPathToField {
         pathToFieldIndex: Int,
     ): List<NormalizedField> {
         return when (parentType) {
+            // TODO: leave comment about why this is needed due to recursion
             is GraphQLInterfaceType -> schema.getImplementations(parentType).map { objectType: GraphQLObjectType ->
                 createField(
                     schema,
                     parentType = objectType,
-                    pathToField,
-                    fieldChildren,
-                    pathToFieldIndex,
-                )
-            }
-            is GraphQLUnionType -> parentType.types.flatMap { typeInUnion: GraphQLOutputType ->
-                createField(
-                    schema,
-                    parentType = typeInUnion,
                     pathToField,
                     fieldChildren,
                     pathToFieldIndex,

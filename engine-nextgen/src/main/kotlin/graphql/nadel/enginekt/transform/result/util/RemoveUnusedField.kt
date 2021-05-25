@@ -36,7 +36,7 @@ object RemoveUnusedField {
         val fieldName = pathToField[pathToFieldIndex]
 
         val existingField = parentField.children.find {
-            it.objectType.name == typeName && it.fieldDefinition.name == fieldName
+            it.objectTypeNames.contains(typeName) && it.fieldName == fieldName
         }
 
         return when {

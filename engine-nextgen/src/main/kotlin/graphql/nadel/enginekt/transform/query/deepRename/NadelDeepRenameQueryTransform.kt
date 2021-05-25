@@ -36,7 +36,7 @@ internal class NadelDeepRenameQueryTransform : NadelQueryTransform<NadelDeepRena
         field: NormalizedField,
         deepRename: NadelDeepRenameFieldInstruction,
     ): NormalizedField {
-        val underlyingTypeName = field.objectType.name.let { overallTypeName ->
+        val underlyingTypeName = field.objectTypeNames.first().let { overallTypeName ->
             blueprint.typeInstructions[overallTypeName]?.underlyingName ?: overallTypeName
         }
 
