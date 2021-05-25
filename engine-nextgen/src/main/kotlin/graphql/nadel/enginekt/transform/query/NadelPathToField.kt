@@ -79,7 +79,7 @@ object NadelPathToField {
         val fieldDef = parentType.getFieldDefinition(fieldName)
             ?: error("No definition for ${parentType.name}.$fieldName")
 
-        return NormalizedField.newQueryExecutionField()
+        return NormalizedField.newNormalizedField()
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
             .children(

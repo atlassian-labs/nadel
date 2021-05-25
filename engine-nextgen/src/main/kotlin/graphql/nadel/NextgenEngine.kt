@@ -19,8 +19,8 @@ import graphql.nadel.enginekt.transform.schema.NadelSchemaResultTransformer
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.NormalizedField
+import graphql.normalized.NormalizedQueryFactory
 import graphql.normalized.NormalizedQueryToAstCompiler.compileToDocument
-import graphql.normalized.NormalizedQueryTreeFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -54,7 +54,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         queryDocument: Document,
         instrumentationState: InstrumentationState?
     ): ExecutionResult {
-        val query = NormalizedQueryTreeFactory.createNormalizedQuery(
+        val query = NormalizedQueryFactory.createNormalizedQuery(
             overallSchema,
             queryDocument,
             executionInput.operationName,
