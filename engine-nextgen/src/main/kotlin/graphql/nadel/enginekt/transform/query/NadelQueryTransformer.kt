@@ -52,7 +52,7 @@ internal class NadelQueryTransformer(
          *     IDEA: to work on multiple transformations we can have this structure and then pass in the originalField to the subsequent transforms
          *     data class FieldTransformResult(
          *          val originalField: NF,
-         *          val extraFields: NF,
+         *          val extraFields: List<NF,
          *     )
          */
         val transformation = transformations.single()
@@ -66,24 +66,6 @@ internal class NadelQueryTransformer(
             field,
             transformation.state,
         )
-        // return when (val fieldInstruction = executionBlueprint.fieldInstructions.getForField(field)) {
-        //     is NadelRenameFieldInstruction -> TODO()
-        //     is NadelHydrationFieldInstruction -> TODO()
-        //     is NadelBatchHydrationFieldInstruction -> TODO()
-        //     is NadelDeepRenameFieldInstruction -> deepRenameTransform.transformField(
-        //         transformer = this,
-        //         service,
-        //         overallSchema,
-        //         executionBlueprint,
-        //         field,
-        //         fieldInstruction,
-        //     )
-        //     null -> listOf(
-        //         field.transform {
-        //             it.children(transformFields(service, field.children))
-        //         }
-        //     )
-        // }
     }
 
     /**

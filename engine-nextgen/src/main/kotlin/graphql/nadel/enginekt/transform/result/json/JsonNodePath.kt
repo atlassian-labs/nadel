@@ -21,6 +21,10 @@ data class JsonNodePath(
         return copy(segments = segments.dropLast(n))
     }
 
+    override fun toString(): String {
+        return "JsonNodePath(segments=$segments)"
+    }
+
     companion object {
         val root = JsonNodePath(segments = emptyList())
     }
@@ -31,4 +35,8 @@ sealed class JsonNodePathSegment<T : Any> {
 
     data class Int(override val value: kotlin.Int) : JsonNodePathSegment<kotlin.Int>()
     data class String(override val value: kotlin.String) : JsonNodePathSegment<kotlin.String>()
+
+    override fun toString(): kotlin.String {
+        return "$value"
+    }
 }

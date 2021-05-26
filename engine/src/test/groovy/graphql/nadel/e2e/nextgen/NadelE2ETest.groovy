@@ -82,7 +82,7 @@ class NadelE2ETest extends Specification {
         '''
         def expectedQuery = '''query {... on Query {issue {... on Issue {my_uuid:detail {... on IssueDetails {detailName}}}}}}'''
         def overallResponse = [issue: [name: "My Issue"]]
-        def serviceResponse = [issue: [__typename: "Issue", detail: [detailName: "My Issue"]]]
+        def serviceResponse = [issue: [my_uuid: [detailName: "My Issue"]]]
         Map response
         List<GraphQLError> errors
         when:
