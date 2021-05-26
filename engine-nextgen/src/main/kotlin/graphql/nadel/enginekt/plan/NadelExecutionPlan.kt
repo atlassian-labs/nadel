@@ -4,14 +4,16 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.transform.query.NadelTransform
 import graphql.normalized.NormalizedField
 
+internal typealias AnyNadelExecutionPlanStep = NadelExecutionPlan.Step<Any>
+
 internal data class NadelExecutionPlan(
-    val transformations: Map<NormalizedField, List<Step>>,
+    val transformationSteps: Map<NormalizedField, List<AnyNadelExecutionPlanStep>>,
 ) {
-    data class Step(
+    data class Step<T : Any>(
         val service: Service,
         val field: NormalizedField,
-        val transform: NadelTransform<Any>,
-        val state: Any,
+        val transform: NadelTransform<T>,
+        val state: T,
     )
 }
 

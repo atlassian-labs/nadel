@@ -1,5 +1,6 @@
 package graphql.nadel.enginekt.transform.result.json
 
+import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap

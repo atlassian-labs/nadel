@@ -3,6 +3,7 @@ package graphql.nadel.enginekt.plan
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.transform.deepRename.NadelDeepRenameTransform
+import graphql.nadel.enginekt.transform.query.AnyNadelTransform
 import graphql.nadel.enginekt.transform.query.NadelTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
@@ -10,9 +11,8 @@ import graphql.schema.GraphQLSchema
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelExecutionBlueprint,
     private val overallSchema: GraphQLSchema,
-    private val transforms: List<NadelTransform<*>>,
+    private val transforms: List<AnyNadelTransform>,
 ) {
-
     /**
      * This derives an execution plan from with the main input parameters being the
      * [rootField] and [executionBlueprint].
@@ -22,24 +22,26 @@ internal class NadelExecutionPlanFactory(
         service: Service,
         rootField: NormalizedField,
     ): NadelExecutionPlan {
-        val steps = mutableListOf<NadelExecutionPlan.Step>()
+        val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
 
         traverseQuery(rootField) { field ->
             transforms.forEach { transform ->
                 val state = transform.isApplicable(userContext, overallSchema, executionBlueprint, service, field)
                 if (state != null) {
-                    steps.add(NadelExecutionPlan.Step(
-                        service,
-                        field,
-                        transform as NadelTransform<Any>,
-                        state,
-                    ))
+                    executionSteps.add(
+                        NadelExecutionPlan.Step(
+                            service,
+                            field,
+                            transform,
+                            state,
+                        ),
+                    )
                 }
             }
         }
 
         return NadelExecutionPlan(
-            steps.groupBy { it.field },
+            executionSteps.groupBy { it.field },
         )
     }
 
@@ -58,10 +60,17 @@ internal class NadelExecutionPlanFactory(
             return NadelExecutionPlanFactory(
                 executionBlueprint,
                 overallSchema,
-                transforms = listOf(
+                transforms = listOfTransforms(
                     NadelDeepRenameTransform(),
                 ),
             )
+        }
+
+        private fun listOfTransforms(vararg elements: NadelTransform<out Any>): List<AnyNadelTransform> {
+            return elements.map {
+                @Suppress("UNCHECKED_CAST") // Ssh it's okay
+                it as AnyNadelTransform
+            }
         }
     }
 }

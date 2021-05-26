@@ -40,7 +40,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         executionInput: ExecutionInput,
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
-        nadelExecutionParams: NadelExecutionParams
+        nadelExecutionParams: NadelExecutionParams,
     ): CompletableFuture<ExecutionResult> {
         return GlobalScope.async {
             executeCoroutine(executionInput, queryDocument, instrumentationState)
@@ -50,7 +50,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private suspend fun executeCoroutine(
         executionInput: ExecutionInput,
         queryDocument: Document,
-        instrumentationState: InstrumentationState?
+        instrumentationState: InstrumentationState?,
     ): ExecutionResult {
         val query = NormalizedQueryFactory.createNormalizedQuery(
             overallSchema,
@@ -122,7 +122,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
         return serviceResult
     }
-
 
     private fun getOperationKind(queryDocument: Document, operationName: String?): OperationKind {
         val operation = NodeUtil.getOperation(queryDocument, operationName)

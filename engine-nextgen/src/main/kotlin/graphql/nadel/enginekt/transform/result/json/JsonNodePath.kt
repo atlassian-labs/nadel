@@ -3,7 +3,7 @@ package graphql.nadel.enginekt.transform.result.json
 typealias AnyJsonNodePathSegment = JsonNodePathSegment<*>
 
 data class JsonNodePath(
-    val segments: List<AnyJsonNodePathSegment>
+    val segments: List<AnyJsonNodePathSegment>,
 ) {
     operator fun plus(segment: String): JsonNodePath {
         return copy(segments = segments + JsonNodePathSegment.String(segment))

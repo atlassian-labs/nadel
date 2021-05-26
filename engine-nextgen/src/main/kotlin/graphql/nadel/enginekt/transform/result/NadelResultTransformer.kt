@@ -27,7 +27,7 @@ internal class NadelResultTransformer(
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
-        val instructions = executionPlan.transformations.flatMap { (field, steps) ->
+        val instructions = executionPlan.transformationSteps.flatMap { (field, steps) ->
             steps.flatMap { step ->
                 step.transform.getResultInstructions(
                     userContext,
