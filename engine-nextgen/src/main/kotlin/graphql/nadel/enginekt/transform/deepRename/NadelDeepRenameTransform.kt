@@ -6,8 +6,9 @@ import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getForField
 import graphql.nadel.enginekt.transform.query.NadelPathToField
-import graphql.nadel.enginekt.transform.query.NadelQueryTransformerContinue
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.NadelTransform
+import graphql.nadel.enginekt.transform.query.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.JsonMap
@@ -22,15 +23,15 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     )
 
     override fun transformField(
-        transformer: NadelQueryTransformerContinue,
+        transformer: NadelQueryTransformer.Continuation,
         service: Service, // this has an underlying schema
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
         field: NormalizedField,
         state: State,
-    ): List<NormalizedField> {
-        return listOf(
-            createDeepField(
+    ): NadelTransformFieldResult {
+        return NadelTransformFieldResult(
+            newField = createDeepField(
                 transformer,
                 executionBlueprint,
                 service,
@@ -43,7 +44,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     }
 
     private fun createDeepField(
-        transformer: NadelQueryTransformerContinue,
+        transformer: NadelQueryTransformer.Continuation,
         blueprint: NadelExecutionBlueprint,
         service: Service,
         field: NormalizedField,
@@ -60,7 +61,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
             schema = service.underlyingSchema,
             parentType = underlyingObjectType,
             pathToField = deepRename.pathToSourceField,
-            fieldChildren = transformer.transformNext(field.children),
+            fieldChildren = transformer.transform(field.children),
         )
     }
 
