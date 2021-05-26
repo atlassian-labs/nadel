@@ -31,15 +31,18 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
-            newField = createDeepField(
-                transformer,
-                executionBlueprint,
-                service,
-                field,
-                deepRename = state.instruction,
-            ).transform {
-                it.alias(state.alias)
-            }
+            newField = null,
+            extraFields = listOf(
+                createDeepField(
+                    transformer,
+                    executionBlueprint,
+                    service,
+                    field,
+                    deepRename = state.instruction,
+                ).transform {
+                    it.alias(state.alias)
+                },
+            )
         )
     }
 
