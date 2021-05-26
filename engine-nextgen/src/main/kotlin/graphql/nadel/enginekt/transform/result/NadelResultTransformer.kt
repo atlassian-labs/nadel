@@ -9,29 +9,34 @@ import graphql.nadel.enginekt.transform.result.json.AnyJsonNodePathSegment
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodePath
 import graphql.nadel.enginekt.transform.result.json.JsonNodePathSegment
-import graphql.nadel.enginekt.util.*
+import graphql.nadel.enginekt.util.AnyList
+import graphql.nadel.enginekt.util.AnyMap
+import graphql.nadel.enginekt.util.AnyMutableList
+import graphql.nadel.enginekt.util.AnyMutableMap
+import graphql.nadel.enginekt.util.JsonMap
 import graphql.schema.GraphQLSchema
 import kotlin.reflect.KClass
 
 internal class NadelResultTransformer(
-        private val overallSchema: GraphQLSchema,
-        private val executionBlueprint: NadelExecutionBlueprint,
+    private val overallSchema: GraphQLSchema,
+    private val executionBlueprint: NadelExecutionBlueprint,
 ) {
     fun transform(
-            userContext: Any?,
-            executionPlan: NadelExecutionPlan,
-            service: Service,
-            result: ServiceExecutionResult,
+        userContext: Any?,
+        executionPlan: NadelExecutionPlan,
+        service: Service,
+        result: ServiceExecutionResult,
     ): ServiceExecutionResult {
-        val instructions = executionPlan.resultTransformations.flatMap { (field, transforms) ->
-            transforms.flatMap { transformation ->
-                transformation.transform.getInstructions(
-                        userContext,
-                        overallSchema,
-                        executionBlueprint,
-                        service,
-                        field,
-                        result,
+        val instructions = executionPlan.transformations.flatMap { (field, steps) ->
+            steps.flatMap { step ->
+                step.transform.getResultInstructions(
+                    userContext,
+                    overallSchema,
+                    executionBlueprint,
+                    service,
+                    field,
+                    result,
+                    step.state,
                 )
             }
         }
@@ -54,14 +59,14 @@ internal class NadelResultTransformer(
 
         // Clean up data at the end
         transformations
-                .asSequence()
-                .mapNotNull {
-                    when (it) {
-                        is NadelResultInstruction.Remove -> it.subjectPath
-                        else -> null
-                    }
+            .asSequence()
+            .mapNotNull {
+                when (it) {
+                    is NadelResultInstruction.Remove -> it.subjectPath
+                    else -> null
                 }
-                .forEach(result.data::cleanup)
+            }
+            .forEach(result.data::cleanup)
     }
 
     private fun prepareSet(data: JsonMap, instruction: NadelResultInstruction.Set): DataMutation {
@@ -191,13 +196,13 @@ private fun getNextNode(current: JsonNode, segment: AnyJsonNodePathSegment): Jso
             val path = current.path + segment.value
             when (val value = current.value) {
                 is AnyMap? -> JsonNode(
-                        path = path,
-                        value = value?.get(segment.value),
+                    path = path,
+                    value = value?.get(segment.value),
                 )
                 else -> throw UnexpectedDataType(
-                        path,
-                        expected = Map::class,
-                        actual = value?.javaClass
+                    path,
+                    expected = Map::class,
+                    actual = value?.javaClass
                 )
             }
         }
@@ -205,13 +210,13 @@ private fun getNextNode(current: JsonNode, segment: AnyJsonNodePathSegment): Jso
             val path = current.path + segment.value
             when (val value = current.value) {
                 is AnyList? -> JsonNode(
-                        path = path,
-                        value = value?.get(segment.value),
+                    path = path,
+                    value = value?.get(segment.value),
                 )
                 else -> throw UnexpectedDataType(
-                        path,
-                        expected = List::class,
-                        actual = value?.javaClass
+                    path,
+                    expected = List::class,
+                    actual = value?.javaClass
                 )
             }
         }
