@@ -7,7 +7,7 @@ overallSchema:
       }
     }
 services:
-  service: |
+  service1: |
     type Query {
       foo: String
     }
