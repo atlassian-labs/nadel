@@ -4,21 +4,23 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.deepRename.NadelDeepRenameTransform
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformer.Continuation
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
-
-fun interface NadelQueryTransformerContinue {
-    fun transformNext(field: List<NormalizedField>): List<NormalizedField>
-}
 
 internal class NadelQueryTransformer(
     private val overallSchema: GraphQLSchema,
     private val executionBlueprint: NadelExecutionBlueprint,
     private val deepRenameTransform: NadelDeepRenameTransform,
 ) {
-    /**
-     * Use this function.
-     */
+    fun interface Continuation {
+        fun transform(fields: NormalizedField): List<NormalizedField> {
+            return transform(listOf(fields))
+        }
+
+        fun transform(fields: List<NormalizedField>): List<NormalizedField>
+    }
+
     fun transformQuery(
         service: Service,
         field: NormalizedField,
@@ -29,51 +31,55 @@ internal class NadelQueryTransformer(
         }
     }
 
-    /**
-     * API for transforms, do not use outside of transformer classes.
-     *
-     * @see [transformQuery]
-     */
-    internal fun transformField(
+    private fun transformField(
         service: Service,
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
-        val transformations = executionPlan.transformations[field] ?: return listOf(
+        val transformationSteps = executionPlan.transformationSteps[field] ?: return listOf(
             field.transform {
                 it.children(transformFields(service, field.children, executionPlan))
             }
         )
 
         /**
-         * transformField(): List<>
-         * transformField(): FieldTransformResult
+         * TODO: determine how to handle multiple transformation steps e.g.
          *
-         *     IDEA: to work on multiple transformations we can have this structure and then pass in the originalField to the subsequent transforms
-         *     data class FieldTransformResult(
-         *          val originalField: NF,
-         *          val extraFields: List<NF,
-         *     )
+         * issueByARI(ari: ID @ARI): Issue @renamed(from: "issueById")
+         *
+         * Will have two transformation steps on it. The ARI transform and the rename transform.
+         *
+         * Ideally we need to just pass on [NadelTransformFieldResult.newField] to the next transformer.
+         *
+         * BUT, what happens when one transform sets [NadelTransformFieldResult.newField] to null to remove
+         * the field? In that case the other transforms may be left in a unstable state as they might
+         * still be expecting to be executed.
          */
-        val transformation = transformations.single()
-        return transformation.transform.transformField(
-            {
-                transformFields(service, it, executionPlan)
-            },
+        val transformation = transformationSteps.single()
+        val continuation = Continuation {
+            transformFields(service, it, executionPlan)
+        }
+        val result = transformation.transform.transformField(
+            continuation,
             service,
             overallSchema,
             executionBlueprint,
             field,
             transformation.state,
         )
+
+        return result.extraFields.let { fields ->
+            when (val newField = result.newField) {
+                null -> fields
+                else -> fields + newField
+            }
+        }
     }
 
     /**
-     * API for transforms, do not use outside of transformer classes.
-     *
-     * @see [transformQuery]
+     * Helper for calling [transformField] for all the given [fields].
      */
-    internal fun transformFields(
+    private fun transformFields(
         service: Service,
         fields: List<NormalizedField>,
         executionPlan: NadelExecutionPlan,

@@ -66,7 +66,7 @@ internal object NadelExecutionBlueprintFactory {
     private fun createDeepRenameFieldInstruction(
         parentType: GraphQLObjectType,
         field: GraphQLFieldDefinition,
-        mappingDefinition: FieldMappingDefinition
+        mappingDefinition: FieldMappingDefinition,
     ): NadelFieldInstruction {
         val location = createFieldCoordinates(parentType, field)
 
