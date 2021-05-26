@@ -14,8 +14,6 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
-import graphql.nadel.enginekt.transform.schema.NadelSchemaQueryTransformer
-import graphql.nadel.enginekt.transform.schema.NadelSchemaResultTransformer
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.NormalizedField
@@ -106,8 +104,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
         val transformedQuery = queryTransformer.transformQuery(service, topLevelField, executionPlan).single()
-        val underlyingQuery = NadelSchemaQueryTransformer().transform(executionPlan, transformedQuery)
-        val document = compileToDocument(listOf(underlyingQuery))
+        val document = compileToDocument(listOf(transformedQuery))
 
         val serviceResult = service.serviceExecution.execute(
             newServiceExecutionParameters()
@@ -123,7 +120,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
                 .build()
         ).asDeferred().await()
 
-        return NadelSchemaResultTransformer().transform(executionPlan, serviceResult)
+        return serviceResult
     }
 
 
