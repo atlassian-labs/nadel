@@ -20,46 +20,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
 
-    def simpleNDSL = [MyService: '''
-         service MyService {
-            type Query {
-                hello: World
-            }
-            type World {
-                id: ID
-                name: String
-            }
-            type Mutation {
-                hello: String  
-            }
-            type Subscription {
-                onWorldUpdate: World
-                onAnotherUpdate: World
-            }
-         }
-        ''']
 
-    def simpleUnderlyingSchema = typeDefinitions('''
-            type Query {
-                hello: World
-            }
-            type World {
-                id: ID
-                name: String
-            }
-            type Mutation {
-                hello: String
-            }
-            type Subscription {
-                onWorldUpdate: World
-                onAnotherUpdate: World
-            }
-        ''')
-
-    def delegatedExecution = Mock(ServiceExecution)
-    def serviceFactory = TestUtil.serviceFactory(delegatedExecution, simpleUnderlyingSchema)
-
-    def "deep rename works"() {
+    def "simple deep rename"() {
 
         def nsdl = [IssueService: '''
          service IssueService {
@@ -94,6 +56,65 @@ class NadelE2ETest extends Specification {
         (response, errors) = test1Service(
                 nsdl,
                 'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "deep rename with interfaces"() {
+
+        def serviceName = 'PetService'
+        def nsdl = [(serviceName): '''
+         service PetService {
+            type Query {
+                pets: [Pet]
+            } 
+            interface Pet {
+                name: String 
+            }
+            type Dog implements Pet {
+                name: String  => renamed from detail.petName
+            }
+            type Cat implements Pet {
+                name: String  => renamed from detail.petName
+            }
+         }
+        ''']
+        def underlyingSchema = '''
+            type Query {
+                pets: [Pet]
+            } 
+            interface Pet {
+                detail: PetDetails
+            }
+            type Dog implements Pet {
+                detail: PetDetails
+            }
+            type Cat implements Pet {
+                detail: PetDetails
+            }
+            type PetDetails {
+                petName: String 
+            }
+        '''
+        def query = '''
+        { pets { name } } 
+        '''
+        def expectedQuery = '''query {... on Query {pets {... on Cat { detail {... on PetDetail {petName}}} ... on Dog { detail {... on PetDetail {petName}}}}}'''
+        def serviceResponse = [pets: [[detail: [petName: "Tiger"]], [detail: [petName: "Luna"]]]]
+
+        def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                serviceName,
                 underlyingSchema,
                 query,
                 expectedQuery,
