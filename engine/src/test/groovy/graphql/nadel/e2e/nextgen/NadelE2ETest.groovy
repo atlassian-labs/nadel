@@ -91,10 +91,10 @@ class NadelE2ETest extends Specification {
                 name: String 
             }
             type Dog implements Pet {
-                name: String  => renamed from detail.petName
+                name: String => renamed from detail.petName
             }
             type Cat implements Pet {
-                name: String  => renamed from detail.petName
+                name: String => renamed from detail.petName
             }
          }
         """]
@@ -147,6 +147,97 @@ class NadelE2ETest extends Specification {
         def serviceResponse = [pets: [
                 [my_uuid__typename: "Cat", my_uuid__detail: [petName: "Tiger"]],
                 [my_uuid__typename: "Dog", my_uuid__detail: [petName: "Luna"]],
+        ]]
+
+        def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                serviceName,
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "different deep renames on same normalized field"() {
+        def serviceName = "PetService"
+        def nsdl = [(serviceName): """
+         service PetService {
+            type Query {
+                pets: [Pet]
+            } 
+            interface Pet {
+                name: String 
+            }
+            type Dog implements Pet {
+                name: String => renamed from collar.petName
+            }
+            type Cat implements Pet {
+                name: String => renamed from microchip.petName
+            }
+         }
+        """]
+        def underlyingSchema = """
+            type Query {
+                pets: [Pet]
+            } 
+            interface Pet {
+                id: ID
+            }
+            type Dog implements Pet {
+                id: ID
+                collar: Collar
+            }
+            type Cat implements Pet {
+                id: ID
+                microchip: Microchip
+            }
+            type Microchip {
+                petName: String
+            }
+            type Collar {
+                petName: String
+            }
+        """
+        def query = """
+        { pets { name } } 
+        """
+        def expectedQuery = """query {
+  ... on Query {
+    pets {
+      ... on Dog {
+        my_uuid__collar: collar {
+          ... on Collar {
+            petName
+          }
+        }
+      }
+      ... on Cat {
+        my_uuid__microchip: microchip {
+          ... on Microchip {
+            petName
+          }
+        }
+      }
+      ... on Dog {
+        my_uuid__typename: __typename
+      }
+      ... on Cat {
+        my_uuid__typename: __typename
+      }
+    }
+  }
+}"""
+        def serviceResponse = [pets: [
+                [my_uuid__typename: "Cat", my_uuid__microchip: [petName: "Tiger"]],
+                [my_uuid__typename: "Dog", my_uuid__collar: [petName: "Luna"]],
         ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
