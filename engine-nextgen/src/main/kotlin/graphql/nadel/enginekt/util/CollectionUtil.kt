@@ -108,9 +108,15 @@ fun AnyMutableMap.hackPutAll(map: AnyMap) {
     (this as MutableMap<Any?, Any?>).putAll(map)
 }
 
-fun <T : Any> List<T>.emptyOrSingle(): T? {
-    return when {
-        isEmpty() -> null
-        else -> single()
+fun <T : Any> Iterable<T>.emptyOrSingle(): T? {
+    return when (this) {
+        is List<T> -> when (isEmpty()) {
+            true -> null
+            else -> single()
+        }
+        else -> when (iterator().hasNext()) {
+            true -> single()
+            else -> null
+        }
     }
 }

@@ -13,7 +13,7 @@ object NadelPathToField {
         pathToField: List<String>,
         fieldChildren: List<NormalizedField>,
     ): List<NormalizedField> {
-        return createField(
+        return createFieldRecursively(
             schema,
             parentType,
             pathToField,
@@ -28,7 +28,7 @@ object NadelPathToField {
         pathToField: List<String>,
         fieldChildren: List<NormalizedField>,
     ): NormalizedField {
-        return createField(
+        return createParticularField(
             schema,
             parentType,
             pathToField,
@@ -37,17 +37,18 @@ object NadelPathToField {
         )
     }
 
-    private fun createField(
+    private fun createFieldRecursively(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
         pathToField: List<String>,
         fieldChildren: List<NormalizedField>,
         pathToFieldIndex: Int,
     ): List<NormalizedField> {
+        // Note: remember that we are creating fields that do not exist in the original NF
+        // Thus, we need to handle interfaces and object types
         return when (parentType) {
-            // TODO: leave comment about why this is needed due to recursion
             is GraphQLInterfaceType -> schema.getImplementations(parentType).map { objectType: GraphQLObjectType ->
-                createField(
+                createParticularField(
                     schema,
                     parentType = objectType,
                     pathToField,
@@ -56,7 +57,7 @@ object NadelPathToField {
                 )
             }
             is GraphQLObjectType -> listOf(
-                createField(
+                createParticularField(
                     schema,
                     parentType,
                     pathToField,
@@ -64,11 +65,11 @@ object NadelPathToField {
                     pathToFieldIndex,
                 )
             )
-            else -> error("Unknown type '${parentType.javaClass.name}'")
+            else -> error("Unsupported type '${parentType.javaClass.name}'")
         }
     }
 
-    private fun createField(
+    private fun createParticularField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
         pathToField: List<String>,
@@ -86,7 +87,7 @@ object NadelPathToField {
                 if (pathToFieldIndex == pathToField.lastIndex) {
                     fieldChildren
                 } else {
-                    createField(
+                    createFieldRecursively(
                         schema,
                         parentType = fieldDef.type,
                         pathToField,

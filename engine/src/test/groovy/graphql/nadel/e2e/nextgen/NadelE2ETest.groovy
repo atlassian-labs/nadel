@@ -1,6 +1,7 @@
 package graphql.nadel.e2e.nextgen
 
 import graphql.GraphQLError
+import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.NextgenEngine
@@ -8,9 +9,9 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.result.ResultComplexityAggregator
 import graphql.nadel.engine.testutils.TestUtil
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.parser.Parser
 import spock.lang.Specification
 
 import static graphql.language.AstPrinter.printAstCompact
@@ -19,10 +20,7 @@ import static graphql.nadel.engine.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
-
-
     def "simple deep rename"() {
-
         def nsdl = [IssueService: '''
          service IssueService {
             type Query {
@@ -47,9 +45,9 @@ class NadelE2ETest extends Specification {
         def query = '''
         { issue { name } } 
         '''
-        def expectedQuery = '''query {... on Query {issue {... on Issue {my_uuid:detail {... on IssueDetails {detailName}}}}}}'''
+        def expectedQuery = '''query {... on Query {issue {... on Issue {my_uuid__detail:detail {... on IssueDetails {detailName}}}}}}'''
         def overallResponse = [issue: [name: "My Issue"]]
-        def serviceResponse = [issue: [my_uuid: [detailName: "My Issue"]]]
+        def serviceResponse = [issue: [my_uuid__typename: "Issue", my_uuid__detail: [detailName: "My Issue"]]]
         Map response
         List<GraphQLError> errors
         when:
@@ -67,9 +65,8 @@ class NadelE2ETest extends Specification {
     }
 
     def "deep rename with interfaces"() {
-
-        def serviceName = 'PetService'
-        def nsdl = [(serviceName): '''
+        def serviceName = "PetService"
+        def nsdl = [(serviceName): """
          service PetService {
             type Query {
                 pets: [Pet]
@@ -84,8 +81,8 @@ class NadelE2ETest extends Specification {
                 name: String  => renamed from detail.petName
             }
          }
-        ''']
-        def underlyingSchema = '''
+        """]
+        def underlyingSchema = """
             type Query {
                 pets: [Pet]
             } 
@@ -101,12 +98,36 @@ class NadelE2ETest extends Specification {
             type PetDetails {
                 petName: String 
             }
-        '''
-        def query = '''
+        """
+        def query = """
         { pets { name } } 
-        '''
-        def expectedQuery = '''query {... on Query {pets {... on Cat { detail {... on PetDetail {petName}}} ... on Dog { detail {... on PetDetail {petName}}}}}'''
-        def serviceResponse = [pets: [[detail: [petName: "Tiger"]], [detail: [petName: "Luna"]]]]
+        """
+        def expectedQuery = """
+{
+  ... on Query {
+    pets {
+      ... on Cat {
+        my_uuid__detail: detail {
+          ... on PetDetails {
+            petName
+          }
+        }
+      }
+      ... on Dog {
+        my_uuid__detail: detail {
+          ... on PetDetails {
+            petName
+          }
+        }
+      }
+    }
+  }
+}"""
+        new Parser().parseDocument(expectedQuery)
+        def serviceResponse = [pets: [
+                [my_uuid__typename: "Cat", my_uuid__detail: [petName: "Tiger"]],
+                [my_uuid__typename: "Dog", my_uuid__detail: [petName: "Luna"]],
+        ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
         Map response
@@ -132,17 +153,22 @@ class NadelE2ETest extends Specification {
                           String expectedQuery,
                           Map serviceResponse,
                           ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
-                          Map variables = [:],
-                          ResultComplexityAggregator resultComplexityAggregator = null
+                          Map variables = [:]
     ) {
         def response1ServiceResult = new ServiceExecutionResult(serviceResponse)
 
-
         boolean calledService1 = false
+        def astSorter = new AstSorter()
         ServiceExecution serviceExecution = { ServiceExecutionParameters sep ->
             println printAstCompact(sep.query)
             calledService1 = true
-            assert printAstCompact(sep.query) == expectedQuery
+            assert printAstCompact(
+                    astSorter.sort(sep.query)
+            ) == printAstCompact(
+                    astSorter.sort(
+                            new Parser().parseDocument(expectedQuery),
+                    )
+            )
             return completedFuture(response1ServiceResult)
         }
 
@@ -158,7 +184,6 @@ class NadelE2ETest extends Specification {
                 .artificialFieldsUUID("uuid")
                 .build()
 
-
         def response = nadel.execute(nadelExecutionInput)
 
         def executionResult = response.get()
@@ -166,6 +191,4 @@ class NadelE2ETest extends Specification {
 
         return [executionResult.getData(), executionResult.getErrors()]
     }
-
-
 }
