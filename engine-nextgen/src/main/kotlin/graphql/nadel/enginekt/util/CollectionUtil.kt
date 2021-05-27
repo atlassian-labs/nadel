@@ -107,3 +107,30 @@ fun AnyMutableMap.hackPutAll(map: AnyMap) {
     @Suppress("UNCHECKED_CAST")
     (this as MutableMap<Any?, Any?>).putAll(map)
 }
+
+fun <T : Any> Iterable<T>.emptyOrSingle(): T? {
+    return when (this) {
+        is List<T> -> when (isEmpty()) {
+            true -> null
+            else -> single()
+        }
+        else -> when (iterator().hasNext()) {
+            true -> single()
+            else -> null
+        }
+    }
+}
+
+inline fun <K, reified T> Map<K, *>.filterValuesOfType(): Map<K, T> {
+    @Suppress("UNCHECKED_CAST")
+    return filterValues {
+        it is T
+    } as Map<K, T>
+}
+
+inline fun <I, T> Iterable<I>.mapToArrayList(
+    destination: ArrayList<T> = ArrayList(),
+    transform: (I) -> T,
+): ArrayList<T> {
+    return mapTo(destination, transform)
+}

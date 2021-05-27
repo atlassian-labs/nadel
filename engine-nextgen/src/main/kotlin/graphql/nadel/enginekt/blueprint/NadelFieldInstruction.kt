@@ -24,7 +24,7 @@ data class NadelBatchHydrationFieldInstruction(
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
 ) : NadelFieldInstruction()
 
-class NadelDeepRenameFieldInstruction(
+data class NadelDeepRenameFieldInstruction(
     override val location: FieldCoordinates,
     val pathToSourceField: List<String>,
 ) : NadelFieldInstruction()

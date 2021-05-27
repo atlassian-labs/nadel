@@ -1,6 +1,7 @@
 package graphql.nadel.schema;
 
 import graphql.Assert;
+import graphql.execution.ValuesResolver;
 import graphql.language.BooleanValue;
 import graphql.language.Description;
 import graphql.language.DirectiveDefinition;
@@ -157,7 +158,8 @@ public class NadelDirectives {
             objectIdentifier = null; // we cant have both but it has a default
         }
         int batchSize = getDirectiveValue(directive, "batchSize", Integer.class, 200);
-        List<RemoteArgumentDefinition> arguments = createArgs(directive.getArgument("arguments").getValue());
+        GraphQLArgument graphQLArgument = directive.getArgument("arguments");
+        List<RemoteArgumentDefinition> arguments = createArgs((List<Object>) ValuesResolver.valueToInternalValue(graphQLArgument.getArgumentValue(), graphQLArgument.getType()));
 
         List<String> fieldNames = dottedString(field);
         assertTrue(fieldNames.size() >= 1);
@@ -181,7 +183,7 @@ public class NadelDirectives {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<RemoteArgumentDefinition> createArgs(Object arguments) {
+    private static List<RemoteArgumentDefinition> createArgs(List<Object> arguments) {
         List<RemoteArgumentDefinition> remoteArgumentDefinitions = new ArrayList<>();
         List<Object> args = (List<Object>) arguments;
         for (Object arg : args) {
@@ -255,7 +257,7 @@ public class NadelDirectives {
     private static <T> T getDirectiveValue(GraphQLDirective directive, String name, Class<T> clazz) {
         GraphQLArgument argument = directive.getArgument(name);
         assertNotNull(argument, () -> String.format("The @%s directive argument '%s argument MUST be present - how is this possible?", directive.getName(), name));
-        Object value = argument.getValue();
+        Object value = ValuesResolver.valueToInternalValue(argument.getArgumentValue(), argument.getType());
         return clazz.cast(value);
     }
 

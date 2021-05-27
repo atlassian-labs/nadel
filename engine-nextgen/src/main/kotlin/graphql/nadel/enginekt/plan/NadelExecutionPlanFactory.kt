@@ -2,16 +2,16 @@ package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.NadelRenameFieldInstruction
-import graphql.nadel.enginekt.transform.result.NadelResultTransform
+import graphql.nadel.enginekt.transform.deepRename.NadelDeepRenameTransform
+import graphql.nadel.enginekt.transform.query.AnyNadelTransform
+import graphql.nadel.enginekt.transform.query.NadelTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
-import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelExecutionBlueprint,
     private val overallSchema: GraphQLSchema,
-    private val resultTransforms: List<NadelResultTransform>,
+    private val transforms: List<AnyNadelTransform>,
 ) {
     /**
      * This derives an execution plan from with the main input parameters being the
@@ -22,53 +22,33 @@ internal class NadelExecutionPlanFactory(
         service: Service,
         rootField: NormalizedField,
     ): NadelExecutionPlan {
-        val schemaTransformations = mutableListOf<NadelSchemaTransformation>()
-        val resultTransformations = mutableListOf<NadelResultTransformation>()
+        val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
 
-        traverseQueryTree(rootField) { field ->
-            schemaTransformations += getSchemaTransformations(field)
-            resultTransformations += getResultTransformations(userContext, service, field)
+        traverseQuery(rootField) { field ->
+            transforms.forEach { transform ->
+                val state = transform.isApplicable(userContext, overallSchema, executionBlueprint, service, field)
+                if (state != null) {
+                    executionSteps.add(
+                        NadelExecutionPlan.Step(
+                            service,
+                            field,
+                            transform,
+                            state,
+                        ),
+                    )
+                }
+            }
         }
 
         return NadelExecutionPlan(
-            schemaTransformations.groupBy { it.field },
-            resultTransformations.groupBy { it.field },
+            executionSteps.groupBy { it.field },
         )
     }
 
-    private fun getSchemaTransformations(field: NormalizedField): List<NadelSchemaTransformation> {
-        val coordinates = createFieldCoordinates(field.objectType.name, field.name)
-
-        return listOfNotNull(
-            when (val fieldInstruction = executionBlueprint.fieldInstructions[coordinates]) {
-                is NadelRenameFieldInstruction -> NadelUnderlyingFieldTransformation(field, fieldInstruction)
-                else -> null
-            },
-            when (val typeInstruction = executionBlueprint.typeInstructions[field.objectType.name]) {
-                null -> null
-                else -> NadelUnderlyingTypeTransformation(field, typeInstruction)
-            }
-        )
-    }
-
-    private fun getResultTransformations(
-        userContext: Any?,
-        service: Service,
-        field: NormalizedField,
-    ): List<NadelResultTransformation> {
-        return resultTransforms.mapNotNull {
-            if (it.isApplicable(userContext, overallSchema, service, field)) {
-                NadelResultTransformation(service, field, it)
-            } else {
-                null
-            }
-        }
-    }
-
-    private fun traverseQueryTree(root: NormalizedField, consumer: (NormalizedField) -> Unit) {
+    private fun traverseQuery(root: NormalizedField, consumer: (NormalizedField) -> Unit) {
         consumer(root)
         root.children.forEach {
-            traverseQueryTree(it, consumer)
+            traverseQuery(it, consumer)
         }
     }
 
@@ -80,8 +60,17 @@ internal class NadelExecutionPlanFactory(
             return NadelExecutionPlanFactory(
                 executionBlueprint,
                 overallSchema,
-                emptyList()
+                transforms = listOfTransforms(
+                    NadelDeepRenameTransform(),
+                ),
             )
+        }
+
+        private fun listOfTransforms(vararg elements: NadelTransform<out Any>): List<AnyNadelTransform> {
+            return elements.map {
+                @Suppress("UNCHECKED_CAST") // Ssh it's okay
+                it as AnyNadelTransform
+            }
         }
     }
 }

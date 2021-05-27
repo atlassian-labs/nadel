@@ -33,4 +33,3 @@ private fun GraphQLFieldsContainer.getFieldAt(
         fieldOutputType.getFieldAt(pathToField, pathIndex + 1)
     }
 }
-

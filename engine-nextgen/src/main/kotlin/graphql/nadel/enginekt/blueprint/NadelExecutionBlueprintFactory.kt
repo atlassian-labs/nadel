@@ -24,7 +24,7 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
 import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
-object NadelExecutionBlueprintFactory {
+internal object NadelExecutionBlueprintFactory {
     fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelExecutionBlueprint {
         val typeRenameInstructions = createTypeRenameInstructions(overallSchema).toMap {
             it.overallName
@@ -66,7 +66,7 @@ object NadelExecutionBlueprintFactory {
     private fun createDeepRenameFieldInstruction(
         parentType: GraphQLObjectType,
         field: GraphQLFieldDefinition,
-        mappingDefinition: FieldMappingDefinition
+        mappingDefinition: FieldMappingDefinition,
     ): NadelFieldInstruction {
         val location = createFieldCoordinates(parentType, field)
 

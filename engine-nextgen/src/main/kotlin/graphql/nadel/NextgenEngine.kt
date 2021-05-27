@@ -9,16 +9,16 @@ import graphql.language.NodeUtil
 import graphql.language.OperationDefinition
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
-import graphql.nadel.enginekt.normalized.NormalizedQueryToDocument
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
-import graphql.nadel.enginekt.transform.schema.NadelSchemaTransformer
+import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.NormalizedField
-import graphql.normalized.NormalizedQueryTreeFactory
+import graphql.normalized.NormalizedQueryFactory
+import graphql.normalized.NormalizedQueryToAstCompiler.compileToDocument
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -32,16 +32,15 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val fieldInfos = NadelFieldInfos.create(nadel.services)
     private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema, nadel.services)
     private val executionPlanner = NadelExecutionPlanFactory.create(executionBlueprint, nadel.overallSchema)
-    private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema)
+    private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema, executionBlueprint)
+    private val resultTransformer = NadelResultTransformer(nadel.overallSchema, executionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val normalizedQueryToDocument = NormalizedQueryToDocument()
-    private val schemaTransformer = NadelSchemaTransformer()
 
     override fun execute(
         executionInput: ExecutionInput,
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
-        nadelExecutionParams: NadelExecutionParams
+        nadelExecutionParams: NadelExecutionParams,
     ): CompletableFuture<ExecutionResult> {
         return GlobalScope.async {
             executeCoroutine(executionInput, queryDocument, instrumentationState)
@@ -51,10 +50,9 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private suspend fun executeCoroutine(
         executionInput: ExecutionInput,
         queryDocument: Document,
-        instrumentationState: InstrumentationState?
+        instrumentationState: InstrumentationState?,
     ): ExecutionResult {
-
-        val query = NormalizedQueryTreeFactory.createNormalizedQuery(
+        val query = NormalizedQueryFactory.createNormalizedQuery(
             overallSchema,
             queryDocument,
             executionInput.operationName,
@@ -69,7 +67,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         val results = query.topLevelFields.map { topLevelField ->
             coroutineScope {
                 async {
-                    execute(topLevelField, operationKind, executionInput)
+                    executeTopLevelField(topLevelField, operationKind, executionInput)
                 }
             }
         }.awaitAll()
@@ -77,21 +75,19 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         return mergeTrees(results)
     }
 
-    private suspend fun execute(
+    private suspend fun executeTopLevelField(
         topLevelField: NormalizedField,
         operationKind: OperationKind,
         executionInput: ExecutionInput,
     ): ExecutionResult {
+        // todo: we need to support different services on the second level
         val topLevelFieldInfo = fieldInfos.getFieldInfo(operationKind, topLevelField.name)
             ?: throw UnsupportedOperationException("Unknown top level field ${operationKind.displayName}.${topLevelField.name}")
         val service = topLevelFieldInfo.service
 
         val executionPlan = executionPlanner.create(executionInput.context, service, topLevelField)
-
-        val executionResult = postProcess(
-            executionPlan,
-            executeService(service, executionPlan, topLevelField, executionInput),
-        )
+        val result = executeService(service, executionPlan, topLevelField, executionInput)
+        val executionResult = resultTransformer.transform(executionInput.context, executionPlan, service, result)
 
         @Suppress("UNCHECKED_CAST")
         return ExecutionResultImpl.newExecutionResult()
@@ -107,9 +103,8 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         topLevelField: NormalizedField,
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
-        val transformedQuery = queryTransformer.transform(executionInput.context, topLevelField).single()
-        val underlyingQuery = schemaTransformer.transformQuery(executionPlan, transformedQuery)
-        val document = normalizedQueryToDocument.toDocument(underlyingQuery)
+        val transformedQuery = queryTransformer.transformQuery(service, topLevelField, executionPlan).single()
+        val document = compileToDocument(listOf(transformedQuery))
 
         val serviceResult = service.serviceExecution.execute(
             newServiceExecutionParameters()
@@ -125,15 +120,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
                 .build()
         ).asDeferred().await()
 
-        return schemaTransformer.transformResult(executionPlan, serviceResult)
-    }
-
-    private fun postProcess(
-        executionPlan: NadelExecutionPlan,
-        result: ServiceExecutionResult
-    ): ServiceExecutionResult {
-        // TODO: run through schema and result transformer here
-        return result
+        return serviceResult
     }
 
     private fun getOperationKind(queryDocument: Document, operationName: String?): OperationKind {

@@ -13,7 +13,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = "1.7.25"
-def graphqlJavaVersion = "0.0.0-2021-05-17T01-01-51-5ec03a8b"
+def graphqlJavaVersion = "0.0.0-2021-05-25T00-50-29-f2c5f5f6"
 
 apply plugin: "groovy"
 
@@ -30,7 +30,7 @@ dependencies {
     implementation "org.slf4j:slf4j-api:" + slf4jVersion
     testImplementation "junit:junit:4.11"
     testImplementation "org.spockframework:spock-core:1.0-groovy-2.4"
-    testImplementation "org.codehaus.groovy:groovy-all:2.5.1"
+    testImplementation "org.codehaus.groovy:groovy:2.5.1"
     testImplementation "cglib:cglib-nodep:3.1"
     testImplementation "org.objenesis:objenesis:2.1"
     testImplementation "com.google.code.gson:gson:2.8.0"
@@ -39,4 +39,5 @@ dependencies {
     testImplementation "org.openjdk.jmh:jmh-core:1.21"
     testImplementation "org.openjdk.jmh:jmh-generator-annprocess:1.21"
     testImplementation "com.google.guava:guava:28.0-jre"
+    testImplementation project(path: ":nadel-engine-nextgen")
 }
