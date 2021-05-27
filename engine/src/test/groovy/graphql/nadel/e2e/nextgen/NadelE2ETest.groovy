@@ -257,6 +257,50 @@ class NadelE2ETest extends Specification {
         response == overallResponse
     }
 
+    def "simple type rename"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue: Issue
+            } 
+            type Issue => renamed from UnderlyingIssue {
+                name: String 
+            }
+         }
+        """]
+        def underlyingSchema = """
+            type Query {
+                issue: UnderlyingIssue 
+            } 
+            type UnderlyingIssue {
+                name:String
+            }
+        """
+        def query = """
+        { issue { __typename name } } 
+        """
+        def expectedQuery = '''query {... on Query {issue {... on Issue {__typename} ... on Issue {name}}}}'''
+        def serviceResponse = [issue: [__typename: "UnderlyingIssue", name: "My Issue"]]
+
+        def overallResponse = [issue: [__typename: "Issue", name: "My Issue"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+
     Object[] test1Service(Map<String, String> overallSchema,
                           String serviceOneName,
                           String underlyingSchema,
