@@ -10,7 +10,6 @@ import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.testutils.TestUtil
-import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.parser.Parser
 import spock.lang.Specification
 
@@ -300,6 +299,52 @@ class NadelE2ETest extends Specification {
         response == overallResponse
     }
 
+    def "input object type rename with query variables"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue(arg: Input): String
+            } 
+            input Input => renamed from UnderlyingInput{
+                foo: String
+            }
+         }
+        """]
+        def underlyingSchema = """
+            type Query {
+                issue(arg: Input): String
+            } 
+            input Input{
+                foo: String
+            }
+        """
+        def query = ''' 
+        query($var: Input)
+        { issue(arg: $var)}
+        '''
+        def rawVariables = [var: [foo: "bar"]]
+        def expectedQuery = '''query {... on Query {issue(arg: {foo: "bar"})}}'''
+        def serviceResponse = [issue: "hello"]
+
+        def overallResponse = [issue: "hello"]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+                rawVariables
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
 
     Object[] test1Service(Map<String, String> overallSchema,
                           String serviceOneName,
@@ -307,8 +352,7 @@ class NadelE2ETest extends Specification {
                           String query,
                           String expectedQuery,
                           Map serviceResponse,
-                          ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
-                          Map variables = [:]
+                          Map rawVariables = [:]
     ) {
         def response1ServiceResult = new ServiceExecutionResult(serviceResponse)
 
@@ -341,6 +385,7 @@ class NadelE2ETest extends Specification {
                 .build()
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
+                .variables(rawVariables)
                 .artificialFieldsUUID("uuid")
                 .build()
 
