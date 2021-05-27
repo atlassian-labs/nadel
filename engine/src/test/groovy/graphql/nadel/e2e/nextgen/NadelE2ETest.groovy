@@ -21,7 +21,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ETest extends Specification {
     def "simple deep rename"() {
-        def nsdl = [IssueService: '''
+        def nsdl = [IssueService: """
          service IssueService {
             type Query {
                 issue: Issue
@@ -30,8 +30,8 @@ class NadelE2ETest extends Specification {
                 name: String => renamed from detail.detailName
             }
          }
-        ''']
-        def underlyingSchema = '''
+        """]
+        def underlyingSchema = """
             type Query {
                 issue: Issue 
             } 
@@ -41,13 +41,29 @@ class NadelE2ETest extends Specification {
             type IssueDetails {
                 detailName: String
             }
-        '''
-        def query = '''
+        """
+        def query = """
         { issue { name } } 
-        '''
-        def expectedQuery = '''query {... on Query {issue {... on Issue {my_uuid__detail:detail {... on IssueDetails {detailName}}}}}}'''
+        """
+        def expectedQuery = """query {
+  ... on Query {
+    issue {
+      ... on Issue {
+        my_uuid__detail: detail {
+          ... on IssueDetails {
+            detailName
+          }
+        }
+      }
+      ... on Issue {
+        my_uuid__typename: __typename
+      }
+    }
+  }
+}"""
         def overallResponse = [issue: [name: "My Issue"]]
         def serviceResponse = [issue: [my_uuid__typename: "Issue", my_uuid__detail: [detailName: "My Issue"]]]
+
         Map response
         List<GraphQLError> errors
         when:
@@ -102,10 +118,16 @@ class NadelE2ETest extends Specification {
         def query = """
         { pets { name } } 
         """
-        def expectedQuery = """
-{
+        def expectedQuery = """query {
   ... on Query {
     pets {
+      ... on Dog {
+        my_uuid__detail: detail {
+          ... on PetDetails {
+            petName
+          }
+        }
+      }
       ... on Cat {
         my_uuid__detail: detail {
           ... on PetDetails {
@@ -114,16 +136,14 @@ class NadelE2ETest extends Specification {
         }
       }
       ... on Dog {
-        my_uuid__detail: detail {
-          ... on PetDetails {
-            petName
-          }
-        }
+        my_uuid__typename: __typename
+      }
+      ... on Cat {
+        my_uuid__typename: __typename
       }
     }
   }
 }"""
-        new Parser().parseDocument(expectedQuery)
         def serviceResponse = [pets: [
                 [my_uuid__typename: "Cat", my_uuid__detail: [petName: "Tiger"]],
                 [my_uuid__typename: "Dog", my_uuid__detail: [petName: "Luna"]],
@@ -160,15 +180,20 @@ class NadelE2ETest extends Specification {
         boolean calledService1 = false
         def astSorter = new AstSorter()
         ServiceExecution serviceExecution = { ServiceExecutionParameters sep ->
-            println printAstCompact(sep.query)
             calledService1 = true
             assert printAstCompact(
                     astSorter.sort(sep.query)
-            ) == printAstCompact(
+            ).tap {
+                println "Actual query:"
+                println it
+            } == printAstCompact(
                     astSorter.sort(
                             new Parser().parseDocument(expectedQuery),
                     )
-            )
+            ).tap {
+                println "Expecting query:"
+                println it
+            }
             return completedFuture(response1ServiceResult)
         }
 

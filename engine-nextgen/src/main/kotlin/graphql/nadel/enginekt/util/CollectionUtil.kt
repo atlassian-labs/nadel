@@ -120,3 +120,17 @@ fun <T : Any> Iterable<T>.emptyOrSingle(): T? {
         }
     }
 }
+
+inline fun <K, reified T> Map<K, *>.filterValuesOfType(): Map<K, T> {
+    @Suppress("UNCHECKED_CAST")
+    return filterValues {
+        it is T
+    } as Map<K, T>
+}
+
+inline fun <I, T> Iterable<I>.mapToArrayList(
+    destination: ArrayList<T> = ArrayList(),
+    transform: (I) -> T,
+): ArrayList<T> {
+    return mapTo(destination, transform)
+}

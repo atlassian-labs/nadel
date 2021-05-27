@@ -3,7 +3,6 @@ package graphql.nadel.enginekt.transform.query
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.deepRename.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer.Continuation
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
@@ -11,7 +10,6 @@ import graphql.schema.GraphQLSchema
 internal class NadelQueryTransformer(
     private val overallSchema: GraphQLSchema,
     private val executionBlueprint: NadelExecutionBlueprint,
-    private val deepRenameTransform: NadelDeepRenameTransform,
 ) {
     fun interface Continuation {
         fun transform(fields: NormalizedField): List<NormalizedField> {
@@ -104,7 +102,6 @@ internal class NadelQueryTransformer(
             return NadelQueryTransformer(
                 overallSchema,
                 executionBlueprint,
-                deepRenameTransform = NadelDeepRenameTransform(),
             )
         }
     }
