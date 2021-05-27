@@ -286,10 +286,11 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * }
      * ```
      *
-     * it will return the instruction
+     * it will return the instructions
      *
      * ```
-     * Move(subjectPath=/collar/name, destinationPath=/)
+     * Copy(subjectPath=/collar/name, destinationPath=/)
+     * Remove(subjectPath=/collar)
      * ```
      */
     override fun getResultInstructions(
