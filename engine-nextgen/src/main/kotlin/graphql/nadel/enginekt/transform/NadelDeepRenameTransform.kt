@@ -384,10 +384,11 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     ): NadelDeepRenameFieldInstruction {
         val underlyingTypeName = parentMap[getTypeNameResultKey(state)] as? String
             ?: error("Typename must never be null")
+
         val overallTypeName = executionPlan.getOverallTypeName(underlyingTypeName)
 
         val fieldName = state.instructions.keys.first().fieldName
-        return state.instructions[makeFieldCoordinates(overallTypeName as String, fieldName)]
+        return state.instructions[makeFieldCoordinates(overallTypeName, fieldName)]
             ?: error("No instruction for '$overallTypeName'")
     }
 }

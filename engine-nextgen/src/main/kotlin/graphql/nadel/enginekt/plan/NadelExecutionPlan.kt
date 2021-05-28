@@ -13,6 +13,8 @@ internal typealias AnyNadelExecutionPlanStep = NadelExecutionPlan.Step<Any>
 internal data class NadelExecutionPlan(
     // this is a map for overall Fields
     val transformationSteps: Map<NormalizedField, List<AnyNadelExecutionPlanStep>>,
+    // these are the relevant type names for the service and current query from
+    // the key is the overall type name
     val typeRenames: Map<String, NadelTypeRenameInstruction>,
 ) {
     data class Step<T : Any>(

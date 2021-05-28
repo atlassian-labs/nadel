@@ -25,10 +25,10 @@ internal class NadelExecutionPlanFactory(
         rootField: NormalizedField,
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
-        val typeRenames = mutableMapOf<String, NadelTypeRenameInstruction>()
+        val relevantTypeRenames = mutableMapOf<String, NadelTypeRenameInstruction>()
 
         traverseQuery(rootField) { field ->
-            field.objectTypeNames.mapNotNull { executionBlueprint.typeInstructions[it] }.forEach { typeRenames[it.overallName] = it }
+            field.objectTypeNames.mapNotNull { executionBlueprint.typeInstructions[it] }.forEach { relevantTypeRenames[it.overallName] = it }
 
             transforms.forEach { transform ->
                 val state = transform.isApplicable(userContext, overallSchema, executionBlueprint, service, field)
@@ -47,7 +47,7 @@ internal class NadelExecutionPlanFactory(
 
         return NadelExecutionPlan(
             executionSteps.groupBy { it.field },
-            typeRenames
+            relevantTypeRenames
         )
     }
 
