@@ -32,7 +32,7 @@ internal class NadelResultTransformer(
                 step.transform.getResultInstructions(
                     userContext,
                     overallSchema,
-                    executionBlueprint,
+                    executionPlan,
                     service,
                     field,
                     result,

@@ -21,5 +21,10 @@ internal data class NadelExecutionPlan(
         val transform: NadelTransform<T>,
         val state: T,
     )
+
+    fun getOverallTypeName(underlyingTypeName: String): String {
+        val typeRenameInstruction = typeRenames.filter { it.value.underlyingName == underlyingTypeName }.values.singleOrNull()
+        return typeRenameInstruction?.overallName ?: underlyingTypeName
+    }
 }
 

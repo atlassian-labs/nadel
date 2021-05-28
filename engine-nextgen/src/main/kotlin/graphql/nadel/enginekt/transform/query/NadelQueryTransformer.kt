@@ -66,7 +66,7 @@ internal class NadelQueryTransformer(
             continuation,
             service,
             overallSchema,
-            executionBlueprint,
+            executionPlan,
             field,
             transformation.state,
         )

@@ -4,6 +4,7 @@ import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
+import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.NadelTransform
 import graphql.nadel.enginekt.transform.query.NadelTransformFieldResult
@@ -31,7 +32,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
     override fun transformField(transformer: NadelQueryTransformer.Continuation,
                                 service: Service,
                                 overallSchema: GraphQLSchema,
-                                executionBlueprint: NadelExecutionBlueprint,
+                                executionPlan: NadelExecutionPlan,
                                 field: NormalizedField,
                                 state: State): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
@@ -39,7 +40,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
 
     override fun getResultInstructions(userContext: Any?,
                                        overallSchema: GraphQLSchema,
-                                       executionBlueprint: NadelExecutionBlueprint,
+                                       executionPlan: NadelExecutionPlan,
                                        service: Service,
                                        field: NormalizedField,
                                        result: ServiceExecutionResult,
@@ -51,13 +52,9 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         )
         return nodes.map {
             val underlyingTypeName = it.value as String
-            val overallTypeName = getOverallTypeName(underlyingTypeName, executionBlueprint)
+            val overallTypeName = executionPlan.getOverallTypeName(underlyingTypeName)
             return@map NadelResultInstruction.Set(it.path, overallTypeName)
         }
     }
 
-    private fun getOverallTypeName(underlyingTypeName: String, executionBlueprint: NadelExecutionBlueprint): String {
-        val typeRenameInstruction = executionBlueprint.typeInstructions.filter { it.value.underlyingName == underlyingTypeName }.values.single()
-        return typeRenameInstruction.overallName
-    }
 }
