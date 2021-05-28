@@ -62,7 +62,7 @@ internal class NadelQueryTransformer(
         val continuation = Continuation {
             transformFields(service, it, executionPlan)
         }
-        val result = transformation.transform.transformField(
+        val transformResult = transformation.transform.transformField(
             continuation,
             service,
             overallSchema,
@@ -72,18 +72,22 @@ internal class NadelQueryTransformer(
         )
 
 
-        return result.extraFields.let { fields ->
-            when (val newField = result.newField) {
+        val result = transformResult.extraFields.let { fields ->
+            when (val newField = transformResult.newField) {
                 null -> fields
-                else -> {
-                    val patchedTypeNames = newField.transform { it ->
-                        it.clearObjectTypesNames()
-                        it.objectTypeNames(newField.objectTypeNames.map {
-                            executionPlan.typeRenames[it]?.underlyingName ?: it
-                        })
-                    }
-                    fields + patchedTypeNames
-                }
+                else -> fields + newField
+            }
+        }
+        return patchObjectTypeNames(result, executionPlan)
+    }
+
+    private fun patchObjectTypeNames(fields: List<NormalizedField>, executionPlan: NadelExecutionPlan): List<NormalizedField> {
+        return fields.map { field ->
+            field.transform { builder ->
+                builder.clearObjectTypesNames()
+                builder.objectTypeNames(field.objectTypeNames.map {
+                    executionPlan.typeRenames[it]?.underlyingName ?: it
+                })
             }
         }
     }

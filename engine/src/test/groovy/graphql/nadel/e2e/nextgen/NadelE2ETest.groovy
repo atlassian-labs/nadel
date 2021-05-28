@@ -299,6 +299,72 @@ class NadelE2ETest extends Specification {
         response == overallResponse
     }
 
+    def "type rename with deep rename"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue: Issue
+            } 
+            type Issue => renamed from UnderlyingIssue{
+                name: String => renamed from detail.detailName
+                detail: IssueDetails
+            }
+            type IssueDetails => renamed from UnderlyingIssueDetails {
+                otherDetail: String
+            }
+         }
+        """]
+        def underlyingSchema = """
+            type Query {
+                issue: UnderlyingIssue 
+            } 
+            type UnderlyingIssue {
+                detail: UnderlyingIssueDetails
+            }
+            type UnderlyingIssueDetails {
+                detailName: String
+                otherDetail: String
+            }
+        """
+        def query = """
+        { issue { name  detail {otherDetail} } }
+        """
+        def expectedQuery = """query {
+  ... on Query {
+    issue {
+      ... on UnderlyingIssue {
+        my_uuid__detail: detail {
+          ... on UnderlyingIssueDetails {
+            detailName
+          }
+        }
+      }
+      ... on UnderlyingIssue {
+        my_uuid__typename: __typename
+      }
+      ... on UnderlyingIssue {detail {... on UnderlyingIssueDetails {otherDetail}}}
+    }
+  }
+}"""
+        def serviceResponse = [issue: [detail: [otherDetail: "other detail"], my_uuid__typename: "UnderlyingIssue", my_uuid__detail: [detailName: "My Issue"]]]
+        def overallResponse = [issue: [name: "My Issue", detail: [otherDetail: "other detail"]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
     def "input object type rename with query variables"() {
         def nsdl = [IssueService: """
          service IssueService {
