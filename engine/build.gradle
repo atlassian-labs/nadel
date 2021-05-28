@@ -13,7 +13,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = "1.7.25"
-def graphqlJavaVersion = "0.0.0-2021-05-28T10-25-42-f2c5f5f6"
+def graphqlJavaVersion = "0.0.0-2021-05-28T01-59-18-ee8078a3"
 
 apply plugin: "groovy"
 
