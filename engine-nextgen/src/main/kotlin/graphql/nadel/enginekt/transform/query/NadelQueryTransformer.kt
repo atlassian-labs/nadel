@@ -34,9 +34,14 @@ internal class NadelQueryTransformer(
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
+
         val transformationSteps = executionPlan.transformationSteps[field] ?: return listOf(
-            field.transform {
-                it.children(transformFields(service, field.children, executionPlan))
+            field.transform { builder ->
+                builder.clearObjectTypesNames()
+                builder.objectTypeNames(field.objectTypeNames.map { overallTypeName ->
+                    executionPlan.typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
+                })
+                builder.children(transformFields(service, field.children, executionPlan))
             }
         )
 
@@ -66,10 +71,19 @@ internal class NadelQueryTransformer(
             transformation.state,
         )
 
+
         return result.extraFields.let { fields ->
             when (val newField = result.newField) {
                 null -> fields
-                else -> fields + newField
+                else -> {
+                    val patchedTypeNames = newField.transform { it ->
+                        it.clearObjectTypesNames()
+                        it.objectTypeNames(newField.objectTypeNames.map {
+                            executionPlan.typeRenames[it]?.underlyingName ?: it
+                        })
+                    }
+                    fields + patchedTypeNames
+                }
             }
         }
     }

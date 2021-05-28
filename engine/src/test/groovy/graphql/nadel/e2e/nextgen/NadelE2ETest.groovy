@@ -278,7 +278,7 @@ class NadelE2ETest extends Specification {
         def query = """
         { issue { __typename name } } 
         """
-        def expectedQuery = '''query {... on Query {issue {... on Issue {__typename} ... on Issue {name}}}}'''
+        def expectedQuery = '''query {... on Query {issue {... on UnderlyingIssue {__typename} ... on UnderlyingIssue {name}}}}'''
         def serviceResponse = [issue: [__typename: "UnderlyingIssue", name: "My Issue"]]
 
         def overallResponse = [issue: [__typename: "Issue", name: "My Issue"]]

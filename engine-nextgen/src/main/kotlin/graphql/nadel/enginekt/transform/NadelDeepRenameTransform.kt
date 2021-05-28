@@ -1,4 +1,4 @@
-package graphql.nadel.enginekt.transform.deepRename
+package graphql.nadel.enginekt.transform
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.Service
@@ -377,8 +377,8 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     }
 
     private fun getMatchingDeepRename(
-            parentMap: JsonMap,
-            state: State,
+        parentMap: JsonMap,
+        state: State,
     ): NadelDeepRenameFieldInstruction {
         // TODO: handle type renames
         // Note, we add a typename in transformField, so it should NEVER be null

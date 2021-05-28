@@ -2,7 +2,9 @@ package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
-import graphql.nadel.enginekt.transform.deepRename.NadelDeepRenameTransform
+import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
+import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
+import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform
 import graphql.nadel.enginekt.transform.query.AnyNadelTransform
 import graphql.nadel.enginekt.transform.query.NadelTransform
 import graphql.normalized.NormalizedField
@@ -23,8 +25,11 @@ internal class NadelExecutionPlanFactory(
         rootField: NormalizedField,
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
+        val typeRenames = mutableMapOf<String, NadelTypeRenameInstruction>()
 
         traverseQuery(rootField) { field ->
+            field.objectTypeNames.mapNotNull { executionBlueprint.typeInstructions[it] }.forEach { typeRenames[it.overallName] = it }
+
             transforms.forEach { transform ->
                 val state = transform.isApplicable(userContext, overallSchema, executionBlueprint, service, field)
                 if (state != null) {
@@ -42,6 +47,7 @@ internal class NadelExecutionPlanFactory(
 
         return NadelExecutionPlan(
             executionSteps.groupBy { it.field },
+            typeRenames
         )
     }
 
@@ -62,6 +68,7 @@ internal class NadelExecutionPlanFactory(
                 overallSchema,
                 transforms = listOfTransforms(
                     NadelDeepRenameTransform(),
+                    NadelTypeRenameResultTransform(),
                 ),
             )
         }
