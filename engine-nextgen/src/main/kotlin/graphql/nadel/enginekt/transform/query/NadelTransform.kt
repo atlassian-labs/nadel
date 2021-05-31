@@ -4,6 +4,7 @@ import graphql.language.Directive
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
+import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
@@ -44,7 +45,7 @@ internal interface NadelTransform<State : Any> {
         transformer: NadelQueryTransformer.Continuation,
         service: Service,
         overallSchema: GraphQLSchema,
-        executionBlueprint: NadelExecutionBlueprint,
+        executionPlan: NadelExecutionPlan,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult
@@ -58,7 +59,7 @@ internal interface NadelTransform<State : Any> {
     fun getResultInstructions(
         userContext: Any?,
         overallSchema: GraphQLSchema,
-        executionBlueprint: NadelExecutionBlueprint,
+        executionPlan: NadelExecutionPlan,
         service: Service,
         field: NormalizedField,
         result: ServiceExecutionResult,

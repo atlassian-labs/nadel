@@ -1,4 +1,4 @@
-package graphql.nadel.enginekt.transform.deepRename
+package graphql.nadel.enginekt.transform
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.Service
@@ -6,6 +6,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getForField
+import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.query.NadelPathToField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.NadelTransform
@@ -186,7 +187,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         transformer: NadelQueryTransformer.Continuation,
         service: Service, // this has an underlying schema
         overallSchema: GraphQLSchema,
-        executionBlueprint: NadelExecutionBlueprint,
+        executionPlan: NadelExecutionPlan,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -195,7 +196,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
             extraFields = state.instructions.map { (coordinates, instruction) ->
                 makeDeepField(
                     transformer,
-                    executionBlueprint,
+                    executionPlan,
                     service,
                     field,
                     coordinates,
@@ -246,14 +247,14 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     private fun makeDeepField(
         transformer: NadelQueryTransformer.Continuation,
-        blueprint: NadelExecutionBlueprint,
+        executionPlan: NadelExecutionPlan,
         service: Service,
         field: NormalizedField,
         fieldCoordinates: FieldCoordinates,
         deepRename: NadelDeepRenameFieldInstruction,
     ): NormalizedField {
         val underlyingTypeName = fieldCoordinates.typeName.let { overallTypeName ->
-            blueprint.typeInstructions[overallTypeName]?.underlyingName ?: overallTypeName
+            executionPlan.typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
         }
 
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
@@ -297,7 +298,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     override fun getResultInstructions(
         userContext: Any?,
         overallSchema: GraphQLSchema,
-        executionBlueprint: NadelExecutionBlueprint,
+        executionPlan: NadelExecutionPlan,
         service: Service,
         field: NormalizedField, // Overall field
         result: ServiceExecutionResult,
@@ -312,7 +313,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         return parentNodes.flatMap { parentNode ->
             @Suppress("UNCHECKED_CAST") // Ensure the result is a Map, return if null
             val parentMap = parentNode.value as JsonMap? ?: return@flatMap emptyList()
-            val deepRenameInstruction = getMatchingDeepRename(parentMap, state)
+            val deepRenameInstruction = getMatchingDeepRename(parentMap, state, executionPlan)
 
             val nodeToMove = getNodesAt(parentNode, getPathOfNodeToMove(state, deepRenameInstruction))
                     .emptyOrSingle() ?: return@flatMap emptyList()
@@ -377,17 +378,18 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     }
 
     private fun getMatchingDeepRename(
-            parentMap: JsonMap,
-            state: State,
+        parentMap: JsonMap,
+        state: State,
+        executionPlan: NadelExecutionPlan
     ): NadelDeepRenameFieldInstruction {
-        // TODO: handle type renames
-        // Note, we add a typename in transformField, so it should NEVER be null
-        val typeName = parentMap[getTypeNameResultKey(state)]
-                ?: error("Typename must never be null")
+        val underlyingTypeName = parentMap[getTypeNameResultKey(state)] as? String
+            ?: error("Typename must never be null")
+
+        val overallTypeName = executionPlan.getOverallTypeName(underlyingTypeName)
 
         val fieldName = state.instructions.keys.first().fieldName
-        return state.instructions[makeFieldCoordinates(typeName as String, fieldName)]
-            ?: error("No instruction for '$typeName'")
+        return state.instructions[makeFieldCoordinates(overallTypeName, fieldName)]
+            ?: error("No instruction for '$overallTypeName'")
     }
 }
 

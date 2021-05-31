@@ -10,7 +10,6 @@ import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.testutils.TestUtil
-import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.parser.Parser
 import spock.lang.Specification
 
@@ -257,14 +256,169 @@ class NadelE2ETest extends Specification {
         response == overallResponse
     }
 
+    def "simple type rename"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue: Issue
+            } 
+            type Issue => renamed from UnderlyingIssue {
+                name: String 
+            }
+         }
+        """]
+        def underlyingSchema = """
+            type Query {
+                issue: UnderlyingIssue 
+            } 
+            type UnderlyingIssue {
+                name:String
+            }
+        """
+        def query = """
+        { issue { __typename name } } 
+        """
+        def expectedQuery = '''query {... on Query {issue {... on UnderlyingIssue {__typename} ... on UnderlyingIssue {name}}}}'''
+        def serviceResponse = [issue: [__typename: "UnderlyingIssue", name: "My Issue"]]
+
+        def overallResponse = [issue: [__typename: "Issue", name: "My Issue"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "type rename with deep rename"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue: Issue
+            } 
+            type Issue => renamed from UnderlyingIssue{
+                name: String => renamed from detail.detailName
+                detail: IssueDetails
+            }
+            type IssueDetails => renamed from UnderlyingIssueDetails {
+                otherDetail: String
+            }
+         }
+        """]
+        def underlyingSchema = """
+            type Query {
+                issue: UnderlyingIssue 
+            } 
+            type UnderlyingIssue {
+                detail: UnderlyingIssueDetails
+            }
+            type UnderlyingIssueDetails {
+                detailName: String
+                otherDetail: String
+            }
+        """
+        def query = """
+        { issue { name  detail {otherDetail} } }
+        """
+        def expectedQuery = """query {
+  ... on Query {
+    issue {
+      ... on UnderlyingIssue {
+        my_uuid__detail: detail {
+          ... on UnderlyingIssueDetails {
+            detailName
+          }
+        }
+      }
+      ... on UnderlyingIssue {
+        my_uuid__typename: __typename
+      }
+      ... on UnderlyingIssue {detail {... on UnderlyingIssueDetails {otherDetail}}}
+    }
+  }
+}"""
+        def serviceResponse = [issue: [detail: [otherDetail: "other detail"], my_uuid__typename: "UnderlyingIssue", my_uuid__detail: [detailName: "My Issue"]]]
+        def overallResponse = [issue: [name: "My Issue", detail: [otherDetail: "other detail"]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "input object type rename with query variables"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue(arg: Input): String
+            } 
+            input Input => renamed from UnderlyingInput{
+                foo: String
+            }
+         }
+        """]
+        def underlyingSchema = """
+            type Query {
+                issue(arg: Input): String
+            } 
+            input Input{
+                foo: String
+            }
+        """
+        def query = ''' 
+        query($var: Input)
+        { issue(arg: $var)}
+        '''
+        def rawVariables = [var: [foo: "bar"]]
+        def expectedQuery = '''query {... on Query {issue(arg: {foo: "bar"})}}'''
+        def serviceResponse = [issue: "hello"]
+
+        def overallResponse = [issue: "hello"]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+                rawVariables
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+
     Object[] test1Service(Map<String, String> overallSchema,
                           String serviceOneName,
                           String underlyingSchema,
                           String query,
                           String expectedQuery,
                           Map serviceResponse,
-                          ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
-                          Map variables = [:]
+                          Map rawVariables = [:]
     ) {
         def response1ServiceResult = new ServiceExecutionResult(serviceResponse)
 
@@ -297,6 +451,7 @@ class NadelE2ETest extends Specification {
                 .build()
         NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
                 .query(query)
+                .variables(rawVariables)
                 .artificialFieldsUUID("uuid")
                 .build()
 

@@ -34,9 +34,14 @@ internal class NadelQueryTransformer(
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
+
         val transformationSteps = executionPlan.transformationSteps[field] ?: return listOf(
-            field.transform {
-                it.children(transformFields(service, field.children, executionPlan))
+            field.transform { builder ->
+                builder.clearObjectTypesNames()
+                builder.objectTypeNames(field.objectTypeNames.map { overallTypeName ->
+                    executionPlan.typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
+                })
+                builder.children(transformFields(service, field.children, executionPlan))
             }
         )
 
@@ -57,19 +62,32 @@ internal class NadelQueryTransformer(
         val continuation = Continuation {
             transformFields(service, it, executionPlan)
         }
-        val result = transformation.transform.transformField(
+        val transformResult = transformation.transform.transformField(
             continuation,
             service,
             overallSchema,
-            executionBlueprint,
+            executionPlan,
             field,
             transformation.state,
         )
 
-        return result.extraFields.let { fields ->
-            when (val newField = result.newField) {
+
+        val result = transformResult.extraFields.let { fields ->
+            when (val newField = transformResult.newField) {
                 null -> fields
                 else -> fields + newField
+            }
+        }
+        return patchObjectTypeNames(result, executionPlan)
+    }
+
+    private fun patchObjectTypeNames(fields: List<NormalizedField>, executionPlan: NadelExecutionPlan): List<NormalizedField> {
+        return fields.map { field ->
+            field.transform { builder ->
+                builder.clearObjectTypesNames()
+                builder.objectTypeNames(field.objectTypeNames.map {
+                    executionPlan.typeRenames[it]?.underlyingName ?: it
+                })
             }
         }
     }

@@ -32,7 +32,7 @@ internal class NadelResultTransformer(
                 step.transform.getResultInstructions(
                     userContext,
                     overallSchema,
-                    executionBlueprint,
+                    executionPlan,
                     service,
                     field,
                     result,
@@ -58,6 +58,7 @@ internal class NadelResultTransformer(
         mutations.forEach(DataMutation::run)
 
         // Clean up data at the end
+        // TODO: not sure when we need this: do we have tests for that?
         transformations
             .asSequence()
             .mapNotNull {
