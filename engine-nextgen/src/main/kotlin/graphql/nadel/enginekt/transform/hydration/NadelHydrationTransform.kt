@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform.hydration
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
+import graphql.language.AstPrinter
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
@@ -18,6 +19,7 @@ import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.mapToArrayList
+import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedField.newNormalizedField
 import graphql.normalized.NormalizedQueryToAstCompiler
@@ -30,6 +32,10 @@ internal class NadelHydrationTransform(
 ) : NadelTransform<State> {
     data class State(
         val instructions: Map<FieldCoordinates, NadelHydrationFieldInstruction>,
+        /**
+         * The field in question for the transform, stored for quick access when
+         * the [State] is passed around.
+         */
         val field: NormalizedField,
         val alias: String,
     )
@@ -38,6 +44,7 @@ internal class NadelHydrationTransform(
         userContext: Any?,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
+        services: Map<String, Service>,
         service: Service,
         field: NormalizedField,
     ): State? {
@@ -109,7 +116,6 @@ internal class NadelHydrationTransform(
         return parentNodes.flatMap {
             hydrate(
                 parentNode = it,
-                service = service,
                 state = state,
                 executionPlan = executionPlan,
                 hydrationField = field,
@@ -119,7 +125,6 @@ internal class NadelHydrationTransform(
 
     private fun hydrate(
         parentNode: JsonNode,
-        service: Service,
         state: State,
         executionPlan: NadelExecutionPlan,
         hydrationField: NormalizedField, // Field asking for hydration from the overall query
@@ -132,11 +137,10 @@ internal class NadelHydrationTransform(
         ) ?: return emptyList()
 
         val sourceField = NadelPathToField.createField(
-            schema = service.underlyingSchema,
-            parentType = service.underlyingSchema.queryType,
+            schema = instruction.sourceService.underlyingSchema,
+            parentType = instruction.sourceService.underlyingSchema.queryType,
             pathToField = instruction.pathToSourceField,
             fieldArguments = NadelHydrationArgumentsBuilder.createSourceFieldArgs(
-                service,
                 instruction,
                 parentNode,
                 hydrationField,
@@ -146,7 +150,11 @@ internal class NadelHydrationTransform(
 
         // TODO: execute it
         println(
-            NormalizedQueryToAstCompiler.compileToDocument(listOf(sourceField)),
+            AstPrinter.printAst(
+                NormalizedQueryToAstCompiler.compileToDocument(
+                    listOf(sourceField),
+                ),
+            ),
         )
 
         return emptyList()

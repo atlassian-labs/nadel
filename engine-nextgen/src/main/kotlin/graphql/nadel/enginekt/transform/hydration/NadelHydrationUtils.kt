@@ -1,11 +1,21 @@
 package graphql.nadel.enginekt.transform.hydration
 
 import graphql.nadel.Service
+import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 
 internal object NadelHydrationUtils {
-    fun getSourceField(
+    fun getSourceFieldDefinition(
+        instruction: NadelHydrationFieldInstruction,
+    ): GraphQLFieldDefinition {
+        return getSourceFieldDefinition(
+            service = instruction.sourceService,
+            pathToSourceField = instruction.pathToSourceField,
+        )
+    }
+
+    private fun getSourceFieldDefinition(
         service: Service,
         pathToSourceField: List<String>,
     ): GraphQLFieldDefinition {

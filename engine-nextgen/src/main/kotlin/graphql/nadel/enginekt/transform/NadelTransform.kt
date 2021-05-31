@@ -24,12 +24,19 @@ interface NadelTransform<State : Any> {
      * e.g. the names of fields that will be added etc. The implementation of [State] is completely up
      * to you. You can make it mutable if that makes your life easier etc.
      *
+     * @param userContext the context passed by the user into [graphql.nadel.NadelExecutionInput.context]
+     * @param overallSchema the overall [GraphQLSchema] of the of the Nadel instance being operated on
+     * @param executionBlueprint the [NadelExecutionBlueprint] of the Nadel instance being operated on
+     * @param service the [Service] the [field] belongs to
+     * @param field the [NormalizedField] in question, we are asking whether it [isApplicable] for transforms
+     *
      * @return null if the [NadelTransform] should not run, non-null [State] otherwise
      */
     suspend fun isApplicable(
         userContext: Any?,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
+        services: Map<String, Service>,
         service: Service,
         field: NormalizedField,
     ): State?

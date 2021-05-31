@@ -23,6 +23,7 @@ internal class NadelExecutionPlanFactory(
      */
     suspend fun create(
         userContext: Any?,
+        services: Map<String, Service>,
         service: Service,
         rootField: NormalizedField,
     ): NadelExecutionPlan {
@@ -34,7 +35,14 @@ internal class NadelExecutionPlanFactory(
                 .forEach { relevantTypeRenames[it.overallName] = it }
 
             transforms.forEach { transform ->
-                val state = transform.isApplicable(userContext, overallSchema, executionBlueprint, service, field)
+                val state = transform.isApplicable(
+                    userContext,
+                    overallSchema,
+                    executionBlueprint,
+                    services,
+                    service,
+                    field,
+                )
                 if (state != null) {
                     executionSteps.add(
                         NadelExecutionPlan.Step(

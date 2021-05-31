@@ -112,6 +112,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         userContext: Any?,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
+        services: Map<String, Service>,
         service: Service,
         field: NormalizedField,
     ): State? {

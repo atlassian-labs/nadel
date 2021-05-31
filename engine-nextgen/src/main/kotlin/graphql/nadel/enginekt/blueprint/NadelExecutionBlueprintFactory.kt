@@ -15,7 +15,7 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrate
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.util.getFieldAt
-import graphql.nadel.enginekt.util.toMap
+import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
@@ -26,10 +26,10 @@ import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
 internal object NadelExecutionBlueprintFactory {
     fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelExecutionBlueprint {
-        val typeRenameInstructions = createTypeRenameInstructions(overallSchema).toMap {
+        val typeRenameInstructions = createTypeRenameInstructions(overallSchema).strictAssociateBy {
             it.overallName
         }
-        val fieldInstructions = createInstructions(overallSchema, services).toMap {
+        val fieldInstructions = createInstructions(overallSchema, services).strictAssociateBy {
             it.location
         }
 
@@ -94,7 +94,7 @@ internal object NadelExecutionBlueprintFactory {
 
         return NadelHydrationFieldInstruction(
             location = createFieldCoordinates(parentType, field),
-            sourceService = hydration.serviceName,
+            sourceService= hydrationService,
             pathToSourceField = pathToSourceField,
             arguments = getHydrationArguments(hydration),
         )

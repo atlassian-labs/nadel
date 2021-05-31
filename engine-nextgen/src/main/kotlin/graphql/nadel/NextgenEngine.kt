@@ -14,6 +14,7 @@ import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.singleOfType
+import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedQueryFactory
@@ -28,6 +29,7 @@ import java.util.concurrent.CompletableFuture
 
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val overallSchema = nadel.overallSchema
+    private val services = nadel.services.strictAssociateBy { it.name }
     private val fieldInfos = NadelFieldInfos.create(nadel.services)
     private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema, nadel.services)
     private val executionPlanner = NadelExecutionPlanFactory.create(executionBlueprint, nadel.overallSchema, this)
@@ -84,7 +86,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             ?: throw UnsupportedOperationException("Unknown top level field ${operationKind.displayName}.${topLevelField.name}")
         val service = topLevelFieldInfo.service
 
-        val executionPlan = executionPlanner.create(executionInput.context, service, topLevelField)
+        val executionPlan = executionPlanner.create(executionInput.context, services, service, topLevelField)
         val result = executeService(service, executionPlan, topLevelField, executionInput)
         val executionResult = resultTransformer.transform(executionInput.context, executionPlan, service, result)
 

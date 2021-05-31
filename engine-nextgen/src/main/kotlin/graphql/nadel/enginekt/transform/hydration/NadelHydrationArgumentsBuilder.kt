@@ -9,7 +9,7 @@ import graphql.language.Value
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
-import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtils.getSourceField
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtils.getSourceFieldDefinition
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.AnyList
@@ -25,12 +25,11 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSou
 
 internal object NadelHydrationArgumentsBuilder {
     fun createSourceFieldArgs(
-        service: Service,
         instruction: NadelHydrationFieldInstruction,
         parentNode: JsonNode,
         hydrationField: NormalizedField,
     ): Map<String, NormalizedInputValue> {
-        val sourceField = getSourceField(service, instruction.pathToSourceField)
+        val sourceField = getSourceFieldDefinition(instruction)
 
         return mapFrom(
             instruction.arguments
