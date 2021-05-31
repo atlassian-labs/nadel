@@ -1,10 +1,12 @@
 package graphql.nadel.enginekt.plan
 
+import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform
 import graphql.nadel.enginekt.transform.query.AnyNadelTransform
 import graphql.nadel.enginekt.transform.query.NadelTransform
 import graphql.normalized.NormalizedField
@@ -63,6 +65,7 @@ internal class NadelExecutionPlanFactory(
         fun create(
             executionBlueprint: NadelExecutionBlueprint,
             overallSchema: GraphQLSchema,
+            engine: NextgenEngine,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
                 executionBlueprint,
@@ -70,6 +73,7 @@ internal class NadelExecutionPlanFactory(
                 transforms = listOfTransforms(
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),
+                    NadelHydrationTransform(engine),
                 ),
             )
         }

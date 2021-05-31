@@ -11,7 +11,7 @@ import graphql.schema.GraphQLSchema
 
 internal typealias AnyNadelTransform = NadelTransform<Any>
 
-internal interface NadelTransform<State : Any> {
+interface NadelTransform<State : Any> {
     /**
      * Determines whether the [NadelTransform] should run. If it should run return a [State].
      *

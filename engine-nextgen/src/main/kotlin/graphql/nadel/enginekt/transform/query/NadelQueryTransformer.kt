@@ -6,7 +6,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-internal class NadelQueryTransformer(
+class NadelQueryTransformer internal constructor(
     private val overallSchema: GraphQLSchema,
 ) {
     interface Continuation {

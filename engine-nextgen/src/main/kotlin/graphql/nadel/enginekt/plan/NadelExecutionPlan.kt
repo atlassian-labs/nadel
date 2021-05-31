@@ -10,7 +10,7 @@ internal typealias AnyNadelExecutionPlanStep = NadelExecutionPlan.Step<Any>
 /**
  * Currently per service. TODO: we should have an overall execution plan.
  */
-internal data class NadelExecutionPlan(
+data class NadelExecutionPlan(
     // this is a map for overall Fields
     val transformationSteps: Map<NormalizedField, List<AnyNadelExecutionPlanStep>>,
     // these are the relevant type names for the service and current query from
@@ -25,8 +25,16 @@ internal data class NadelExecutionPlan(
     )
 
     fun getOverallTypeName(underlyingTypeName: String): String {
-        val typeRenameInstruction = typeRenames.filter { it.value.underlyingName == underlyingTypeName }.values.singleOrNull()
+        val typeRenameInstruction = typeRenames
+            .asSequence()
+            .map { it.value }
+            .filter { it.underlyingName == underlyingTypeName }
+            .singleOrNull()
         return typeRenameInstruction?.overallName ?: underlyingTypeName
+    }
+
+    fun getUnderlyingTypeName(overallTypeName: String): String {
+        return typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
     }
 }
 

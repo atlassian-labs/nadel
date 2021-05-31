@@ -5,17 +5,17 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.getForField
+import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.query.NadelPathToField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.NadelTransform
 import graphql.nadel.enginekt.transform.query.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
-import graphql.nadel.enginekt.util.filterValuesOfType
 import graphql.nadel.enginekt.util.mapToArrayList
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedField.newNormalizedField
@@ -115,20 +115,15 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         service: Service,
         field: NormalizedField,
     ): State? {
-        val instructions = executionBlueprint.fieldInstructions.getForField(field)
-        if (instructions.isEmpty()) {
-            return null
-        }
-
-        val deepRenameInstructions = instructions
-            .filterValuesOfType<FieldCoordinates, NadelDeepRenameFieldInstruction>()
+        val deepRenameInstructions = executionBlueprint.fieldInstructions
+            .getInstructionsOfTypeForField<NadelDeepRenameFieldInstruction>(field)
         if (deepRenameInstructions.isEmpty()) {
             return null
         }
 
         return State(
             deepRenameInstructions,
-            "my_uuid"
+            "my_uuid",
             // UUID.randomUUID().toString(),
         )
     }
@@ -204,7 +199,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                 ).transform {
                     it.alias(getFirstFieldResultKey(state, instruction))
                 }
-            } + makeTypeNameField(state, state.instructions),
+            } + makeTypeNameField(state),
         )
     }
 
@@ -219,12 +214,11 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     private fun makeTypeNameField(
         state: State,
-        instructions: Map<FieldCoordinates, NadelDeepRenameFieldInstruction>,
     ): NormalizedField {
         return newNormalizedField()
-                .alias(getTypeNameResultKey(state))
-                .fieldName(TypeNameMetaFieldDef.name)
-            .objectTypeNames(instructions.keys.mapToArrayList { it.typeName })
+            .alias(getTypeNameResultKey(state))
+            .fieldName(TypeNameMetaFieldDef.name)
+            .objectTypeNames(state.instructions.keys.mapToArrayList { it.typeName })
             .build()
     }
 
@@ -264,6 +258,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
             schema = service.underlyingSchema,
             parentType = underlyingObjectType,
             pathToField = deepRename.pathToSourceField,
+            fieldArguments = emptyMap(),
             fieldChildren = transformer.transform(field.children),
         )
     }
@@ -305,31 +300,55 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         state: State,
     ): List<NadelResultInstruction> {
         val parentNodes = getNodesAt(
-                result.data,
-                field.listOfResultKeys.dropLast(1),
-                flatten = true,
+            result.data,
+            field.listOfResultKeys.dropLast(1),
+            flatten = true,
         )
 
         return parentNodes.flatMap { parentNode ->
             @Suppress("UNCHECKED_CAST") // Ensure the result is a Map, return if null
-            val parentMap = parentNode.value as JsonMap? ?: return@flatMap emptyList()
-            val deepRenameInstruction = getMatchingDeepRename(parentMap, state, executionPlan)
+            val parentMap = parentNode.value as JsonMap?
+                ?: return@flatMap makeRemoveFieldInstructions(state, parentNode)
+            val deepRenameInstruction = getMatchingDeepRenameInstruction(parentMap, state, executionPlan)
+                ?: return@flatMap makeRemoveFieldInstructions(state, parentNode)
 
             val nodeToMove = getNodesAt(parentNode, getPathOfNodeToMove(state, deepRenameInstruction))
-                    .emptyOrSingle() ?: return@flatMap emptyList()
+                .emptyOrSingle() ?: return@flatMap emptyList()
 
             listOf(
                 NadelResultInstruction.Copy(
                     subjectPath = nodeToMove.path,
                     destinationPath = parentNode.path + field.resultKey,
                 ),
+            ) + makeRemoveFieldInstructions(state, parentNode, deepRenameInstruction)
+        }
+    }
+
+    /**
+     * Cleans up the [parentNode] by removing fields that were added by this transform.
+     */
+    private fun makeRemoveFieldInstructions(
+        state: State,
+        parentNode: JsonNode,
+        deepRenameInstruction: NadelDeepRenameFieldInstruction? = null,
+    ): List<NadelResultInstruction.Remove> {
+        return listOf(
+            // Removes __typename
+            NadelResultInstruction.Remove(
+                subjectPath = parentNode.path + getTypeNameResultKey(state),
+            ),
+        ) + if (deepRenameInstruction != null) {
+            listOf(
                 NadelResultInstruction.Remove(
-                        subjectPath = parentNode.path + getFirstFieldResultKey(state, deepRenameInstruction),
-                ),
-                NadelResultInstruction.Remove(
-                    subjectPath = parentNode.path + getTypeNameResultKey(state),
-                ),
+                    subjectPath = parentNode.path + getFirstFieldResultKey(state, deepRenameInstruction),
+                )
             )
+        } else {
+            state.instructions.values.map { instruction ->
+                NadelResultInstruction.Remove(
+                    subjectPath = parentNode.path + getFirstFieldResultKey(state, instruction),
+                )
+            }
         }
     }
 
@@ -377,11 +396,14 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         return state.alias + TypeNameMetaFieldDef.name
     }
 
-    private fun getMatchingDeepRename(
+    /**
+     * Note: this can be null if the type condition was not met
+     */
+    private fun getMatchingDeepRenameInstruction(
         parentMap: JsonMap,
         state: State,
-        executionPlan: NadelExecutionPlan
-    ): NadelDeepRenameFieldInstruction {
+        executionPlan: NadelExecutionPlan,
+    ): NadelDeepRenameFieldInstruction? {
         val underlyingTypeName = parentMap[getTypeNameResultKey(state)] as? String
             ?: error("Typename must never be null")
 
@@ -389,7 +411,6 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
         val fieldName = state.instructions.keys.first().fieldName
         return state.instructions[makeFieldCoordinates(overallTypeName, fieldName)]
-            ?: error("No instruction for '$overallTypeName'")
     }
 }
 

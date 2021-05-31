@@ -6,7 +6,6 @@ import graphql.ExecutionResultImpl
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.language.NodeUtil
-import graphql.language.OperationDefinition
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
@@ -31,7 +30,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val overallSchema = nadel.overallSchema
     private val fieldInfos = NadelFieldInfos.create(nadel.services)
     private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema, nadel.services)
-    private val executionPlanner = NadelExecutionPlanFactory.create(executionBlueprint, nadel.overallSchema)
+    private val executionPlanner = NadelExecutionPlanFactory.create(executionBlueprint, nadel.overallSchema, this)
     private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema)
     private val resultTransformer = NadelResultTransformer(nadel.overallSchema)
     private val instrumentation = nadel.instrumentation
@@ -97,6 +96,9 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             .build()
     }
 
+    internal fun executeHydration() {
+    }
+
     private suspend fun executeService(
         service: Service,
         executionPlan: NadelExecutionPlan,
@@ -106,7 +108,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         val transformedQuery = queryTransformer.transformQuery(service, topLevelField, executionPlan).single()
         val document = compileToDocument(listOf(transformedQuery))
 
-        val serviceResult = service.serviceExecution.execute(
+        return service.serviceExecution.execute(
             newServiceExecutionParameters()
                 .query(document)
                 .context(executionInput.context)
@@ -114,13 +116,11 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
                 .cacheControl(executionInput.cacheControl)
                 .variables(emptyMap())
                 .fragments(emptyMap())
-                .operationDefinition(document.definitions.singleOfType<OperationDefinition>())
+                .operationDefinition(document.definitions.singleOfType())
                 .serviceContext(null)
                 .hydrationCall(false)
                 .build()
         ).asDeferred().await()
-
-        return serviceResult
     }
 
     private fun getOperationKind(queryDocument: Document, operationName: String?): OperationKind {
