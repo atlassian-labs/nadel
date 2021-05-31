@@ -19,7 +19,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         val typeRenamePath: QueryPath,
     )
 
-    override fun isApplicable(
+    override suspend fun isApplicable(
         userContext: Any?,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
@@ -35,7 +35,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         }
     }
 
-    override fun transformField(
+    override suspend fun transformField(
         transformer: NadelQueryTransformer.Continuation,
         service: Service,
         overallSchema: GraphQLSchema,
@@ -46,7 +46,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         return NadelTransformFieldResult.unmodified(field)
     }
 
-    override fun getResultInstructions(
+    override suspend fun getResultInstructions(
         userContext: Any?,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,

@@ -2,7 +2,6 @@ package graphql.nadel.enginekt.transform.result
 
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer.DataMutation
 import graphql.nadel.enginekt.transform.result.json.AnyJsonNodePathSegment
@@ -19,9 +18,8 @@ import kotlin.reflect.KClass
 
 internal class NadelResultTransformer(
     private val overallSchema: GraphQLSchema,
-    private val executionBlueprint: NadelExecutionBlueprint,
 ) {
-    fun transform(
+    suspend fun transform(
         userContext: Any?,
         executionPlan: NadelExecutionPlan,
         service: Service,

@@ -26,7 +26,7 @@ internal interface NadelTransform<State : Any> {
      *
      * @return null if the [NadelTransform] should not run, non-null [State] otherwise
      */
-    fun isApplicable(
+    suspend fun isApplicable(
         userContext: Any?,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
@@ -41,7 +41,7 @@ internal interface NadelTransform<State : Any> {
      * This lets you transform a field. You may add extra fields, modify the [field], or
      * ever delete the [field] from the query. See [NadelTransformFieldResult] for more.
      */
-    fun transformField(
+    suspend fun transformField(
         transformer: NadelQueryTransformer.Continuation,
         service: Service,
         overallSchema: GraphQLSchema,
@@ -56,7 +56,7 @@ internal interface NadelTransform<State : Any> {
      *
      * Return a [List] of [NadelResultInstruction]s to modify the result.
      */
-    fun getResultInstructions(
+    suspend fun getResultInstructions(
         userContext: Any?,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,

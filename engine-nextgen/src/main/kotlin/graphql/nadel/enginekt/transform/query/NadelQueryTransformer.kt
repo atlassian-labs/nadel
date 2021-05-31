@@ -3,23 +3,21 @@ package graphql.nadel.enginekt.transform.query
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.query.NadelQueryTransformer.Continuation
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
 internal class NadelQueryTransformer(
     private val overallSchema: GraphQLSchema,
-    private val executionBlueprint: NadelExecutionBlueprint,
 ) {
-    fun interface Continuation {
-        fun transform(fields: NormalizedField): List<NormalizedField> {
+    interface Continuation {
+        suspend fun transform(fields: NormalizedField): List<NormalizedField> {
             return transform(listOf(fields))
         }
 
-        fun transform(fields: List<NormalizedField>): List<NormalizedField>
+        suspend fun transform(fields: List<NormalizedField>): List<NormalizedField>
     }
 
-    fun transformQuery(
+    suspend fun transformQuery(
         service: Service,
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
@@ -29,19 +27,23 @@ internal class NadelQueryTransformer(
         }
     }
 
-    private fun transformField(
+    private suspend fun transformField(
         service: Service,
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
 
         val transformationSteps = executionPlan.transformationSteps[field] ?: return listOf(
-            field.transform { builder ->
-                builder.clearObjectTypesNames()
-                builder.objectTypeNames(field.objectTypeNames.map { overallTypeName ->
-                    executionPlan.typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
-                })
-                builder.children(transformFields(service, field.children, executionPlan))
+            field.let {
+                // Cannot inline this as transform lambda is not a coroutine
+                val transformedChildFields = transformFields(service, it.children, executionPlan)
+                it.transform { builder ->
+                    builder.clearObjectTypesNames()
+                    builder.objectTypeNames(field.objectTypeNames.map { overallTypeName ->
+                        executionPlan.typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
+                    })
+                    builder.children(transformedChildFields)
+                }
             }
         )
 
@@ -59,8 +61,10 @@ internal class NadelQueryTransformer(
          * still be expecting to be executed.
          */
         val transformation = transformationSteps.single()
-        val continuation = Continuation {
-            transformFields(service, it, executionPlan)
+        val continuation = object : Continuation {
+            override suspend fun transform(fields: List<NormalizedField>): List<NormalizedField> {
+                return transformFields(service, fields, executionPlan)
+            }
         }
         val transformResult = transformation.transform.transformField(
             continuation,
@@ -71,7 +75,6 @@ internal class NadelQueryTransformer(
             transformation.state,
         )
 
-
         val result = transformResult.extraFields.let { fields ->
             when (val newField = transformResult.newField) {
                 null -> fields
@@ -81,7 +84,10 @@ internal class NadelQueryTransformer(
         return patchObjectTypeNames(result, executionPlan)
     }
 
-    private fun patchObjectTypeNames(fields: List<NormalizedField>, executionPlan: NadelExecutionPlan): List<NormalizedField> {
+    private fun patchObjectTypeNames(
+        fields: List<NormalizedField>,
+        executionPlan: NadelExecutionPlan,
+    ): List<NormalizedField> {
         return fields.map { field ->
             field.transform { builder ->
                 builder.clearObjectTypesNames()
@@ -95,7 +101,7 @@ internal class NadelQueryTransformer(
     /**
      * Helper for calling [transformField] for all the given [fields].
      */
-    private fun transformFields(
+    private suspend fun transformFields(
         service: Service,
         fields: List<NormalizedField>,
         executionPlan: NadelExecutionPlan,
@@ -116,10 +122,9 @@ internal class NadelQueryTransformer(
     }
 
     companion object {
-        fun create(overallSchema: GraphQLSchema, executionBlueprint: NadelExecutionBlueprint): NadelQueryTransformer {
+        fun create(overallSchema: GraphQLSchema): NadelQueryTransformer {
             return NadelQueryTransformer(
                 overallSchema,
-                executionBlueprint,
             )
         }
     }

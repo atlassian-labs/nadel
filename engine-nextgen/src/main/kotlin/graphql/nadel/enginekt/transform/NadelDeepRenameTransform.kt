@@ -108,7 +108,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      *
      * Creates a state with the deep rename instructions and the transform alias.
      */
-    override fun isApplicable(
+    override suspend fun isApplicable(
         userContext: Any?,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
@@ -183,7 +183,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * }
      * ```
      */
-    override fun transformField(
+    override suspend fun transformField(
         transformer: NadelQueryTransformer.Continuation,
         service: Service, // this has an underlying schema
         overallSchema: GraphQLSchema,
@@ -245,7 +245,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * }
      * ```
      */
-    private fun makeDeepField(
+    private suspend fun makeDeepField(
         transformer: NadelQueryTransformer.Continuation,
         executionPlan: NadelExecutionPlan,
         service: Service,
@@ -295,7 +295,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * Remove(subjectPath=/collar)
      * ```
      */
-    override fun getResultInstructions(
+    override suspend fun getResultInstructions(
         userContext: Any?,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,

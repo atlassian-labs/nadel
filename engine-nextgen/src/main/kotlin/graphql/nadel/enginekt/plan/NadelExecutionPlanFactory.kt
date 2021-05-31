@@ -19,7 +19,7 @@ internal class NadelExecutionPlanFactory(
      * This derives an execution plan from with the main input parameters being the
      * [rootField] and [executionBlueprint].
      */
-    fun create(
+    suspend fun create(
         userContext: Any?,
         service: Service,
         rootField: NormalizedField,
@@ -28,7 +28,8 @@ internal class NadelExecutionPlanFactory(
         val relevantTypeRenames = mutableMapOf<String, NadelTypeRenameInstruction>()
 
         traverseQuery(rootField) { field ->
-            field.objectTypeNames.mapNotNull { executionBlueprint.typeInstructions[it] }.forEach { relevantTypeRenames[it.overallName] = it }
+            field.objectTypeNames.mapNotNull { executionBlueprint.typeInstructions[it] }
+                .forEach { relevantTypeRenames[it.overallName] = it }
 
             transforms.forEach { transform ->
                 val state = transform.isApplicable(userContext, overallSchema, executionBlueprint, service, field)
@@ -51,7 +52,7 @@ internal class NadelExecutionPlanFactory(
         )
     }
 
-    private fun traverseQuery(root: NormalizedField, consumer: (NormalizedField) -> Unit) {
+    private suspend fun traverseQuery(root: NormalizedField, consumer: suspend (NormalizedField) -> Unit) {
         consumer(root)
         root.children.forEach {
             traverseQuery(it, consumer)
