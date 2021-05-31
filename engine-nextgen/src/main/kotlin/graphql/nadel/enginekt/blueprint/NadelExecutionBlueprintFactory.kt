@@ -1,5 +1,6 @@
 package graphql.nadel.enginekt.blueprint
 
+import graphql.language.TypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
 import graphql.nadel.dsl.ExtendedFieldDefinition
@@ -15,7 +16,8 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrate
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.util.getFieldAt
-import graphql.nadel.enginekt.util.toMap
+import graphql.nadel.enginekt.util.mapFrom
+import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
@@ -24,22 +26,53 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
 import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
+internal typealias AnyTypeDefinition = TypeDefinition<*>
+
 internal object NadelExecutionBlueprintFactory {
     fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelExecutionBlueprint {
-        val typeRenameInstructions = createTypeRenameInstructions(overallSchema).toMap {
+        val typeRenameInstructions = createTypeRenameInstructions(overallSchema).strictAssociateBy {
             it.overallName
         }
-        val fieldInstructions = createInstructions(overallSchema, services).toMap {
+        val fieldInstructions = createFieldInstructions(overallSchema, services).strictAssociateBy {
             it.location
         }
 
+        val serviceTypeRenameInstructions = createServiceTypeRenameInstructions(services)
+
         return NadelExecutionBlueprint(
             fieldInstructions,
-            typeRenameInstructions,
+            NadelTypeRenameInstructions(
+                typeRenameInstructions,
+                serviceTypeRenameInstructions,
+            ),
         )
     }
 
-    private fun createInstructions(overallSchema: GraphQLSchema, services: List<Service>): List<NadelFieldInstruction> {
+    private fun createServiceTypeRenameInstructions(
+        services: List<Service>,
+    ): Map<String, NadelServiceTypeRenameInstructions> {
+        return mapFrom(
+            services.map { service ->
+                service.definitionRegistry.definitions
+                    .asSequence()
+                    .filterIsInstance<AnyTypeDefinition>()
+                    .mapNotNull { def ->
+                        createTypeRenameInstruction(def)
+                    }
+                    .strictAssociateBy {
+                        it.underlyingName
+                    }
+                    .let {
+                        service.name to NadelServiceTypeRenameInstructions(it)
+                    }
+            },
+        )
+    }
+
+    private fun createFieldInstructions(
+        overallSchema: GraphQLSchema,
+        services: List<Service>,
+    ): List<NadelFieldInstruction> {
         return overallSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLObjectType>()
@@ -133,23 +166,29 @@ internal object NadelExecutionBlueprintFactory {
         )
     }
 
-    private fun createTypeRenameInstructions(overallSchema: GraphQLSchema): Sequence<NadelTypeRenameInstruction> {
+    private fun createTypeRenameInstructions(
+        overallSchema: GraphQLSchema,
+    ): Sequence<NadelTypeRenameInstruction> {
         return overallSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLDirectiveContainer>()
+            .filter { it.definition is AnyTypeDefinition }
             .mapNotNull(this::createTypeRenameInstruction)
     }
 
     private fun createTypeRenameInstruction(type: GraphQLDirectiveContainer): NadelTypeRenameInstruction? {
-        return when (val def = type.definition) {
-            is ObjectTypeDefinitionWithTransformation -> createTypeRenameInstruction(def.typeMappingDefinition)
-            is InterfaceTypeDefinitionWithTransformation -> createTypeRenameInstruction(def.typeMappingDefinition)
-            is InputObjectTypeDefinitionWithTransformation -> createTypeRenameInstruction(def.typeMappingDefinition)
-            is EnumTypeDefinitionWithTransformation -> createTypeRenameInstruction(def.typeMappingDefinition)
-            else -> when (val typeMappingDef = NadelDirectives.createTypeMapping(type)) {
-                null -> null
-                else -> createTypeRenameInstruction(typeMappingDef)
-            }
+        // Create from the extended type definition or try lookup instruction metadata in the directives
+        return createTypeRenameInstruction(type.definition as AnyTypeDefinition)
+            ?: NadelDirectives.createTypeMapping(type)?.let(::createTypeRenameInstruction)
+    }
+
+    private fun createTypeRenameInstruction(definition: AnyTypeDefinition): NadelTypeRenameInstruction? {
+        return when (definition) {
+            is ObjectTypeDefinitionWithTransformation -> createTypeRenameInstruction(definition.typeMappingDefinition)
+            is InterfaceTypeDefinitionWithTransformation -> createTypeRenameInstruction(definition.typeMappingDefinition)
+            is InputObjectTypeDefinitionWithTransformation -> createTypeRenameInstruction(definition.typeMappingDefinition)
+            is EnumTypeDefinitionWithTransformation -> createTypeRenameInstruction(definition.typeMappingDefinition)
+            else -> null
         }
     }
 

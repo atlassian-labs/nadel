@@ -19,15 +19,15 @@ inline fun <reified T> Collection<*>.singleOfType(predicate: (T) -> Boolean = { 
     return singleOfTypeOrNull(predicate) as T
 }
 
-inline fun <K, E> Iterable<E>.toMap(crossinline keyExtractor: (E) -> K): Map<K, E> {
+inline fun <K, E> Iterable<E>.strictAssociateBy(crossinline keyExtractor: (E) -> K): Map<K, E> {
     return mapFrom(
         map {
             keyExtractor(it) to it
-        }
+        },
     )
 }
 
-inline fun <K, E> Sequence<E>.toMap(crossinline keyExtractor: (E) -> K): Map<K, E> {
+inline fun <K, E> Sequence<E>.strictAssociateBy(crossinline keyExtractor: (E) -> K): Map<K, E> {
     val map = mutableMapOf<K, E>()
     var count = 0
     forEach {

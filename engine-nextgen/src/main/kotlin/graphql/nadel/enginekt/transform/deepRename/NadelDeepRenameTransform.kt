@@ -1,5 +1,6 @@
 package graphql.nadel.enginekt.transform.deepRename
 
+import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
@@ -99,6 +100,10 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
          * ```
          */
         val alias: String,
+        /**
+         * Name of the deep rename field
+         */
+        val fieldName: String,
     )
 
     /**
@@ -126,8 +131,9 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
         return State(
             deepRenameInstructions,
-            "my_uuid"
+            alias = "my_uuid",
             // UUID.randomUUID().toString(),
+            fieldName = field.fieldName,
         )
     }
 
@@ -221,7 +227,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     ): NormalizedField {
         return newNormalizedField()
             .alias(getTypeNameResultKey(state))
-            .fieldName(Introspection.typeNameField)
+            .fieldName(Introspection.TypeNameMetaFieldDef.name)
             .objectTypeNames(instructions.keys.mapToArrayList { it.typeName })
             .build()
     }
@@ -252,7 +258,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         deepRename: NadelDeepRenameFieldInstruction,
     ): NormalizedField {
         val underlyingTypeName = fieldCoordinates.typeName.let { overallTypeName ->
-            blueprint.typeInstructions[overallTypeName]?.underlyingName ?: overallTypeName
+            blueprint.typeInstructions.getForOverall(overallTypeName)?.underlyingName ?: overallTypeName
         }
 
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
@@ -311,7 +317,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         return parentNodes.flatMap { parentNode ->
             @Suppress("UNCHECKED_CAST") // Ensure the result is a Map, return if null
             val parentMap = parentNode.value as JsonMap? ?: return@flatMap emptyList()
-            val instruction = getFieldInstructionFor(parentMap, state)
+            val instruction = getFieldInstructionFor(parentMap, state, service, executionBlueprint)
 
             val nodeToMove = JsonNodeExtractor.getNodesAt(parentNode, getPathOfNodeToMove(state, instruction))
                 .emptyOrSingle() ?: return@flatMap emptyList()
@@ -372,24 +378,27 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * @return the aliased value of the GraphQL introspection field `__typename`
      */
     private fun getTypeNameResultKey(state: State): String {
-        return state.alias + Introspection.typeNameField
+        return state.alias + Introspection.TypeNameMetaFieldDef.name
     }
 
     private fun getFieldInstructionFor(
         parentMap: JsonMap,
         state: State,
+        service: Service,
+        executionBlueprint: NadelExecutionBlueprint,
     ): NadelDeepRenameFieldInstruction {
-        // TODO: handle type renames
         // Note, we add a typename in transformField, so it should NEVER be null
-        val typeName = parentMap[getTypeNameResultKey(state)]
-            ?: error("Typename must never be null")
+        val underlyingTypeName = parentMap[getTypeNameResultKey(state)].let {
+            it ?: error("Type name must never be null")
+            it as String
+        }
 
-        val fieldName = state.instructions.keys.first().fieldName
-        return state.instructions[makeFieldCoordinates(typeName as String, fieldName)]
+        val typeName = executionBlueprint.typeInstructions.getForUnderlying(service, underlyingTypeName).let {
+            // If there is no rename instruction then the overall type name is the same as the underlying
+            it?.overallName ?: underlyingTypeName
+        }
+
+        return state.instructions[makeFieldCoordinates(typeName, state.fieldName)]
             ?: error("No instruction for '$typeName'")
     }
-}
-
-object Introspection {
-    const val typeNameField = "__typename"
 }
