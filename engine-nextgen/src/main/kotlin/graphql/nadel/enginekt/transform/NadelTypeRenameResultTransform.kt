@@ -14,47 +14,57 @@ import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
-
 internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameResultTransform.State> {
     data class State(
-        val typeRenamePath: QueryPath
+        val typeRenamePath: QueryPath,
     )
 
-    override fun isApplicable(userContext: Any?, overallSchema: GraphQLSchema, executionBlueprint: NadelExecutionBlueprint, service: Service, field: NormalizedField): State? {
-        if (field.fieldName != Introspection.TypeNameMetaFieldDef.name) {
-            return null
+    override fun isApplicable(
+        userContext: Any?,
+        overallSchema: GraphQLSchema,
+        executionBlueprint: NadelExecutionBlueprint,
+        service: Service,
+        field: NormalizedField,
+    ): State? {
+        return if (field.fieldName == Introspection.TypeNameMetaFieldDef.name) {
+            State(
+                typeRenamePath = QueryPath(field.listOfResultKeys),
+            )
+        } else {
+            null
         }
-        return State(
-            typeRenamePath = QueryPath(field.listOfResultKeys)
-        )
     }
 
-    override fun transformField(transformer: NadelQueryTransformer.Continuation,
-                                service: Service,
-                                overallSchema: GraphQLSchema,
-                                executionPlan: NadelExecutionPlan,
-                                field: NormalizedField,
-                                state: State): NadelTransformFieldResult {
+    override fun transformField(
+        transformer: NadelQueryTransformer.Continuation,
+        service: Service,
+        overallSchema: GraphQLSchema,
+        executionPlan: NadelExecutionPlan,
+        field: NormalizedField,
+        state: State,
+    ): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
     }
 
-    override fun getResultInstructions(userContext: Any?,
-                                       overallSchema: GraphQLSchema,
-                                       executionPlan: NadelExecutionPlan,
-                                       service: Service,
-                                       field: NormalizedField,
-                                       result: ServiceExecutionResult,
-                                       state: State): List<NadelResultInstruction> {
+    override fun getResultInstructions(
+        userContext: Any?,
+        overallSchema: GraphQLSchema,
+        executionPlan: NadelExecutionPlan,
+        service: Service,
+        field: NormalizedField,
+        result: ServiceExecutionResult,
+        state: State,
+    ): List<NadelResultInstruction> {
         val nodes = JsonNodeExtractor.getNodesAt(
             result.data,
-            field.listOfResultKeys,
+            state.typeRenamePath.segments,
             flatten = true,
         )
+
         return nodes.map {
             val underlyingTypeName = it.value as String
             val overallTypeName = executionPlan.getOverallTypeName(underlyingTypeName)
-            return@map NadelResultInstruction.Set(it.path, overallTypeName)
+            NadelResultInstruction.Set(it.path, overallTypeName)
         }
     }
-
 }
