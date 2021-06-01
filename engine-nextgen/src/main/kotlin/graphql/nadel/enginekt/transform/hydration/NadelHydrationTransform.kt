@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform.hydration
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
+import graphql.language.AstPrinter
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
@@ -12,7 +13,6 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSou
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
-import graphql.nadel.enginekt.transform.query.NadelPathToField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.NadelTransform
 import graphql.nadel.enginekt.transform.query.NadelTransformFieldResult
@@ -20,8 +20,10 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
+import graphql.nadel.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedField.newNormalizedField
+import graphql.normalized.NormalizedQueryToAstCompiler
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
 import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
@@ -73,6 +75,9 @@ internal class NadelHydrationTransform(
             newField = null,
             extraFields = state.instructions.flatMap { (fieldCoordinates, instruction) ->
                 NadelHydrationFieldsBuilder.getExtraFields(service, executionPlan, fieldCoordinates, instruction)
+                    .map {
+                        it.toBuilder().alias(getArtificialFieldResultKey(state, it)).build()
+                    }
             } + makeTypeNameField(state),
         )
     }
@@ -137,30 +142,25 @@ internal class NadelHydrationTransform(
         )
 
         // Do nothing if there is no hydration instruction associated with this result
-        instruction ?: return emptyList()
-
-        val sourceField = NadelPathToField.createField(
-            schema = instruction.sourceService.underlyingSchema,
-            parentType = instruction.sourceService.underlyingSchema.queryType,
-            pathToField = instruction.pathToSourceField,
-            fieldArguments = NadelHydrationArgumentsBuilder.createSourceFieldArgs(
-                instruction,
-                parentNode,
-                hydrationField,
-            ),
-            fieldChildren = hydrationField.children,
-        )
+        instruction ?: return makeTeardownInstructions(state, parentNode)
 
         val result = engine.executeHydration(
             service = instruction.sourceService,
-            topLevelField = sourceField,
+            topLevelField = NadelHydrationQueryBuilder.getQuery(
+                instruction = instruction,
+                hydrationField = hydrationField,
+                parentNode = parentNode,
+                pathToResultKeys = { path ->
+                    mapFieldPathToResultKeys(state, path)
+                },
+            ),
             pathToSourceField = instruction.pathToSourceField,
             executionContext = executionContext,
         )
 
         val data = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryResultKeyPath = instruction.pathToSourceField
+            queryResultKeyPath = instruction.pathToSourceField,
         ).emptyOrSingle()
 
         return listOf(
@@ -168,17 +168,55 @@ internal class NadelHydrationTransform(
                 subjectPath = parentNode.path + hydrationField.resultKey,
                 newValue = data?.value,
             ),
-        ) + instruction.arguments
-            .asSequence()
-            .map { it.valueSource }
-            .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
-            .map {
-                NadelResultInstruction.Remove(
-                    subjectPath = parentNode.path + it.pathToField.first(),
-                )
-            } + NadelResultInstruction.Remove(
+        ) + makeTeardownInstructions(state, parentNode)
+    }
+
+    private fun makeTeardownInstructions(
+        state: State,
+        parentNode: JsonNode,
+    ): List<NadelResultInstruction> {
+        val removeTypeName = NadelResultInstruction.Remove(
             subjectPath = parentNode.path + getTypeNameResultKey(state),
         )
+
+        // TODO: we really need the automatic tracking and deletion of artificial fields
+        // We should NOT be duplicating logic here to determine which fields were added
+        // Alternatively we should track artificial fields in the State, but less than ideal for the transform API
+        return state.instructions.values
+            .asSequence()
+            .flatMap { instruction ->
+                instruction.arguments
+                    .asSequence()
+                    .map { it.valueSource }
+                    .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
+                    .map {
+                        NadelResultInstruction.Remove(
+                            subjectPath = parentNode.path + getArtificialFieldResultKey(
+                                state,
+                                fieldName = it.pathToField.first(),
+                            ),
+                        )
+                    }
+            }
+            .toList() + removeTypeName
+    }
+
+    private fun mapFieldPathToResultKeys(state: State, path: List<String>): List<String> {
+        return path.mapIndexed { index, segment ->
+            if (index == 0) {
+                getArtificialFieldResultKey(state, segment)
+            } else {
+                segment
+            }
+        }
+    }
+
+    private fun getArtificialFieldResultKey(state: State, field: NormalizedField): String {
+        return getArtificialFieldResultKey(state, fieldName = field.name)
+    }
+
+    private fun getArtificialFieldResultKey(state: State, fieldName: String): String {
+        return state.alias + "__" + fieldName
     }
 
     /**
@@ -187,7 +225,7 @@ internal class NadelHydrationTransform(
      * @return the aliased value of the GraphQL introspection field `__typename`
      */
     private fun getTypeNameResultKey(state: State): String {
-        return state.alias + TypeNameMetaFieldDef.name
+        return TypeNameMetaFieldDef.name + "__" + state.alias
     }
 
     /**
@@ -198,7 +236,11 @@ internal class NadelHydrationTransform(
         state: State,
         executionPlan: NadelExecutionPlan,
     ): NadelHydrationFieldInstruction? {
-        val overallTypeName = NadelTransformUtil.getOverallTypename(executionPlan, parentNode)
+        val overallTypeName = NadelTransformUtil.getOverallTypename(
+            executionPlan = executionPlan,
+            node = parentNode,
+            typeNameResultKey = getTypeNameResultKey(state),
+        )
         return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
     }
 }

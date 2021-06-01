@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.transform.query
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
+import graphql.nadel.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
@@ -16,32 +17,47 @@ class NadelQueryTransformer internal constructor(
         suspend fun transform(fields: List<NormalizedField>): List<NormalizedField>
     }
 
+    internal data class TransformContext(
+        val extraFields: MutableList<NormalizedField>,
+    )
+
+    data class TransformResult(
+        /**
+         * The transformed fields.
+         */
+        val result: List<NormalizedField>,
+        /**
+         * A list of fields that were added to the query that do not belong in the overall result.
+         */
+        val artificialFields: List<NormalizedField>,
+    )
+
     suspend fun transformQuery(
         service: Service,
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
-        return transformField(service, field, executionPlan).also { rootFields ->
+        val context = TransformContext(extraFields = mutableListOf())
+
+        return transformField(context, executionPlan, service, field).also { rootFields ->
             fixParentRefs(parent = null, rootFields)
         }
     }
 
     private suspend fun transformField(
+        context: TransformContext,
+        executionPlan: NadelExecutionPlan,
         service: Service,
         field: NormalizedField,
-        executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
         val transformationSteps = executionPlan.transformationSteps[field] ?: return listOf(
             field.let {
-                // Cannot inline this as transform lambda is not a coroutine
-                val transformedChildFields = transformFields(service, it.children, executionPlan)
-                it.transform { builder ->
-                    builder.clearObjectTypesNames()
-                    builder.objectTypeNames(field.objectTypeNames.map { overallTypeName ->
-                        executionPlan.typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
-                    })
-                    builder.children(transformedChildFields)
-                }
+                val transformedChildFields = transformFields(context, service, it.children, executionPlan)
+                it.toBuilder()
+                    .clearObjectTypesNames()
+                    .objectTypeNames(field.objectTypeNames.map(executionPlan::getUnderlyingTypeName))
+                    .children(transformedChildFields)
+                    .build()
             }
         )
 
@@ -61,7 +77,7 @@ class NadelQueryTransformer internal constructor(
         val transformation = transformationSteps.single()
         val continuation = object : Continuation {
             override suspend fun transform(fields: List<NormalizedField>): List<NormalizedField> {
-                return transformFields(service, fields, executionPlan)
+                return transformFields(context, service, fields, executionPlan)
             }
         }
         val transformResult = transformation.transform.transformField(
@@ -79,6 +95,9 @@ class NadelQueryTransformer internal constructor(
                 else -> fields + newField
             }
         }
+
+        context.extraFields.addAll(transformResult.extraFields)
+
         return patchObjectTypeNames(result, executionPlan)
     }
 
@@ -87,12 +106,10 @@ class NadelQueryTransformer internal constructor(
         executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
         return fields.map { field ->
-            field.transform { builder ->
-                builder.clearObjectTypesNames()
-                builder.objectTypeNames(field.objectTypeNames.map {
-                    executionPlan.typeRenames[it]?.underlyingName ?: it
-                })
-            }
+            field.toBuilder()
+                .clearObjectTypesNames()
+                .objectTypeNames(field.objectTypeNames.map(executionPlan::getUnderlyingTypeName))
+                .build()
         }
     }
 
@@ -100,12 +117,13 @@ class NadelQueryTransformer internal constructor(
      * Helper for calling [transformField] for all the given [fields].
      */
     private suspend fun transformFields(
+        context: TransformContext,
         service: Service,
         fields: List<NormalizedField>,
         executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
         return fields.flatMap {
-            transformField(service, it, executionPlan)
+            transformField(context, executionPlan, service, it)
         }
     }
 
@@ -121,9 +139,7 @@ class NadelQueryTransformer internal constructor(
 
     companion object {
         fun create(overallSchema: GraphQLSchema): NadelQueryTransformer {
-            return NadelQueryTransformer(
-                overallSchema,
-            )
+            return NadelQueryTransformer(overallSchema)
         }
     }
 }

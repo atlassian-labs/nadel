@@ -177,14 +177,14 @@ class NadelE2ETest extends Specification {
             }
          }
         """, UserService: """
-         service UserService {
+        service UserService {
             type Query {
                 userById(userId: ID!): User
             } 
             type User {
                 id: ID!
             }
-         }
+        }
         """]
         def issueUnderlyingSchema = """
             type Query {
@@ -217,17 +217,17 @@ class NadelE2ETest extends Specification {
     ... on Query {
         issue {
             ... on Issue {
-                authorId
+                hydration_uuid__authorId: authorId
             }
             ... on Issue {
-                hydration_uuid__typename: __typename
+                __typename__hydration_uuid: __typename
             }
         }
     }
 }""")): [
                         issue: [
-                                hydration_uuid__typename: "Issue",
-                                authorId                : "user-1",
+                                __typename__hydration_uuid: "Issue",
+                                hydration_uuid__authorId  : "user-1",
                         ],
                 ],
         ]

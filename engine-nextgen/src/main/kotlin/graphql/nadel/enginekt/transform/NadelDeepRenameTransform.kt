@@ -407,7 +407,11 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         state: State,
         executionPlan: NadelExecutionPlan,
     ): NadelDeepRenameFieldInstruction? {
-        val overallTypeName = NadelTransformUtil.getOverallTypename(executionPlan, parentNode)
+        val overallTypeName = NadelTransformUtil.getOverallTypename(
+            executionPlan = executionPlan,
+            node = parentNode,
+            typeNameResultKey = getTypeNameResultKey(state),
+        )
         return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
     }
 }
