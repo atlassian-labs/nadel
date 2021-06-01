@@ -7,9 +7,6 @@ import graphql.normalized.NormalizedField
 
 internal typealias AnyNadelExecutionPlanStep = NadelExecutionPlan.Step<Any>
 
-/**
- * Currently per service. TODO: we should have an overall execution plan.
- */
 data class NadelExecutionPlan(
     // this is a map for overall Fields
     val transformationSteps: Map<NormalizedField, List<AnyNadelExecutionPlanStep>>,
@@ -35,6 +32,24 @@ data class NadelExecutionPlan(
 
     fun getUnderlyingTypeName(overallTypeName: String): String {
         return typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
+    }
+
+    /**
+     * Creates and returns a new [NadelExecutionPlan] that is a merging of `this` plan
+     * and the [other] plan.
+     */
+    fun merge(other: NadelExecutionPlan): NadelExecutionPlan {
+        val newSteps = transformationSteps.toMutableMap()
+        other.transformationSteps.forEach { (field, steps) ->
+            newSteps.compute(field) { _, oldSteps ->
+                oldSteps?.let { it + steps } ?: steps
+            }
+        }
+
+        return copy(
+            transformationSteps = transformationSteps + other.transformationSteps,
+            typeRenames = typeRenames + typeRenames,
+        )
     }
 }
 

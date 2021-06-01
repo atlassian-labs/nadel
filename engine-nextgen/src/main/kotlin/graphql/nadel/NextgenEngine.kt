@@ -9,6 +9,7 @@ import graphql.language.NodeUtil
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
+import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
@@ -117,27 +118,20 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             it.children.single()
         }
 
+        // Creates N plans for the children then merges them together into one big plan
         val executionPlan = sourceField.children.map {
             executionPlanner.create(executionContext, services, service, topLevelField)
-        }.reduce { acc, plan ->
-            val newSteps = acc.transformationSteps.toMutableMap()
-            plan.transformationSteps.forEach { (field, steps) ->
-                newSteps.compute(field) { _, oldSteps ->
-                    oldSteps?.let { it + steps } ?: steps
-                }
-            }
+        }.reduce(NadelExecutionPlan::merge)
 
-            acc.copy(
-                transformationSteps = acc.transformationSteps + plan.transformationSteps,
-                typeRenames = acc.typeRenames + acc.typeRenames,
-            )
-        }
-
-        val sourceFieldWithTransformedChildren = sourceField.setChildren(
+        // Transform the children of the source field
+        // The source field itself is already transformed
+        val sourceFieldWithTransformedChildren = sourceField.copyWithChildren(
             sourceField.children.flatMap {
                 queryTransformer.transformQuery(service, field = it, executionPlan)
             },
         )
+
+        // Get to the top level field again using .parent N times on the new source field
         val transformedQuery: NormalizedField = fold(
             initial = sourceFieldWithTransformedChildren,
             count = pathToSourceField.size - 1,
@@ -203,7 +197,7 @@ fun NormalizedField.toBuilder(): NormalizedField.Builder {
     return builder!!
 }
 
-fun NormalizedField.setChildren(children: List<NormalizedField>): NormalizedField {
+fun NormalizedField.copyWithChildren(children: List<NormalizedField>): NormalizedField {
     fun fixParents(old: NormalizedField?, new: NormalizedField?) {
         if (old == null || new == null || new.parent == null) {
             return
