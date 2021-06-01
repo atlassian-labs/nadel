@@ -7,8 +7,8 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.language.NodeUtil
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
+import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
-import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
@@ -81,14 +81,13 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         operationKind: OperationKind,
         executionInput: ExecutionInput,
     ): ExecutionResult {
-        // todo: we need to support different services on the second level
-        val topLevelFieldInfo = fieldInfos.getFieldInfo(operationKind, topLevelField.name)
-            ?: throw UnsupportedOperationException("Unknown top level field ${operationKind.displayName}.${topLevelField.name}")
-        val service = topLevelFieldInfo.service
+        val service = getService(topLevelField, operationKind)
 
-        val executionPlan = executionPlanner.create(executionInput.context, services, service, topLevelField)
-        val result = executeService(service, executionPlan, topLevelField, executionInput)
-        val executionResult = resultTransformer.transform(executionInput.context, executionPlan, service, result)
+        val executionContext = NadelExecutionContext(executionInput)
+        val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
+        val transformedQuery = queryTransformer.transformQuery(service, topLevelField, executionPlan).single()
+        val result = executeService(service, transformedQuery, executionInput)
+        val executionResult = resultTransformer.transform(executionContext, executionPlan, service, result)
 
         @Suppress("UNCHECKED_CAST")
         return ExecutionResultImpl.newExecutionResult()
@@ -98,16 +97,63 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             .build()
     }
 
-    internal fun executeHydration() {
+    private fun getService(
+        topLevelField: NormalizedField,
+        operationKind: OperationKind,
+    ): Service {
+        // TODO: we need to support different services on the second level
+        val topLevelFieldInfo = fieldInfos.getFieldInfo(operationKind, topLevelField.name)
+            ?: error("Unknown top level field ${operationKind.displayName}.${topLevelField.name}")
+        return topLevelFieldInfo.service
+    }
+
+    internal suspend fun executeHydration(
+        service: Service,
+        topLevelField: NormalizedField,
+        pathToSourceField: List<String>,
+        executionContext: NadelExecutionContext,
+    ): ServiceExecutionResult {
+        val sourceField = fold(initial = topLevelField, count = pathToSourceField.size - 1) {
+            it.children.single()
+        }
+
+        val executionPlan = sourceField.children.map {
+            executionPlanner.create(executionContext, services, service, topLevelField)
+        }.reduce { acc, plan ->
+            val newSteps = acc.transformationSteps.toMutableMap()
+            plan.transformationSteps.forEach { (field, steps) ->
+                newSteps.compute(field) { _, oldSteps ->
+                    oldSteps?.let { it + steps } ?: steps
+                }
+            }
+
+            acc.copy(
+                transformationSteps = acc.transformationSteps + plan.transformationSteps,
+                typeRenames = acc.typeRenames + acc.typeRenames,
+            )
+        }
+
+        val sourceFieldWithTransformedChildren = sourceField.setChildren(
+            sourceField.children.flatMap {
+                queryTransformer.transformQuery(service, field = it, executionPlan)
+            },
+        )
+        val transformedQuery: NormalizedField = fold(
+            initial = sourceFieldWithTransformedChildren,
+            count = pathToSourceField.size - 1,
+        ) {
+            it.parent ?: error("No parent")
+        }
+
+        val result = executeService(service, transformedQuery, executionContext.executionInput)
+        return resultTransformer.transform(executionContext, executionPlan, service, result)
     }
 
     private suspend fun executeService(
         service: Service,
-        executionPlan: NadelExecutionPlan,
-        topLevelField: NormalizedField,
+        transformedQuery: NormalizedField,
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
-        val transformedQuery = queryTransformer.transformQuery(service, topLevelField, executionPlan).single()
         val document = compileToDocument(listOf(transformedQuery))
 
         return service.serviceExecution.execute(
@@ -141,4 +187,39 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             return Nadel.Builder().engineFactory(::NextgenEngine)
         }
     }
+}
+
+fun <T> fold(initial: T, count: Int, transform: (T) -> T): T {
+    var element = initial
+    for (i in 1..count) {
+        element = transform(element)
+    }
+    return element
+}
+
+fun NormalizedField.toBuilder(): NormalizedField.Builder {
+    var builder: NormalizedField.Builder? = null
+    transform { builder = it }
+    return builder!!
+}
+
+fun NormalizedField.setChildren(children: List<NormalizedField>): NormalizedField {
+    fun fixParents(old: NormalizedField?, new: NormalizedField?) {
+        if (old == null || new == null || new.parent == null) {
+            return
+        }
+        val newParent = new.parent.toBuilder()
+            .children(old.parent.children.filter { it !== old } + new)
+            .build()
+        new.replaceParent(newParent)
+        // Do recursively for all ancestors
+        fixParents(old = old.parent, new = newParent)
+    }
+
+    return toBuilder()
+        .children(children)
+        .build()
+        .also {
+            fixParents(old = this, new = it)
+        }
 }

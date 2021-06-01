@@ -3,6 +3,7 @@ package graphql.nadel.enginekt.transform
 import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
@@ -20,7 +21,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
     )
 
     override suspend fun isApplicable(
-        userContext: Any?,
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
         services: Map<String, Service>,
@@ -48,7 +49,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
     }
 
     override suspend fun getResultInstructions(
-        userContext: Any?,
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,

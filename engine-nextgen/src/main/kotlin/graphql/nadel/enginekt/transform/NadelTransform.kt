@@ -3,6 +3,7 @@ package graphql.nadel.enginekt.transform.query
 import graphql.language.Directive
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
@@ -33,7 +34,7 @@ interface NadelTransform<State : Any> {
      * @return null if the [NadelTransform] should not run, non-null [State] otherwise
      */
     suspend fun isApplicable(
-        userContext: Any?,
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
         services: Map<String, Service>,
@@ -64,7 +65,7 @@ interface NadelTransform<State : Any> {
      * Return a [List] of [NadelResultInstruction]s to modify the result.
      */
     suspend fun getResultInstructions(
-        userContext: Any?,
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,

@@ -227,7 +227,7 @@ class NadelE2ETest extends Specification {
 }""")): [
                         issue: [
                                 hydration_uuid__typename: "Issue",
-                                authorId: "user-1",
+                                authorId                : "user-1",
                         ],
                 ],
         ]
@@ -248,7 +248,7 @@ class NadelE2ETest extends Specification {
                 ],
         ]
 
-        def overallResponse = [issue: [name: "My Issue"]]
+        def overallResponse = [issue: [author: [id: "user-1"]]]
 
         Map response
         List<GraphQLError> errors

@@ -1,7 +1,6 @@
 package graphql.nadel.enginekt.transform.query
 
 import graphql.nadel.Service
-import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
@@ -32,7 +31,6 @@ class NadelQueryTransformer internal constructor(
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
-
         val transformationSteps = executionPlan.transformationSteps[field] ?: return listOf(
             field.let {
                 // Cannot inline this as transform lambda is not a coroutine

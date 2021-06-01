@@ -6,7 +6,6 @@ import graphql.language.IntValue
 import graphql.language.NullValue
 import graphql.language.StringValue
 import graphql.language.Value
-import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtils.getSourceFieldDefinition

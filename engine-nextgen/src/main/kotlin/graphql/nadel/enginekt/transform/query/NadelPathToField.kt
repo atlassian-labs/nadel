@@ -108,5 +108,11 @@ object NadelPathToField {
                 }
             )
             .build()
+            .also { field ->
+                // Set parents correctly
+                field.children.forEach { child ->
+                    child.replaceParent(field)
+                }
+            }
     }
 }

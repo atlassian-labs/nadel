@@ -18,7 +18,7 @@ data class NadelHydrationFieldInstruction(
 
 data class NadelBatchHydrationFieldInstruction(
     override val location: FieldCoordinates,
-    val sourceService: String,
+    val sourceService: Service,
     val pathToSourceField: List<String>,
     val arguments: List<NadelHydrationArgument>,
     val batchSize: Int,

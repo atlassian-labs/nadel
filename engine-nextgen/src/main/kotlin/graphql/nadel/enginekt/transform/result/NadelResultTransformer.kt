@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.transform.result
 
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer.DataMutation
 import graphql.nadel.enginekt.transform.result.json.AnyJsonNodePathSegment
@@ -20,7 +21,7 @@ internal class NadelResultTransformer(
     private val overallSchema: GraphQLSchema,
 ) {
     suspend fun transform(
-        userContext: Any?,
+        executionContext: NadelExecutionContext,
         executionPlan: NadelExecutionPlan,
         service: Service,
         result: ServiceExecutionResult,
@@ -28,7 +29,7 @@ internal class NadelResultTransformer(
         val instructions = executionPlan.transformationSteps.flatMap { (field, steps) ->
             steps.flatMap { step ->
                 step.transform.getResultInstructions(
-                    userContext,
+                    executionContext,
                     overallSchema,
                     executionPlan,
                     service,

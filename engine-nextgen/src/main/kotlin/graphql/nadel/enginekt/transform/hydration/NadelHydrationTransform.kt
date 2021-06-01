@@ -1,13 +1,14 @@
 package graphql.nadel.enginekt.transform.hydration
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
-import graphql.language.AstPrinter
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.NadelPathToField
@@ -18,11 +19,9 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.enginekt.util.mapToArrayList
-import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedField.newNormalizedField
-import graphql.normalized.NormalizedQueryToAstCompiler
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
 import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
@@ -41,7 +40,7 @@ internal class NadelHydrationTransform(
     )
 
     override suspend fun isApplicable(
-        userContext: Any?,
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
         services: Map<String, Service>,
@@ -94,12 +93,12 @@ internal class NadelHydrationTransform(
         return newNormalizedField()
             .alias(getTypeNameResultKey(state))
             .fieldName(TypeNameMetaFieldDef.name)
-            .objectTypeNames(state.instructions.keys.mapToArrayList { it.typeName })
+            .objectTypeNames(state.instructions.keys.map { it.typeName })
             .build()
     }
 
     override suspend fun getResultInstructions(
-        userContext: Any?,
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,
@@ -119,15 +118,17 @@ internal class NadelHydrationTransform(
                 state = state,
                 executionPlan = executionPlan,
                 hydrationField = field,
+                executionContext = executionContext,
             )
         }
     }
 
-    private fun hydrate(
+    private suspend fun hydrate(
         parentNode: JsonNode,
         state: State,
         executionPlan: NadelExecutionPlan,
         hydrationField: NormalizedField, // Field asking for hydration from the overall query
+        executionContext: NadelExecutionContext,
     ): List<NadelResultInstruction> {
         @Suppress("UNCHECKED_CAST")
         val instruction = getMatchingInstruction(
@@ -148,16 +149,34 @@ internal class NadelHydrationTransform(
             fieldChildren = hydrationField.children,
         )
 
-        // TODO: execute it
-        println(
-            AstPrinter.printAst(
-                NormalizedQueryToAstCompiler.compileToDocument(
-                    listOf(sourceField),
-                ),
-            ),
+        val result = engine.executeHydration(
+            service = instruction.sourceService,
+            topLevelField = sourceField,
+            pathToSourceField = instruction.pathToSourceField,
+            executionContext = executionContext,
         )
 
-        return emptyList()
+        val data = JsonNodeExtractor.getNodesAt(
+            data = result.data,
+            queryResultKeyPath = instruction.pathToSourceField
+        ).emptyOrSingle()
+
+        return listOf(
+            NadelResultInstruction.Set(
+                subjectPath = parentNode.path + hydrationField.resultKey,
+                newValue = data?.value,
+            ),
+        ) + instruction.arguments
+            .asSequence()
+            .map { it.valueSource }
+            .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
+            .map {
+                NadelResultInstruction.Remove(
+                    subjectPath = parentNode.path + it.pathToField.first(),
+                )
+            } + NadelResultInstruction.Remove(
+            subjectPath = parentNode.path + getTypeNameResultKey(state),
+        )
     }
 
     /**

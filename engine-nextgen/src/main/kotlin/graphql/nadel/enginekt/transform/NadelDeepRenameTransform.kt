@@ -3,6 +3,7 @@ package graphql.nadel.enginekt.transform
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
@@ -109,7 +110,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * Creates a state with the deep rename instructions and the transform alias.
      */
     override suspend fun isApplicable(
-        userContext: Any?,
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
         services: Map<String, Service>,
@@ -292,7 +293,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * ```
      */
     override suspend fun getResultInstructions(
-        userContext: Any?,
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,
