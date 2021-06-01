@@ -47,7 +47,7 @@ data class NadelExecutionPlan(
         }
 
         return copy(
-            transformationSteps = transformationSteps + other.transformationSteps,
+            transformationSteps = newSteps,
             typeRenames = typeRenames + typeRenames,
         )
     }
