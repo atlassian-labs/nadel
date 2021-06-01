@@ -120,7 +120,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
         // Creates N plans for the children then merges them together into one big plan
         val executionPlan = sourceField.children.map {
-            executionPlanner.create(executionContext, services, service, topLevelField)
+            executionPlanner.create(executionContext, services, service, rootField = it)
         }.reduce(NadelExecutionPlan::merge)
 
         // Transform the children of the source field
