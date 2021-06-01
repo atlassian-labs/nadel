@@ -36,12 +36,17 @@ class NadelQueryTransformer internal constructor(
         service: Service,
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
-    ): List<NormalizedField> {
+    ): TransformResult {
         val context = TransformContext(extraFields = mutableListOf())
 
-        return transformField(context, executionPlan, service, field).also { rootFields ->
+        val result = transformField(context, executionPlan, service, field).also { rootFields ->
             fixParentRefs(parent = null, rootFields)
         }
+
+        return TransformResult(
+            result = result,
+            artificialFields = context.extraFields,
+        )
     }
 
     private suspend fun transformField(
@@ -89,16 +94,10 @@ class NadelQueryTransformer internal constructor(
             transformation.state,
         )
 
-        val result = transformResult.extraFields.let { fields ->
-            when (val newField = transformResult.newField) {
-                null -> fields
-                else -> fields + newField
-            }
-        }
-
-        context.extraFields.addAll(transformResult.extraFields)
-
-        return patchObjectTypeNames(result, executionPlan)
+        val patchedArtificialFields = patchObjectTypeNames(transformResult.extraFields, executionPlan)
+        val patchedNewField = patchObjectTypeNames(listOfNotNull(transformResult.newField), executionPlan)
+        context.extraFields.addAll(patchedArtificialFields)
+        return patchedArtificialFields + patchedNewField
     }
 
     private fun patchObjectTypeNames(

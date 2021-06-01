@@ -86,9 +86,16 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
         val executionContext = NadelExecutionContext(executionInput)
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
-        val transformedQuery = queryTransformer.transformQuery(service, topLevelField, executionPlan).single()
+        val queryTransformerResult = queryTransformer.transformQuery(service, topLevelField, executionPlan)
+        val transformedQuery = queryTransformerResult.result.single()
         val result = executeService(service, transformedQuery, executionInput)
-        val executionResult = resultTransformer.transform(executionContext, executionPlan, service, result)
+        val executionResult = resultTransformer.transform(
+            executionContext = executionContext,
+            executionPlan = executionPlan,
+            artificialFields = queryTransformerResult.artificialFields,
+            service = service,
+            result = result,
+        )
 
         @Suppress("UNCHECKED_CAST")
         return ExecutionResultImpl.newExecutionResult()
@@ -123,11 +130,17 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             executionPlanner.create(executionContext, services, service, rootField = it)
         }.reduce(NadelExecutionPlan::merge)
 
+        val artificialFields = mutableListOf<NormalizedField>()
+
         // Transform the children of the source field
         // The source field itself is already transformed
         val sourceFieldWithTransformedChildren = sourceField.copyWithChildren(
-            sourceField.children.flatMap {
-                queryTransformer.transformQuery(service, field = it, executionPlan)
+            sourceField.children.flatMap { childField ->
+                queryTransformer.transformQuery(service, field = childField, executionPlan)
+                    .let {
+                        artificialFields.addAll(it.artificialFields)
+                        it.result
+                    }
             },
         )
 
@@ -140,7 +153,13 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         }
 
         val result = executeService(service, transformedQuery, executionContext.executionInput)
-        return resultTransformer.transform(executionContext, executionPlan, service, result)
+        return resultTransformer.transform(
+            executionContext = executionContext,
+            executionPlan = executionPlan,
+            artificialFields = artificialFields,
+            service = service,
+            result = result,
+        )
     }
 
     private suspend fun executeService(

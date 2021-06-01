@@ -7,6 +7,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer.DataMutation
 import graphql.nadel.enginekt.transform.result.json.AnyJsonNodePathSegment
 import graphql.nadel.enginekt.transform.result.json.JsonNode
+import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.transform.result.json.JsonNodePath
 import graphql.nadel.enginekt.transform.result.json.JsonNodePathSegment
 import graphql.nadel.enginekt.util.AnyList
@@ -14,6 +15,7 @@ import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.AnyMutableList
 import graphql.nadel.enginekt.util.AnyMutableMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 import kotlin.reflect.KClass
 
@@ -23,6 +25,7 @@ internal class NadelResultTransformer(
     suspend fun transform(
         executionContext: NadelExecutionContext,
         executionPlan: NadelExecutionPlan,
+        artificialFields: List<NormalizedField>,
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
@@ -38,7 +41,7 @@ internal class NadelResultTransformer(
                     step.state,
                 )
             }
-        }
+        } + getRemoveArtificialFieldInstructions(result, artificialFields)
 
         mutate(result, instructions)
 
@@ -110,6 +113,23 @@ internal class NadelResultTransformer(
 
     private fun interface DataMutation {
         fun run()
+    }
+
+    private fun getRemoveArtificialFieldInstructions(
+        result: ServiceExecutionResult,
+        artificialFields: List<NormalizedField>,
+    ): List<NadelResultInstruction> {
+        return artificialFields.flatMap { field ->
+            JsonNodeExtractor.getNodesAt(
+                data = result.data,
+                queryResultKeyPath = field.listOfResultKeys,
+                flatten = true,
+            ).map { jsonNode ->
+                NadelResultInstruction.Remove(
+                    subjectPath = jsonNode.path,
+                )
+            }
+        }
     }
 }
 

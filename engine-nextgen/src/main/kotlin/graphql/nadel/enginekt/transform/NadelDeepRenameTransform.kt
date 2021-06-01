@@ -313,7 +313,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
         return parentNodes.flatMap { parentNode ->
             val deepRenameInstruction = getMatchingDeepRenameInstruction(parentNode, state, executionPlan)
-                ?: return@flatMap makeRemoveFieldInstructions(state, parentNode)
+                ?: return@flatMap emptyList()
 
             val nodeToMove = getNodesAt(parentNode, getPathOfNodeToMove(state, deepRenameInstruction))
                 .emptyOrSingle() ?: return@flatMap emptyList()
@@ -322,36 +322,9 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                 NadelResultInstruction.Copy(
                     subjectPath = nodeToMove.path,
                     destinationPath = parentNode.path + field.resultKey,
-                ),
-            ) + makeRemoveFieldInstructions(state, parentNode, deepRenameInstruction)
-        }
-    }
-
-    /**
-     * Cleans up the [parentNode] by removing fields that were added by this transform.
-     */
-    private fun makeRemoveFieldInstructions(
-        state: State,
-        parentNode: JsonNode,
-        deepRenameInstruction: NadelDeepRenameFieldInstruction? = null,
-    ): List<NadelResultInstruction.Remove> {
-        return listOf(
-            // Removes __typename
-            NadelResultInstruction.Remove(
-                subjectPath = parentNode.path + getTypeNameResultKey(state),
-            ),
-        ) + if (deepRenameInstruction != null) {
-            listOf(
-                NadelResultInstruction.Remove(
-                    subjectPath = parentNode.path + getFirstFieldResultKey(state, deepRenameInstruction),
                 )
+                ,
             )
-        } else {
-            state.instructions.values.map { instruction ->
-                NadelResultInstruction.Remove(
-                    subjectPath = parentNode.path + getFirstFieldResultKey(state, instruction),
-                )
-            }
         }
     }
 

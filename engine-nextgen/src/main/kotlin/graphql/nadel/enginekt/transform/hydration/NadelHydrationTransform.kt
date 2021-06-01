@@ -1,7 +1,6 @@
 package graphql.nadel.enginekt.transform.hydration
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
-import graphql.language.AstPrinter
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
@@ -23,7 +22,6 @@ import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedField.newNormalizedField
-import graphql.normalized.NormalizedQueryToAstCompiler
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
 import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
@@ -142,7 +140,7 @@ internal class NadelHydrationTransform(
         )
 
         // Do nothing if there is no hydration instruction associated with this result
-        instruction ?: return makeTeardownInstructions(state, parentNode)
+        instruction ?: return emptyList()
 
         val result = engine.executeHydration(
             service = instruction.sourceService,
@@ -168,37 +166,7 @@ internal class NadelHydrationTransform(
                 subjectPath = parentNode.path + hydrationField.resultKey,
                 newValue = data?.value,
             ),
-        ) + makeTeardownInstructions(state, parentNode)
-    }
-
-    private fun makeTeardownInstructions(
-        state: State,
-        parentNode: JsonNode,
-    ): List<NadelResultInstruction> {
-        val removeTypeName = NadelResultInstruction.Remove(
-            subjectPath = parentNode.path + getTypeNameResultKey(state),
         )
-
-        // TODO: we really need the automatic tracking and deletion of artificial fields
-        // We should NOT be duplicating logic here to determine which fields were added
-        // Alternatively we should track artificial fields in the State, but less than ideal for the transform API
-        return state.instructions.values
-            .asSequence()
-            .flatMap { instruction ->
-                instruction.arguments
-                    .asSequence()
-                    .map { it.valueSource }
-                    .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
-                    .map {
-                        NadelResultInstruction.Remove(
-                            subjectPath = parentNode.path + getArtificialFieldResultKey(
-                                state,
-                                fieldName = it.pathToField.first(),
-                            ),
-                        )
-                    }
-            }
-            .toList() + removeTypeName
     }
 
     private fun mapFieldPathToResultKeys(state: State, path: List<String>): List<String> {
