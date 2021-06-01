@@ -10,6 +10,7 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
+import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.NadelPathToField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
@@ -18,7 +19,6 @@ import graphql.nadel.enginekt.transform.query.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
-import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedField.newNormalizedField
@@ -130,12 +130,14 @@ internal class NadelHydrationTransform(
         hydrationField: NormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
     ): List<NadelResultInstruction> {
-        @Suppress("UNCHECKED_CAST")
         val instruction = getMatchingInstruction(
-            parentNode.value as JsonMap,
+            parentNode,
             state,
             executionPlan,
-        ) ?: return emptyList()
+        )
+
+        // Do nothing if there is no hydration instruction associated with this result
+        instruction ?: return emptyList()
 
         val sourceField = NadelPathToField.createField(
             schema = instruction.sourceService.underlyingSchema,
@@ -192,15 +194,11 @@ internal class NadelHydrationTransform(
      * Note: this can be null if the type condition was not met
      */
     private fun getMatchingInstruction(
-        parentMap: JsonMap,
+        parentNode: JsonNode,
         state: State,
         executionPlan: NadelExecutionPlan,
     ): NadelHydrationFieldInstruction? {
-        val underlyingTypeName = parentMap[getTypeNameResultKey(state)] as? String
-            ?: error("${TypeNameMetaFieldDef.name} must never be null")
-
-        val overallTypeName = executionPlan.getOverallTypeName(underlyingTypeName)
-
+        val overallTypeName = NadelTransformUtil.getOverallTypename(executionPlan, parentNode)
         return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
     }
 }

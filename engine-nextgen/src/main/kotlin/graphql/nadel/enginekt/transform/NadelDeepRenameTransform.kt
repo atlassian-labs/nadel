@@ -102,6 +102,10 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
          * ```
          */
         val alias: String,
+        /**
+         * Stored for easy access in other functions.
+         */
+        val field: NormalizedField,
     )
 
     /**
@@ -125,8 +129,8 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
         return State(
             deepRenameInstructions,
-            "my_uuid",
-            // UUID.randomUUID().toString(),
+            "my_uuid", // UUID.randomUUID().toString(),
+            field,
         )
     }
 
@@ -308,10 +312,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         )
 
         return parentNodes.flatMap { parentNode ->
-            @Suppress("UNCHECKED_CAST") // Ensure the result is a Map, return if null
-            val parentMap = parentNode.value as JsonMap?
-                ?: return@flatMap makeRemoveFieldInstructions(state, parentNode)
-            val deepRenameInstruction = getMatchingDeepRenameInstruction(parentMap, state, executionPlan)
+            val deepRenameInstruction = getMatchingDeepRenameInstruction(parentNode, state, executionPlan)
                 ?: return@flatMap makeRemoveFieldInstructions(state, parentNode)
 
             val nodeToMove = getNodesAt(parentNode, getPathOfNodeToMove(state, deepRenameInstruction))
@@ -402,17 +403,12 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * Note: this can be null if the type condition was not met
      */
     private fun getMatchingDeepRenameInstruction(
-        parentMap: JsonMap,
+        parentNode: JsonNode,
         state: State,
         executionPlan: NadelExecutionPlan,
     ): NadelDeepRenameFieldInstruction? {
-        val underlyingTypeName = parentMap[getTypeNameResultKey(state)] as? String
-            ?: error("Typename must never be null")
-
-        val overallTypeName = executionPlan.getOverallTypeName(underlyingTypeName)
-
-        val fieldName = state.instructions.keys.first().fieldName
-        return state.instructions[makeFieldCoordinates(overallTypeName, fieldName)]
+        val overallTypeName = NadelTransformUtil.getOverallTypename(executionPlan, parentNode)
+        return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
     }
 }
 
