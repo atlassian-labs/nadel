@@ -92,7 +92,11 @@ object NadelPathToField {
         return NormalizedField.newNormalizedField()
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
-            .normalizedArguments(fieldArguments)
+            .also { builder ->
+                if (pathToFieldIndex == pathToField.lastIndex) {
+                    builder.normalizedArguments(fieldArguments)
+                }
+            }
             .children(
                 if (pathToFieldIndex == pathToField.lastIndex) {
                     fieldChildren
