@@ -98,7 +98,7 @@ public class HydrationInputResolver {
                                                                             Map<Service, Object> serviceContexts,
                                                                             ResultComplexityAggregator resultComplexityAggregator) {
         Set<NodeZipper<ExecutionResultNode>> hydrationInputZippers = getHydrationInputNodes(node, hydrationInputPaths);
-        if (hydrationInputZippers.size() == 0) {
+        if (hydrationInputZippers.isEmpty()) {
             return CompletableFuture.completedFuture(node);
         }
 
@@ -353,7 +353,7 @@ public class HydrationInputResolver {
                                                                               ResultComplexityAggregator resultComplexityAggregator
     ) {
 
-        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformations().getFieldIdToTransformation();
+        Map<String, FieldTransformation> transformationByTransformationId = queryTransformationResult.getTransformations().getTransformationIdToTransformation();
         Map<FieldTransformation, String> transformationToFieldId = queryTransformationResult.getTransformations().getTransformationToFieldId();
 
         Map<String, String> typeRenameMappings = queryTransformationResult.getTransformations().getTypeRenameMappings();
@@ -373,7 +373,7 @@ public class HydrationInputResolver {
                         hydrationInputNode,
                         true,
                         false,
-                        transformationByResultField,
+                        transformationByTransformationId,
                         transformationToFieldId,
                         typeRenameMappings,
                         nadelContext,
@@ -540,7 +540,7 @@ public class HydrationInputResolver {
         }
 
         List<ExecutionResultNode> result = new ArrayList<>();
-        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformations().getFieldIdToTransformation();
+        Map<String, FieldTransformation> transformationByResultField = queryTransformationResult.getTransformations().getTransformationIdToTransformation();
         Map<FieldTransformation, String> transformationToFieldId = queryTransformationResult.getTransformations().getTransformationToFieldId();
 
         Map<String, String> typeRenameMappings = queryTransformationResult.getTransformations().getTypeRenameMappings();
