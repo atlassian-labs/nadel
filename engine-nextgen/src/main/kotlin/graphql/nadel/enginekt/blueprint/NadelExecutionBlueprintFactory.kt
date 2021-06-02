@@ -15,7 +15,7 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrate
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.util.getFieldAt
-import graphql.nadel.enginekt.util.toMap
+import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
@@ -26,10 +26,10 @@ import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
 
 internal object NadelExecutionBlueprintFactory {
     fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelExecutionBlueprint {
-        val typeRenameInstructions = createTypeRenameInstructions(overallSchema).toMap {
+        val typeRenameInstructions = createTypeRenameInstructions(overallSchema).strictAssociateBy {
             it.overallName
         }
-        val fieldInstructions = createInstructions(overallSchema, services).toMap {
+        val fieldInstructions = createInstructions(overallSchema, services).strictAssociateBy {
             it.location
         }
 
@@ -82,19 +82,19 @@ internal object NadelExecutionBlueprintFactory {
         field: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
     ): NadelFieldInstruction {
-        val hydrationService = services.single { it.name == hydration.serviceName }
-        val underlyingSchema = hydrationService.underlyingSchema
+        val hydrationSourceService = services.single { it.name == hydration.serviceName }
+        val underlyingSchema = hydrationSourceService.underlyingSchema
 
         val pathToSourceField = listOfNotNull(hydration.syntheticField, hydration.topLevelField)
         val sourceField = underlyingSchema.queryType.getFieldAt(pathToSourceField)!!
 
         if (GraphQLTypeUtil.isList(sourceField.type)) {
-            return createBatchHydrationFieldInstruction(parentType, field, hydration)
+            return createBatchHydrationFieldInstruction(parentType, field, hydration, hydrationSourceService)
         }
 
         return NadelHydrationFieldInstruction(
             location = createFieldCoordinates(parentType, field),
-            sourceService = hydration.serviceName,
+            sourceService = hydrationSourceService,
             pathToSourceField = pathToSourceField,
             arguments = getHydrationArguments(hydration),
         )
@@ -104,12 +104,13 @@ internal object NadelExecutionBlueprintFactory {
         type: GraphQLObjectType,
         field: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
+        sourceService: Service,
     ): NadelFieldInstruction {
         val location = createFieldCoordinates(type, field)
 
         return NadelBatchHydrationFieldInstruction(
             location,
-            sourceService = hydration.serviceName,
+            sourceService = sourceService,
             pathToSourceField = listOfNotNull(hydration.syntheticField, hydration.topLevelField),
             arguments = getHydrationArguments(hydration),
             // TODO: figure out what to do for default batch sizes, nobody uses them in central schema

@@ -1,17 +1,19 @@
-package graphql.nadel.enginekt.transform.query
+package graphql.nadel.enginekt.transform
 
 import graphql.language.Directive
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
 internal typealias AnyNadelTransform = NadelTransform<Any>
 
-internal interface NadelTransform<State : Any> {
+interface NadelTransform<State : Any> {
     /**
      * Determines whether the [NadelTransform] should run. If it should run return a [State].
      *
@@ -24,12 +26,19 @@ internal interface NadelTransform<State : Any> {
      * e.g. the names of fields that will be added etc. The implementation of [State] is completely up
      * to you. You can make it mutable if that makes your life easier etc.
      *
+     * @param userContext the context passed by the user into [graphql.nadel.NadelExecutionInput.context]
+     * @param overallSchema the overall [GraphQLSchema] of the of the Nadel instance being operated on
+     * @param executionBlueprint the [NadelExecutionBlueprint] of the Nadel instance being operated on
+     * @param service the [Service] the [field] belongs to
+     * @param field the [NormalizedField] in question, we are asking whether it [isApplicable] for transforms
+     *
      * @return null if the [NadelTransform] should not run, non-null [State] otherwise
      */
-    fun isApplicable(
-        userContext: Any?,
+    suspend fun isApplicable(
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionBlueprint: NadelExecutionBlueprint,
+        services: Map<String, Service>,
         service: Service,
         field: NormalizedField,
     ): State?
@@ -41,7 +50,8 @@ internal interface NadelTransform<State : Any> {
      * This lets you transform a field. You may add extra fields, modify the [field], or
      * ever delete the [field] from the query. See [NadelTransformFieldResult] for more.
      */
-    fun transformField(
+    suspend fun transformField(
+        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
         service: Service,
         overallSchema: GraphQLSchema,
@@ -56,8 +66,8 @@ internal interface NadelTransform<State : Any> {
      *
      * Return a [List] of [NadelResultInstruction]s to modify the result.
      */
-    fun getResultInstructions(
-        userContext: Any?,
+    suspend fun getResultInstructions(
+        executionContext: NadelExecutionContext,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,
@@ -82,7 +92,7 @@ data class NadelTransformFieldResult(
      * will be automatically removed by Nadel as GraphQL only allows for
      * fields specified by the incoming query to be in the result.
      */
-    val extraFields: List<NormalizedField> = emptyList(),
+    val artificialFields: List<NormalizedField> = emptyList(),
 ) {
     companion object {
         /**

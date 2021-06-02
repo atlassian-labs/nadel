@@ -1,12 +1,15 @@
 package graphql.nadel.enginekt.plan
 
+import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
+import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform
-import graphql.nadel.enginekt.transform.query.AnyNadelTransform
-import graphql.nadel.enginekt.transform.query.NadelTransform
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform
+import graphql.nadel.enginekt.transform.AnyNadelTransform
+import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
@@ -19,8 +22,9 @@ internal class NadelExecutionPlanFactory(
      * This derives an execution plan from with the main input parameters being the
      * [rootField] and [executionBlueprint].
      */
-    fun create(
-        userContext: Any?,
+    suspend fun create(
+        executionContext: NadelExecutionContext,
+        services: Map<String, Service>,
         service: Service,
         rootField: NormalizedField,
     ): NadelExecutionPlan {
@@ -28,10 +32,19 @@ internal class NadelExecutionPlanFactory(
         val relevantTypeRenames = mutableMapOf<String, NadelTypeRenameInstruction>()
 
         traverseQuery(rootField) { field ->
-            field.objectTypeNames.mapNotNull { executionBlueprint.typeInstructions[it] }.forEach { relevantTypeRenames[it.overallName] = it }
+            field.objectTypeNames
+                .mapNotNull { executionBlueprint.typeInstructions[it] }
+                .forEach { relevantTypeRenames[it.overallName] = it }
 
             transforms.forEach { transform ->
-                val state = transform.isApplicable(userContext, overallSchema, executionBlueprint, service, field)
+                val state = transform.isApplicable(
+                    executionContext,
+                    overallSchema,
+                    executionBlueprint,
+                    services,
+                    service,
+                    field,
+                )
                 if (state != null) {
                     executionSteps.add(
                         NadelExecutionPlan.Step(
@@ -47,11 +60,11 @@ internal class NadelExecutionPlanFactory(
 
         return NadelExecutionPlan(
             executionSteps.groupBy { it.field },
-            relevantTypeRenames
+            relevantTypeRenames,
         )
     }
 
-    private fun traverseQuery(root: NormalizedField, consumer: (NormalizedField) -> Unit) {
+    private suspend fun traverseQuery(root: NormalizedField, consumer: suspend (NormalizedField) -> Unit) {
         consumer(root)
         root.children.forEach {
             traverseQuery(it, consumer)
@@ -62,6 +75,7 @@ internal class NadelExecutionPlanFactory(
         fun create(
             executionBlueprint: NadelExecutionBlueprint,
             overallSchema: GraphQLSchema,
+            engine: NextgenEngine,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
                 executionBlueprint,
@@ -69,6 +83,7 @@ internal class NadelExecutionPlanFactory(
                 transforms = listOfTransforms(
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),
+                    NadelHydrationTransform(engine),
                 ),
             )
         }

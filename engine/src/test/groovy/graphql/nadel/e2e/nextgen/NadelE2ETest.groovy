@@ -2,6 +2,7 @@ package graphql.nadel.e2e.nextgen
 
 import graphql.GraphQLError
 import graphql.language.AstSorter
+import graphql.language.Document
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.NextgenEngine
@@ -159,6 +160,232 @@ class NadelE2ETest extends Specification {
                 query,
                 expectedQuery,
                 serviceResponse,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "simple hydration"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue: Issue
+            } 
+            type Issue {
+                author: User => hydrated from UserService.userById(userId: \$source.authorId)
+            }
+         }
+        """, UserService: """
+        service UserService {
+            type Query {
+                userById(userId: ID!): User
+            } 
+            type User {
+                id: ID!
+            }
+        }
+        """]
+        def issueUnderlyingSchema = """
+            type Query {
+                issue: Issue 
+            } 
+            type Issue {
+                authorId: ID!
+            }
+        """
+        def userUnderlyingSchema = """
+            type Query {
+                userById(userId: ID!): User
+            } 
+            type User {
+                id: ID!
+            }
+        """
+        def query = """
+        {
+            issue {
+                author {
+                    id
+                }
+            }
+        } 
+        """
+
+        def issueCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        issue {
+            ... on Issue {
+                hydration_uuid__authorId: authorId
+            }
+            ... on Issue {
+                __typename__hydration_uuid: __typename
+            }
+        }
+    }
+}""")): [
+                        issue: [
+                                __typename__hydration_uuid: "Issue",
+                                hydration_uuid__authorId  : "user-1",
+                        ],
+                ],
+        ]
+
+        def userCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        userById(userId: "user-1") {
+            ... on User {
+                id
+            }
+        }
+    }
+}""")): [
+                        userById: [
+                                id: "user-1"
+                        ]
+                ],
+        ]
+
+        def overallResponse = [issue: [author: [id: "user-1"]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = testServices(
+                nsdl,
+                [
+                        IssueService: issueUnderlyingSchema,
+                        UserService : userUnderlyingSchema,
+                ],
+                [
+                        IssueService: issueCalls,
+                        UserService : userCalls,
+                ],
+                query,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "hydration with deep rename"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue: Issue
+            } 
+            type Issue {
+                author: User => hydrated from UserService.userById(userId: \$source.authorId)
+            }
+         }
+        """, UserService: """
+        service UserService {
+            type Query {
+                userById(userId: ID!): User
+            } 
+            type User {
+                id: ID!
+                name: String => renamed from details.name
+            }
+        }
+        """]
+        def issueUnderlyingSchema = """
+            type Query {
+                issue: Issue 
+            } 
+            type Issue {
+                authorId: ID!
+            }
+        """
+        def userUnderlyingSchema = """
+            type Query {
+                userById(userId: ID!): User
+            } 
+            type User {
+                id: ID!
+                details: UserDetails
+            }
+            type UserDetails {
+                name: String
+            }
+        """
+        def query = """
+        {
+            issue {
+                author {
+                    id
+                    name
+                }
+            }
+        } 
+        """
+
+        def issueCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        issue {
+            ... on Issue {
+                hydration_uuid__authorId: authorId
+            }
+            ... on Issue {
+                __typename__hydration_uuid: __typename
+            }
+        }
+    }
+}""")): [
+                        issue: [
+                                __typename__hydration_uuid: "Issue",
+                                hydration_uuid__authorId  : "user-1",
+                        ],
+                ],
+        ]
+
+        def userCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        userById(userId: "user-1") {
+            ... on User {
+                id
+            }
+            ... on User {
+                my_uuid__details: details {
+                    ... on UserDetails {
+                        name
+                    }
+                }
+            }
+            ... on User {
+                my_uuid__typename: __typename
+            }
+        }
+    }
+}""")): [
+                        userById: [
+                                my_uuid__typename: "User",
+                                id               : "user-1",
+                                my_uuid__details : [name: "Atlassian"],
+                        ]
+                ],
+        ]
+
+        def overallResponse = [issue: [author: [id: "user-1", name: "Atlassian"]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = testServices(
+                nsdl,
+                [
+                        IssueService: issueUnderlyingSchema,
+                        UserService : userUnderlyingSchema,
+                ],
+                [
+                        IssueService: issueCalls,
+                        UserService : userCalls,
+                ],
+                query,
         )
         then:
         errors.size() == 0
@@ -458,7 +685,56 @@ class NadelE2ETest extends Specification {
         def response = nadel.execute(nadelExecutionInput)
 
         def executionResult = response.get()
-        assert calledService1
+
+        return [executionResult.getData(), executionResult.getErrors()]
+    }
+
+    Object[] testServices(
+            Map<String, String> overallSchema, // Map<ServiceName, OverallSchema>
+            Map<String, String> services, // Map<ServiceName, UnderlyingSchema>
+            Map<String, Map<Document, Map>> serviceCalls, // Map<ServiceName, Map<Query, Result>>
+            String query,
+            Map rawVariables = [:]
+    ) {
+        def astSorter = new AstSorter()
+        def makeServiceExecution = { String serviceName ->
+            println "On calling service '$serviceName'"
+            def calls = serviceCalls[serviceName]
+            def execution = Mock(ServiceExecution)
+            calls.each {
+                def expectedDocument = astSorter.sort(it.key)
+                println "Expecting query"
+                def result = new ServiceExecutionResult(it.value)
+                println printAstCompact(expectedDocument)
+                1 * execution.execute({ ServiceExecutionParameters sep ->
+                    println "Service '$serviceName' got query"
+                    println printAstCompact(sep.query)
+                    printAstCompact(sep.query) == printAstCompact(expectedDocument)
+                }) >> completedFuture(result)
+            }
+            execution
+        }
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([:].tap {
+            services.each {
+                def serviceName = it.key
+                def serviceSchema = it.value
+                put(serviceName, new Tuple2(makeServiceExecution(serviceName), typeDefinitions(serviceSchema)))
+            }
+        })
+        Nadel nadel = NextgenEngine.newNadel()
+                .dsl(overallSchema)
+                .serviceExecutionFactory(serviceFactory)
+                .build()
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .variables(rawVariables)
+                .artificialFieldsUUID("uuid")
+                .build()
+
+        def response = nadel.execute(nadelExecutionInput)
+
+        def executionResult = response.get()
 
         return [executionResult.getData(), executionResult.getErrors()]
     }

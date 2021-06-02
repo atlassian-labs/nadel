@@ -2,15 +2,12 @@ package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
-import graphql.nadel.enginekt.transform.query.NadelTransform
+import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.normalized.NormalizedField
 
 internal typealias AnyNadelExecutionPlanStep = NadelExecutionPlan.Step<Any>
 
-/**
- * Currently per service. TODO: we should have an overall execution plan.
- */
-internal data class NadelExecutionPlan(
+data class NadelExecutionPlan(
     // this is a map for overall Fields
     val transformationSteps: Map<NormalizedField, List<AnyNadelExecutionPlanStep>>,
     // these are the relevant type names for the service and current query from
@@ -25,8 +22,33 @@ internal data class NadelExecutionPlan(
     )
 
     fun getOverallTypeName(underlyingTypeName: String): String {
-        val typeRenameInstruction = typeRenames.filter { it.value.underlyingName == underlyingTypeName }.values.singleOrNull()
+        val typeRenameInstruction = typeRenames
+            .asSequence()
+            .map { it.value }
+            .filter { it.underlyingName == underlyingTypeName }
+            .singleOrNull()
         return typeRenameInstruction?.overallName ?: underlyingTypeName
     }
-}
 
+    fun getUnderlyingTypeName(overallTypeName: String): String {
+        return typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
+    }
+
+    /**
+     * Creates and returns a new [NadelExecutionPlan] that is a merging of `this` plan
+     * and the [other] plan.
+     */
+    fun merge(other: NadelExecutionPlan): NadelExecutionPlan {
+        val newSteps = transformationSteps.toMutableMap()
+        other.transformationSteps.forEach { (field, steps) ->
+            newSteps.compute(field) { _, oldSteps ->
+                oldSteps?.let { it + steps } ?: steps
+            }
+        }
+
+        return copy(
+            transformationSteps = newSteps,
+            typeRenames = typeRenames + typeRenames,
+        )
+    }
+}

@@ -2,11 +2,12 @@ package graphql.nadel.enginekt.transform.result
 
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
+import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer.DataMutation
 import graphql.nadel.enginekt.transform.result.json.AnyJsonNodePathSegment
 import graphql.nadel.enginekt.transform.result.json.JsonNode
+import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.transform.result.json.JsonNodePath
 import graphql.nadel.enginekt.transform.result.json.JsonNodePathSegment
 import graphql.nadel.enginekt.util.AnyList
@@ -14,23 +15,24 @@ import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.AnyMutableList
 import graphql.nadel.enginekt.util.AnyMutableMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 import kotlin.reflect.KClass
 
 internal class NadelResultTransformer(
     private val overallSchema: GraphQLSchema,
-    private val executionBlueprint: NadelExecutionBlueprint,
 ) {
-    fun transform(
-        userContext: Any?,
+    suspend fun transform(
+        executionContext: NadelExecutionContext,
         executionPlan: NadelExecutionPlan,
+        artificialFields: List<NormalizedField>,
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
         val instructions = executionPlan.transformationSteps.flatMap { (field, steps) ->
             steps.flatMap { step ->
                 step.transform.getResultInstructions(
-                    userContext,
+                    executionContext,
                     overallSchema,
                     executionPlan,
                     service,
@@ -39,7 +41,7 @@ internal class NadelResultTransformer(
                     step.state,
                 )
             }
-        }
+        } + getRemoveArtificialFieldInstructions(result, artificialFields)
 
         mutate(result, instructions)
 
@@ -111,6 +113,23 @@ internal class NadelResultTransformer(
 
     private fun interface DataMutation {
         fun run()
+    }
+
+    private fun getRemoveArtificialFieldInstructions(
+        result: ServiceExecutionResult,
+        artificialFields: List<NormalizedField>,
+    ): List<NadelResultInstruction> {
+        return artificialFields.flatMap { field ->
+            JsonNodeExtractor.getNodesAt(
+                data = result.data,
+                queryResultKeyPath = field.listOfResultKeys,
+                flatten = true,
+            ).map { jsonNode ->
+                NadelResultInstruction.Remove(
+                    subjectPath = jsonNode.path,
+                )
+            }
+        }
     }
 }
 

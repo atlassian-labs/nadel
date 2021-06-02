@@ -1,5 +1,6 @@
 package graphql.nadel.enginekt.blueprint
 
+import graphql.nadel.enginekt.util.filterValuesOfType
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
@@ -11,16 +12,22 @@ data class NadelExecutionBlueprint(
 )
 
 fun <T> Map<FieldCoordinates, T>.getForField(
-    key: NormalizedField,
+    field: NormalizedField,
 ): Map<FieldCoordinates, T> {
     return mapFrom(
-        key.objectTypeNames.asSequence()
+        field.objectTypeNames.asSequence()
             .map {
-                makeFieldCoordinates(it, key.fieldName)
+                makeFieldCoordinates(it, field.fieldName)
             }
             .mapNotNull {
                 it to (this[it] ?: return@mapNotNull null)
             }
             .toList(),
     )
+}
+
+inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, NadelFieldInstruction>.getInstructionsOfTypeForField(
+    field: NormalizedField,
+): Map<FieldCoordinates, T> {
+    return getForField(field).filterValuesOfType()
 }

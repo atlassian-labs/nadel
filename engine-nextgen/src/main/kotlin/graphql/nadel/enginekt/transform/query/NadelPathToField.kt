@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform.query
 
 import graphql.normalized.NormalizedField
+import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
@@ -11,12 +12,14 @@ object NadelPathToField {
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
         pathToField: List<String>,
+        fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
     ): List<NormalizedField> {
         return createFieldRecursively(
             schema,
             parentType,
             pathToField,
+            fieldArguments,
             fieldChildren,
             pathToFieldIndex = 0,
         )
@@ -26,12 +29,14 @@ object NadelPathToField {
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
         pathToField: List<String>,
+        fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
     ): NormalizedField {
         return createParticularField(
             schema,
             parentType,
             pathToField,
+            fieldArguments,
             fieldChildren,
             pathToFieldIndex = 0,
         )
@@ -41,6 +46,7 @@ object NadelPathToField {
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
         pathToField: List<String>,
+        fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
         pathToFieldIndex: Int,
     ): List<NormalizedField> {
@@ -52,6 +58,7 @@ object NadelPathToField {
                     schema,
                     parentType = objectType,
                     pathToField,
+                    fieldArguments,
                     fieldChildren,
                     pathToFieldIndex,
                 )
@@ -61,6 +68,7 @@ object NadelPathToField {
                     schema,
                     parentType,
                     pathToField,
+                    fieldArguments,
                     fieldChildren,
                     pathToFieldIndex,
                 )
@@ -73,6 +81,7 @@ object NadelPathToField {
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
         pathToField: List<String>,
+        fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
         pathToFieldIndex: Int,
     ): NormalizedField {
@@ -83,6 +92,11 @@ object NadelPathToField {
         return NormalizedField.newNormalizedField()
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
+            .also { builder ->
+                if (pathToFieldIndex == pathToField.lastIndex) {
+                    builder.normalizedArguments(fieldArguments)
+                }
+            }
             .children(
                 if (pathToFieldIndex == pathToField.lastIndex) {
                     fieldChildren
@@ -91,11 +105,18 @@ object NadelPathToField {
                         schema,
                         parentType = fieldDef.type,
                         pathToField,
+                        fieldArguments,
                         fieldChildren,
                         pathToFieldIndex = pathToFieldIndex + 1,
                     )
                 }
             )
             .build()
+            .also { field ->
+                // Set parents correctly
+                field.children.forEach { child ->
+                    child.replaceParent(field)
+                }
+            }
     }
 }
