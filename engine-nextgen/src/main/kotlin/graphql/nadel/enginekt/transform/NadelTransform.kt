@@ -92,7 +92,7 @@ data class NadelTransformFieldResult(
      * will be automatically removed by Nadel as GraphQL only allows for
      * fields specified by the incoming query to be in the result.
      */
-    val extraFields: List<NormalizedField> = emptyList(),
+    val artificialFields: List<NormalizedField> = emptyList(),
 ) {
     companion object {
         /**

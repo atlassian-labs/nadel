@@ -3,6 +3,7 @@ package graphql.nadel.enginekt.transform.query
 import graphql.nadel.Service
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
+import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
@@ -19,7 +20,7 @@ class NadelQueryTransformer internal constructor(
     }
 
     internal data class TransformContext(
-        val extraFields: MutableList<NormalizedField>,
+        val artificialFields: MutableList<NormalizedField>,
     )
 
     data class TransformResult(
@@ -39,7 +40,7 @@ class NadelQueryTransformer internal constructor(
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
     ): TransformResult {
-        val transformContext = TransformContext(extraFields = mutableListOf())
+        val transformContext = TransformContext(artificialFields = mutableListOf())
 
         val result = transformField(executionContext, transformContext, executionPlan, service, field)
             .also { rootFields ->
@@ -48,7 +49,7 @@ class NadelQueryTransformer internal constructor(
 
         return TransformResult(
             result = result,
-            artificialFields = transformContext.extraFields,
+            artificialFields = transformContext.artificialFields,
         )
     }
 
@@ -112,9 +113,9 @@ class NadelQueryTransformer internal constructor(
             transformation.state,
         )
 
-        val patchedArtificialFields = patchObjectTypeNames(transformResult.extraFields, executionPlan)
+        val patchedArtificialFields = patchObjectTypeNames(transformResult.artificialFields, executionPlan)
         val patchedNewField = patchObjectTypeNames(listOfNotNull(transformResult.newField), executionPlan)
-        transformContext.extraFields.addAll(patchedArtificialFields)
+        transformContext.artificialFields.addAll(patchedArtificialFields)
         return patchedArtificialFields + patchedNewField
     }
 

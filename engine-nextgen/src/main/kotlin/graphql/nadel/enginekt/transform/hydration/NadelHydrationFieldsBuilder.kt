@@ -30,7 +30,7 @@ internal object NadelHydrationFieldsBuilder {
         )
     }
 
-    fun getExtraFields(
+    fun getArtificialFields(
         service: Service,
         executionPlan: NadelExecutionPlan,
         fieldCoordinates: FieldCoordinates,

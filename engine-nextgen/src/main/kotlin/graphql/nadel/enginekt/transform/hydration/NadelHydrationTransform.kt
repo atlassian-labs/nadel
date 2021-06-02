@@ -82,8 +82,8 @@ internal class NadelHydrationTransform(
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
-            extraFields = state.instructions.flatMap { (fieldCoordinates, instruction) ->
-                NadelHydrationFieldsBuilder.getExtraFields(service, executionPlan, fieldCoordinates, instruction)
+            artificialFields = state.instructions.flatMap { (fieldCoordinates, instruction) ->
+                NadelHydrationFieldsBuilder.getArtificialFields(service, executionPlan, fieldCoordinates, instruction)
                     .map {
                         it.toBuilder().alias(getArtificialFieldResultKey(state, it)).build()
                     }

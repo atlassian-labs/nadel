@@ -192,7 +192,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
-            extraFields = state.instructions.map { (coordinates, instruction) ->
+            artificialFields = state.instructions.map { (coordinates, instruction) ->
                 makeDeepField(
                     transformer,
                     executionPlan,
