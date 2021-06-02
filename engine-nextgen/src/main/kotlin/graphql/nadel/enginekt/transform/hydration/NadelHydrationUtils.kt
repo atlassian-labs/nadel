@@ -23,7 +23,7 @@ internal object NadelHydrationUtils {
             .asSequence()
             .take(pathToSourceField.size - 1) // All but last element
             .fold(service.underlyingSchema.queryType) { prevType, fieldName ->
-                prevType.fields.find { it.name == fieldName }!!.type as GraphQLObjectType
+                prevType.getField(fieldName)!!.type as GraphQLObjectType
             }
 
         return parentType.getField(pathToSourceField.last())
