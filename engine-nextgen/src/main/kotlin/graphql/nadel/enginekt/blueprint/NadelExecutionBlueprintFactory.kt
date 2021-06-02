@@ -96,7 +96,7 @@ internal object NadelExecutionBlueprintFactory {
             location = createFieldCoordinates(parentType, field),
             sourceService = hydrationSourceService,
             pathToSourceField = pathToSourceField,
-            arguments = getHydrationArguments(hydration),
+            sourceFieldArguments = getHydrationArguments(hydration),
         )
     }
 
@@ -112,7 +112,7 @@ internal object NadelExecutionBlueprintFactory {
             location,
             sourceService = sourceService,
             pathToSourceField = listOfNotNull(hydration.syntheticField, hydration.topLevelField),
-            arguments = getHydrationArguments(hydration),
+            sourceFieldArguments = getHydrationArguments(hydration),
             // TODO: figure out what to do for default batch sizes, nobody uses them in central schema
             batchSize = hydration.batchSize!!,
             batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {

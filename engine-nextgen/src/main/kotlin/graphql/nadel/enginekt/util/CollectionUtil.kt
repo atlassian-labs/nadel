@@ -114,11 +114,24 @@ fun <T : Any> Iterable<T>.emptyOrSingle(): T? {
             true -> null
             else -> single()
         }
-        else -> when (iterator().hasNext()) {
-            true -> single()
-            else -> null
-        }
+        else -> iterator().emptyOrSingle()
     }
+}
+
+fun <T : Any> Iterator<T>.emptyOrSingle(): T? {
+    return when (hasNext()) {
+        true -> next().also {
+            if (hasNext()) {
+                // Copied from List.single
+                throw IllegalArgumentException("List has more than one element.")
+            }
+        }
+        else -> null
+    }
+}
+
+fun <T : Any> Sequence<T>.emptyOrSingle(): T? {
+    return iterator().emptyOrSingle()
 }
 
 inline fun <K, reified T> Map<K, *>.filterValuesOfType(): Map<K, T> {
@@ -133,4 +146,19 @@ inline fun <I, T> Iterable<I>.mapToArrayList(
     transform: (I) -> T,
 ): ArrayList<T> {
     return mapTo(destination, transform)
+}
+
+fun Sequence<Any?>.flatten(recursively: Boolean): Sequence<Any?> {
+    return flatMap { element ->
+        when (element) {
+            is AnyIterable -> element.asSequence().let {
+                if (recursively) {
+                    it.flatten(recursively = true)
+                } else {
+                    it
+                }
+            }
+            else -> sequenceOf(element)
+        }
+    }
 }

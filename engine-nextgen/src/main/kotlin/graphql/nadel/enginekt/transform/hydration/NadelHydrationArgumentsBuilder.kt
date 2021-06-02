@@ -1,14 +1,17 @@
 package graphql.nadel.enginekt.transform.hydration
 
+import graphql.language.ArrayValue
 import graphql.language.BooleanValue
 import graphql.language.FloatValue
 import graphql.language.IntValue
 import graphql.language.NullValue
+import graphql.language.ObjectField
+import graphql.language.ObjectValue
 import graphql.language.StringValue
 import graphql.language.Value
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
-import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtils.getSourceFieldDefinition
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getSourceFieldDefinition
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.AnyList
@@ -32,7 +35,7 @@ internal object NadelHydrationArgumentsBuilder {
         val sourceField = getSourceFieldDefinition(instruction)
 
         return mapFrom(
-            instruction.arguments
+            instruction.sourceFieldArguments
                 .map {
                     val argumentDef = sourceField.getArgument(it.name)
                     it.name to makeInputValue(it, argumentDef, parentNode, hydrationField, pathToResultKeys)
@@ -65,22 +68,45 @@ internal object NadelHydrationArgumentsBuilder {
             queryResultKeyPath = pathToResultKeys(valueSource.pathToField),
         ).emptyOrSingle()?.value
 
+        return NormalizedInputValueValue.AstValue(
+            valueToAstValue(value),
+        )
+    }
+
+    internal fun valueToAstValue(value: Any?): Value<*> {
         return when (value) {
-            is AnyList -> NormalizedInputValueValue.ListValue(value)
-            // TODO: I think this needs to be reconstructed with leaf values as graphql.language.Value
-            is AnyMap -> @Suppress("UNCHECKED_CAST") NormalizedInputValueValue.ObjectValue(value as JsonMap)
-            null -> NormalizedInputValueValue.AstValue(NullValue.newNullValue().build())
-            is Double -> NormalizedInputValueValue.AstValue(FloatValue.newFloatValue().value(
-                value.toBigDecimal(),
-            ).build())
-            is Float -> NormalizedInputValueValue.AstValue(FloatValue.newFloatValue().value(
-                value.toBigDecimal(),
-            ).build())
-            is Number -> NormalizedInputValueValue.AstValue(IntValue.newIntValue().value(
-                value.toLong().toBigInteger(),
-            ).build())
-            is String -> NormalizedInputValueValue.AstValue(StringValue.newStringValue().value(value).build())
-            is Boolean -> NormalizedInputValueValue.AstValue(BooleanValue.newBooleanValue().value(value).build())
+            is AnyList -> ArrayValue(
+                value.map(this::valueToAstValue),
+            )
+            is AnyMap -> ObjectValue
+                .newObjectValue()
+                .objectFields(
+                    value.let {
+                        @Suppress("UNCHECKED_CAST")
+                        it as JsonMap
+                    }.map {
+                        ObjectField(it.key, valueToAstValue(it.value))
+                    },
+                )
+                .build()
+            null ->
+                NullValue.newNullValue().build()
+            is Double ->
+                FloatValue.newFloatValue()
+                    .value(value.toBigDecimal())
+                    .build()
+            is Float -> FloatValue.newFloatValue()
+                .value(value.toBigDecimal())
+                .build()
+            is Number -> IntValue.newIntValue()
+                .value(value.toLong().toBigInteger())
+                .build()
+            is String -> StringValue.newStringValue()
+                .value(value)
+                .build()
+            is Boolean -> BooleanValue.newBooleanValue()
+                .value(value)
+                .build()
             else -> error("Unknown value type '${value.javaClass.name}'")
         }
     }
@@ -96,7 +122,7 @@ internal object NadelHydrationArgumentsBuilder {
     }
 }
 
-private typealias AnyNormalizedInputValueValue = NormalizedInputValueValue<*>
+internal typealias AnyNormalizedInputValueValue = NormalizedInputValueValue<*>
 
 internal sealed class NormalizedInputValueValue<T> {
     abstract val value: T

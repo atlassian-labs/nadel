@@ -1,13 +1,16 @@
 package graphql.nadel.enginekt.transform.hydration
 
+import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.Service
-import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
+import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
+import graphql.normalized.NormalizedField
+import graphql.normalized.NormalizedField.newNormalizedField
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 
-internal object NadelHydrationUtils {
+internal object NadelHydrationUtil {
     fun getSourceFieldDefinition(
-        instruction: NadelHydrationFieldInstruction,
+        instruction: NadelGenericHydrationInstruction,
     ): GraphQLFieldDefinition {
         return getSourceFieldDefinition(
             service = instruction.sourceService,
@@ -27,5 +30,16 @@ internal object NadelHydrationUtils {
             }
 
         return parentType.getField(pathToSourceField.last())
+    }
+
+    fun makeTypeNameField(
+        alias: String,
+        objectTypeNames: List<String>,
+    ): NormalizedField {
+        return newNormalizedField()
+            .alias(alias)
+            .fieldName(TypeNameMetaFieldDef.name)
+            .objectTypeNames(objectTypeNames)
+            .build()
     }
 }

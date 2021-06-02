@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform.hydration
 
 import graphql.nadel.Service
+import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
@@ -34,13 +35,13 @@ internal object NadelHydrationFieldsBuilder {
         service: Service,
         executionPlan: NadelExecutionPlan,
         fieldCoordinates: FieldCoordinates,
-        instruction: NadelHydrationFieldInstruction,
+        instruction: NadelGenericHydrationInstruction,
     ): List<NormalizedField> {
         val underlyingTypeName = executionPlan.getUnderlyingTypeName(overallTypeName = fieldCoordinates.typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
-        return instruction.arguments
+        return instruction.sourceFieldArguments
             .asSequence()
             .map { it.valueSource }
             .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
