@@ -1,4 +1,4 @@
-package graphql.nadel.enginekt.transform.query
+package graphql.nadel.enginekt.transform
 
 import graphql.language.Directive
 import graphql.nadel.Service
@@ -6,6 +6,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
@@ -50,6 +51,7 @@ interface NadelTransform<State : Any> {
      * ever delete the [field] from the query. See [NadelTransformFieldResult] for more.
      */
     suspend fun transformField(
+        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
         service: Service,
         overallSchema: GraphQLSchema,

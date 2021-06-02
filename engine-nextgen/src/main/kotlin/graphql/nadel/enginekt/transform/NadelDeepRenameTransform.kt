@@ -10,12 +10,9 @@ import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.query.NadelPathToField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
-import graphql.nadel.enginekt.transform.query.NadelTransform
-import graphql.nadel.enginekt.transform.query.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
-import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.mapToArrayList
 import graphql.normalized.NormalizedField
@@ -185,8 +182,9 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * ```
      */
     override suspend fun transformField(
-        transformer: NadelQueryTransformer.Continuation,
-        service: Service, // this has an underlying schema
+        executionContext: NadelExecutionContext,
+        transformer: NadelQueryTransformer.Continuation, // this has an underlying schema
+        service: Service,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         field: NormalizedField,

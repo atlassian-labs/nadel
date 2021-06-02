@@ -12,8 +12,8 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
-import graphql.nadel.enginekt.transform.query.NadelTransform
-import graphql.nadel.enginekt.transform.query.NadelTransformFieldResult
+import graphql.nadel.enginekt.transform.NadelTransform
+import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -72,6 +72,7 @@ internal class NadelHydrationTransform(
     }
 
     override suspend fun transformField(
+        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
         service: Service,
         overallSchema: GraphQLSchema,

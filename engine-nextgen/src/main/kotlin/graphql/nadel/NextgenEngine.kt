@@ -88,13 +88,18 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
         val executionContext = NadelExecutionContext(executionInput)
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
-        val queryTransformerResult = queryTransformer.transformQuery(service, topLevelField, executionPlan)
-        val transformedQuery = queryTransformerResult.result.single()
+        val queryTransform = queryTransformer.transformQuery(
+            executionContext,
+            service,
+            topLevelField,
+            executionPlan
+        )
+        val transformedQuery = queryTransform.result.single()
         val result = executeService(service, transformedQuery, executionInput)
         val executionResult = resultTransformer.transform(
             executionContext = executionContext,
             executionPlan = executionPlan,
-            artificialFields = queryTransformerResult.artificialFields,
+            artificialFields = queryTransform.artificialFields,
             service = service,
             result = result,
         )
@@ -138,7 +143,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         // The source field itself is already transformed
         val sourceFieldWithTransformedChildren = sourceField.copyWithChildren(
             sourceField.children.flatMap { childField ->
-                queryTransformer.transformQuery(service, field = childField, executionPlan)
+                queryTransformer.transformQuery(executionContext, service, field = childField, executionPlan)
                     .let {
                         artificialFields.addAll(it.artificialFields)
                         it.result

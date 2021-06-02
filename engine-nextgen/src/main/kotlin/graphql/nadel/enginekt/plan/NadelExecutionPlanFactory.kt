@@ -8,8 +8,8 @@ import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform
-import graphql.nadel.enginekt.transform.query.AnyNadelTransform
-import graphql.nadel.enginekt.transform.query.NadelTransform
+import graphql.nadel.enginekt.transform.AnyNadelTransform
+import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 

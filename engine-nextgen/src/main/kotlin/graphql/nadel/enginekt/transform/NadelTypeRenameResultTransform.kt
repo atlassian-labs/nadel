@@ -7,8 +7,6 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
-import graphql.nadel.enginekt.transform.query.NadelTransform
-import graphql.nadel.enginekt.transform.query.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -38,6 +36,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
     }
 
     override suspend fun transformField(
+        executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
         service: Service,
         overallSchema: GraphQLSchema,

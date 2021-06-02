@@ -2,7 +2,7 @@ package graphql.nadel.enginekt.plan
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
-import graphql.nadel.enginekt.transform.query.NadelTransform
+import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.normalized.NormalizedField
 
 internal typealias AnyNadelExecutionPlanStep = NadelExecutionPlan.Step<Any>
