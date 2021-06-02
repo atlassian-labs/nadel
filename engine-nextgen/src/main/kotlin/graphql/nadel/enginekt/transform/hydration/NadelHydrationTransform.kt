@@ -8,7 +8,6 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
@@ -19,7 +18,7 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
-import graphql.nadel.toBuilder
+import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedField.newNormalizedField
 import graphql.schema.FieldCoordinates
@@ -30,12 +29,23 @@ internal class NadelHydrationTransform(
     private val engine: NextgenEngine,
 ) : NadelTransform<State> {
     data class State(
+        /**
+         * The hydration instructions for the [field]. There can be multiple instructions
+         * as a [NormalizedField] can have multiple [NormalizedField.objectTypeNames].
+         *
+         * The [Map.Entry.key] of [FieldCoordinates] denotes a specific object type and
+         * its associated instruction.
+         */
         val instructions: Map<FieldCoordinates, NadelHydrationFieldInstruction>,
         /**
          * The field in question for the transform, stored for quick access when
          * the [State] is passed around.
          */
         val field: NormalizedField,
+        /**
+         * Used as a prefix or suffix to field names to ensure that artificial fields added
+         * by [NadelHydrationTransform] do NOT overlap with existing field result keys.
+         */
         val alias: String,
     )
 
@@ -144,7 +154,7 @@ internal class NadelHydrationTransform(
 
         val result = engine.executeHydration(
             service = instruction.sourceService,
-            topLevelField = NadelHydrationQueryBuilder.getQuery(
+            topLevelField = NadelHydrationFieldsBuilder.getQuery(
                 instruction = instruction,
                 hydrationField = hydrationField,
                 parentNode = parentNode,
@@ -188,7 +198,7 @@ internal class NadelHydrationTransform(
     }
 
     /**
-     * Read [alias]
+     * Read [State.alias]
      *
      * @return the aliased value of the GraphQL introspection field `__typename`
      */

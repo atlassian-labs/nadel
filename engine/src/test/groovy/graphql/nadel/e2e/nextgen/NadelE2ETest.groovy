@@ -270,6 +270,128 @@ class NadelE2ETest extends Specification {
         response == overallResponse
     }
 
+    def "hydration with deep rename"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue: Issue
+            } 
+            type Issue {
+                author: User => hydrated from UserService.userById(userId: \$source.authorId)
+            }
+         }
+        """, UserService: """
+        service UserService {
+            type Query {
+                userById(userId: ID!): User
+            } 
+            type User {
+                id: ID!
+                name: String => renamed from details.name
+            }
+        }
+        """]
+        def issueUnderlyingSchema = """
+            type Query {
+                issue: Issue 
+            } 
+            type Issue {
+                authorId: ID!
+            }
+        """
+        def userUnderlyingSchema = """
+            type Query {
+                userById(userId: ID!): User
+            } 
+            type User {
+                id: ID!
+                details: UserDetails
+            }
+            type UserDetails {
+                name: String
+            }
+        """
+        def query = """
+        {
+            issue {
+                author {
+                    id
+                    name
+                }
+            }
+        } 
+        """
+
+        def issueCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        issue {
+            ... on Issue {
+                hydration_uuid__authorId: authorId
+            }
+            ... on Issue {
+                __typename__hydration_uuid: __typename
+            }
+        }
+    }
+}""")): [
+                        issue: [
+                                __typename__hydration_uuid: "Issue",
+                                hydration_uuid__authorId  : "user-1",
+                        ],
+                ],
+        ]
+
+        def userCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        userById(userId: "user-1") {
+            ... on User {
+                id
+            }
+            ... on User {
+                my_uuid__details: details {
+                    ... on UserDetails {
+                        name
+                    }
+                }
+            }
+            ... on User {
+                my_uuid__typename: __typename
+            }
+        }
+    }
+}""")): [
+                        userById: [
+                                my_uuid__typename: "User",
+                                id               : "user-1",
+                                my_uuid__details : [name: "Atlassian"],
+                        ]
+                ],
+        ]
+
+        def overallResponse = [issue: [author: [id: "user-1", name: "Atlassian"]]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = testServices(
+                nsdl,
+                [
+                        IssueService: issueUnderlyingSchema,
+                        UserService : userUnderlyingSchema,
+                ],
+                [
+                        IssueService: issueCalls,
+                        UserService : userCalls,
+                ],
+                query,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
     def "different deep renames on same normalized field"() {
         def serviceName = "PetService"
         def nsdl = [(serviceName): """

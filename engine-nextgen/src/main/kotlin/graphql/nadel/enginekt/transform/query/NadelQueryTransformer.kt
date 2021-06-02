@@ -2,7 +2,7 @@ package graphql.nadel.enginekt.transform.query
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.toBuilder
+import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 

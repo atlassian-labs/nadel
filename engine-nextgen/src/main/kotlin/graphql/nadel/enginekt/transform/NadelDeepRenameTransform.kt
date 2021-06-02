@@ -322,8 +322,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                 NadelResultInstruction.Copy(
                     subjectPath = nodeToMove.path,
                     destinationPath = parentNode.path + field.resultKey,
-                )
-                ,
+                ),
             )
         }
     }

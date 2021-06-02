@@ -5,10 +5,31 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.query.NadelPathToField
+import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
 
 internal object NadelHydrationFieldsBuilder {
+    fun getQuery(
+        instruction: NadelHydrationFieldInstruction,
+        hydrationField: NormalizedField,
+        parentNode: JsonNode,
+        pathToResultKeys: (List<String>) -> List<String>,
+    ): NormalizedField {
+        return NadelPathToField.createField(
+            schema = instruction.sourceService.underlyingSchema,
+            parentType = instruction.sourceService.underlyingSchema.queryType,
+            pathToField = instruction.pathToSourceField,
+            fieldArguments = NadelHydrationArgumentsBuilder.createSourceFieldArgs(
+                instruction,
+                parentNode,
+                hydrationField,
+                pathToResultKeys,
+            ),
+            fieldChildren = hydrationField.children,
+        )
+    }
+
     fun getExtraFields(
         service: Service,
         executionPlan: NadelExecutionPlan,
