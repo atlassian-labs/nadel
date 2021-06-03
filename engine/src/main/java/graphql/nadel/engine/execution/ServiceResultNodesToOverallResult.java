@@ -40,7 +40,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
@@ -515,33 +514,33 @@ public class ServiceResultNodesToOverallResult {
 
         Map<AbstractNode, Set<String>> transformationIdsByTransformationDefinition = new LinkedHashMap<>();
         List<String> fieldIds = executionResultNode.getFieldIds();
-        Set<String> allRelevantTransformationIds = new LinkedHashSet<>();
+        Set<String> rootTransformationIdsForNode = new LinkedHashSet<>();
         for (String fieldId : fieldIds) {
-            List<String> transformationIds = FieldMetadataUtil.getRootOfTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId());
-            for (String transformationId : transformationIds) {
-                FieldTransformation fieldTransformation = assertNotNull(transformationIdToTransformation.get(transformationId));
-                allRelevantTransformationIds.addAll(transformationIds);
+            List<String> rootTransformationIdsForFieldId = FieldMetadataUtil.getRootOfTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId());
+            for (String rootTransformationId : rootTransformationIdsForFieldId) {
+                FieldTransformation fieldTransformation = assertNotNull(transformationIdToTransformation.get(rootTransformationId));
+                rootTransformationIdsForNode.addAll(rootTransformationIdsForFieldId);
                 // This checks that the current fieldTransformation is for this specific fieldID as we can have a n:1 mapping of transformations to fieldIds
                 // due to multiple source arguments
                 if (transformationToFieldId.containsKey(fieldTransformation) && transformationToFieldId.get(fieldTransformation).equals(fieldId)) {
                     AbstractNode definition = fieldTransformation.getDefinition();
                     transformationIdsByTransformationDefinition.putIfAbsent(definition, new LinkedHashSet<>());
-                    transformationIdsByTransformationDefinition.get(definition).add(transformationId);
+                    transformationIdsByTransformationDefinition.get(definition).add(rootTransformationId);
                 }
             }
         }
 
-        Map<AbstractNode, List<ExecutionResultNode>> treesByDefinition = new LinkedHashMap<>();
+        Map<AbstractNode, List<ExecutionResultNode>> treesByTransformationDefinition = new LinkedHashMap<>();
         Set<AbstractNode> definitions = transformationIdsByTransformationDefinition.keySet();
 
         boolean canSkipTraversal = canSkipTraversal(definitions, executionResultNode, transformationMetadata);
         if (canSkipTraversal) {
-            treesByDefinition.put(definitions.iterator().next(), singletonList(executionResultNode));
+            treesByTransformationDefinition.put(definitions.iterator().next(), singletonList(executionResultNode));
         } else {
             for (AbstractNode definition : definitions) {
                 Set<String> transformationIds = transformationIdsByTransformationDefinition.get(definition);
-                treesByDefinition.putIfAbsent(definition, new ArrayList<>());
-                treesByDefinition.get(definition).add(nodesWithTransformationIds(executionResultNode, transformationIds, transformationMetadata));
+                treesByTransformationDefinition.putIfAbsent(definition, new ArrayList<>());
+                treesByTransformationDefinition.get(definition).add(nodesWithTransformationIds(executionResultNode, transformationIds, transformationMetadata));
 
                 if (definition instanceof UnderlyingServiceHydration) {
                     for (ExecutionResultNode child : directParentNode.getChildren()) {
@@ -549,14 +548,17 @@ public class ServiceResultNodesToOverallResult {
                         if (child != executionResultNode && !getFieldIdsWithTransformationIds(child, transformationIds, transformationMetadata).isEmpty()
                         ) {
                             ExecutionResultNode resultNode = nodesWithTransformationIds(child, transformationIds, transformationMetadata);
-                            treesByDefinition.get(definition).add(resultNode);
+                            treesByTransformationDefinition.get(definition).add(resultNode);
                         }
                     }
                 }
             }
         }
-        ExecutionResultNode treeWithout = canSkipTraversal ? null : nodesWithoutTransformationIds(executionResultNode, allRelevantTransformationIds, transformationMetadata);
-        return Tuples.of(treeWithout, treesByDefinition);
+        ExecutionResultNode treeWithoutRootTransformations = canSkipTraversal
+                ? null
+                : nodesWithoutTransformationIds(executionResultNode, rootTransformationIdsForNode, transformationMetadata);
+
+        return Tuples.of(treeWithoutRootTransformations, treesByTransformationDefinition);
     }
 
     /**
@@ -597,43 +599,41 @@ public class ServiceResultNodesToOverallResult {
             @Override
             public TraversalControl enter(TraverserContext<ExecutionResultNode> context) {
                 ExecutionResultNode node = context.thisNode();
-                List<String> fieldIdsWithId;
-
-                fieldIdsWithId = getFieldIdsWithoutTransformationIds(node, transformationIds, transformationMetadata);
-
-
-                if (fieldIdsWithId.isEmpty()) {
+                List<String> fieldIdsWithoutTransformationIds = getFieldIdsWithoutTransformationIds(node, transformationIds, transformationMetadata);
+                if (fieldIdsWithoutTransformationIds.isEmpty()) {
                     return TreeTransformerUtil.deleteNode(context);
                 }
-                ExecutionResultNode changedNode = changeFieldIsInResultNode(node, fieldIdsWithId);
+                ExecutionResultNode changedNode = changeFieldIsInResultNode(node, fieldIdsWithoutTransformationIds);
                 return TreeTransformerUtil.changeNode(context, changedNode);
             }
         });
     }
 
-    private List<String> getFieldIdsWithoutTransformationIds(ExecutionResultNode node, Set<String> notTransformationIds, TransformationMetadata transformationMetadata) {
+    private List<String> getFieldIdsWithoutTransformationIds(ExecutionResultNode node, Set<String> transformationIds, TransformationMetadata transformationMetadata) {
         return FpKit.filter(node.getFieldIds(), fieldId -> {
             Map<String, List<FieldMetadata>> metadataByFieldId = transformationMetadata.getMetadataByFieldId();
-            List<String> transformationIds = FieldMetadataUtil.getTransformationIds(fieldId, metadataByFieldId);
-            return Collections.disjoint(transformationIds, notTransformationIds);
+            List<String> transformationIdsForFieldId = FieldMetadataUtil.getTransformationIds(fieldId, metadataByFieldId);
+            return Collections.disjoint(transformationIdsForFieldId, transformationIds);
         });
     }
 
     private List<String> getFieldIdsWithoutTransformations(ExecutionResultNode node, TransformationMetadata transformationMetadata) {
-        return node.getFieldIds()
-                .stream()
-                .filter(fieldId -> FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId()).isEmpty())
-                .collect(Collectors.toList());
+        return FpKit.filter(
+                node.getFieldIds(),
+                fieldId -> {
+                    Map<String, List<FieldMetadata>> metadataByFieldId = transformationMetadata.getMetadataByFieldId();
+                    List<String> transformationIdsForFieldId = FieldMetadataUtil.getTransformationIds(fieldId, metadataByFieldId);
+                    return transformationIdsForFieldId.isEmpty();
+                });
     }
-
 
     private List<String> getFieldIdsWithTransformationIds(
             ExecutionResultNode node, Set<String> transformationIds, TransformationMetadata transformationMetadata
     ) {
-        return node.getFieldIds().stream().filter(fieldId -> {
+        return FpKit.filter(node.getFieldIds(), fieldId -> {
             List<String> transformationIdsForField = FieldMetadataUtil.getTransformationIds(fieldId, transformationMetadata.getMetadataByFieldId());
             return transformationIdsForField.stream().anyMatch(transformationIds::contains);
-        }).collect(Collectors.toList());
+        });
     }
 
     private ExecutionResultNode mapNode(ExecutionResultNode node, UnapplyEnvironment environment, ResultCounter resultCounter) {
@@ -718,8 +718,7 @@ public class ServiceResultNodesToOverallResult {
         }
 
         public static HandleResult simple(ExecutionResultNode executionResultNode) {
-            HandleResult handleResult = new HandleResult(executionResultNode, emptyList(), TraversalControl.CONTINUE);
-            return handleResult;
+            return new HandleResult(executionResultNode, emptyList(), TraversalControl.CONTINUE);
         }
     }
 
