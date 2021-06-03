@@ -136,7 +136,7 @@ internal class NadelBatchHydrationTransform(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
-        val argBatches = NadelBatchArgumentsBuilder.getArguementBatches(
+        val argBatches = NadelBatchArgumentsBuilder.getArgumentBatches(
             instruction = instruction,
             hydrationField = state.field,
             parentNodes = parentNodes,

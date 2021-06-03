@@ -16,7 +16,7 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLTypeUtil
 
 object NadelBatchArgumentsBuilder {
-    fun getArguementBatches(
+    fun getArgumentBatches(
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: NormalizedField,
         parentNodes: List<JsonNode>,
