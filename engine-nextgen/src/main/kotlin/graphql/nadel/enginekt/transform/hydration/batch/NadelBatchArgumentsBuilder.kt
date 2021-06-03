@@ -15,7 +15,7 @@ import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLTypeUtil
 
-object NadelBatchArgumentsBuilder {
+internal object NadelBatchArgumentsBuilder {
     fun getArgumentBatches(
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: NormalizedField,
