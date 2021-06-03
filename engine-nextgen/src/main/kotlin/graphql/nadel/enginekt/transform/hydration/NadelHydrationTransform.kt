@@ -182,10 +182,9 @@ internal class NadelHydrationTransform(
 
     private fun mapFieldPathToResultKeys(state: State, path: List<String>): List<String> {
         return path.mapIndexed { index, segment ->
-            if (index == 0) {
-                getArtificialFieldResultKey(state, segment)
-            } else {
-                segment
+            when (index) {
+                0 -> getArtificialFieldResultKey(state, segment)
+                else -> segment
             }
         }
     }

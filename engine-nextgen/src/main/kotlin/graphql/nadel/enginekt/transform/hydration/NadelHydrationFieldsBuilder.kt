@@ -8,6 +8,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.query.NadelPathToField
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.normalized.NormalizedField
+import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
 
 internal object NadelHydrationFieldsBuilder {
@@ -17,16 +18,28 @@ internal object NadelHydrationFieldsBuilder {
         parentNode: JsonNode,
         pathToResultKeys: (List<String>) -> List<String>,
     ): NormalizedField {
-        return NadelPathToField.createField(
-            schema = instruction.sourceService.underlyingSchema,
-            parentType = instruction.sourceService.underlyingSchema.queryType,
-            pathToField = instruction.pathToSourceField,
+        return getQuery(
+            instruction,
+            hydrationField,
             fieldArguments = NadelHydrationArgumentsBuilder.createSourceFieldArgs(
                 instruction,
                 parentNode,
                 hydrationField,
                 pathToResultKeys,
             ),
+        )
+    }
+
+    fun getQuery(
+        instruction: NadelGenericHydrationInstruction,
+        hydrationField: NormalizedField,
+        fieldArguments: Map<String, NormalizedInputValue>,
+    ): NormalizedField {
+        return NadelPathToField.createField(
+            schema = instruction.sourceService.underlyingSchema,
+            parentType = instruction.sourceService.underlyingSchema.queryType,
+            pathToField = instruction.pathToSourceField,
+            fieldArguments = fieldArguments,
             fieldChildren = hydrationField.children,
         )
     }

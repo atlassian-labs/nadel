@@ -89,8 +89,7 @@ internal object NadelHydrationArgumentsBuilder {
                     },
                 )
                 .build()
-            null ->
-                NullValue.newNullValue().build()
+            null -> NullValue.newNullValue().build()
             is Double ->
                 FloatValue.newFloatValue()
                     .value(value.toBigDecimal())

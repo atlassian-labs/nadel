@@ -16,17 +16,18 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLTypeUtil
 
 object NadelBatchArgumentsBuilder {
-    fun getFieldValues(
+    fun getArguementBatches(
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: NormalizedField,
         parentNodes: List<JsonNode>,
+        pathToResultKeys: (List<String>) -> List<String>,
     ): List<Map<NadelHydrationArgument, NormalizedInputValue>> {
         val sourceFieldDefinition = NadelHydrationUtil.getSourceFieldDefinition(instruction)
 
         val nonBatchArgs = getNonBatchArgs(instruction, hydrationField)
-        val batchArgs = getBatchArgs(sourceFieldDefinition, instruction, parentNodes)
+        val batchArgs = getBatchArgs(sourceFieldDefinition, instruction, parentNodes, pathToResultKeys)
 
-        return batchArgs.map { nonBatchArgs + batchArgs }
+        return batchArgs.map { nonBatchArgs + it }
     }
 
     private fun getNonBatchArgs(
@@ -52,6 +53,7 @@ object NadelBatchArgumentsBuilder {
         sourceFieldDefinition: GraphQLFieldDefinition,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
+        pathToResultKeys: (List<String>) -> List<String>,
     ): List<Pair<NadelHydrationArgument, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
@@ -67,7 +69,7 @@ object NadelBatchArgumentsBuilder {
 
         val batchArgDef = sourceFieldDefinition.getArgument(batchArg.name)
 
-        return getFieldValues(valueSource, parentNodes)
+        return getFieldValues(valueSource, parentNodes, pathToResultKeys)
             .chunked(size = batchSize)
             .map { chunk ->
                 batchArg to NormalizedInputValue(
@@ -80,11 +82,12 @@ object NadelBatchArgumentsBuilder {
     private fun getFieldValues(
         valueSource: NadelHydrationArgumentValueSource.FieldValue,
         parentNodes: List<JsonNode>,
+        pathToResultKeys: (List<String>) -> List<String>,
     ): List<Any?> {
         return parentNodes.flatMap { parentNode ->
             val nodes = JsonNodeExtractor.getNodesAt(
                 rootNode = parentNode,
-                queryResultKeyPath = valueSource.pathToField,
+                queryResultKeyPath = pathToResultKeys(valueSource.pathToField),
                 flatten = true,
             )
 
