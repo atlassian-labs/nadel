@@ -3,6 +3,7 @@ package graphql.nadel.enginekt.transform.hydration.batch
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
+import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationArgumentsBuilder.valueToAstValue
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
@@ -17,15 +18,15 @@ import graphql.schema.GraphQLTypeUtil
 
 internal object NadelBatchArgumentsBuilder {
     fun getArgumentBatches(
+        artificialFields: ArtificialFields,
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: NormalizedField,
         parentNodes: List<JsonNode>,
-        pathToResultKeys: (List<String>) -> List<String>,
     ): List<Map<NadelHydrationArgument, NormalizedInputValue>> {
         val sourceFieldDefinition = NadelHydrationUtil.getSourceFieldDefinition(instruction)
 
         val nonBatchArgs = getNonBatchArgs(instruction, hydrationField)
-        val batchArgs = getBatchArgs(sourceFieldDefinition, instruction, parentNodes, pathToResultKeys)
+        val batchArgs = getBatchArgs(sourceFieldDefinition, instruction, parentNodes, artificialFields)
 
         return batchArgs.map { nonBatchArgs + it }
     }
@@ -53,7 +54,7 @@ internal object NadelBatchArgumentsBuilder {
         sourceFieldDefinition: GraphQLFieldDefinition,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
-        pathToResultKeys: (List<String>) -> List<String>,
+        artificialFields: ArtificialFields,
     ): List<Pair<NadelHydrationArgument, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
@@ -69,7 +70,7 @@ internal object NadelBatchArgumentsBuilder {
 
         val batchArgDef = sourceFieldDefinition.getArgument(batchArg.name)
 
-        return getFieldValues(valueSource, parentNodes, pathToResultKeys)
+        return getFieldValues(valueSource, parentNodes, artificialFields)
             .chunked(size = batchSize)
             .map { chunk ->
                 batchArg to NormalizedInputValue(
@@ -82,12 +83,12 @@ internal object NadelBatchArgumentsBuilder {
     private fun getFieldValues(
         valueSource: NadelHydrationArgumentValueSource.FieldValue,
         parentNodes: List<JsonNode>,
-        pathToResultKeys: (List<String>) -> List<String>,
+        artificialFields: ArtificialFields,
     ): List<Any?> {
         return parentNodes.flatMap { parentNode ->
             val nodes = JsonNodeExtractor.getNodesAt(
                 rootNode = parentNode,
-                queryResultKeyPath = pathToResultKeys(valueSource.pathToField),
+                queryResultKeyPath = artificialFields.mapPathToResultKeys(valueSource.pathToField),
                 flatten = true,
             )
 

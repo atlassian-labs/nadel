@@ -9,20 +9,21 @@ import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.NadelTransformUtil
-import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
-import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
+import graphql.nadel.enginekt.transform.NadelTransformUtil
+import graphql.nadel.enginekt.transform.artificial.ArtificialFields
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
-import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedField.newNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
+import kotlinx.coroutines.internal.artificialFrame
 import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 internal class NadelHydrationTransform(
@@ -42,11 +43,7 @@ internal class NadelHydrationTransform(
          * the [State] is passed around.
          */
         val field: NormalizedField,
-        /**
-         * Used as a prefix or suffix to field names to ensure that artificial fields added
-         * by [NadelHydrationTransform] do NOT overlap with existing field result keys.
-         */
-        val alias: String,
+        val artificialFields: ArtificialFields,
     )
 
     override suspend fun isApplicable(
@@ -66,7 +63,7 @@ internal class NadelHydrationTransform(
             State(
                 hydrationInstructions,
                 field,
-                alias = "hydration_uuid",
+                artificialFields = ArtificialFields("hydration_uuid"),
             )
         }
     }
@@ -83,10 +80,13 @@ internal class NadelHydrationTransform(
         return NadelTransformFieldResult(
             newField = null,
             artificialFields = state.instructions.flatMap { (fieldCoordinates, instruction) ->
-                NadelHydrationFieldsBuilder.getArtificialFields(service, executionPlan, fieldCoordinates, instruction)
-                    .map {
-                        it.toBuilder().alias(getArtificialFieldResultKey(state, it)).build()
-                    }
+                NadelHydrationFieldsBuilder.getArtificialFields(
+                    service = service,
+                    executionPlan = executionPlan,
+                    artificialFields = state.artificialFields,
+                    fieldCoordinates = fieldCoordinates,
+                    instruction = instruction,
+                )
             } + makeTypeNameField(state),
         )
     }
@@ -105,7 +105,7 @@ internal class NadelHydrationTransform(
     ): NormalizedField {
         // TODO: DRY this code, this is copied from deep rename
         return newNormalizedField()
-            .alias(getTypeNameResultKey(state))
+            .alias(state.artificialFields.typeNameResultKey)
             .fieldName(TypeNameMetaFieldDef.name)
             .objectTypeNames(state.instructions.keys.map { it.typeName })
             .build()
@@ -157,11 +157,9 @@ internal class NadelHydrationTransform(
             service = instruction.sourceService,
             topLevelField = NadelHydrationFieldsBuilder.getQuery(
                 instruction = instruction,
+                artificialFields = state.artificialFields,
                 hydrationField = hydrationField,
                 parentNode = parentNode,
-                pathToResultKeys = { path ->
-                    mapFieldPathToResultKeys(state, path)
-                },
             ),
             pathToSourceField = instruction.pathToSourceField,
             executionContext = executionContext,
@@ -180,32 +178,6 @@ internal class NadelHydrationTransform(
         )
     }
 
-    private fun mapFieldPathToResultKeys(state: State, path: List<String>): List<String> {
-        return path.mapIndexed { index, segment ->
-            when (index) {
-                0 -> getArtificialFieldResultKey(state, segment)
-                else -> segment
-            }
-        }
-    }
-
-    private fun getArtificialFieldResultKey(state: State, field: NormalizedField): String {
-        return getArtificialFieldResultKey(state, fieldName = field.name)
-    }
-
-    private fun getArtificialFieldResultKey(state: State, fieldName: String): String {
-        return state.alias + "__" + fieldName
-    }
-
-    /**
-     * Read [State.alias]
-     *
-     * @return the aliased value of the GraphQL introspection field `__typename`
-     */
-    private fun getTypeNameResultKey(state: State): String {
-        return TypeNameMetaFieldDef.name + "__" + state.alias
-    }
-
     /**
      * Note: this can be null if the type condition was not met
      */
@@ -216,8 +188,8 @@ internal class NadelHydrationTransform(
     ): NadelHydrationFieldInstruction? {
         val overallTypeName = NadelTransformUtil.getOverallTypename(
             executionPlan = executionPlan,
+            artificialFields = state.artificialFields,
             node = parentNode,
-            typeNameResultKey = getTypeNameResultKey(state),
         )
         return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
     }

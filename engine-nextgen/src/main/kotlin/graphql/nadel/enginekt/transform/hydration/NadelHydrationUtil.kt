@@ -31,15 +31,4 @@ internal object NadelHydrationUtil {
 
         return parentType.getField(pathToSourceField.last())
     }
-
-    fun makeTypeNameField(
-        alias: String,
-        objectTypeNames: List<String>,
-    ): NormalizedField {
-        return newNormalizedField()
-            .alias(alias)
-            .fieldName(TypeNameMetaFieldDef.name)
-            .objectTypeNames(objectTypeNames)
-            .build()
-    }
 }

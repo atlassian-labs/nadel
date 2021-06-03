@@ -11,6 +11,7 @@ import graphql.language.StringValue
 import graphql.language.Value
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
+import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getSourceFieldDefinition
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -28,9 +29,9 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSou
 internal object NadelHydrationArgumentsBuilder {
     fun createSourceFieldArgs(
         instruction: NadelHydrationFieldInstruction,
-        parentNode: JsonNode,
+        artificialFields: ArtificialFields,
         hydrationField: NormalizedField,
-        pathToResultKeys: (List<String>) -> List<String>,
+        parentNode: JsonNode,
     ): Map<String, NormalizedInputValue> {
         val sourceField = getSourceFieldDefinition(instruction)
 
@@ -38,7 +39,7 @@ internal object NadelHydrationArgumentsBuilder {
             instruction.sourceFieldArguments
                 .map {
                     val argumentDef = sourceField.getArgument(it.name)
-                    it.name to makeInputValue(it, argumentDef, parentNode, hydrationField, pathToResultKeys)
+                    it.name to makeInputValue(it, argumentDef, parentNode, hydrationField, artificialFields)
                 }
         )
     }
@@ -48,12 +49,12 @@ internal object NadelHydrationArgumentsBuilder {
         argumentDef: GraphQLArgument,
         parentNode: JsonNode,
         hydrationField: NormalizedField,
-        pathToResultKeys: (List<String>) -> List<String>,
+        artificialFields: ArtificialFields,
     ): NormalizedInputValue {
         return when (val valueSource = argument.valueSource) {
             is ValueSource.ArgumentValue -> hydrationField.getNormalizedArgument(valueSource.argumentName)
             is ValueSource.FieldValue -> makeInputValue(argumentDef) {
-                getFieldValue(valueSource, parentNode, pathToResultKeys)
+                getFieldValue(valueSource, parentNode, artificialFields)
             }
         }
     }
@@ -61,11 +62,11 @@ internal object NadelHydrationArgumentsBuilder {
     private fun getFieldValue(
         valueSource: ValueSource.FieldValue,
         parentNode: JsonNode,
-        pathToResultKeys: (List<String>) -> List<String>,
+        artificialFields: ArtificialFields,
     ): AnyNormalizedInputValueValue {
         val value = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
-            queryResultKeyPath = pathToResultKeys(valueSource.pathToField),
+            queryResultKeyPath = artificialFields.mapPathToResultKeys(valueSource.pathToField),
         ).emptyOrSingle()?.value
 
         return NormalizedInputValueValue.AstValue(

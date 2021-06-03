@@ -56,13 +56,13 @@ class NadelE2ETest extends Specification {
         }
       }
       ... on Issue {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
     }
   }
 }"""
         def overallResponse = [issue: [name: "My Issue"]]
-        def serviceResponse = [issue: [my_uuid__typename: "Issue", my_uuid__detail: [detailName: "My Issue"]]]
+        def serviceResponse = [issue: [__typename__my_uuid: "Issue", my_uuid__detail: [detailName: "My Issue"]]]
 
         Map response
         List<GraphQLError> errors
@@ -136,17 +136,17 @@ class NadelE2ETest extends Specification {
         }
       }
       ... on Dog {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
       ... on Cat {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
     }
   }
 }"""
         def serviceResponse = [pets: [
-                [my_uuid__typename: "Cat", my_uuid__detail: [petName: "Tiger"]],
-                [my_uuid__typename: "Dog", my_uuid__detail: [petName: "Luna"]],
+                [__typename__my_uuid: "Cat", my_uuid__detail: [petName: "Tiger"]],
+                [__typename__my_uuid: "Dog", my_uuid__detail: [petName: "Luna"]],
         ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
@@ -358,7 +358,7 @@ class NadelE2ETest extends Specification {
             }
         }
     }
-}""")): [
+}"""))                                 : [
                         usersByIds: [
                                 [id: "user-1", name: "Scott"],
                                 [id: "user-2", name: "Mike"],
@@ -495,15 +495,15 @@ class NadelE2ETest extends Specification {
                 }
             }
             ... on User {
-                my_uuid__typename: __typename
+                __typename__my_uuid: __typename
             }
         }
     }
 }""")): [
                         userById: [
-                                my_uuid__typename: "User",
-                                id               : "user-1",
-                                my_uuid__details : [name: "Atlassian"],
+                                __typename__my_uuid: "User",
+                                id                 : "user-1",
+                                my_uuid__details   : [name: "Atlassian"],
                         ]
                 ],
         ]
@@ -591,17 +591,17 @@ class NadelE2ETest extends Specification {
         }
       }
       ... on Dog {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
       ... on Cat {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
     }
   }
 }"""
         def serviceResponse = [pets: [
-                [my_uuid__typename: "Cat", my_uuid__microchip: [petName: "Tiger"]],
-                [my_uuid__typename: "Dog", my_uuid__collar: [petName: "Luna"]],
+                [__typename__my_uuid: "Cat", my_uuid__microchip: [petName: "Tiger"]],
+                [__typename__my_uuid: "Dog", my_uuid__collar: [petName: "Luna"]],
         ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
@@ -705,13 +705,13 @@ class NadelE2ETest extends Specification {
         }
       }
       ... on UnderlyingIssue {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
       ... on UnderlyingIssue {detail {... on UnderlyingIssueDetails {otherDetail}}}
     }
   }
 }"""
-        def serviceResponse = [issue: [detail: [otherDetail: "other detail"], my_uuid__typename: "UnderlyingIssue", my_uuid__detail: [detailName: "My Issue"]]]
+        def serviceResponse = [issue: [detail: [otherDetail: "other detail"], __typename__my_uuid: "UnderlyingIssue", my_uuid__detail: [detailName: "My Issue"]]]
         def overallResponse = [issue: [name: "My Issue", detail: [otherDetail: "other detail"]]]
 
         Map response
