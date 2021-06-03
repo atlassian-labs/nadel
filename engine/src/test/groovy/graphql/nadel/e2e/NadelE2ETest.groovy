@@ -19,7 +19,9 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.engine.StrategyTestHelper
 import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation
+import graphql.nadel.engine.result.ResultComplexityAggregator
 import graphql.nadel.engine.result.ResultNodesUtil
 import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.engine.testutils.TestUtil
@@ -39,7 +41,6 @@ import graphql.schema.SchemaTransformer
 import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.util.TraversalControl
 import graphql.util.TraverserContext
-import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
@@ -50,7 +51,7 @@ import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import static graphql.nadel.engine.testutils.TestUtil.typeDefinitions
 import static java.util.concurrent.CompletableFuture.completedFuture
 
-class NadelE2ETest extends Specification {
+class NadelE2ETest extends StrategyTestHelper {
 
     def simpleNDSL = [MyService: '''
          service MyService {
@@ -1345,4 +1346,92 @@ class NadelE2ETest extends Specification {
 
     }
 
+    def '''bugfix: check that a field that is used as an input for a hydration is not dropped from the response if it's
+           explicitly requested and the top level field is renamed'''() {
+
+        def overallSchema = TestUtil.schemaFromNdsl([
+                CommentService: '''   
+                    service CommentService {
+                       type Query {
+                           commentRenamed(id: ID): Comment => renamed from comment
+                           comment(id: ID): Comment
+                       }
+                       
+                       type Comment {
+                           id: ID
+                           text: String
+                           authorId: ID
+                           author: User => hydrated from UserService.userById(id: $source.authorId)
+                       }
+                    }
+                    ''',
+                UserService   : '''
+                    service UserService {
+                        type Query {
+                            userById(id: ID): User
+                        }
+                        
+                        type User {
+                            userId: ID
+                            displayName: String
+                        }
+                    }'''
+        ])
+
+        def commentSchema = TestUtil.schema("""
+            type Query {
+                comment(id: ID): Comment
+            }
+            
+            type Comment {
+                id: ID
+                text: String
+                authorId: ID
+            }""")
+
+        def userServiceSchema = TestUtil.schema("""
+            type Query {
+                userById(id: ID): User
+            }
+            type User {
+                userId: ID
+                displayName: String
+            }""")
+
+        given:
+
+        def query = '''
+        {
+            commentRenamed(id:"C1") {
+                authorId
+                author {displayName}
+            }
+        }
+        '''
+        def expectedQuery1 = 'query nadel_2_CommentService {comment(id:"C1") {authorId authorId}}'
+        def expectedQuery2 = """query nadel_2_UserService {userById(id:"fred") {displayName}}"""
+        Map response1 = [comment: [authorId: "fred"]]
+        Map response2 = [userById: [displayName: "Display name of Fred"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "CommentService",
+                commentSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["commentRenamed"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [commentRenamed: [authorId: "fred", author: [displayName: "Display name of Fred"]]]
+        errors.size() == 0
+    }
 }

@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class TransformationState {
     // needed when the underlying result tree is mapped back
-    final Map<String, FieldTransformation> fieldIdToTransformation;
+    final Map<String, FieldTransformation> transformationIdToTransformation;
     // needed when the underlying result tree is mapped back
     final Map<FieldTransformation, String> transformationToFieldId;
     // needed when the underlying result tree is mapped back
@@ -18,19 +18,19 @@ public class TransformationState {
     final List<String> hintTypenames;
 
     public TransformationState() {
-        this.fieldIdToTransformation = new LinkedHashMap<>();
+        this.transformationIdToTransformation = new LinkedHashMap<>();
         this.transformationToFieldId = new LinkedHashMap<>();
         this.typeRenameMappings = new LinkedHashMap<>();
         this.hintTypenames = new ArrayList<>();
     }
 
-    public Map<String, FieldTransformation> getFieldIdToTransformation() {
-        return fieldIdToTransformation;
+    public Map<String, FieldTransformation> getTransformationIdToTransformation() {
+        return transformationIdToTransformation;
     }
 
     public Map<FieldTransformation, String> getTransformationToFieldId() {
         return transformationToFieldId;
-    };
+    }
 
     public Map<String, String> getTypeRenameMappings() {
         return typeRenameMappings;
@@ -40,8 +40,8 @@ public class TransformationState {
         return hintTypenames;
     }
 
-    public void putFieldIdToTransformation(String fieldId, FieldTransformation transformation) {
-        fieldIdToTransformation.put(fieldId, transformation);
+    public void putTransformationIdToTransformation(String transformationId, FieldTransformation transformation) {
+        transformationIdToTransformation.put(transformationId, transformation);
     }
 
     public void putTransformationToFieldId(FieldTransformation transformation, String fieldId) {

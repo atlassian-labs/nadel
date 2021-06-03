@@ -161,7 +161,7 @@ public class NadelExecutionStrategy {
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operationKind, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
             resultNodes.add(transformedQueryCF.thenCompose(transformedQuery -> {
-                Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getTransformations().getFieldIdToTransformation();
+                Map<String, FieldTransformation> transformationIdToTransformation = transformedQuery.getTransformations().getTransformationIdToTransformation();
                 Map<String, String> typeRenameMappings = transformedQuery.getTransformations().getTypeRenameMappings();
                 Map<FieldTransformation, String> transformationToFieldId = transformedQuery.getTransformations().getTransformationToFieldId();
 
@@ -176,7 +176,7 @@ public class NadelExecutionStrategy {
 
                 CompletableFuture<RootExecutionResultNode> convertedResult;
 
-                if (skipTransformationProcessing(nadelContext, transformedQuery)) {
+                if (skipTransformationProcessing(transformedQuery)) {
                     convertedResult = serviceExecutor
                             .execute(newExecutionContext, transformedQuery, service, operationKind, serviceContext, overallSchema, false);
                     resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);
@@ -191,7 +191,7 @@ public class NadelExecutionStrategy {
                                     benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
                                     benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
                                     benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
-                                    benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
+                                    benchmarkContext.serviceResultNodesToOverallResult.transformationIdToTransformation = transformationIdToTransformation;
                                     benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
                                     benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
                                     benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = transformedQuery.getRemovedFieldMap();
@@ -201,7 +201,7 @@ public class NadelExecutionStrategy {
                                                 resultNode,
                                                 overallSchema,
                                                 resultNode,
-                                                fieldIdToTransformation,
+                                                transformationIdToTransformation,
                                                 transformationToFieldId,
                                                 typeRenameMappings,
                                                 nadelContext,
@@ -354,12 +354,12 @@ public class NadelExecutionStrategy {
         return executionContext.getContext();
     }
 
-    private boolean skipTransformationProcessing(NadelContext nadelContext, QueryTransformationResult transformedQuery) {
+    private boolean skipTransformationProcessing(QueryTransformationResult transformedQuery) {
         TransformationState transformations = transformedQuery.getTransformations();
-        return transformations.getFieldIdToTransformation().size() == 0 &&
-               transformations.getTypeRenameMappings().size() == 0 &&
-               !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
-               transformations.getHintTypenames().size() == 0;
+        return transformations.getTransformationIdToTransformation().isEmpty() &&
+                transformations.getTypeRenameMappings().isEmpty() &&
+                !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
+                transformations.getHintTypenames().isEmpty();
     }
 }
 
