@@ -8,8 +8,6 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
-import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
@@ -21,22 +19,18 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
-import graphql.nadel.enginekt.util.AnyMap
-import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 internal class NadelBatchHydrationTransform(
-    private val engine: NextgenEngine,
+    engine: NextgenEngine,
 ) : NadelTransform<State> {
+    private val logic = Logic()
+    private val hydrator = NadelBatchHydrator(engine, logic)
+
     data class State(
         val instructions: Map<FieldCoordinates, NadelBatchHydrationFieldInstruction>,
         val executionContext: NadelExecutionContext,
@@ -102,123 +96,7 @@ internal class NadelBatchHydrationTransform(
             flatten = true,
         )
 
-        return hydrate(state, executionPlan, parentNodes)
-    }
-
-    private suspend fun hydrate(
-        state: State,
-        executionPlan: NadelExecutionPlan,
-        parentNodes: List<JsonNode>,
-    ): List<NadelResultInstruction> {
-        val parentNodesByInstruction: Map<NadelBatchHydrationFieldInstruction, List<JsonNode>> = parentNodes
-            .mapNotNull {
-                when (val instruction = getMatchingInstruction(parentNode = it, state, executionPlan)) {
-                    null -> null
-                    else -> it to instruction // Becomes Pair<JsonNode, Instruction>
-                }
-            }
-            // Becomes Map<Instruction, List<Pair<JsonNode, Instruction>>>
-            .groupBy { pair ->
-                pair.second
-            }
-            // Changes List<Pair<JsonNode, Instruction>> to List<JsonNode>
-            .mapValues { pairs ->
-                pairs.value.map { pair -> pair.first }
-            }
-
-        return parentNodesByInstruction.flatMap { (instruction, parentNodes) ->
-            hydrate(state, instruction, parentNodes)
-        }
-    }
-
-    private suspend fun hydrate(
-        state: State,
-        instruction: NadelBatchHydrationFieldInstruction,
-        parentNodes: List<JsonNode>,
-    ): List<NadelResultInstruction> {
-        val argBatches = NadelBatchArgumentsBuilder.getArgumentBatches(
-            instruction = instruction,
-            hydrationField = state.field,
-            parentNodes = parentNodes,
-            pathToResultKeys = { path ->
-                mapFieldPathToResultKeys(state, path)
-            },
-        )
-
-        val batches: List<Deferred<ServiceExecutionResult>> = argBatches
-            .map { argBatch ->
-                val hydrationQuery = NadelHydrationFieldsBuilder.getQuery(
-                    instruction = instruction,
-                    hydrationField = state.field,
-                    fieldArguments = argBatch.mapKeys { (argument) -> argument.name },
-                )
-
-                coroutineScope {
-                    async {
-                        engine.executeHydration(
-                            service = instruction.sourceService,
-                            topLevelField = hydrationQuery,
-                            pathToSourceField = instruction.pathToSourceField,
-                            executionContext = state.executionContext,
-                        )
-                    }
-                }
-            }
-
-        val results = batches
-            .awaitAll()
-            .flatMap { batch ->
-                val nodes = JsonNodeExtractor.getNodesAt(
-                    data = batch.data,
-                    queryResultKeyPath = instruction.pathToSourceField,
-                    flatten = true,
-                )
-
-                // Associate by does not need to be strict here
-                nodes
-                    .mapNotNull { node ->
-                        when (val nodeValue = node.value) {
-                            is AnyMap -> nodeValue.let {
-                                @Suppress("UNCHECKED_CAST")
-                                it as JsonMap
-                            }
-                            else -> null
-                        }
-                    }
-            }
-            .associateBy { nodeValue ->
-                when (val matchStrategy = instruction.batchHydrationMatchStrategy) {
-                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> {
-                        nodeValue[matchStrategy.objectId]
-                    }
-                    is NadelBatchHydrationMatchStrategy.MatchIndex -> {
-                        TODO("no-op")
-                    }
-                }
-            }
-
-        val pathToHydrationParentNodeIdentifier = instruction
-            .sourceFieldArguments
-            .asSequence()
-            .map { it.valueSource }
-            .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
-            .single()
-            .pathToField
-
-        return parentNodes.mapNotNull { parentNode ->
-            val parentNodeIdentifierNode = JsonNodeExtractor.getNodesAt(
-                rootNode = parentNode,
-                queryResultKeyPath = mapFieldPathToResultKeys(state, pathToHydrationParentNodeIdentifier),
-            ).emptyOrSingle()
-
-            when (parentNodeIdentifierNode) {
-                null -> null
-                else -> NadelResultInstruction.Set(
-                    subjectPath = parentNode.path + state.field.resultKey,
-                    newValue = results[parentNodeIdentifierNode.value],
-                )
-            }
-        }
+        return hydrator.hydrate(state, executionPlan, parentNodes)
     }
 
     private fun makeTypeNameField(state: State): NormalizedField {
@@ -240,28 +118,30 @@ internal class NadelBatchHydrationTransform(
         return state.alias + "__" + fieldName
     }
 
-    private fun mapFieldPathToResultKeys(state: State, path: List<String>): List<String> {
-        return path.mapIndexed { index, segment ->
-            when (index) {
-                0 -> getArtificialFieldResultKey(state, segment)
-                else -> segment
+    private inner class Logic : NadelBatchHydrationLogic {
+        override fun mapFieldPathToResultKeys(state: State, path: List<String>): List<String> {
+            return path.mapIndexed { index, segment ->
+                when (index) {
+                    0 -> getArtificialFieldResultKey(state, segment)
+                    else -> segment
+                }
             }
         }
-    }
 
-    /**
-     * Note: this can be null if the type condition was not met
-     */
-    private fun getMatchingInstruction(
-        parentNode: JsonNode,
-        state: State,
-        executionPlan: NadelExecutionPlan,
-    ): NadelBatchHydrationFieldInstruction? {
-        val overallTypeName = NadelTransformUtil.getOverallTypename(
-            executionPlan = executionPlan,
-            node = parentNode,
-            typeNameResultKey = getTypeNameResultKey(state),
-        )
-        return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
+        /**
+         * Note: this can be null if the type condition was not met
+         */
+        override fun getMatchingInstruction(
+            parentNode: JsonNode,
+            state: State,
+            executionPlan: NadelExecutionPlan,
+        ): NadelBatchHydrationFieldInstruction? {
+            val overallTypeName = NadelTransformUtil.getOverallTypename(
+                executionPlan = executionPlan,
+                node = parentNode,
+                typeNameResultKey = getTypeNameResultKey(state),
+            )
+            return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
+        }
     }
 }
