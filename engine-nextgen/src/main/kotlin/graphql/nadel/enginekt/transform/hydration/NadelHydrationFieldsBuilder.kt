@@ -8,7 +8,6 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.query.NadelPathToField
 import graphql.nadel.enginekt.transform.result.json.JsonNode
-import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates

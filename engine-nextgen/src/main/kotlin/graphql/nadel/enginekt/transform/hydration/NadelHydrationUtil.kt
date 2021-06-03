@@ -1,10 +1,7 @@
 package graphql.nadel.enginekt.transform.hydration
 
-import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
-import graphql.normalized.NormalizedField
-import graphql.normalized.NormalizedField.newNormalizedField
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 

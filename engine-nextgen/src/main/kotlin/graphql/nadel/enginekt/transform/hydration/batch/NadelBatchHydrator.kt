@@ -7,6 +7,7 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrate
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
+import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
@@ -23,7 +24,6 @@ import kotlinx.coroutines.coroutineScope
 
 internal class NadelBatchHydrator(
     private val engine: NextgenEngine,
-    private val logic: NadelBatchHydrationLogic,
 ) {
     suspend fun hydrate(
         state: State,
@@ -31,10 +31,15 @@ internal class NadelBatchHydrator(
         parentNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
         val parentNodesByInstruction: Map<NadelBatchHydrationFieldInstruction, List<JsonNode>> = parentNodes
-            .mapNotNull {
-                when (val instruction = logic.getMatchingInstruction(parentNode = it, state, executionPlan)) {
+            .mapNotNull { parentNode ->
+                val instruction = state.instructions.getInstructionForNode(
+                    executionPlan = executionPlan,
+                    artificialFields = state.artificialFields,
+                    parentNode = parentNode,
+                )
+                when (instruction) {
                     null -> null
-                    else -> it to instruction // Becomes Pair<JsonNode, Instruction>
+                    else -> parentNode to instruction // Becomes Pair<JsonNode, Instruction>
                 }
             }
             // Becomes Map<Instruction, List<Pair<JsonNode, Instruction>>>
@@ -64,7 +69,7 @@ internal class NadelBatchHydrator(
         )
 
         val batches: List<Deferred<ServiceExecutionResult>> = executeBatchesAsync(state, instruction, argBatches)
-        val results = awaitBatchesThenAssociateKeys(instruction, batches)
+        val resultsByObjectId = awaitBatchesThenAssociateKeys(instruction, batches)
         val resultKeysToObjectIdOnHydrationParentNode = state.artificialFields.mapPathToResultKeys(
             getPathToObjectIdentifierOnHydrationParentNode(instruction),
         )
@@ -79,7 +84,7 @@ internal class NadelBatchHydrator(
                 null -> null
                 else -> NadelResultInstruction.Set(
                     subjectPath = parentNode.path + state.field.resultKey,
-                    newValue = results[parentNodeIdentifierNode.value],
+                    newValue = resultsByObjectId[parentNodeIdentifierNode.value],
                 )
             }
         }

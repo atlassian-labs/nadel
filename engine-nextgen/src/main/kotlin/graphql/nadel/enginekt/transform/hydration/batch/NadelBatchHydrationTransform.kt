@@ -10,25 +10,21 @@ import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
-import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
-import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 internal class NadelBatchHydrationTransform(
     engine: NextgenEngine,
 ) : NadelTransform<State> {
-    private val logic = Logic()
-    private val hydrator = NadelBatchHydrator(engine, logic)
+    private val hydrator = NadelBatchHydrator(engine)
 
     data class State(
         val instructions: Map<FieldCoordinates, NadelBatchHydrationFieldInstruction>,
@@ -106,27 +102,5 @@ internal class NadelBatchHydrationTransform(
             artificialFields = state.artificialFields,
             objectTypeNames = state.instructions.keys.map { it.typeName },
         )
-    }
-
-    private inner class Logic : NadelBatchHydrationLogic {
-        override fun mapFieldPathToResultKeys(state: State, path: List<String>): List<String> {
-            return state.artificialFields.mapPathToResultKeys(path)
-        }
-
-        /**
-         * Note: this can be null if the type condition was not met
-         */
-        override fun getMatchingInstruction(
-            parentNode: JsonNode,
-            state: State,
-            executionPlan: NadelExecutionPlan,
-        ): NadelBatchHydrationFieldInstruction? {
-            val overallTypeName = NadelTransformUtil.getOverallTypename(
-                executionPlan = executionPlan,
-                artificialFields = state.artificialFields,
-                node = parentNode,
-            )
-            return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
-        }
     }
 }
