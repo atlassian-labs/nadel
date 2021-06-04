@@ -20,6 +20,7 @@ class NadelE2ETest_SharedNamespaceWIP extends Specification {
         def nsdl = [
                 Issues     : '''
             service Issues {
+              
               directive @namespaced on FIELD_DEFINITION
               
               type Query {
@@ -38,11 +39,8 @@ class NadelE2ETest_SharedNamespaceWIP extends Specification {
         ''',
                 IssueSearch: '''
             service IssueSearch {
-              type Query {
-                issue: IssueQuery @namespaced
-              } 
               
-              type IssueQuery {
+              extend type IssueQuery {
                 search: SearchResult 
               }
               
@@ -88,7 +86,7 @@ class NadelE2ETest_SharedNamespaceWIP extends Specification {
                 }
                 
                 search {
-                  found
+                  count
                 }
               }
             }
