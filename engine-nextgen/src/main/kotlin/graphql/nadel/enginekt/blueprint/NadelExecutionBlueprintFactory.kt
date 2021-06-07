@@ -167,7 +167,7 @@ internal object NadelExecutionBlueprintFactory {
         return hydration.arguments.map { argumentDef ->
             val valueSource = when (val argSourceType = argumentDef.remoteArgumentSource.sourceType) {
                 FIELD_ARGUMENT -> NadelHydrationArgumentValueSource.ArgumentValue(argumentDef.remoteArgumentSource.name)
-                OBJECT_FIELD -> NadelHydrationArgumentValueSource.QueriedFieldValue(QueryPath(argumentDef.remoteArgumentSource.path))
+                OBJECT_FIELD -> NadelHydrationArgumentValueSource.FieldResultValue(QueryPath(argumentDef.remoteArgumentSource.path))
                 else -> error("Unsupported remote argument source type: '$argSourceType'")
             }
             NadelHydrationActorInput(argumentDef.name, valueSource)

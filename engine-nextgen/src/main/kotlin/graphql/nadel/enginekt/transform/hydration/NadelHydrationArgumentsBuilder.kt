@@ -53,20 +53,20 @@ internal object NadelHydrationArgumentsBuilder {
     ): NormalizedInputValue {
         return when (val valueSource = actorInput.valueSource) {
             is ValueSource.ArgumentValue -> hydrationField.getNormalizedArgument(valueSource.argumentName)
-            is ValueSource.QueriedFieldValue -> makeInputValue(argumentDef) {
+            is ValueSource.FieldResultValue -> makeInputValue(argumentDef) {
                 getFieldValue(valueSource, parentNode, artificialFields)
             }
         }
     }
 
     private fun getFieldValue(
-        valueSourceQueried: ValueSource.QueriedFieldValue,
+        valueSourceResult: ValueSource.FieldResultValue,
         parentNode: JsonNode,
         artificialFields: ArtificialFields,
     ): AnyNormalizedInputValueValue {
         val value = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
-            queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSourceQueried.queryPath),
+            queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSourceResult.queryPath),
         ).emptyOrSingle()?.value
 
         return NormalizedInputValueValue.AstValue(

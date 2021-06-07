@@ -59,7 +59,7 @@ internal object NadelHydrationFieldsBuilder {
         return instruction.actorInputValues
             .asSequence()
             .map { it.valueSource }
-            .filterIsInstance<NadelHydrationArgumentValueSource.QueriedFieldValue>()
+            .filterIsInstance<NadelHydrationArgumentValueSource.FieldResultValue>()
             .map { valueSource ->
                 artificialFields.toArtificial(
                     NFUtil.createField(

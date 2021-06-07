@@ -175,7 +175,7 @@ internal class NadelBatchHydrator(
             .actorInputValues
             .asSequence()
             .map { it.valueSource }
-            .filterIsInstance<NadelHydrationArgumentValueSource.QueriedFieldValue>()
+            .filterIsInstance<NadelHydrationArgumentValueSource.FieldResultValue>()
             .single()
             .queryPath
     }

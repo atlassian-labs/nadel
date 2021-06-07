@@ -18,7 +18,7 @@ sealed class NadelHydrationArgumentValueSource {
      * }
      * ```
      */
-    data class QueriedFieldValue(val queryPath: QueryPath) : NadelHydrationArgumentValueSource()
+    data class FieldResultValue(val queryPath: QueryPath) : NadelHydrationArgumentValueSource()
 
     /**
      * Uses a value from a field in the same object (or its children) as input e.g.

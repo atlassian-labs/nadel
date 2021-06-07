@@ -44,7 +44,7 @@ internal object NadelBatchArgumentsBuilder {
                             else -> sourceFieldArg to argValue
                         }
                     }
-                    is NadelHydrationArgumentValueSource.QueriedFieldValue -> null
+                    is NadelHydrationArgumentValueSource.FieldResultValue -> null
                 }
             },
         )
@@ -62,7 +62,7 @@ internal object NadelBatchArgumentsBuilder {
             .asSequence()
             .mapNotNull {
                 when (val valueSource = it.valueSource) {
-                    is NadelHydrationArgumentValueSource.QueriedFieldValue -> it to valueSource
+                    is NadelHydrationArgumentValueSource.FieldResultValue -> it to valueSource
                     else -> null
                 }
             }
@@ -81,14 +81,14 @@ internal object NadelBatchArgumentsBuilder {
     }
 
     private fun getFieldValues(
-        valueSourceQueried: NadelHydrationArgumentValueSource.QueriedFieldValue,
+        valueSourceResult: NadelHydrationArgumentValueSource.FieldResultValue,
         parentNodes: List<JsonNode>,
         artificialFields: ArtificialFields,
     ): List<Any?> {
         return parentNodes.flatMap { parentNode ->
             val nodes = JsonNodeExtractor.getNodesAt(
                 rootNode = parentNode,
-                queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSourceQueried.queryPath),
+                queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSourceResult.queryPath),
                 flatten = true,
             )
 
