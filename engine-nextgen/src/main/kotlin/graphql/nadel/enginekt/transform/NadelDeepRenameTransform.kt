@@ -10,6 +10,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
 import graphql.nadel.enginekt.util.emptyOrSingle
@@ -267,7 +268,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     ): List<NadelResultInstruction> {
         val parentNodes = getNodesAt(
             result.data,
-            field.listOfResultKeys.dropLast(1),
+            QueryPath(field.listOfResultKeys.dropLast(1)),
             flatten = true,
         )
 

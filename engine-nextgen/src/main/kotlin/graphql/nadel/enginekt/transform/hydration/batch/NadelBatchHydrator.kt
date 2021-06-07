@@ -4,12 +4,13 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -93,7 +94,7 @@ internal class NadelBatchHydrator(
     private suspend fun executeBatchesAsync(
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
-        argBatches: List<Map<NadelHydrationArgument, NormalizedInputValue>>,
+        argBatches: List<Map<NadelHydrationActorInput, NormalizedInputValue>>,
     ): List<Deferred<ServiceExecutionResult>> {
         return argBatches
             .map { argBatch ->
@@ -106,9 +107,9 @@ internal class NadelBatchHydrator(
                 coroutineScope {
                     async {
                         engine.executeHydration(
-                            service = instruction.sourceService,
+                            service = instruction.actorService,
                             topLevelField = hydrationQuery,
-                            pathToSourceField = instruction.pathToSourceField,
+                            pathToSourceField = instruction.actorFieldQueryPath,
                             executionContext = state.executionContext,
                         )
                     }
@@ -125,7 +126,7 @@ internal class NadelBatchHydrator(
             .flatMap { batch ->
                 val nodes = JsonNodeExtractor.getNodesAt(
                     data = batch.data,
-                    queryResultKeyPath = instruction.pathToSourceField,
+                    queryPath = instruction.actorFieldQueryPath,
                     flatten = true,
                 )
 
@@ -169,13 +170,13 @@ internal class NadelBatchHydrator(
      */
     private fun getPathToObjectIdentifierOnHydrationParentNode(
         instruction: NadelBatchHydrationFieldInstruction,
-    ): List<String> {
+    ): QueryPath {
         return instruction
-            .sourceFieldArguments
+            .actorInputValues
             .asSequence()
             .map { it.valueSource }
-            .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
+            .filterIsInstance<NadelHydrationArgumentValueSource.QueriedFieldValue>()
             .single()
-            .pathToField
+            .queryPath
     }
 }

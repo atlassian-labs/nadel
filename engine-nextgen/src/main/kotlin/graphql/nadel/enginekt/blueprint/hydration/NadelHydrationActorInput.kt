@@ -1,6 +1,8 @@
 package graphql.nadel.enginekt.blueprint.hydration
 
-data class NadelHydrationArgument(
+import graphql.nadel.enginekt.transform.query.QueryPath
+
+data class NadelHydrationActorInput(
     val name: String,
     val valueSource: NadelHydrationArgumentValueSource,
 )
@@ -16,7 +18,7 @@ sealed class NadelHydrationArgumentValueSource {
      * }
      * ```
      */
-    data class FieldValue(val pathToField: List<String>) : NadelHydrationArgumentValueSource()
+    data class QueriedFieldValue(val queryPath: QueryPath) : NadelHydrationArgumentValueSource()
 
     /**
      * Uses a value from a field in the same object (or its children) as input e.g.

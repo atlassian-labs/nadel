@@ -11,7 +11,7 @@ object NFUtil {
     fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
-        pathToField: List<String>,
+        pathToField: QueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
     ): List<NormalizedField> {
@@ -28,7 +28,7 @@ object NFUtil {
     fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
-        queryPathToField: List<String>,
+        queryPathToField: QueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
     ): NormalizedField {
@@ -45,7 +45,7 @@ object NFUtil {
     private fun createFieldRecursively(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
-        queryPathToField: List<String>,
+        queryPathToField: QueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
         pathToFieldIndex: Int,
@@ -80,12 +80,12 @@ object NFUtil {
     private fun createParticularField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
-        queryPathToField: List<String>,
+        queryPathToField: QueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
         pathToFieldIndex: Int,
     ): NormalizedField {
-        val fieldName = queryPathToField[pathToFieldIndex]
+        val fieldName = queryPathToField.segments[pathToFieldIndex]
         val fieldDef = parentType.getFieldDefinition(fieldName)
             ?: error("No definition for ${parentType.name}.$fieldName")
 
@@ -93,12 +93,12 @@ object NFUtil {
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
             .also { builder ->
-                if (pathToFieldIndex == queryPathToField.lastIndex) {
+                if (pathToFieldIndex == queryPathToField.segments.lastIndex) {
                     builder.normalizedArguments(fieldArguments)
                 }
             }
             .children(
-                if (pathToFieldIndex == queryPathToField.lastIndex) {
+                if (pathToFieldIndex == queryPathToField.segments.lastIndex) {
                     fieldChildren
                 } else {
                     createFieldRecursively(

@@ -11,6 +11,7 @@ import graphql.nadel.enginekt.transform.NadelRenameTransform.State
 import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.query.NFUtil.createField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
 import graphql.nadel.enginekt.util.emptyOrSingle
@@ -105,7 +106,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
             createField(
                 schema = service.underlyingSchema,
                 parentType = underlyingObjectType,
-                queryPathToField = listOf(rename.underlyingName),
+                queryPathToField = QueryPath(listOf(rename.underlyingName)),
                 fieldArguments = emptyMap(),
                 fieldChildren = transformer.transform(field.children),
             )
@@ -123,7 +124,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
     ): List<NadelResultInstruction> {
         val parentNodes = getNodesAt(
             result.data,
-            field.listOfResultKeys.dropLast(1),
+            QueryPath(field.listOfResultKeys.dropLast(1)),
             flatten = true,
         )
 
@@ -134,7 +135,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 parentNode = parentNode,
             ) ?: return@instruction null
 
-            val queryPathForSourceField = listOf(state.artificialFields.getResultKey(instruction.underlyingName))
+            val queryPathForSourceField = QueryPath(listOf(state.artificialFields.getResultKey(instruction.underlyingName)))
             val sourceFieldNode = getNodesAt(parentNode, queryPathForSourceField)
                 .emptyOrSingle() ?: return@instruction null
 

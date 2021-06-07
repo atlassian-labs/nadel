@@ -1,7 +1,7 @@
 package graphql.nadel.enginekt.transform.hydration.batch
 
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationArgumentsBuilder.valueToAstValue
@@ -22,7 +22,7 @@ internal object NadelBatchArgumentsBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: NormalizedField,
         parentNodes: List<JsonNode>,
-    ): List<Map<NadelHydrationArgument, NormalizedInputValue>> {
+    ): List<Map<NadelHydrationActorInput, NormalizedInputValue>> {
         val sourceFieldDefinition = NadelHydrationUtil.getSourceFieldDefinition(instruction)
 
         val nonBatchArgs = getNonBatchArgs(instruction, hydrationField)
@@ -34,9 +34,9 @@ internal object NadelBatchArgumentsBuilder {
     private fun getNonBatchArgs(
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: NormalizedField,
-    ): Map<NadelHydrationArgument, NormalizedInputValue> {
+    ): Map<NadelHydrationActorInput, NormalizedInputValue> {
         return mapFrom(
-            instruction.sourceFieldArguments.mapNotNull { sourceFieldArg ->
+            instruction.actorInputValues.mapNotNull { sourceFieldArg ->
                 when (val valueSource = sourceFieldArg.valueSource) {
                     is NadelHydrationArgumentValueSource.ArgumentValue -> {
                         when (val argValue = hydrationField.normalizedArguments[valueSource.argumentName]) {
@@ -44,7 +44,7 @@ internal object NadelBatchArgumentsBuilder {
                             else -> sourceFieldArg to argValue
                         }
                     }
-                    is NadelHydrationArgumentValueSource.FieldValue -> null
+                    is NadelHydrationArgumentValueSource.QueriedFieldValue -> null
                 }
             },
         )
@@ -55,14 +55,14 @@ internal object NadelBatchArgumentsBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
         artificialFields: ArtificialFields,
-    ): List<Pair<NadelHydrationArgument, NormalizedInputValue>> {
+    ): List<Pair<NadelHydrationActorInput, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
-        val (batchArg, valueSource) = instruction.sourceFieldArguments
+        val (batchArg, valueSource) = instruction.actorInputValues
             .asSequence()
             .mapNotNull {
                 when (val valueSource = it.valueSource) {
-                    is NadelHydrationArgumentValueSource.FieldValue -> it to valueSource
+                    is NadelHydrationArgumentValueSource.QueriedFieldValue -> it to valueSource
                     else -> null
                 }
             }
@@ -81,14 +81,14 @@ internal object NadelBatchArgumentsBuilder {
     }
 
     private fun getFieldValues(
-        valueSource: NadelHydrationArgumentValueSource.FieldValue,
+        valueSourceQueried: NadelHydrationArgumentValueSource.QueriedFieldValue,
         parentNodes: List<JsonNode>,
         artificialFields: ArtificialFields,
     ): List<Any?> {
         return parentNodes.flatMap { parentNode ->
             val nodes = JsonNodeExtractor.getNodesAt(
                 rootNode = parentNode,
-                queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSource.pathToField),
+                queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSourceQueried.queryPath),
                 flatten = true,
             )
 

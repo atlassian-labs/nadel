@@ -58,7 +58,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
     ): List<NadelResultInstruction> {
         val nodes = JsonNodeExtractor.getNodesAt(
             result.data,
-            state.typeRenamePath.segments,
+            state.typeRenamePath,
             flatten = true,
         )
 

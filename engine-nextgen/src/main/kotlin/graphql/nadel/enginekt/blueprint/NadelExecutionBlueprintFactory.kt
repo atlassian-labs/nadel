@@ -12,8 +12,9 @@ import graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.schema.NadelDirectives
@@ -72,7 +73,7 @@ internal object NadelExecutionBlueprintFactory {
 
         return NadelDeepRenameFieldInstruction(
             location,
-            mappingDefinition.inputPath,
+            QueryPath(mappingDefinition.inputPath),
         )
     }
 
@@ -94,9 +95,9 @@ internal object NadelExecutionBlueprintFactory {
 
         return NadelHydrationFieldInstruction(
             location = createFieldCoordinates(parentType, field),
-            sourceService = hydrationSourceService,
-            pathToSourceField = pathToSourceField,
-            sourceFieldArguments = getHydrationArguments(hydration),
+            actorService = hydrationSourceService,
+            actorFieldQueryPath = QueryPath(pathToSourceField),
+            actorInputValues = getHydrationArguments(hydration),
         )
     }
 
@@ -110,9 +111,9 @@ internal object NadelExecutionBlueprintFactory {
 
         return NadelBatchHydrationFieldInstruction(
             location,
-            sourceService = sourceService,
-            pathToSourceField = listOfNotNull(hydration.syntheticField, hydration.topLevelField),
-            sourceFieldArguments = getHydrationArguments(hydration),
+            actorService = sourceService,
+            actorFieldQueryPath = QueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
+            actorInputValues = getHydrationArguments(hydration),
             // TODO: figure out what to do for default batch sizes, nobody uses them in central schema
             batchSize = hydration.batchSize!!,
             batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {
@@ -162,14 +163,14 @@ internal object NadelExecutionBlueprintFactory {
         )
     }
 
-    private fun getHydrationArguments(hydration: UnderlyingServiceHydration): List<NadelHydrationArgument> {
+    private fun getHydrationArguments(hydration: UnderlyingServiceHydration): List<NadelHydrationActorInput> {
         return hydration.arguments.map { argumentDef ->
             val valueSource = when (val argSourceType = argumentDef.remoteArgumentSource.sourceType) {
                 FIELD_ARGUMENT -> NadelHydrationArgumentValueSource.ArgumentValue(argumentDef.remoteArgumentSource.name)
-                OBJECT_FIELD -> NadelHydrationArgumentValueSource.FieldValue(argumentDef.remoteArgumentSource.path)
+                OBJECT_FIELD -> NadelHydrationArgumentValueSource.QueriedFieldValue(QueryPath(argumentDef.remoteArgumentSource.path))
                 else -> error("Unsupported remote argument source type: '$argSourceType'")
             }
-            NadelHydrationArgument(argumentDef.name, valueSource)
+            NadelHydrationActorInput(argumentDef.name, valueSource)
         }
     }
 

@@ -15,6 +15,7 @@ import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.normalized.NormalizedField
@@ -90,7 +91,7 @@ internal class NadelBatchHydrationTransform(
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryResultKeyPath = field.listOfResultKeys.dropLast(1),
+            queryPath = QueryPath(field.listOfResultKeys.dropLast(1)),
             flatten = true,
         )
 

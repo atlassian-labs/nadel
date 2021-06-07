@@ -4,6 +4,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer.DataMutation
 import graphql.nadel.enginekt.transform.result.json.AnyJsonNodePathSegment
 import graphql.nadel.enginekt.transform.result.json.JsonNode
@@ -122,7 +123,7 @@ internal class NadelResultTransformer(
         return artificialFields.flatMap { field ->
             JsonNodeExtractor.getNodesAt(
                 data = result.data,
-                queryResultKeyPath = field.listOfResultKeys,
+                queryPath = QueryPath(field.listOfResultKeys),
                 flatten = true,
             ).map { jsonNode ->
                 NadelResultInstruction.Remove(

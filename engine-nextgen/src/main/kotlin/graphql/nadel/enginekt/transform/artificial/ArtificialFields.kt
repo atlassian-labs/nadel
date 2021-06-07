@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform.artificial
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
 
@@ -55,14 +56,14 @@ class ArtificialFields(private val alias: String) {
     }
 
     fun mapQueryPathRespectingResultKey(
-        path: List<String>,
-    ): List<String> {
-        return path.mapIndexed { index, segment ->
+        path: QueryPath
+    ): QueryPath {
+        return QueryPath(path.segments.mapIndexed { index, segment ->
             when (index) {
                 0 -> getResultKey(segment)
                 else -> segment
             }
-        }
+        })
     }
 
     fun toArtificial(it: NormalizedField): NormalizedField {

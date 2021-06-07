@@ -15,6 +15,7 @@ import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -108,7 +109,7 @@ internal class NadelHydrationTransform(
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryResultKeyPath = field.listOfResultKeys.dropLast(1),
+            queryPath = QueryPath(field.listOfResultKeys.dropLast(1)),
             flatten = true,
         )
 
@@ -140,20 +141,20 @@ internal class NadelHydrationTransform(
         instruction ?: return emptyList()
 
         val result = engine.executeHydration(
-            service = instruction.sourceService,
+            service = instruction.actorService,
             topLevelField = NadelHydrationFieldsBuilder.getQuery(
                 instruction = instruction,
                 artificialFields = state.artificialFields,
                 hydrationField = hydrationField,
                 parentNode = parentNode,
             ),
-            pathToSourceField = instruction.pathToSourceField,
+            pathToSourceField = instruction.actorFieldQueryPath,
             executionContext = executionContext,
         )
 
         val data = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryResultKeyPath = instruction.pathToSourceField,
+            queryPath = instruction.actorFieldQueryPath,
         ).emptyOrSingle()
 
         return listOf(

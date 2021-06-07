@@ -10,7 +10,7 @@ import graphql.language.ObjectValue
 import graphql.language.StringValue
 import graphql.language.Value
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgument
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.transform.artificial.ArtificialFields
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getSourceFieldDefinition
 import graphql.nadel.enginekt.transform.result.json.JsonNode
@@ -36,7 +36,7 @@ internal object NadelHydrationArgumentsBuilder {
         val sourceField = getSourceFieldDefinition(instruction)
 
         return mapFrom(
-            instruction.sourceFieldArguments
+            instruction.actorInputValues
                 .map {
                     val argumentDef = sourceField.getArgument(it.name)
                     it.name to makeInputValue(it, argumentDef, parentNode, hydrationField, artificialFields)
@@ -45,28 +45,28 @@ internal object NadelHydrationArgumentsBuilder {
     }
 
     private fun makeInputValue(
-        argument: NadelHydrationArgument,
+        actorInput: NadelHydrationActorInput,
         argumentDef: GraphQLArgument,
         parentNode: JsonNode,
         hydrationField: NormalizedField,
         artificialFields: ArtificialFields,
     ): NormalizedInputValue {
-        return when (val valueSource = argument.valueSource) {
+        return when (val valueSource = actorInput.valueSource) {
             is ValueSource.ArgumentValue -> hydrationField.getNormalizedArgument(valueSource.argumentName)
-            is ValueSource.FieldValue -> makeInputValue(argumentDef) {
+            is ValueSource.QueriedFieldValue -> makeInputValue(argumentDef) {
                 getFieldValue(valueSource, parentNode, artificialFields)
             }
         }
     }
 
     private fun getFieldValue(
-        valueSource: ValueSource.FieldValue,
+        valueSourceQueried: ValueSource.QueriedFieldValue,
         parentNode: JsonNode,
         artificialFields: ArtificialFields,
     ): AnyNormalizedInputValueValue {
         val value = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
-            queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSource.pathToField),
+            queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSourceQueried.queryPath),
         ).emptyOrSingle()?.value
 
         return NormalizedInputValueValue.AstValue(

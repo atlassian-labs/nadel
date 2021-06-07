@@ -37,9 +37,9 @@ internal object NadelHydrationFieldsBuilder {
         fieldArguments: Map<String, NormalizedInputValue>,
     ): NormalizedField {
         return NFUtil.createField(
-            schema = instruction.sourceService.underlyingSchema,
-            parentType = instruction.sourceService.underlyingSchema.queryType,
-            queryPathToField = instruction.pathToSourceField,
+            schema = instruction.actorService.underlyingSchema,
+            parentType = instruction.actorService.underlyingSchema.queryType,
+            queryPathToField = instruction.actorFieldQueryPath,
             fieldArguments = fieldArguments,
             fieldChildren = hydrationField.children,
         )
@@ -56,16 +56,16 @@ internal object NadelHydrationFieldsBuilder {
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
-        return instruction.sourceFieldArguments
+        return instruction.actorInputValues
             .asSequence()
             .map { it.valueSource }
-            .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
+            .filterIsInstance<NadelHydrationArgumentValueSource.QueriedFieldValue>()
             .map { valueSource ->
                 artificialFields.toArtificial(
                     NFUtil.createField(
                         schema = service.underlyingSchema,
                         parentType = underlyingObjectType,
-                        queryPathToField = valueSource.pathToField,
+                        queryPathToField = valueSource.queryPath,
                         fieldArguments = emptyMap(),
                         fieldChildren = emptyList(), // This must be a leaf node
                     ),
