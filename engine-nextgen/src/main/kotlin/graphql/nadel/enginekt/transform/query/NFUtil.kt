@@ -7,7 +7,7 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLSchema
 
-object NadelPathToField {
+object NFUtil {
     fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
@@ -28,14 +28,14 @@ object NadelPathToField {
     fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
-        pathToField: List<String>,
+        queryPathToField: List<String>,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
     ): NormalizedField {
         return createParticularField(
             schema,
             parentType,
-            pathToField,
+            queryPathToField,
             fieldArguments,
             fieldChildren,
             pathToFieldIndex = 0,
@@ -45,7 +45,7 @@ object NadelPathToField {
     private fun createFieldRecursively(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
-        pathToField: List<String>,
+        queryPathToField: List<String>,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
         pathToFieldIndex: Int,
@@ -57,7 +57,7 @@ object NadelPathToField {
                 createParticularField(
                     schema,
                     parentType = objectType,
-                    pathToField,
+                    queryPathToField,
                     fieldArguments,
                     fieldChildren,
                     pathToFieldIndex,
@@ -67,7 +67,7 @@ object NadelPathToField {
                 createParticularField(
                     schema,
                     parentType,
-                    pathToField,
+                    queryPathToField,
                     fieldArguments,
                     fieldChildren,
                     pathToFieldIndex,
@@ -80,12 +80,12 @@ object NadelPathToField {
     private fun createParticularField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
-        pathToField: List<String>,
+        queryPathToField: List<String>,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
         pathToFieldIndex: Int,
     ): NormalizedField {
-        val fieldName = pathToField[pathToFieldIndex]
+        val fieldName = queryPathToField[pathToFieldIndex]
         val fieldDef = parentType.getFieldDefinition(fieldName)
             ?: error("No definition for ${parentType.name}.$fieldName")
 
@@ -93,18 +93,18 @@ object NadelPathToField {
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
             .also { builder ->
-                if (pathToFieldIndex == pathToField.lastIndex) {
+                if (pathToFieldIndex == queryPathToField.lastIndex) {
                     builder.normalizedArguments(fieldArguments)
                 }
             }
             .children(
-                if (pathToFieldIndex == pathToField.lastIndex) {
+                if (pathToFieldIndex == queryPathToField.lastIndex) {
                     fieldChildren
                 } else {
                     createFieldRecursively(
                         schema,
                         parentType = fieldDef.type,
-                        pathToField,
+                        queryPathToField,
                         fieldArguments,
                         fieldChildren,
                         pathToFieldIndex = pathToFieldIndex + 1,

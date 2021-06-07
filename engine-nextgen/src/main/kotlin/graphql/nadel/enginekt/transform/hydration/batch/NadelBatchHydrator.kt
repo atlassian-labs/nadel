@@ -70,20 +70,20 @@ internal class NadelBatchHydrator(
 
         val batches: List<Deferred<ServiceExecutionResult>> = executeBatchesAsync(state, instruction, argBatches)
         val resultsByObjectId = awaitBatchesThenAssociateKeys(instruction, batches)
-        val resultKeysToObjectIdOnHydrationParentNode = state.artificialFields.mapPathToResultKeys(
+        val resultKeysToObjectIdOnHydrationParentNode = state.artificialFields.mapQueryPathRespectingResultKey(
             getPathToObjectIdentifierOnHydrationParentNode(instruction),
         )
 
         return parentNodes.mapNotNull { parentNode ->
             val parentNodeIdentifierNode = JsonNodeExtractor.getNodesAt(
                 rootNode = parentNode,
-                queryResultKeyPath = resultKeysToObjectIdOnHydrationParentNode,
+                queryPath = resultKeysToObjectIdOnHydrationParentNode,
             ).emptyOrSingle()
 
             when (parentNodeIdentifierNode) {
                 null -> null
                 else -> NadelResultInstruction.Set(
-                    subjectPath = parentNode.path + state.field.resultKey,
+                    subjectPath = parentNode.resultPath + state.field.resultKey,
                     newValue = resultsByObjectId[parentNodeIdentifierNode.value],
                 )
             }

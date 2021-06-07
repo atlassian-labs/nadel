@@ -65,7 +65,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         return nodes.map {
             val underlyingTypeName = it.value as String
             val overallTypeName = executionPlan.getOverallTypeName(underlyingTypeName)
-            NadelResultInstruction.Set(it.path, overallTypeName)
+            NadelResultInstruction.Set(it.resultPath, overallTypeName)
         }
     }
 }

@@ -54,7 +54,7 @@ class ArtificialFields(private val alias: String) {
         return alias + "__" + fieldName
     }
 
-    fun mapPathToResultKeys(
+    fun mapQueryPathRespectingResultKey(
         path: List<String>,
     ): List<String> {
         return path.mapIndexed { index, segment ->

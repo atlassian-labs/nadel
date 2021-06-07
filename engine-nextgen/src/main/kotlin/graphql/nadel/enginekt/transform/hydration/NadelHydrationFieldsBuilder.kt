@@ -6,7 +6,7 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.artificial.ArtificialFields
-import graphql.nadel.enginekt.transform.query.NadelPathToField
+import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedInputValue
@@ -36,10 +36,10 @@ internal object NadelHydrationFieldsBuilder {
         hydrationField: NormalizedField,
         fieldArguments: Map<String, NormalizedInputValue>,
     ): NormalizedField {
-        return NadelPathToField.createField(
+        return NFUtil.createField(
             schema = instruction.sourceService.underlyingSchema,
             parentType = instruction.sourceService.underlyingSchema.queryType,
-            pathToField = instruction.pathToSourceField,
+            queryPathToField = instruction.pathToSourceField,
             fieldArguments = fieldArguments,
             fieldChildren = hydrationField.children,
         )
@@ -62,10 +62,10 @@ internal object NadelHydrationFieldsBuilder {
             .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
             .map { valueSource ->
                 artificialFields.toArtificial(
-                    NadelPathToField.createField(
+                    NFUtil.createField(
                         schema = service.underlyingSchema,
                         parentType = underlyingObjectType,
-                        pathToField = valueSource.pathToField,
+                        queryPathToField = valueSource.pathToField,
                         fieldArguments = emptyMap(),
                         fieldChildren = emptyList(), // This must be a leaf node
                     ),

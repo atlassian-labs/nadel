@@ -22,7 +22,7 @@ object RemoveUnusedField {
 
         return JsonNodeExtractor.getNodesAt(node, pathToUnused)
             .map {
-                NadelResultInstruction.Remove(it.path)
+                NadelResultInstruction.Remove(it.resultPath)
             }
     }
 

@@ -66,7 +66,7 @@ internal object NadelHydrationArgumentsBuilder {
     ): AnyNormalizedInputValueValue {
         val value = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
-            queryResultKeyPath = artificialFields.mapPathToResultKeys(valueSource.pathToField),
+            queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSource.pathToField),
         ).emptyOrSingle()?.value
 
         return NormalizedInputValueValue.AstValue(

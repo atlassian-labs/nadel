@@ -158,7 +158,7 @@ internal class NadelHydrationTransform(
 
         return listOf(
             NadelResultInstruction.Set(
-                subjectPath = parentNode.path + hydrationField.resultKey,
+                subjectPath = parentNode.resultPath + hydrationField.resultKey,
                 newValue = data?.value,
             ),
         )

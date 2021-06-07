@@ -5,11 +5,12 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
+import graphql.nadel.enginekt.transform.AnyNadelTransform
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
+import graphql.nadel.enginekt.transform.NadelRenameTransform
+import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform
-import graphql.nadel.enginekt.transform.AnyNadelTransform
-import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
@@ -86,6 +87,7 @@ internal class NadelExecutionPlanFactory(
                     NadelTypeRenameResultTransform(),
                     NadelHydrationTransform(engine),
                     NadelBatchHydrationTransform(engine),
+                    NadelRenameTransform()
                 ),
             )
         }

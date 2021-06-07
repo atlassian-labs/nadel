@@ -39,4 +39,5 @@ data class NadelDeepRenameFieldInstruction(
 class NadelRenameFieldInstruction(
     override val location: FieldCoordinates,
     val underlyingName: String,
+    val overallName: String
 ) : NadelFieldInstruction()

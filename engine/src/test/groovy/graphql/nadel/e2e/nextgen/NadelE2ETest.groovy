@@ -776,6 +776,59 @@ class NadelE2ETest extends Specification {
         response == overallResponse
     }
 
+    def "simple field rename"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue: Issue
+            } 
+            type Issue {
+                name: String => renamed from underlyingName
+            }
+         }
+        """]
+        def underlyingSchema = """
+            type Query {
+                issue: Issue 
+            } 
+            type Issue {
+                underlyingName: String
+            }
+        """
+        def query = """
+        { issue { name } } 
+        """
+        def expectedQuery = """query {
+  ... on Query {
+    issue {
+      ... on Issue {
+            my_uuid__underlyingName: underlyingName
+      }
+      ... on Issue {
+        __typename__my_uuid: __typename
+      }
+    }
+  }
+}"""
+        def overallResponse = [issue: [name: "My Issue"]]
+        def serviceResponse = [issue: [__typename__my_uuid: "Issue", my_uuid__underlyingName: "My Issue"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
 
     Object[] test1Service(Map<String, String> overallSchema,
                           String serviceOneName,
@@ -876,4 +929,6 @@ class NadelE2ETest extends Specification {
 
         return [executionResult.getData(), executionResult.getErrors()]
     }
+
+
 }
