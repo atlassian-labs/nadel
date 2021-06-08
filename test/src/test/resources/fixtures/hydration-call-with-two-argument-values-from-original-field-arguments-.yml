@@ -1,4 +1,4 @@
-name: 'hydration call with two argument values from original field arguments '
+name: hydration call with two argument values from original field arguments
 overallSchema:
   UserService: |
     service UserService {
