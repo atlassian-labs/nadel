@@ -2,8 +2,10 @@ package graphql.nadel.hooks;
 
 import graphql.GraphQLError;
 import graphql.PublicSpi;
+import graphql.nadel.Service;
 import graphql.nadel.normalized.NormalizedQueryField;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -45,5 +47,17 @@ public interface ServiceExecutionHooks {
             Object userSuppliedContext
     ) {
         return CompletableFuture.completedFuture(Optional.empty());
+    }
+
+    /***
+     * Called to resolve the service that should be used to fetch data for a field that uses dynamic service resolution.
+     *
+     * @param services a list of all services registered on Nadel
+     * @param fieldName the name of the field
+     * @param arguments GraphQL arguments that were passed when querying the field
+     * @return the Service that should be used to fetch data for that field
+     */
+    default Service getServiceForDynamicField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+        return null;
     }
 }

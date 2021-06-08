@@ -163,10 +163,17 @@ public class Execution {
     private FieldInfos createFieldsInfos() {
         Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition = new LinkedHashMap<>();
 
+        GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
+
+        schemaQueryType.getFieldDefinitions()
+                .stream()
+                // TODO: Move "dynamicService" to a constant somewhere
+                .filter(fieldDefinition -> fieldDefinition.getDirective("dynamicService") != null)
+                .forEach(fieldDefinition -> fieldInfoByDefinition.put(fieldDefinition, new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, null, fieldDefinition)));
+
         for (Service service : services) {
             List<ObjectTypeDefinition> queryType = service.getDefinitionRegistry().getQueryType();
             if (queryType != null) {
-                GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
                 for (ObjectTypeDefinition objectTypeDefinition : queryType) {
                     for (FieldDefinition fieldDefinition : objectTypeDefinition.getFieldDefinitions()) {
                         GraphQLFieldDefinition graphQLFieldDefinition = schemaQueryType.getFieldDefinition(fieldDefinition.getName());

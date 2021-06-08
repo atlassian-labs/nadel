@@ -25,6 +25,7 @@ import graphql.nadel.engine.result.ResultComplexityAggregator
 import graphql.nadel.engine.result.ResultNodesUtil
 import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.engine.testutils.TestUtil
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.instrumentation.ChainedNadelInstrumentation
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
@@ -1434,4 +1435,91 @@ class NadelE2ETest extends StrategyTestHelper {
         response == [commentRenamed: [authorId: "fred", author: [displayName: "Display name of Fred"]]]
         errors.size() == 0
     }
+
+    def 'Dynamic Service Resolution: simple case'() {
+        def commonTypes = '''
+            directive @dynamicService on FIELD_DEFINITION
+            
+            type Query {
+                node(id: ID!): Node @dynamicService
+            } 
+            
+            interface Node {
+                id: ID!
+            }
+        '''
+
+        def overallSchema = TestUtil.schemaFromNdsl([
+                BitbucketService: '''   
+                    service BitbucketService {
+                       type PullRequest implements Node {
+                            id: ID!
+                            description: String
+                       }
+                    }
+                    '''
+        ], commonTypes)
+
+        def bitbucketSchema = TestUtil.schema("""
+            type Query {
+                node(id: ID): Node
+            }
+           
+            interface Node {
+                id: ID!
+            }
+            
+            type PullRequest implements Node {
+                id: ID!
+                description: String
+            }""")
+
+        def query = '''
+            {
+                node(id: "ari:bitbucket:activation-id-123:pull-request:id-123") {
+                   ... on PullRequest {
+                        id
+                        description
+                   }
+                }
+            }
+        '''
+
+        def expectedQuery1 = 'query nadel_2_BitbucketService {node(id:"ari:bitbucket:activation-id-123:pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}'
+        Map response1 = [node: [id: "123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
+
+        def serviceHooks = new ServiceExecutionHooks() {
+            @Override
+            Service getServiceForDynamicField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+                def bitbucketService = services.stream().filter({ service -> (service.getName() == "BitbucketService") }).findFirst().get()
+                def ariArgument = arguments.get("id")
+
+                if(ariArgument.toString().contains("bitbucket")) {
+                    return bitbucketService
+                }
+
+                return null
+            }
+        }
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "BitbucketService",
+                bitbucketSchema,
+                query,
+                ["pullRequest"],
+                expectedQuery1,
+                response1,
+                serviceHooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [node: [id: "123", description: "this is a pull request"]]
+        errors.size() == 0
+
+    }
+
 }

@@ -64,6 +64,7 @@ public class NadelExecutionStrategy {
     private final HydrationInputResolver hydrationInputResolver;
     private final ServiceExecutionHooks serviceExecutionHooks;
     private final ExecutionPathSet hydrationInputPaths;
+    private final List<Service> services;
 
     private static final Logger log = LoggerFactory.getLogger(NadelExecutionStrategy.class);
 
@@ -79,6 +80,7 @@ public class NadelExecutionStrategy {
         this.serviceExecutor = new ServiceExecutor(instrumentation);
         this.hydrationInputPaths = new ExecutionPathSet();
         this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks, hydrationInputPaths);
+        this.services = services;
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection, ResultComplexityAggregator resultComplexityAggregator) {
@@ -121,7 +123,19 @@ public class NadelExecutionStrategy {
         List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
-            Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+
+            boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition().getDirectives()
+                    .stream()
+                    //TODO: Move "dynamicService" to constant somewhere
+                    .anyMatch(directive -> directive.getName().equals("dynamicService"));
+
+            final Service service;
+
+            if(usesDynamicService) {
+                service = serviceExecutionHooks.getServiceForDynamicField(services, fieldExecutionStepInfo.getField().getName(), fieldExecutionStepInfo.getArguments());
+            } else {
+                service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+            }
 
             CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
                     .from(executionCtx)
