@@ -22,7 +22,7 @@ internal object NadelHydrationFieldsBuilder {
         return getQuery(
             instruction,
             hydrationField,
-            fieldArguments = NadelHydrationArgumentsBuilder.createSourceFieldArgs(
+            fieldArguments = NadelHydrationInputBuilder.getInputValues(
                 instruction,
                 aliasHelper,
                 hydrationField,

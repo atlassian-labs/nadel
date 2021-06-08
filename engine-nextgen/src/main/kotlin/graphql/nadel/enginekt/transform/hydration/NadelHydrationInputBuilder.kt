@@ -26,8 +26,10 @@ import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLTypeUtil
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource as ValueSource
 
-internal object NadelHydrationArgumentsBuilder {
-    fun createSourceFieldArgs(
+internal typealias AnyAstValue = Value<*>
+
+internal object NadelHydrationInputBuilder {
+    fun getInputValues(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: AliasHelper,
         hydrationField: NormalizedField,
@@ -60,21 +62,19 @@ internal object NadelHydrationArgumentsBuilder {
     }
 
     private fun getFieldValue(
-        valueSourceResult: ValueSource.FieldResultValue,
+        valueSource: ValueSource.FieldResultValue,
         parentNode: JsonNode,
         aliasHelper: AliasHelper,
-    ): AnyNormalizedInputValueValue {
+    ): AnyAstValue {
         val value = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
-            queryPath = aliasHelper.mapQueryPathRespectingResultKey(valueSourceResult.queryPathToField),
+            queryPath = aliasHelper.mapQueryPathRespectingResultKey(valueSource.queryPathToField),
         ).emptyOrSingle()?.value
 
-        return NormalizedInputValueValue.AstValue(
-            valueToAstValue(value),
-        )
+        return valueToAstValue(value)
     }
 
-    internal fun valueToAstValue(value: Any?): Value<*> {
+    internal fun valueToAstValue(value: Any?): AnyAstValue {
         return when (value) {
             is AnyList -> ArrayValue(
                 value.map(this::valueToAstValue),
@@ -90,11 +90,12 @@ internal object NadelHydrationArgumentsBuilder {
                     },
                 )
                 .build()
-            null -> NullValue.newNullValue().build()
-            is Double ->
-                FloatValue.newFloatValue()
-                    .value(value.toBigDecimal())
-                    .build()
+            null -> NullValue
+                .newNullValue()
+                .build()
+            is Double -> FloatValue.newFloatValue()
+                .value(value.toBigDecimal())
+                .build()
             is Float -> FloatValue.newFloatValue()
                 .value(value.toBigDecimal())
                 .build()
@@ -113,30 +114,11 @@ internal object NadelHydrationArgumentsBuilder {
 
     private inline fun makeInputValue(
         argumentDef: GraphQLArgument,
-        valueFactory: () -> AnyNormalizedInputValueValue,
+        valueFactory: () -> AnyAstValue,
     ): NormalizedInputValue {
         return NormalizedInputValue(
             GraphQLTypeUtil.simplePrint(argumentDef.type), // Type name
-            valueFactory().value,
+            valueFactory(),
         )
     }
-}
-
-internal typealias AnyNormalizedInputValueValue = NormalizedInputValueValue<*>
-
-internal sealed class NormalizedInputValueValue<T> {
-    abstract val value: T
-
-    data class ListValue<T>(
-        override val value: List<T>,
-    ) : NormalizedInputValueValue<List<T>>()
-
-    data class ObjectValue(
-        override val value: JsonMap,
-    ) : NormalizedInputValueValue<JsonMap>()
-
-    @Suppress("FINITE_BOUNDS_VIOLATION_IN_JAVA") // idk
-    data class AstValue<T : Value<*>>(
-        override val value: T,
-    ) : NormalizedInputValueValue<T>()
 }

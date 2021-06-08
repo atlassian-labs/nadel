@@ -4,7 +4,7 @@ import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
-import graphql.nadel.enginekt.transform.hydration.NadelHydrationArgumentsBuilder.valueToAstValue
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationInputBuilder.valueToAstValue
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -16,8 +16,8 @@ import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLTypeUtil
 
-internal object NadelBatchArgumentsBuilder {
-    fun getArgumentBatches(
+internal object NadelBatchHydrationInputBuilder {
+    fun getInputValueBatches(
         aliasHelper: AliasHelper,
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: NormalizedField,
@@ -25,13 +25,13 @@ internal object NadelBatchArgumentsBuilder {
     ): List<Map<NadelHydrationActorInput, NormalizedInputValue>> {
         val sourceFieldDefinition = NadelHydrationUtil.getSourceFieldDefinition(instruction)
 
-        val nonBatchArgs = getNonBatchArgs(instruction, hydrationField)
-        val batchArgs = getBatchArgs(sourceFieldDefinition, instruction, parentNodes, aliasHelper)
+        val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
+        val batchArgs = getBatchInputValues(sourceFieldDefinition, instruction, parentNodes, aliasHelper)
 
         return batchArgs.map { nonBatchArgs + it }
     }
 
-    private fun getNonBatchArgs(
+    private fun getNonBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: NormalizedField,
     ): Map<NadelHydrationActorInput, NormalizedInputValue> {
@@ -44,13 +44,14 @@ internal object NadelBatchArgumentsBuilder {
                             else -> sourceFieldArg to argValue
                         }
                     }
+                    // These are batch values, ignore them
                     is NadelHydrationArgumentValueSource.FieldResultValue -> null
                 }
             },
         )
     }
 
-    private fun getBatchArgs(
+    private fun getBatchInputValues(
         sourceFieldDefinition: GraphQLFieldDefinition,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -58,7 +59,7 @@ internal object NadelBatchArgumentsBuilder {
     ): List<Pair<NadelHydrationActorInput, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
-        val (batchArg, valueSource) = instruction.actorInputValues
+        val (batchArg, fieldResultValueSource) = instruction.actorInputValues
             .asSequence()
             .mapNotNull {
                 when (val valueSource = it.valueSource) {
@@ -70,7 +71,7 @@ internal object NadelBatchArgumentsBuilder {
 
         val batchArgDef = sourceFieldDefinition.getArgument(batchArg.name)
 
-        return getFieldValues(valueSource, parentNodes, aliasHelper)
+        return getFieldResultValues(fieldResultValueSource, parentNodes, aliasHelper)
             .chunked(size = batchSize)
             .map { chunk ->
                 batchArg to NormalizedInputValue(
@@ -80,15 +81,15 @@ internal object NadelBatchArgumentsBuilder {
             }
     }
 
-    private fun getFieldValues(
-        valueSourceResult: NadelHydrationArgumentValueSource.FieldResultValue,
+    private fun getFieldResultValues(
+        valueSource: NadelHydrationArgumentValueSource.FieldResultValue,
         parentNodes: List<JsonNode>,
         aliasHelper: AliasHelper,
     ): List<Any?> {
         return parentNodes.flatMap { parentNode ->
             val nodes = JsonNodeExtractor.getNodesAt(
                 rootNode = parentNode,
-                queryPath = aliasHelper.mapQueryPathRespectingResultKey(valueSourceResult.queryPathToField),
+                queryPath = aliasHelper.mapQueryPathRespectingResultKey(valueSource.queryPathToField),
                 flatten = true,
             )
 
