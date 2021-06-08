@@ -14,6 +14,9 @@ import graphql.execution.nextgen.FieldSubSelection;
 import graphql.language.Document;
 import graphql.language.FieldDefinition;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.SDLDefinition;
+import graphql.language.Type;
+import graphql.language.TypeName;
 import graphql.nadel.NadelExecutionParams;
 import graphql.nadel.Service;
 import graphql.nadel.engine.BenchmarkContext;
@@ -34,11 +37,14 @@ import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.GraphQLType;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -162,6 +168,36 @@ public class Execution {
 
     private FieldInfos createFieldsInfos() {
         Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition = new LinkedHashMap<>();
+
+        List<Type<?>> allNamespacedTypes = new ArrayList<>();
+        for (Service service : services) {
+            service.getDefinitionRegistry()
+                    .getQueryType()
+                    .stream()
+                    .flatMap(a -> a.getFieldDefinitions().stream())
+                    .filter(a -> a.getDirectives("namespaced") != null && !a.getDirectives("namespaced").isEmpty())
+                    .forEach(a -> allNamespacedTypes.add(a.getType()));
+        }
+
+        for (Service service : services) {
+            for (SDLDefinition definition : service.getDefinitionRegistry().getDefinitions()) {
+                if (!(definition instanceof ObjectTypeDefinition)) {
+                    continue;
+                }
+                ObjectTypeDefinition typeDefinition = (ObjectTypeDefinition) definition;
+                if (allNamespacedTypes.stream().noneMatch(type -> ((TypeName) type).getName().equals(typeDefinition.getName()))) {
+                    continue;
+                }
+                GraphQLType graphQLType = overallSchema.getType(typeDefinition.getName());
+                List<GraphQLFieldDefinition> graphQLFieldDefinitions = graphQLType.getChildren().stream().filter(a -> a instanceof GraphQLFieldDefinition).map(a -> ((GraphQLFieldDefinition) a)).collect(Collectors.toList());
+
+                for (FieldDefinition fieldDefinition : typeDefinition.getFieldDefinitions()) {
+                    GraphQLFieldDefinition graphQLFieldDefinition = graphQLFieldDefinitions.stream().filter(gqlDef -> gqlDef.getName().equals(fieldDefinition.getName())).findFirst().get();
+                    FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
+                    fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
+                }
+            }
+        }
 
         for (Service service : services) {
             List<ObjectTypeDefinition> queryType = service.getDefinitionRegistry().getQueryType();
