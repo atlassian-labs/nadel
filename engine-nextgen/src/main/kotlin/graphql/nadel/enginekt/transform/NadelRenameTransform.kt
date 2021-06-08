@@ -16,15 +16,19 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
+import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
+import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 internal class NadelRenameTransform : NadelTransform<State> {
     data class State(
         val instructions: Map<FieldCoordinates, NadelRenameFieldInstruction>,
+        val objectTypesWithoutRename: List<String>,
         val aliasHelper: AliasHelper,
         val field: NormalizedField,
+        val service: Service,
     )
 
     override suspend fun isApplicable(
@@ -41,16 +45,22 @@ internal class NadelRenameTransform : NadelTransform<State> {
             return null
         }
 
+        val objectsWithoutRename = field.objectTypeNames.filterNot {
+            makeFieldCoordinates(it, field.name) in renameInstructions
+        }
+
         return State(
             renameInstructions,
+            objectsWithoutRename,
             AliasHelper("my_uuid"),
             field,
+            service,
         )
     }
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation, // this has an underlying schema
+        transformer: NadelQueryTransformer.Continuation,
         service: Service,
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
@@ -58,18 +68,15 @@ internal class NadelRenameTransform : NadelTransform<State> {
         state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
-            newField = null,
-            artificialFields = state.instructions.map { (coordinates, instruction) ->
-                makeRenamedField(
-                    state,
-                    transformer,
-                    executionPlan,
-                    service,
-                    field,
-                    coordinates,
-                    rename = instruction,
-                )
-            } + makeTypeNameField(state),
+            newField = if (state.objectTypesWithoutRename.isNotEmpty()) {
+                field.toBuilder()
+                    .clearObjectTypesNames()
+                    .objectTypeNames(state.objectTypesWithoutRename)
+                    .build()
+            } else {
+                null
+            },
+            artificialFields = makeRenamedFields(state, transformer, executionPlan) + makeTypeNameField(state),
         )
     }
 
@@ -89,6 +96,24 @@ internal class NadelRenameTransform : NadelTransform<State> {
             aliasHelper = state.aliasHelper,
             objectTypeNames = state.instructions.keys.map { it.typeName },
         )
+    }
+
+    private suspend fun makeRenamedFields(
+        state: State,
+        transformer: NadelQueryTransformer.Continuation,
+        executionPlan: NadelExecutionPlan,
+    ): List<NormalizedField> {
+        return state.instructions.map { (coordinates, instruction) ->
+            makeRenamedField(
+                state,
+                transformer,
+                executionPlan,
+                state.service,
+                state.field,
+                coordinates,
+                rename = instruction,
+            )
+        }
     }
 
     private suspend fun makeRenamedField(
