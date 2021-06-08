@@ -14,11 +14,13 @@ sealed class NadelHydrationArgumentValueSource {
      * ```
      * type Issue {
      *   id: ID! # Value used as argument to issueId
-     *   owner: User @hydrated(from: ["issueOwner"], args: [{name: "issueId" valueFromField: "id"}])
+     *   owner: User @hydrated(from: ["issueOwner"], args: [
+     *      {name: "issueId" valueFromField: ["id"]}
+     *   ])
      * }
      * ```
      */
-    data class FieldResultValue(val queryPath: QueryPath) : NadelHydrationArgumentValueSource()
+    data class FieldResultValue(val queryPathToField: QueryPath) : NadelHydrationArgumentValueSource()
 
     /**
      * Uses a value from a field in the same object (or its children) as input e.g.

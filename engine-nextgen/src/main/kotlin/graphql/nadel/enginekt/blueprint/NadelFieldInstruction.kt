@@ -34,11 +34,12 @@ data class NadelBatchHydrationFieldInstruction(
 
 data class NadelDeepRenameFieldInstruction(
     override val location: FieldCoordinates,
-    val pathToSourceField: QueryPath
+    val pathToSourceField: QueryPath,
 ) : NadelFieldInstruction()
 
-class NadelRenameFieldInstruction(
+data class NadelRenameFieldInstruction(
     override val location: FieldCoordinates,
     val underlyingName: String,
-    val overallName: String
-) : NadelFieldInstruction()
+) : NadelFieldInstruction() {
+    val overallName: String get() = location.fieldName
+}

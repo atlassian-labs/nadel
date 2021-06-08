@@ -65,7 +65,7 @@ internal object NadelHydrationFieldsBuilder {
                     NFUtil.createField(
                         schema = service.underlyingSchema,
                         parentType = underlyingObjectType,
-                        queryPathToField = valueSource.queryPath,
+                        queryPathToField = valueSource.queryPathToField,
                         fieldArguments = emptyMap(),
                         fieldChildren = emptyList(), // This must be a leaf node
                     ),

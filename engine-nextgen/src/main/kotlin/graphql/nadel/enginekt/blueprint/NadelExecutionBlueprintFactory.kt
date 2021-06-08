@@ -132,7 +132,6 @@ internal object NadelExecutionBlueprintFactory {
         return NadelRenameFieldInstruction(
             location = createFieldCoordinates(parentType, field),
             underlyingName = mappingDefinition.inputPath.single(),
-            overallName = field.name
         )
     }
 

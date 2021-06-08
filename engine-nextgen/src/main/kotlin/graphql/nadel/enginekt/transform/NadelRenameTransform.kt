@@ -15,6 +15,7 @@ import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
 import graphql.nadel.enginekt.util.emptyOrSingle
+import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
@@ -124,7 +125,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
     ): List<NadelResultInstruction> {
         val parentNodes = getNodesAt(
             result.data,
-            QueryPath(field.listOfResultKeys.dropLast(1)),
+            field.queryPath.dropLast(1),
             flatten = true,
         )
 

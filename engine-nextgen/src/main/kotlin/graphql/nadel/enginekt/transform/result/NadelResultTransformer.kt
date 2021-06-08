@@ -16,6 +16,7 @@ import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.AnyMutableList
 import graphql.nadel.enginekt.util.AnyMutableMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 import kotlin.reflect.KClass
@@ -123,7 +124,7 @@ internal class NadelResultTransformer(
         return artificialFields.flatMap { field ->
             JsonNodeExtractor.getNodesAt(
                 data = result.data,
-                queryPath = QueryPath(field.listOfResultKeys),
+                queryPath = field.queryPath,
                 flatten = true,
             ).map { jsonNode ->
                 NadelResultInstruction.Remove(

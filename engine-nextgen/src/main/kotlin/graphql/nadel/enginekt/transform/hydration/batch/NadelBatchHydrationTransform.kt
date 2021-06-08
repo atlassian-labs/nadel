@@ -18,6 +18,7 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
+import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
@@ -91,7 +92,7 @@ internal class NadelBatchHydrationTransform(
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryPath = QueryPath(field.listOfResultKeys.dropLast(1)),
+            queryPath = field.queryPath.dropLast(1),
             flatten = true,
         )
 

@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.util
 
 import graphql.nadel.OperationKind
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -65,3 +66,5 @@ fun NormalizedField.copyWithChildren(children: List<NormalizedField>): Normalize
             fixParents(old = this, new = it)
         }
 }
+
+val NormalizedField.queryPath: QueryPath get() = QueryPath(listOfResultKeys)

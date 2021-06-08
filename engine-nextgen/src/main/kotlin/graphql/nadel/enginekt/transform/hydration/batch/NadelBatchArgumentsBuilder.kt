@@ -88,7 +88,7 @@ internal object NadelBatchArgumentsBuilder {
         return parentNodes.flatMap { parentNode ->
             val nodes = JsonNodeExtractor.getNodesAt(
                 rootNode = parentNode,
-                queryPath = aliasHelper.mapQueryPathRespectingResultKey(valueSourceResult.queryPath),
+                queryPath = aliasHelper.mapQueryPathRespectingResultKey(valueSourceResult.queryPathToField),
                 flatten = true,
             )
 
