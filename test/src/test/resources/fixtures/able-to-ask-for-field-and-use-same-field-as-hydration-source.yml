@@ -37,64 +37,68 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Bar {
-        bar {
-          barId
-          barId
-          name
+  - request:
+      query: |
+        query nadel_2_Bar {
+          bar {
+            barId
+            barId
+            name
+          }
         }
+      variables: {}
+      operationName: nadel_2_Bar
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "bar": {
+            "barId": "1",
+            "name": "Test"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Bar
-  response: |-
-    {
-      "data": {
-        "bar": {
-          "barId": "1",
-          "name": "Test"
+  - request:
+      query: |
+        query nadel_2_Bar {
+          barById(id: "1") {
+            barId
+            barId
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_Bar {
-        barById(id: "1") {
-          barId
-          barId
-        }
+      variables: {}
+      operationName: nadel_2_Bar
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "barId": "1"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Bar
-  response: |-
-    {
-      "data": {
-        "barById": {
-          "barId": "1"
+  - request:
+      query: |
+        query nadel_2_Bar {
+          barById(id: "1") {
+            barId
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_Bar {
-        barById(id: "1") {
-          barId
-        }
+      variables: {}
+      operationName: nadel_2_Bar
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "barId": "1"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Bar
-  response: |-
-    {
-      "data": {
-        "barById": {
-          "barId": "1"
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

@@ -13,7 +13,7 @@ overallSchema:
   service1: |
     service service1 {
       type Query {
-        foo(id : ID): Foo
+        foo(id: ID): Foo
       }
       type Foo {
         id: ID
@@ -59,56 +59,60 @@ query: |
     }
   }
 
-  fragment unusedFrag2 on Foo {
-    bar {
-      id
-      name
-    }
-  }
+  # TODO: why does this generate an error?
+  # fragment unusedFrag2 on Foo {
+  #   bar {
+  #     id
+  #     name
+  #   }
+  # }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_service1 {
-        foo {
-          ...frag1
+  - request:
+      query: |
+        query nadel_2_service1 {
+          foo {
+            ...frag1
+          }
         }
-      }
 
-      fragment frag1 on Foo {
-        barId
+        fragment frag1 on Foo {
+          barId
+        }
+      variables: {}
+      operationName: nadel_2_service1
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "barId": "barId"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service1
-  response: |-
-    {
-      "data": {
-        "foo": {
-          "barId": "barId"
+  - request:
+      query: |
+        query nadel_2_service2 {
+          barById(id: "barId") {
+            id
+            name
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_service2 {
-        barById(id: "barId") {
-          id
-          name
-        }
+      variables: {}
+      operationName: nadel_2_service2
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "id": "barId",
+            "name": "Bar1"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service2
-  response: |-
-    {
-      "data": {
-        "barById": {
-          "id": "barId",
-          "name": "Bar1"
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

@@ -12,7 +12,7 @@ fun <T : Map<K, V>, K, V> Assertion.Builder<T>.keysEqual(keys: Collection<K>): A
             assertThat("$key is expected") { key in keys }
         }
     } then {
-        if (allPassed) pass() else fail()
+        if (allPassed || failedCount == 0) pass() else fail()
     }
     return this
 }

@@ -50,88 +50,93 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_service1 {
-        foo {
-          barId
+  - request:
+      query: |
+        query nadel_2_service1 {
+          foo {
+            barId
+          }
         }
+      variables: {}
+      operationName: nadel_2_service1
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "barId": [
+              "barId1",
+              "barId2",
+              "barId3"
+            ]
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service1
-  response: |-
-    {
-      "data": {
-        "foo": {
-          "barId": [
-            "barId1",
-            "barId2",
-            "barId3"
-          ]
+  - request:
+      query: |
+        query nadel_2_service2 {
+          barById(id: "barId1") {
+            id
+            name
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_service2 {
-        barById(id: "barId1") {
-          id
-          name
-        }
+      variables: {}
+      operationName: nadel_2_service2
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "id": "barId1",
+            "name": "Bar1"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service2
-  response: |-
-    {
-      "data": {
-        "barById": {
-          "id": "barId1",
-          "name": "Bar1"
+  - request:
+      query: |
+        query nadel_2_service2 {
+          barById(id: "barId2") {
+            id
+            name
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_service2 {
-        barById(id: "barId2") {
-          id
-          name
-        }
+      variables: {}
+      operationName: nadel_2_service2
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "id": "barId2",
+            "name": "Bar3"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service2
-  response: |-
-    {
-      "data": {
-        "barById": {
-          "id": "barId2",
-          "name": "Bar3"
+  - request:
+      query: |
+        query nadel_2_service2 {
+          barById(id: "barId3") {
+            id
+            name
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_service2 {
-        barById(id: "barId3") {
-          id
-          name
-        }
+      variables: {}
+      operationName: nadel_2_service2
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "id": "barId3",
+            "name": "Bar4"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service2
-  response: |-
-    {
-      "data": {
-        "barById": {
-          "id": "barId3",
-          "name": "Bar4"
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

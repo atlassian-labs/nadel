@@ -20,7 +20,9 @@ import graphql.nadel.tests.util.keysEqual
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.core.test.TestContext
 import kotlinx.coroutines.future.await
+import org.junit.jupiter.api.fail
 import strikt.api.Assertion
 import strikt.api.expectThat
 import strikt.assertions.all
@@ -42,8 +44,13 @@ class EngineTests : FunSpec({
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
         .forEach { fixture ->
-            test(fixture.name) {
+            val execute: suspend TestContext.() -> Unit = {
                 execute(fixture)
+            }
+            if (fixture.ignored) {
+                xtest(fixture.name, execute)
+            } else {
+                test(fixture.name, execute)
             }
         }
 })
@@ -57,21 +64,29 @@ private suspend fun execute(fixture: TestFixture) {
 
             override fun getServiceExecution(serviceName: String): ServiceExecution {
                 return ServiceExecution { params ->
-                    val incomingQuery = AstPrinter.printAst(
-                        astSorter.sort(
-                            params.query,
-                        ),
-                    )
-                    val call = fixture.calls.single {
-                        AstPrinter.printAst(it.request.document) == incomingQuery
-                    }
+                    try {
+                        val incomingQuery = AstPrinter.printAst(
+                            astSorter.sort(
+                                params.query,
+                            ),
+                        )
+                        val call = fixture.calls.singleOrNull {
+                            AstPrinter.printAst(it.request.document) == incomingQuery
+                        } ?: Unit.let { // Creates code block for null
+                            fail("Unable to match service call")
+                        }
 
-                    @Suppress("UNCHECKED_CAST")
-                    CompletableFuture.completedFuture(
-                        ServiceExecutionResult(
-                            call.response["data"] as JsonMap,
-                        ),
-                    )
+                        @Suppress("UNCHECKED_CAST")
+                        CompletableFuture.completedFuture(
+                            ServiceExecutionResult(
+                                call.response["data"] as JsonMap?,
+                                call.response["errors"] as List<JsonMap>?,
+                                call.response["extensions"] as JsonMap?,
+                            ),
+                        )
+                    } catch (e: Throwable) {
+                        fail("Unable to invoke service", e)
+                    }
                 }
             }
 
@@ -81,11 +96,26 @@ private suspend fun execute(fixture: TestFixture) {
         })
         .build()
 
-    val response = nadel.execute(newNadelExecutionInput()
-        .query(fixture.query)
-        .variables(fixture.variables)
-        .build())
-        .await()
+    val response = try {
+        nadel.execute(newNadelExecutionInput()
+            .query(fixture.query)
+            .variables(fixture.variables)
+            .artificialFieldsUUID("UUID")
+            .build())
+            .await()
+    } catch (e: Exception) {
+        if (fixture.exception != null) {
+            if (fixture.exception.message.matches(e.message ?: "")) {
+                // Pass test
+                return
+            }
+        }
+        fail("Unexpected error during engine execution", e)
+    }
+
+    if (fixture.exception != null) {
+        fail("Expected exception did not occur")
+    }
 
     // TODO: check extensions one day - right now they don't match up as dumped tests weren't fully E2E but tests are
     assertJsonTree(
@@ -142,6 +172,7 @@ fun Assertion.Builder<JsonMap>.assertJsonTree(
 
 private data class TestFixture(
     val name: String,
+    val ignored: Boolean = false,
     val overallSchema: Map<String, String>,
     val services: Map<String, String>,
     val query: String,
@@ -149,6 +180,7 @@ private data class TestFixture(
     val calls: List<ServiceCall>,
     @JsonProperty("response")
     private val responseJsonString: String?,
+    val exception: ExecutionException?,
 ) {
     val response: Map<String, Any?> by lazy {
         if (responseJsonString != null) {
@@ -183,5 +215,23 @@ data class ServiceCall(
             private val astSorter = AstSorter()
             private val documentParser = DocumentParser()
         }
+    }
+}
+
+data class ExecutionException(
+    @JsonProperty("message")
+    private val messageString: String = "",
+    private val ignoreMessageCase: Boolean = false,
+) {
+    val message: Regex by lazy {
+        Regex(
+            messageString,
+            setOfNotNull(
+                when (ignoreMessageCase) {
+                    true -> RegexOption.IGNORE_CASE
+                    else -> null
+                },
+            ),
+        )
     }
 }

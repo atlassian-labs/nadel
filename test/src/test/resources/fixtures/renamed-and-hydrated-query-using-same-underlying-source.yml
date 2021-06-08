@@ -47,50 +47,53 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Foo {
-        foo {
-          issue {
-            field
-          }
-          issue {
-            fooId
+  - request:
+      query: |
+        query nadel_2_Foo {
+          foo {
+            issue {
+              field
+            }
+            issue {
+              fooId
+            }
           }
         }
+      variables: {}
+      operationName: nadel_2_Foo
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "issue": {
+              "field": "field",
+              "fooId": "ID"
+            }
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Foo
-  response: |-
-    {
-      "data": {
-        "foo": {
-          "issue": {
-            "field": "field",
-            "fooId": "ID"
+  - request:
+      query: |
+        query nadel_2_Foo {
+          detail(detailIds: "ID") {
+            name
           }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_Foo {
-        detail(detailIds: "ID") {
-          name
-        }
+      variables: {}
+      operationName: nadel_2_Foo
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "detail": {
+            "name": "apple"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Foo
-  response: |-
-    {
-      "data": {
-        "detail": {
-          "name": "apple"
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

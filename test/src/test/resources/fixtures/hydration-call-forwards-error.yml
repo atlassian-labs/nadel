@@ -49,42 +49,45 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_service1 {
-        foo {
-          barId
+  - request:
+      query: |
+        query nadel_2_service1 {
+          foo {
+            barId
+          }
         }
+      variables: {}
+      operationName: nadel_2_service1
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "barId": "barId1"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service1
-  response: |-
-    {
-      "data": {
-        "foo": {
-          "barId": "barId1"
+  - request:
+      query: |
+        query nadel_2_service2 {
+          barById(id: "barId1") {
+            name
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_service2 {
-        barById(id: "barId1") {
-          name
-        }
+      variables: {}
+      operationName: nadel_2_service2
+    # language=JSON
+    response: |-
+      {
+        "errors": [
+          {
+            "message": "Some error occurred"
+          }
+        ],
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service2
-  response: |-
-    {
-      "errors": [
-        {
-          "message": "Some error occurred"
-        }
-      ],
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "errors": [
@@ -97,7 +100,10 @@ response: |-
       }
     ],
     "data": {
-      "foo": {}
+      "foo": {
+        "bar": null
+      }
     },
     "extensions": {}
   }
+

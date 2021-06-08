@@ -43,49 +43,52 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Foo {
-        foo {
-          issueId
-          issueId
-        }
-      }
-    variables: {}
-    operationName: nadel_2_Foo
-  response: |-
-    {
-      "data": {
-        "foo": {
-          "issueId": "ISSUE-1"
-        }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_Foo {
-        issues(issueIds: ["ISSUE-1"]) {
-          name
-          desc
-          object_identifier__UUID: id
-        }
-      }
-    variables: {}
-    operationName: nadel_2_Foo
-  response: |-
-    {
-      "data": {
-        "issues": [
-          {
-            "name": "I AM A NAME",
-            "desc": "I AM A DESC",
-            "object_identifier__UUID": "ISSUE-1"
+  - request:
+      query: |
+        query nadel_2_Foo {
+          foo {
+            issueId
+            issueId
           }
-        ]
-      },
-      "extensions": {}
-    }
+        }
+      variables: {}
+      operationName: nadel_2_Foo
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "issueId": "ISSUE-1"
+          }
+        },
+        "extensions": {}
+      }
+  - request:
+      query: |
+        query nadel_2_Foo {
+          issues(issueIds: ["ISSUE-1"]) {
+            name
+            desc
+            object_identifier__UUID: id
+          }
+        }
+      variables: {}
+      operationName: nadel_2_Foo
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "name": "I AM A NAME",
+              "desc": "I AM A DESC",
+              "object_identifier__UUID": "ISSUE-1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
 response: |-
   {
     "data": {

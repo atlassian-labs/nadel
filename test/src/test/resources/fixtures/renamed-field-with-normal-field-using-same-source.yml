@@ -52,36 +52,38 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Foo {
-        foo {
-          issue {
-            fooDetail {
-              name
+  - request:
+      query: |
+        query nadel_2_Foo {
+          foo {
+            issue {
+              fooDetail {
+                name
+              }
+            }
+            issue {
+              field
             }
           }
-          issue {
-            field
-          }
         }
+      variables: {}
+      operationName: nadel_2_Foo
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "issue": {
+              "field": "field",
+              "fooDetail": {
+                "name": "fooName"
+              }
+            }
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Foo
-  response: |-
-    {
-      "data": {
-        "foo": {
-          "issue": {
-            "field": "field",
-            "fooDetail": {
-              "name": "fooName"
-            }
-          }
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

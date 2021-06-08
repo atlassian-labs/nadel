@@ -1,7 +1,8 @@
 name: top level field error does not redact other top level fields
+ignored: true
 overallSchema:
-  service1: |
-    service service1 {
+  service: |
+    service service {
       type Query {
         foo: String
       }
@@ -18,20 +19,22 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_service {
-        bar: foo
+  - request:
+      query: |
+        query nadel_2_service {
+          bar: foo
+        }
+      variables: {}
+      operationName: nadel_2_service
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "bar": "boo"
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service
-  response: |-
-    {
-      "data": {
-        "bar": "boo"
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "errors": [

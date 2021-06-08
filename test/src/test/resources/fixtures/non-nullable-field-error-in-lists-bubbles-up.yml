@@ -26,31 +26,33 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Issues {
-        issues {
-          id
+  - request:
+      query: |
+        query nadel_2_Issues {
+          issues {
+            id
+          }
         }
-      }
-    variables: {}
-    operationName: nadel_2_Issues
-  response: |-
-    {
-      "data": {
-        "issues": [
-          [
+      variables: {}
+      operationName: nadel_2_Issues
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
             [
-              {},
-              {
-                "id": "will be discarded"
-              }
+              [
+                {},
+                {
+                  "id": "will be discarded"
+                }
+              ]
             ]
           ]
-        ]
-      },
-      "extensions": {}
-    }
+        },
+        "extensions": {}
+      }
+# language=JSON
 response: |-
   {
     "errors": [

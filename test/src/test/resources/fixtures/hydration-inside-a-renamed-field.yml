@@ -48,44 +48,47 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Foo {
-        fooOriginal {
-          id
-          fooBarId
+  - request:
+      query: |
+        query nadel_2_Foo {
+          fooOriginal {
+            id
+            fooBarId
+          }
         }
+      variables: {}
+      operationName: nadel_2_Foo
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "fooOriginal": {
+            "id": "Foo",
+            "fooBarId": "hydrated-bar"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Foo
-  response: |-
-    {
-      "data": {
-        "fooOriginal": {
-          "id": "Foo",
-          "fooBarId": "hydrated-bar"
+  - request:
+      query: |
+        query nadel_2_Bar {
+          barById(id: "hydrated-bar") {
+            id
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_Bar {
-        barById(id: "hydrated-bar") {
-          id
-        }
+      variables: {}
+      operationName: nadel_2_Bar
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "id": "hydrated-bar"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Bar
-  response: |-
-    {
-      "data": {
-        "barById": {
-          "id": "hydrated-bar"
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

@@ -50,27 +50,29 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Issues {
-        issues {
-          id
-          authorIds
-        }
-      }
-    variables: {}
-    operationName: nadel_2_Issues
-  response: |-
-    {
-      "data": {
-        "issues": [
-          {
-            "id": "ISSUE-1"
+  - request:
+      query: |
+        query nadel_2_Issues {
+          issues {
+            id
+            authorIds
           }
-        ]
-      },
-      "extensions": {}
-    }
+        }
+      variables: {}
+      operationName: nadel_2_Issues
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "id": "ISSUE-1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
 response: |-
   {
     "data": {

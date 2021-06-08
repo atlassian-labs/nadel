@@ -47,48 +47,51 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Foo {
-        foo {
-          issueId
-          issueId
+  - request:
+      query: |
+        query nadel_2_Foo {
+          foo {
+            issueId
+            issueId
+          }
         }
+      variables: {}
+      operationName: nadel_2_Foo
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "issueId": "ISSUE-1"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Foo
-  response: |-
-    {
-      "data": {
-        "foo": {
-          "issueId": "ISSUE-1"
+  - request:
+      query: |
+        query nadel_2_Foo {
+          issue(issueId: "ISSUE-1") {
+            name
+            summary
+            desc
+            summary
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_Foo {
-        issue(issueId: "ISSUE-1") {
-          name
-          summary
-          desc
-          summary
-        }
+      variables: {}
+      operationName: nadel_2_Foo
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "name": "I AM A NAME",
+            "desc": "I AM A DESC",
+            "summary": "I AM A SUMMARY"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Foo
-  response: |-
-    {
-      "data": {
-        "issue": {
-          "name": "I AM A NAME",
-          "desc": "I AM A DESC",
-          "summary": "I AM A SUMMARY"
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

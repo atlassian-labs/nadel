@@ -64,70 +64,73 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Issues {
-        issues {
-          id
-          authors {
-            authorId
+  - request:
+      query: |
+        query nadel_2_Issues {
+          issues {
+            id
+            authors {
+              authorId
+            }
           }
         }
+      variables: {}
+      operationName: nadel_2_Issues
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "id": "ISSUE-1",
+              "authors": [
+                {
+                  "authorId": "USER-1"
+                },
+                {
+                  "authorId": "USER-2"
+                }
+              ]
+            }
+          ]
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Issues
-  response: |-
-    {
-      "data": {
-        "issues": [
-          {
-            "id": "ISSUE-1",
-            "authors": [
+  - request:
+      query: |
+        query nadel_2_UserService {
+          usersQuery {
+            usersByIds(id: ["USER-1", "USER-2"]) {
+              name
+              id
+              object_identifier__UUID: id
+            }
+          }
+        }
+      variables: {}
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersQuery": {
+            "usersByIds": [
               {
-                "authorId": "USER-1"
+                "id": "USER-1",
+                "name": "User 1",
+                "object_identifier__UUID": "USER-1"
               },
               {
-                "authorId": "USER-2"
+                "id": "USER-2",
+                "name": "User 2",
+                "object_identifier__UUID": "USER-2"
               }
             ]
           }
-        ]
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_UserService {
-        usersQuery {
-          usersByIds(id: ["USER-1", "USER-2"]) {
-            name
-            id
-            object_identifier__UUID: id
-          }
-        }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_UserService
-  response: |-
-    {
-      "data": {
-        "usersQuery": {
-          "usersByIds": [
-            {
-              "id": "USER-1",
-              "name": "User 1",
-              "object_identifier__UUID": "USER-1"
-            },
-            {
-              "id": "USER-2",
-              "name": "User 2",
-              "object_identifier__UUID": "USER-2"
-            }
-          ]
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

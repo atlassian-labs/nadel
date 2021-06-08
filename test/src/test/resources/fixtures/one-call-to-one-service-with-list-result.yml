@@ -1,7 +1,7 @@
 name: one call to one service with list result
 overallSchema:
-  service1: |
-    service service1 {
+  service: |
+    service service {
       type Query {
         foo: [String]
       }
@@ -17,23 +17,25 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_service {
-        foo
+  - request:
+      query: |
+        query nadel_2_service {
+          foo
+        }
+      variables: {}
+      operationName: nadel_2_service
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": [
+            "foo1",
+            "foo2"
+          ]
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service
-  response: |-
-    {
-      "data": {
-        "foo": [
-          "foo1",
-          "foo2"
-        ]
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

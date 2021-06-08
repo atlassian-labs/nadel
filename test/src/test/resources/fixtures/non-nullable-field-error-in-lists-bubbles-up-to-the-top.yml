@@ -26,24 +26,26 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Issues {
-        issues {
-          id
+  - request:
+      query: |
+        query nadel_2_Issues {
+          issues {
+            id
+          }
         }
+      variables: {}
+      operationName: nadel_2_Issues
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {}
+          ]
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Issues
-  response: |-
-    {
-      "data": {
-        "issues": [
-          {}
-        ]
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "errors": [

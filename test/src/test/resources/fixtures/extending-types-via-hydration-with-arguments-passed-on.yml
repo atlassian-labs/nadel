@@ -50,49 +50,52 @@ services:
 query: |
   query {
     issue {
-      association(filter: {name : "value"}) {
+      association(filter: {name: "value"}) {
         nameOfAssociation
       }
     }
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Issue {
-        issue {
-          id
+  - request:
+      query: |
+        query nadel_2_Issue {
+          issue {
+            id
+          }
         }
+      variables: {}
+      operationName: nadel_2_Issue
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "id": "ISSUE-1"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Issue
-  response: |-
-    {
-      "data": {
-        "issue": {
-          "id": "ISSUE-1"
+  - request:
+      query: |
+        query nadel_2_Association {
+          association(id: "ISSUE-1", filter: {name: "value"}) {
+            nameOfAssociation
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_Association {
-        association(id: "ISSUE-1", filter: {name : "value"}) {
-          nameOfAssociation
-        }
+      variables: {}
+      operationName: nadel_2_Association
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "association": {
+            "nameOfAssociation": "ASSOC NAME"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Association
-  response: |-
-    {
-      "data": {
-        "association": {
-          "nameOfAssociation": "ASSOC NAME"
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

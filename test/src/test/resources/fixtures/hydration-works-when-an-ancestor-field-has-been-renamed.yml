@@ -46,48 +46,51 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_IssueService {
-        relationships {
-          nodes {
-            issueId
+  - request:
+      query: |
+        query nadel_2_IssueService {
+          relationships {
+            nodes {
+              issueId
+            }
           }
         }
+      variables: {}
+      operationName: nadel_2_IssueService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "relationships": {
+            "nodes": [
+              {
+                "issueId": "1"
+              }
+            ]
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_IssueService
-  response: |-
-    {
-      "data": {
-        "relationships": {
-          "nodes": [
-            {
-              "issueId": "1"
-            }
-          ]
+  - request:
+      query: |
+        query nadel_2_IssueService {
+          issue(id: "1") {
+            id
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_IssueService {
-        issue(id: "1") {
-          id
-        }
+      variables: {}
+      operationName: nadel_2_IssueService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "id": "1"
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_IssueService
-  response: |-
-    {
-      "data": {
-        "issue": {
-          "id": "1"
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {

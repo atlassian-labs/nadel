@@ -56,51 +56,53 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Issues {
-        boardScope {
-          board {
-            issueChildren {
-              id
-              issue {
-                key
-              }
-              issue {
-                summary
+  - request:
+      query: |
+        query nadel_2_Issues {
+          boardScope {
+            board {
+              issueChildren {
+                id
+                issue {
+                  key
+                }
+                issue {
+                  summary
+                }
               }
             }
           }
         }
-      }
-    variables: {}
-    operationName: nadel_2_Issues
-  response: |-
-    {
-      "data": {
-        "boardScope": {
-          "board": {
-            "issueChildren": [
-              {
-                "id": "1234",
-                "issue": {
-                  "key": "abc",
-                  "summary": "Summary 1"
+      variables: {}
+      operationName: nadel_2_Issues
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "boardScope": {
+            "board": {
+              "issueChildren": [
+                {
+                  "id": "1234",
+                  "issue": {
+                    "key": "abc",
+                    "summary": "Summary 1"
+                  }
+                },
+                {
+                  "id": "456",
+                  "issue": {
+                    "key": "def",
+                    "summary": "Summary 2"
+                  }
                 }
-              },
-              {
-                "id": "456",
-                "issue": {
-                  "key": "def",
-                  "summary": "Summary 2"
-                }
-              }
-            ]
+              ]
+            }
           }
-        }
-      },
-      "extensions": {}
-    }
+        },
+        "extensions": {}
+      }
+# language=JSON
 response: |-
   {
     "data": {

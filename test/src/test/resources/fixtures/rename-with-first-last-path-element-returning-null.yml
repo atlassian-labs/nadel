@@ -30,30 +30,36 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Issues {
-        issue {
-          details {
-            name
+  - request:
+      query: |
+        query nadel_2_Issues {
+          issue {
+            details {
+              name
+            }
           }
         }
+      variables: {}
+      operationName: nadel_2_Issues
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "details": {
+              "name": null
+            }
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_Issues
-  response: |-
-    {
-      "data": {
-        "issue": {
-          "details": {}
-        }
-      },
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "data": {
-      "issue": {}
+      "issue": {
+        "name": null
+      }
     },
     "extensions": {}
   }

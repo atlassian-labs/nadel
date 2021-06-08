@@ -56,40 +56,42 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Boards {
-        boardScope {
-          issueParents {
-            issueType {
-              id
-              inlineIssueCreate {
-                enabled
+  - request:
+      query: |
+        query nadel_2_Boards {
+          boardScope {
+            issueParents {
+              issueType {
+                id
+                inlineIssueCreate {
+                  enabled
+                }
               }
             }
           }
         }
-      }
-    variables: {}
-    operationName: nadel_2_Boards
-  response: |-
-    {
-      "data": {
-        "boardScope": {
-          "issueParents": [
-            {
-              "issueType": {
-                "id": "ID-1",
-                "inlineIssueCreate": {
-                  "enabled": true
+      variables: {}
+      operationName: nadel_2_Boards
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "boardScope": {
+            "issueParents": [
+              {
+                "issueType": {
+                  "id": "ID-1",
+                  "inlineIssueCreate": {
+                    "enabled": true
+                  }
                 }
               }
-            }
-          ]
-        }
-      },
-      "extensions": {}
-    }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
 response: |-
   {
     "data": {

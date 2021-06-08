@@ -30,33 +30,35 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_Issues {
-        details {
-          issue {
-            labels
-          }
-        }
-      }
-    variables: {}
-    operationName: nadel_2_Issues
-  response: |-
-    {
-      "data": {
-        "details": [
-          {
-            "issue": {
-              "labels": [
-                "label1",
-                "label2"
-              ]
+  - request:
+      query: |
+        query nadel_2_Issues {
+          details {
+            issue {
+              labels
             }
           }
-        ]
-      },
-      "extensions": {}
-    }
+        }
+      variables: {}
+      operationName: nadel_2_Issues
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "details": [
+            {
+              "issue": {
+                "labels": [
+                  "label1",
+                  "label2"
+                ]
+              }
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
 response: |-
   {
     "data": {

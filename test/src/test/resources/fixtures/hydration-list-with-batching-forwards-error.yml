@@ -49,47 +49,50 @@ query: |
   }
 variables: {}
 calls:
-- request:
-    query: |
-      query nadel_2_service1 {
-        foo {
-          barId
+  - request:
+      query: |
+        query nadel_2_service1 {
+          foo {
+            barId
+          }
         }
+      variables: {}
+      operationName: nadel_2_service1
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "barId": [
+              "barId1",
+              "barId2",
+              "barId3"
+            ]
+          }
+        },
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service1
-  response: |-
-    {
-      "data": {
-        "foo": {
-          "barId": [
-            "barId1",
-            "barId2",
-            "barId3"
-          ]
+  - request:
+      query: |
+        query nadel_2_service2 {
+          barsById(id: ["barId1", "barId2", "barId3"]) {
+            name
+            object_identifier__UUID: id
+          }
         }
-      },
-      "extensions": {}
-    }
-- request:
-    query: |
-      query nadel_2_service2 {
-        barsById(id: ["barId1", "barId2", "barId3"]) {
-          name
-          object_identifier__UUID: id
-        }
+      variables: {}
+      operationName: nadel_2_service2
+    # language=JSON
+    response: |-
+      {
+        "errors": [
+          {
+            "message": "Some error occurred"
+          }
+        ],
+        "extensions": {}
       }
-    variables: {}
-    operationName: nadel_2_service2
-  response: |-
-    {
-      "errors": [
-        {
-          "message": "Some error occurred"
-        }
-      ],
-      "extensions": {}
-    }
+# language=JSON
 response: |-
   {
     "errors": [
