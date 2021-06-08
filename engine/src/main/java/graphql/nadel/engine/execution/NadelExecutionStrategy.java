@@ -9,6 +9,8 @@ import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.ResultPath;
 import graphql.execution.nextgen.FieldSubSelection;
+import graphql.language.Field;
+import graphql.language.Node;
 import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.NodeId;
@@ -28,6 +30,7 @@ import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.nadel.util.MergedFieldUtil;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
@@ -121,17 +124,41 @@ public class NadelExecutionStrategy {
         List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
-            Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+            boolean isNamespaced = true;
+            if (isNamespaced) {
+                List<Node> children = mergedField.getSingleField().getChildren().get(0).getChildren();
+                for (Node child : children) {
 
-            CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
-                    .from(executionCtx)
-                    .service(service)
-                    .executionStepInfo(fieldExecutionStepInfo)
-                    .build();
+                    MergedField newMergedField = MergedFieldUtil.includeSubSelection(mergedField, "IssueQuery", executionCtx, a -> a.getSingleField().getName().equals(((Field) child).getName()));
 
-            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
-            CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo));
-            result.add(serviceCF);
+                    ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
+
+                    FieldInfo fieldInfo1 = fieldInfos.fieldInfoByDefinition.values().stream().filter(fieldInfo -> fieldInfo.getFieldDefinition().getName().equals(((Field) child).getName())).findFirst().get();
+                    Service service = fieldInfo1.getService();
+
+                    CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
+                            .from(executionCtx)
+                            .service(service)
+                            .executionStepInfo(newFieldExecutionStepInfo)
+                            .build();
+
+                    CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
+                    CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, newFieldExecutionStepInfo));
+                    result.add(serviceCF);
+                }
+            } else {
+                Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+
+                CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
+                        .from(executionCtx)
+                        .service(service)
+                        .executionStepInfo(fieldExecutionStepInfo)
+                        .build();
+
+                CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
+                CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo));
+                result.add(serviceCF);
+            }
         }
         return Async.each(result);
     }

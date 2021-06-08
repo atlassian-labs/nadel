@@ -108,7 +108,7 @@ class NadelE2ETest_SharedNamespaceWIP extends Specification {
                 .query(query)
                 .build()
         def data1 = [issue: [getIssue: [text: "Foo"]]]
-        def data2 = [issue: [search: [found: 1]]]
+        def data2 = [issue: [search: [count: 1]]]
         ServiceExecutionResult delegatedExecutionResult1 = new ServiceExecutionResult(data1)
         ServiceExecutionResult delegatedExecutionResult2 = new ServiceExecutionResult(data2)
         when:
@@ -120,7 +120,7 @@ class NadelE2ETest_SharedNamespaceWIP extends Specification {
         def er = result.join()
         er.data == [issue: [
                 getIssue: [text: "Foo"],
-                search  : [found: 1]
+                search  : [count: 1]
         ]]
     }
 }

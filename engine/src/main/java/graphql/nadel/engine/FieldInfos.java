@@ -8,7 +8,7 @@ import java.util.Map;
 @Internal
 public class FieldInfos {
 
-    private final Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition;
+    public final Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition;
 
     public FieldInfos(Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition) {
         this.fieldInfoByDefinition = fieldInfoByDefinition;

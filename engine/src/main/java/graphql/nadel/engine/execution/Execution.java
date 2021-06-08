@@ -37,14 +37,12 @@ import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -188,11 +186,15 @@ public class Execution {
                 if (allNamespacedTypes.stream().noneMatch(type -> ((TypeName) type).getName().equals(typeDefinition.getName()))) {
                     continue;
                 }
-                GraphQLType graphQLType = overallSchema.getType(typeDefinition.getName());
-                List<GraphQLFieldDefinition> graphQLFieldDefinitions = graphQLType.getChildren().stream().filter(a -> a instanceof GraphQLFieldDefinition).map(a -> ((GraphQLFieldDefinition) a)).collect(Collectors.toList());
+                GraphQLObjectType graphQLType = overallSchema.getObjectType(typeDefinition.getName());
+                List<GraphQLFieldDefinition> graphQLFieldDefinitions = graphQLType.getFieldDefinitions();
 
                 for (FieldDefinition fieldDefinition : typeDefinition.getFieldDefinitions()) {
-                    GraphQLFieldDefinition graphQLFieldDefinition = graphQLFieldDefinitions.stream().filter(gqlDef -> gqlDef.getName().equals(fieldDefinition.getName())).findFirst().get();
+                    GraphQLFieldDefinition graphQLFieldDefinition = graphQLFieldDefinitions.stream()
+                            .filter(gqlDef -> gqlDef.getName().equals(fieldDefinition.getName()))
+                            .findFirst()
+                            .get();
+
                     FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
                     fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
                 }
