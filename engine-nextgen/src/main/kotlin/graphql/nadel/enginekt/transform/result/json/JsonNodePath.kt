@@ -21,10 +21,6 @@ data class JsonNodePath(
         return copy(segments = segments.dropLast(n))
     }
 
-    override fun toString(): String {
-        return "JsonNodePath(segments=$segments)"
-    }
-
     companion object {
         val root = JsonNodePath(segments = emptyList())
     }

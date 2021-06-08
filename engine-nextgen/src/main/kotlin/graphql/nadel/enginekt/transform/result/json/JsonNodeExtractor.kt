@@ -1,5 +1,6 @@
 package graphql.nadel.enginekt.transform.result.json
 
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
@@ -9,15 +10,15 @@ import graphql.nadel.enginekt.util.JsonMap
  * Use the [getNodesAt] function to extract get the nodes at the given query selection path.
  */
 object JsonNodeExtractor {
-    fun getNodesAt(data: JsonMap, queryResultKeyPath: List<String>, flatten: Boolean = false): List<JsonNode> {
+    fun getNodesAt(data: JsonMap, queryPath: QueryPath, flatten: Boolean = false): List<JsonNode> {
         val rootNode = JsonNode(JsonNodePath.root, data)
-        return getNodesAt(rootNode, queryResultKeyPath, flatten)
+        return getNodesAt(rootNode, queryPath, flatten)
     }
 
-    fun getNodesAt(rootNode: JsonNode, queryResultKeyPath: List<String>, flatten: Boolean = false): List<JsonNode> {
+    fun getNodesAt(rootNode: JsonNode, queryPath: QueryPath, flatten: Boolean = false): List<JsonNode> {
         // This is a breadth-first search
-        return queryResultKeyPath.foldIndexed(listOf(rootNode)) { index, queue, pathSegment ->
-            val atEnd = index == queryResultKeyPath.lastIndex
+        return queryPath.segments.foldIndexed(listOf(rootNode)) { index, queue, pathSegment ->
+            val atEnd = index == queryPath.segments.lastIndex
             // For all the nodes, get the next node according to the segment value
             // We use flatMap as one node may be a list with more than one node to explore
             queue.flatMap { node ->
@@ -29,7 +30,7 @@ object JsonNodeExtractor {
 
     private fun getNodes(node: JsonNode, segment: String, flattenLists: Boolean): List<JsonNode> {
         return when (node.value) {
-            is AnyMap -> getNodes(node.path, node.value, segment, flattenLists)
+            is AnyMap -> getNodes(node.resultPath, node.value, segment, flattenLists)
             null -> emptyList()
             else -> throw IllegalNodeTypeException(node)
         }
@@ -80,7 +81,7 @@ private class IllegalNodeTypeException private constructor(message: String) : Ru
     companion object {
         operator fun invoke(node: JsonNode): IllegalNodeTypeException {
             val nodeType = node.value?.javaClass?.name ?: "null"
-            val pathString = node.path.segments.joinToString("/") {
+            val pathString = node.resultPath.segments.joinToString("/") {
                 it.value.toString()
             }
 

@@ -15,6 +15,7 @@ import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.AnyMutableList
 import graphql.nadel.enginekt.util.AnyMutableMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 import kotlin.reflect.KClass
@@ -122,11 +123,11 @@ internal class NadelResultTransformer(
         return artificialFields.flatMap { field ->
             JsonNodeExtractor.getNodesAt(
                 data = result.data,
-                queryResultKeyPath = field.listOfResultKeys,
+                queryPath = field.queryPath,
                 flatten = true,
             ).map { jsonNode ->
                 NadelResultInstruction.Remove(
-                    subjectPath = jsonNode.path,
+                    subjectPath = jsonNode.resultPath,
                 )
             }
         }
@@ -183,7 +184,7 @@ private fun JsonMap.cleanup(path: JsonNodePath) {
                     else -> throw UnsupportedOperationException("Unsupported key to delete from Map")
                 }
                 if (value.isEmpty()) {
-                    childKeyToDelete = item.path.segments.lastOrNull()
+                    childKeyToDelete = item.resultPath.segments.lastOrNull()
                 } else {
                     break
                 }
@@ -213,10 +214,10 @@ private fun JsonNode.get(segment: AnyJsonNodePathSegment): JsonNode {
 private fun getNextNode(current: JsonNode, segment: AnyJsonNodePathSegment): JsonNode {
     return when (segment) {
         is JsonNodePathSegment.String -> {
-            val path = current.path + segment.value
+            val path = current.resultPath + segment.value
             when (val value = current.value) {
                 is AnyMap? -> JsonNode(
-                    path = path,
+                    resultPath = path,
                     value = value?.get(segment.value),
                 )
                 else -> throw UnexpectedDataType(
@@ -227,10 +228,10 @@ private fun getNextNode(current: JsonNode, segment: AnyJsonNodePathSegment): Jso
             }
         }
         is JsonNodePathSegment.Int -> {
-            val path = current.path + segment.value
+            val path = current.resultPath + segment.value
             when (val value = current.value) {
                 is AnyList? -> JsonNode(
-                    path = path,
+                    resultPath = path,
                     value = value?.get(segment.value),
                 )
                 else -> throw UnexpectedDataType(

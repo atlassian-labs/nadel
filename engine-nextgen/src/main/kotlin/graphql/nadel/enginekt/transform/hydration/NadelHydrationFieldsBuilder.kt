@@ -1,31 +1,46 @@
 package graphql.nadel.enginekt.transform.hydration
 
 import graphql.nadel.Service
+import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.query.NadelPathToField
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.normalized.NormalizedField
+import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
 
 internal object NadelHydrationFieldsBuilder {
-    fun getQuery(
+    fun getActorQuery(
         instruction: NadelHydrationFieldInstruction,
+        aliasHelper: AliasHelper,
         hydrationField: NormalizedField,
         parentNode: JsonNode,
-        pathToResultKeys: (List<String>) -> List<String>,
     ): NormalizedField {
-        return NadelPathToField.createField(
-            schema = instruction.sourceService.underlyingSchema,
-            parentType = instruction.sourceService.underlyingSchema.queryType,
-            pathToField = instruction.pathToSourceField,
-            fieldArguments = NadelHydrationArgumentsBuilder.createSourceFieldArgs(
+        return getActorQuery(
+            instruction,
+            hydrationField,
+            fieldArguments = NadelHydrationInputBuilder.getInputValues(
                 instruction,
-                parentNode,
+                aliasHelper,
                 hydrationField,
-                pathToResultKeys,
+                parentNode,
             ),
+        )
+    }
+
+    fun getActorQuery(
+        instruction: NadelGenericHydrationInstruction,
+        hydrationField: NormalizedField,
+        fieldArguments: Map<String, NormalizedInputValue>,
+    ): NormalizedField {
+        return NFUtil.createField(
+            schema = instruction.actorService.underlyingSchema,
+            parentType = instruction.actorService.underlyingSchema.queryType,
+            queryPathToField = instruction.queryPathToActorField,
+            fieldArguments = fieldArguments,
             fieldChildren = hydrationField.children,
         )
     }
@@ -33,24 +48,27 @@ internal object NadelHydrationFieldsBuilder {
     fun getArtificialFields(
         service: Service,
         executionPlan: NadelExecutionPlan,
+        aliasHelper: AliasHelper,
         fieldCoordinates: FieldCoordinates,
-        instruction: NadelHydrationFieldInstruction,
+        instruction: NadelGenericHydrationInstruction,
     ): List<NormalizedField> {
         val underlyingTypeName = executionPlan.getUnderlyingTypeName(overallTypeName = fieldCoordinates.typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
-        return instruction.arguments
+        return instruction.actorInputValues
             .asSequence()
             .map { it.valueSource }
-            .filterIsInstance<NadelHydrationArgumentValueSource.FieldValue>()
+            .filterIsInstance<NadelHydrationActorInput.ValueSource.FieldResultValue>()
             .map { valueSource ->
-                NadelPathToField.createField(
-                    schema = service.underlyingSchema,
-                    parentType = underlyingObjectType,
-                    pathToField = valueSource.pathToField,
-                    fieldArguments = emptyMap(),
-                    fieldChildren = emptyList(), // This must be a leaf node
+                aliasHelper.toArtificial(
+                    NFUtil.createField(
+                        schema = service.underlyingSchema,
+                        parentType = underlyingObjectType,
+                        queryPathToField = valueSource.queryPathToField,
+                        fieldArguments = emptyMap(),
+                        fieldChildren = emptyList(), // This must be a leaf node
+                    ),
                 )
             }
             .toList()

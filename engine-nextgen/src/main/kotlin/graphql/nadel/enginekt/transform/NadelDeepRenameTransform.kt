@@ -1,6 +1,5 @@
 package graphql.nadel.enginekt.transform
 
-import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
@@ -8,18 +7,16 @@ import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.query.NadelPathToField
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.json.JsonNode
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
+import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
-import graphql.nadel.enginekt.util.mapToArrayList
+import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
-import graphql.normalized.NormalizedField.newNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
-import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 /**
  * A deep rename is a rename in where the field being "renamed" is not on the same level
@@ -64,41 +61,9 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
          */
         val instructions: Map<FieldCoordinates, NadelDeepRenameFieldInstruction>,
         /**
-         * When we query the underlying service we ensure to add an alias to the fields
-         * we insert in [NadelDeepRenameTransform.transformField] to ensure no clashes
-         * in the query namespace.
-         *
-         * The examples omit this detail for simplicity, but this manifests as such, given:
-         *
-         * ```graphql
-         * type Cat implements Pet {
-         *   name: String @renamed(from: ["tag", "name"])
-         * }
-         * ```
-         *
-         * and a query:
-         *
-         * ```
-         * {
-         *   pet {
-         *     ... on Cat { name }
-         *   }
-         * }
-         * ```
-         *
-         * then the query to the underlying service should look something similar to:
-         *
-         * ```
-         * {
-         *   pet {
-         *     ... on Cat {
-         *       my_alias__tag: tag { name }
-         *     }
-         *   }
-         * }
-         * ```
+         * See [AliasHelper]
          */
-        val alias: String,
+        val aliasHelper: AliasHelper,
         /**
          * Stored for easy access in other functions.
          */
@@ -126,7 +91,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
         return State(
             deepRenameInstructions,
-            "my_uuid", // UUID.randomUUID().toString(),
+            AliasHelper("my_uuid"),
             field,
         )
     }
@@ -194,15 +159,14 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
             newField = null,
             artificialFields = state.instructions.map { (coordinates, instruction) ->
                 makeDeepField(
+                    state,
                     transformer,
                     executionPlan,
                     service,
                     field,
                     coordinates,
                     deepRename = instruction,
-                ).transform {
-                    it.alias(getFirstFieldResultKey(state, instruction))
-                }
+                )
             } + makeTypeNameField(state),
         )
     }
@@ -219,11 +183,10 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     private fun makeTypeNameField(
         state: State,
     ): NormalizedField {
-        return newNormalizedField()
-            .alias(getTypeNameResultKey(state))
-            .fieldName(TypeNameMetaFieldDef.name)
-            .objectTypeNames(state.instructions.keys.mapToArrayList { it.typeName })
-            .build()
+        return NadelTransformUtil.makeTypeNameField(
+            aliasHelper = state.aliasHelper,
+            objectTypeNames = state.instructions.keys.map { it.typeName },
+        )
     }
 
     /**
@@ -244,6 +207,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      * ```
      */
     private suspend fun makeDeepField(
+        state: State,
         transformer: NadelQueryTransformer.Continuation,
         executionPlan: NadelExecutionPlan,
         service: Service,
@@ -251,19 +215,18 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         fieldCoordinates: FieldCoordinates,
         deepRename: NadelDeepRenameFieldInstruction,
     ): NormalizedField {
-        val underlyingTypeName = fieldCoordinates.typeName.let { overallTypeName ->
-            executionPlan.typeRenames[overallTypeName]?.underlyingName ?: overallTypeName
-        }
-
+        val underlyingTypeName = executionPlan.getUnderlyingTypeName(fieldCoordinates.typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
-        return NadelPathToField.createField(
-            schema = service.underlyingSchema,
-            parentType = underlyingObjectType,
-            pathToField = deepRename.pathToSourceField,
-            fieldArguments = emptyMap(),
-            fieldChildren = transformer.transform(field.children),
+        return state.aliasHelper.toArtificial(
+            NFUtil.createField(
+                schema = service.underlyingSchema,
+                parentType = underlyingObjectType,
+                queryPathToField = deepRename.queryPathToField,
+                fieldArguments = emptyMap(),
+                fieldChildren = transformer.transform(field.children),
+            ),
         )
     }
 
@@ -303,86 +266,28 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {
-        val parentNodes = getNodesAt(
+        val parentNodes = JsonNodeExtractor.getNodesAt(
             result.data,
-            field.listOfResultKeys.dropLast(1),
+            field.queryPath.dropLast(1),
             flatten = true,
         )
 
-        return parentNodes.flatMap { parentNode ->
-            val deepRenameInstruction = getMatchingDeepRenameInstruction(parentNode, state, executionPlan)
-                ?: return@flatMap emptyList()
+        return parentNodes.mapNotNull instruction@{ parentNode ->
+            val instruction = state.instructions.getInstructionForNode(
+                executionPlan = executionPlan,
+                aliasHelper = state.aliasHelper,
+                parentNode = parentNode,
+            ) ?: return@instruction null
 
-            val nodeToMove = getNodesAt(parentNode, getPathOfNodeToMove(state, deepRenameInstruction))
-                .emptyOrSingle() ?: return@flatMap emptyList()
+            val queryPathForSourceField = state.aliasHelper.getQueryPath(instruction.queryPathToField)
+            val sourceFieldNode = JsonNodeExtractor.getNodesAt(parentNode, queryPathForSourceField)
+                .emptyOrSingle() ?: return@instruction null
 
-            listOf(
-                NadelResultInstruction.Copy(
-                    subjectPath = nodeToMove.path,
-                    destinationPath = parentNode.path + field.resultKey,
-                ),
+            NadelResultInstruction.Copy(
+                subjectPath = sourceFieldNode.resultPath,
+                destinationPath = parentNode.resultPath + field.resultKey,
             )
         }
-    }
-
-    /**
-     * Read [State.alias]
-     *
-     * For a schema
-     *
-     * ```graphql
-     * type Dog {
-     *   name: String @renamed(from: ["collar", "name"])
-     * }
-     * ```
-     *
-     * @return if the value of [State.alias] is `hello_world` then it returns `[hello_world__collar, name]`
-     */
-    private fun getPathOfNodeToMove(state: State, instruction: NadelDeepRenameFieldInstruction): List<String> {
-        val firstKey = getFirstFieldResultKey(state, instruction)
-        return listOf(firstKey) + instruction.pathToSourceField.drop(1)
-    }
-
-    /**
-     * Read [State.alias]
-     *
-     * For a schema
-     *
-     * ```graphql
-     * type Dog {
-     *   name: String @renamed(from: ["collar", "name"])
-     * }
-     * ```
-     *
-     * @return if the value of [State.alias] is `hello_world` then it returns `hello_world__collar`
-     */
-    private fun getFirstFieldResultKey(state: State, instruction: NadelDeepRenameFieldInstruction): String {
-        return state.alias + "__" + instruction.pathToSourceField.first()
-    }
-
-    /**
-     * Read [State.alias]
-     *
-     * @return the aliased value of the GraphQL introspection field `__typename`
-     */
-    private fun getTypeNameResultKey(state: State): String {
-        return state.alias + TypeNameMetaFieldDef.name
-    }
-
-    /**
-     * Note: this can be null if the type condition was not met
-     */
-    private fun getMatchingDeepRenameInstruction(
-        parentNode: JsonNode,
-        state: State,
-        executionPlan: NadelExecutionPlan,
-    ): NadelDeepRenameFieldInstruction? {
-        val overallTypeName = NadelTransformUtil.getOverallTypename(
-            executionPlan = executionPlan,
-            node = parentNode,
-            typeNameResultKey = getTypeNameResultKey(state),
-        )
-        return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
     }
 }
 

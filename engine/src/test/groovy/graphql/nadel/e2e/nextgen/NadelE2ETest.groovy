@@ -56,13 +56,13 @@ class NadelE2ETest extends Specification {
         }
       }
       ... on Issue {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
     }
   }
 }"""
         def overallResponse = [issue: [name: "My Issue"]]
-        def serviceResponse = [issue: [my_uuid__typename: "Issue", my_uuid__detail: [detailName: "My Issue"]]]
+        def serviceResponse = [issue: [__typename__my_uuid: "Issue", my_uuid__detail: [detailName: "My Issue"]]]
 
         Map response
         List<GraphQLError> errors
@@ -136,17 +136,17 @@ class NadelE2ETest extends Specification {
         }
       }
       ... on Dog {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
       ... on Cat {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
     }
   }
 }"""
         def serviceResponse = [pets: [
-                [my_uuid__typename: "Cat", my_uuid__detail: [petName: "Tiger"]],
-                [my_uuid__typename: "Dog", my_uuid__detail: [petName: "Luna"]],
+                [__typename__my_uuid: "Cat", my_uuid__detail: [petName: "Tiger"]],
+                [__typename__my_uuid: "Dog", my_uuid__detail: [petName: "Luna"]],
         ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
@@ -270,6 +270,282 @@ class NadelE2ETest extends Specification {
         response == overallResponse
     }
 
+    def "simple batch hydration"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issues: [Issue]
+            } 
+            type Issue {
+                author: User => hydrated from UserService.usersByIds(userIds: \$source.authorId) object identified by id, batch size 2
+            }
+         }
+        """, UserService: """
+        service UserService {
+            type User {
+                id: ID!
+                name: String
+            }
+        }
+        """]
+        def issueUnderlyingSchema = """
+            type Query {
+                issues: [Issue]
+            } 
+            type Issue {
+                authorId: ID!
+            }
+        """
+        def userUnderlyingSchema = """
+            type Query {
+                usersByIds(userIds: [ID!]!): [User]
+            } 
+            type User {
+                id: ID!
+                name: String
+            }
+        """
+        def query = """
+        {
+            issues {
+                author {
+                    id
+                    name
+                }
+            }
+        } 
+        """
+
+        def issueCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        issues {
+            ... on Issue {
+                kt_batch_hydration__authorId: authorId
+            }
+            ... on Issue {
+                __typename__kt_batch_hydration: __typename
+            }
+        }
+    }
+}""")): [
+                        issues: [
+                                [
+                                        __typename__kt_batch_hydration: "Issue",
+                                        kt_batch_hydration__authorId  : "user-1",
+                                ],
+                                [
+                                        __typename__kt_batch_hydration: "Issue",
+                                        kt_batch_hydration__authorId  : "user-2",
+                                ],
+                                [
+                                        __typename__kt_batch_hydration: "Issue",
+                                        kt_batch_hydration__authorId  : "user-5",
+                                ],
+                        ],
+                ],
+        ]
+
+        def userCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        usersByIds(userIds: ["user-1", "user-2"]) {
+            ... on User {
+                id
+            }
+            ... on User {
+                name
+            }
+        }
+    }
+}"""))                                 : [
+                        usersByIds: [
+                                [id: "user-1", name: "Scott"],
+                                [id: "user-2", name: "Mike"],
+                        ],
+                ],
+                (Parser.parse("""{
+    ... on Query {
+        usersByIds(userIds: ["user-5"]) {
+            ... on User {
+                id
+            }
+            ... on User {
+                name
+            }
+        }
+    }
+}""")): [
+                        usersByIds: [
+                                [id: "user-5", name: "John"],
+                        ],
+                ],
+        ]
+
+        def expectedResponse = [issues: [
+                [author: [id: "user-1", name: "Scott"]],
+                [author: [id: "user-2", name: "Mike"]],
+                [author: [id: "user-5", name: "John"]],
+        ]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = testServices(
+                nsdl,
+                [
+                        IssueService: issueUnderlyingSchema,
+                        UserService : userUnderlyingSchema,
+                ],
+                [
+                        IssueService: issueCalls,
+                        UserService : userCalls,
+                ],
+                query,
+        )
+        then:
+        errors.size() == 0
+        response == expectedResponse
+    }
+
+    def "simple batch hydration matching on index"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issues: [Issue]
+            } 
+            type Issue {
+                author: User => hydrated from UserService.issueOwners(issueIds: \$source.id) using indexes, batch size 2
+            }
+         }
+        """, UserService: """
+        service UserService {
+            type User {
+                id: ID!
+                name: String
+            }
+        }
+        """]
+        def issueUnderlyingSchema = """
+            type Query {
+                issues: [Issue]
+            } 
+            type Issue {
+                id: ID!
+            }
+        """
+        def userUnderlyingSchema = """
+            type Query {
+                issueOwners(issueIds: [ID!]!): [User]
+            } 
+            type User {
+                id: ID!
+                name: String
+            }
+        """
+        def query = """
+        {
+            issues {
+                author {
+                    id
+                    name
+                }
+            }
+        } 
+        """
+
+        def issueCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        issues {
+            ... on Issue {
+                kt_batch_hydration__id: id
+            }
+            ... on Issue {
+                __typename__kt_batch_hydration: __typename
+            }
+        }
+    }
+}""")): [
+                        issues: [
+                                [
+                                        __typename__kt_batch_hydration: "Issue",
+                                        kt_batch_hydration__id        : "issue-1",
+                                ],
+                                [
+                                        __typename__kt_batch_hydration: "Issue",
+                                        kt_batch_hydration__id        : "issue-2",
+                                ],
+                                [
+                                        __typename__kt_batch_hydration: "Issue",
+                                        kt_batch_hydration__id        : "issue-5",
+                                ],
+                        ],
+                ],
+        ]
+
+        def userCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        issueOwners(issueIds: ["issue-1", "issue-2"]) {
+            ... on User {
+                id
+            }
+            ... on User {
+                name
+            }
+        }
+    }
+}"""))                                 : [
+                        issueOwners: [
+                                [id: "user-1", name: "Scott"],
+                                [id: "user-2", name: "Mike"],
+                        ],
+                ],
+                (Parser.parse("""{
+    ... on Query {
+        issueOwners(issueIds: ["issue-5"]) {
+            ... on User {
+                id
+            }
+            ... on User {
+                name
+            }
+        }
+    }
+}""")): [
+                        issueOwners: [
+                                [id: "user-5", name: "John"],
+                        ],
+                ],
+        ]
+
+        def expectedResponse = [issues: [
+                [author: [id: "user-1", name: "Scott"]],
+                [author: [id: "user-2", name: "Mike"]],
+                [author: [id: "user-5", name: "John"]],
+        ]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = testServices(
+                nsdl,
+                [
+                        IssueService: issueUnderlyingSchema,
+                        UserService : userUnderlyingSchema,
+                ],
+                [
+                        IssueService: issueCalls,
+                        UserService : userCalls,
+                ],
+                query,
+        )
+        then:
+        errors.size() == 0
+        response == expectedResponse
+    }
+
     def "hydration with deep rename"() {
         def nsdl = [IssueService: """
          service IssueService {
@@ -357,15 +633,15 @@ class NadelE2ETest extends Specification {
                 }
             }
             ... on User {
-                my_uuid__typename: __typename
+                __typename__my_uuid: __typename
             }
         }
     }
 }""")): [
                         userById: [
-                                my_uuid__typename: "User",
-                                id               : "user-1",
-                                my_uuid__details : [name: "Atlassian"],
+                                __typename__my_uuid: "User",
+                                id                 : "user-1",
+                                my_uuid__details   : [name: "Atlassian"],
                         ]
                 ],
         ]
@@ -453,17 +729,17 @@ class NadelE2ETest extends Specification {
         }
       }
       ... on Dog {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
       ... on Cat {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
     }
   }
 }"""
         def serviceResponse = [pets: [
-                [my_uuid__typename: "Cat", my_uuid__microchip: [petName: "Tiger"]],
-                [my_uuid__typename: "Dog", my_uuid__collar: [petName: "Luna"]],
+                [__typename__my_uuid: "Cat", my_uuid__microchip: [petName: "Tiger"]],
+                [__typename__my_uuid: "Dog", my_uuid__collar: [petName: "Luna"]],
         ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
@@ -567,13 +843,13 @@ class NadelE2ETest extends Specification {
         }
       }
       ... on UnderlyingIssue {
-        my_uuid__typename: __typename
+        __typename__my_uuid: __typename
       }
       ... on UnderlyingIssue {detail {... on UnderlyingIssueDetails {otherDetail}}}
     }
   }
 }"""
-        def serviceResponse = [issue: [detail: [otherDetail: "other detail"], my_uuid__typename: "UnderlyingIssue", my_uuid__detail: [detailName: "My Issue"]]]
+        def serviceResponse = [issue: [detail: [otherDetail: "other detail"], __typename__my_uuid: "UnderlyingIssue", my_uuid__detail: [detailName: "My Issue"]]]
         def overallResponse = [issue: [name: "My Issue", detail: [otherDetail: "other detail"]]]
 
         Map response
@@ -632,6 +908,59 @@ class NadelE2ETest extends Specification {
                 expectedQuery,
                 serviceResponse,
                 rawVariables
+        )
+        then:
+        errors.size() == 0
+        response == overallResponse
+    }
+
+    def "simple field rename"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issue: Issue
+            } 
+            type Issue {
+                name: String => renamed from underlyingName
+            }
+         }
+        """]
+        def underlyingSchema = """
+            type Query {
+                issue: Issue 
+            } 
+            type Issue {
+                underlyingName: String
+            }
+        """
+        def query = """
+        { issue { name } } 
+        """
+        def expectedQuery = """query {
+  ... on Query {
+    issue {
+      ... on Issue {
+            my_uuid__underlyingName: underlyingName
+      }
+      ... on Issue {
+        __typename__my_uuid: __typename
+      }
+    }
+  }
+}"""
+        def overallResponse = [issue: [name: "My Issue"]]
+        def serviceResponse = [issue: [__typename__my_uuid: "Issue", my_uuid__underlyingName: "My Issue"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                nsdl,
+                'IssueService',
+                underlyingSchema,
+                query,
+                expectedQuery,
+                serviceResponse,
         )
         then:
         errors.size() == 0
@@ -738,4 +1067,6 @@ class NadelE2ETest extends Specification {
 
         return [executionResult.getData(), executionResult.getErrors()]
     }
+
+
 }

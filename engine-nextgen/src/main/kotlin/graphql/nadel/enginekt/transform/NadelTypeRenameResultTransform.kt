@@ -10,6 +10,7 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
+import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
@@ -28,7 +29,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
     ): State? {
         return if (field.fieldName == Introspection.TypeNameMetaFieldDef.name) {
             State(
-                typeRenamePath = QueryPath(field.listOfResultKeys),
+                typeRenamePath = field.queryPath,
             )
         } else {
             null
@@ -58,14 +59,14 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
     ): List<NadelResultInstruction> {
         val nodes = JsonNodeExtractor.getNodesAt(
             result.data,
-            state.typeRenamePath.segments,
+            state.typeRenamePath,
             flatten = true,
         )
 
         return nodes.map {
             val underlyingTypeName = it.value as String
             val overallTypeName = executionPlan.getOverallTypeName(underlyingTypeName)
-            NadelResultInstruction.Set(it.path, overallTypeName)
+            NadelResultInstruction.Set(it.resultPath, overallTypeName)
         }
     }
 }

@@ -1,6 +1,5 @@
 package graphql.nadel.enginekt.transform.hydration
 
-import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
@@ -9,21 +8,21 @@ import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.NadelTransformUtil
-import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
-import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
+import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.getInstructionForNode
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
-import graphql.nadel.enginekt.util.toBuilder
+import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
-import graphql.normalized.NormalizedField.newNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
-import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 internal class NadelHydrationTransform(
     private val engine: NextgenEngine,
@@ -42,11 +41,7 @@ internal class NadelHydrationTransform(
          * the [State] is passed around.
          */
         val field: NormalizedField,
-        /**
-         * Used as a prefix or suffix to field names to ensure that artificial fields added
-         * by [NadelHydrationTransform] do NOT overlap with existing field result keys.
-         */
-        val alias: String,
+        val aliasHelper: AliasHelper,
     )
 
     override suspend fun isApplicable(
@@ -66,7 +61,7 @@ internal class NadelHydrationTransform(
             State(
                 hydrationInstructions,
                 field,
-                alias = "hydration_uuid",
+                aliasHelper = AliasHelper("hydration_uuid"),
             )
         }
     }
@@ -83,32 +78,24 @@ internal class NadelHydrationTransform(
         return NadelTransformFieldResult(
             newField = null,
             artificialFields = state.instructions.flatMap { (fieldCoordinates, instruction) ->
-                NadelHydrationFieldsBuilder.getArtificialFields(service, executionPlan, fieldCoordinates, instruction)
-                    .map {
-                        it.toBuilder().alias(getArtificialFieldResultKey(state, it)).build()
-                    }
+                NadelHydrationFieldsBuilder.getArtificialFields(
+                    service = service,
+                    executionPlan = executionPlan,
+                    aliasHelper = state.aliasHelper,
+                    fieldCoordinates = fieldCoordinates,
+                    instruction = instruction,
+                )
             } + makeTypeNameField(state),
         )
     }
 
-    /**
-     * Read [State.instructions]
-     *
-     * In the case that there are multiple [FieldCoordinates] for a single [NormalizedField]
-     * we need to know which type we are dealing with, so we use this to add a `__typename`
-     * selection to determine the behavior on [getResultInstructions].
-     *
-     * This detail is omitted from most examples in this file for simplicity.
-     */
     private fun makeTypeNameField(
         state: State,
     ): NormalizedField {
-        // TODO: DRY this code, this is copied from deep rename
-        return newNormalizedField()
-            .alias(getTypeNameResultKey(state))
-            .fieldName(TypeNameMetaFieldDef.name)
-            .objectTypeNames(state.instructions.keys.map { it.typeName })
-            .build()
+        return makeTypeNameField(
+            aliasHelper = state.aliasHelper,
+            objectTypeNames = state.instructions.keys.map { it.typeName },
+        )
     }
 
     override suspend fun getResultInstructions(
@@ -122,7 +109,7 @@ internal class NadelHydrationTransform(
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryResultKeyPath = field.listOfResultKeys.dropLast(1),
+            queryPath = field.queryPath.dropLast(1),
             flatten = true,
         )
 
@@ -144,82 +131,37 @@ internal class NadelHydrationTransform(
         hydrationField: NormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
     ): List<NadelResultInstruction> {
-        val instruction = getMatchingInstruction(
-            parentNode,
-            state,
-            executionPlan,
+        val instruction = state.instructions.getInstructionForNode(
+            executionPlan = executionPlan,
+            aliasHelper = state.aliasHelper,
+            parentNode = parentNode,
         )
 
         // Do nothing if there is no hydration instruction associated with this result
         instruction ?: return emptyList()
 
         val result = engine.executeHydration(
-            service = instruction.sourceService,
-            topLevelField = NadelHydrationFieldsBuilder.getQuery(
+            service = instruction.actorService,
+            topLevelField = NadelHydrationFieldsBuilder.getActorQuery(
                 instruction = instruction,
+                aliasHelper = state.aliasHelper,
                 hydrationField = hydrationField,
                 parentNode = parentNode,
-                pathToResultKeys = { path ->
-                    mapFieldPathToResultKeys(state, path)
-                },
             ),
-            pathToSourceField = instruction.pathToSourceField,
+            pathToSourceField = instruction.queryPathToActorField,
             executionContext = executionContext,
         )
 
         val data = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryResultKeyPath = instruction.pathToSourceField,
+            queryPath = instruction.queryPathToActorField,
         ).emptyOrSingle()
 
         return listOf(
             NadelResultInstruction.Set(
-                subjectPath = parentNode.path + hydrationField.resultKey,
+                subjectPath = parentNode.resultPath + hydrationField.resultKey,
                 newValue = data?.value,
             ),
         )
-    }
-
-    private fun mapFieldPathToResultKeys(state: State, path: List<String>): List<String> {
-        return path.mapIndexed { index, segment ->
-            if (index == 0) {
-                getArtificialFieldResultKey(state, segment)
-            } else {
-                segment
-            }
-        }
-    }
-
-    private fun getArtificialFieldResultKey(state: State, field: NormalizedField): String {
-        return getArtificialFieldResultKey(state, fieldName = field.name)
-    }
-
-    private fun getArtificialFieldResultKey(state: State, fieldName: String): String {
-        return state.alias + "__" + fieldName
-    }
-
-    /**
-     * Read [State.alias]
-     *
-     * @return the aliased value of the GraphQL introspection field `__typename`
-     */
-    private fun getTypeNameResultKey(state: State): String {
-        return TypeNameMetaFieldDef.name + "__" + state.alias
-    }
-
-    /**
-     * Note: this can be null if the type condition was not met
-     */
-    private fun getMatchingInstruction(
-        parentNode: JsonNode,
-        state: State,
-        executionPlan: NadelExecutionPlan,
-    ): NadelHydrationFieldInstruction? {
-        val overallTypeName = NadelTransformUtil.getOverallTypename(
-            executionPlan = executionPlan,
-            node = parentNode,
-            typeNameResultKey = getTypeNameResultKey(state),
-        )
-        return state.instructions[makeFieldCoordinates(overallTypeName, state.field.name)]
     }
 }
