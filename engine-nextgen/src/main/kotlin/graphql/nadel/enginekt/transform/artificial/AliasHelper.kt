@@ -56,20 +56,20 @@ class AliasHelper(private val alias: String) {
     }
 
     fun mapQueryPathRespectingResultKey(
-        path: QueryPath
+        path: QueryPath,
     ): QueryPath {
-        return QueryPath(path.segments.mapIndexed { index, segment ->
+        return path.mapIndexed { index, segment ->
             when (index) {
                 0 -> getResultKey(segment)
                 else -> segment
             }
-        })
+        }
     }
 
-    fun toArtificial(it: NormalizedField): NormalizedField {
+    fun toArtificial(field: NormalizedField): NormalizedField {
         // The first field must be aliased as it is an artificial field
-        return it.toBuilder()
-            .alias(getResultKey(it.fieldName))
+        return field.toBuilder()
+            .alias(getResultKey(field.fieldName))
             .build()
     }
 }

@@ -408,6 +408,144 @@ class NadelE2ETest extends Specification {
         response == expectedResponse
     }
 
+    def "simple batch hydration matching on index"() {
+        def nsdl = [IssueService: """
+         service IssueService {
+            type Query {
+                issues: [Issue]
+            } 
+            type Issue {
+                author: User => hydrated from UserService.issueOwners(issueIds: \$source.id) using indexes, batch size 2
+            }
+         }
+        """, UserService: """
+        service UserService {
+            type User {
+                id: ID!
+                name: String
+            }
+        }
+        """]
+        def issueUnderlyingSchema = """
+            type Query {
+                issues: [Issue]
+            } 
+            type Issue {
+                id: ID!
+            }
+        """
+        def userUnderlyingSchema = """
+            type Query {
+                issueOwners(issueIds: [ID!]!): [User]
+            } 
+            type User {
+                id: ID!
+                name: String
+            }
+        """
+        def query = """
+        {
+            issues {
+                author {
+                    id
+                    name
+                }
+            }
+        } 
+        """
+
+        def issueCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        issues {
+            ... on Issue {
+                kt_batch_hydration__id: id
+            }
+            ... on Issue {
+                __typename__kt_batch_hydration: __typename
+            }
+        }
+    }
+}""")): [
+                        issues: [
+                                [
+                                        __typename__kt_batch_hydration: "Issue",
+                                        kt_batch_hydration__id        : "issue-1",
+                                ],
+                                [
+                                        __typename__kt_batch_hydration: "Issue",
+                                        kt_batch_hydration__id        : "issue-2",
+                                ],
+                                [
+                                        __typename__kt_batch_hydration: "Issue",
+                                        kt_batch_hydration__id        : "issue-5",
+                                ],
+                        ],
+                ],
+        ]
+
+        def userCalls = [
+                (Parser.parse("""{
+    ... on Query {
+        issueOwners(issueIds: ["issue-1", "issue-2"]) {
+            ... on User {
+                id
+            }
+            ... on User {
+                name
+            }
+        }
+    }
+}"""))                                 : [
+                        issueOwners: [
+                                [id: "user-1", name: "Scott"],
+                                [id: "user-2", name: "Mike"],
+                        ],
+                ],
+                (Parser.parse("""{
+    ... on Query {
+        issueOwners(issueIds: ["issue-5"]) {
+            ... on User {
+                id
+            }
+            ... on User {
+                name
+            }
+        }
+    }
+}""")): [
+                        issueOwners: [
+                                [id: "user-5", name: "John"],
+                        ],
+                ],
+        ]
+
+        def expectedResponse = [issues: [
+                [author: [id: "user-1", name: "Scott"]],
+                [author: [id: "user-2", name: "Mike"]],
+                [author: [id: "user-5", name: "John"]],
+        ]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = testServices(
+                nsdl,
+                [
+                        IssueService: issueUnderlyingSchema,
+                        UserService : userUnderlyingSchema,
+                ],
+                [
+                        IssueService: issueCalls,
+                        UserService : userCalls,
+                ],
+                query,
+        )
+        then:
+        errors.size() == 0
+        response == expectedResponse
+    }
+
     def "hydration with deep rename"() {
         def nsdl = [IssueService: """
          service IssueService {

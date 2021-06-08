@@ -15,7 +15,6 @@ import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
-import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -143,7 +142,7 @@ internal class NadelHydrationTransform(
 
         val result = engine.executeHydration(
             service = instruction.actorService,
-            topLevelField = NadelHydrationFieldsBuilder.getQuery(
+            topLevelField = NadelHydrationFieldsBuilder.getActorQuery(
                 instruction = instruction,
                 aliasHelper = state.aliasHelper,
                 hydrationField = hydrationField,

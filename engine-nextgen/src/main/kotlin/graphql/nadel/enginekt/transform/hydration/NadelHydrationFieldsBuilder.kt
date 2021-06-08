@@ -13,13 +13,13 @@ import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
 
 internal object NadelHydrationFieldsBuilder {
-    fun getQuery(
+    fun getActorQuery(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: AliasHelper,
         hydrationField: NormalizedField,
         parentNode: JsonNode,
     ): NormalizedField {
-        return getQuery(
+        return getActorQuery(
             instruction,
             hydrationField,
             fieldArguments = NadelHydrationInputBuilder.getInputValues(
@@ -31,7 +31,7 @@ internal object NadelHydrationFieldsBuilder {
         )
     }
 
-    fun getQuery(
+    fun getActorQuery(
         instruction: NadelGenericHydrationInstruction,
         hydrationField: NormalizedField,
         fieldArguments: Map<String, NormalizedInputValue>,

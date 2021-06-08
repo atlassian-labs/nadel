@@ -10,6 +10,10 @@ data class QueryPath(val segments: List<String>) {
         return QueryPath(segments.dropLast(n))
     }
 
+    inline fun mapIndexed(mapper: (index: Int, segment: String) -> String): QueryPath {
+        return QueryPath(segments.mapIndexed(mapper))
+    }
+
     fun last(): String {
         return segments.last()
     }

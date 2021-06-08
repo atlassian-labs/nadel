@@ -108,6 +108,12 @@ fun AnyMutableMap.hackPutAll(map: AnyMap) {
     (this as MutableMap<Any?, Any?>).putAll(map)
 }
 
+/**
+ * This function permits an empty collection or a [single] object in the collection.
+ *
+ * @return null if empty or [single] object
+ * @see single
+ */
 fun <T : Any> Iterable<T>.emptyOrSingle(): T? {
     return when (this) {
         is List<T> -> when (isEmpty()) {
@@ -118,6 +124,9 @@ fun <T : Any> Iterable<T>.emptyOrSingle(): T? {
     }
 }
 
+/**
+ * See `Iterable`.[emptyOrSingle]
+ */
 fun <T : Any> Iterator<T>.emptyOrSingle(): T? {
     return when (hasNext()) {
         true -> next().also {
@@ -130,6 +139,9 @@ fun <T : Any> Iterator<T>.emptyOrSingle(): T? {
     }
 }
 
+/**
+ * See `Iterable`.[emptyOrSingle]
+ */
 fun <T : Any> Sequence<T>.emptyOrSingle(): T? {
     return iterator().emptyOrSingle()
 }

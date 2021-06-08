@@ -17,7 +17,6 @@ import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
-import graphql.normalized.NormalizedInputValue
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -62,15 +61,55 @@ internal class NadelBatchHydrator(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
-        val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
-            aliasHelper = state.aliasHelper,
+        val deferredBatches: List<Deferred<ServiceExecutionResult>> = executeBatchesAsync(
+            state = state,
             instruction = instruction,
-            hydrationField = state.field,
-            parentNodes = parentNodes,
+            parentNodes = parentNodes
         )
+        val resultNodes: List<JsonMap> = getHydrationActorResultNodes(instruction, deferredBatches)
 
-        val batches: List<Deferred<ServiceExecutionResult>> = executeBatchesAsync(state, instruction, argBatches)
-        val resultsByObjectId = awaitBatchesThenAssociateKeys(instruction, batches)
+        return when (val matchStrategy = instruction.batchHydrationMatchStrategy) {
+            is NadelBatchHydrationMatchStrategy.MatchIndex -> getHydrateInstructionsMatchingIndex(
+                state = state,
+                parentNodes = parentNodes,
+                resultNodes = resultNodes,
+            )
+            is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> getHydrateInstructionsMatchingObjectId(
+                state = state,
+                instruction = instruction,
+                parentNodes = parentNodes,
+                resultNodes = resultNodes,
+                matchStrategy = matchStrategy,
+            )
+        }
+    }
+
+    private fun getHydrateInstructionsMatchingIndex(
+        state: State,
+        parentNodes: List<JsonNode>,
+        resultNodes: List<JsonMap>,
+    ): List<NadelResultInstruction> {
+        require(resultNodes.size == parentNodes.size) { "Could not hydrate by index: illegal element count" }
+
+        return parentNodes.mapIndexed { index, parentNode ->
+            NadelResultInstruction.Set(
+                subjectPath = parentNode.resultPath + state.field.resultKey,
+                newValue = resultNodes[index],
+            )
+        }
+    }
+
+    private fun getHydrateInstructionsMatchingObjectId(
+        state: State,
+        instruction: NadelBatchHydrationFieldInstruction,
+        parentNodes: List<JsonNode>,
+        resultNodes: List<JsonMap>,
+        matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
+    ): List<NadelResultInstruction> {
+        val resultNodesByObjectId = resultNodes.associateBy {
+            it[matchStrategy.objectId]
+        }
+
         val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.mapQueryPathRespectingResultKey(
             getPathToObjectIdentifierOnHydrationParentNode(instruction),
         )
@@ -85,7 +124,7 @@ internal class NadelBatchHydrator(
                 null -> null
                 else -> NadelResultInstruction.Set(
                     subjectPath = parentNode.resultPath + state.field.resultKey,
-                    newValue = resultsByObjectId[parentNodeIdentifierNode.value],
+                    newValue = resultNodesByObjectId[parentNodeIdentifierNode.value],
                 )
             }
         }
@@ -94,21 +133,30 @@ internal class NadelBatchHydrator(
     private suspend fun executeBatchesAsync(
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
-        argBatches: List<Map<NadelHydrationActorInput, NormalizedInputValue>>,
+        parentNodes: List<JsonNode>,
     ): List<Deferred<ServiceExecutionResult>> {
-        return argBatches
-            .map { argBatch ->
-                val hydrationQuery = NadelHydrationFieldsBuilder.getQuery(
+        val inputValueBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
+            aliasHelper = state.aliasHelper,
+            instruction = instruction,
+            hydrationField = state.field,
+            parentNodes = parentNodes,
+        )
+
+        return inputValueBatches
+            .map { inputValueBatch ->
+                val hydrationActorQuery = NadelHydrationFieldsBuilder.getActorQuery(
                     instruction = instruction,
                     hydrationField = state.field,
-                    fieldArguments = argBatch.mapKeys { (argument) -> argument.name },
+                    fieldArguments = inputValueBatch.mapKeys { (argument: NadelHydrationActorInput) ->
+                        argument.name
+                    },
                 )
 
                 coroutineScope {
-                    async {
+                    async { // This executes the batches in parallel i.e. executes hydration as Deferred/Future
                         engine.executeHydration(
                             service = instruction.actorService,
-                            topLevelField = hydrationQuery,
+                            topLevelField = hydrationActorQuery,
                             pathToSourceField = instruction.actorFieldQueryPath,
                             executionContext = state.executionContext,
                         )
@@ -117,12 +165,13 @@ internal class NadelBatchHydrator(
             }
     }
 
-    private suspend fun awaitBatchesThenAssociateKeys(
+    private suspend fun getHydrationActorResultNodes(
         instruction: NadelBatchHydrationFieldInstruction,
         batches: List<Deferred<ServiceExecutionResult>>,
-    ): Map<Any?, JsonMap> {
+    ): List<JsonMap> {
         return batches
             .awaitAll()
+            .asSequence()
             .flatMap { batch ->
                 val nodes = JsonNodeExtractor.getNodesAt(
                     data = batch.data,
@@ -132,6 +181,7 @@ internal class NadelBatchHydrator(
 
                 // Associate by does not need to be strict here
                 nodes
+                    .asSequence()
                     .mapNotNull { node ->
                         when (val nodeValue = node.value) {
                             is AnyMap -> nodeValue.let {
@@ -142,12 +192,7 @@ internal class NadelBatchHydrator(
                         }
                     }
             }
-            .associateBy { nodeValue ->
-                when (val matchStrategy = instruction.batchHydrationMatchStrategy) {
-                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> nodeValue[matchStrategy.objectId]
-                    is NadelBatchHydrationMatchStrategy.MatchIndex -> TODO("no-op")
-                }
-            }
+            .toList()
     }
 
     /**

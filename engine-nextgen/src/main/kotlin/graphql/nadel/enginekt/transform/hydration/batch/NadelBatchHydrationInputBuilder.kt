@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform.hydration.batch
 
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
+import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
@@ -16,6 +17,12 @@ import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLTypeUtil
 
+/**
+ * README
+ *
+ * Please ensure that the batch arguments are ordered according to the input.
+ * This is required for [NadelBatchHydrationMatchStrategy.MatchIndex].
+ */
 internal object NadelBatchHydrationInputBuilder {
     fun getInputValueBatches(
         aliasHelper: AliasHelper,
