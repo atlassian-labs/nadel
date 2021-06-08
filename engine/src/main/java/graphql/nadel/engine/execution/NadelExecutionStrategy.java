@@ -32,6 +32,7 @@ import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.util.MergedFieldUtil;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,12 +125,13 @@ public class NadelExecutionStrategy {
         List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
-            boolean isNamespaced = true;
+            boolean isNamespaced = !fieldExecutionStepInfo.getFieldDefinition().getDirectives("namespaced").isEmpty();
             if (isNamespaced) {
-                List<Node> children = mergedField.getSingleField().getChildren().get(0).getChildren();
-                for (Node child : children) {
+                List<Node<?>> children = mergedField.getSingleField().getChildren().get(0).getChildren();
+                String typeName = ((GraphQLObjectType) fieldExecutionStepInfo.getUnwrappedNonNullType()).getName();
+                for (Node<?> child : children) {
 
-                    MergedField newMergedField = MergedFieldUtil.includeSubSelection(mergedField, "IssueQuery", executionCtx, a -> a.getSingleField().getName().equals(((Field) child).getName()));
+                    MergedField newMergedField = MergedFieldUtil.includeSubSelection(mergedField, typeName, executionCtx, a -> a.getSingleField().getName().equals(((Field) child).getName()));
 
                     ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
 
