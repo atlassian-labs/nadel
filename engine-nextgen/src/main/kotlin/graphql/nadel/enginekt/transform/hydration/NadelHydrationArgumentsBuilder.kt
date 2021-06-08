@@ -11,7 +11,7 @@ import graphql.language.StringValue
 import graphql.language.Value
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
-import graphql.nadel.enginekt.transform.artificial.ArtificialFields
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getSourceFieldDefinition
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -29,7 +29,7 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSou
 internal object NadelHydrationArgumentsBuilder {
     fun createSourceFieldArgs(
         instruction: NadelHydrationFieldInstruction,
-        artificialFields: ArtificialFields,
+        aliasHelper: AliasHelper,
         hydrationField: NormalizedField,
         parentNode: JsonNode,
     ): Map<String, NormalizedInputValue> {
@@ -39,7 +39,7 @@ internal object NadelHydrationArgumentsBuilder {
             instruction.actorInputValues
                 .map {
                     val argumentDef = sourceField.getArgument(it.name)
-                    it.name to makeInputValue(it, argumentDef, parentNode, hydrationField, artificialFields)
+                    it.name to makeInputValue(it, argumentDef, parentNode, hydrationField, aliasHelper)
                 }
         )
     }
@@ -49,12 +49,12 @@ internal object NadelHydrationArgumentsBuilder {
         argumentDef: GraphQLArgument,
         parentNode: JsonNode,
         hydrationField: NormalizedField,
-        artificialFields: ArtificialFields,
+        aliasHelper: AliasHelper,
     ): NormalizedInputValue {
         return when (val valueSource = actorInput.valueSource) {
             is ValueSource.ArgumentValue -> hydrationField.getNormalizedArgument(valueSource.argumentName)
             is ValueSource.FieldResultValue -> makeInputValue(argumentDef) {
-                getFieldValue(valueSource, parentNode, artificialFields)
+                getFieldValue(valueSource, parentNode, aliasHelper)
             }
         }
     }
@@ -62,11 +62,11 @@ internal object NadelHydrationArgumentsBuilder {
     private fun getFieldValue(
         valueSourceResult: ValueSource.FieldResultValue,
         parentNode: JsonNode,
-        artificialFields: ArtificialFields,
+        aliasHelper: AliasHelper,
     ): AnyNormalizedInputValueValue {
         val value = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
-            queryPath = artificialFields.mapQueryPathRespectingResultKey(valueSourceResult.queryPath),
+            queryPath = aliasHelper.mapQueryPathRespectingResultKey(valueSourceResult.queryPath),
         ).emptyOrSingle()?.value
 
         return NormalizedInputValueValue.AstValue(

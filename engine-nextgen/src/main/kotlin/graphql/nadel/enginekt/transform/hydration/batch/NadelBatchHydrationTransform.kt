@@ -11,7 +11,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
-import graphql.nadel.enginekt.transform.artificial.ArtificialFields
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
@@ -31,7 +31,7 @@ internal class NadelBatchHydrationTransform(
         val instructions: Map<FieldCoordinates, NadelBatchHydrationFieldInstruction>,
         val executionContext: NadelExecutionContext,
         val field: NormalizedField,
-        val artificialFields: ArtificialFields,
+        val aliasHelper: AliasHelper,
     )
 
     override suspend fun isApplicable(
@@ -50,7 +50,7 @@ internal class NadelBatchHydrationTransform(
                 instructions,
                 executionContext,
                 field,
-                artificialFields = ArtificialFields(alias = "kt_batch_hydration"),
+                aliasHelper = AliasHelper(alias = "kt_batch_hydration"),
             )
         } else {
             null
@@ -72,7 +72,7 @@ internal class NadelBatchHydrationTransform(
                 NadelHydrationFieldsBuilder.getArtificialFields(
                     service = service,
                     executionPlan = executionPlan,
-                    artificialFields = state.artificialFields,
+                    aliasHelper = state.aliasHelper,
                     fieldCoordinates = fieldCoordinates,
                     instruction = instruction
                 )
@@ -100,7 +100,7 @@ internal class NadelBatchHydrationTransform(
 
     private fun makeTypeNameField(state: State): NormalizedField {
         return makeTypeNameField(
-            artificialFields = state.artificialFields,
+            aliasHelper = state.aliasHelper,
             objectTypeNames = state.instructions.keys.map { it.typeName },
         )
     }

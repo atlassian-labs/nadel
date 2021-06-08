@@ -3,7 +3,7 @@ package graphql.nadel.enginekt.transform
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.enginekt.blueprint.NadelFieldInstruction
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.artificial.ArtificialFields
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.normalized.NormalizedField
@@ -14,15 +14,15 @@ import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 object NadelTransformUtil {
     fun getOverallTypename(
         executionPlan: NadelExecutionPlan,
-        artificialFields: ArtificialFields,
+        aliasHelper: AliasHelper,
         node: JsonNode,
     ): String? {
         @Suppress("UNCHECKED_CAST")
         val nodeValueAsMap = node.value as? JsonMap ?: return null
 
-        return if (artificialFields.typeNameResultKey in nodeValueAsMap) {
+        return if (aliasHelper.typeNameResultKey in nodeValueAsMap) {
             executionPlan.getOverallTypeName(
-                underlyingTypeName = nodeValueAsMap[artificialFields.typeNameResultKey] as String,
+                underlyingTypeName = nodeValueAsMap[aliasHelper.typeNameResultKey] as String,
             )
         } else {
             null
@@ -30,11 +30,11 @@ object NadelTransformUtil {
     }
 
     fun makeTypeNameField(
-        artificialFields: ArtificialFields,
+        aliasHelper: AliasHelper,
         objectTypeNames: List<String>,
     ): NormalizedField {
         return newNormalizedField()
-            .alias(artificialFields.typeNameResultKey)
+            .alias(aliasHelper.typeNameResultKey)
             .fieldName(TypeNameMetaFieldDef.name)
             .objectTypeNames(objectTypeNames)
             .build()
@@ -43,12 +43,12 @@ object NadelTransformUtil {
 
 fun <T : NadelFieldInstruction> Map<FieldCoordinates, T>.getInstructionForNode(
     executionPlan: NadelExecutionPlan,
-    artificialFields: ArtificialFields,
+    aliasHelper: AliasHelper,
     parentNode: JsonNode,
 ): T? = let { instructions ->
     val overallTypeName = NadelTransformUtil.getOverallTypename(
         executionPlan = executionPlan,
-        artificialFields = artificialFields,
+        aliasHelper = aliasHelper,
         node = parentNode,
     )
 

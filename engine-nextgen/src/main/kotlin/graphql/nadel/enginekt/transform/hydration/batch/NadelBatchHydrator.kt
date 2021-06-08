@@ -35,7 +35,7 @@ internal class NadelBatchHydrator(
             .mapNotNull { parentNode ->
                 val instruction = state.instructions.getInstructionForNode(
                     executionPlan = executionPlan,
-                    artificialFields = state.artificialFields,
+                    aliasHelper = state.aliasHelper,
                     parentNode = parentNode,
                 )
                 when (instruction) {
@@ -63,7 +63,7 @@ internal class NadelBatchHydrator(
         parentNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
         val argBatches = NadelBatchArgumentsBuilder.getArgumentBatches(
-            artificialFields = state.artificialFields,
+            aliasHelper = state.aliasHelper,
             instruction = instruction,
             hydrationField = state.field,
             parentNodes = parentNodes,
@@ -71,7 +71,7 @@ internal class NadelBatchHydrator(
 
         val batches: List<Deferred<ServiceExecutionResult>> = executeBatchesAsync(state, instruction, argBatches)
         val resultsByObjectId = awaitBatchesThenAssociateKeys(instruction, batches)
-        val resultKeysToObjectIdOnHydrationParentNode = state.artificialFields.mapQueryPathRespectingResultKey(
+        val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.mapQueryPathRespectingResultKey(
             getPathToObjectIdentifierOnHydrationParentNode(instruction),
         )
 

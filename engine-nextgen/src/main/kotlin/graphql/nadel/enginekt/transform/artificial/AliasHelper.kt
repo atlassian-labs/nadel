@@ -42,7 +42,7 @@ import graphql.normalized.NormalizedField
  * }
  * ```
  */
-class ArtificialFields(private val alias: String) {
+class AliasHelper(private val alias: String) {
     val typeNameResultKey by lazy {
         TypeNameMetaFieldDef.name + "__" + alias
     }

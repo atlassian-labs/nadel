@@ -8,7 +8,7 @@ import graphql.nadel.enginekt.blueprint.NadelRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelRenameTransform.State
-import graphql.nadel.enginekt.transform.artificial.ArtificialFields
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.query.NFUtil.createField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
@@ -22,7 +22,7 @@ import graphql.schema.GraphQLSchema
 internal class NadelRenameTransform : NadelTransform<State> {
     data class State(
         val instructions: Map<FieldCoordinates, NadelRenameFieldInstruction>,
-        val artificialFields: ArtificialFields,
+        val aliasHelper: AliasHelper,
         val field: NormalizedField,
     )
 
@@ -42,7 +42,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
         return State(
             renameInstructions,
-            ArtificialFields("my_uuid"),
+            AliasHelper("my_uuid"),
             field,
         )
     }
@@ -85,7 +85,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         state: State,
     ): NormalizedField {
         return NadelTransformUtil.makeTypeNameField(
-            artificialFields = state.artificialFields,
+            aliasHelper = state.aliasHelper,
             objectTypeNames = state.instructions.keys.map { it.typeName },
         )
     }
@@ -102,7 +102,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         val underlyingTypeName = executionPlan.getUnderlyingTypeName(fieldCoordinates.typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
-        return state.artificialFields.toArtificial(
+        return state.aliasHelper.toArtificial(
             createField(
                 schema = service.underlyingSchema,
                 parentType = underlyingObjectType,
@@ -131,11 +131,11 @@ internal class NadelRenameTransform : NadelTransform<State> {
         return parentNodes.mapNotNull instruction@{ parentNode ->
             val instruction = state.instructions.getInstructionForNode(
                 executionPlan = executionPlan,
-                artificialFields = state.artificialFields,
+                aliasHelper = state.aliasHelper,
                 parentNode = parentNode,
             ) ?: return@instruction null
 
-            val queryPathForSourceField = QueryPath(listOf(state.artificialFields.getResultKey(instruction.underlyingName)))
+            val queryPathForSourceField = QueryPath(listOf(state.aliasHelper.getResultKey(instruction.underlyingName)))
             val sourceFieldNode = getNodesAt(parentNode, queryPathForSourceField)
                 .emptyOrSingle() ?: return@instruction null
 

@@ -11,7 +11,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
-import graphql.nadel.enginekt.transform.artificial.ArtificialFields
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
@@ -41,7 +41,7 @@ internal class NadelHydrationTransform(
          * the [State] is passed around.
          */
         val field: NormalizedField,
-        val artificialFields: ArtificialFields,
+        val aliasHelper: AliasHelper,
     )
 
     override suspend fun isApplicable(
@@ -61,7 +61,7 @@ internal class NadelHydrationTransform(
             State(
                 hydrationInstructions,
                 field,
-                artificialFields = ArtificialFields("hydration_uuid"),
+                aliasHelper = AliasHelper("hydration_uuid"),
             )
         }
     }
@@ -81,7 +81,7 @@ internal class NadelHydrationTransform(
                 NadelHydrationFieldsBuilder.getArtificialFields(
                     service = service,
                     executionPlan = executionPlan,
-                    artificialFields = state.artificialFields,
+                    aliasHelper = state.aliasHelper,
                     fieldCoordinates = fieldCoordinates,
                     instruction = instruction,
                 )
@@ -93,7 +93,7 @@ internal class NadelHydrationTransform(
         state: State,
     ): NormalizedField {
         return makeTypeNameField(
-            artificialFields = state.artificialFields,
+            aliasHelper = state.aliasHelper,
             objectTypeNames = state.instructions.keys.map { it.typeName },
         )
     }
@@ -133,7 +133,7 @@ internal class NadelHydrationTransform(
     ): List<NadelResultInstruction> {
         val instruction = state.instructions.getInstructionForNode(
             executionPlan = executionPlan,
-            artificialFields = state.artificialFields,
+            aliasHelper = state.aliasHelper,
             parentNode = parentNode,
         )
 
@@ -144,7 +144,7 @@ internal class NadelHydrationTransform(
             service = instruction.actorService,
             topLevelField = NadelHydrationFieldsBuilder.getQuery(
                 instruction = instruction,
-                artificialFields = state.artificialFields,
+                aliasHelper = state.aliasHelper,
                 hydrationField = hydrationField,
                 parentNode = parentNode,
             ),

@@ -7,7 +7,7 @@ import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.artificial.ArtificialFields
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
@@ -61,9 +61,9 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
          */
         val instructions: Map<FieldCoordinates, NadelDeepRenameFieldInstruction>,
         /**
-         * See [ArtificialFields]
+         * See [AliasHelper]
          */
-        val artificialFields: ArtificialFields,
+        val aliasHelper: AliasHelper,
         /**
          * Stored for easy access in other functions.
          */
@@ -91,7 +91,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
         return State(
             deepRenameInstructions,
-            ArtificialFields("my_uuid"),
+            AliasHelper("my_uuid"),
             field,
         )
     }
@@ -184,7 +184,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         state: State,
     ): NormalizedField {
         return NadelTransformUtil.makeTypeNameField(
-            artificialFields = state.artificialFields,
+            aliasHelper = state.aliasHelper,
             objectTypeNames = state.instructions.keys.map { it.typeName },
         )
     }
@@ -219,7 +219,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
-        return state.artificialFields.toArtificial(
+        return state.aliasHelper.toArtificial(
             NFUtil.createField(
                 schema = service.underlyingSchema,
                 parentType = underlyingObjectType,
@@ -275,11 +275,11 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         return parentNodes.mapNotNull instruction@{ parentNode ->
             val instruction = state.instructions.getInstructionForNode(
                 executionPlan = executionPlan,
-                artificialFields = state.artificialFields,
+                aliasHelper = state.aliasHelper,
                 parentNode = parentNode,
             ) ?: return@instruction null
 
-            val queryPathForSourceField = state.artificialFields.mapQueryPathRespectingResultKey(instruction.pathToSourceField)
+            val queryPathForSourceField = state.aliasHelper.mapQueryPathRespectingResultKey(instruction.pathToSourceField)
             val sourceFieldNode = getNodesAt(parentNode, queryPathForSourceField)
                 .emptyOrSingle() ?: return@instruction null
 

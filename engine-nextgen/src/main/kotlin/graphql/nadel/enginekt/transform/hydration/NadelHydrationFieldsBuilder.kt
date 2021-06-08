@@ -5,7 +5,7 @@ import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.artificial.ArtificialFields
+import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.normalized.NormalizedField
@@ -15,7 +15,7 @@ import graphql.schema.FieldCoordinates
 internal object NadelHydrationFieldsBuilder {
     fun getQuery(
         instruction: NadelHydrationFieldInstruction,
-        artificialFields: ArtificialFields,
+        aliasHelper: AliasHelper,
         hydrationField: NormalizedField,
         parentNode: JsonNode,
     ): NormalizedField {
@@ -24,7 +24,7 @@ internal object NadelHydrationFieldsBuilder {
             hydrationField,
             fieldArguments = NadelHydrationArgumentsBuilder.createSourceFieldArgs(
                 instruction,
-                artificialFields,
+                aliasHelper,
                 hydrationField,
                 parentNode,
             ),
@@ -48,7 +48,7 @@ internal object NadelHydrationFieldsBuilder {
     fun getArtificialFields(
         service: Service,
         executionPlan: NadelExecutionPlan,
-        artificialFields: ArtificialFields,
+        aliasHelper: AliasHelper,
         fieldCoordinates: FieldCoordinates,
         instruction: NadelGenericHydrationInstruction,
     ): List<NormalizedField> {
@@ -61,7 +61,7 @@ internal object NadelHydrationFieldsBuilder {
             .map { it.valueSource }
             .filterIsInstance<NadelHydrationArgumentValueSource.FieldResultValue>()
             .map { valueSource ->
-                artificialFields.toArtificial(
+                aliasHelper.toArtificial(
                     NFUtil.createField(
                         schema = service.underlyingSchema,
                         parentType = underlyingObjectType,
