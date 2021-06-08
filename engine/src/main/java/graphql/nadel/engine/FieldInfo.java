@@ -8,7 +8,8 @@ import graphql.schema.GraphQLFieldDefinition;
 public class FieldInfo {
 
     public enum FieldKind {
-        TOPLEVEL
+        TOPLEVEL,
+        NAMESPACE_SUBFIELD
     }
 
     private final FieldKind fieldKind;

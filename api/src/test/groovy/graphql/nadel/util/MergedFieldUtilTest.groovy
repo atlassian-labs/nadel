@@ -1,6 +1,5 @@
 package graphql.nadel.util
 
-import graphql.AssertException
 import graphql.execution.ExecutionContext
 import graphql.execution.ExecutionContextBuilder
 import graphql.execution.ExecutionId
@@ -94,9 +93,11 @@ class MergedFieldUtilTest extends Specification {
         def testFieldAndContext = new TestFieldAndContext(complicatedQuery, [:])
         Predicate<MergedField> onlyIssueFields = { fld -> fld.name.toLowerCase().contains("issue") }
 
+        def parentType = testFieldAndContext.executionContext.getGraphQLSchema().getObjectType("JiraQuery")
         when:
-        def actualMergedField = MergedFieldUtil.includeSubSelection(
-                testFieldAndContext.mergedField, "JiraQuery", testFieldAndContext.executionContext, onlyIssueFields)
+        MergedField actualMergedField = MergedFieldUtil.includeSubSelection(
+                testFieldAndContext.mergedField, parentType, testFieldAndContext.executionContext, onlyIssueFields)
+                .get()
 
         then:
         actualMergedField.getFields().size() == 1
@@ -119,12 +120,12 @@ class MergedFieldUtilTest extends Specification {
         def testFieldAndContext = new TestFieldAndContext(complicatedQuery, [:])
         Predicate<MergedField> noFieldsAlways = { fld -> false }
 
+        def parentType = testFieldAndContext.executionContext.getGraphQLSchema().getObjectType("JiraQuery")
         when:
-        MergedFieldUtil.includeSubSelection(
-                testFieldAndContext.mergedField, "JiraQuery", testFieldAndContext.executionContext, noFieldsAlways)
+        def selection = MergedFieldUtil.includeSubSelection(
+                testFieldAndContext.mergedField, parentType, testFieldAndContext.executionContext, noFieldsAlways)
 
         then:
-        thrown(AssertException.class)
-
+        selection == Optional.empty()
     }
 }

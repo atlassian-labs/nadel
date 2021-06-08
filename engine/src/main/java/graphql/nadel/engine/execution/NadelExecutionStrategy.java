@@ -9,8 +9,6 @@ import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.ResultPath;
 import graphql.execution.nextgen.FieldSubSelection;
-import graphql.language.Field;
-import graphql.language.Node;
 import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.NodeId;
@@ -51,6 +49,7 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 
+@SuppressWarnings("DuplicatedCode")
 @Internal
 public class NadelExecutionStrategy {
 
@@ -124,17 +123,19 @@ public class NadelExecutionStrategy {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
             boolean isNamespaced = !fieldExecutionStepInfo.getFieldDefinition().getDirectives("namespaced").isEmpty();
             if (isNamespaced) {
-                List<Node<?>> children = mergedField.getSingleField().getChildren().get(0).getChildren();
-                String typeName = ((GraphQLObjectType) fieldExecutionStepInfo.getUnwrappedNonNullType()).getName();
-                for (Node<?> child : children) {
+                GraphQLObjectType namespacedObjectType = (GraphQLObjectType) fieldExecutionStepInfo.getUnwrappedNonNullType();
+                for (Map.Entry<Service, Set<GraphQLFieldDefinition>> serviceWithCorrespondingFieldDefinitions : fieldInfos.fieldDefinitionsByService.entrySet()) {
+                    Service service = serviceWithCorrespondingFieldDefinitions.getKey();
+                    Set<GraphQLFieldDefinition> secondLevelFieldDefinitionsForService = serviceWithCorrespondingFieldDefinitions.getValue();
 
-                    MergedField newMergedField = MergedFieldUtil.includeSubSelection(mergedField, typeName, executionCtx, a -> a.getSingleField().getName().equals(((Field) child).getName()));
-
-                    ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
-
-                    FieldInfo fieldInfo1 = fieldInfos.fieldInfoByDefinition.values().stream().filter(fieldInfo -> fieldInfo.getFieldDefinition().getName().equals(((Field) child).getName())).findFirst().get();
-                    Service service = fieldInfo1.getService();
-
+                    Optional<MergedField> newMergedField = MergedFieldUtil.includeSubSelection(mergedField, namespacedObjectType, executionCtx,
+                            field -> secondLevelFieldDefinitionsForService.stream()
+                                    .filter(namespacedObjectType.getFieldDefinitions()::contains)
+                                    .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName())));
+                    if (!newMergedField.isPresent()) {
+                        continue;
+                    }
+                    ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField.get(), rootExecutionStepInfo);
                     CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
                             .from(executionCtx)
                             .service(service)
@@ -376,5 +377,3 @@ public class NadelExecutionStrategy {
                 transformations.getHintTypenames().isEmpty();
     }
 }
-
-
