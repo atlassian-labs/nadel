@@ -13,6 +13,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
@@ -125,10 +126,10 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     internal suspend fun executeHydration(
         service: Service,
         topLevelField: NormalizedField,
-        pathToSourceField: List<String>,
+        pathToSourceField: QueryPath,
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
-        val sourceField = fold(initial = topLevelField, count = pathToSourceField.size - 1) {
+        val sourceField = fold(initial = topLevelField, count = pathToSourceField.segments.size - 1) {
             it.children.single()
         }
 
@@ -154,7 +155,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         // Get to the top level field again using .parent N times on the new source field
         val transformedQuery: NormalizedField = fold(
             initial = sourceFieldWithTransformedChildren,
-            count = pathToSourceField.size - 1,
+            count = pathToSourceField.segments.size - 1,
         ) {
             it.parent ?: error("No parent")
         }
