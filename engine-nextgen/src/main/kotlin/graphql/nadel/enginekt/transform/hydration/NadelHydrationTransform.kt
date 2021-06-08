@@ -148,13 +148,13 @@ internal class NadelHydrationTransform(
                 hydrationField = hydrationField,
                 parentNode = parentNode,
             ),
-            pathToSourceField = instruction.actorFieldQueryPath,
+            pathToSourceField = instruction.queryPathToActorField,
             executionContext = executionContext,
         )
 
         val data = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryPath = instruction.actorFieldQueryPath,
+            queryPath = instruction.queryPathToActorField,
         ).emptyOrSingle()
 
         return listOf(

@@ -12,21 +12,21 @@ sealed class NadelFieldInstruction {
 
 interface NadelGenericHydrationInstruction {
     val actorService: Service
-    val actorFieldQueryPath: QueryPath
+    val queryPathToActorField: QueryPath
     val actorInputValues: List<NadelHydrationActorInput>
 }
 
 data class NadelHydrationFieldInstruction(
     override val location: FieldCoordinates,
     override val actorService: Service,
-    override val actorFieldQueryPath: QueryPath,
+    override val queryPathToActorField: QueryPath,
     override val actorInputValues: List<NadelHydrationActorInput>,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
 data class NadelBatchHydrationFieldInstruction(
     override val location: FieldCoordinates,
     override val actorService: Service,
-    override val actorFieldQueryPath: QueryPath,
+    override val queryPathToActorField: QueryPath,
     override val actorInputValues: List<NadelHydrationActorInput>,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
@@ -34,7 +34,7 @@ data class NadelBatchHydrationFieldInstruction(
 
 data class NadelDeepRenameFieldInstruction(
     override val location: FieldCoordinates,
-    val pathToSourceField: QueryPath,
+    val queryPathToField: QueryPath,
 ) : NadelFieldInstruction()
 
 data class NadelRenameFieldInstruction(

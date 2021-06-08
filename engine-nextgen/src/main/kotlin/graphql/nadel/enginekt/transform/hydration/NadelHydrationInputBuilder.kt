@@ -11,6 +11,7 @@ import graphql.language.StringValue
 import graphql.language.Value
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput.ValueSource
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getSourceFieldDefinition
 import graphql.nadel.enginekt.transform.result.json.JsonNode
@@ -24,7 +25,6 @@ import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLTypeUtil
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource as ValueSource
 
 internal typealias AnyAstValue = Value<*>
 
@@ -68,7 +68,7 @@ internal object NadelHydrationInputBuilder {
     ): AnyAstValue {
         val value = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
-            queryPath = aliasHelper.mapQueryPathRespectingResultKey(valueSource.queryPathToField),
+            queryPath = aliasHelper.getQueryPath(valueSource.queryPathToField),
         ).emptyOrSingle()?.value
 
         return valueToAstValue(value)

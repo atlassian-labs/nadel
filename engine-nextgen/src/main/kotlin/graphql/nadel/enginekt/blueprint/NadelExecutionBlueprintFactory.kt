@@ -13,7 +13,6 @@ import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.strictAssociateBy
@@ -96,7 +95,7 @@ internal object NadelExecutionBlueprintFactory {
         return NadelHydrationFieldInstruction(
             location = createFieldCoordinates(parentType, field),
             actorService = hydrationSourceService,
-            actorFieldQueryPath = QueryPath(pathToSourceField),
+            queryPathToActorField = QueryPath(pathToSourceField),
             actorInputValues = getHydrationArguments(hydration),
         )
     }
@@ -112,7 +111,7 @@ internal object NadelExecutionBlueprintFactory {
         return NadelBatchHydrationFieldInstruction(
             location,
             actorService = sourceService,
-            actorFieldQueryPath = QueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
+            queryPathToActorField = QueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
             actorInputValues = getHydrationArguments(hydration),
             // TODO: figure out what to do for default batch sizes, nobody uses them in central schema
             batchSize = hydration.batchSize!!,
@@ -165,8 +164,8 @@ internal object NadelExecutionBlueprintFactory {
     private fun getHydrationArguments(hydration: UnderlyingServiceHydration): List<NadelHydrationActorInput> {
         return hydration.arguments.map { argumentDef ->
             val valueSource = when (val argSourceType = argumentDef.remoteArgumentSource.sourceType) {
-                FIELD_ARGUMENT -> NadelHydrationArgumentValueSource.ArgumentValue(argumentDef.remoteArgumentSource.name)
-                OBJECT_FIELD -> NadelHydrationArgumentValueSource.FieldResultValue(QueryPath(argumentDef.remoteArgumentSource.path))
+                FIELD_ARGUMENT -> NadelHydrationActorInput.ValueSource.ArgumentValue(argumentDef.remoteArgumentSource.name)
+                OBJECT_FIELD -> NadelHydrationActorInput.ValueSource.FieldResultValue(QueryPath(argumentDef.remoteArgumentSource.path))
                 else -> error("Unsupported remote argument source type: '$argSourceType'")
             }
             NadelHydrationActorInput(argumentDef.name, valueSource)

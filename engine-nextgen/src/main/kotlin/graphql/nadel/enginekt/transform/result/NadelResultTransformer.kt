@@ -4,7 +4,6 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
-import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer.DataMutation
 import graphql.nadel.enginekt.transform.result.json.AnyJsonNodePathSegment
 import graphql.nadel.enginekt.transform.result.json.JsonNode

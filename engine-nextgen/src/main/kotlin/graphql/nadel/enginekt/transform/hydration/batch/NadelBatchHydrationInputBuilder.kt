@@ -3,7 +3,6 @@ package graphql.nadel.enginekt.transform.hydration.batch
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationInputBuilder.valueToAstValue
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil
@@ -45,14 +44,14 @@ internal object NadelBatchHydrationInputBuilder {
         return mapFrom(
             instruction.actorInputValues.mapNotNull { sourceFieldArg ->
                 when (val valueSource = sourceFieldArg.valueSource) {
-                    is NadelHydrationArgumentValueSource.ArgumentValue -> {
+                    is NadelHydrationActorInput.ValueSource.ArgumentValue -> {
                         when (val argValue = hydrationField.normalizedArguments[valueSource.argumentName]) {
                             null -> null
                             else -> sourceFieldArg to argValue
                         }
                     }
                     // These are batch values, ignore them
-                    is NadelHydrationArgumentValueSource.FieldResultValue -> null
+                    is NadelHydrationActorInput.ValueSource.FieldResultValue -> null
                 }
             },
         )
@@ -70,7 +69,7 @@ internal object NadelBatchHydrationInputBuilder {
             .asSequence()
             .mapNotNull {
                 when (val valueSource = it.valueSource) {
-                    is NadelHydrationArgumentValueSource.FieldResultValue -> it to valueSource
+                    is NadelHydrationActorInput.ValueSource.FieldResultValue -> it to valueSource
                     else -> null
                 }
             }
@@ -89,14 +88,14 @@ internal object NadelBatchHydrationInputBuilder {
     }
 
     private fun getFieldResultValues(
-        valueSource: NadelHydrationArgumentValueSource.FieldResultValue,
+        valueSource: NadelHydrationActorInput.ValueSource.FieldResultValue,
         parentNodes: List<JsonNode>,
         aliasHelper: AliasHelper,
     ): List<Any?> {
         return parentNodes.flatMap { parentNode ->
             val nodes = JsonNodeExtractor.getNodesAt(
                 rootNode = parentNode,
-                queryPath = aliasHelper.mapQueryPathRespectingResultKey(valueSource.queryPathToField),
+                queryPath = aliasHelper.getQueryPath(valueSource.queryPathToField),
                 flatten = true,
             )
 

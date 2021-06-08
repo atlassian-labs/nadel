@@ -13,7 +13,7 @@ import graphql.nadel.enginekt.transform.query.NFUtil.createField
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
+import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
@@ -107,7 +107,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
             createField(
                 schema = service.underlyingSchema,
                 parentType = underlyingObjectType,
-                queryPathToField = QueryPath(listOf(rename.underlyingName)),
+                queryPathToField = QueryPath(rename.underlyingName),
                 fieldArguments = emptyMap(),
                 fieldChildren = transformer.transform(field.children),
             )
@@ -123,10 +123,9 @@ internal class NadelRenameTransform : NadelTransform<State> {
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {
-        val parentNodes = getNodesAt(
+        val parentNodes = JsonNodeExtractor.getNodesAt(
             result.data,
             field.queryPath.dropLast(1),
-            flatten = true,
         )
 
         return parentNodes.mapNotNull instruction@{ parentNode ->
@@ -136,8 +135,8 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 parentNode = parentNode,
             ) ?: return@instruction null
 
-            val queryPathForSourceField = QueryPath(listOf(state.aliasHelper.getResultKey(instruction.underlyingName)))
-            val sourceFieldNode = getNodesAt(parentNode, queryPathForSourceField)
+            val queryPathForSourceField = QueryPath(state.aliasHelper.getResultKey(instruction.underlyingName))
+            val sourceFieldNode = JsonNodeExtractor.getNodesAt(parentNode, queryPathForSourceField)
                 .emptyOrSingle() ?: return@instruction null
 
             NadelResultInstruction.Copy(

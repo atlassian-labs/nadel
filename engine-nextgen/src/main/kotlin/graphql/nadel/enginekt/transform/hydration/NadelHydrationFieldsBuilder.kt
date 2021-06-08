@@ -3,7 +3,7 @@ package graphql.nadel.enginekt.transform.hydration
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.query.NFUtil
@@ -39,7 +39,7 @@ internal object NadelHydrationFieldsBuilder {
         return NFUtil.createField(
             schema = instruction.actorService.underlyingSchema,
             parentType = instruction.actorService.underlyingSchema.queryType,
-            queryPathToField = instruction.actorFieldQueryPath,
+            queryPathToField = instruction.queryPathToActorField,
             fieldArguments = fieldArguments,
             fieldChildren = hydrationField.children,
         )
@@ -59,7 +59,7 @@ internal object NadelHydrationFieldsBuilder {
         return instruction.actorInputValues
             .asSequence()
             .map { it.valueSource }
-            .filterIsInstance<NadelHydrationArgumentValueSource.FieldResultValue>()
+            .filterIsInstance<NadelHydrationActorInput.ValueSource.FieldResultValue>()
             .map { valueSource ->
                 aliasHelper.toArtificial(
                     NFUtil.createField(

@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform.query
 
 data class QueryPath(val segments: List<String>) {
+    constructor(segment: String) : this(listOf(segment))
 
     operator fun plus(segment: String): QueryPath {
         return QueryPath(segments + segment)

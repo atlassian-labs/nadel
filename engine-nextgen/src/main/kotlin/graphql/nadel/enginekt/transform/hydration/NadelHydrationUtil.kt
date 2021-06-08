@@ -12,7 +12,7 @@ internal object NadelHydrationUtil {
     ): GraphQLFieldDefinition {
         return getSourceFieldDefinition(
             service = instruction.actorService,
-            pathToSourceField = instruction.actorFieldQueryPath,
+            pathToSourceField = instruction.queryPathToActorField,
         )
     }
 

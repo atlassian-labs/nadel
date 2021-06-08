@@ -55,7 +55,7 @@ class AliasHelper(private val alias: String) {
         return alias + "__" + fieldName
     }
 
-    fun mapQueryPathRespectingResultKey(
+    fun getQueryPath(
         path: QueryPath,
     ): QueryPath {
         return path.mapIndexed { index, segment ->

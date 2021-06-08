@@ -5,7 +5,6 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationArgumentValueSource
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
@@ -110,7 +109,7 @@ internal class NadelBatchHydrator(
             it[matchStrategy.objectId]
         }
 
-        val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.mapQueryPathRespectingResultKey(
+        val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.getQueryPath(
             getPathToObjectIdentifierOnHydrationParentNode(instruction),
         )
 
@@ -157,7 +156,7 @@ internal class NadelBatchHydrator(
                         engine.executeHydration(
                             service = instruction.actorService,
                             topLevelField = hydrationActorQuery,
-                            pathToSourceField = instruction.actorFieldQueryPath,
+                            pathToSourceField = instruction.queryPathToActorField,
                             executionContext = state.executionContext,
                         )
                     }
@@ -175,7 +174,7 @@ internal class NadelBatchHydrator(
             .flatMap { batch ->
                 val nodes = JsonNodeExtractor.getNodesAt(
                     data = batch.data,
-                    queryPath = instruction.actorFieldQueryPath,
+                    queryPath = instruction.queryPathToActorField,
                     flatten = true,
                 )
 
@@ -220,7 +219,7 @@ internal class NadelBatchHydrator(
             .actorInputValues
             .asSequence()
             .map { it.valueSource }
-            .filterIsInstance<NadelHydrationArgumentValueSource.FieldResultValue>()
+            .filterIsInstance<NadelHydrationActorInput.ValueSource.FieldResultValue>()
             .single()
             .queryPathToField
     }
