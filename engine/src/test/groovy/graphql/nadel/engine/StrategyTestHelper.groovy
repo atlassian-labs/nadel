@@ -185,13 +185,61 @@ class StrategyTestHelper extends Specification {
 
         NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
 
-
         def executionData = createExecutionData(query, variables, overallSchema)
 
         def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
 
         assert calledService1
         assert calledService2
+
+        return [resultData(response), resultErrors(response)]
+    }
+
+    Object[] testServices(GraphQLSchema overallSchema,
+                          String query,
+                          List<TestService> testServices,
+                          ServiceExecutionHooks serviceExecutionHooks = new ServiceExecutionHooks() {},
+                          Map variables = [:],
+                          ResultComplexityAggregator resultComplexityAggregator
+    ) {
+
+        def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
+        def definitionRegistry = Mock(DefinitionRegistry)
+        def instrumentation = new NadelInstrumentation() {}
+        def fieldInfoByDefinition = [:]
+        def services = []
+        def calledServices = [:]
+
+        testServices.forEach({ testService ->
+            def responseServiceResult = new ServiceExecutionResult(testService.response)
+            ServiceExecution serviceExecution = { ServiceExecutionParameters sep ->
+                println printAstCompact(sep.query)
+                assert printAstCompact(sep.query) == testService.expectedQuery
+                calledServices.put(testService.name, true)
+                return completedFuture(responseServiceResult)
+            }
+            def service = new Service(testService.name, testService.schema, serviceExecution, serviceDefinition, definitionRegistry)
+
+            testService.topLevelFields.forEach({ topLevelField ->
+                def fieldDefinition = overallSchema.getQueryType().getFieldDefinition(topLevelField)
+                FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, fieldDefinition)
+                fieldInfoByDefinition.put(fieldDefinition, fieldInfo)
+            })
+
+            services.add(service)
+        })
+
+        FieldInfos fieldInfos = new FieldInfos(fieldInfoByDefinition)
+
+        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy(services, fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
+
+        def executionData = createExecutionData(query, variables, overallSchema)
+
+        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
+
+        services.stream().forEach({ service ->
+            assert calledServices.get(service.name) : "Service '" + service.name + "' was not called"
+        })
 
         return [resultData(response), resultErrors(response)]
     }
@@ -235,4 +283,11 @@ class StrategyTestHelper extends Specification {
         return new FieldInfos([(fieldDefinition): fieldInfo])
     }
 
+    static class TestService {
+        String name
+        GraphQLSchema schema
+        List<String> topLevelFields
+        String expectedQuery
+        Map response
+    }
 }

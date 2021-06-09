@@ -1522,4 +1522,133 @@ class NadelE2ETest extends StrategyTestHelper {
 
     }
 
+    def 'Dynamic Service Resolution: multiple services'() {
+        def commonTypes = '''
+            directive @dynamicService on FIELD_DEFINITION
+            
+            type Query {
+                node(id: ID!): Node @dynamicService
+            } 
+            
+            interface Node {
+                id: ID!
+            }
+        '''
+
+        def overallSchema = TestUtil.schemaFromNdsl([
+                BitbucketService: '''   
+                    service BitbucketService {
+                       type PullRequest implements Node {
+                            id: ID!
+                            description: String
+                       }
+                    }
+                   ''',
+                JiraService: '''   
+                    service JiraService {
+                       type Issue implements Node {
+                            id: ID!
+                            issueKey: String
+                       }
+                    }
+                    '''
+        ], commonTypes)
+
+        def bitbucketSchema = TestUtil.schema("""
+            type Query {
+                node(id: ID): Node
+            }
+           
+            interface Node {
+                id: ID!
+            }
+            
+            type PullRequest implements Node {
+                id: ID!
+                description: String
+            }""")
+
+        def jiraSchema = TestUtil.schema("""
+            type Query {
+                node(id: ID): Node
+            }
+           
+            interface Node {
+                id: ID!
+            }
+            
+            type Issue implements Node {
+                id: ID!
+                issueKey: String
+            }""")
+
+        def query = '''
+            {
+                pr:node(id: "ari:bitbucket:activation-id-123:pull-request:id-123") {
+                   ... on PullRequest {
+                        id
+                        description
+                   }
+                }
+                issue:node(id: "ari:cloud:jira:site-id-123:issue/id-123") {
+                   ... on Issue {
+                        id
+                        issueKey
+                   }
+                }
+            }
+        '''
+        def bitbucketTestService = new TestService(
+                name: "BitbucketService",
+                schema: bitbucketSchema,
+                topLevelFields: ["pullRequest"],
+                expectedQuery: 'query nadel_2_BitbucketService {pr:node(id:"ari:bitbucket:activation-id-123:pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}',
+                response: [pr: [id: "ari:bitbucket:activation-id-123:pull-request:id-123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
+        )
+
+        def jiraTestService = new TestService(
+                name: "JiraService",
+                schema: jiraSchema,
+                topLevelFields: ["issue"],
+                expectedQuery: 'query nadel_2_JiraService {issue:node(id:"ari:cloud:jira:site-id-123:issue/id-123") {... on Issue {id issueKey} type_hint_typename__UUID:__typename}}',
+                response: [issue: [id: "ari:cloud:jira:site-id-123:issue/id-123", issueKey: "ISSUE-1", type_hint_typename__UUID: "Issue"]]
+        )
+
+        def serviceHooks = new ServiceExecutionHooks() {
+            @Override
+            Service getServiceForDynamicField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+                def bitbucketService = services.stream().filter({ service -> (service.getName() == "BitbucketService") }).findFirst().get()
+                def jiraService = services.stream().filter({ service -> (service.getName() == "JiraService") }).findFirst().get()
+                def ariArgument = arguments.get("id")
+
+                if(ariArgument.toString().contains("bitbucket")) {
+                    return bitbucketService
+                }
+
+                if(ariArgument.toString().contains("jira")) {
+                    return jiraService
+                }
+
+                return null
+            }
+        }
+
+        Map response
+        List<GraphQLError> errors
+        when:
+
+        (response, errors) = testServices(
+                overallSchema,
+                query,
+                [bitbucketTestService, jiraTestService],
+                serviceHooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [
+                pr: [id: "ari:bitbucket:activation-id-123:pull-request:id-123", description: "this is a pull request"],
+                issue: [id: "ari:cloud:jira:site-id-123:issue/id-123", issueKey: "ISSUE-1"]
+        ]
+        errors.size() == 0
+    }
 }
