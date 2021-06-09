@@ -18,7 +18,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.tests.util.fixtures.EngineTestHooks
+import graphql.nadel.tests.util.fixtures.EngineTestHook
 import graphql.nadel.tests.util.getPropertyValue
 import graphql.nadel.tests.util.keysEqual
 import graphql.nadel.tests.util.packageName
@@ -58,7 +58,7 @@ class EngineTests : FunSpec({
             engineFactories.all
                 .asSequence()
                 // TODO: remove
-                .filter { (key) -> key == Engine.nextgen }
+                // .filter { (key) -> key == Engine.nextgen }
                 .filter { (key) ->
                     getPropertyValue(instance = fixture.enabled, propertyName = key.name)
                 }
@@ -80,7 +80,7 @@ private suspend fun execute(
     engine: Engine,
     engineFactory: NadelExecutionEngineFactory,
 ) {
-    val testHooks = getTestHooks(fixture)
+    val testHooks = getTestHook(fixture)
 
     val nadel = Nadel.newNadel()
         .engineFactory(engineFactory)
@@ -167,11 +167,11 @@ private suspend fun execute(
     )
 }
 
-private fun getTestHooks(fixture: TestFixture): EngineTestHooks? {
+private fun getTestHook(fixture: TestFixture): EngineTestHook? {
     val hookClass = try {
         Class.forName(
             sequenceOf(
-                EngineTestHooks::class.java.packageName,
+                EngineTestHook::class.java.packageName,
                 "hooks",
                 fixture.name.toSlug(),
             ).joinToString(separator = "."),
@@ -180,7 +180,7 @@ private fun getTestHooks(fixture: TestFixture): EngineTestHooks? {
         println("No hook class found")
         return null
     }
-    return hookClass.newInstance() as EngineTestHooks
+    return hookClass.newInstance() as EngineTestHook
 }
 
 fun assertJsonTree(expected: JsonMap, actual: JsonMap) {

@@ -3,7 +3,7 @@ package graphql.nadel.tests.util.fixtures
 import graphql.nadel.Nadel
 import graphql.nadel.tests.Engine
 
-interface EngineTestHooks {
+interface EngineTestHook {
     fun makeNadel(engine: Engine, builder: Nadel.Builder): Nadel.Builder {
         return builder
     }
@@ -14,4 +14,4 @@ interface EngineTestHooks {
  * if annotated by EngineTestHook" feature. Gets IntelliJ to stop complaining that
  * your hook class is unused.
  */
-annotation class EngineTestHook
+annotation class KeepHook

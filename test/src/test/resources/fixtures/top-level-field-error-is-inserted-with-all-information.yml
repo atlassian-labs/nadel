@@ -1,7 +1,4 @@
 name: top level field error is inserted with all information
-ignored:
-  current: true
-  nextgen: true
 overallSchema:
   service1: |
     service service1 {
