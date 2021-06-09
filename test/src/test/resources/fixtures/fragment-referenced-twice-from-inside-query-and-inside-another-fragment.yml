@@ -37,36 +37,37 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_Foo {
-          foo {
+  current:
+    - request:
+        query: |
+          query nadel_2_Foo {
+            foo {
+              id
+              ...F2
+              ...F1
+            }
+          }
+
+          fragment F2 on Bar {
+            id
+          }
+
+          fragment F1 on Bar {
             id
             ...F2
-            ...F1
           }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "id": "ID"
+            }
+          },
+          "extensions": {}
         }
-
-        fragment F2 on Bar {
-          id
-        }
-
-        fragment F1 on Bar {
-          id
-          ...F2
-        }
-      variables: {}
-      operationName: nadel_2_Foo
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "foo": {
-            "id": "ID"
-          }
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {

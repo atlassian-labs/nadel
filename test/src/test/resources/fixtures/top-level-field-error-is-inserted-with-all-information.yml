@@ -1,5 +1,7 @@
 name: top level field error is inserted with all information
-ignored: true
+ignored:
+  current: true
+  nextgen: true
 overallSchema:
   service1: |
     service service1 {
@@ -17,7 +19,7 @@ query: |
     foo
   }
 variables: {}
-calls: []
+calls: {}
 # language=JSON
 response: |-
   {

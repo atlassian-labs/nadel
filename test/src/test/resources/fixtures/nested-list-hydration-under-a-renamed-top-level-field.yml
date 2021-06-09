@@ -74,88 +74,89 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_Foo {
-          service {
-            id
-          }
-        }
-      variables: {}
-      operationName: nadel_2_Foo
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "service": {
-            "id": "ID"
-          }
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_Foo {
-          connection(id: "ID") {
-            edges {
-              node
+  current:
+    - request:
+        query: |
+          query nadel_2_Foo {
+            service {
+              id
             }
           }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "service": {
+              "id": "ID"
+            }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Foo
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "connection": {
-            "edges": [
-              {
-                "node": "1"
+    - request:
+        query: |
+          query nadel_2_Foo {
+            connection(id: "ID") {
+              edges {
+                node
               }
-            ]
+            }
           }
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_Foo {
-          node(id: "1") {
-            id
-          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "connection": {
+              "edges": [
+                {
+                  "node": "1"
+                }
+              ]
+            }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Foo
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "node": {
-            "id": "1a"
+    - request:
+        query: |
+          query nadel_2_Foo {
+            node(id: "1") {
+              id
+            }
           }
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_Foo {
-          space(id: "1a") {
-            id
-          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "node": {
+              "id": "1a"
+            }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Foo
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "space": {
-            "id": "apple"
+    - request:
+        query: |
+          query nadel_2_Foo {
+            space(id: "1a") {
+              id
+            }
           }
-        },
-        "extensions": {}
-      }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "space": {
+              "id": "apple"
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

@@ -1,4 +1,6 @@
 name: a lot of renames
+enabled:
+  nextgen: true
 overallSchema:
   Boards: |
     service Boards {
@@ -56,41 +58,100 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_Boards {
-          boardScope {
-            issueParents {
-              issueType {
-                id
-                inlineIssueCreate {
-                  enabled
+  current:
+    - request:
+        query: |
+          query nadel_2_Boards {
+            boardScope {
+              issueParents {
+                issueType {
+                  id
+                  inlineIssueCreate {
+                    enabled
+                  }
                 }
               }
             }
           }
-        }
-      variables: {}
-      operationName: nadel_2_Boards
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "boardScope": {
-            "issueParents": [
-              {
-                "issueType": {
-                  "id": "ID-1",
-                  "inlineIssueCreate": {
-                    "enabled": true
+        variables: {}
+        operationName: nadel_2_Boards
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "boardScope": {
+              "issueParents": [
+                {
+                  "issueType": {
+                    "id": "ID-1",
+                    "inlineIssueCreate": {
+                      "enabled": true
+                    }
                   }
                 }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - request:
+        query: |-
+          query {
+            ... on Query {
+              boardScope {
+                ... on BoardScope {
+                  nadel__boardScope_cardParents__issueParents: issueParents {
+                    ... on IssueParent {
+                      nadel__boardScope_cardParents_cardType__issueType: issueType {
+                        ... on IssueType {
+                          id
+                        }
+                        ... on IssueType {
+                          nadel__boardScope_cardParents_cardType_inlineCardCreate__inlineIssueCreate: inlineIssueCreate {
+                            ... on InlineIssueCreateConfig {
+                              enabled
+                            }
+                          }
+                        }
+                        ... on IssueType {
+                          __typename__nadel__boardScope_cardParents_cardType_inlineCardCreate: __typename
+                        }
+                      }
+                    }
+                    ... on IssueParent {
+                      __typename__nadel__boardScope_cardParents_cardType: __typename
+                    }
+                  }
+                }
+                ... on BoardScope {
+                  __typename__nadel__boardScope_cardParents: __typename
+                }
               }
-            ]
+            }
           }
-        },
-        "extensions": {}
-      }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "boardScope": {
+              "nadel__boardScope_cardParents__issueParents": [
+                {
+                  "nadel__boardScope_cardParents_cardType__issueType": {
+                    "id": "ID-1",
+                    "nadel__boardScope_cardParents_cardType_inlineCardCreate__inlineIssueCreate": {
+                      "enabled": true
+                    },
+                    "__typename__nadel__boardScope_cardParents_cardType_inlineCardCreate": "IssueType"
+                  },
+                  "__typename__nadel__boardScope_cardParents_cardType": "IssueParent"
+                }
+              ],
+              "__typename__nadel__boardScope_cardParents": "BoardScope"
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

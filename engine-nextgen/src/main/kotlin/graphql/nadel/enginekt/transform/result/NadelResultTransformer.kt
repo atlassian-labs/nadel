@@ -124,7 +124,6 @@ internal class NadelResultTransformer(
             JsonNodeExtractor.getNodesAt(
                 data = result.data,
                 queryPath = field.queryPath,
-                flatten = true,
             ).map { jsonNode ->
                 NadelResultInstruction.Remove(
                     subjectPath = jsonNode.resultPath,

@@ -24,23 +24,24 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_MyService_myQuery($varIds: [ID], $otherVar: String) {
-          hello(arg: {ids: $varIds}, otherArg: $otherVar)
+  current:
+    - request:
+        query: |
+          query nadel_2_MyService_myQuery($varIds: [ID], $otherVar: String) {
+            hello(arg: {ids: $varIds}, otherArg: $otherVar)
+          }
+        variables:
+          varIds: null
+          otherVar: null
+        operationName: nadel_2_MyService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": "world"
+          },
+          "extensions": {}
         }
-      variables:
-        varIds: null
-        otherVar: null
-      operationName: nadel_2_MyService
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "hello": "world"
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {

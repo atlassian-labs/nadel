@@ -45,48 +45,49 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_Issues {
-          issues {
-            id
-            authorDetails {
-              name {
-                originalFirstName
-                lastName
+  current:
+    - request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              id
+              authorDetails {
+                name {
+                  originalFirstName
+                  lastName
+                }
               }
             }
           }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1",
+                "authorDetails": {
+                  "name": {
+                    "originalFirstName": "George",
+                    "lastName": "Smith"
+                  }
+                }
+              },
+              {
+                "id": "ISSUE-2",
+                "authorDetails": {
+                  "name": {
+                    "originalFirstName": "Elizabeth",
+                    "lastName": "Windsor"
+                  }
+                }
+              }
+            ]
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Issues
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "issues": [
-            {
-              "id": "ISSUE-1",
-              "authorDetails": {
-                "name": {
-                  "originalFirstName": "George",
-                  "lastName": "Smith"
-                }
-              }
-            },
-            {
-              "id": "ISSUE-2",
-              "authorDetails": {
-                "name": {
-                  "originalFirstName": "Elizabeth",
-                  "lastName": "Windsor"
-                }
-              }
-            }
-          ]
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {

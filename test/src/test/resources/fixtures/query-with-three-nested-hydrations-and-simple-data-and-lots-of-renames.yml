@@ -113,130 +113,131 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_Foo {
-          foos {
-            details {
+  current:
+    - request:
+        query: |
+          query nadel_2_Foo {
+            foos {
+              details {
+                name
+                age
+                contact {
+                  email
+                  phone
+                }
+              }
+              barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foos": [
+              {
+                "details": {
+                  "name": "smith",
+                  "age": 1,
+                  "contact": {
+                    "email": "test",
+                    "phone": 1
+                  }
+                },
+                "barId": "bar1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - request:
+        query: |
+          query nadel_2_Bar {
+            barsById(id: ["bar1"]) {
               name
-              age
-              contact {
-                email
-                phone
+              nestedBarId
+              object_identifier__UUID: barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barsById": [
+              {
+                "object_identifier__UUID": "bar1",
+                "name": "Bar 1",
+                "nestedBarId": "nestedBar1"
               }
-            }
-            barId
-          }
+            ]
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Foo
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "foos": [
-            {
-              "details": {
-                "name": "smith",
-                "age": 1,
-                "contact": {
-                  "email": "test",
-                  "phone": 1
-                }
-              },
-              "barId": "bar1"
+    - request:
+        query: |
+          query nadel_2_Bar {
+            barsById(id: ["nestedBar1"]) {
+              name
+              nestedBarId
+              object_identifier__UUID: barId
             }
-          ]
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_Bar {
-          barsById(id: ["bar1"]) {
-            name
-            nestedBarId
-            object_identifier__UUID: barId
           }
-        }
-      variables: {}
-      operationName: nadel_2_Bar
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "barsById": [
-            {
-              "object_identifier__UUID": "bar1",
-              "name": "Bar 1",
-              "nestedBarId": "nestedBar1"
-            }
-          ]
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_Bar {
-          barsById(id: ["nestedBar1"]) {
-            name
-            nestedBarId
-            object_identifier__UUID: barId
-          }
-        }
-      variables: {}
-      operationName: nadel_2_Bar
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "barsById": [
-            {
-              "object_identifier__UUID": "nestedBar1",
-              "name": "NestedBarName1",
-              "nestedBarId": "nestedBarId456"
-            }
-          ]
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_Bar {
-          barsById(id: ["nestedBarId456"]) {
-            name
-            details {
-              age
-              contact {
-                email
-                phone
+        variables: {}
+        operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barsById": [
+              {
+                "object_identifier__UUID": "nestedBar1",
+                "name": "NestedBarName1",
+                "nestedBarId": "nestedBarId456"
               }
-            }
-            object_identifier__UUID: barId
-          }
+            ]
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Bar
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "barsById": [
-            {
-              "object_identifier__UUID": "nestedBarId456",
-              "name": "NestedBarName2",
-              "details": {
-                "age": 1,
-                "contact": {
-                  "email": "test",
-                  "phone": 1
+    - request:
+        query: |
+          query nadel_2_Bar {
+            barsById(id: ["nestedBarId456"]) {
+              name
+              details {
+                age
+                contact {
+                  email
+                  phone
                 }
               }
+              object_identifier__UUID: barId
             }
-          ]
-        },
-        "extensions": {}
-      }
+          }
+        variables: {}
+        operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barsById": [
+              {
+                "object_identifier__UUID": "nestedBarId456",
+                "name": "NestedBarName2",
+                "details": {
+                  "age": 1,
+                  "contact": {
+                    "email": "test",
+                    "phone": 1
+                  }
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

@@ -54,64 +54,65 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_Foo {
-          foo {
-            fooId
-            fooId
+  current:
+    - request:
+        query: |
+          query nadel_2_Foo {
+            foo {
+              fooId
+              fooId
+            }
           }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "fooId": "ID"
+            }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Foo
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "foo": {
-            "fooId": "ID"
+    - request:
+        query: |
+          query nadel_2_Foo {
+            issue(issueId: "ID") {
+              field
+            }
           }
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_Foo {
-          issue(issueId: "ID") {
-            field
-          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "field": "field_name"
+            }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Foo
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "issue": {
-            "field": "field_name"
+    - request:
+        query: |
+          query nadel_2_Foo {
+            detail(detailId: "ID") {
+              name
+            }
           }
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_Foo {
-          detail(detailId: "ID") {
-            name
-          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "detail": {
+              "name": "apple"
+            }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Foo
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "detail": {
-            "name": "apple"
-          }
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {

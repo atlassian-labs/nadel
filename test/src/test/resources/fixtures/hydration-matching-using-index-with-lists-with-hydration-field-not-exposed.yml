@@ -50,62 +50,63 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_Issues {
-          issues {
-            id
-            id
-          }
-        }
-      variables: {}
-      operationName: nadel_2_Issues
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "issues": [
-            {
-              "id": "ISSUE-1"
-            },
-            {
-              "id": "ISSUE-2"
+  current:
+    - request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              id
+              id
             }
-          ]
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_UserService {
-          usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {
-            name
           }
-        }
-      variables: {}
-      operationName: nadel_2_UserService
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "usersByIssueIds": [
-            [
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
               {
-                "name": "Name"
-              }
-            ],
-            [
-              {
-                "name": "Name"
+                "id": "ISSUE-1"
               },
               {
-                "name": "Name 2"
+                "id": "ISSUE-2"
               }
             ]
-          ]
-        },
-        "extensions": {}
-      }
+          },
+          "extensions": {}
+        }
+    - request:
+        query: |
+          query nadel_2_UserService {
+            usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_UserService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIssueIds": [
+              [
+                {
+                  "name": "Name"
+                }
+              ],
+              [
+                {
+                  "name": "Name"
+                },
+                {
+                  "name": "Name 2"
+                }
+              ]
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

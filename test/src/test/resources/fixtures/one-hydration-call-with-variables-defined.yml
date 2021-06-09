@@ -56,47 +56,48 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_service1($var: ID) {
-          foo(id: $var) {
-            barId
+  current:
+    - request:
+        query: |
+          query nadel_2_service1($var: ID) {
+            foo(id: $var) {
+              barId
+            }
           }
+        variables:
+          var: null
+        operationName: nadel_2_service1
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "barId": "barId"
+            }
+          },
+          "extensions": {}
         }
-      variables:
-        var: null
-      operationName: nadel_2_service1
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "foo": {
-            "barId": "barId"
+    - request:
+        query: |
+          query nadel_2_service2 {
+            barById(id: "barId") {
+              id
+              name
+            }
           }
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_service2 {
-          barById(id: "barId") {
-            id
-            name
-          }
+        variables: {}
+        operationName: nadel_2_service2
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "id": "barId",
+              "name": "Bar1"
+            }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_service2
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "barById": {
-            "id": "barId",
-            "name": "Bar1"
-          }
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {

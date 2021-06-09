@@ -42,7 +42,7 @@ import graphql.normalized.NormalizedField
  * }
  * ```
  */
-class AliasHelper(private val alias: String) {
+class AliasHelper private constructor(private val alias: String) {
     val typeNameResultKey by lazy {
         TypeNameMetaFieldDef.name + "__" + alias
     }
@@ -71,5 +71,11 @@ class AliasHelper(private val alias: String) {
         return field.toBuilder()
             .alias(getResultKey(field.fieldName))
             .build()
+    }
+
+    companion object {
+        fun forField(field: NormalizedField): AliasHelper {
+            return AliasHelper("nadel__" + field.listOfResultKeys.joinToString("_"))
+        }
     }
 }

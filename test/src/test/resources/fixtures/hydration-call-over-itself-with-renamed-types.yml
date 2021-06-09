@@ -59,117 +59,118 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_testing {
-          testing {
-            movies {
+  current:
+    - request:
+        query: |
+          query nadel_2_testing {
+            testing {
+              movies {
+                id
+                name
+                characterIds
+                ...F1
+              }
+            }
+          }
+
+          fragment F1 on Movie {
+            name
+          }
+        variables: {}
+        operationName: nadel_2_testing
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "testing": {
+              "movies": [
+                {
+                  "id": "M1",
+                  "name": "Movie 1",
+                  "characterIds": [
+                    "C1",
+                    "C2"
+                  ]
+                },
+                {
+                  "id": "M2",
+                  "name": "Movie 2",
+                  "characterIds": [
+                    "C1",
+                    "C2",
+                    "C3"
+                  ]
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - request:
+        query: |
+          query nadel_2_testing {
+            characters(ids: ["C1", "C2", "C1"]) {
               id
               name
-              characterIds
-              ...F1
+              object_identifier__UUID: id
             }
           }
-        }
-
-        fragment F1 on Movie {
-          name
-        }
-      variables: {}
-      operationName: nadel_2_testing
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "testing": {
-            "movies": [
+        variables: {}
+        operationName: nadel_2_testing
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "characters": [
               {
-                "id": "M1",
-                "name": "Movie 1",
-                "characterIds": [
-                  "C1",
-                  "C2"
-                ]
+                "id": "C1",
+                "name": "Luke",
+                "object_identifier__UUID": "C1"
               },
               {
-                "id": "M2",
-                "name": "Movie 2",
-                "characterIds": [
-                  "C1",
-                  "C2",
-                  "C3"
-                ]
+                "id": "C2",
+                "name": "Leia",
+                "object_identifier__UUID": "C2"
+              },
+              {
+                "id": "C1",
+                "name": "Luke",
+                "object_identifier__UUID": "C1"
               }
             ]
-          }
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_testing {
-          characters(ids: ["C1", "C2", "C1"]) {
-            id
-            name
-            object_identifier__UUID: id
-          }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_testing
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "characters": [
-            {
-              "id": "C1",
-              "name": "Luke",
-              "object_identifier__UUID": "C1"
-            },
-            {
-              "id": "C2",
-              "name": "Leia",
-              "object_identifier__UUID": "C2"
-            },
-            {
-              "id": "C1",
-              "name": "Luke",
-              "object_identifier__UUID": "C1"
+    - request:
+        query: |
+          query nadel_2_testing {
+            characters(ids: ["C2", "C3"]) {
+              id
+              name
+              object_identifier__UUID: id
             }
-          ]
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_testing {
-          characters(ids: ["C2", "C3"]) {
-            id
-            name
-            object_identifier__UUID: id
           }
+        variables: {}
+        operationName: nadel_2_testing
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "characters": [
+              {
+                "id": "C2",
+                "name": "Leia",
+                "object_identifier__UUID": "C2"
+              },
+              {
+                "id": "C3",
+                "name": "Anakin",
+                "object_identifier__UUID": "C3"
+              }
+            ]
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_testing
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "characters": [
-            {
-              "id": "C2",
-              "name": "Leia",
-              "object_identifier__UUID": "C2"
-            },
-            {
-              "id": "C3",
-              "name": "Anakin",
-              "object_identifier__UUID": "C3"
-            }
-          ]
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {

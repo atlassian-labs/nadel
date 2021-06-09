@@ -78,116 +78,117 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_Issues {
-          issues {
-            ...IssueFragment
+  current:
+    - request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              ...IssueFragment
+              id
+              authorDetails {
+                authorId
+              }
+            }
+          }
+
+          fragment IssueFragment on Issue {
             id
-            authorDetails {
-              authorId
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1",
+                "authorDetails": [
+                  {
+                    "authorId": "USER-1"
+                  },
+                  {
+                    "authorId": "USER-2"
+                  }
+                ]
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - request:
+        query: |
+          query nadel_2_UserService {
+            usersByIds(id: ["USER-1"]) {
+              ...UserFragment1
             }
           }
-        }
 
-        fragment IssueFragment on Issue {
-          id
-        }
-      variables: {}
-      operationName: nadel_2_Issues
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "issues": [
-            {
-              "id": "ISSUE-1",
-              "authorDetails": [
-                {
-                  "authorId": "USER-1"
-                },
-                {
-                  "authorId": "USER-2"
-                }
-              ]
-            }
-          ]
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_UserService {
-          usersByIds(id: ["USER-1"]) {
-            ...UserFragment1
-          }
-        }
-
-        fragment UserFragment1 on User {
-          id
-          name
-          ...UserFragment2
-        }
-
-        fragment UserFragment2 on User {
-          name
-        }
-      variables: {}
-      operationName: nadel_2_UserService
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "usersByIds": [
-            {
-              "id": "USER-1",
-              "name": "User 1",
-              "object_identifier__UUID": "USER-1"
-            }
-          ]
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_UserService {
-          usersByIds(id: ["USER-1", "USER-2"]) {
+          fragment UserFragment1 on User {
             id
-            ...UserFragment1
-            object_identifier__UUID: id
+            name
+            ...UserFragment2
           }
-        }
 
-        fragment UserFragment1 on User {
-          id
-          name
-          ...UserFragment2
+          fragment UserFragment2 on User {
+            name
+          }
+        variables: {}
+        operationName: nadel_2_UserService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
+              {
+                "id": "USER-1",
+                "name": "User 1",
+                "object_identifier__UUID": "USER-1"
+              }
+            ]
+          },
+          "extensions": {}
         }
-
-        fragment UserFragment2 on User {
-          name
-        }
-      variables: {}
-      operationName: nadel_2_UserService
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "usersByIds": [
-            {
-              "id": "USER-1",
-              "name": "User 1",
-              "object_identifier__UUID": "USER-1"
-            },
-            {
-              "id": "USER-2",
-              "name": "User 2",
-              "object_identifier__UUID": "USER-2"
+    - request:
+        query: |
+          query nadel_2_UserService {
+            usersByIds(id: ["USER-1", "USER-2"]) {
+              id
+              ...UserFragment1
+              object_identifier__UUID: id
             }
-          ]
-        },
-        "extensions": {}
-      }
+          }
+
+          fragment UserFragment1 on User {
+            id
+            name
+            ...UserFragment2
+          }
+
+          fragment UserFragment2 on User {
+            name
+          }
+        variables: {}
+        operationName: nadel_2_UserService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
+              {
+                "id": "USER-1",
+                "name": "User 1",
+                "object_identifier__UUID": "USER-1"
+              },
+              {
+                "id": "USER-2",
+                "name": "User 2",
+                "object_identifier__UUID": "USER-2"
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

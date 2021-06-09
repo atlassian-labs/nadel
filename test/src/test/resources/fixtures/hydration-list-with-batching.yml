@@ -49,60 +49,61 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_service1 {
-          foo {
-            barId
-          }
-        }
-      variables: {}
-      operationName: nadel_2_service1
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "foo": {
-            "barId": [
-              "barId1",
-              "barId2",
-              "barId3"
-            ]
-          }
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_service2 {
-          barsById(id: ["barId1", "barId2", "barId3"]) {
-            name
-            object_identifier__UUID: id
-          }
-        }
-      variables: {}
-      operationName: nadel_2_service2
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "barsById": [
-            {
-              "object_identifier__UUID": "barId1",
-              "name": "Bar1"
-            },
-            {
-              "object_identifier__UUID": "barId2",
-              "name": "Bar2"
-            },
-            {
-              "object_identifier__UUID": "barId3",
-              "name": "Bar3"
+  current:
+    - request:
+        query: |
+          query nadel_2_service1 {
+            foo {
+              barId
             }
-          ]
-        },
-        "extensions": {}
-      }
+          }
+        variables: {}
+        operationName: nadel_2_service1
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "barId": [
+                "barId1",
+                "barId2",
+                "barId3"
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - request:
+        query: |
+          query nadel_2_service2 {
+            barsById(id: ["barId1", "barId2", "barId3"]) {
+              name
+              object_identifier__UUID: id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service2
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barsById": [
+              {
+                "object_identifier__UUID": "barId1",
+                "name": "Bar1"
+              },
+              {
+                "object_identifier__UUID": "barId2",
+                "name": "Bar2"
+              },
+              {
+                "object_identifier__UUID": "barId3",
+                "name": "Bar3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

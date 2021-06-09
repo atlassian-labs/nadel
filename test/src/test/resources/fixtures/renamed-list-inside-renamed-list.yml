@@ -47,39 +47,40 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_IssuesService {
-          issue {
-            ticket {
-              ticketTypes {
-                id
-                date
+  current:
+    - request:
+        query: |
+          query nadel_2_IssuesService {
+            issue {
+              ticket {
+                ticketTypes {
+                  id
+                  date
+                }
               }
             }
           }
-        }
-      variables: {}
-      operationName: nadel_2_IssuesService
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "issue": [
-            {
-              "ticket": {
-                "ticketTypes": [
-                  {
-                    "id": "1",
-                    "date": "20/11/2020"
-                  }
-                ]
+        variables: {}
+        operationName: nadel_2_IssuesService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": [
+              {
+                "ticket": {
+                  "ticketTypes": [
+                    {
+                      "id": "1",
+                      "date": "20/11/2020"
+                    }
+                  ]
+                }
               }
-            }
-          ]
-        },
-        "extensions": {}
-      }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

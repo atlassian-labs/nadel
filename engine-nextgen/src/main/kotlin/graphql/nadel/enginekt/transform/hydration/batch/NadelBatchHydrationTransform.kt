@@ -50,7 +50,7 @@ internal class NadelBatchHydrationTransform(
                 instructions,
                 executionContext,
                 field,
-                aliasHelper = AliasHelper(alias = "kt_batch_hydration"),
+                aliasHelper = AliasHelper.forField(field),
             )
         } else {
             null

@@ -36,44 +36,45 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_Issues {
-          issues {
-            id
-            authorDetails {
-              authorId
-            }
-            authorDetails {
-              name
+  current:
+    - request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              id
+              authorDetails {
+                authorId
+              }
+              authorDetails {
+                name
+              }
             }
           }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1",
+                "authorDetails": {
+                  "authorId": "USER-1",
+                  "name": "User 1"
+                }
+              },
+              {
+                "id": "ISSUE-2",
+                "authorDetails": {
+                  "authorId": "USER-2",
+                  "name": "User 2"
+                }
+              }
+            ]
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Issues
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "issues": [
-            {
-              "id": "ISSUE-1",
-              "authorDetails": {
-                "authorId": "USER-1",
-                "name": "User 1"
-              }
-            },
-            {
-              "id": "ISSUE-2",
-              "authorDetails": {
-                "authorId": "USER-2",
-                "name": "User 2"
-              }
-            }
-          ]
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {

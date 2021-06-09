@@ -61,7 +61,7 @@ internal class NadelHydrationTransform(
             State(
                 hydrationInstructions,
                 field,
-                aliasHelper = AliasHelper("hydration_uuid"),
+                aliasHelper = AliasHelper.forField(field),
             )
         }
     }

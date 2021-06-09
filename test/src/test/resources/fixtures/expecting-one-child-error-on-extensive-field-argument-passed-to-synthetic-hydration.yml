@@ -75,90 +75,91 @@ query: |
   }
 variables: {}
 calls:
-  - request:
-      query: |
-        query nadel_2_TestBoard {
-          board(id: 1) {
-            id
-            issueChildren {
-              issue {
-                assignee {
-                  accountId
+  current:
+    - request:
+        query: |
+          query nadel_2_TestBoard {
+            board(id: 1) {
+              id
+              issueChildren {
+                issue {
+                  assignee {
+                    accountId
+                  }
                 }
               }
             }
           }
+        variables: {}
+        operationName: nadel_2_TestBoard
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "board": {
+              "id": "1",
+              "issueChildren": [
+                {
+                  "issue": {
+                    "assignee": {
+                      "accountId": "1"
+                    }
+                  }
+                },
+                {
+                  "issue": {
+                    "assignee": {
+                      "accountId": "2"
+                    }
+                  }
+                },
+                {
+                  "issue": {
+                    "assignee": {
+                      "accountId": "3"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_TestBoard
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "board": {
-            "id": "1",
-            "issueChildren": [
-              {
-                "issue": {
-                  "assignee": {
-                    "accountId": "1"
-                  }
-                }
-              },
-              {
-                "issue": {
-                  "assignee": {
-                    "accountId": "2"
-                  }
-                }
-              },
-              {
-                "issue": {
-                  "assignee": {
-                    "accountId": "3"
-                  }
-                }
+    - request:
+        query: |
+          query nadel_2_Users {
+            usersQuery {
+              users(accountIds: ["1", "2", "3"]) {
+                accountId
+                object_identifier__UUID: accountId
               }
-            ]
-          }
-        },
-        "extensions": {}
-      }
-  - request:
-      query: |
-        query nadel_2_Users {
-          usersQuery {
-            users(accountIds: ["1", "2", "3"]) {
-              accountId
-              object_identifier__UUID: accountId
             }
           }
+        variables: {}
+        operationName: nadel_2_Users
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersQuery": {
+              "users": [
+                {
+                  "accountId": "1",
+                  "object_identifier__UUID": "1"
+                },
+                {
+                  "accountId": "2",
+                  "object_identifier__UUID": "2"
+                },
+                {
+                  "accountId": "3",
+                  "object_identifier__UUID": "3"
+                }
+              ]
+            }
+          },
+          "extensions": {}
         }
-      variables: {}
-      operationName: nadel_2_Users
-    # language=JSON
-    response: |-
-      {
-        "data": {
-          "usersQuery": {
-            "users": [
-              {
-                "accountId": "1",
-                "object_identifier__UUID": "1"
-              },
-              {
-                "accountId": "2",
-                "object_identifier__UUID": "2"
-              },
-              {
-                "accountId": "3",
-                "object_identifier__UUID": "3"
-              }
-            ]
-          }
-        },
-        "extensions": {}
-      }
 # language=JSON
 response: |-
   {
