@@ -1438,10 +1438,10 @@ class NadelE2ETest extends StrategyTestHelper {
 
     def 'Dynamic Service Resolution: simple case'() {
         def commonTypes = '''
-            directive @dynamicService on FIELD_DEFINITION
+            directive @dynamicServiceResolution on FIELD_DEFINITION
             
             type Query {
-                node(id: ID!): Node @dynamicService
+                node(id: ID!): Node @dynamicServiceResolution
             } 
             
             interface Node {
@@ -1490,7 +1490,7 @@ class NadelE2ETest extends StrategyTestHelper {
 
         def serviceHooks = new ServiceExecutionHooks() {
             @Override
-            Service getServiceForDynamicField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+            Service resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
                 def bitbucketService = services.stream().filter({ service -> (service.getName() == "BitbucketService") }).findFirst().get()
                 def ariArgument = arguments.get("id")
 
@@ -1524,10 +1524,10 @@ class NadelE2ETest extends StrategyTestHelper {
 
     def 'Dynamic Service Resolution: multiple services'() {
         def commonTypes = '''
-            directive @dynamicService on FIELD_DEFINITION
+            directive @dynamicServiceResolution on FIELD_DEFINITION
             
             type Query {
-                node(id: ID!): Node @dynamicService
+                node(id: ID!): Node @dynamicServiceResolution
             } 
             
             interface Node {
@@ -1616,7 +1616,7 @@ class NadelE2ETest extends StrategyTestHelper {
 
         def serviceHooks = new ServiceExecutionHooks() {
             @Override
-            Service getServiceForDynamicField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+            Service resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
                 def bitbucketService = services.stream().filter({ service -> (service.getName() == "BitbucketService") }).findFirst().get()
                 def jiraService = services.stream().filter({ service -> (service.getName() == "JiraService") }).findFirst().get()
                 def ariArgument = arguments.get("id")

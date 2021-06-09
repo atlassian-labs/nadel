@@ -28,6 +28,7 @@ import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.nadel.schema.NadelDirectives;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
@@ -126,13 +127,12 @@ public class NadelExecutionStrategy {
 
             boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition().getDirectives()
                     .stream()
-                    //TODO: Move "dynamicService" to constant somewhere
-                    .anyMatch(directive -> directive.getName().equals("dynamicService"));
+                    .anyMatch(directive -> directive.getName().equals(NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()));
 
             final Service service;
 
             if(usesDynamicService) {
-                service = serviceExecutionHooks.getServiceForDynamicField(services, fieldExecutionStepInfo.getField().getName(), fieldExecutionStepInfo.getArguments());
+                service = serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo.getField().getName(), fieldExecutionStepInfo.getArguments());
             } else {
                 service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
             }

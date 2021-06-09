@@ -31,6 +31,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOpera
 import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.normalized.NormalizedQueryFactory;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.nadel.schema.NadelDirectives;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
@@ -167,8 +168,7 @@ public class Execution {
 
         schemaQueryType.getFieldDefinitions()
                 .stream()
-                // TODO: Move "dynamicService" to a constant somewhere
-                .filter(fieldDefinition -> fieldDefinition.getDirective("dynamicService") != null)
+                .filter(fieldDefinition -> fieldDefinition.getDirective(NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()) != null)
                 .forEach(fieldDefinition -> fieldInfoByDefinition.put(fieldDefinition, new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, null, fieldDefinition)));
 
         for (Service service : services) {

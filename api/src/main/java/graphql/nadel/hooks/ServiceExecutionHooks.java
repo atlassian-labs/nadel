@@ -57,7 +57,7 @@ public interface ServiceExecutionHooks {
      * @param arguments GraphQL arguments that were passed when querying the field
      * @return the Service that should be used to fetch data for that field
      */
-    default Service getServiceForDynamicField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+    default Service resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
         return null;
     }
 }
