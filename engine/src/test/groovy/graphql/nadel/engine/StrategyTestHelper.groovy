@@ -46,39 +46,16 @@ class StrategyTestHelper extends Specification {
                           Map variables = [:],
                           ResultComplexityAggregator resultComplexityAggregator
     ) {
-        def response1ServiceResult = new ServiceExecutionResult(response1)
-
-        boolean calledService1 = false
-        ServiceExecution service1Execution = { ServiceExecutionParameters sep ->
-            println printAstCompact(sep.query)
-            assert printAstCompact(sep.query) == expectedQuery1
-            calledService1 = true
-            return completedFuture(response1ServiceResult)
-        }
-        def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
-        def definitionRegistry = Mock(DefinitionRegistry)
-        def instrumentation = new NadelInstrumentation() {}
-
-        def service1 = new Service(serviceOneName, underlyingOne, service1Execution, serviceDefinition, definitionRegistry)
-
-        Map fieldInfoByDefinition = [:]
-        topLevelFields.forEach({ it ->
-            def fd = overallSchema.getQueryType().getFieldDefinition(it)
-            FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service1, fd)
-            fieldInfoByDefinition.put(fd, fieldInfo)
-        })
-        FieldInfos fieldInfos = new FieldInfos(fieldInfoByDefinition)
-
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
-
-
-        def executionData = createExecutionData(query, variables, overallSchema)
-
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
-
-        assert calledService1
-
-        return [resultData(response), resultErrors(response)]
+        return testServices(
+                overallSchema,
+                query,
+                [
+                        new TestService(name: serviceOneName, schema: underlyingOne, topLevelFields: topLevelFields, expectedQuery: expectedQuery1, response: response1),
+                ],
+                serviceExecutionHooks,
+                variables,
+                resultComplexityAggregator
+        )
     }
 
     Object[] test1ServiceWithNHydration(GraphQLSchema overallSchema,
@@ -151,48 +128,18 @@ class StrategyTestHelper extends Specification {
                            ResultComplexityAggregator resultComplexityAggregator
     ) {
 
-        def response1ServiceResult = new ServiceExecutionResult(response1)
-        def response2ServiceResult = new ServiceExecutionResult(response2)
 
-        boolean calledService1 = false
-        ServiceExecution service1Execution = { ServiceExecutionParameters sep ->
-            println printAstCompact(sep.query)
-            assert printAstCompact(sep.query) == expectedQuery1
-            calledService1 = true
-            return completedFuture(response1ServiceResult)
-        }
-        boolean calledService2 = false
-        ServiceExecution service2Execution = { ServiceExecutionParameters sep ->
-            println printAstCompact(sep.query)
-            assert printAstCompact(sep.query) == expectedQuery2
-            calledService2 = true
-            return completedFuture(response2ServiceResult)
-        }
-        def serviceDefinition = ServiceDefinition.newServiceDefinition().build()
-        def definitionRegistry = Mock(DefinitionRegistry)
-        def instrumentation = new NadelInstrumentation() {}
-
-        def service1 = new Service(serviceOneName, underlyingOne, service1Execution, serviceDefinition, definitionRegistry)
-        def service2 = new Service(serviceTwoName, underlyingTwo, service2Execution, serviceDefinition, definitionRegistry)
-
-        Map fieldInfoByDefinition = [:]
-        topLevelFields.forEach({ it ->
-            def fd = overallSchema.getQueryType().getFieldDefinition(it)
-            FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service1, fd)
-            fieldInfoByDefinition.put(fd, fieldInfo)
-        })
-        FieldInfos fieldInfos = new FieldInfos(fieldInfoByDefinition)
-
-        NadelExecutionStrategy nadelExecutionStrategy = new NadelExecutionStrategy([service1, service2], fieldInfos, overallSchema, instrumentation, serviceExecutionHooks)
-
-        def executionData = createExecutionData(query, variables, overallSchema)
-
-        def response = nadelExecutionStrategy.execute(executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext), resultComplexityAggregator)
-
-        assert calledService1
-        assert calledService2
-
-        return [resultData(response), resultErrors(response)]
+        return testServices(
+                overallSchema,
+                query,
+                [
+                        new TestService(name: serviceOneName, schema: underlyingOne, topLevelFields: topLevelFields, expectedQuery: expectedQuery1, response: response1),
+                        new TestService(name: serviceTwoName, schema: underlyingTwo, topLevelFields: [], expectedQuery: expectedQuery2, response: response2)
+                ],
+                serviceExecutionHooks,
+                variables,
+                resultComplexityAggregator
+        )
     }
 
     Object[] testServices(GraphQLSchema overallSchema,
