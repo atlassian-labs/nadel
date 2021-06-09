@@ -1,5 +1,7 @@
 package graphql.nadel.enginekt.util
 
+import graphql.language.Definition
+import graphql.language.Document
 import graphql.nadel.OperationKind
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.normalized.NormalizedField
@@ -7,6 +9,8 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
+
+typealias AnyAstDefinition = Definition<*>
 
 fun GraphQLSchema.getOperationType(kind: OperationKind): GraphQLObjectType? {
     return when (kind) {
@@ -68,3 +72,7 @@ fun NormalizedField.copyWithChildren(children: List<NormalizedField>): Normalize
 }
 
 val NormalizedField.queryPath: QueryPath get() = QueryPath(listOfResultKeys)
+
+inline fun <reified T : AnyAstDefinition> Document.getDefinitionsOfType(): List<T> {
+    return getDefinitionsOfType(T::class.java)
+}

@@ -4,24 +4,38 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.readValue
+import graphql.introspection.Introspection
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.language.Document
+import graphql.language.Field
+import graphql.language.InlineFragment
+import graphql.language.OperationDefinition
+import graphql.language.SelectionSet
 import graphql.nadel.Nadel
 import graphql.nadel.NadelEngine
 import graphql.nadel.NadelExecutionEngineFactory
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import graphql.nadel.NextgenEngine
+import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.enginekt.util.emptyOrSingle
+import graphql.nadel.enginekt.util.getDefinitionsOfType
+import graphql.nadel.enginekt.util.mapFrom
+import graphql.nadel.enginekt.util.queryPath
+import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.tests.util.fixtures.EngineTestHook
 import graphql.nadel.tests.util.getPropertyValue
 import graphql.nadel.tests.util.keysEqual
 import graphql.nadel.tests.util.packageName
+import graphql.normalized.NormalizedField
+import graphql.normalized.NormalizedQueryFactory
+import graphql.schema.GraphQLSchema
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
@@ -30,10 +44,7 @@ import kotlinx.coroutines.future.await
 import org.junit.jupiter.api.fail
 import strikt.api.Assertion
 import strikt.api.expectThat
-import strikt.assertions.all
 import strikt.assertions.isA
-import strikt.assertions.isEqualTo
-import strikt.assertions.isNull
 import java.io.File
 import java.text.Normalizer
 import java.util.Locale
@@ -58,9 +69,9 @@ class EngineTests : FunSpec({
             engineFactories.all
                 .asSequence()
                 // TODO: remove
-                // .filter { (key) -> key == Engine.nextgen }
+                .filter { (key) -> key == Engine.current }
                 .filter { (key) ->
-                    getPropertyValue(instance = fixture.enabled, propertyName = key.name)
+                    getPropertyValue(instance = fixture.enabled, propertyName = key.name) || true
                 }
                 .forEach { (key, engineFactory) ->
                     val execute: suspend TestContext.() -> Unit = {
@@ -88,28 +99,132 @@ private suspend fun execute(
         .serviceExecutionFactory(object : ServiceExecutionFactory {
             private val astSorter = AstSorter()
 
+            private val callsByTopLevelField by lazy {
+                fixture.calls.current.strictAssociateBy { call ->
+                    getTopLevelField(call.request.document).transform {
+                        // Remove children, we want to match purely on the top level field itself
+                        it.selectionSet(SelectionSet.newSelectionSet().build())
+                    }.toString()
+                }
+            }
+
+            private fun getMatchingCall(query: Document): ServiceCall? {
+                return callsByTopLevelField[
+                    getTopLevelField(query).transform {
+                        it.selectionSet(SelectionSet.newSelectionSet().build())
+                    }.toString(),
+                ]
+            }
+
+            private fun transform(
+                incomingQuery: Document,
+                response: JsonMap,
+                service: Service,
+            ): JsonMap {
+                val nq = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
+                    service.underlyingSchema, /* schema */
+                    incomingQuery, /* query */
+                    null, /* operation name */
+                    emptyMap(), /* variables */
+                )
+
+                @Suppress("UNCHECKED_CAST")
+                return response.mapValues { (key, value) ->
+                    when (key) {
+                        "data" -> transform(nq.topLevelFields, value as JsonMap, service.underlyingSchema)
+                        else -> value
+                    }
+                }.also {
+                    println("Mapped response")
+                    println(it)
+                    println()
+                }
+            }
+
+            private fun transform(
+                fields: List<NormalizedField>,
+                parent: JsonMap,
+                underlyingSchema: GraphQLSchema,
+            ): JsonMap {
+                return mapFrom(
+                    fields.map { field ->
+                        field.resultKey to (if (field.name in parent) {
+                            parent[field.name]
+                        } else if (field.name == Introspection.TypeNameMetaFieldDef.name) {
+                            field.objectTypeNames.single().also {
+                                println("Inferring type of ${field.queryPath} as $it")
+                            }
+                        } else {
+                            fail("Could not determine value")
+                        }).let { value ->
+                            fun mapValue(value: Any?): Any? {
+                                @Suppress("UNCHECKED_CAST")
+                                return when (value) {
+                                    is AnyList -> value.map(::mapValue)
+                                    is AnyMap -> transform(field.children, parent = value as JsonMap, underlyingSchema)
+                                    else -> value
+                                }
+                            }
+
+                            mapValue(value)
+                        }
+                    },
+                )
+            }
+
+            private fun <K, V> Map<K, V>.deepClone(): Map<K, V> {
+                return mapValues { (_, value) ->
+                    @Suppress("UNCHECKED_CAST")
+                    when (value) {
+                        is AnyList -> value.deepClone() as V
+                        is AnyMap -> value.deepClone() as V
+                        else -> value
+                    }
+                }
+            }
+
+            private fun <T> List<T>.deepClone(): List<T> {
+                return map { value ->
+                    @Suppress("UNCHECKED_CAST")
+                    when (value) {
+                        is AnyMap -> value.deepClone() as T
+                        is AnyList -> value.deepClone() as T
+                        else -> value
+                    }
+                }
+            }
+
             override fun getServiceExecution(serviceName: String): ServiceExecution {
                 return ServiceExecution { params ->
                     try {
+                        val incomingQuery = params.query
                         val incomingQueryPrinted = AstPrinter.printAst(
-                            astSorter.sort(
-                                params.query,
-                            ),
+                            astSorter.sort(incomingQuery),
                         )
                         println(incomingQueryPrinted)
 
-                        val call = fixture.calls[engine].singleOrNull {
+                        val response = fixture.calls[engine].singleOrNull {
                             AstPrinter.printAst(it.request.document) == incomingQueryPrinted
-                        } ?: Unit.let { // Creates code block for null
-                            fail("Unable to match service call")
+                        }?.response ?: Unit.let { // Creates code block for null
+                            var match: JsonMap? = null
+                            if (engine == Engine.nextgen) {
+                                println("Attempting to match query")
+                                val matchingCall = getMatchingCall(incomingQuery)
+                                if (matchingCall != null) {
+                                    val response = matchingCall.response
+                                    match = transform(incomingQuery, response, params.getServiceContext())
+                                }
+                            }
+
+                            match ?: fail("Unable to match service call")
                         }
 
                         @Suppress("UNCHECKED_CAST")
                         CompletableFuture.completedFuture(
                             ServiceExecutionResult(
-                                call.response["data"] as JsonMap?,
-                                call.response["errors"] as List<JsonMap>?,
-                                call.response["extensions"] as JsonMap?,
+                                response["data"] as JsonMap?,
+                                response["errors"] as List<JsonMap>?,
+                                response["extensions"] as JsonMap?,
                             ),
                         )
                     } catch (e: Throwable) {
@@ -149,20 +264,28 @@ private suspend fun execute(
     }
 
     // TODO: check extensions one day - right now they don't match up as dumped tests weren't fully E2E but tests are
-    assertJsonTree(
+    assertJsonObject(
+        subject = response.toSpecification().let {
+            mapOf(
+                "data" to it["data"],
+                "errors" to (it["errors"] ?: emptyList<JsonMap>()),
+                // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
+            ).also {
+                println("Overall response")
+                println(it)
+                println()
+            }
+        },
         expected = fixture.response.let {
             mapOf(
                 "data" to it["data"],
                 "errors" to (it["errors"] ?: emptyList<JsonMap>()),
                 // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
-            )
-        },
-        actual = response.toSpecification().let {
-            mapOf(
-                "data" to it["data"],
-                "errors" to (it["errors"] ?: emptyList<JsonMap>()),
-                // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
-            )
+            ).also {
+                println("Expecting response")
+                println(it)
+                println()
+            }
         },
     )
 }
@@ -183,37 +306,84 @@ private fun getTestHook(fixture: TestFixture): EngineTestHook? {
     return hookClass.newInstance() as EngineTestHook
 }
 
-fun assertJsonTree(expected: JsonMap, actual: JsonMap) {
-    return expectThat(actual) {
-        assertJsonTree(expected = expected)
+fun assertJsonObject(subject: JsonMap, expected: JsonMap) {
+    return expectThat(subject) {
+        assertJsonObject(expectedMap = expected)
     }
 }
 
-fun Assertion.Builder<JsonMap>.assertJsonTree(
-    expected: JsonMap,
-) {
-    keysEqual(expected.keys)
+fun Assertion.Builder<JsonMap>.assertJsonObject(expectedMap: JsonMap) {
+    keysEqual(expectedMap.keys)
 
-    get { entries }.all {
-        // JSON map needs String keys
-        get { key }.isA<String>()
-
-        compose("value") { entry ->
-            when (val expectedValue = expected[entry.key]) {
-                is AnyMap -> get { value }.isA<JsonMap>().and {
-                    @Suppress("UNCHECKED_CAST")
-                    this@and.assertJsonTree(expectedValue as JsonMap)
-                }
-                is AnyList -> get { value }.and { }
-                is Number -> get { value }.isEqualTo(expectedValue)
-                is String -> get { value }.isEqualTo(expectedValue)
-                is Boolean -> get { value }.isEqualTo(expectedValue)
-                null -> get { value }.isNull()
-                else -> error("Unknown type ${expectedValue.javaClass}")
+    assert("keys are all strings") { subject ->
+        @Suppress("USELESS_CAST") // We're checking if the erased type holds up
+        for (key in (subject.keys as Set<Any>)) {
+            if (key !is String) {
+                fail(description = "%s is not a string", actual = key)
+                return@assert
             }
-        } then {
-            if (allPassed || failedCount == 0) pass() else fail()
         }
+        pass()
+    }
+
+    compose("contents match expected") { subjectMap ->
+        subjectMap.entries.forEach { (key, subjectValue) ->
+            assertJsonEntry(key, subjectValue, expectedValue = expectedMap[key])
+        }
+    } then {
+        if (allPassed || failedCount == 0) pass() else fail()
+    }
+}
+
+fun Assertion.Builder<JsonMap>.assertJsonEntry(key: String, subjectValue: Any?, expectedValue: Any?) {
+    get("""entry "$key"""") { subjectValue }
+        .assertJsonValue(subjectValue, expectedValue)
+}
+
+fun <T> Assertion.Builder<T>.assertJsonValue(subjectValue: Any?, expectedValue: Any?) {
+    when (subjectValue) {
+        is AnyMap -> {
+            assert("is same type as expected value") {
+                if (expectedValue is AnyMap) {
+                    pass()
+                    @Suppress("UNCHECKED_CAST")
+                    isA<JsonMap>().assertJsonObject(expectedMap = expectedValue as JsonMap)
+                } else {
+                    fail("did not expect JSON object")
+                }
+            }
+        }
+        is AnyList -> {
+            assert("is same type as expected value") {
+                if (expectedValue is AnyList) {
+                    pass()
+                    @Suppress("UNCHECKED_CAST")
+                    isA<List<Any>>().assertJsonArray(expectedValue = expectedValue as List<Any>)
+                } else {
+                    fail("did not expect JSON array")
+                }
+            }
+        }
+        else -> {
+            assert("equals expected value") {
+                if (subjectValue == expectedValue) {
+                    pass()
+                } else {
+                    fail("""expected "$expectedValue" but got "$subjectValue"""")
+                }
+            }
+        }
+    }
+}
+
+private fun <T> Assertion.Builder<List<T>>.assertJsonArray(expectedValue: List<T>) {
+    compose("all elements match:") { subject ->
+        subject.forEachIndexed { index, element ->
+            get("element $index") { element }
+                .assertJsonValue(subjectValue = element, expectedValue[index])
+        }
+    } then {
+        if (allPassed) pass() else fail()
     }
 }
 
@@ -345,4 +515,18 @@ fun String.toSlug(): String {
     return slug.toLowerCase(Locale.ENGLISH)
 }
 
-
+fun getTopLevelField(document: Document): Field {
+    return document
+        .getDefinitionsOfType<OperationDefinition>()
+        .single()
+        .children
+        .filterIsInstance<SelectionSet>()
+        .single()
+        .selections
+        .let { selections ->
+            val realSelections = selections.filterIsInstance<InlineFragment>()
+                .emptyOrSingle()?.selectionSet?.selections ?: selections
+            realSelections.filterIsInstance<Field>()
+                .single()
+        }
+}

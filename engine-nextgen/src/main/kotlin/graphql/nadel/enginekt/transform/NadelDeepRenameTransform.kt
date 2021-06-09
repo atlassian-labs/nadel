@@ -71,7 +71,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     )
 
     /**
-     * Determines whether a deep rename is applicable for the given [field].
+     * Determines whether a deep rename is applicable for the given [overallField].
      *
      * Creates a state with the deep rename instructions and the transform alias.
      */
@@ -81,18 +81,18 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         executionBlueprint: NadelExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        field: NormalizedField,
+        overallField: NormalizedField,
     ): State? {
         val deepRenameInstructions = executionBlueprint.fieldInstructions
-            .getInstructionsOfTypeForField<NadelDeepRenameFieldInstruction>(field)
+            .getInstructionsOfTypeForField<NadelDeepRenameFieldInstruction>(overallField)
         if (deepRenameInstructions.isEmpty()) {
             return null
         }
 
         return State(
             deepRenameInstructions,
-            AliasHelper.forField(field),
-            field,
+            AliasHelper.forField(overallField),
+            overallField,
         )
     }
 
@@ -262,13 +262,14 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,
-        field: NormalizedField, // Overall field
+        overallField: NormalizedField, // Overall field
+        underlyingParentField: NormalizedField,
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
-            result.data,
-            field.queryPath.dropLast(1),
+            data = result.data,
+            queryPath = underlyingParentField.queryPath,
             flatten = true,
         )
 
@@ -285,7 +286,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
             NadelResultInstruction.Copy(
                 subjectPath = sourceFieldNode.resultPath,
-                destinationPath = parentNode.resultPath + field.resultKey,
+                destinationPath = parentNode.resultPath + overallField.resultKey,
             )
         }
     }

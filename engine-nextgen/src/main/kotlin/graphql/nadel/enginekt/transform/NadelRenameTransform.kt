@@ -37,23 +37,23 @@ internal class NadelRenameTransform : NadelTransform<State> {
         executionBlueprint: NadelExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        field: NormalizedField,
+        overallField: NormalizedField,
     ): State? {
         val renameInstructions = executionBlueprint.fieldInstructions
-            .getInstructionsOfTypeForField<NadelRenameFieldInstruction>(field)
+            .getInstructionsOfTypeForField<NadelRenameFieldInstruction>(overallField)
         if (renameInstructions.isEmpty()) {
             return null
         }
 
-        val objectsWithoutRename = field.objectTypeNames.filterNot {
-            makeFieldCoordinates(it, field.name) in renameInstructions
+        val objectsWithoutRename = overallField.objectTypeNames.filterNot {
+            makeFieldCoordinates(it, overallField.name) in renameInstructions
         }
 
         return State(
             renameInstructions,
             objectsWithoutRename,
-            AliasHelper.forField(field),
-            field,
+            AliasHelper.forField(overallField),
+            overallField,
             service,
         )
     }
@@ -144,13 +144,15 @@ internal class NadelRenameTransform : NadelTransform<State> {
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,
-        field: NormalizedField, // Overall field
+        overallField: NormalizedField, // Overall field
+        underlyingParentField: NormalizedField,
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
-            result.data,
-            field.queryPath.dropLast(1),
+            data = result.data,
+            queryPath = underlyingParentField.queryPath,
+            flatten = true,
         )
 
         return parentNodes.mapNotNull instruction@{ parentNode ->
@@ -166,7 +168,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
             NadelResultInstruction.Copy(
                 subjectPath = sourceFieldNode.resultPath,
-                destinationPath = parentNode.resultPath + field.resultKey,
+                destinationPath = parentNode.resultPath + overallField.resultKey,
             )
         }
     }

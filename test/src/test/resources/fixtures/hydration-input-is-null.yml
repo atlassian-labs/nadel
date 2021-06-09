@@ -79,9 +79,11 @@ response: |-
     "data": {
       "issues": [
         {
-          "id": "ISSUE-1"
+          "id": "ISSUE-1",
+          "authors": null
         }
       ]
     },
     "extensions": {}
   }
+

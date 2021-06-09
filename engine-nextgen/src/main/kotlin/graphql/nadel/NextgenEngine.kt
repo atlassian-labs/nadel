@@ -101,6 +101,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             executionContext = executionContext,
             executionPlan = executionPlan,
             artificialFields = queryTransform.artificialFields,
+            overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
             service = service,
             result = result,
         )
@@ -139,15 +140,21 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         }.reduce(NadelExecutionPlan::merge)
 
         val artificialFields = mutableListOf<NormalizedField>()
+        val overallToUnderlyingFields = mutableMapOf<NormalizedField, List<NormalizedField>>()
 
         // Transform the children of the source field
         // The source field itself is already transformed
         val sourceFieldWithTransformedChildren = sourceField.copyWithChildren(
             sourceField.children.flatMap { childField ->
                 queryTransformer.transformQuery(executionContext, service, field = childField, executionPlan)
-                    .let {
-                        artificialFields.addAll(it.artificialFields)
-                        it.result
+                    .let { result ->
+                        artificialFields.addAll(result.artificialFields)
+                        overallToUnderlyingFields.also { map ->
+                            val sizeBefore = map.size
+                            map.putAll(result.overallToUnderlyingFields)
+                            require(map.size == sizeBefore + result.overallToUnderlyingFields.size)
+                        }
+                        result.result
                     }
             },
         )
@@ -165,6 +172,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             executionContext = executionContext,
             executionPlan = executionPlan,
             artificialFields = artificialFields,
+            overallToUnderlyingFields = overallToUnderlyingFields,
             service = service,
             result = result,
         )
@@ -186,7 +194,8 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
                 .variables(emptyMap())
                 .fragments(emptyMap())
                 .operationDefinition(document.definitions.singleOfType())
-                .serviceContext(null)
+                // TODO: set back to NULL after
+                .serviceContext(service)
                 .hydrationCall(false)
                 .build()
         ).asDeferred().await()

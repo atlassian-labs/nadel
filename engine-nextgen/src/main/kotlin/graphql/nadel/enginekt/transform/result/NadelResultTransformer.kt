@@ -27,6 +27,7 @@ internal class NadelResultTransformer(
         executionContext: NadelExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<NormalizedField>,
+        overallToUnderlyingFields: Map<NormalizedField, List<NormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
@@ -38,6 +39,7 @@ internal class NadelResultTransformer(
                     executionPlan,
                     service,
                     field,
+                    overallToUnderlyingFields[field]!!.first().parent,
                     result,
                     step.state,
                 )

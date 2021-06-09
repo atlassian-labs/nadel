@@ -40,17 +40,17 @@ internal class NadelBatchHydrationTransform(
         executionBlueprint: NadelExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        field: NormalizedField,
+        overallField: NormalizedField,
     ): State? {
         val instructions = executionBlueprint.fieldInstructions
-            .getInstructionsOfTypeForField<NadelBatchHydrationFieldInstruction>(field)
+            .getInstructionsOfTypeForField<NadelBatchHydrationFieldInstruction>(overallField)
 
         return if (instructions.isNotEmpty()) {
             return State(
                 instructions,
                 executionContext,
-                field,
-                aliasHelper = AliasHelper.forField(field),
+                overallField,
+                aliasHelper = AliasHelper.forField(overallField),
             )
         } else {
             null
@@ -85,13 +85,14 @@ internal class NadelBatchHydrationTransform(
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,
-        field: NormalizedField,
+        overallField: NormalizedField,
+        underlyingParentField: NormalizedField,
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryPath = field.queryPath.dropLast(1),
+            queryPath = underlyingParentField.queryPath,
             flatten = true,
         )
 

@@ -1,4 +1,6 @@
 name: basic hydration
+enabled:
+  nextgen: true
 overallSchema:
   service2: |
     service service2 {
@@ -13,7 +15,7 @@ overallSchema:
   service1: |
     service service1 {
       type Query {
-        foo(id: ID): Foo
+        foo: Foo
       }
       type Foo {
         id: ID
@@ -43,7 +45,7 @@ services:
     }
 
     type Query {
-      foo(id: ID): Foo
+      foo: Foo
     }
 query: |
   query {

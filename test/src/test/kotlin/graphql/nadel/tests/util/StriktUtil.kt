@@ -1,18 +1,29 @@
 package graphql.nadel.tests.util
 
 import strikt.api.Assertion
-import strikt.assertions.containsKey
 
-fun <T : Map<K, V>, K, V> Assertion.Builder<T>.keysEqual(keys: Collection<K>): Assertion.Builder<T> {
-    keys.forEach { key ->
-        containsKey(key)
-    }
-    compose("has no extra keys") { subject ->
-        subject.keys.forEach { key ->
-            assertThat("$key is expected") { key in keys }
+fun <T : Map<K, V>, K, V> Assertion.Builder<T>.keysEqual(expectedKeys: Collection<K>): Assertion.Builder<T> {
+    compose("keys match expected") { actual ->
+        val actualKeys = actual.keys
+        if (actualKeys != expectedKeys) {
+            for (key in actualKeys) {
+                if (key !in expectedKeys) {
+                    assert("has unexpected $key") {
+                        fail()
+                    }
+                }
+            }
+            for (key in expectedKeys) {
+                if (key !in actualKeys) {
+                    assert("missing $key") {
+                        fail()
+                    }
+                }
+            }
         }
     } then {
-        if (allPassed || failedCount == 0) pass() else fail()
+        if (allPassed) pass() else fail()
     }
+
     return this
 }
