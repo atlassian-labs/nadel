@@ -1,4 +1,7 @@
 name: Expecting one child Error on extensive field argument passed to synthetic hydration
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   TestBoard: |
     service TestBoard {

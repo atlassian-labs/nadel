@@ -1,4 +1,7 @@
 name: nested list hydration under a renamed top level field
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {

@@ -1,4 +1,7 @@
 name: hydration matching using index
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {

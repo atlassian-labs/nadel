@@ -1,4 +1,7 @@
 name: fragment referenced twice from inside Query and inside another Fragment
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {

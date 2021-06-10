@@ -1,4 +1,7 @@
 name: call with variables inside input objects
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

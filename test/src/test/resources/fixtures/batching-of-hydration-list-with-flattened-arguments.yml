@@ -1,4 +1,7 @@
 name: batching of hydration list with flattened arguments
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {

@@ -1,4 +1,7 @@
 name: hydration matching using index with lists with hydration field not exposed
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {

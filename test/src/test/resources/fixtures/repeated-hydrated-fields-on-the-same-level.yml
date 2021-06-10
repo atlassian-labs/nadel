@@ -1,4 +1,7 @@
 name: repeated hydrated fields on the same level
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {

@@ -1,4 +1,7 @@
 name: hydration call forwards error
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service2: |
     service service2 {

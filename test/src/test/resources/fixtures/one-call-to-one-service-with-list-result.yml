@@ -1,4 +1,7 @@
 name: one call to one service with list result
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service: |
     service service {

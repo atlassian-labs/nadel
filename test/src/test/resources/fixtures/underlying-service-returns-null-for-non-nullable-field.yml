@@ -1,4 +1,8 @@
 name: underlying service returns null for non-nullable field
+enabled:
+  current: true
+  # Nextgen no longer does this check
+  nextgen: false
 overallSchema:
   Issues: |
     service Issues {

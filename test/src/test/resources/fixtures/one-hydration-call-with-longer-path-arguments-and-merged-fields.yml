@@ -1,4 +1,7 @@
 name: one hydration call with longer path arguments and merged fields
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {

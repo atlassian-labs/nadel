@@ -1,4 +1,7 @@
 name: one hydration call with input value having longer path
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service2: |
     service service2 {
@@ -13,7 +16,7 @@ overallSchema:
   service1: |
     service service1 {
       type Query {
-        foo(id: ID): Foo
+        foo: Foo
       }
       type Foo {
         id: ID
@@ -43,7 +46,7 @@ underlyingSchema:
     }
 
     type Query {
-      foo(id: ID): Foo
+      foo: Foo
     }
 query: |
   query {

@@ -1,4 +1,7 @@
 name: hydration works when an ancestor field has been renamed
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   IssueService: |
     service IssueService {

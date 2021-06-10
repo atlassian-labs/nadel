@@ -1,4 +1,7 @@
 name: one call to one service
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service: |
     service service {

@@ -1,4 +1,7 @@
 name: repeated hydrated fields on the same level when using batch hydration
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {

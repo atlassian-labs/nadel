@@ -1,4 +1,7 @@
 name: hydration call over itself with renamed types
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   testing: |
     service testing {

@@ -1,4 +1,7 @@
 name: hydration list with one element
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service2: |
     service service2 {

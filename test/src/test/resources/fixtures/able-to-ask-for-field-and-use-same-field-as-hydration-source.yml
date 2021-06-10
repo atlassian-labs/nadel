@@ -1,4 +1,7 @@
 name: able to ask for field and use same field as hydration source
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Bar: |
     service Bar {

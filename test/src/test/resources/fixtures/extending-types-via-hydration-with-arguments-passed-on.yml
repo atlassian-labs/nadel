@@ -1,4 +1,7 @@
 name: extending types via hydration with arguments passed on
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issue: |
     service Issue {

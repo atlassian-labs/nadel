@@ -1,4 +1,7 @@
 name: deep rename inside another rename of type List
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issues: |
     service Issues {

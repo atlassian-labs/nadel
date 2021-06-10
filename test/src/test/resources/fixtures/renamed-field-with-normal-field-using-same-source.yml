@@ -1,4 +1,7 @@
 name: renamed field with normal field using same source
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {

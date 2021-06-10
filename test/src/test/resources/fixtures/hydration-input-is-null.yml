@@ -1,4 +1,7 @@
 name: hydration input is null
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {
@@ -68,7 +71,8 @@ serviceCalls:
           "data": {
             "issues": [
               {
-                "id": "ISSUE-1"
+                "id": "ISSUE-1",
+                "authorIds": null
               }
             ]
           },

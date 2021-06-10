@@ -1,4 +1,7 @@
 name: deep rename of an object with transformations inside object
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issues: |
     service Issues {

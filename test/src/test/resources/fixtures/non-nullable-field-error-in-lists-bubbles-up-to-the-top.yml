@@ -1,4 +1,8 @@
 name: non-nullable field error in lists bubbles up to the top
+enabled:
+  current: true
+  # Nextgen no longer does this check
+  nextgen: false
 overallSchema:
   Issues: |
     service Issues {

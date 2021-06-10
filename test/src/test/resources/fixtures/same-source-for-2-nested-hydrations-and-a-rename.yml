@@ -1,4 +1,7 @@
 name: same source for 2 nested hydrations and a rename
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {

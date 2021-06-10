@@ -1,4 +1,7 @@
 name: hydration list with batching
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service2: |
     service service2 {
@@ -17,7 +20,7 @@ overallSchema:
       }
       type Foo {
         id: ID
-        bar: [Bar] => hydrated from service2.barsById(id: $source.barId)
+        bar: [Bar] => hydrated from service2.barsById(id: $source.barId) object identified by id
       }
     }
 underlyingSchema:

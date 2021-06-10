@@ -1,4 +1,7 @@
 name: renamed list inside renamed list
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   IssuesService: |
     service IssuesService {

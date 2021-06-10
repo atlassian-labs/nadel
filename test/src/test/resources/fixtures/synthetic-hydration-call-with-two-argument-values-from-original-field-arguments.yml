@@ -1,4 +1,7 @@
 name: synthetic hydration call with two argument values from original field arguments
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {

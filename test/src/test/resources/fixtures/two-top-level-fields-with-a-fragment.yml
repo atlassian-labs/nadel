@@ -1,4 +1,7 @@
 name: two top level fields with a fragment
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {

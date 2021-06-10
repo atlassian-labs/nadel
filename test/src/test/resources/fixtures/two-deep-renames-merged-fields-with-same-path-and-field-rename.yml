@@ -1,4 +1,7 @@
 name: two deep renames, merged fields with same path and field rename
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issues: |
     service Issues {

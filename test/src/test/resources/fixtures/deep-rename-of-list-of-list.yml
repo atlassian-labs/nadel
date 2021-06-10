@@ -1,4 +1,7 @@
 name: deep rename of list of list
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issues: |
     service Issues {

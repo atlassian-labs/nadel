@@ -1,4 +1,7 @@
 name: two deep renames
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issues: |
     service Issues {

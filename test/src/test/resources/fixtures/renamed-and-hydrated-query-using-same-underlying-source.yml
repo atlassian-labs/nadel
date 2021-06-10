@@ -1,4 +1,7 @@
 name: renamed and hydrated query using same underlying source
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {

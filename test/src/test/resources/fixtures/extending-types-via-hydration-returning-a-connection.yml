@@ -1,4 +1,7 @@
 name: extending types via hydration returning a connection
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issue: |
     service Issue {
