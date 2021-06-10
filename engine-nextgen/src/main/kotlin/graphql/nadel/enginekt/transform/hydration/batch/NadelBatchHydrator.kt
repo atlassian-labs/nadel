@@ -11,6 +11,7 @@ import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.asMutable
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.AnyMap
@@ -106,7 +107,8 @@ internal class NadelBatchHydrator(
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
     ): List<NadelResultInstruction> {
         val resultNodesByObjectId = resultNodes.associateBy {
-            it[state.aliasHelper.getResultKey(matchStrategy.objectId)]
+            // We don't want to show this in the overall result, so remove it here as we use it
+            it.asMutable().remove(state.aliasHelper.getResultKey(matchStrategy.objectId))
         }
 
         val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.getQueryPath(

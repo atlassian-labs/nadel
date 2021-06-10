@@ -194,8 +194,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
                 .variables(emptyMap())
                 .fragments(emptyMap())
                 .operationDefinition(document.definitions.singleOfType())
-                // TODO: set back to NULL after
-                .serviceContext(service)
+                .serviceContext(null)
                 .hydrationCall(false)
                 .build()
         ).asDeferred().await()

@@ -135,7 +135,7 @@ internal class NadelResultTransformer(
     }
 }
 
-private fun <K, V> Map<K, V>.asMutable(): MutableMap<K, V> {
+internal fun <K, V> Map<K, V>.asMutable(): MutableMap<K, V> {
     return this as? MutableMap<K, V> ?: throw NotMutableError()
 }
 
