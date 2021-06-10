@@ -20,7 +20,7 @@ overallSchema:
         authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) using indexes, batch size 5
       }
     }
-services:
+underlyingSchema:
   UserService: |
     type Query {
       usersByIds(ids: [ID]): [User]
@@ -49,7 +49,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

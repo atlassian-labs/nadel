@@ -24,7 +24,7 @@ overallSchema:
         name: String
       }
     }
-services:
+underlyingSchema:
   UserService: |
     type Query {
       usersByIds(id: [ID]): [User]
@@ -61,7 +61,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

@@ -21,7 +21,7 @@ overallSchema:
         enabled: Boolean!
       }
     }
-services:
+underlyingSchema:
   Boards: |
     type BoardScope {
       issueParents: [IssueParent]!
@@ -57,7 +57,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

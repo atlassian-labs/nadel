@@ -23,7 +23,7 @@ overallSchema:
         accountId: ID
       }
     }
-services:
+underlyingSchema:
   TestBoard: |
     type Board {
       id: ID
@@ -68,7 +68,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

@@ -13,7 +13,7 @@ overallSchema:
         authorIds: [ID]
       }
     }
-services:
+underlyingSchema:
   Issues: |
     interface AbstractIssue {
       id: ID
@@ -38,7 +38,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

@@ -26,7 +26,7 @@ overallSchema:
         id: ID
       }
     }
-services:
+underlyingSchema:
   Foo: |
     type Connection {
       edges: [Edge]
@@ -73,7 +73,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

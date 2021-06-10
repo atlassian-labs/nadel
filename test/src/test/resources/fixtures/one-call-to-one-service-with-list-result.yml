@@ -6,7 +6,7 @@ overallSchema:
         foo: [String]
       }
     }
-services:
+underlyingSchema:
   service: |
     type Query {
       foo: [String]
@@ -16,7 +16,7 @@ query: |
     foo
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

@@ -9,7 +9,7 @@ overallSchema:
         id: ID!
       }
     }
-services:
+underlyingSchema:
   Issues: |
     type Issue {
       id: ID!
@@ -25,7 +25,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

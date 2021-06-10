@@ -15,7 +15,7 @@ overallSchema:
         extra: String => renamed from extraInfo
       }
     }
-services:
+underlyingSchema:
   Issues: |
     type AuthorDetail {
       authorId: ID
@@ -43,7 +43,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

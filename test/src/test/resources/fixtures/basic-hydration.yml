@@ -23,7 +23,7 @@ overallSchema:
         barLongerInput: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)
       }
     }
-services:
+underlyingSchema:
   service2: |
     type Bar {
       id: ID
@@ -56,7 +56,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

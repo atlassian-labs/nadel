@@ -6,7 +6,7 @@ overallSchema:
         foo: String
       }
     }
-services:
+underlyingSchema:
   service1: |
     type Query {
       foo: String

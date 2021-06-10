@@ -16,7 +16,7 @@ overallSchema:
         renamedDate: String => renamed from date
       }
     }
-services:
+underlyingSchema:
   IssuesService: |
     type Issue {
       ticket: Ticket
@@ -46,7 +46,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

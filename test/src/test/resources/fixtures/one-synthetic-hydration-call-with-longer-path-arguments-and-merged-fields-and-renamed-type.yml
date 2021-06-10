@@ -24,7 +24,7 @@ overallSchema:
         authors: [RenamedUser] => hydrated from UserService.usersQuery.usersByIds(id: $source.authors.authorId) object identified by id, batch size 2
       }
     }
-services:
+underlyingSchema:
   UserService: |
     type Query {
       usersQuery: UserQuery
@@ -63,7 +63,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

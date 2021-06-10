@@ -16,7 +16,7 @@ overallSchema:
         devOpsIssue(id: ID): DevOpsIssue => renamed from issue
       }
     }
-services:
+underlyingSchema:
   IssueService: |
     type Issue {
       id: ID
@@ -45,7 +45,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

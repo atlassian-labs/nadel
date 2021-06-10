@@ -19,7 +19,7 @@ overallSchema:
         id: ID
       }
     }
-services:
+underlyingSchema:
   UserService: |
     type Query {
       user: User
@@ -57,7 +57,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

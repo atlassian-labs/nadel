@@ -18,7 +18,7 @@ overallSchema:
         devOpsRelationships: DevOpsRelationshipConnection => renamed from relationships
       }
     }
-services:
+underlyingSchema:
   IssueService: |
     type Issue {
       id: ID
@@ -51,7 +51,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

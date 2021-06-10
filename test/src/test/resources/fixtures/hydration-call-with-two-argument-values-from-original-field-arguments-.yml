@@ -20,7 +20,7 @@ overallSchema:
         author(extraArg1: String, extraArg2: Int): User => hydrated from UserService.usersByIds(extraArg1: $argument.extraArg1, extraArg2: $argument.extraArg2, id: $source.authorId) object identified by id, batch size 2
       }
     }
-services:
+underlyingSchema:
   UserService: |
     type Query {
       usersByIds(extraArg1: String, extraArg2: Int, id: [ID]): [User]
@@ -49,7 +49,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

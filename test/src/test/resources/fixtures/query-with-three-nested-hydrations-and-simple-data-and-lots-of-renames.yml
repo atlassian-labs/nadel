@@ -39,7 +39,7 @@ overallSchema:
         fooPhone: Int => renamed from phone
       }
     }
-services:
+underlyingSchema:
   Bar: |
     type Bar {
       barId: ID
@@ -112,7 +112,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

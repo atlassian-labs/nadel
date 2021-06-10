@@ -9,7 +9,7 @@ overallSchema:
         name: String => renamed from details.name
       }
     }
-services:
+underlyingSchema:
   Issues: |
     type Issue {
       details: IssueDetails
@@ -29,7 +29,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

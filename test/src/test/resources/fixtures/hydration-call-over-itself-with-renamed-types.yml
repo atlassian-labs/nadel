@@ -18,7 +18,7 @@ overallSchema:
         characters: [TestingCharacter] => hydrated from testing.characters(ids: $source.characterIds) object identified by id, batch size  3
       }
     }
-services:
+underlyingSchema:
   testing: |
     type Character {
       id: ID!
@@ -58,7 +58,7 @@ query: |
     name
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

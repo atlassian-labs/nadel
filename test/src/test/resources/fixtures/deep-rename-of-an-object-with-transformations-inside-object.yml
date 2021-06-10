@@ -14,7 +14,7 @@ overallSchema:
         lastName: String
       }
     }
-services:
+underlyingSchema:
   Issues: |
     type AuthorDetail {
       name: OriginalName
@@ -44,7 +44,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

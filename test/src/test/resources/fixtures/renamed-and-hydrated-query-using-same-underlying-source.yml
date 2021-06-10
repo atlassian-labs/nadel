@@ -14,7 +14,7 @@ overallSchema:
         name: String
       }
     }
-services:
+underlyingSchema:
   Foo: |
     type Detail {
       detailId: ID!
@@ -46,7 +46,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

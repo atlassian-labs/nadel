@@ -11,7 +11,7 @@ overallSchema:
         nestedBar: Bar => hydrated from Bar.barById(id: $source.barId)
       }
     }
-services:
+underlyingSchema:
   Bar: |
     type Bar {
       barId: ID
@@ -36,7 +36,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

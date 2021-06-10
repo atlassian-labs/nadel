@@ -19,7 +19,7 @@ overallSchema:
         fooBar: RenamedBar => hydrated from Bar.barById(id: $source.fooBarId)
       }
     }
-services:
+underlyingSchema:
   Bar: |
     type Bar {
       id: ID
@@ -47,7 +47,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

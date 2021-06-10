@@ -17,7 +17,7 @@ overallSchema:
         summary: String => renamed from issue.summary
       }
     }
-services:
+underlyingSchema:
   Issues: |
     type Board {
       id: ID
@@ -55,7 +55,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

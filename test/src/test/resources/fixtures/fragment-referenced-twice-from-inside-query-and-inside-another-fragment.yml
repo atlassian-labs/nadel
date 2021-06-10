@@ -9,7 +9,7 @@ overallSchema:
         id: String
       }
     }
-services:
+underlyingSchema:
   Foo: |
     type Bar {
       id: String
@@ -36,7 +36,7 @@ query: |
     ...F2
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

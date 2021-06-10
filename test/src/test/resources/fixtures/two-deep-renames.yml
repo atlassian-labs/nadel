@@ -11,7 +11,7 @@ overallSchema:
         authorName: ID => renamed from authorDetails.name
       }
     }
-services:
+underlyingSchema:
   Issues: |
     type AuthorDetail {
       authorId: ID
@@ -35,7 +35,7 @@ query: |
     }
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

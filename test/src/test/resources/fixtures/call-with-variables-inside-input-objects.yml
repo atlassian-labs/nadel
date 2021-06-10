@@ -9,7 +9,7 @@ overallSchema:
         ids: [ID]
       }
     }
-services:
+underlyingSchema:
   MyService: |-
     type Query {
       hello(arg: Arg, otherArg: String): String
@@ -23,7 +23,7 @@ query: |
     hello(arg: {ids: $varIds}, otherArg: $otherVar)
   }
 variables: {}
-calls:
+serviceCalls:
   current:
     - request:
         query: |

@@ -25,7 +25,7 @@ overallSchema:
         association(filter:Filter): RenamedAssociation => hydrated from Association.association(id: $source.id, filter: $argument.filter)
       }
     }
-services:
+underlyingSchema:
   Issue: |
     type Issue {
       id: ID
@@ -59,7 +59,7 @@ variables:
   filter:
     name:
       - value
-calls:
+serviceCalls:
   current:
     - request:
         query: |
