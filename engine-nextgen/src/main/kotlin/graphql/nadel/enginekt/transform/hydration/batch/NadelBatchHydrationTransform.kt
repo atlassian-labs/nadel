@@ -69,7 +69,7 @@ internal class NadelBatchHydrationTransform(
         return NadelTransformFieldResult(
             newField = null,
             artificialFields = state.instructions.flatMap { (fieldCoordinates, instruction) ->
-                NadelHydrationFieldsBuilder.getArtificialFields(
+                NadelHydrationFieldsBuilder.makeFieldsUsedAsActorInputValues(
                     service = service,
                     executionPlan = executionPlan,
                     aliasHelper = state.aliasHelper,

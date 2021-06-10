@@ -85,17 +85,17 @@ internal object NadelExecutionBlueprintFactory {
         val hydrationSourceService = services.single { it.name == hydration.serviceName }
         val underlyingSchema = hydrationSourceService.underlyingSchema
 
-        val pathToSourceField = listOfNotNull(hydration.syntheticField, hydration.topLevelField)
-        val sourceField = underlyingSchema.queryType.getFieldAt(pathToSourceField)!!
+        val queryPathToActorField = listOfNotNull(hydration.syntheticField, hydration.topLevelField)
+        val actorField = underlyingSchema.queryType.getFieldAt(queryPathToActorField)!!
 
-        if (GraphQLTypeUtil.isList(sourceField.type)) {
+        if (GraphQLTypeUtil.isList(actorField.type)) {
             return createBatchHydrationFieldInstruction(parentType, field, hydration, hydrationSourceService)
         }
 
         return NadelHydrationFieldInstruction(
             location = createFieldCoordinates(parentType, field),
             actorService = hydrationSourceService,
-            queryPathToActorField = QueryPath(pathToSourceField),
+            queryPathToActorField = QueryPath(queryPathToActorField),
             actorInputValues = getHydrationArguments(hydration),
         )
     }
@@ -113,8 +113,7 @@ internal object NadelExecutionBlueprintFactory {
             actorService = sourceService,
             queryPathToActorField = QueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
             actorInputValues = getHydrationArguments(hydration),
-            // TODO: figure out what to do for default batch sizes, nobody uses them in central schema
-            batchSize = hydration.batchSize!!,
+            batchSize = hydration.batchSize ?: 50,
             batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {
                 NadelBatchHydrationMatchStrategy.MatchIndex
             } else {

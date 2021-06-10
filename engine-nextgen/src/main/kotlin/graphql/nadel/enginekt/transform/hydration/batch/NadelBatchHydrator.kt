@@ -106,7 +106,7 @@ internal class NadelBatchHydrator(
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
     ): List<NadelResultInstruction> {
         val resultNodesByObjectId = resultNodes.associateBy {
-            it[matchStrategy.objectId]
+            it[state.aliasHelper.getResultKey(matchStrategy.objectId)]
         }
 
         val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.getQueryPath(
@@ -134,34 +134,26 @@ internal class NadelBatchHydrator(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<Deferred<ServiceExecutionResult>> {
-        val inputValueBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
-            aliasHelper = state.aliasHelper,
+        val actorQueries = NadelHydrationFieldsBuilder.makeActorQueries(
             instruction = instruction,
-            hydrationField = state.field,
+            aliasHelper = state.aliasHelper,
+            hydratedField = state.field,
             parentNodes = parentNodes,
         )
 
-        return inputValueBatches
-            .map { inputValueBatch ->
-                val hydrationActorQuery = NadelHydrationFieldsBuilder.getActorQuery(
-                    instruction = instruction,
-                    hydrationField = state.field,
-                    fieldArguments = inputValueBatch.mapKeys { (argument: NadelHydrationActorInput) ->
-                        argument.name
-                    },
-                )
-
-                coroutineScope {
-                    async { // This executes the batches in parallel i.e. executes hydration as Deferred/Future
+        return coroutineScope {
+            actorQueries
+                .map { actorQuery ->
+                    async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
                         engine.executeHydration(
                             service = instruction.actorService,
-                            topLevelField = hydrationActorQuery,
-                            pathToSourceField = instruction.queryPathToActorField,
+                            topLevelField = actorQuery,
+                            pathToActorField = instruction.queryPathToActorField,
                             executionContext = state.executionContext,
                         )
                     }
                 }
-            }
+        }
     }
 
     private suspend fun getHydrationActorResultNodes(

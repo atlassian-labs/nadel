@@ -1,51 +1,73 @@
 package graphql.nadel.enginekt.transform.hydration
 
 import graphql.nadel.Service
+import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
+import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy.MatchObjectIdentifier
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationInputBuilder
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
+import graphql.nadel.enginekt.util.deepClone
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLUnionType
 
 internal object NadelHydrationFieldsBuilder {
-    fun getActorQuery(
+    fun makeActorQuery(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: AliasHelper,
-        hydrationField: NormalizedField,
+        hydratedField: NormalizedField,
         parentNode: JsonNode,
     ): NormalizedField {
-        return getActorQuery(
-            instruction,
-            hydrationField,
+        return makeActorQuery(
+            instruction = instruction,
             fieldArguments = NadelHydrationInputBuilder.getInputValues(
-                instruction,
-                aliasHelper,
-                hydrationField,
-                parentNode,
+                instruction = instruction,
+                aliasHelper = aliasHelper,
+                hydratedField = hydratedField,
+                parentNode = parentNode,
             ),
+            fieldChildren = deepClone(fields = hydratedField.children),
         )
     }
 
-    fun getActorQuery(
-        instruction: NadelGenericHydrationInstruction,
-        hydrationField: NormalizedField,
-        fieldArguments: Map<String, NormalizedInputValue>,
-    ): NormalizedField {
-        return NFUtil.createField(
-            schema = instruction.actorService.underlyingSchema,
-            parentType = instruction.actorService.underlyingSchema.queryType,
-            queryPathToField = instruction.queryPathToActorField,
-            fieldArguments = fieldArguments,
-            fieldChildren = hydrationField.children,
+    fun makeActorQueries(
+        instruction: NadelBatchHydrationFieldInstruction,
+        aliasHelper: AliasHelper,
+        hydratedField: NormalizedField,
+        parentNodes: List<JsonNode>,
+    ): List<NormalizedField> {
+        val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
+            instruction = instruction,
+            aliasHelper = aliasHelper,
+            hydrationField = hydratedField,
+            parentNodes = parentNodes,
         )
+
+        val fieldChildren = deepClone(fields = hydratedField.children).let { children ->
+            when (val objectIdField = makeObjectIdField(aliasHelper, instruction)) {
+                null -> children
+                else -> children + objectIdField
+            }
+        }
+
+        return argBatches.map { argBatch ->
+            makeActorQuery(
+                instruction = instruction,
+                fieldArguments = argBatch.mapKeys { (input: NadelHydrationActorInput) -> input.name },
+                fieldChildren = fieldChildren,
+            )
+        }
     }
 
-    fun getArtificialFields(
+    fun makeFieldsUsedAsActorInputValues(
         service: Service,
         executionPlan: NadelExecutionPlan,
         aliasHelper: AliasHelper,
@@ -72,5 +94,44 @@ internal object NadelHydrationFieldsBuilder {
                 )
             }
             .toList()
+    }
+
+    private fun makeActorQuery(
+        instruction: NadelGenericHydrationInstruction,
+        fieldArguments: Map<String, NormalizedInputValue>,
+        fieldChildren: List<NormalizedField>,
+    ): NormalizedField {
+        return NFUtil.createField(
+            schema = instruction.actorService.underlyingSchema,
+            parentType = instruction.actorService.underlyingSchema.queryType,
+            queryPathToField = instruction.queryPathToActorField,
+            fieldArguments = fieldArguments,
+            fieldChildren = fieldChildren,
+        )
+    }
+
+    private fun makeObjectIdField(
+        aliasHelper: AliasHelper,
+        batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
+    ): NormalizedField? {
+        return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
+            is MatchObjectIdentifier -> {
+                val actorField = NadelHydrationUtil.getActorField(batchHydrationInstruction)
+                val underlyingSchema = batchHydrationInstruction.actorService.underlyingSchema
+                val objectTypes: List<GraphQLObjectType> = when (val outputType = actorField.type) {
+                    is GraphQLObjectType -> listOf(outputType)
+                    is GraphQLUnionType -> outputType.types.map { it as GraphQLObjectType }
+                    is GraphQLInterfaceType -> underlyingSchema.getImplementations(outputType)
+                    else -> error("When matching by object identifier, actor field output type must be object")
+                }
+
+                NormalizedField.newNormalizedField()
+                    .objectTypeNames(objectTypes.map { it.name })
+                    .fieldName(matchStrategy.objectId)
+                    .alias(aliasHelper.getResultKey(matchStrategy.objectId))
+                    .build()
+            }
+            else -> null
+        }
     }
 }

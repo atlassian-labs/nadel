@@ -76,3 +76,11 @@ val NormalizedField.queryPath: QueryPath get() = QueryPath(listOfResultKeys)
 inline fun <reified T : AnyAstDefinition> Document.getDefinitionsOfType(): List<T> {
     return getDefinitionsOfType(T::class.java)
 }
+
+fun deepClone(fields: List<NormalizedField>): List<NormalizedField> {
+    return fields.map {
+        it.toBuilder()
+            .children(deepClone(fields = it.children))
+            .build()
+    }
+}

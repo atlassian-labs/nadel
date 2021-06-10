@@ -63,21 +63,24 @@ class EngineTests : FunSpec({
     val fixturesDir = File(javaClass.classLoader.getResource("fixtures")!!.path)
     fixturesDir.listFiles()!!
         .asSequence()
+        .filter {
+            it.name == "hydration-list-with-batching.yml"
+        }
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
         .forEach { fixture ->
             engineFactories.all
                 .asSequence()
                 // TODO: remove
-                .filter { (key) -> key == Engine.current }
+                // .filter { (key) -> key == Engine.nextgen }
                 .filter { (key) ->
-                    getPropertyValue(instance = fixture.enabled, propertyName = key.name) || true
+                    fixture.enabled.get(engine = key)
                 }
                 .forEach { (key, engineFactory) ->
                     val execute: suspend TestContext.() -> Unit = {
                         execute(fixture, key, engineFactory)
                     }
-                    if (getPropertyValue(instance = fixture.ignored, propertyName = key.name)) {
+                    if (fixture.ignored.get(engine = key)) {
                         xtest("$key ${fixture.name}", execute)
                     } else {
                         test("$key ${fixture.name}", execute)
@@ -128,6 +131,10 @@ private suspend fun execute(
                     emptyMap(), /* variables */
                 )
 
+                println("Original service response")
+                println(response)
+                println()
+
                 @Suppress("UNCHECKED_CAST")
                 return response.mapValues { (key, value) ->
                     when (key) {
@@ -135,7 +142,7 @@ private suspend fun execute(
                         else -> value
                     }
                 }.also {
-                    println("Mapped response")
+                    println("Mapped service response")
                     println(it)
                     println()
                 }

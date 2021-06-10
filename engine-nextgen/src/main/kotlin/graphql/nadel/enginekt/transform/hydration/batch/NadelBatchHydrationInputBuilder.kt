@@ -29,10 +29,10 @@ internal object NadelBatchHydrationInputBuilder {
         hydrationField: NormalizedField,
         parentNodes: List<JsonNode>,
     ): List<Map<NadelHydrationActorInput, NormalizedInputValue>> {
-        val sourceFieldDefinition = NadelHydrationUtil.getSourceFieldDefinition(instruction)
+        val actorFieldDefinition = NadelHydrationUtil.getActorField(instruction)
 
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
-        val batchArgs = getBatchInputValues(sourceFieldDefinition, instruction, parentNodes, aliasHelper)
+        val batchArgs = getBatchInputValues(actorFieldDefinition, instruction, parentNodes, aliasHelper)
 
         return batchArgs.map { nonBatchArgs + it }
     }
@@ -42,12 +42,12 @@ internal object NadelBatchHydrationInputBuilder {
         hydrationField: NormalizedField,
     ): Map<NadelHydrationActorInput, NormalizedInputValue> {
         return mapFrom(
-            instruction.actorInputValues.mapNotNull { sourceFieldArg ->
-                when (val valueSource = sourceFieldArg.valueSource) {
+            instruction.actorInputValues.mapNotNull { actorFieldArg ->
+                when (val valueSource = actorFieldArg.valueSource) {
                     is NadelHydrationActorInput.ValueSource.ArgumentValue -> {
                         when (val argValue = hydrationField.normalizedArguments[valueSource.argumentName]) {
                             null -> null
-                            else -> sourceFieldArg to argValue
+                            else -> actorFieldArg to argValue
                         }
                     }
                     // These are batch values, ignore them
@@ -58,7 +58,7 @@ internal object NadelBatchHydrationInputBuilder {
     }
 
     private fun getBatchInputValues(
-        sourceFieldDefinition: GraphQLFieldDefinition,
+        actorFieldDefinition: GraphQLFieldDefinition,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
         aliasHelper: AliasHelper,
@@ -75,7 +75,7 @@ internal object NadelBatchHydrationInputBuilder {
             }
             .emptyOrSingle() ?: return emptyList()
 
-        val batchArgDef = sourceFieldDefinition.getArgument(batchArg.name)
+        val batchArgDef = actorFieldDefinition.getArgument(batchArg.name)
 
         return getFieldResultValues(fieldResultValueSource, parentNodes, aliasHelper)
             .chunked(size = batchSize)

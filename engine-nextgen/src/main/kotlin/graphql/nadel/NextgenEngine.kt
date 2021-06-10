@@ -127,25 +127,25 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     internal suspend fun executeHydration(
         service: Service,
         topLevelField: NormalizedField,
-        pathToSourceField: QueryPath,
+        pathToActorField: QueryPath,
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
-        val sourceField = fold(initial = topLevelField, count = pathToSourceField.segments.size - 1) {
+        val actorField = fold(initial = topLevelField, count = pathToActorField.segments.size - 1) {
             it.children.single()
         }
 
         // Creates N plans for the children then merges them together into one big plan
-        val executionPlan = sourceField.children.map {
+        val executionPlan = actorField.children.map {
             executionPlanner.create(executionContext, services, service, rootField = it)
         }.reduce(NadelExecutionPlan::merge)
 
         val artificialFields = mutableListOf<NormalizedField>()
         val overallToUnderlyingFields = mutableMapOf<NormalizedField, List<NormalizedField>>()
 
-        // Transform the children of the source field
-        // The source field itself is already transformed
-        val sourceFieldWithTransformedChildren = sourceField.copyWithChildren(
-            sourceField.children.flatMap { childField ->
+        // Transform the children of the actor field
+        // The actor field itself is already transformed
+        val actorFieldWithTransformedChildren = actorField.copyWithChildren(
+            actorField.children.flatMap { childField ->
                 queryTransformer.transformQuery(executionContext, service, field = childField, executionPlan)
                     .let { result ->
                         artificialFields.addAll(result.artificialFields)
@@ -159,10 +159,10 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             },
         )
 
-        // Get to the top level field again using .parent N times on the new source field
+        // Get to the top level field again using .parent N times on the new actor field
         val transformedQuery: NormalizedField = fold(
-            initial = sourceFieldWithTransformedChildren,
-            count = pathToSourceField.segments.size - 1,
+            initial = actorFieldWithTransformedChildren,
+            count = pathToActorField.segments.size - 1,
         ) {
             it.parent ?: error("No parent")
         }

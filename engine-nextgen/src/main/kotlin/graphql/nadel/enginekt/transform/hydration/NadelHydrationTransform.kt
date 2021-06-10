@@ -78,7 +78,7 @@ internal class NadelHydrationTransform(
         return NadelTransformFieldResult(
             newField = null,
             artificialFields = state.instructions.flatMap { (fieldCoordinates, instruction) ->
-                NadelHydrationFieldsBuilder.getArtificialFields(
+                NadelHydrationFieldsBuilder.makeFieldsUsedAsActorInputValues(
                     service = service,
                     executionPlan = executionPlan,
                     aliasHelper = state.aliasHelper,
@@ -143,13 +143,13 @@ internal class NadelHydrationTransform(
 
         val result = engine.executeHydration(
             service = instruction.actorService,
-            topLevelField = NadelHydrationFieldsBuilder.getActorQuery(
+            topLevelField = NadelHydrationFieldsBuilder.makeActorQuery(
                 instruction = instruction,
                 aliasHelper = state.aliasHelper,
-                hydrationField = hydrationField,
+                hydratedField = hydrationField,
                 parentNode = parentNode,
             ),
-            pathToSourceField = instruction.queryPathToActorField,
+            pathToActorField = instruction.queryPathToActorField,
             executionContext = executionContext,
         )
 
