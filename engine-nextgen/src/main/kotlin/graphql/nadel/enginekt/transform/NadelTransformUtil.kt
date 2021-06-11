@@ -1,8 +1,9 @@
 package graphql.nadel.enginekt.transform
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
+import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelFieldInstruction
-import graphql.nadel.enginekt.plan.NadelExecutionPlan
+import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.JsonMap
@@ -13,7 +14,8 @@ import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 object NadelTransformUtil {
     fun getOverallTypename(
-        executionPlan: NadelExecutionPlan,
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
         aliasHelper: AliasHelper,
         node: JsonNode,
     ): String? {
@@ -21,7 +23,8 @@ object NadelTransformUtil {
         val nodeValueAsMap = node.value as? JsonMap ?: return null
 
         return if (aliasHelper.typeNameResultKey in nodeValueAsMap) {
-            executionPlan.getOverallTypeName(
+            executionBlueprint.getOverallTypeName(
+                service = service,
                 underlyingTypeName = nodeValueAsMap[aliasHelper.typeNameResultKey] as String,
             )
         } else {
@@ -42,12 +45,14 @@ object NadelTransformUtil {
 }
 
 fun <T : NadelFieldInstruction> Map<FieldCoordinates, T>.getInstructionForNode(
-    executionPlan: NadelExecutionPlan,
+    executionBlueprint: NadelOverallExecutionBlueprint,
+    service: Service,
     aliasHelper: AliasHelper,
     parentNode: JsonNode,
 ): T? = let { instructions ->
     val overallTypeName = NadelTransformUtil.getOverallTypename(
-        executionPlan = executionPlan,
+        executionBlueprint = executionBlueprint,
+        service = service,
         aliasHelper = aliasHelper,
         node = parentNode,
     )

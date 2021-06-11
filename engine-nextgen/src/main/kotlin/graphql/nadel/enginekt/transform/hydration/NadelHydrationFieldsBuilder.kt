@@ -4,6 +4,7 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
+import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy.MatchObjectIdentifier
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
@@ -70,12 +71,12 @@ internal object NadelHydrationFieldsBuilder {
 
     fun makeFieldsUsedAsActorInputValues(
         service: Service,
-        executionPlan: NadelExecutionPlan,
+        executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: AliasHelper,
         fieldCoordinates: FieldCoordinates,
         instruction: NadelGenericHydrationInstruction,
     ): List<NormalizedField> {
-        val underlyingTypeName = executionPlan.getUnderlyingTypeName(overallTypeName = fieldCoordinates.typeName)
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(overallTypeName = fieldCoordinates.typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
@@ -129,7 +130,7 @@ internal object NadelHydrationFieldsBuilder {
                 NormalizedField.newNormalizedField()
                     .objectTypeNames(objectTypes.map { it.name })
                     .fieldName(matchStrategy.objectId)
-                    .alias(aliasHelper.getResultKey(matchStrategy.objectId))
+                    .alias(aliasHelper.getObjectIdentifierKey(matchStrategy.objectId))
                     .build()
             }
             else -> null

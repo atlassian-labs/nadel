@@ -5,6 +5,8 @@ import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.language.Definition
 import graphql.language.Document
+import graphql.language.ObjectTypeDefinition
+import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.normalized.NormalizedField
@@ -18,6 +20,14 @@ import graphql.schema.GraphQLTypeUtil
 typealias AnyAstDefinition = Definition<*>
 
 fun GraphQLSchema.getOperationType(kind: OperationKind): GraphQLObjectType? {
+    return when (kind) {
+        OperationKind.QUERY -> queryType
+        OperationKind.MUTATION -> mutationType
+        OperationKind.SUBSCRIPTION -> subscriptionType
+    }
+}
+
+fun DefinitionRegistry.getOperationTypes(kind: OperationKind): List<ObjectTypeDefinition> {
     return when (kind) {
         OperationKind.QUERY -> queryType
         OperationKind.MUTATION -> mutationType

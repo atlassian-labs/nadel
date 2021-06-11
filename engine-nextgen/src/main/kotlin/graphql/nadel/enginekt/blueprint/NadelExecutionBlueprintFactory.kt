@@ -1,5 +1,9 @@
 package graphql.nadel.enginekt.blueprint
 
+import graphql.language.EnumTypeDefinition
+import graphql.language.ImplementingTypeDefinition
+import graphql.language.NamedNode
+import graphql.nadel.OperationKind
 import graphql.nadel.Service
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
 import graphql.nadel.dsl.ExtendedFieldDefinition
@@ -15,17 +19,23 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrate
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.util.getFieldAt
+import graphql.nadel.enginekt.util.mapFrom
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.schema.NadelDirectives
+import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLDirectiveContainer
+import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
-import graphql.schema.FieldCoordinates.coordinates as createFieldCoordinates
+import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
+
+internal typealias AnyNamedNode = NamedNode<*>
 
 internal object NadelExecutionBlueprintFactory {
-    fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelExecutionBlueprint {
+    fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelOverallExecutionBlueprint {
         val typeRenameInstructions = createTypeRenameInstructions(overallSchema).strictAssociateBy {
             it.overallName
         }
@@ -33,9 +43,10 @@ internal object NadelExecutionBlueprintFactory {
             it.location
         }
 
-        return NadelExecutionBlueprint(
+        return NadelOverallExecutionBlueprint(
             fieldInstructions,
             typeRenameInstructions,
+            underlyingBlueprints = deriveUnderlyingBlueprints(services, fieldInstructions, typeRenameInstructions),
         )
     }
 
@@ -68,7 +79,7 @@ internal object NadelExecutionBlueprintFactory {
         field: GraphQLFieldDefinition,
         mappingDefinition: FieldMappingDefinition,
     ): NadelFieldInstruction {
-        val location = createFieldCoordinates(parentType, field)
+        val location = makeFieldCoordinates(parentType, field)
 
         return NadelDeepRenameFieldInstruction(
             location,
@@ -93,7 +104,7 @@ internal object NadelExecutionBlueprintFactory {
         }
 
         return NadelHydrationFieldInstruction(
-            location = createFieldCoordinates(parentType, field),
+            location = makeFieldCoordinates(parentType, field),
             actorService = hydrationSourceService,
             queryPathToActorField = QueryPath(queryPathToActorField),
             actorInputValues = getHydrationArguments(hydration),
@@ -106,7 +117,7 @@ internal object NadelExecutionBlueprintFactory {
         hydration: UnderlyingServiceHydration,
         sourceService: Service,
     ): NadelFieldInstruction {
-        val location = createFieldCoordinates(type, field)
+        val location = makeFieldCoordinates(type, field)
 
         return NadelBatchHydrationFieldInstruction(
             location,
@@ -128,7 +139,7 @@ internal object NadelExecutionBlueprintFactory {
         mappingDefinition: FieldMappingDefinition,
     ): NadelRenameFieldInstruction {
         return NadelRenameFieldInstruction(
-            location = createFieldCoordinates(parentType, field),
+            location = makeFieldCoordinates(parentType, field),
             underlyingName = mappingDefinition.inputPath.single(),
         )
     }
@@ -181,5 +192,90 @@ internal object NadelExecutionBlueprintFactory {
         val extendedDef = field.definition as? ExtendedFieldDefinition
         return extendedDef?.fieldTransformation?.underlyingServiceHydration
             ?: NadelDirectives.createUnderlyingServiceHydration(field)
+    }
+
+    private fun deriveUnderlyingBlueprints(
+        services: List<Service>,
+        fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
+        typeRenameInstructions: Map<String, NadelTypeRenameInstruction>,
+    ): Map<String, NadelExecutionBlueprint> {
+        val definitionNameToService = mapFrom(
+            services.flatMap { service ->
+                val operationTypes = service.definitionRegistry.operationMap.values.flatten()
+                service.definitionRegistry.definitions
+                    .filterIsInstance<AnyNamedNode>()
+                    .filterNot { def -> def in operationTypes }
+                    .map { def -> def.name to service }
+            }
+        )
+
+        val coordinatesToService = mapFrom(
+            services.flatMap { service ->
+                service.definitionRegistry.definitions
+                    .filterIsInstance<AnyNamedNode>()
+                    .flatMap { typeDef ->
+                        when (typeDef) {
+                            is EnumTypeDefinition -> typeDef.enumValueDefinitions.map { enumValue ->
+                                FieldCoordinates.coordinates(typeDef.name, enumValue.name)
+                            }
+                            is ImplementingTypeDefinition -> typeDef.fieldDefinitions.map { fieldDef ->
+                                FieldCoordinates.coordinates(typeDef.name, fieldDef.name)
+                            }
+                            else -> emptyList()
+                        }
+                    }
+                    .map { coordinates -> coordinates to service }
+            }
+        )
+
+        val typeInstructionsByServiceName = typeRenameInstructions.values
+            .groupBy { instruction ->
+                definitionNameToService[instruction.overallName]!!.name
+            }
+            .mapValues { (_, typeInstructionsForService) ->
+                mapFrom(
+                    typeInstructionsForService.map { instruction: NadelTypeRenameInstruction ->
+                        // Make sure to key by underlying name
+                        instruction.underlyingName to instruction
+                    },
+                )
+            }
+
+        val fieldInstructionsByServiceName = fieldInstructions.values
+            .groupBy { instruction ->
+                coordinatesToService[instruction.location]!!.name
+            }
+            .mapValues { (_, fieldInstructionsForService) ->
+                mapFrom(
+                    fieldInstructionsForService.map { instruction: NadelFieldInstruction ->
+                        val underlyingTypeName = instruction.location.typeName.let { overallTypeName ->
+                            typeRenameInstructions[overallTypeName]?.underlyingName ?: overallTypeName
+                        }
+                        val underlyingFieldName = when (instruction) {
+                            is NadelRenameFieldInstruction -> instruction.underlyingName
+                            else -> instruction.location.fieldName
+                        }
+                        val underlyingFieldCoordinates = makeFieldCoordinates(underlyingTypeName, underlyingFieldName)
+
+                        when (instruction) {
+                            is NadelBatchHydrationFieldInstruction -> instruction.copy(location = underlyingFieldCoordinates)
+                            is NadelDeepRenameFieldInstruction -> instruction.copy(location = underlyingFieldCoordinates)
+                            is NadelHydrationFieldInstruction -> instruction.copy(location = underlyingFieldCoordinates)
+                            is NadelRenameFieldInstruction -> instruction.copy(location = underlyingFieldCoordinates)
+                        }.let {
+                            it.location to it
+                        }
+                    },
+                )
+            }
+
+        return mapFrom(
+            services.map { service ->
+                service.name to NadelUnderlyingExecutionBlueprint(
+                    fieldInstructions = fieldInstructionsByServiceName[service.name] ?: emptyMap(),
+                    typeInstructions = typeInstructionsByServiceName[service.name] ?: emptyMap(),
+                )
+            }
+        )
     }
 }

@@ -16,7 +16,7 @@ overallSchema:
   service1: |
     service service1 {
       type Query {
-        foo(id: ID): Foo
+        foo: Foo
       }
       type Foo {
         id: ID
@@ -46,7 +46,7 @@ underlyingSchema:
     }
 
     type Query {
-      foo(id: ID): Foo
+      foo: Foo
     }
 query: |
   query {

@@ -65,6 +65,9 @@ class EngineTests : FunSpec({
         .onEach {
             println("Loading ${it.nameWithoutExtension}")
         }
+        .filter {
+            "query-with-three-nested" in it.name
+        }
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
         .forEach { fixture ->
@@ -105,7 +108,9 @@ private suspend fun execute(
                 fixture.serviceCalls.current.strictAssociateBy { call ->
                     getTopLevelField(call.request.document).transform {
                         // Remove children, we want to match purely on the top level field itself
-                        it.selectionSet(SelectionSet.newSelectionSet().build())
+                        it
+                            .alias(null)
+                            .selectionSet(SelectionSet.newSelectionSet().build())
                     }.toString()
                 }
             }
@@ -113,7 +118,9 @@ private suspend fun execute(
             private fun getMatchingCall(query: Document): ServiceCall? {
                 return callsByTopLevelField[
                     getTopLevelField(query).transform {
-                        it.selectionSet(SelectionSet.newSelectionSet().build())
+                        it
+                            .alias(null)
+                            .selectionSet(SelectionSet.newSelectionSet().build())
                     }.toString(),
                 ]
             }
@@ -160,6 +167,12 @@ private suspend fun execute(
                             field.objectTypeNames.single().also {
                                 println("Inferring type of ${field.queryPath} as $it")
                             }
+                        } else if ("__object_ID__" in field.resultKey) {
+                            if ("object_identifier__UUID" in parent) {
+                                parent["object_identifier__UUID"]
+                            } else {
+                                fail("Could not determine object identifier")
+                            }
                         } else {
                             fail("Could not determine value")
                         }).let { value ->
@@ -167,7 +180,9 @@ private suspend fun execute(
                                 @Suppress("UNCHECKED_CAST")
                                 return when (value) {
                                     is AnyList -> value.map(::mapValue)
-                                    is AnyMap -> transform(field.children, parent = value as JsonMap, underlyingSchema)
+                                    is AnyMap -> transform(field.children,
+                                        parent = value as JsonMap,
+                                        underlyingSchema)
                                     else -> value
                                 }
                             }

@@ -38,7 +38,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val fieldInfos = NadelFieldInfos.create(nadel.services)
     private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema, nadel.services)
     private val executionPlanner = NadelExecutionPlanFactory.create(executionBlueprint, nadel.overallSchema, this)
-    private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema)
+    private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema, executionBlueprint)
     private val resultTransformer = NadelResultTransformer(nadel.overallSchema)
     private val instrumentation = nadel.instrumentation
 
@@ -100,6 +100,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         val result = executeService(service, transformedQuery, executionInput)
         val executionResult = resultTransformer.transform(
             executionContext = executionContext,
+            executionBlueprint = executionBlueprint,
             executionPlan = executionPlan,
             artificialFields = queryTransform.artificialFields,
             overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
@@ -171,6 +172,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         val result = executeService(service, transformedQuery, executionContext.executionInput)
         return resultTransformer.transform(
             executionContext = executionContext,
+            executionBlueprint = executionBlueprint,
             executionPlan = executionPlan,
             artificialFields = artificialFields,
             overallToUnderlyingFields = overallToUnderlyingFields,

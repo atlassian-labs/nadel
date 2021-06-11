@@ -25,8 +25,8 @@ overallSchema:
     }
   Foo: |
     service Foo {
-      type Query{
-        fooz: [Fooz]  => renamed from foos
+      type Query {
+        fooz: [Fooz] => renamed from foos
       }
       type Fooz => renamed from Foo {
         fooDetails: FooDetails => renamed from details

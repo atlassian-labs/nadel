@@ -1,12 +1,9 @@
 package graphql.nadel.enginekt.schema
 
-import graphql.language.FieldDefinition
-import graphql.language.ObjectTypeDefinition
 import graphql.nadel.OperationKind
 import graphql.nadel.Service
-import graphql.nadel.enginekt.util.getOperationType
+import graphql.nadel.enginekt.util.getOperationTypes
 import graphql.nadel.enginekt.util.mapFrom
-import graphql.schema.GraphQLFieldDefinition
 
 internal data class NadelFieldInfos(
     private val queryTopLevelFields: Map<String, NadelFieldInfo>,
@@ -36,36 +33,15 @@ internal data class NadelFieldInfos(
         ): Map<String, NadelFieldInfo> {
             return mapFrom(
                 services.flatMap forService@{ service ->
-                    val underlyingOperationType = service.underlyingSchema.getOperationType(operationKind)
-                        ?: return@forService emptyList()
-
-                    // TODO: determine what to do for underlying fields - those will conflict as Map keys
-                    underlyingOperationType.fieldDefinitions.mapNotNull forField@{ underlyingField ->
-                        val overallField = getOverallField(service, operationKind, underlyingField)
-                            ?: return@forField null
-                        overallField.name to NadelFieldInfo(service, operationKind, overallField)
+                    // Definition registry is the service's AST contributions to the overall schema
+                    val operationTypes = service.definitionRegistry.getOperationTypes(operationKind)
+                    operationTypes.flatMap { operationType ->
+                        operationType.fieldDefinitions.map { fieldDef ->
+                            fieldDef.name to NadelFieldInfo(service, operationKind, fieldDef)
+                        }
                     }
                 }
             )
-        }
-
-        private fun getOverallField(
-            service: Service,
-            operationKind: OperationKind,
-            underlyingField: GraphQLFieldDefinition,
-        ): FieldDefinition? {
-            val overallOperationTypes: MutableList<ObjectTypeDefinition> = when (operationKind) {
-                OperationKind.QUERY -> service.definitionRegistry.queryType
-                OperationKind.MUTATION -> service.definitionRegistry.mutationType
-                OperationKind.SUBSCRIPTION -> service.definitionRegistry.subscriptionType
-            }
-
-            return overallOperationTypes
-                .asSequence()
-                .flatMap(ObjectTypeDefinition::getFieldDefinitions)
-                .firstOrNull { fieldDef ->
-                    fieldDef.name == underlyingField.name
-                }
         }
     }
 }

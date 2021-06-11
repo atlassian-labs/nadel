@@ -3,6 +3,7 @@ package graphql.nadel.enginekt.transform.result
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
+import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer.DataMutation
 import graphql.nadel.enginekt.transform.result.json.AnyJsonNodePathSegment
@@ -25,6 +26,7 @@ internal class NadelResultTransformer(
 ) {
     suspend fun transform(
         executionContext: NadelExecutionContext,
+        executionBlueprint: NadelOverallExecutionBlueprint,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<NormalizedField>,
         overallToUnderlyingFields: Map<NormalizedField, List<NormalizedField>>,
@@ -34,12 +36,14 @@ internal class NadelResultTransformer(
         val instructions = executionPlan.transformationSteps.flatMap { (field, steps) ->
             steps.flatMap step@{ step ->
                 // This can be null if we did not end up sending the field e.g. for hydration
-                val underlyingFields = overallToUnderlyingFields[field] ?: return@step emptyList()
+                val underlyingFields = overallToUnderlyingFields[field]
+                    ?.takeIf(List<NormalizedField>::isNotEmpty)
+                    ?: return@step emptyList()
 
                 step.transform.getResultInstructions(
                     executionContext,
                     overallSchema,
-                    executionPlan,
+                    executionBlueprint,
                     service,
                     field,
                     underlyingFields.first().parent,

@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.transform.query
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.NadelExecutionContext
+import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.util.toBuilder
@@ -10,6 +11,7 @@ import graphql.schema.GraphQLSchema
 
 class NadelQueryTransformer internal constructor(
     private val overallSchema: GraphQLSchema,
+    private val executionBlueprint: NadelOverallExecutionBlueprint,
 ) {
     interface Continuation {
         suspend fun transform(fields: NormalizedField): List<NormalizedField> {
@@ -118,7 +120,7 @@ class NadelQueryTransformer internal constructor(
             continuation,
             service,
             overallSchema,
-            executionPlan,
+            executionBlueprint,
             field,
             transformation.state,
         )
@@ -153,7 +155,7 @@ class NadelQueryTransformer internal constructor(
     ): NormalizedField.Builder {
         return field.toBuilder()
             .clearObjectTypesNames()
-            .objectTypeNames(field.objectTypeNames.map(executionPlan::getUnderlyingTypeName))
+            .objectTypeNames(field.objectTypeNames.map(executionBlueprint::getUnderlyingTypeName))
     }
 
     /**
@@ -182,8 +184,11 @@ class NadelQueryTransformer internal constructor(
     }
 
     companion object {
-        fun create(overallSchema: GraphQLSchema): NadelQueryTransformer {
-            return NadelQueryTransformer(overallSchema)
+        fun create(
+            overallSchema: GraphQLSchema,
+            executionBlueprint: NadelOverallExecutionBlueprint,
+        ): NadelQueryTransformer {
+            return NadelQueryTransformer(overallSchema, executionBlueprint)
         }
     }
 }
