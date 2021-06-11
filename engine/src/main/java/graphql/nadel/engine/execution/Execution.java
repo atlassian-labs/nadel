@@ -31,7 +31,6 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOpera
 import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.normalized.NormalizedQueryFactory;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
-import graphql.nadel.schema.NadelDirectives;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
@@ -164,16 +163,10 @@ public class Execution {
     private FieldInfos createFieldsInfos() {
         Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition = new LinkedHashMap<>();
 
-        GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
-
-        schemaQueryType.getFieldDefinitions()
-                .stream()
-                .filter(fieldDefinition -> fieldDefinition.getDirective(NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()) != null)
-                .forEach(fieldDefinition -> fieldInfoByDefinition.put(fieldDefinition, new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, null, fieldDefinition)));
-
         for (Service service : services) {
             List<ObjectTypeDefinition> queryType = service.getDefinitionRegistry().getQueryType();
             if (queryType != null) {
+                GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
                 for (ObjectTypeDefinition objectTypeDefinition : queryType) {
                     for (FieldDefinition fieldDefinition : objectTypeDefinition.getFieldDefinitions()) {
                         GraphQLFieldDefinition graphQLFieldDefinition = schemaQueryType.getFieldDefinition(fieldDefinition.getName());
