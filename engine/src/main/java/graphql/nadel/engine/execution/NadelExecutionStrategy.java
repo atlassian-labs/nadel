@@ -21,6 +21,7 @@ import graphql.nadel.engine.execution.transformation.TransformationMetadata.Norm
 import graphql.nadel.engine.hooks.EngineServiceExecutionHooks;
 import graphql.nadel.engine.hooks.ResultRewriteParams;
 import graphql.nadel.engine.result.ExecutionResultNode;
+import graphql.nadel.engine.result.LeafExecutionResultNode;
 import graphql.nadel.engine.result.ResultComplexityAggregator;
 import graphql.nadel.engine.result.RootExecutionResultNode;
 import graphql.nadel.hooks.CreateServiceContextParams;
@@ -133,13 +134,15 @@ public class NadelExecutionStrategy {
             final Service service;
 
             if(usesDynamicService) {
-                ServiceOrError serviceOrError = serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo.getField().getName(), fieldExecutionStepInfo.getArguments());
+                ServiceOrError serviceOrError = assertNotNull(serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo));
 
-                if(serviceOrError != null && serviceOrError.getService() != null) {
+                if(serviceOrError.getService() != null) {
                     service = serviceOrError.getService();
                 } else {
-                    // TODO: Deal with the case when the service couldn't be resolved
-                    service = null;
+                    GraphQLError graphQLError = assertNotNull(serviceOrError.getError());
+
+                    result.add(CompletableFuture.completedFuture(new OneServiceExecution(null, null, null, true, graphQLError, fieldExecutionStepInfo)));
+                    continue;
                 }
 
             } else {
@@ -153,7 +156,7 @@ public class NadelExecutionStrategy {
                     .build();
 
             CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
-            CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo));
+            CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo, false, null, fieldExecutionStepInfo));
             result.add(serviceCF);
         }
         return Async.each(result);
@@ -169,6 +172,26 @@ public class NadelExecutionStrategy {
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
+            if(oneServiceExecution.earlyFailure) {
+                LeafExecutionResultNode leafExecutionResultNode = new LeafExecutionResultNode
+                        .Builder()
+                        .addError(oneServiceExecution.error)
+                        .completedValue(null)
+                        .fieldDefinition(oneServiceExecution.fieldExecutionStepInfo.getFieldDefinition())
+                        .resultPath(oneServiceExecution.fieldExecutionStepInfo.getPath())
+                        .alias(oneServiceExecution.fieldExecutionStepInfo.getField().getSingleField().getAlias())
+                        .objectType(oneServiceExecution.fieldExecutionStepInfo.getObjectType())
+                        .build();
+
+                RootExecutionResultNode rootExecutionResultNode = new RootExecutionResultNode.Builder()
+                        .addChild(leafExecutionResultNode)
+                        .build();
+
+                resultNodes.add(CompletableFuture.completedFuture(rootExecutionResultNode));
+
+                continue;
+            }
+
             Service service = oneServiceExecution.service;
             ExecutionStepInfo esi = oneServiceExecution.stepInfo;
             Object serviceContext = oneServiceExecution.serviceContext;
@@ -296,7 +319,6 @@ public class NadelExecutionStrategy {
         return resultToResultNode.createResultWithNullTopLevelField(overallQuery, topLevelField, singletonList(error), emptyMap());
     }
 
-    @SuppressWarnings("unused")
     private <T> void possiblyLogException(T result, Throwable exception) {
         if (exception != null) {
             exception.printStackTrace();
@@ -335,15 +357,21 @@ public class NadelExecutionStrategy {
 
     private static class OneServiceExecution {
 
-        public OneServiceExecution(Service service, Object serviceContext, ExecutionStepInfo stepInfo) {
+        public OneServiceExecution(Service service, Object serviceContext, ExecutionStepInfo stepInfo, boolean earlyFailure, GraphQLError error, ExecutionStepInfo fieldExecutionStepInfo) {
             this.service = service;
             this.serviceContext = serviceContext;
             this.stepInfo = stepInfo;
+            this.earlyFailure = earlyFailure;
+            this.error = error;
+            this.fieldExecutionStepInfo = fieldExecutionStepInfo;
         }
 
         final Service service;
         final Object serviceContext;
         final ExecutionStepInfo stepInfo;
+        final boolean earlyFailure;
+        final GraphQLError error;
+        final ExecutionStepInfo fieldExecutionStepInfo;
     }
 
     public static class ExecutionPathSet extends LinkedHashSet<ResultPath> {
