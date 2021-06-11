@@ -55,9 +55,9 @@ public interface ServiceExecutionHooks {
      * @param services a list of all services registered on Nadel
      * @param fieldName the name of the field
      * @param arguments GraphQL arguments that were passed when querying the field
-     * @return the Service that should be used to fetch data for that field
+     * @return the Service that should be used to fetch data for that field or an error that was raised when trying to resolve the service.
      */
-    default Service resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+    default ServiceOrError resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
         return null;
     }
 }

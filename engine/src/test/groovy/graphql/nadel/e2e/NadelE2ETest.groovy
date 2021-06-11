@@ -26,6 +26,7 @@ import graphql.nadel.engine.result.ResultNodesUtil
 import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.engine.testutils.TestUtil
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.ServiceOrError
 import graphql.nadel.instrumentation.ChainedNadelInstrumentation
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
@@ -1490,12 +1491,12 @@ class NadelE2ETest extends StrategyTestHelper {
 
         def serviceHooks = new ServiceExecutionHooks() {
             @Override
-            Service resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+            ServiceOrError resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
                 def bitbucketService = services.stream().filter({ service -> (service.getName() == "BitbucketService") }).findFirst().get()
                 def ariArgument = arguments.get("id")
 
                 if(ariArgument.toString().contains("bitbucket")) {
-                    return bitbucketService
+                    return new ServiceOrError(bitbucketService, null)
                 }
 
                 return null
@@ -1616,17 +1617,17 @@ class NadelE2ETest extends StrategyTestHelper {
 
         def serviceHooks = new ServiceExecutionHooks() {
             @Override
-            Service resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+            ServiceOrError resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
                 def bitbucketService = services.stream().filter({ service -> (service.getName() == "BitbucketService") }).findFirst().get()
                 def jiraService = services.stream().filter({ service -> (service.getName() == "JiraService") }).findFirst().get()
                 def ariArgument = arguments.get("id")
 
                 if(ariArgument.toString().contains("bitbucket")) {
-                    return bitbucketService
+                    return new ServiceOrError(bitbucketService, null)
                 }
 
                 if(ariArgument.toString().contains("jira")) {
-                    return jiraService
+                    return new ServiceOrError(jiraService, null)
                 }
 
                 return null

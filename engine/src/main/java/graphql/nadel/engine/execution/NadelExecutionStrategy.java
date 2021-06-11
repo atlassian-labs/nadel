@@ -25,6 +25,7 @@ import graphql.nadel.engine.result.ResultComplexityAggregator;
 import graphql.nadel.engine.result.RootExecutionResultNode;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
+import graphql.nadel.hooks.ServiceOrError;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
@@ -132,7 +133,15 @@ public class NadelExecutionStrategy {
             final Service service;
 
             if(usesDynamicService) {
-                service = serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo.getField().getName(), fieldExecutionStepInfo.getArguments());
+                ServiceOrError serviceOrError = serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo.getField().getName(), fieldExecutionStepInfo.getArguments());
+
+                if(serviceOrError != null && serviceOrError.getService() != null) {
+                    service = serviceOrError.getService();
+                } else {
+                    // TODO: Deal with the case when the service couldn't be resolved
+                    service = null;
+                }
+
             } else {
                 service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
             }
