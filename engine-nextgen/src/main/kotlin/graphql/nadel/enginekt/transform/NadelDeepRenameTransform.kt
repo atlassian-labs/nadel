@@ -91,7 +91,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
         return State(
             deepRenameInstructions,
-            AliasHelper.forField(overallField),
+            AliasHelper.forField(tag = "deep_rename", overallField),
             overallField,
         )
     }
