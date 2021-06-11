@@ -2,7 +2,7 @@ package graphql.nadel
 
 import graphql.ExecutionInput
 import graphql.ExecutionResult
-import graphql.ExecutionResultImpl
+import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.language.NodeUtil
@@ -17,6 +17,7 @@ import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
+import graphql.nadel.enginekt.util.mergeResults
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.util.ErrorUtil
@@ -77,7 +78,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             }
         }.awaitAll()
 
-        return mergeTrees(results)
+        return mergeResults(results)
     }
 
     private suspend fun executeTopLevelField(
@@ -107,7 +108,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         )
 
         @Suppress("UNCHECKED_CAST")
-        return ExecutionResultImpl.newExecutionResult()
+        return newExecutionResult()
             .data(executionResult.data)
             .errors(ErrorUtil.createGraphQlErrorsFromRawErrors(executionResult.errors))
             .extensions(executionResult.extensions as Map<Any, Any>)
@@ -194,7 +195,8 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
                 .variables(emptyMap())
                 .fragments(emptyMap())
                 .operationDefinition(document.definitions.singleOfType())
-                .serviceContext(null)
+                // TODO: set back to null
+                .serviceContext(service)
                 .hydrationCall(false)
                 .build()
         ).asDeferred().await()
@@ -203,11 +205,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private fun getOperationKind(queryDocument: Document, operationName: String?): OperationKind {
         val operation = NodeUtil.getOperation(queryDocument, operationName)
         return OperationKind.fromAst(operation.operationDefinition.operation)
-    }
-
-    private fun mergeTrees(results: List<ExecutionResult>): ExecutionResult {
-        // TODO: merge these properly
-        return results.first()
     }
 
     companion object {

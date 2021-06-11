@@ -4,11 +4,11 @@ typealias AnyMap = Map<*, *>
 
 typealias AnyMapEntry = Map.Entry<*, *>
 
-typealias JsonMap = Map<String, *>
+typealias JsonMap = Map<String, Any?>
 
-typealias MutableJsonMap = MutableMap<String, *>
+typealias MutableJsonMap = MutableMap<String, Any?>
 
-typealias JsonMapEntry = Map.Entry<String, *>
+typealias JsonMapEntry = Map.Entry<String, Any?>
 
 typealias AnyMutableMap = MutableMap<*, *>
 

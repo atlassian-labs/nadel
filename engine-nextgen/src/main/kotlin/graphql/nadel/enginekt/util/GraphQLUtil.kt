@@ -1,5 +1,8 @@
 package graphql.nadel.enginekt.util
 
+import graphql.ExecutionResult
+import graphql.ExecutionResultImpl.newExecutionResult
+import graphql.GraphQLError
 import graphql.language.Definition
 import graphql.language.Document
 import graphql.nadel.OperationKind
@@ -94,4 +97,31 @@ fun GraphQLType.unwrap(
         true -> GraphQLTypeUtil.unwrapAll(this)
         else -> GraphQLTypeUtil.unwrapOne(this)
     }
+}
+
+internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
+    val data: MutableJsonMap = mutableMapOf()
+    val extensions: MutableJsonMap = mutableMapOf()
+    val errors: MutableList<GraphQLError> = mutableListOf()
+
+    for (result in results) {
+        if (result.isDataPresent) {
+            data.putAll(result.getData())
+        }
+        errors.addAll(result.errors)
+        result.extensions?.asJsonMap()?.let(extensions::putAll)
+    }
+
+    return newExecutionResult()
+        .data(data.takeIf {
+            it.isNotEmpty()
+        })
+        .extensions(extensions.let {
+            @Suppress("UNCHECKED_CAST") // .extensions should take in a Map<*, *> instead of strictly Map<Any?, Any?>
+            it as Map<Any?, Any?>
+        }.takeIf {
+            it.isNotEmpty()
+        })
+        .errors(errors)
+        .build()
 }
