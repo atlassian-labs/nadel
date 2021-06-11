@@ -1,19 +1,16 @@
 package graphql.nadel.e2e
 
 
-import graphql.ErrorClassification
 import graphql.ErrorType
 import graphql.GraphQLError
+import graphql.GraphqlErrorBuilder
 import graphql.execution.ExecutionStepInfo
-import graphql.language.SourceLocation
 import graphql.nadel.Service
 import graphql.nadel.engine.StrategyTestHelper
 import graphql.nadel.engine.result.ResultComplexityAggregator
 import graphql.nadel.engine.testutils.TestUtil
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.hooks.ServiceOrError
-
-import static java.lang.String.format
 
 class NadelE2EDynamicServiceResolutionTest extends StrategyTestHelper {
     def commonTypes = '''
@@ -76,27 +73,11 @@ class NadelE2EDynamicServiceResolutionTest extends StrategyTestHelper {
 
             return new ServiceOrError(
                     null,
-                    new GraphQLError() {
-                        @Override
-                        String getMessage() {
-                            return format("Could not resolve service for field: %s", executionStepInfo.path)
-                        }
-
-                        @Override
-                        List<SourceLocation> getLocations() {
-                            return null
-                        }
-
-                        @Override
-                        ErrorClassification getErrorType() {
-                            return ErrorType.ExecutionAborted
-                        }
-
-                        @Override
-                        List<Object> getPath() {
-                            return executionStepInfo.getPath().toList()
-                        }
-                    }
+                    GraphqlErrorBuilder.newError()
+                            .message("Could not resolve service for field: %s", executionStepInfo.path)
+                            .errorType(ErrorType.ExecutionAborted)
+                            .path(executionStepInfo.getPath())
+                            .build()
             )
         }
     }
