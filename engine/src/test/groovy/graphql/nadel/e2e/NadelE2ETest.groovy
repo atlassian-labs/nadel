@@ -1451,8 +1451,8 @@ class NadelE2ETest extends StrategyTestHelper {
         '''
 
         def overallSchema = TestUtil.schemaFromNdsl([
-                BitbucketService: '''   
-                    service BitbucketService {
+                RepoService: '''   
+                    service RepoService {
                        type PullRequest implements Node {
                             id: ID!
                             description: String
@@ -1461,7 +1461,7 @@ class NadelE2ETest extends StrategyTestHelper {
                     '''
         ], commonTypes)
 
-        def bitbucketSchema = TestUtil.schema("""
+        def repoSchema = TestUtil.schema("""
             type Query {
                 node(id: ID): Node
             }
@@ -1477,7 +1477,7 @@ class NadelE2ETest extends StrategyTestHelper {
 
         def query = '''
             {
-                node(id: "ari:bitbucket:activation-id-123:pull-request:id-123") {
+                node(id: "pull-request:id-123") {
                    ... on PullRequest {
                         id
                         description
@@ -1486,17 +1486,17 @@ class NadelE2ETest extends StrategyTestHelper {
             }
         '''
 
-        def expectedQuery1 = 'query nadel_2_BitbucketService {node(id:"ari:bitbucket:activation-id-123:pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}'
+        def expectedQuery1 = 'query nadel_2_RepoService {node(id:"pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}'
         Map response1 = [node: [id: "123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
 
         def serviceHooks = new ServiceExecutionHooks() {
             @Override
             ServiceOrError resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
-                def bitbucketService = services.stream().filter({ service -> (service.getName() == "BitbucketService") }).findFirst().get()
-                def ariArgument = arguments.get("id")
+                def repoService = services.stream().filter({ service -> (service.getName() == "RepoService") }).findFirst().get()
+                def idArgument = arguments.get("id")
 
-                if(ariArgument.toString().contains("bitbucket")) {
-                    return new ServiceOrError(bitbucketService, null)
+                if(idArgument.toString().contains("pull-request")) {
+                    return new ServiceOrError(repoService, null)
                 }
 
                 return null
@@ -1508,8 +1508,8 @@ class NadelE2ETest extends StrategyTestHelper {
         when:
         (response, errors) = test1Service(
                 overallSchema,
-                "BitbucketService",
-                bitbucketSchema,
+                "RepoService",
+                repoSchema,
                 query,
                 ["pullRequest"],
                 expectedQuery1,
@@ -1537,16 +1537,16 @@ class NadelE2ETest extends StrategyTestHelper {
         '''
 
         def overallSchema = TestUtil.schemaFromNdsl([
-                BitbucketService: '''   
-                    service BitbucketService {
+                RepoService: '''   
+                    service RepoService {
                        type PullRequest implements Node {
                             id: ID!
                             description: String
                        }
                     }
                    ''',
-                JiraService: '''   
-                    service JiraService {
+                IssueService: '''   
+                    service IssueService {
                        type Issue implements Node {
                             id: ID!
                             issueKey: String
@@ -1555,7 +1555,7 @@ class NadelE2ETest extends StrategyTestHelper {
                     '''
         ], commonTypes)
 
-        def bitbucketSchema = TestUtil.schema("""
+        def repoSchema = TestUtil.schema("""
             type Query {
                 node(id: ID): Node
             }
@@ -1569,7 +1569,7 @@ class NadelE2ETest extends StrategyTestHelper {
                 description: String
             }""")
 
-        def jiraSchema = TestUtil.schema("""
+        def issueSchema = TestUtil.schema("""
             type Query {
                 node(id: ID): Node
             }
@@ -1585,13 +1585,13 @@ class NadelE2ETest extends StrategyTestHelper {
 
         def query = '''
             {
-                pr:node(id: "ari:bitbucket:activation-id-123:pull-request:id-123") {
+                pr:node(id: "pull-request:id-123") {
                    ... on PullRequest {
                         id
                         description
                    }
                 }
-                issue:node(id: "ari:cloud:jira:site-id-123:issue/id-123") {
+                issue:node(id: "issue/id-123") {
                    ... on Issue {
                         id
                         issueKey
@@ -1599,35 +1599,35 @@ class NadelE2ETest extends StrategyTestHelper {
                 }
             }
         '''
-        def bitbucketTestService = new TestService(
-                name: "BitbucketService",
-                schema: bitbucketSchema,
+        def repoTestService = new TestService(
+                name: "RepoService",
+                schema: repoSchema,
                 topLevelFields: ["pullRequest"],
-                expectedQuery: 'query nadel_2_BitbucketService {pr:node(id:"ari:bitbucket:activation-id-123:pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}',
-                response: [pr: [id: "ari:bitbucket:activation-id-123:pull-request:id-123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
+                expectedQuery: 'query nadel_2_RepoService {pr:node(id:"pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}',
+                response: [pr: [id: "pull-request:id-123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
         )
 
-        def jiraTestService = new TestService(
-                name: "JiraService",
-                schema: jiraSchema,
+        def issueTestService = new TestService(
+                name: "IssueService",
+                schema: issueSchema,
                 topLevelFields: ["issue"],
-                expectedQuery: 'query nadel_2_JiraService {issue:node(id:"ari:cloud:jira:site-id-123:issue/id-123") {... on Issue {id issueKey} type_hint_typename__UUID:__typename}}',
-                response: [issue: [id: "ari:cloud:jira:site-id-123:issue/id-123", issueKey: "ISSUE-1", type_hint_typename__UUID: "Issue"]]
+                expectedQuery: 'query nadel_2_IssueService {issue:node(id:"issue/id-123") {... on Issue {id issueKey} type_hint_typename__UUID:__typename}}',
+                response: [issue: [id: "issue/id-123", issueKey: "ISSUE-1", type_hint_typename__UUID: "Issue"]]
         )
 
         def serviceHooks = new ServiceExecutionHooks() {
             @Override
             ServiceOrError resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
-                def bitbucketService = services.stream().filter({ service -> (service.getName() == "BitbucketService") }).findFirst().get()
-                def jiraService = services.stream().filter({ service -> (service.getName() == "JiraService") }).findFirst().get()
-                def ariArgument = arguments.get("id")
+                def repoService = services.stream().filter({ service -> (service.getName() == "RepoService") }).findFirst().get()
+                def issueService = services.stream().filter({ service -> (service.getName() == "IssueService") }).findFirst().get()
+                def idArgument = arguments.get("id")
 
-                if(ariArgument.toString().contains("bitbucket")) {
-                    return new ServiceOrError(bitbucketService, null)
+                if(idArgument.toString().contains("pull-request")) {
+                    return new ServiceOrError(repoService, null)
                 }
 
-                if(ariArgument.toString().contains("jira")) {
-                    return new ServiceOrError(jiraService, null)
+                if(idArgument.toString().contains("issue")) {
+                    return new ServiceOrError(issueService, null)
                 }
 
                 return null
@@ -1641,14 +1641,14 @@ class NadelE2ETest extends StrategyTestHelper {
         (response, errors) = testServices(
                 overallSchema,
                 query,
-                [bitbucketTestService, jiraTestService],
+                [repoTestService, issueTestService],
                 serviceHooks,
                 Mock(ResultComplexityAggregator)
         )
         then:
         response == [
-                pr: [id: "ari:bitbucket:activation-id-123:pull-request:id-123", description: "this is a pull request"],
-                issue: [id: "ari:cloud:jira:site-id-123:issue/id-123", issueKey: "ISSUE-1"]
+                pr: [id: "pull-request:id-123", description: "this is a pull request"],
+                issue: [id: "issue/id-123", issueKey: "ISSUE-1"]
         ]
         errors.size() == 0
     }
