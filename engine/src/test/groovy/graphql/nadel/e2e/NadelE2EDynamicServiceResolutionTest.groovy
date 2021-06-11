@@ -1,44 +1,19 @@
 package graphql.nadel.e2e
 
-import graphql.*
-import graphql.execution.AbortExecutionException
-import graphql.execution.ExecutionId
-import graphql.execution.ExecutionIdProvider
+
+import graphql.ErrorClassification
+import graphql.ErrorType
+import graphql.GraphQLError
 import graphql.execution.ExecutionStepInfo
-import graphql.execution.instrumentation.InstrumentationContext
-import graphql.execution.instrumentation.InstrumentationState
-import graphql.execution.instrumentation.SimpleInstrumentationContext
 import graphql.language.SourceLocation
-import graphql.nadel.*
+import graphql.nadel.Service
 import graphql.nadel.engine.StrategyTestHelper
-import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.engine.result.ResultComplexityAggregator
-import graphql.nadel.engine.result.ResultNodesUtil
-import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.engine.testutils.TestUtil
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.hooks.ServiceOrError
-import graphql.nadel.instrumentation.ChainedNadelInstrumentation
-import graphql.nadel.instrumentation.NadelInstrumentation
-import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
-import graphql.nadel.schema.SchemaTransformationHook
-import graphql.schema.*
-import graphql.schema.idl.TypeDefinitionRegistry
-import graphql.util.TraversalControl
-import graphql.util.TraverserContext
 
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
-
-import static graphql.language.AstPrinter.printAstCompact
-import static graphql.nadel.NadelEngine.newNadel
-import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
-import static graphql.nadel.engine.testutils.TestUtil.typeDefinitions
 import static java.lang.String.format
-import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2EDynamicServiceResolutionTest extends StrategyTestHelper {
     def commonTypes = '''
