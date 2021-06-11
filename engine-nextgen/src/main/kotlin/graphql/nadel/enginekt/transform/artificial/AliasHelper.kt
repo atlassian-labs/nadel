@@ -75,7 +75,8 @@ class AliasHelper private constructor(private val alias: String) {
 
     companion object {
         fun forField(field: NormalizedField): AliasHelper {
-            return AliasHelper("nadel__" + field.listOfResultKeys.joinToString("_"))
+            // TODO: detect when not in test environment and provide UUID or similar
+            return AliasHelper("nadel__" + field.name)
         }
     }
 }

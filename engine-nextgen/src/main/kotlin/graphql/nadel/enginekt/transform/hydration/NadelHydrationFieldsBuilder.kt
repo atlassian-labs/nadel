@@ -12,6 +12,7 @@ import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationInput
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.deepClone
+import graphql.nadel.enginekt.util.unwrap
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
@@ -118,11 +119,11 @@ internal object NadelHydrationFieldsBuilder {
             is MatchObjectIdentifier -> {
                 val actorField = NadelHydrationUtil.getActorField(batchHydrationInstruction)
                 val underlyingSchema = batchHydrationInstruction.actorService.underlyingSchema
-                val objectTypes: List<GraphQLObjectType> = when (val outputType = actorField.type) {
-                    is GraphQLObjectType -> listOf(outputType)
-                    is GraphQLUnionType -> outputType.types.map { it as GraphQLObjectType }
-                    is GraphQLInterfaceType -> underlyingSchema.getImplementations(outputType)
-                    else -> error("When matching by object identifier, actor field output type must be object")
+                val objectTypes: List<GraphQLObjectType> = when (val type = actorField.type.unwrap(all = true)) {
+                    is GraphQLObjectType -> listOf(type)
+                    is GraphQLUnionType -> type.types.map { it as GraphQLObjectType }
+                    is GraphQLInterfaceType -> underlyingSchema.getImplementations(type)
+                    else -> error("When matching by object identifier, output type of actor field must be an object")
                 }
 
                 NormalizedField.newNormalizedField()

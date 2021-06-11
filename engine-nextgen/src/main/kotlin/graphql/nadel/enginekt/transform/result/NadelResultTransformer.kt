@@ -32,14 +32,17 @@ internal class NadelResultTransformer(
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
         val instructions = executionPlan.transformationSteps.flatMap { (field, steps) ->
-            steps.flatMap { step ->
+            steps.flatMap step@{ step ->
+                // This can be null if we did not end up sending the field e.g. for hydration
+                val underlyingFields = overallToUnderlyingFields[field] ?: return@step emptyList()
+
                 step.transform.getResultInstructions(
                     executionContext,
                     overallSchema,
                     executionPlan,
                     service,
                     field,
-                    overallToUnderlyingFields[field]!!.first().parent,
+                    underlyingFields.first().parent,
                     result,
                     step.state,
                 )

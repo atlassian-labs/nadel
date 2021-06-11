@@ -49,20 +49,20 @@ class NadelE2ETest extends Specification {
   ... on Query {
     issue {
       ... on Issue {
-        my_uuid__detail: detail {
+        nadel__name__detail: detail {
           ... on IssueDetails {
             detailName
           }
         }
       }
       ... on Issue {
-        __typename__my_uuid: __typename
+        __typename__nadel__name: __typename
       }
     }
   }
 }"""
         def overallResponse = [issue: [name: "My Issue"]]
-        def serviceResponse = [issue: [__typename__my_uuid: "Issue", my_uuid__detail: [detailName: "My Issue"]]]
+        def serviceResponse = [issue: [__typename__nadel__name: "Issue", nadel__name__detail: [detailName: "My Issue"]]]
 
         Map response
         List<GraphQLError> errors
@@ -122,31 +122,31 @@ class NadelE2ETest extends Specification {
   ... on Query {
     pets {
       ... on Dog {
-        my_uuid__detail: detail {
+        nadel__name__detail: detail {
           ... on PetDetails {
             petName
           }
         }
       }
       ... on Cat {
-        my_uuid__detail: detail {
+        nadel__name__detail: detail {
           ... on PetDetails {
             petName
           }
         }
       }
       ... on Dog {
-        __typename__my_uuid: __typename
+        __typename__nadel__name: __typename
       }
       ... on Cat {
-        __typename__my_uuid: __typename
+        __typename__nadel__name: __typename
       }
     }
   }
 }"""
         def serviceResponse = [pets: [
-                [__typename__my_uuid: "Cat", my_uuid__detail: [petName: "Tiger"]],
-                [__typename__my_uuid: "Dog", my_uuid__detail: [petName: "Luna"]],
+                [__typename__nadel__name: "Cat", nadel__name__detail: [petName: "Tiger"]],
+                [__typename__nadel__name: "Dog", nadel__name__detail: [petName: "Luna"]],
         ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
@@ -217,17 +217,17 @@ class NadelE2ETest extends Specification {
     ... on Query {
         issue {
             ... on Issue {
-                hydration_uuid__authorId: authorId
+                nadel__author__authorId: authorId
             }
             ... on Issue {
-                __typename__hydration_uuid: __typename
+                __typename__nadel__author: __typename
             }
         }
     }
 }""")): [
                         issue: [
-                                __typename__hydration_uuid: "Issue",
-                                hydration_uuid__authorId  : "user-1",
+                                __typename__nadel__author: "Issue",
+                                nadel__author__authorId  : "user-1",
                         ],
                 ],
         ]
@@ -309,7 +309,6 @@ class NadelE2ETest extends Specification {
         {
             issues {
                 author {
-                    id
                     name
                 }
             }
@@ -321,26 +320,26 @@ class NadelE2ETest extends Specification {
     ... on Query {
         issues {
             ... on Issue {
-                kt_batch_hydration__authorId: authorId
+                nadel__author__authorId: authorId
             }
             ... on Issue {
-                __typename__kt_batch_hydration: __typename
+                __typename__nadel__author: __typename
             }
         }
     }
 }""")): [
                         issues: [
                                 [
-                                        __typename__kt_batch_hydration: "Issue",
-                                        kt_batch_hydration__authorId  : "user-1",
+                                        __typename__nadel__author: "Issue",
+                                        nadel__author__authorId  : "user-1",
                                 ],
                                 [
-                                        __typename__kt_batch_hydration: "Issue",
-                                        kt_batch_hydration__authorId  : "user-2",
+                                        __typename__nadel__author: "Issue",
+                                        nadel__author__authorId  : "user-2",
                                 ],
                                 [
-                                        __typename__kt_batch_hydration: "Issue",
-                                        kt_batch_hydration__authorId  : "user-5",
+                                        __typename__nadel__author: "Issue",
+                                        nadel__author__authorId  : "user-5",
                                 ],
                         ],
                 ],
@@ -351,41 +350,41 @@ class NadelE2ETest extends Specification {
     ... on Query {
         usersByIds(userIds: ["user-1", "user-2"]) {
             ... on User {
-                id
+                name
             }
             ... on User {
-                name
+                nadel__author__id: id
             }
         }
     }
 }"""))                                 : [
                         usersByIds: [
-                                [id: "user-1", name: "Scott"],
-                                [id: "user-2", name: "Mike"],
+                                [nadel__author__id: "user-1", name: "Scott"],
+                                [nadel__author__id: "user-2", name: "Mike"],
                         ],
                 ],
                 (Parser.parse("""{
     ... on Query {
         usersByIds(userIds: ["user-5"]) {
             ... on User {
-                id
+                name
             }
             ... on User {
-                name
+                nadel__author__id: id
             }
         }
     }
 }""")): [
                         usersByIds: [
-                                [id: "user-5", name: "John"],
+                                [nadel__author__id: "user-5", name: "John"],
                         ],
                 ],
         ]
 
         def expectedResponse = [issues: [
-                [author: [id: "user-1", name: "Scott"]],
-                [author: [id: "user-2", name: "Mike"]],
-                [author: [id: "user-5", name: "John"]],
+                [author: [name: "Scott"]],
+                [author: [name: "Mike"]],
+                [author: [name: "John"]],
         ]]
 
         Map response
@@ -447,7 +446,6 @@ class NadelE2ETest extends Specification {
         {
             issues {
                 author {
-                    id
                     name
                 }
             }
@@ -459,26 +457,26 @@ class NadelE2ETest extends Specification {
     ... on Query {
         issues {
             ... on Issue {
-                kt_batch_hydration__id: id
+                nadel__author__id: id
             }
             ... on Issue {
-                __typename__kt_batch_hydration: __typename
+                __typename__nadel__author: __typename
             }
         }
     }
 }""")): [
                         issues: [
                                 [
-                                        __typename__kt_batch_hydration: "Issue",
-                                        kt_batch_hydration__id        : "issue-1",
+                                        __typename__nadel__author: "Issue",
+                                        nadel__author__id        : "issue-1",
                                 ],
                                 [
-                                        __typename__kt_batch_hydration: "Issue",
-                                        kt_batch_hydration__id        : "issue-2",
+                                        __typename__nadel__author: "Issue",
+                                        nadel__author__id        : "issue-2",
                                 ],
                                 [
-                                        __typename__kt_batch_hydration: "Issue",
-                                        kt_batch_hydration__id        : "issue-5",
+                                        __typename__nadel__author: "Issue",
+                                        nadel__author__id        : "issue-5",
                                 ],
                         ],
                 ],
@@ -489,25 +487,19 @@ class NadelE2ETest extends Specification {
     ... on Query {
         issueOwners(issueIds: ["issue-1", "issue-2"]) {
             ... on User {
-                id
-            }
-            ... on User {
                 name
             }
         }
     }
 }"""))                                 : [
                         issueOwners: [
-                                [id: "user-1", name: "Scott"],
-                                [id: "user-2", name: "Mike"],
+                                [name: "Scott"],
+                                [name: "Mike"],
                         ],
                 ],
                 (Parser.parse("""{
     ... on Query {
         issueOwners(issueIds: ["issue-5"]) {
-            ... on User {
-                id
-            }
             ... on User {
                 name
             }
@@ -515,15 +507,15 @@ class NadelE2ETest extends Specification {
     }
 }""")): [
                         issueOwners: [
-                                [id: "user-5", name: "John"],
+                                [name: "John"],
                         ],
                 ],
         ]
 
         def expectedResponse = [issues: [
-                [author: [id: "user-1", name: "Scott"]],
-                [author: [id: "user-2", name: "Mike"]],
-                [author: [id: "user-5", name: "John"]],
+                [author: [name: "Scott"]],
+                [author: [name: "Mike"]],
+                [author: [name: "John"]],
         ]]
 
         Map response
@@ -603,17 +595,17 @@ class NadelE2ETest extends Specification {
     ... on Query {
         issue {
             ... on Issue {
-                hydration_uuid__authorId: authorId
+                nadel__author__authorId: authorId
             }
             ... on Issue {
-                __typename__hydration_uuid: __typename
+                __typename__nadel__author: __typename
             }
         }
     }
 }""")): [
                         issue: [
-                                __typename__hydration_uuid: "Issue",
-                                hydration_uuid__authorId  : "user-1",
+                                __typename__nadel__author: "Issue",
+                                nadel__author__authorId  : "user-1",
                         ],
                 ],
         ]
@@ -626,22 +618,22 @@ class NadelE2ETest extends Specification {
                 id
             }
             ... on User {
-                my_uuid__details: details {
+                nadel__name__details: details {
                     ... on UserDetails {
                         name
                     }
                 }
             }
             ... on User {
-                __typename__my_uuid: __typename
+                __typename__nadel__name: __typename
             }
         }
     }
 }""")): [
                         userById: [
-                                __typename__my_uuid: "User",
-                                id                 : "user-1",
-                                my_uuid__details   : [name: "Atlassian"],
+                                __typename__nadel__name: "User",
+                                id                     : "user-1",
+                                nadel__name__details   : [name: "Atlassian"],
                         ]
                 ],
         ]
@@ -715,31 +707,31 @@ class NadelE2ETest extends Specification {
   ... on Query {
     pets {
       ... on Dog {
-        my_uuid__collar: collar {
+        nadel__name__collar: collar {
           ... on Collar {
             petName
           }
         }
       }
       ... on Cat {
-        my_uuid__microchip: microchip {
+        nadel__name__microchip: microchip {
           ... on Microchip {
             petName
           }
         }
       }
       ... on Dog {
-        __typename__my_uuid: __typename
+        __typename__nadel__name: __typename
       }
       ... on Cat {
-        __typename__my_uuid: __typename
+        __typename__nadel__name: __typename
       }
     }
   }
 }"""
         def serviceResponse = [pets: [
-                [__typename__my_uuid: "Cat", my_uuid__microchip: [petName: "Tiger"]],
-                [__typename__my_uuid: "Dog", my_uuid__collar: [petName: "Luna"]],
+                [__typename__nadel__name: "Cat", nadel__name__microchip: [petName: "Tiger"]],
+                [__typename__nadel__name: "Dog", nadel__name__collar: [petName: "Luna"]],
         ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
@@ -775,7 +767,7 @@ class NadelE2ETest extends Specification {
                 issue: UnderlyingIssue 
             } 
             type UnderlyingIssue {
-                name:String
+                name: String
             }
         """
         def query = """
@@ -830,27 +822,34 @@ class NadelE2ETest extends Specification {
             }
         """
         def query = """
-        { issue { name  detail {otherDetail} } }
+        { issue { name detail {otherDetail} } }
         """
         def expectedQuery = """query {
   ... on Query {
     issue {
       ... on UnderlyingIssue {
-        my_uuid__detail: detail {
+        nadel__name__detail: detail {
           ... on UnderlyingIssueDetails {
             detailName
           }
         }
       }
       ... on UnderlyingIssue {
-        __typename__my_uuid: __typename
+        __typename__nadel__name: __typename
       }
       ... on UnderlyingIssue {detail {... on UnderlyingIssueDetails {otherDetail}}}
     }
   }
 }"""
-        def serviceResponse = [issue: [detail: [otherDetail: "other detail"], __typename__my_uuid: "UnderlyingIssue", my_uuid__detail: [detailName: "My Issue"]]]
-        def overallResponse = [issue: [name: "My Issue", detail: [otherDetail: "other detail"]]]
+        def serviceResponse = [issue: [
+                detail                 : [otherDetail: "other detail"],
+                __typename__nadel__name: "UnderlyingIssue",
+                nadel__name__detail    : [detailName: "My Issue"],
+        ]]
+        def overallResponse = [issue: [
+                name  : "My Issue",
+                detail: [otherDetail: "other detail"],
+        ]]
 
         Map response
         List<GraphQLError> errors
@@ -940,16 +939,19 @@ class NadelE2ETest extends Specification {
   ... on Query {
     issue {
       ... on Issue {
-            my_uuid__underlyingName: underlyingName
+            nadel__name__underlyingName: underlyingName
       }
       ... on Issue {
-        __typename__my_uuid: __typename
+        __typename__nadel__name: __typename
       }
     }
   }
 }"""
         def overallResponse = [issue: [name: "My Issue"]]
-        def serviceResponse = [issue: [__typename__my_uuid: "Issue", my_uuid__underlyingName: "My Issue"]]
+        def serviceResponse = [issue: [
+                __typename__nadel__name    : "Issue",
+                nadel__name__underlyingName: "My Issue",
+        ]]
 
         Map response
         List<GraphQLError> errors

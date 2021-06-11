@@ -78,6 +78,12 @@ class NadelQueryTransformer internal constructor(
                 patchObjectTypeNames(field, executionPlan)
                     .children(transformedChildFields)
                     .build()
+                    .also { newField ->
+                        // Track overall -> underlying fields
+                        transformContext.overallToUnderlyingFields.compute(field) { _, oldValue ->
+                            (oldValue ?: emptyList()) + newField
+                        }
+                    }
             }
         )
 

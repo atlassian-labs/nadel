@@ -9,6 +9,8 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLType
+import graphql.schema.GraphQLTypeUtil
 
 typealias AnyAstDefinition = Definition<*>
 
@@ -82,5 +84,14 @@ fun deepClone(fields: List<NormalizedField>): List<NormalizedField> {
         it.toBuilder()
             .children(deepClone(fields = it.children))
             .build()
+    }
+}
+
+fun GraphQLType.unwrap(
+    all: Boolean = false,
+): GraphQLType {
+    return when (all) {
+        true -> GraphQLTypeUtil.unwrapAll(this)
+        else -> GraphQLTypeUtil.unwrapOne(this)
     }
 }
