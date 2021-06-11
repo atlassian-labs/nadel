@@ -48,11 +48,18 @@ import static java.util.Collections.emptyMap;
 
 public class NadelDirectives {
 
-    static final DirectiveDefinition RENAMED_DIRECTIVE_DEFINITION;
-    static final DirectiveDefinition HYDRATED_DIRECTIVE_DEFINITION;
-    static final InputObjectTypeDefinition NADEL_HYDRATION_ARGUMENT_DEFINITION;
+    public static final DirectiveDefinition RENAMED_DIRECTIVE_DEFINITION;
+    public static final DirectiveDefinition HYDRATED_DIRECTIVE_DEFINITION;
+    public static final InputObjectTypeDefinition NADEL_HYDRATION_ARGUMENT_DEFINITION;
+    public static final DirectiveDefinition DYNAMIC_SERVICE_DIRECTIVE_DEFINITION;
 
     static {
+        DYNAMIC_SERVICE_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
+                .name("dynamicServiceResolution")
+                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
+                .description(createDescription("Indicates that the field uses dynamic service resolution. This directive should only be used in commons fields, i.e. fields that are not part of a particular service."))
+                .build();
+
         RENAMED_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
                 .name("renamed")
                 .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())

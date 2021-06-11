@@ -25,9 +25,11 @@ import graphql.nadel.engine.result.ResultComplexityAggregator;
 import graphql.nadel.engine.result.RootExecutionResultNode;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
+import graphql.nadel.hooks.ServiceOrError;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.nadel.schema.NadelDirectives;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
@@ -64,6 +66,7 @@ public class NadelExecutionStrategy {
     private final HydrationInputResolver hydrationInputResolver;
     private final ServiceExecutionHooks serviceExecutionHooks;
     private final ExecutionPathSet hydrationInputPaths;
+    private final List<Service> services;
 
     private static final Logger log = LoggerFactory.getLogger(NadelExecutionStrategy.class);
 
@@ -79,6 +82,7 @@ public class NadelExecutionStrategy {
         this.serviceExecutor = new ServiceExecutor(instrumentation);
         this.hydrationInputPaths = new ExecutionPathSet();
         this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks, hydrationInputPaths);
+        this.services = services;
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection, ResultComplexityAggregator resultComplexityAggregator) {
@@ -121,7 +125,26 @@ public class NadelExecutionStrategy {
         List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
-            Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+
+            boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition().getDirectives()
+                    .stream()
+                    .anyMatch(directive -> directive.getName().equals(NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()));
+
+            final Service service;
+
+            if(usesDynamicService) {
+                ServiceOrError serviceOrError = serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo.getField().getName(), fieldExecutionStepInfo.getArguments());
+
+                if(serviceOrError != null && serviceOrError.getService() != null) {
+                    service = serviceOrError.getService();
+                } else {
+                    // TODO: Deal with the case when the service couldn't be resolved
+                    service = null;
+                }
+
+            } else {
+                service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+            }
 
             CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
                     .from(executionCtx)

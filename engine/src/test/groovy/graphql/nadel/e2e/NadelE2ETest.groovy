@@ -25,6 +25,8 @@ import graphql.nadel.engine.result.ResultComplexityAggregator
 import graphql.nadel.engine.result.ResultNodesUtil
 import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.engine.testutils.TestUtil
+import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.hooks.ServiceOrError
 import graphql.nadel.instrumentation.ChainedNadelInstrumentation
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
@@ -1432,6 +1434,222 @@ class NadelE2ETest extends StrategyTestHelper {
         )
         then:
         response == [commentRenamed: [authorId: "fred", author: [displayName: "Display name of Fred"]]]
+        errors.size() == 0
+    }
+
+    def 'Dynamic Service Resolution: simple case'() {
+        def commonTypes = '''
+            directive @dynamicServiceResolution on FIELD_DEFINITION
+            
+            type Query {
+                node(id: ID!): Node @dynamicServiceResolution
+            } 
+            
+            interface Node {
+                id: ID!
+            }
+        '''
+
+        def overallSchema = TestUtil.schemaFromNdsl([
+                RepoService: '''   
+                    service RepoService {
+                       type PullRequest implements Node {
+                            id: ID!
+                            description: String
+                       }
+                    }
+                    '''
+        ], commonTypes)
+
+        def repoSchema = TestUtil.schema("""
+            type Query {
+                node(id: ID): Node
+            }
+           
+            interface Node {
+                id: ID!
+            }
+            
+            type PullRequest implements Node {
+                id: ID!
+                description: String
+            }""")
+
+        def query = '''
+            {
+                node(id: "pull-request:id-123") {
+                   ... on PullRequest {
+                        id
+                        description
+                   }
+                }
+            }
+        '''
+
+        def expectedQuery1 = 'query nadel_2_RepoService {node(id:"pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}'
+        Map response1 = [node: [id: "123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
+
+        def serviceHooks = new ServiceExecutionHooks() {
+            @Override
+            ServiceOrError resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+                def repoService = services.stream().filter({ service -> (service.getName() == "RepoService") }).findFirst().get()
+                def idArgument = arguments.get("id")
+
+                if(idArgument.toString().contains("pull-request")) {
+                    return new ServiceOrError(repoService, null)
+                }
+
+                return null
+            }
+        }
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test1Service(
+                overallSchema,
+                "RepoService",
+                repoSchema,
+                query,
+                ["pullRequest"],
+                expectedQuery1,
+                response1,
+                serviceHooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [node: [id: "123", description: "this is a pull request"]]
+        errors.size() == 0
+
+    }
+
+    def 'Dynamic Service Resolution: multiple services'() {
+        def commonTypes = '''
+            directive @dynamicServiceResolution on FIELD_DEFINITION
+            
+            type Query {
+                node(id: ID!): Node @dynamicServiceResolution
+            } 
+            
+            interface Node {
+                id: ID!
+            }
+        '''
+
+        def overallSchema = TestUtil.schemaFromNdsl([
+                RepoService: '''   
+                    service RepoService {
+                       type PullRequest implements Node {
+                            id: ID!
+                            description: String
+                       }
+                    }
+                   ''',
+                IssueService: '''   
+                    service IssueService {
+                       type Issue implements Node {
+                            id: ID!
+                            issueKey: String
+                       }
+                    }
+                    '''
+        ], commonTypes)
+
+        def repoSchema = TestUtil.schema("""
+            type Query {
+                node(id: ID): Node
+            }
+           
+            interface Node {
+                id: ID!
+            }
+            
+            type PullRequest implements Node {
+                id: ID!
+                description: String
+            }""")
+
+        def issueSchema = TestUtil.schema("""
+            type Query {
+                node(id: ID): Node
+            }
+           
+            interface Node {
+                id: ID!
+            }
+            
+            type Issue implements Node {
+                id: ID!
+                issueKey: String
+            }""")
+
+        def query = '''
+            {
+                pr:node(id: "pull-request:id-123") {
+                   ... on PullRequest {
+                        id
+                        description
+                   }
+                }
+                issue:node(id: "issue/id-123") {
+                   ... on Issue {
+                        id
+                        issueKey
+                   }
+                }
+            }
+        '''
+        def repoTestService = new TestService(
+                name: "RepoService",
+                schema: repoSchema,
+                topLevelFields: ["pullRequest"],
+                expectedQuery: 'query nadel_2_RepoService {pr:node(id:"pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}',
+                response: [pr: [id: "pull-request:id-123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
+        )
+
+        def issueTestService = new TestService(
+                name: "IssueService",
+                schema: issueSchema,
+                topLevelFields: ["issue"],
+                expectedQuery: 'query nadel_2_IssueService {issue:node(id:"issue/id-123") {... on Issue {id issueKey} type_hint_typename__UUID:__typename}}',
+                response: [issue: [id: "issue/id-123", issueKey: "ISSUE-1", type_hint_typename__UUID: "Issue"]]
+        )
+
+        def serviceHooks = new ServiceExecutionHooks() {
+            @Override
+            ServiceOrError resolveServiceForField(List<Service> services, String fieldName, Map<String, Object> arguments) {
+                def repoService = services.stream().filter({ service -> (service.getName() == "RepoService") }).findFirst().get()
+                def issueService = services.stream().filter({ service -> (service.getName() == "IssueService") }).findFirst().get()
+                def idArgument = arguments.get("id")
+
+                if(idArgument.toString().contains("pull-request")) {
+                    return new ServiceOrError(repoService, null)
+                }
+
+                if(idArgument.toString().contains("issue")) {
+                    return new ServiceOrError(issueService, null)
+                }
+
+                return null
+            }
+        }
+
+        Map response
+        List<GraphQLError> errors
+        when:
+
+        (response, errors) = testServices(
+                overallSchema,
+                query,
+                [repoTestService, issueTestService],
+                serviceHooks,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [
+                pr: [id: "pull-request:id-123", description: "this is a pull request"],
+                issue: [id: "issue/id-123", issueKey: "ISSUE-1"]
+        ]
         errors.size() == 0
     }
 }
