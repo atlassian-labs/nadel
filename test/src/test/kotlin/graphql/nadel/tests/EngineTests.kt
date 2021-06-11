@@ -48,8 +48,8 @@ class EngineTests : FunSpec({
     val fixturesDir = File(javaClass.classLoader.getResource("fixtures")!!.path)
     fixturesDir.listFiles()!!
         .asSequence()
-        .filter {
-            it.name == "hydration-list-with-batching.yml"
+        .onEach {
+            println("Loading ${it.nameWithoutExtension}")
         }
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
@@ -96,11 +96,13 @@ private suspend fun execute(
                         )
                         println(incomingQueryPrinted)
 
-                        val response = fixture.serviceCalls[engine].singleOrNull {
-                            AstPrinter.printAst(it.request.document) == incomingQueryPrinted
-                        }?.response ?: Unit.let { // Creates code block for null
-                            fail("Unable to match service call")
-                        }
+                        val response = fixture.serviceCalls[engine]
+                            .filter { call ->
+                                call.serviceName == serviceName
+                            }
+                            .singleOrNull {
+                                AstPrinter.printAst(it.request.document) == incomingQueryPrinted
+                            }?.response ?: fail("Unable to match service call")
 
                         @Suppress("UNCHECKED_CAST")
                         CompletableFuture.completedFuture(
@@ -344,6 +346,7 @@ data class ServiceCalls(
 ) : Engines<List<ServiceCall>>
 
 data class ServiceCall(
+    val serviceName: String,
     val request: Request,
     @JsonProperty("response")
     private val responseJsonString: String,

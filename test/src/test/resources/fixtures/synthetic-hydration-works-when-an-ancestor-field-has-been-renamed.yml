@@ -53,7 +53,8 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - request:
+    - serviceName: IssueService
+      request:
         query: |
           query nadel_2_IssueService {
             relationships {
@@ -78,7 +79,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: IssueService
+      request:
         query: |
           query nadel_2_IssueService {
             syntheticIssue {

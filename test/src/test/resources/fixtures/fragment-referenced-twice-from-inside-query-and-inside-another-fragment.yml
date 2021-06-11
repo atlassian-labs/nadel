@@ -38,7 +38,8 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - request:
+    - serviceName: Foo
+      request:
         query: |
           query nadel_2_Foo {
             foo {

@@ -76,7 +76,8 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - request:
+    - serviceName: TestBoard
+      request:
         query: |
           query nadel_2_TestBoard {
             board(id: 1) {
@@ -125,7 +126,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: Users
+      request:
         query: |
           query nadel_2_Users {
             usersQuery {

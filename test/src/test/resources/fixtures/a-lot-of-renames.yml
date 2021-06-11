@@ -59,7 +59,8 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - request:
+    - serviceName: Boards
+      request:
         query: |
           query nadel_2_Boards {
             boardScope {
@@ -95,37 +96,38 @@ serviceCalls:
           "extensions": {}
         }
   nextgen:
-    - request:
+    - serviceName: Boards
+      request:
         query: |-
           query {
             ... on Query {
               boardScope {
                 ... on BoardScope {
-                  nadel__boardScope_cardParents__issueParents: issueParents {
+                  rename__cardParents__issueParents: issueParents {
                     ... on IssueParent {
-                      nadel__boardScope_cardParents_cardType__issueType: issueType {
+                      rename__cardType__issueType: issueType {
                         ... on IssueType {
                           id
                         }
                         ... on IssueType {
-                          nadel__boardScope_cardParents_cardType_inlineCardCreate__inlineIssueCreate: inlineIssueCreate {
+                          rename__inlineCardCreate__inlineIssueCreate: inlineIssueCreate {
                             ... on InlineIssueCreateConfig {
                               enabled
                             }
                           }
                         }
                         ... on IssueType {
-                          __typename__nadel__boardScope_cardParents_cardType_inlineCardCreate: __typename
+                          __typename__rename__inlineCardCreate: __typename
                         }
                       }
                     }
                     ... on IssueParent {
-                      __typename__nadel__boardScope_cardParents_cardType: __typename
+                      __typename__rename__cardType: __typename
                     }
                   }
                 }
                 ... on BoardScope {
-                  __typename__nadel__boardScope_cardParents: __typename
+                  __typename__rename__cardParents: __typename
                 }
               }
             }
@@ -135,19 +137,19 @@ serviceCalls:
         {
           "data": {
             "boardScope": {
-              "nadel__boardScope_cardParents__issueParents": [
+              "rename__cardParents__issueParents": [
                 {
-                  "nadel__boardScope_cardParents_cardType__issueType": {
+                  "rename__cardType__issueType": {
                     "id": "ID-1",
-                    "nadel__boardScope_cardParents_cardType_inlineCardCreate__inlineIssueCreate": {
+                    "rename__inlineCardCreate__inlineIssueCreate": {
                       "enabled": true
                     },
-                    "__typename__nadel__boardScope_cardParents_cardType_inlineCardCreate": "IssueType"
+                    "__typename__rename__inlineCardCreate": "IssueType"
                   },
-                  "__typename__nadel__boardScope_cardParents_cardType": "IssueParent"
+                  "__typename__rename__cardType": "IssueParent"
                 }
               ],
-              "__typename__nadel__boardScope_cardParents": "BoardScope"
+              "__typename__rename__cardParents": "BoardScope"
             }
           },
           "extensions": {}

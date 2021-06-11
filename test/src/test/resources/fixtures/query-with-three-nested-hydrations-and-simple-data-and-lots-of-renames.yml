@@ -114,7 +114,8 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - request:
+    - serviceName: Foo
+      request:
         query: |
           query nadel_2_Foo {
             foos {
@@ -151,7 +152,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: Bar
+      request:
         query: |
           query nadel_2_Bar {
             barsById(id: ["bar1"]) {
@@ -176,7 +178,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: Bar
+      request:
         query: |
           query nadel_2_Bar {
             barsById(id: ["nestedBar1"]) {
@@ -201,7 +204,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: Bar
+      request:
         query: |
           query nadel_2_Bar {
             barsById(id: ["nestedBarId456"]) {

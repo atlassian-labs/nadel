@@ -50,7 +50,8 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - request:
+    - serviceName: service1
+      request:
         query: |
           query nadel_2_service1 {
             foo {
@@ -73,7 +74,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: service2
+      request:
         query: |
           query nadel_2_service2 {
             barsById(id: ["barId1", "barId2", "barId3"]) {

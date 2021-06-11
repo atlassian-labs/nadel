@@ -54,7 +54,8 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - request:
+    - serviceName: Issues
+      request:
         query: |
           query nadel_2_Issues {
             issues {
@@ -108,7 +109,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: UserService
+      request:
         query: |
           query nadel_2_UserService {
             usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
@@ -139,7 +141,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: UserService
+      request:
         query: |
           query nadel_2_UserService {
             usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {

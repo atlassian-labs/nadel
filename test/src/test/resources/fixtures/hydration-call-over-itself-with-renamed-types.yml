@@ -60,7 +60,8 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - request:
+    - serviceName: testing
+      request:
         query: |
           query nadel_2_testing {
             testing {
@@ -106,7 +107,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: testing
+      request:
         query: |
           query nadel_2_testing {
             characters(ids: ["C1", "C2", "C1"]) {
@@ -141,7 +143,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: testing
+      request:
         query: |
           query nadel_2_testing {
             characters(ids: ["C2", "C3"]) {

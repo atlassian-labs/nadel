@@ -61,7 +61,8 @@ variables:
       - value
 serviceCalls:
   current:
-    - request:
+    - serviceName: Issue
+      request:
         query: |
           query nadel_2_Issue_MyQuery {
             issue {
@@ -80,7 +81,8 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - request:
+    - serviceName: Association
+      request:
         query: |
           query nadel_2_Association_MyQuery($filter: Filter) {
             association(id: "ISSUE-1", filter: $filter) {

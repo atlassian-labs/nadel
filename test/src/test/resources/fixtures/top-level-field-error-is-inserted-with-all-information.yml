@@ -16,7 +16,7 @@ query: |
     foo
   }
 variables: {}
-calls: {}
+serviceCalls: {}
 # language=JSON
 response: |-
   {
