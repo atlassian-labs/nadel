@@ -1,9 +1,15 @@
 package graphql.nadel.enginekt.blueprint
 
 import graphql.language.EnumTypeDefinition
+import graphql.language.EnumTypeExtensionDefinition
 import graphql.language.ImplementingTypeDefinition
+import graphql.language.InputObjectTypeExtensionDefinition
+import graphql.language.InterfaceTypeExtensionDefinition
 import graphql.language.NamedNode
-import graphql.nadel.OperationKind
+import graphql.language.ObjectTypeExtensionDefinition
+import graphql.language.ScalarTypeExtensionDefinition
+import graphql.language.SchemaExtensionDefinition
+import graphql.language.UnionTypeExtensionDefinition
 import graphql.nadel.Service
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
 import graphql.nadel.dsl.ExtendedFieldDefinition
@@ -24,9 +30,7 @@ import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLDirectiveContainer
-import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
@@ -204,6 +208,15 @@ internal object NadelExecutionBlueprintFactory {
                 val operationTypes = service.definitionRegistry.operationMap.values.flatten()
                 service.definitionRegistry.definitions
                     .filterIsInstance<AnyNamedNode>()
+                    .filterNot {
+                        it is ObjectTypeExtensionDefinition
+                            || it is InterfaceTypeExtensionDefinition
+                            || it is EnumTypeExtensionDefinition
+                            || it is ScalarTypeExtensionDefinition
+                            || it is InputObjectTypeExtensionDefinition
+                            || it is SchemaExtensionDefinition
+                            || it is UnionTypeExtensionDefinition
+                    }
                     .filterNot { def -> def in operationTypes }
                     .map { def -> def.name to service }
             }
