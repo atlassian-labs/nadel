@@ -32,6 +32,9 @@ serviceCalls:
       # language=JSON
       response: |-
         {
+          "data": {
+            "foo": null
+          },
           "extensions": {}
         }
 # language=JSON
