@@ -5,9 +5,11 @@ import graphql.nadel.enginekt.util.filterValuesOfType
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLSchema
 import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 interface NadelExecutionBlueprint {
+    val schema: GraphQLSchema
     val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>
     val typeInstructions: Map<String, NadelTypeRenameInstruction>
 }
@@ -16,6 +18,7 @@ interface NadelExecutionBlueprint {
  * Execution blueprint where keys are in terms of the overall schema.
  */
 data class NadelOverallExecutionBlueprint(
+    override val schema: GraphQLSchema,
     override val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
     override val typeInstructions: Map<String, NadelTypeRenameInstruction>,
     private val underlyingBlueprints: Map<String, NadelExecutionBlueprint>,
@@ -52,6 +55,7 @@ data class NadelOverallExecutionBlueprint(
  * Execution blueprint where keys are in terms of the underlying schema.
  */
 data class NadelUnderlyingExecutionBlueprint(
+    override val schema: GraphQLSchema,
     override val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
     override val typeInstructions: Map<String, NadelTypeRenameInstruction>,
 ) : NadelExecutionBlueprint

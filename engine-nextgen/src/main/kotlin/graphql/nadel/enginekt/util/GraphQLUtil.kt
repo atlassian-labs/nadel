@@ -10,6 +10,7 @@ import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.normalized.NormalizedField
+import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
@@ -18,6 +19,12 @@ import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
 
 typealias AnyAstDefinition = Definition<*>
+
+fun GraphQLSchema.getField(coordinates: FieldCoordinates): GraphQLFieldDefinition? {
+    return getType(coordinates.typeName)
+        ?.let { it as? GraphQLFieldsContainer }
+        ?.getField(coordinates.fieldName)
+}
 
 fun GraphQLSchema.getOperationType(kind: OperationKind): GraphQLObjectType? {
     return when (kind) {
@@ -108,6 +115,15 @@ fun GraphQLType.unwrap(
         else -> GraphQLTypeUtil.unwrapOne(this)
     }
 }
+
+fun GraphQLType.unwrapNonNull(): GraphQLType {
+    return GraphQLTypeUtil.unwrapNonNull(this)
+}
+
+val GraphQLType.isList: Boolean get() = GraphQLTypeUtil.isList(this)
+val GraphQLType.isNonNull: Boolean get() = GraphQLTypeUtil.isNonNull(this)
+val GraphQLType.isWrapped: Boolean get() = GraphQLTypeUtil.isWrapped(this)
+val GraphQLType.isNotWrapped: Boolean get() = GraphQLTypeUtil.isNotWrapped(this)
 
 internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
     val data: MutableJsonMap = mutableMapOf()

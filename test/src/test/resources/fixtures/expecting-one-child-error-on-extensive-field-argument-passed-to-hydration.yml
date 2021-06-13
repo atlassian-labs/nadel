@@ -1,4 +1,4 @@
-name: Expecting one child Error on extensive field argument passed to hydration
+name: expecting one child error on extensive field argument passed to hydration
 enabled:
   current: true
   nextgen: true

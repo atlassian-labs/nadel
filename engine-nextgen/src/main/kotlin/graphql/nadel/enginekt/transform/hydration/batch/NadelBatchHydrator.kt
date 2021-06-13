@@ -6,6 +6,7 @@ import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
+import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
@@ -14,13 +15,19 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.asMutable
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
+import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
+import graphql.nadel.enginekt.util.flatten
+import graphql.nadel.enginekt.util.getField
+import graphql.nadel.enginekt.util.isList
+import graphql.nadel.enginekt.util.unwrapNonNull
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 internal class NadelBatchHydrator(
     private val engine: NextgenEngine,
@@ -53,11 +60,12 @@ internal class NadelBatchHydrator(
             }
 
         return parentNodesByInstruction.flatMap { (instruction, parentNodes) ->
-            hydrate(state, instruction, parentNodes)
+            hydrate(executionBlueprint, state, instruction, parentNodes)
         }
     }
 
     private suspend fun hydrate(
+        executionBlueprint: NadelOverallExecutionBlueprint,
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -76,6 +84,7 @@ internal class NadelBatchHydrator(
                 resultNodes = resultNodes,
             )
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> getHydrateInstructionsMatchingObjectId(
+                executionBlueprint = executionBlueprint,
                 state = state,
                 instruction = instruction,
                 parentNodes = parentNodes,
@@ -101,6 +110,7 @@ internal class NadelBatchHydrator(
     }
 
     private fun getHydrateInstructionsMatchingObjectId(
+        executionBlueprint: NadelOverallExecutionBlueprint,
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
@@ -116,19 +126,46 @@ internal class NadelBatchHydrator(
             getPathToObjectIdentifierOnHydrationParentNode(instruction),
         )
 
-        return parentNodes.mapNotNull { parentNode ->
-            val parentNodeIdentifierNode = JsonNodeExtractor.getNodesAt(
+        return parentNodes.map { parentNode ->
+            val parentNodeIdentifierNodes = JsonNodeExtractor.getNodesAt(
                 rootNode = parentNode,
                 queryPath = resultKeysToObjectIdOnHydrationParentNode,
-            ).emptyOrSingle()
+            )
 
-            when (parentNodeIdentifierNode) {
-                null -> null
-                else -> NadelResultInstruction.Set(
-                    subjectPath = parentNode.resultPath + state.hydratedField.resultKey,
-                    newValue = resultNodesByObjectId[parentNodeIdentifierNode.value],
-                )
+            val overallTypeName = NadelTransformUtil.getOverallTypeNameOfNode(
+                executionBlueprint = executionBlueprint,
+                service = state.hydratedFieldService,
+                aliasHelper = state.aliasHelper,
+                node = parentNode,
+            )
+            val hydratedFieldCoordinates = makeFieldCoordinates(overallTypeName, state.hydratedField.name)
+            val hydratedFieldDef = executionBlueprint.schema.getField(hydratedFieldCoordinates)
+                ?: error("Unable to find field at $hydratedFieldCoordinates")
+
+            val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
+                parentNodeIdentifierNodes
+                    .flatMap { parentNodeIdentifierNode ->
+                        when (val id = parentNodeIdentifierNode.value) {
+                            null -> emptySequence()
+                            is AnyList -> id.asSequence().flatten(recursively = true)
+                            else -> sequenceOf(id)
+                        }
+                    }
+                    .map { id ->
+                        resultNodesByObjectId[id]
+                    }
+                    .toList()
+            } else {
+                parentNodeIdentifierNodes.emptyOrSingle()?.let { node ->
+                    resultNodesByObjectId[node.value]
+                }
             }
+
+
+            NadelResultInstruction.Set(
+                subjectPath = parentNode.resultPath + state.hydratedField.resultKey,
+                newValue = newValue,
+            )
         }
     }
 

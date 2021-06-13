@@ -65,11 +65,11 @@ class EngineTests : FunSpec({
         .onEach {
             println("Loading ${it.nameWithoutExtension}")
         }
-        .filter {
-            "query-with-three-nested" in it.name
-        }
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
+        // .filter {
+        //     it.name == "expecting one child error on extensive field argument passed to hydration"
+        // }
         .forEach { fixture ->
             engineFactories.all
                 .asSequence()

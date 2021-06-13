@@ -13,7 +13,7 @@ import graphql.schema.FieldCoordinates
 import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 object NadelTransformUtil {
-    fun getOverallTypename(
+    fun getOverallTypeNameOfNode(
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         aliasHelper: AliasHelper,
@@ -50,7 +50,7 @@ fun <T : NadelFieldInstruction> Map<FieldCoordinates, T>.getInstructionForNode(
     aliasHelper: AliasHelper,
     parentNode: JsonNode,
 ): T? = let { instructions ->
-    val overallTypeName = NadelTransformUtil.getOverallTypename(
+    val overallTypeName = NadelTransformUtil.getOverallTypeNameOfNode(
         executionBlueprint = executionBlueprint,
         service = service,
         aliasHelper = aliasHelper,

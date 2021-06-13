@@ -48,8 +48,9 @@ internal object NadelExecutionBlueprintFactory {
         }
 
         return NadelOverallExecutionBlueprint(
-            fieldInstructions,
-            typeRenameInstructions,
+            schema = overallSchema,
+            fieldInstructions = fieldInstructions,
+            typeInstructions = typeRenameInstructions,
             underlyingBlueprints = deriveUnderlyingBlueprints(services, fieldInstructions, typeRenameInstructions),
         )
     }
@@ -285,6 +286,7 @@ internal object NadelExecutionBlueprintFactory {
         return mapFrom(
             services.map { service ->
                 service.name to NadelUnderlyingExecutionBlueprint(
+                    schema = service.underlyingSchema,
                     fieldInstructions = fieldInstructionsByServiceName[service.name] ?: emptyMap(),
                     typeInstructions = typeInstructionsByServiceName[service.name] ?: emptyMap(),
                 )
