@@ -25,7 +25,7 @@ overallSchema:
         nameOfAssociation: String
       }
       extend type Issue {
-        association(filter:Filter): Association => hydrated from Association.association(id: $source.id, filter: $argument.filter)
+        association(filter: Filter): Association => hydrated from Association.association(id: $source.id, filter: $argument.filter)
       }
     }
 underlyingSchema:
