@@ -59,6 +59,11 @@ internal class NadelResultTransformer(
     }
 
     private fun mutate(result: ServiceExecutionResult, transformations: List<NadelResultInstruction>) {
+        // For now we don't have any instructions to modify anything other than data, so return early
+        if (result.data == null) {
+            return
+        }
+
         val mutations = transformations.map { transformation ->
             when (transformation) {
                 is NadelResultInstruction.Set -> prepareSet(result.data, transformation)
