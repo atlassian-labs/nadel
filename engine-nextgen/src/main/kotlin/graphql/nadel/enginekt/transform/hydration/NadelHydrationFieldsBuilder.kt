@@ -40,7 +40,7 @@ internal object NadelHydrationFieldsBuilder {
         )
     }
 
-    fun makeActorQueries(
+    fun makeBatchActorQueries(
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: AliasHelper,
         hydratedField: NormalizedField,

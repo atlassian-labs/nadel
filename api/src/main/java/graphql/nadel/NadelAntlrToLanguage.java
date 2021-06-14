@@ -174,8 +174,12 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
 
         String objectIdentifier = "id";
         boolean objectIndexed = false;
+        boolean batched = false;
         StitchingDSLParser.ObjectResolutionContext objectResolution = ctx.objectResolution();
         if (objectResolution != null) {
+            if (objectResolution.batched() != null) {
+                batched = true;
+            }
             if (objectResolution.objectByIndex() != null) {
                 objectIdentifier = null;
                 objectIndexed = true;
@@ -188,8 +192,19 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         if (ctx.batchSize() != null) {
             batchSize = Integer.parseInt(ctx.batchSize().intValue().getText());
         }
-        return new UnderlyingServiceHydration(getSourceLocation(ctx), new ArrayList<>(), serviceName, topLevelField, syntheticField,
-                remoteArguments, objectIdentifier, objectIndexed, batchSize, additionalIdData());
+        return new UnderlyingServiceHydration(
+                getSourceLocation(ctx),
+                new ArrayList<>(),
+                serviceName,
+                topLevelField,
+                syntheticField,
+                remoteArguments,
+                objectIdentifier,
+                objectIndexed,
+                batched,
+                batchSize,
+                additionalIdData()
+        );
     }
 
     @Override

@@ -153,3 +153,7 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
         .errors(errors)
         .build()
 }
+
+fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates {
+    return FieldCoordinates.coordinates(typeName, fieldName)
+}

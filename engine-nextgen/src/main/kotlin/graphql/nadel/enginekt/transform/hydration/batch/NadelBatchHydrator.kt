@@ -20,14 +20,13 @@ import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
-import graphql.nadel.enginekt.util.getField
 import graphql.nadel.enginekt.util.isList
+import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.unwrapNonNull
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 internal class NadelBatchHydrator(
     private val engine: NextgenEngine,
@@ -117,6 +116,7 @@ internal class NadelBatchHydrator(
         resultNodes: List<JsonMap>,
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
     ): List<NadelResultInstruction> {
+        // Associate by does not need to be strict here
         val resultNodesByObjectId = resultNodes.associateBy {
             // We don't want to show this in the overall result, so remove it here as we use it
             it.asMutable().remove(state.aliasHelper.getObjectIdentifierKey(matchStrategy.objectId))
@@ -132,41 +132,54 @@ internal class NadelBatchHydrator(
                 queryPath = resultKeysToObjectIdOnHydrationParentNode,
             )
 
-            val overallTypeName = NadelTransformUtil.getOverallTypeNameOfNode(
+            getHydrateInstructionsForNodeMatchingObjectId(
                 executionBlueprint = executionBlueprint,
-                service = state.hydratedFieldService,
-                aliasHelper = state.aliasHelper,
-                node = parentNode,
-            )
-            val hydratedFieldCoordinates = makeFieldCoordinates(overallTypeName, state.hydratedField.name)
-            val hydratedFieldDef = executionBlueprint.schema.getField(hydratedFieldCoordinates)
-                ?: error("Unable to find field at $hydratedFieldCoordinates")
-
-            val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
-                parentNodeIdentifierNodes
-                    .flatMap { parentNodeIdentifierNode ->
-                        when (val id = parentNodeIdentifierNode.value) {
-                            null -> emptySequence()
-                            is AnyList -> id.asSequence().flatten(recursively = true)
-                            else -> sequenceOf(id)
-                        }
-                    }
-                    .map { id ->
-                        resultNodesByObjectId[id]
-                    }
-                    .toList()
-            } else {
-                parentNodeIdentifierNodes.emptyOrSingle()?.let { node ->
-                    resultNodesByObjectId[node.value]
-                }
-            }
-
-
-            NadelResultInstruction.Set(
-                subjectPath = parentNode.resultPath + state.hydratedField.resultKey,
-                newValue = newValue,
+                state = state,
+                parentNode = parentNode,
+                parentNodeIdentifierNodes = parentNodeIdentifierNodes,
+                resultNodesByObjectId = resultNodesByObjectId
             )
         }
+    }
+
+    private fun getHydrateInstructionsForNodeMatchingObjectId(
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        state: State,
+        parentNode: JsonNode,
+        parentNodeIdentifierNodes: List<JsonNode>,
+        resultNodesByObjectId: Map<Any?, JsonMap>,
+    ): NadelResultInstruction {
+        val hydratedFieldDef = NadelTransformUtil.getOverallFieldDef(
+            overallField = state.hydratedField,
+            parentNode = parentNode,
+            service = state.hydratedFieldService,
+            executionBlueprint = executionBlueprint,
+            aliasHelper = state.aliasHelper,
+        ) ?: error("Unable to find field definition for ${state.hydratedField.queryPath}")
+
+        val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
+            parentNodeIdentifierNodes
+                .flatMap { parentNodeIdentifierNode ->
+                    when (val id = parentNodeIdentifierNode.value) {
+                        null -> emptySequence()
+                        is AnyList -> id.asSequence().flatten(recursively = true)
+                        else -> sequenceOf(id)
+                    }
+                }
+                .map { id ->
+                    resultNodesByObjectId[id]
+                }
+                .toList()
+        } else {
+            parentNodeIdentifierNodes.emptyOrSingle()?.let { node ->
+                resultNodesByObjectId[node.value]
+            }
+        }
+
+        return NadelResultInstruction.Set(
+            subjectPath = parentNode.resultPath + state.hydratedField.resultKey,
+            newValue = newValue,
+        )
     }
 
     private suspend fun executeBatchesAsync(
@@ -174,7 +187,7 @@ internal class NadelBatchHydrator(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<Deferred<ServiceExecutionResult>> {
-        val actorQueries = NadelHydrationFieldsBuilder.makeActorQueries(
+        val actorQueries = NadelHydrationFieldsBuilder.makeBatchActorQueries(
             instruction = instruction,
             aliasHelper = state.aliasHelper,
             hydratedField = state.hydratedField,
@@ -210,7 +223,6 @@ internal class NadelBatchHydrator(
                     flatten = true,
                 )
 
-                // Associate by does not need to be strict here
                 nodes
                     .asSequence()
                     .mapNotNull { node ->

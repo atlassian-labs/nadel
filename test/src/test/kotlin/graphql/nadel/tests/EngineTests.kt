@@ -68,7 +68,7 @@ class EngineTests : FunSpec({
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
         // .filter {
-        //     it.name == "expecting one child error on extensive field argument passed to hydration"
+        //     it.name == "call with variables inside input objects"
         // }
         .forEach { fixture ->
             engineFactories.all

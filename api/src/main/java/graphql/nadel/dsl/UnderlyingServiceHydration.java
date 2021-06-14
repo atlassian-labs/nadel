@@ -26,6 +26,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
     private final List<RemoteArgumentDefinition> arguments;
     private final String objectIdentifier;
     private final boolean objectIndexed;
+    private final boolean batched;
     private final Integer batchSize;
 
     public UnderlyingServiceHydration(SourceLocation sourceLocation,
@@ -36,6 +37,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
                                       List<RemoteArgumentDefinition> arguments,
                                       String objectIdentifier,
                                       boolean objectIndexed,
+                                      boolean batched,
                                       Integer batchSize,
                                       Map<String, String> additionalData
     ) {
@@ -47,6 +49,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
         this.arguments = arguments;
         this.objectIdentifier = objectIdentifier;
         this.objectIndexed = objectIndexed;
+        this.batched = batched;
         this.batchSize = batchSize;
         this.syntheticField = syntheticField;
     }
@@ -61,6 +64,10 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
 
     public boolean isObjectMatchByIndex() {
         return objectIndexed;
+    }
+
+    public boolean isBatched() {
+        return batched;
     }
 
     public String getServiceName() {

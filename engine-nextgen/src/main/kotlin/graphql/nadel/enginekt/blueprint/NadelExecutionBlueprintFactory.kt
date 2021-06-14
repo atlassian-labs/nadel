@@ -25,8 +25,10 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrate
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.util.getFieldAt
+import graphql.nadel.enginekt.util.isList
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.enginekt.util.unwrapNonNull
 import graphql.nadel.schema.NadelDirectives
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLDirectiveContainer
@@ -98,19 +100,20 @@ internal object NadelExecutionBlueprintFactory {
         field: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
     ): NadelFieldInstruction {
-        val hydrationSourceService = services.single { it.name == hydration.serviceName }
-        val underlyingSchema = hydrationSourceService.underlyingSchema
+        val hydrationActorService = services.single { it.name == hydration.serviceName }
+        val actorFieldSchema = hydrationActorService.underlyingSchema
 
         val queryPathToActorField = listOfNotNull(hydration.syntheticField, hydration.topLevelField)
-        val actorField = underlyingSchema.queryType.getFieldAt(queryPathToActorField)!!
+        val actorField = actorFieldSchema.queryType.getFieldAt(queryPathToActorField)!!
 
-        if (GraphQLTypeUtil.isList(actorField.type)) {
-            return createBatchHydrationFieldInstruction(parentType, field, hydration, hydrationSourceService)
+        if (hydration.isBatched || /*deprecated*/ actorField.type.unwrapNonNull().isList) {
+            require(actorField.type.unwrapNonNull().isList) { "Batched hydration at '$queryPathToActorField' requires a list output type" }
+            return createBatchHydrationFieldInstruction(parentType, field, hydration, hydrationActorService)
         }
 
         return NadelHydrationFieldInstruction(
             location = makeFieldCoordinates(parentType, field),
-            actorService = hydrationSourceService,
+            actorService = hydrationActorService,
             queryPathToActorField = QueryPath(queryPathToActorField),
             actorInputValues = getHydrationArguments(hydration),
         )
