@@ -5,7 +5,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
@@ -260,10 +260,10 @@ internal class NadelBatchHydrator(
         instruction: NadelBatchHydrationFieldInstruction,
     ): QueryPath {
         return instruction
-            .actorInputValues
+            .actorInputValueDefs
             .asSequence()
             .map { it.valueSource }
-            .filterIsInstance<NadelHydrationActorInput.ValueSource.FieldResultValue>()
+            .filterIsInstance<NadelHydrationActorInputDef.ValueSource.FieldResultValue>()
             .single()
             .queryPathToField
     }

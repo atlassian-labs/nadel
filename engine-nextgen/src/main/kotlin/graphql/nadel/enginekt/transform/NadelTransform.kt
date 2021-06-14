@@ -6,7 +6,6 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.NormalizedField
@@ -36,7 +35,6 @@ interface NadelTransform<State : Any> {
      */
     suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -53,9 +51,8 @@ interface NadelTransform<State : Any> {
     suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
-        service: Service,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult
@@ -68,7 +65,6 @@ interface NadelTransform<State : Any> {
      */
     suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: NormalizedField,

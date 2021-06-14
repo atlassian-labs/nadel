@@ -118,9 +118,8 @@ class NadelQueryTransformer internal constructor(
         val transformResult = transformation.transform.transformField(
             executionContext,
             continuation,
-            service,
-            overallSchema,
             executionBlueprint,
+            service,
             field,
             transformation.state,
         )

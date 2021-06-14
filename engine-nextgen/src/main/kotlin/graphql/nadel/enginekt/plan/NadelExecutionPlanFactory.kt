@@ -3,9 +3,7 @@ package graphql.nadel.enginekt.plan
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.enginekt.NadelExecutionContext
-import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
 import graphql.nadel.enginekt.transform.AnyNadelTransform
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.NadelRenameTransform
@@ -37,7 +35,6 @@ internal class NadelExecutionPlanFactory(
             transforms.forEach { transform ->
                 val state = transform.isApplicable(
                     executionContext,
-                    overallSchema,
                     executionBlueprint,
                     services,
                     service,

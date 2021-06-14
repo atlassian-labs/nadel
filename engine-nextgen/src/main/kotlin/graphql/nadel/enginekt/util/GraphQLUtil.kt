@@ -48,6 +48,19 @@ fun GraphQLFieldsContainer.getFieldAt(
     return getFieldAt(pathToField, pathIndex = 0)
 }
 
+fun GraphQLFieldsContainer.getFieldsAlong(
+    pathToField: List<String>,
+): List<GraphQLFieldDefinition> {
+    var parent = this
+    return pathToField.mapIndexed { index, fieldName ->
+        val field = parent.getField(fieldName)
+        if (index != pathToField.lastIndex) {
+            parent = field.type.unwrap(all = true) as GraphQLFieldsContainer
+        }
+        field
+    }
+}
+
 private fun GraphQLFieldsContainer.getFieldAt(
     pathToField: List<String>,
     pathIndex: Int,
@@ -57,7 +70,7 @@ private fun GraphQLFieldsContainer.getFieldAt(
     return if (pathIndex == pathToField.lastIndex) {
         field
     } else {
-        val fieldOutputType = field.type as GraphQLFieldsContainer
+        val fieldOutputType = field.type.unwrap(all = true) as GraphQLFieldsContainer
         fieldOutputType.getFieldAt(pathToField, pathIndex + 1)
     }
 }

@@ -16,7 +16,6 @@ import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLSchema
 
 /**
  * A deep rename is a rename in where the field being "renamed" is not on the same level
@@ -77,7 +76,6 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -149,9 +147,8 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation, // this has an underlying schema
-        service: Service,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -259,11 +256,10 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: NormalizedField, // Overall field
-        underlyingParentField: NormalizedField?,
+        overallField: NormalizedField,
+        underlyingParentField: NormalizedField?, // Overall field
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {

@@ -11,7 +11,6 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
-import graphql.schema.GraphQLSchema
 
 internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameResultTransform.State> {
     data class State(
@@ -20,7 +19,6 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -38,9 +36,8 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
-        service: Service,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -49,7 +46,6 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: NormalizedField,

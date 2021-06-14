@@ -5,7 +5,6 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.transform.NadelTransform
@@ -21,7 +20,6 @@ import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLSchema
 
 internal class NadelBatchHydrationTransform(
     engine: NextgenEngine,
@@ -38,7 +36,6 @@ internal class NadelBatchHydrationTransform(
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -63,9 +60,8 @@ internal class NadelBatchHydrationTransform(
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
-        service: Service,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -85,7 +81,6 @@ internal class NadelBatchHydrationTransform(
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: NormalizedField,

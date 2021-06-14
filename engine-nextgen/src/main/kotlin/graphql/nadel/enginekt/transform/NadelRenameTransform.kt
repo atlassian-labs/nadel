@@ -20,7 +20,6 @@ import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLSchema
 
 internal class NadelRenameTransform : NadelTransform<State> {
     data class State(
@@ -33,7 +32,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -61,9 +59,8 @@ internal class NadelRenameTransform : NadelTransform<State> {
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
-        service: Service,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -151,11 +148,10 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: NormalizedField, // Overall field
-        underlyingParentField: NormalizedField?,
+        overallField: NormalizedField,
+        underlyingParentField: NormalizedField?, // Overall field
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {

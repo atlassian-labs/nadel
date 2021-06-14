@@ -6,7 +6,7 @@ import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy.MatchObjectIdentifier
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationInputBuilder
 import graphql.nadel.enginekt.transform.query.NFUtil
@@ -26,17 +26,19 @@ internal object NadelHydrationFieldsBuilder {
         aliasHelper: AliasHelper,
         hydratedField: NormalizedField,
         parentNode: JsonNode,
-    ): NormalizedField {
-        return makeActorQueries(
+    ): List<NormalizedField> {
+        return NadelHydrationInputBuilder.getInputValues(
             instruction = instruction,
-            fieldArguments = NadelHydrationInputBuilder.getInputValues(
+            aliasHelper = aliasHelper,
+            hydratedField = hydratedField,
+            parentNode = parentNode,
+        ).map { args ->
+            makeActorQueries(
                 instruction = instruction,
-                aliasHelper = aliasHelper,
-                hydratedField = hydratedField,
-                parentNode = parentNode,
-            ),
-            fieldChildren = deepClone(fields = hydratedField.children),
-        )
+                fieldArguments = args,
+                fieldChildren = deepClone(fields = hydratedField.children),
+            )
+        }
     }
 
     fun makeBatchActorQueries(
@@ -62,7 +64,7 @@ internal object NadelHydrationFieldsBuilder {
         return argBatches.map { argBatch ->
             makeActorQueries(
                 instruction = instruction,
-                fieldArguments = argBatch.mapKeys { (input: NadelHydrationActorInput) -> input.name },
+                fieldArguments = argBatch.mapKeys { (inputDef: NadelHydrationActorInputDef) -> inputDef.name },
                 fieldChildren = fieldChildren,
             )
         }
@@ -79,10 +81,10 @@ internal object NadelHydrationFieldsBuilder {
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
-        return instruction.actorInputValues
+        return instruction.actorInputValueDefs
             .asSequence()
             .map { it.valueSource }
-            .filterIsInstance<NadelHydrationActorInput.ValueSource.FieldResultValue>()
+            .filterIsInstance<NadelHydrationActorInputDef.ValueSource.FieldResultValue>()
             .map { valueSource ->
                 aliasHelper.toArtificial(
                     NFUtil.createField(

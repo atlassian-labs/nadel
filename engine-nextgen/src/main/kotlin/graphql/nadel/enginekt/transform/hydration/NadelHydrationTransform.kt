@@ -7,6 +7,7 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
@@ -22,7 +23,6 @@ import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLSchema
 
 internal class NadelHydrationTransform(
     private val engine: NextgenEngine,
@@ -47,7 +47,6 @@ internal class NadelHydrationTransform(
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
@@ -71,9 +70,8 @@ internal class NadelHydrationTransform(
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
-        service: Service,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -102,7 +100,6 @@ internal class NadelHydrationTransform(
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: NormalizedField,
@@ -144,28 +141,56 @@ internal class NadelHydrationTransform(
         // Do nothing if there is no hydration instruction associated with this result
         instruction ?: return emptyList()
 
-        val result = engine.executeHydration(
-            service = instruction.actorService,
-            topLevelField = NadelHydrationFieldsBuilder.makeActorQueries(
-                instruction = instruction,
-                aliasHelper = state.aliasHelper,
-                hydratedField = hydrationField,
-                parentNode = parentNode,
-            ),
-            pathToActorField = instruction.queryPathToActorField,
-            executionContext = executionContext,
-        )
+        val actorQueryResults = NadelHydrationFieldsBuilder.makeActorQueries(
+            instruction = instruction,
+            aliasHelper = state.aliasHelper,
+            hydratedField = hydrationField,
+            parentNode = parentNode,
+        ).map { actorQuery ->
+            engine.executeHydration(
+                service = instruction.actorService,
+                topLevelField = actorQuery,
+                pathToActorField = instruction.queryPathToActorField,
+                executionContext = executionContext,
+            )
+        }
 
-        val data = JsonNodeExtractor.getNodesAt(
-            data = result.data,
-            queryPath = instruction.queryPathToActorField,
-        ).emptyOrSingle()
+        when (instruction.hydrationStrategy) {
+            is NadelHydrationStrategy.OneToOne -> {
+                // Should not have more than one query for one to one
+                val result = actorQueryResults.emptyOrSingle()
 
-        return listOf(
-            NadelResultInstruction.Set(
-                subjectPath = parentNode.resultPath + hydrationField.resultKey,
-                newValue = data?.value,
-            ),
-        )
+                val data = result?.let {
+                    JsonNodeExtractor.getNodesAt(
+                        data = result.data,
+                        queryPath = instruction.queryPathToActorField,
+                    ).emptyOrSingle()
+                }
+
+                return listOf(
+                    NadelResultInstruction.Set(
+                        subjectPath = parentNode.resultPath + hydrationField.resultKey,
+                        newValue = data?.value,
+                    ),
+                )
+            }
+            is NadelHydrationStrategy.ManyToOne -> {
+                val data = actorQueryResults.flatMap { result ->
+                    JsonNodeExtractor.getNodesAt(
+                        data = result.data,
+                        queryPath = instruction.queryPathToActorField,
+                    ).map {
+                        it.value
+                    }
+                }
+
+                return listOf(
+                    NadelResultInstruction.Set(
+                        subjectPath = parentNode.resultPath + hydrationField.resultKey,
+                        newValue = data,
+                    ),
+                )
+            }
+        }
     }
 }
