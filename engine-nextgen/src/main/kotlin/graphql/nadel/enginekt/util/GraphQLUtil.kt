@@ -157,3 +157,7 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
 fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates {
     return FieldCoordinates.coordinates(typeName, fieldName)
 }
+
+fun makeFieldCoordinates(parentType: GraphQLObjectType, field: GraphQLFieldDefinition): FieldCoordinates {
+    return makeFieldCoordinates(typeName = parentType.name, fieldName = field.name)
+}

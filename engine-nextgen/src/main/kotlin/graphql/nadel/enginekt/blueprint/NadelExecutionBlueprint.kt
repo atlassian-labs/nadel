@@ -2,11 +2,11 @@ package graphql.nadel.enginekt.blueprint
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.filterValuesOfType
+import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
-import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 interface NadelExecutionBlueprint {
     val schema: GraphQLSchema
@@ -33,11 +33,7 @@ data class NadelOverallExecutionBlueprint(
         service: Service,
         underlyingTypeName: String,
     ): String {
-        val serviceName = service.name
-        val underlyingBlueprint = underlyingBlueprints[serviceName] ?: error("Could not find service: $serviceName")
-        return underlyingTypeName.let { underlying ->
-            underlyingBlueprint.typeInstructions[underlying]?.overallName ?: underlying
-        }
+        return getOverallTypeName(service.name, underlyingTypeName)
     }
 
     private fun getOverallTypeName(

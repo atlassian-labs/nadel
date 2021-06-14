@@ -26,6 +26,7 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.isList
+import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.enginekt.util.unwrapNonNull
@@ -35,8 +36,6 @@ import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLTypeUtil
-import graphql.schema.FieldCoordinates.coordinates as makeFieldCoordinates
 
 internal typealias AnyNamedNode = NamedNode<*>
 
@@ -97,40 +96,49 @@ internal object NadelExecutionBlueprintFactory {
     private fun createHydrationFieldInstruction(
         services: List<Service>,
         parentType: GraphQLObjectType,
-        field: GraphQLFieldDefinition,
+        hydratedFieldDef: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
     ): NadelFieldInstruction {
         val hydrationActorService = services.single { it.name == hydration.serviceName }
         val actorFieldSchema = hydrationActorService.underlyingSchema
 
         val queryPathToActorField = listOfNotNull(hydration.syntheticField, hydration.topLevelField)
-        val actorField = actorFieldSchema.queryType.getFieldAt(queryPathToActorField)!!
+        val actorFieldDef = actorFieldSchema.queryType.getFieldAt(queryPathToActorField)!!
 
-        if (hydration.isBatched || /*deprecated*/ actorField.type.unwrapNonNull().isList) {
-            require(actorField.type.unwrapNonNull().isList) { "Batched hydration at '$queryPathToActorField' requires a list output type" }
-            return createBatchHydrationFieldInstruction(parentType, field, hydration, hydrationActorService)
+        if (hydration.isBatched || /*deprecated*/ actorFieldDef.type.unwrapNonNull().isList) {
+            require(actorFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$queryPathToActorField' requires a list output type" }
+            return createBatchHydrationFieldInstruction(
+                type = parentType,
+                hydratedFieldDef = hydratedFieldDef,
+                actorFieldDef = actorFieldDef,
+                hydration = hydration,
+                actorService = hydrationActorService,
+            )
         }
 
         return NadelHydrationFieldInstruction(
-            location = makeFieldCoordinates(parentType, field),
+            location = makeFieldCoordinates(parentType, hydratedFieldDef),
             actorService = hydrationActorService,
             queryPathToActorField = QueryPath(queryPathToActorField),
+            actorFieldDefinition = actorFieldDef,
             actorInputValues = getHydrationArguments(hydration),
         )
     }
 
     private fun createBatchHydrationFieldInstruction(
         type: GraphQLObjectType,
-        field: GraphQLFieldDefinition,
+        hydratedFieldDef: GraphQLFieldDefinition,
+        actorFieldDef: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
-        sourceService: Service,
+        actorService: Service,
     ): NadelFieldInstruction {
-        val location = makeFieldCoordinates(type, field)
+        val location = makeFieldCoordinates(type, hydratedFieldDef)
 
         return NadelBatchHydrationFieldInstruction(
             location,
-            actorService = sourceService,
+            actorService = actorService,
             queryPathToActorField = QueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
+            actorFieldDefinition = actorFieldDef,
             actorInputValues = getHydrationArguments(hydration),
             batchSize = hydration.batchSize ?: 50,
             batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {
@@ -233,10 +241,10 @@ internal object NadelExecutionBlueprintFactory {
                     .flatMap { typeDef ->
                         when (typeDef) {
                             is EnumTypeDefinition -> typeDef.enumValueDefinitions.map { enumValue ->
-                                FieldCoordinates.coordinates(typeDef.name, enumValue.name)
+                                makeFieldCoordinates(typeDef.name, enumValue.name)
                             }
                             is ImplementingTypeDefinition -> typeDef.fieldDefinitions.map { fieldDef ->
-                                FieldCoordinates.coordinates(typeDef.name, fieldDef.name)
+                                makeFieldCoordinates(typeDef.name, fieldDef.name)
                             }
                             else -> emptyList()
                         }
