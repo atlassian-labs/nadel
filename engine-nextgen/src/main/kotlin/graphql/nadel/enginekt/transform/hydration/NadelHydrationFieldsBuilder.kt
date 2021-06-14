@@ -7,7 +7,6 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy.MatchObjectIdentifier
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
-import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationInputBuilder
 import graphql.nadel.enginekt.transform.query.NFUtil
@@ -22,13 +21,13 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLUnionType
 
 internal object NadelHydrationFieldsBuilder {
-    fun makeActorQuery(
+    fun makeActorQueries(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: AliasHelper,
         hydratedField: NormalizedField,
         parentNode: JsonNode,
     ): NormalizedField {
-        return makeActorQuery(
+        return makeActorQueries(
             instruction = instruction,
             fieldArguments = NadelHydrationInputBuilder.getInputValues(
                 instruction = instruction,
@@ -61,7 +60,7 @@ internal object NadelHydrationFieldsBuilder {
         }
 
         return argBatches.map { argBatch ->
-            makeActorQuery(
+            makeActorQueries(
                 instruction = instruction,
                 fieldArguments = argBatch.mapKeys { (input: NadelHydrationActorInput) -> input.name },
                 fieldChildren = fieldChildren,
@@ -98,7 +97,7 @@ internal object NadelHydrationFieldsBuilder {
             .toList()
     }
 
-    private fun makeActorQuery(
+    private fun makeActorQueries(
         instruction: NadelGenericHydrationInstruction,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<NormalizedField>,
@@ -118,9 +117,9 @@ internal object NadelHydrationFieldsBuilder {
     ): NormalizedField? {
         return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
             is MatchObjectIdentifier -> {
-                val actorField = NadelHydrationUtil.getActorField(batchHydrationInstruction)
+                val actorFieldDef = batchHydrationInstruction.actorFieldDefinition
                 val underlyingSchema = batchHydrationInstruction.actorService.underlyingSchema
-                val objectTypes: List<GraphQLObjectType> = when (val type = actorField.type.unwrap(all = true)) {
+                val objectTypes: List<GraphQLObjectType> = when (val type = actorFieldDef.type.unwrap(all = true)) {
                     is GraphQLObjectType -> listOf(type)
                     is GraphQLUnionType -> type.types.map { it as GraphQLObjectType }
                     is GraphQLInterfaceType -> underlyingSchema.getImplementations(type)

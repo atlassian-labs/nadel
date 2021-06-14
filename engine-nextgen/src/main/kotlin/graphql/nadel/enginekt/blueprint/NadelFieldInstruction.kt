@@ -5,6 +5,7 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrate
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLFieldDefinition
 
 sealed class NadelFieldInstruction {
     abstract val location: FieldCoordinates
@@ -13,6 +14,7 @@ sealed class NadelFieldInstruction {
 interface NadelGenericHydrationInstruction {
     val actorService: Service
     val queryPathToActorField: QueryPath
+    val actorFieldDefinition: GraphQLFieldDefinition
     val actorInputValues: List<NadelHydrationActorInput>
 }
 
@@ -20,6 +22,7 @@ data class NadelHydrationFieldInstruction(
     override val location: FieldCoordinates,
     override val actorService: Service,
     override val queryPathToActorField: QueryPath,
+    override val actorFieldDefinition: GraphQLFieldDefinition,
     override val actorInputValues: List<NadelHydrationActorInput>,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
@@ -27,6 +30,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val location: FieldCoordinates,
     override val actorService: Service,
     override val queryPathToActorField: QueryPath,
+    override val actorFieldDefinition: GraphQLFieldDefinition,
     override val actorInputValues: List<NadelHydrationActorInput>,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,

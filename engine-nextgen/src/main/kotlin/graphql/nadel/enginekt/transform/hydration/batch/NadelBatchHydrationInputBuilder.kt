@@ -5,7 +5,6 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrate
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationInputBuilder.valueToAstValue
-import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
@@ -13,7 +12,6 @@ import graphql.nadel.enginekt.util.flatten
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedInputValue
-import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLTypeUtil
 
 /**
@@ -29,10 +27,8 @@ internal object NadelBatchHydrationInputBuilder {
         hydrationField: NormalizedField,
         parentNodes: List<JsonNode>,
     ): List<Map<NadelHydrationActorInput, NormalizedInputValue>> {
-        val actorFieldDefinition = NadelHydrationUtil.getActorField(instruction)
-
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
-        val batchArgs = getBatchInputValues(actorFieldDefinition, instruction, parentNodes, aliasHelper)
+        val batchArgs = getBatchInputValues(instruction, parentNodes, aliasHelper)
 
         return batchArgs.map { nonBatchArgs + it }
     }
@@ -58,7 +54,6 @@ internal object NadelBatchHydrationInputBuilder {
     }
 
     private fun getBatchInputValues(
-        actorFieldDefinition: GraphQLFieldDefinition,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
         aliasHelper: AliasHelper,
@@ -75,7 +70,7 @@ internal object NadelBatchHydrationInputBuilder {
             }
             .emptyOrSingle() ?: return emptyList()
 
-        val batchArgDef = actorFieldDefinition.getArgument(batchArg.name)
+        val batchArgDef = instruction.actorFieldDefinition.getArgument(batchArg.name)
 
         return getFieldResultValues(fieldResultValueSource, parentNodes, aliasHelper)
             .chunked(size = batchSize)

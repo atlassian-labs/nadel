@@ -146,7 +146,7 @@ internal class NadelHydrationTransform(
 
         val result = engine.executeHydration(
             service = instruction.actorService,
-            topLevelField = NadelHydrationFieldsBuilder.makeActorQuery(
+            topLevelField = NadelHydrationFieldsBuilder.makeActorQueries(
                 instruction = instruction,
                 aliasHelper = state.aliasHelper,
                 hydratedField = hydrationField,
