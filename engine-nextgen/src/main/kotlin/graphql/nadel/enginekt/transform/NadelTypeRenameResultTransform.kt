@@ -25,11 +25,11 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         executionBlueprint: NadelExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        field: NormalizedField,
+        overallField: NormalizedField,
     ): State? {
-        return if (field.fieldName == Introspection.TypeNameMetaFieldDef.name) {
+        return if (overallField.fieldName == Introspection.TypeNameMetaFieldDef.name) {
             State(
-                typeRenamePath = field.queryPath,
+                typeRenamePath = overallField.queryPath,
             )
         } else {
             null
@@ -53,7 +53,8 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,
-        field: NormalizedField,
+        overallField: NormalizedField,
+        underlyingParentField: NormalizedField,
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {

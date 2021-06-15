@@ -1,0 +1,117 @@
+name: hydration call with argument value from original field argument
+overallSchema:
+  UserService: |
+    service UserService {
+      type Query {
+        usersByIds(extraArg: String, id: [ID]): [User]
+      }
+      type User {
+        id: ID
+        name: String
+      }
+    }
+  Issues: |
+    service Issues {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        author(extraArg: String): User => hydrated from UserService.usersByIds(extraArg: $argument.extraArg,id: $source.authorId) object identified by id, batch size 2
+      }
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      usersByIds(extraArg: String, id: [ID]): [User]
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Issue {
+      authorId: ID
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      author(extraArg: "extraArg") {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              id
+              authorId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1",
+                "authorId": "USER-1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query nadel_2_UserService {
+            usersByIds(id: ["USER-1"], extraArg: "extraArg") {
+              name
+              object_identifier__UUID: id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_UserService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
+              {
+                "id": "USER-1",
+                "name": "User 1",
+                "object_identifier__UUID": "USER-1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "author": {
+            "name": "User 1"
+          }
+        }
+      ]
+    },
+    "extensions": {}
+  }

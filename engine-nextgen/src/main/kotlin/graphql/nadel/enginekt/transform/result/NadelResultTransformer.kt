@@ -27,17 +27,22 @@ internal class NadelResultTransformer(
         executionContext: NadelExecutionContext,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<NormalizedField>,
+        overallToUnderlyingFields: Map<NormalizedField, List<NormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
         val instructions = executionPlan.transformationSteps.flatMap { (field, steps) ->
-            steps.flatMap { step ->
+            steps.flatMap step@{ step ->
+                // This can be null if we did not end up sending the field e.g. for hydration
+                val underlyingFields = overallToUnderlyingFields[field] ?: return@step emptyList()
+
                 step.transform.getResultInstructions(
                     executionContext,
                     overallSchema,
                     executionPlan,
                     service,
                     field,
+                    underlyingFields.first().parent,
                     result,
                     step.state,
                 )
@@ -124,7 +129,6 @@ internal class NadelResultTransformer(
             JsonNodeExtractor.getNodesAt(
                 data = result.data,
                 queryPath = field.queryPath,
-                flatten = true,
             ).map { jsonNode ->
                 NadelResultInstruction.Remove(
                     subjectPath = jsonNode.resultPath,
@@ -134,7 +138,7 @@ internal class NadelResultTransformer(
     }
 }
 
-private fun <K, V> Map<K, V>.asMutable(): MutableMap<K, V> {
+internal fun <K, V> Map<K, V>.asMutable(): MutableMap<K, V> {
     return this as? MutableMap<K, V> ?: throw NotMutableError()
 }
 

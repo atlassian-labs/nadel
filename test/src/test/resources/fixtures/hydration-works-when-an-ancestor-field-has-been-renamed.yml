@@ -1,0 +1,111 @@
+name: hydration works when an ancestor field has been renamed
+overallSchema:
+  IssueService: |
+    service IssueService {
+      type DevOpsIssue => renamed from Issue {
+        id: ID
+      }
+      type DevOpsRelationship => renamed from Relationship {
+        devOpsIssue: DevOpsIssue => hydrated from IssueService.issue(id: $source.issueId)
+      }
+      type DevOpsRelationshipConnection => renamed from RelationshipConnection {
+        nodes: [DevOpsRelationship]
+      }
+      type Query {
+        devOpsRelationships: DevOpsRelationshipConnection => renamed from relationships
+        devOpsIssue(id: ID): DevOpsIssue => renamed from issue
+      }
+    }
+underlyingSchema:
+  IssueService: |
+    type Issue {
+      id: ID
+    }
+
+    type Query {
+      issue(id: ID): Issue
+      relationships: RelationshipConnection
+    }
+
+    type Relationship {
+      issueId: ID
+    }
+
+    type RelationshipConnection {
+      nodes: [Relationship]
+    }
+query: |
+  query {
+    devOpsRelationships {
+      nodes {
+        devOpsIssue {
+          id
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: IssueService
+      request:
+        query: |
+          query nadel_2_IssueService {
+            relationships {
+              nodes {
+                issueId
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "relationships": {
+              "nodes": [
+                {
+                  "issueId": "1"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: IssueService
+      request:
+        query: |
+          query nadel_2_IssueService {
+            issue(id: "1") {
+              id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "1"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "devOpsRelationships": {
+        "nodes": [
+          {
+            "devOpsIssue": {
+              "id": "1"
+            }
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,133 @@
+name: same source for 2 hydrations
+overallSchema:
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        issue: Issue => hydrated from Foo.issue(issueId: $source.fooId)
+        detail: Detail => hydrated from Foo.detail(detailId: $source.fooId)
+      }
+      type Detail {
+        detailId: ID!
+        name: String
+      }
+      type Issue {
+        fooId: ID
+        field: String
+      }
+    }
+underlyingSchema:
+  Foo: |
+    type Detail {
+      detailId: ID!
+      name: String
+    }
+
+    type Foo {
+      field: String
+      fooId: ID
+      issue: Issue
+    }
+
+    type Issue {
+      field: String
+      fooId: ID
+    }
+
+    type Query {
+      detail(detailId: ID): Detail
+      foo: Foo
+      issue(issueId: ID): Issue
+    }
+query: |
+  query {
+    foo {
+      issue {
+        field
+      }
+      detail {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            foo {
+              fooId
+              fooId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "fooId": "ID"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            issue(issueId: "ID") {
+              field
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "field": "field_name"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            detail(detailId: "ID") {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "detail": {
+              "name": "apple"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "issue": {
+          "field": "field_name"
+        },
+        "detail": {
+          "name": "apple"
+        }
+      }
+    },
+    "extensions": {}
+  }

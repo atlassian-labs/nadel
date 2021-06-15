@@ -1,0 +1,50 @@
+name: one call to one service with list result
+overallSchema:
+  service: |
+    service service {
+      type Query {
+        foo: [String]
+      }
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: [String]
+    }
+query: |
+  query {
+    foo
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: service
+      request:
+        query: |
+          query nadel_2_service {
+            foo
+          }
+        variables: {}
+        operationName: nadel_2_service
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": [
+              "foo1",
+              "foo2"
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": [
+        "foo1",
+        "foo2"
+      ]
+    },
+    "extensions": {}
+  }

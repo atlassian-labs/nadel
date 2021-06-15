@@ -13,7 +13,7 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput.ValueSource
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
-import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getSourceFieldDefinition
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getActorField
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.AnyList
@@ -32,16 +32,16 @@ internal object NadelHydrationInputBuilder {
     fun getInputValues(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: AliasHelper,
-        hydrationField: NormalizedField,
+        hydratedField: NormalizedField,
         parentNode: JsonNode,
     ): Map<String, NormalizedInputValue> {
-        val sourceField = getSourceFieldDefinition(instruction)
+        val actorField = getActorField(instruction)
 
         return mapFrom(
             instruction.actorInputValues
                 .map {
-                    val argumentDef = sourceField.getArgument(it.name)
-                    it.name to makeInputValue(it, argumentDef, parentNode, hydrationField, aliasHelper)
+                    val argumentDef = actorField.getArgument(it.name)
+                    it.name to makeInputValue(it, argumentDef, parentNode, hydratedField, aliasHelper)
                 }
         )
     }

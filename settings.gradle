@@ -1,5 +1,5 @@
 rootProject.name = "nadel"
-include("nadel", "api", "engine", "engine-nextgen")
+include("nadel", "api", "engine", "engine-nextgen", "test")
 
 // Prefix every project name with nadel
 rootProject.children.forEach { project ->
