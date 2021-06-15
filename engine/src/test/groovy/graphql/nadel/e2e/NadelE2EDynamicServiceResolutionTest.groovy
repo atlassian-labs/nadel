@@ -2,30 +2,62 @@ package graphql.nadel.e2e
 
 
 import graphql.ErrorType
-import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder
 import graphql.execution.ExecutionStepInfo
+import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionInput
 import graphql.nadel.Service
-import graphql.nadel.engine.StrategyTestHelper
-import graphql.nadel.engine.result.ResultComplexityAggregator
+import graphql.nadel.ServiceExecution
+import graphql.nadel.ServiceExecutionFactory
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.testutils.TestUtil
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.hooks.ServiceOrError
+import spock.lang.Specification
 
-class NadelE2EDynamicServiceResolutionTest extends StrategyTestHelper {
-    def commonTypes = '''
-            directive @dynamicServiceResolution on FIELD_DEFINITION
-            
-            type Query {
-                node(id: ID!): Node @dynamicServiceResolution
-            } 
-            
-            interface Node {
-                id: ID!
-            }
-        '''
+import static graphql.nadel.NadelEngine.newNadel
+import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
+import static graphql.nadel.engine.testutils.TestUtil.typeDefinitions
+import static java.util.concurrent.CompletableFuture.completedFuture
 
-    def repoSchema = TestUtil.schema("""
+class NadelE2EDynamicServiceResolutionTest extends Specification {
+    def nsdl = [
+            common: '''
+                    common {
+                        directive @dynamicServiceResolution on FIELD_DEFINITION
+                        
+                        type Query {
+                            node(id: ID!): Node @dynamicServiceResolution
+                        } 
+                        
+                        interface Node {
+                            id: ID!
+                        }
+                    }
+            ''',
+            RepoService: '''   
+                    service RepoService {
+                       type PullRequest implements Node {
+                            id: ID!
+                            description: String
+                       }
+                       type Commit implements Node {
+                            id: ID!
+                            hash: String
+                       }
+                    }
+            ''',
+            IssueService: '''   
+                    service IssueService {
+                       type Issue implements Node {
+                            id: ID!
+                            issueKey: String
+                       }
+                    }
+                    '''
+    ]
+
+    def repoSchema = typeDefinitions('''
             type Query {
                 node(id: ID): Node
             }
@@ -38,13 +70,9 @@ class NadelE2EDynamicServiceResolutionTest extends StrategyTestHelper {
                 id: ID!
                 description: String
             }
-                
-            type Commit implements Node {
-                id: ID!
-                hash: String
-            }""")
+        ''')
 
-    def issueSchema = TestUtil.schema("""
+    def issueSchema = typeDefinitions("""
             type Query {
                 node(id: ID): Node
             }
@@ -82,18 +110,7 @@ class NadelE2EDynamicServiceResolutionTest extends StrategyTestHelper {
         }
     }
 
-    def 'simple success case'() {
-        def overallSchema = TestUtil.schemaFromNdsl([
-                RepoService: '''   
-                    service RepoService {
-                       type PullRequest implements Node {
-                            id: ID!
-                            description: String
-                       }
-                    }
-                    '''
-        ], commonTypes)
-
+    def "simple success case"() {
         def query = '''
             {
                 node(id: "pull-request:id-123") {
@@ -104,50 +121,40 @@ class NadelE2EDynamicServiceResolutionTest extends StrategyTestHelper {
                 }
             }
         '''
+        ServiceExecution repoExecution = Mock(ServiceExecution)
+        ServiceExecution issueExecution = Mock(ServiceExecution)
 
-        def expectedQuery1 = 'query nadel_2_RepoService {node(id:"pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}'
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                RepoService: new Tuple2(repoExecution, repoSchema),
+                IssueService: new Tuple2(issueExecution, issueSchema)
+        ])
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .serviceExecutionHooks(serviceHooks)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
         Map response1 = [node: [id: "123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(response1)
 
-        Map response
-        List<GraphQLError> errors
+        repoExecution.execute(_) >>
+                completedFuture(topLevelResult)
+
         when:
-        (response, errors) = test1Service(
-                overallSchema,
-                "RepoService",
-                repoSchema,
-                query,
-                ["pullRequest"],
-                expectedQuery1,
-                response1,
-                serviceHooks,
-                Mock(ResultComplexityAggregator)
-        )
-        then:
-        response == [node: [id: "123", description: "this is a pull request"]]
-        errors.size() == 0
+        def result = nadel.execute(nadelExecutionInput).get()
 
+        then:
+        result.data == [node: [id: "123", description: "this is a pull request"]]
+        result.errors.size() == 0
     }
 
-    def 'multiple services'() {
-        def overallSchema = TestUtil.schemaFromNdsl([
-                RepoService: '''   
-                    service RepoService {
-                       type PullRequest implements Node {
-                            id: ID!
-                            description: String
-                       }
-                    }
-                   ''',
-                IssueService: '''   
-                    service IssueService {
-                       type Issue implements Node {
-                            id: ID!
-                            issueKey: String
-                       }
-                    }
-                    '''
-        ], commonTypes)
-
+    def "multiple services"() {
         def query = '''
             {
                 pr:node(id: "pull-request:id-123") {
@@ -164,65 +171,45 @@ class NadelE2EDynamicServiceResolutionTest extends StrategyTestHelper {
                 }
             }
         '''
-        def repoTestService = new TestService(
-                name: "RepoService",
-                schema: repoSchema,
-                topLevelFields: ["pullRequest"],
-                expectedQuery: 'query nadel_2_RepoService {pr:node(id:"pull-request:id-123") {... on PullRequest {id description} type_hint_typename__UUID:__typename}}',
-                response: [pr: [id: "pull-request:id-123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
-        )
+        ServiceExecution repoServiceExecution = Mock(ServiceExecution)
+        ServiceExecution issueServiceExecution = Mock(ServiceExecution)
 
-        def issueTestService = new TestService(
-                name: "IssueService",
-                schema: issueSchema,
-                topLevelFields: ["issue"],
-                expectedQuery: 'query nadel_2_IssueService {issue:node(id:"issue/id-123") {... on Issue {id issueKey} type_hint_typename__UUID:__typename}}',
-                response: [issue: [id: "issue/id-123", issueKey: "ISSUE-1", type_hint_typename__UUID: "Issue"]]
-        )
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                RepoService: new Tuple2(repoServiceExecution, repoSchema),
+                IssueService: new Tuple2(issueServiceExecution, issueSchema)
+        ])
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .serviceExecutionHooks(serviceHooks)
+                .build()
 
-        Map response
-        List<GraphQLError> errors
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        Map repoResponse = [pr: [id: "pull-request:id-123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
+        Map issueResponse = [issue: [id: "issue/id-123", issueKey: "ISSUE-1", type_hint_typename__UUID: "Issue"]]
+        ServiceExecutionResult repoExecutionResult = new ServiceExecutionResult(repoResponse)
+        ServiceExecutionResult issueExecutionResult = new ServiceExecutionResult(issueResponse)
+
+        repoServiceExecution.execute(_) >> completedFuture(repoExecutionResult)
+        issueServiceExecution.execute(_) >> completedFuture(issueExecutionResult)
+
         when:
+        def result = nadel.execute(nadelExecutionInput).get()
 
-        (response, errors) = testServices(
-                overallSchema,
-                query,
-                [repoTestService, issueTestService],
-                serviceHooks,
-                Mock(ResultComplexityAggregator)
-        )
         then:
-        response == [
+        result.data == [
                 pr: [id: "pull-request:id-123", description: "this is a pull request"],
                 issue: [id: "issue/id-123", issueKey: "ISSUE-1"]
         ]
-        errors.size() == 0
+        result.errors.size() == 0
     }
 
-    def 'multiple services with one unmapped node lookup'() {
-        def overallSchema = TestUtil.schemaFromNdsl([
-                RepoService: '''
-                    service RepoService {
-                       type PullRequest implements Node {
-                            id: ID!
-                            description: String
-                       }
-                       type Commit implements Node {
-                            id: ID!
-                            hash: String
-                       }
-                    }
-                   ''',
-                IssueService: '''
-                    service IssueService {
-                       type Issue implements Node {
-                            id: ID!
-                            issueKey: String
-                       }
-                    }
-                    '''
-        ], commonTypes)
-
+    def "multiple services with one unmapped node lookup"() {
         def query = '''
             {
                 commit:node(id: "commit:id-123") {
@@ -239,32 +226,40 @@ class NadelE2EDynamicServiceResolutionTest extends StrategyTestHelper {
                 }
             }
         '''
+        ServiceExecution issueServiceExecution = Mock(ServiceExecution)
+        ServiceExecution repoServiceExecution = Mock(ServiceExecution)
 
-        def issueTestService = new TestService(
-                name: "IssueService",
-                schema: issueSchema,
-                topLevelFields: ["issue"],
-                expectedQuery: 'query nadel_2_IssueService {issue:node(id:"issue/id-123") {... on Issue {id issueKey} type_hint_typename__UUID:__typename}}',
-                response: [issue: [id: "issue/id-123", issueKey: "ISSUE-1", type_hint_typename__UUID: "Issue"]]
-        )
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                RepoService: new Tuple2(repoServiceExecution, repoSchema),
+                IssueService: new Tuple2(issueServiceExecution, issueSchema)
+        ])
 
-        Map response
-        List<GraphQLError> errors
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .serviceExecutionHooks(serviceHooks)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        Map issueResponse = [issue: [id: "issue/id-123", issueKey: "ISSUE-1", type_hint_typename__UUID: "Issue"]]
+        ServiceExecutionResult issueExecutionResult = new ServiceExecutionResult(issueResponse)
+
+        issueServiceExecution.execute(_) >> completedFuture(issueExecutionResult)
+
         when:
-
-        (response, errors) = testServices(
-                overallSchema,
-                query,
-                [issueTestService],
-                serviceHooks,
-                Mock(ResultComplexityAggregator)
-        )
+        def result = nadel.execute(nadelExecutionInput).get()
         then:
-        response == [
+
+        result.data == [
                 commit: null,
                 issue: [id: "issue/id-123", issueKey: "ISSUE-1"]
         ]
-        errors.size() == 1
-        errors.get(0).message == "Could not resolve service for field: /commit"
+        result.errors.size() == 1
+        result.errors.get(0).message == "Could not resolve service for field: /commit"
     }
 }
