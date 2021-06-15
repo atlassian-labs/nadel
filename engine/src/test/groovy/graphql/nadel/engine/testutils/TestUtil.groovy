@@ -21,6 +21,7 @@ import graphql.language.Field
 import graphql.language.FragmentDefinition
 import graphql.language.Node
 import graphql.language.OperationDefinition
+import graphql.language.SDLDefinition
 import graphql.language.ScalarTypeDefinition
 import graphql.language.SelectionSet
 import graphql.nadel.DefinitionRegistry
@@ -204,8 +205,11 @@ class TestUtil {
             return null
         }
     }
-
     static GraphQLSchema schemaFromNdsl(Map<String, String> serviceDSLs) {
+       return schemaFromNdsl(serviceDSLs, null)
+    }
+
+    static GraphQLSchema schemaFromNdsl(Map<String, String> serviceDSLs, String commonTypesDSL) {
         def defRegistries = []
         for (Map.Entry<String, String> e : serviceDSLs.entrySet()) {
             def serviceName = e.getKey()
@@ -214,7 +218,17 @@ class TestUtil {
             def definitionRegistry = Util.buildServiceRegistry(serviceDefinition)
             defRegistries.add(definitionRegistry)
         }
-        return new OverallSchemaGenerator().buildOverallSchema(defRegistries, new DefinitionRegistry(), new NeverWiringFactory())
+
+
+        def commonTypes = new DefinitionRegistry()
+        if(commonTypesDSL != null) {
+            def commonDSL = new NSDLParser().parseDSL(commonTypesDSL)
+            for(SDLDefinition commonTypeDefinition: commonDSL.SDLDefinitions) {
+                commonTypes.add(commonTypeDefinition)
+            }
+        }
+
+        return new OverallSchemaGenerator().buildOverallSchema(defRegistries, commonTypes, new NeverWiringFactory())
     }
 
     static GraphQL.Builder graphQL(String spec) {
