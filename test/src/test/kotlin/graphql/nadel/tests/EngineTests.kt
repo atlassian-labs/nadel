@@ -18,9 +18,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.tests.util.fixtures.EngineTestHook
 import graphql.nadel.tests.util.keysEqual
-import graphql.nadel.tests.util.packageName
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
@@ -31,10 +29,7 @@ import strikt.api.Assertion
 import strikt.api.expectThat
 import strikt.assertions.isA
 import java.io.File
-import java.text.Normalizer
-import java.util.Locale
 import java.util.concurrent.CompletableFuture
-import java.util.regex.Pattern
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
 import graphql.parser.Parser as DocumentParser
@@ -175,22 +170,6 @@ private suspend fun execute(
     )
 }
 
-private fun getTestHook(fixture: TestFixture): EngineTestHook? {
-    val hookClass = try {
-        Class.forName(
-            sequenceOf(
-                EngineTestHook::class.java.packageName,
-                "hooks",
-                fixture.name.toSlug(),
-            ).joinToString(separator = "."),
-        )
-    } catch (_: ClassNotFoundException) {
-        println("No hook class found")
-        return null
-    }
-    return hookClass.newInstance() as EngineTestHook
-}
-
 fun assertJsonObject(subject: JsonMap, expected: JsonMap) {
     return expectThat(subject) {
         assertJsonObject(expectedMap = expected)
@@ -272,7 +251,7 @@ private fun <T> Assertion.Builder<List<T>>.assertJsonArray(expectedValue: List<T
     }
 }
 
-private data class TestFixture(
+internal data class TestFixture(
     val name: String,
     val enabled: EngineEnabled = EngineEnabled(),
     val ignored: EngineIgnored = EngineIgnored(),
@@ -389,14 +368,4 @@ data class ExpectedException(
             ),
         )
     }
-}
-
-private val NON_LATIN: Pattern = Pattern.compile("[^\\w-]")
-private val WHITESPACE: Pattern = Pattern.compile("[\\s]")
-
-fun String.toSlug(): String {
-    val noWhitespace = WHITESPACE.matcher(this).replaceAll("-")
-    val normalized = Normalizer.normalize(noWhitespace, Normalizer.Form.NFD)
-    val slug = NON_LATIN.matcher(normalized).replaceAll("")
-    return slug.toLowerCase(Locale.ENGLISH)
 }
