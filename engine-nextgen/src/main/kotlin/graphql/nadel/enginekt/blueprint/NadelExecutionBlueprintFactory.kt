@@ -272,24 +272,19 @@ internal object NadelExecutionBlueprintFactory {
             }
             .mapValues { (_, fieldInstructionsForService) ->
                 mapFrom(
-                    fieldInstructionsForService.map { instruction: NadelFieldInstruction ->
+                    fieldInstructionsForService.mapNotNull { instruction: NadelFieldInstruction ->
                         val underlyingTypeName = instruction.location.typeName.let { overallTypeName ->
                             typeRenameInstructions[overallTypeName]?.underlyingName ?: overallTypeName
                         }
                         val underlyingFieldName = when (instruction) {
                             is NadelRenameFieldInstruction -> instruction.underlyingName
-                            else -> instruction.location.fieldName
+                            else -> return@mapNotNull null
                         }
                         val underlyingFieldCoordinates = makeFieldCoordinates(underlyingTypeName, underlyingFieldName)
-
-                        when (instruction) {
-                            is NadelBatchHydrationFieldInstruction -> instruction.copy(location = underlyingFieldCoordinates)
-                            is NadelDeepRenameFieldInstruction -> instruction.copy(location = underlyingFieldCoordinates)
-                            is NadelHydrationFieldInstruction -> instruction.copy(location = underlyingFieldCoordinates)
-                            is NadelRenameFieldInstruction -> instruction.copy(location = underlyingFieldCoordinates)
-                        }.let {
-                            it.location to it
-                        }
+                        instruction.copy(location = underlyingFieldCoordinates)
+                            .let {
+                                it.location to it
+                            }
                     },
                 )
             }

@@ -75,7 +75,18 @@ internal class NadelResultTransformer(
         mutations.forEach(DataMutation::run)
 
         // Clean up data at the end
-        // TODO: not sure when we need this: do we have tests for that?
+        // TODO: optimize this, we can shave a lot of time here if we track which nodes need to be cleaned up e.g.
+        // transform(parent = parentNode) {
+        //   it.remove(x)
+        // }
+        // Where transform is something like
+        //
+        // inline fun transform(parent: JsonNode, func: (parent: JsonNode) -> Unit) {
+        //   func()
+        //   if (parent.isEmpty()) {
+        //     toCleanup.add(parent)
+        //   }
+        // }
         transformations
             .asSequence()
             .mapNotNull {
@@ -117,7 +128,7 @@ internal class NadelResultTransformer(
         val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
         val dataToCopy = parent[instruction.subjectKey]
 
-        val destinationParent = data.getJsonMapAt(instruction.destinationPath.dropLast(1)) ?: return DataMutation {}
+        val destinationParent = data.getParentOf(instruction.destinationPath) ?: return DataMutation {}
         val destinationKey = instruction.destinationKey
 
         return DataMutation {
@@ -236,7 +247,7 @@ private fun getNextNode(current: JsonNode, segment: AnyJsonNodePathSegment): Jso
                 else -> throw UnexpectedDataType(
                     path,
                     expected = Map::class,
-                    actual = value?.javaClass
+                    actual = value?.javaClass,
                 )
             }
         }
@@ -250,7 +261,7 @@ private fun getNextNode(current: JsonNode, segment: AnyJsonNodePathSegment): Jso
                 else -> throw UnexpectedDataType(
                     path,
                     expected = List::class,
-                    actual = value?.javaClass
+                    actual = value?.javaClass,
                 )
             }
         }

@@ -36,8 +36,8 @@ dependencies {
     testImplementation "com.google.code.gson:gson:2.8.0"
     testImplementation "org.slf4j:slf4j-simple:" + slf4jVersion
     testImplementation "com.fasterxml.jackson.core:jackson-databind:2.9.6"
-    testImplementation "org.openjdk.jmh:jmh-core:1.21"
-    testImplementation "org.openjdk.jmh:jmh-generator-annprocess:1.21"
+    testImplementation "org.openjdk.jmh:jmh-core:1.25"
+    testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:1.25"
     testImplementation "com.google.guava:guava:28.0-jre"
     testImplementation project(path: ":nadel-engine-nextgen")
 }
