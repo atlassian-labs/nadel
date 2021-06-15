@@ -1,0 +1,279 @@
+name: query with three nested hydrations and simple data and lots of renames
+overallSchema:
+  Bar: |
+    service Bar {
+      type Query{
+        ibar: Bar => renamed from bar
+      }
+      type Bar {
+        barId: ID
+        barName: String => renamed from name
+        nestedBar: Bar => hydrated from Bar.barsById(id: $source.nestedBarId) object identified by barId
+        barDetails: BarDetails => renamed from details
+      }
+      type BarDetails => renamed from Details {
+        barAge: Int => renamed from age
+        barContact: BarContactDetails => renamed from contact
+      }
+      type BarContactDetails => renamed from ContactDetails {
+        barEmail: String => renamed from email
+        barPhone: Int => renamed from phone
+      }
+    }
+  Foo: |
+    service Foo {
+      type Query{
+        fooz: [Fooz]  => renamed from foos
+      }
+      type Fooz => renamed from Foo {
+        fooDetails: FooDetails => renamed from details
+        bar: Bar => hydrated from Bar.barsById(id: $source.barId) object identified by barId, batch size 2
+      }
+      type FooDetails => renamed from Details {
+        fooName: String => renamed from name
+        fooAge: Int => renamed from age
+        fooContact: FooContactDetails => renamed from contact
+      }
+      type FooContactDetails => renamed from ContactDetails {
+        fooEmail: String => renamed from email
+        fooPhone: Int => renamed from phone
+      }
+    }
+underlyingSchema:
+  Bar: |
+    type Bar {
+      barId: ID
+      details: Details
+      name: String
+      nestedBarId: ID
+    }
+
+    type ContactDetails {
+      email: String
+      phone: Int
+    }
+
+    type Details {
+      age: Int
+      contact: ContactDetails
+    }
+
+    type Query {
+      bar: Bar
+      barsById(id: [ID]): [Bar]
+    }
+  Foo: |
+    type ContactDetails {
+      email: String
+      phone: Int
+    }
+
+    type Details {
+      age: Int
+      contact: ContactDetails
+      name: String
+    }
+
+    type Foo {
+      barId: ID
+      details: Details
+    }
+
+    type Query {
+      foos: [Foo]
+    }
+query: |
+  query {
+    fooz {
+      fooDetails {
+        fooName
+        fooAge
+        fooContact {
+          fooEmail
+          fooPhone
+        }
+      }
+      bar {
+        barName
+        nestedBar {
+          barName
+          nestedBar {
+            barName
+            barDetails {
+              barAge
+              barContact {
+                barEmail
+                barPhone
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            foos {
+              details {
+                name
+                age
+                contact {
+                  email
+                  phone
+                }
+              }
+              barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foos": [
+              {
+                "details": {
+                  "name": "smith",
+                  "age": 1,
+                  "contact": {
+                    "email": "test",
+                    "phone": 1
+                  }
+                },
+                "barId": "bar1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query nadel_2_Bar {
+            barsById(id: ["bar1"]) {
+              name
+              nestedBarId
+              object_identifier__UUID: barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barsById": [
+              {
+                "object_identifier__UUID": "bar1",
+                "name": "Bar 1",
+                "nestedBarId": "nestedBar1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query nadel_2_Bar {
+            barsById(id: ["nestedBar1"]) {
+              name
+              nestedBarId
+              object_identifier__UUID: barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barsById": [
+              {
+                "object_identifier__UUID": "nestedBar1",
+                "name": "NestedBarName1",
+                "nestedBarId": "nestedBarId456"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query nadel_2_Bar {
+            barsById(id: ["nestedBarId456"]) {
+              name
+              details {
+                age
+                contact {
+                  email
+                  phone
+                }
+              }
+              object_identifier__UUID: barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barsById": [
+              {
+                "object_identifier__UUID": "nestedBarId456",
+                "name": "NestedBarName2",
+                "details": {
+                  "age": 1,
+                  "contact": {
+                    "email": "test",
+                    "phone": 1
+                  }
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "fooz": [
+        {
+          "fooDetails": {
+            "fooName": "smith",
+            "fooAge": 1,
+            "fooContact": {
+              "fooEmail": "test",
+              "fooPhone": 1
+            }
+          },
+          "bar": {
+            "barName": "Bar 1",
+            "nestedBar": {
+              "barName": "NestedBarName1",
+              "nestedBar": {
+                "barName": "NestedBarName2",
+                "barDetails": {
+                  "barAge": 1,
+                  "barContact": {
+                    "barEmail": "test",
+                    "barPhone": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "extensions": {}
+  }

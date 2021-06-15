@@ -11,6 +11,7 @@ import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.asMutable
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.AnyMap
@@ -106,7 +107,8 @@ internal class NadelBatchHydrator(
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
     ): List<NadelResultInstruction> {
         val resultNodesByObjectId = resultNodes.associateBy {
-            it[matchStrategy.objectId]
+            // We don't want to show this in the overall result, so remove it here as we use it
+            it.asMutable().remove(state.aliasHelper.getResultKey(matchStrategy.objectId))
         }
 
         val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.getQueryPath(
@@ -134,34 +136,26 @@ internal class NadelBatchHydrator(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<Deferred<ServiceExecutionResult>> {
-        val inputValueBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
-            aliasHelper = state.aliasHelper,
+        val actorQueries = NadelHydrationFieldsBuilder.makeActorQueries(
             instruction = instruction,
-            hydrationField = state.field,
+            aliasHelper = state.aliasHelper,
+            hydratedField = state.field,
             parentNodes = parentNodes,
         )
 
-        return inputValueBatches
-            .map { inputValueBatch ->
-                val hydrationActorQuery = NadelHydrationFieldsBuilder.getActorQuery(
-                    instruction = instruction,
-                    hydrationField = state.field,
-                    fieldArguments = inputValueBatch.mapKeys { (argument: NadelHydrationActorInput) ->
-                        argument.name
-                    },
-                )
-
-                coroutineScope {
-                    async { // This executes the batches in parallel i.e. executes hydration as Deferred/Future
+        return coroutineScope {
+            actorQueries
+                .map { actorQuery ->
+                    async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
                         engine.executeHydration(
                             service = instruction.actorService,
-                            topLevelField = hydrationActorQuery,
-                            pathToSourceField = instruction.queryPathToActorField,
+                            topLevelField = actorQuery,
+                            pathToActorField = instruction.queryPathToActorField,
                             executionContext = state.executionContext,
                         )
                     }
                 }
-            }
+        }
     }
 
     private suspend fun getHydrationActorResultNodes(

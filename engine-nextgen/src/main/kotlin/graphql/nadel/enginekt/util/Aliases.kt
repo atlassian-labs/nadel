@@ -6,6 +6,8 @@ typealias AnyMapEntry = Map.Entry<*, *>
 
 typealias JsonMap = Map<String, *>
 
+typealias MutableJsonMap = MutableMap<String, *>
+
 typealias JsonMapEntry = Map.Entry<String, *>
 
 typealias AnyMutableMap = MutableMap<*, *>

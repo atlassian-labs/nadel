@@ -1,0 +1,59 @@
+name: top level field error does not redact other top level fields
+overallSchema:
+  service: |
+    service service {
+      type Query {
+        foo: String
+      }
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: String
+    }
+query: |
+  query {
+    foo
+    bar: foo
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: service
+      request:
+        query: |
+          query nadel_2_service {
+            bar: foo
+          }
+        variables: {}
+        operationName: nadel_2_service
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bar": "boo"
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "errors": [
+      {
+        "message": "Hello world",
+        "locations": [],
+        "path": [
+          "test",
+          "hello"
+        ],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "data": {
+      "bar": "boo",
+      "foo": null
+    },
+    "extensions": {}
+  }

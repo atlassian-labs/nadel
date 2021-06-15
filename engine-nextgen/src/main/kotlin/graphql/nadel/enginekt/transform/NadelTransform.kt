@@ -19,7 +19,7 @@ interface NadelTransform<State : Any> {
      *
      * The returned [State] is then fed into [transformField] and [getResultInstructions].
      *
-     * So here you will want to check whether the [field] has a specific [Directive] or
+     * So here you will want to check whether the [overallField] has a specific [Directive] or
      * if the field has an instruction inside [NadelExecutionBlueprint] etc.
      *
      * The state should hold data that is shared between [transformField] and [getResultInstructions]
@@ -29,8 +29,8 @@ interface NadelTransform<State : Any> {
      * @param userContext the context passed by the user into [graphql.nadel.NadelExecutionInput.context]
      * @param overallSchema the overall [GraphQLSchema] of the of the Nadel instance being operated on
      * @param executionBlueprint the [NadelExecutionBlueprint] of the Nadel instance being operated on
-     * @param service the [Service] the [field] belongs to
-     * @param field the [NormalizedField] in question, we are asking whether it [isApplicable] for transforms
+     * @param service the [Service] the [overallField] belongs to
+     * @param overallField the [NormalizedField] in question, we are asking whether it [isApplicable] for transforms
      *
      * @return null if the [NadelTransform] should not run, non-null [State] otherwise
      */
@@ -40,7 +40,7 @@ interface NadelTransform<State : Any> {
         executionBlueprint: NadelExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        field: NormalizedField,
+        overallField: NormalizedField,
     ): State?
 
     /**
@@ -71,7 +71,8 @@ interface NadelTransform<State : Any> {
         overallSchema: GraphQLSchema,
         executionPlan: NadelExecutionPlan,
         service: Service,
-        field: NormalizedField,
+        overallField: NormalizedField,
+        underlyingParentField: NormalizedField,
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction>

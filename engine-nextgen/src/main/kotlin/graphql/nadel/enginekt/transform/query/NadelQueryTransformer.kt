@@ -21,6 +21,7 @@ class NadelQueryTransformer internal constructor(
 
     internal data class TransformContext(
         val artificialFields: MutableList<NormalizedField>,
+        val overallToUnderlyingFields: MutableMap<NormalizedField, List<NormalizedField>>,
     )
 
     data class TransformResult(
@@ -32,6 +33,7 @@ class NadelQueryTransformer internal constructor(
          * A list of fields that were added to the query that do not belong in the overall result.
          */
         val artificialFields: List<NormalizedField>,
+        val overallToUnderlyingFields: Map<NormalizedField, List<NormalizedField>>,
     )
 
     suspend fun transformQuery(
@@ -40,7 +42,10 @@ class NadelQueryTransformer internal constructor(
         field: NormalizedField,
         executionPlan: NadelExecutionPlan,
     ): TransformResult {
-        val transformContext = TransformContext(artificialFields = mutableListOf())
+        val transformContext = TransformContext(
+            artificialFields = mutableListOf(),
+            overallToUnderlyingFields = mutableMapOf(),
+        )
 
         val result = transformField(executionContext, transformContext, executionPlan, service, field)
             .also { rootFields ->
@@ -50,6 +55,7 @@ class NadelQueryTransformer internal constructor(
         return TransformResult(
             result = result,
             artificialFields = transformContext.artificialFields,
+            overallToUnderlyingFields = transformContext.overallToUnderlyingFields,
         )
     }
 
@@ -69,11 +75,15 @@ class NadelQueryTransformer internal constructor(
                     fields = it.children,
                     executionPlan = executionPlan
                 )
-                it.toBuilder()
-                    .clearObjectTypesNames()
-                    .objectTypeNames(field.objectTypeNames.map(executionPlan::getUnderlyingTypeName))
+                patchObjectTypeNames(field, executionPlan)
                     .children(transformedChildFields)
                     .build()
+                    .also { newField ->
+                        // Track overall -> underlying fields
+                        transformContext.overallToUnderlyingFields.compute(field) { _, oldValue ->
+                            (oldValue ?: emptyList()) + newField
+                        }
+                    }
             }
         )
 
@@ -113,9 +123,18 @@ class NadelQueryTransformer internal constructor(
             transformation.state,
         )
 
+        // TODO: I think that patching names here is wrong, we're giving mixed signals to the transformations
+        // i.e. yes please give us a field in the underlying sense, but only field name
+        // I think this introduces confusion
         val patchedArtificialFields = patchObjectTypeNames(transformResult.artificialFields, executionPlan)
         val patchedNewField = patchObjectTypeNames(listOfNotNull(transformResult.newField), executionPlan)
         transformContext.artificialFields.addAll(patchedArtificialFields)
+
+        // Track overall -> underlying fields
+        transformContext.overallToUnderlyingFields.compute(field) { _, oldValue ->
+            (oldValue ?: emptyList()) + patchedNewField + patchedArtificialFields
+        }
+
         return patchedArtificialFields + patchedNewField
     }
 
@@ -124,11 +143,17 @@ class NadelQueryTransformer internal constructor(
         executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
         return fields.map { field ->
-            field.toBuilder()
-                .clearObjectTypesNames()
-                .objectTypeNames(field.objectTypeNames.map(executionPlan::getUnderlyingTypeName))
-                .build()
+            patchObjectTypeNames(field, executionPlan).build()
         }
+    }
+
+    private fun patchObjectTypeNames(
+        field: NormalizedField,
+        executionPlan: NadelExecutionPlan,
+    ): NormalizedField.Builder {
+        return field.toBuilder()
+            .clearObjectTypesNames()
+            .objectTypeNames(field.objectTypeNames.map(executionPlan::getUnderlyingTypeName))
     }
 
     /**

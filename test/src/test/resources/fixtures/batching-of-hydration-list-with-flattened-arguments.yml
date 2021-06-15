@@ -1,0 +1,217 @@
+name: batching of hydration list with flattened arguments
+overallSchema:
+  UserService: |
+    service UserService {
+      type Query {
+        usersByIds(id: [ID]): [User]
+      }
+      type User {
+        id: ID
+      }
+    }
+  Issues: |
+    service Issues {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        authors: [User] => hydrated from UserService.usersByIds(id: $source.authors.authorId) object identified by id, batch size 3
+      }
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      usersByIds(id: [ID]): [User]
+    }
+
+    type User {
+      id: ID
+    }
+  Issues: |
+    type Issue {
+      authorIds: [ID]
+      authors: [IssueUser]
+      id: ID
+    }
+
+    type IssueUser {
+      authorId: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      authors {
+        id
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              id
+              authors {
+                authorId
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1",
+                "authors": [
+                  {
+                    "authorId": "USER-1"
+                  },
+                  {
+                    "authorId": "USER-2"
+                  }
+                ]
+              },
+              {
+                "id": "ISSUE-2",
+                "authors": [
+                  {
+                    "authorId": "USER-3"
+                  }
+                ]
+              },
+              {
+                "id": "ISSUE-3",
+                "authors": [
+                  {
+                    "authorId": "USER-2"
+                  },
+                  {
+                    "authorId": "USER-4"
+                  },
+                  {
+                    "authorId": "USER-5"
+                  }
+                ]
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query nadel_2_UserService {
+            usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
+              id
+              object_identifier__UUID: id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_UserService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
+              {
+                "id": "USER-1",
+                "object_identifier__UUID": "USER-1"
+              },
+              {
+                "id": "USER-2",
+                "object_identifier__UUID": "USER-2"
+              },
+              {
+                "id": "USER-3",
+                "object_identifier__UUID": "USER-3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query nadel_2_UserService {
+            usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
+              id
+              object_identifier__UUID: id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_UserService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
+              {
+                "id": "USER-2",
+                "object_identifier__UUID": "USER-2"
+              },
+              {
+                "id": "USER-4",
+                "object_identifier__UUID": "USER-4"
+              },
+              {
+                "id": "USER-5",
+                "object_identifier__UUID": "USER-5"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": [
+            {
+              "id": "USER-1"
+            },
+            {
+              "id": "USER-2"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-2",
+          "authors": [
+            {
+              "id": "USER-3"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-3",
+          "authors": [
+            {
+              "id": "USER-2"
+            },
+            {
+              "id": "USER-4"
+            },
+            {
+              "id": "USER-5"
+            }
+          ]
+        }
+      ]
+    },
+    "extensions": {}
+  }
