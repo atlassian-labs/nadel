@@ -1,12 +1,15 @@
 package graphql.nadel.e2e
 
+import graphql.language.AstPrinter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
+import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.testutils.TestUtil
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static graphql.nadel.NadelEngine.newNadel
 import static graphql.nadel.NadelExecutionInput.newNadelExecutionInput
@@ -15,7 +18,8 @@ import static java.util.concurrent.CompletableFuture.completedFuture
 
 class NadelE2ENamespacedSharedFieldTest extends Specification {
 
-    def "query with two services sharing a namespaced field"() {
+    @Unroll
+    def "query with two services sharing a namespaced field: #description"() {
         def nsdl = [
                 Issues     : '''
             service Issues {
@@ -77,19 +81,6 @@ class NadelE2ENamespacedSharedFieldTest extends Specification {
               count: Int
             }  
         ''')
-        def query = '''
-            { 
-              issue {
-                getIssue {
-                  text
-                }
-                
-                search {
-                  count
-                }
-              }
-            }
-        '''
         ServiceExecution delegatedExecution1 = Mock(ServiceExecution)
         ServiceExecution delegatedExecution2 = Mock(ServiceExecution)
 
@@ -114,13 +105,24 @@ class NadelE2ENamespacedSharedFieldTest extends Specification {
         def result = nadel.execute(nadelExecutionInput)
 
         then:
-        1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
-        1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
+        1 * delegatedExecution1.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'query nadel_2_Issues {issue {getIssue {text}}}'
+            return completedFuture(delegatedExecutionResult1)
+        }
+        1 * delegatedExecution2.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'query nadel_2_IssueSearch {issue {search {count}}}'
+            return completedFuture(delegatedExecutionResult2)
+        }
         def er = result.join()
         er.data == [issue: [
                 getIssue: [text: "Foo"],
                 search  : [count: 1]
         ]]
+
+        where:
+        query                                                                  | description
+        '{...F} fragment F on Query {issue { getIssue {text} search {count}}}' | 'query with fragment'
+        '{issue { getIssue {text} search {count}}}'                            | 'simple query'
     }
 
     def "query with two services sharing a namespaced field mutation"() {
@@ -238,8 +240,14 @@ class NadelE2ENamespacedSharedFieldTest extends Specification {
         def result = nadel.execute(nadelExecutionInput)
 
         then:
-        1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
-        1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
+        1 * delegatedExecution1.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'mutation nadel_2_Issues {issue {getIssue {text}}}'
+            return completedFuture(delegatedExecutionResult1)
+        }
+        1 * delegatedExecution2.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'mutation nadel_2_IssueSearch {issue {search {count}}}'
+            return completedFuture(delegatedExecutionResult2)
+        }
         def er = result.join()
         er.data == [issue: [
                 getIssue: [text: "Foo"],
@@ -364,9 +372,18 @@ class NadelE2ENamespacedSharedFieldTest extends Specification {
         def result = nadel.execute(nadelExecutionInput)
 
         then:
-        1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
-        1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
-        1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult3)
+        1 * delegatedExecution1.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'query nadel_2_Issues {issue {getIssue {text}}}'
+            return completedFuture(delegatedExecutionResult1)
+        }
+        1 * delegatedExecution2.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'query nadel_2_IssueSearch {issue {search {count}}}'
+            return completedFuture(delegatedExecutionResult2)
+        }
+        1 * delegatedExecution1.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'query nadel_2_Issues {conf {title}}'
+            return completedFuture(delegatedExecutionResult3)
+        }
         def er = result.join()
         er.data == [
                 issue: [
@@ -516,9 +533,18 @@ class NadelE2ENamespacedSharedFieldTest extends Specification {
         def result = nadel.execute(nadelExecutionInput)
 
         then:
-        1 * delegatedExecution1.execute(_) >> completedFuture(delegatedExecutionResult1)
-        1 * delegatedExecution2.execute(_) >> completedFuture(delegatedExecutionResult2)
-        1 * delegatedExecution3.execute(_) >> completedFuture(delegatedExecutionResult3)
+        1 * delegatedExecution1.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'query nadel_2_Issues {issue {getIssue {text}}}'
+            return completedFuture(delegatedExecutionResult1)
+        }
+        1 * delegatedExecution2.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'query nadel_2_IssueSearch {issue {search {count}}}'
+            return completedFuture(delegatedExecutionResult2)
+        }
+        1 * delegatedExecution3.execute(_) >> { ServiceExecutionParameters executionParameters ->
+            assert AstPrinter.printAstCompact(executionParameters.query) == 'query nadel_2_Pages {page {getIssue {pageText}}}'
+            return completedFuture(delegatedExecutionResult3)
+        }
         def er = result.join()
         er.data == [
                 issue: [

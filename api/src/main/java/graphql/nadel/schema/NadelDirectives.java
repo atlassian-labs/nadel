@@ -64,7 +64,7 @@ public class NadelDirectives {
         NAMESPACED_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
                 .name("namespaced")
                 .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-                .description(createDescription("Indicates that the field is a namespaced field.."))
+                .description(createDescription("Indicates that the field is a namespaced field."))
                 .build();
 
         RENAMED_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
