@@ -36,7 +36,7 @@ public class FieldInfos {
         this.fieldDefinitionsByService = fieldInfoByDefinition.entrySet()
                 .stream()
                 .collect(Collectors.groupingBy(
-                        graphQLFieldDefinitionFieldInfoEntry -> graphQLFieldDefinitionFieldInfoEntry.getValue().getService(),
+                        entry -> entry.getValue().getService(),
                         Collectors.mapping(Map.Entry::getKey, Collectors.toSet())));
 
     }
