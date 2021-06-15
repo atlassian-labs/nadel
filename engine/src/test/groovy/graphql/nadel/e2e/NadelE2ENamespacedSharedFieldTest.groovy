@@ -22,35 +22,29 @@ class NadelE2ENamespacedSharedFieldTest extends Specification {
     def "query with two services sharing a namespaced field: #description"() {
         def nsdl = [
                 Issues     : '''
-            service Issues {
-              
-              directive @namespaced on FIELD_DEFINITION
-              
-              type Query {
-                issue: IssueQuery @namespaced
-              }
-              
-              type IssueQuery {
-                getIssue: Issue
-              }
-              
-              type Issue {
-                id: ID
-                text: String
-              }
+            directive @namespaced on FIELD_DEFINITION
+            
+            type Query {
+              issue: IssueQuery @namespaced
+            }
+            
+            type IssueQuery {
+              getIssue: Issue
+            }
+            
+            type Issue {
+              id: ID
+              text: String
             }
         ''',
                 IssueSearch: '''
-            service IssueSearch {
-              
-              extend type IssueQuery {
-                search: SearchResult 
-              }
-              
-              type SearchResult {
-                id: ID
-                count: Int
-              }
+            extend type IssueQuery {
+              search: SearchResult 
+            }
+            
+            type SearchResult {
+              id: ID
+              count: Int
             }
         ''']
         def underlyingSchema1 = typeDefinitions('''
@@ -128,43 +122,37 @@ class NadelE2ENamespacedSharedFieldTest extends Specification {
     def "query with two services sharing a namespaced field mutation"() {
         def nsdl = [
                 Issues     : '''
-            service Issues {
+            type Query {
+              echo: String
+            }
+            
+            directive @namespaced on FIELD_DEFINITION
               
-              type Query {
-                echo: String
-              }
-              
-              directive @namespaced on FIELD_DEFINITION
-              
-              type Mutation {
-                issue: IssueQuery @namespaced
-              }
-              
-              type IssueQuery {
-                getIssue: Issue
-              }
-              
-              type Issue {
-                id: ID
-                text: String
-              }
+            type Mutation {
+              issue: IssueQuery @namespaced
+            }
+            
+            type IssueQuery {
+              getIssue: Issue
+            }
+            
+            type Issue {
+              id: ID
+              text: String
             }
         ''',
                 IssueSearch: '''
-            service IssueSearch {
+            type Query {
+              echoes: String
+            }
             
-              type Query {
-                echoes: String
-              }
-              
-              extend type IssueQuery {
-                search: SearchResult 
-              }
-              
-              type SearchResult {
-                id: ID
-                count: Int
-              }
+            extend type IssueQuery {
+              search: SearchResult 
+            }
+            
+            type SearchResult {
+              id: ID
+              count: Int
             }
         ''']
         def underlyingSchema1 = typeDefinitions('''
@@ -258,40 +246,35 @@ class NadelE2ENamespacedSharedFieldTest extends Specification {
     def "query with two services sharing a namespaced field and a non namespaced top level field"() {
         def nsdl = [
                 Issues     : '''
-            service Issues {
-              
-              directive @namespaced on FIELD_DEFINITION
-              
-              type Query {
-                issue: IssueQuery @namespaced
-                conf: Page
-              }
-              
-              type IssueQuery {
-                getIssue: Issue
-              }
-              
-              type Issue {
-                id: ID
-                text: String
-              }
-              
-              type Page {
-                id: ID
-                title: String
-              }
+            directive @namespaced on FIELD_DEFINITION
+            
+            type Query {
+              issue: IssueQuery @namespaced
+              conf: Page
+            }
+            
+            type IssueQuery {
+              getIssue: Issue
+            }
+            
+            type Issue {
+              id: ID
+              text: String
+            }
+            
+            type Page {
+              id: ID
+              title: String
             }
         ''',
                 IssueSearch: '''
-            service IssueSearch {
-              extend type IssueQuery {
-                search: SearchResult 
-              }
-              
-              type SearchResult {
-                id: ID
-                count: Int
-              }
+            extend type IssueQuery {
+              search: SearchResult 
+            }
+            
+            type SearchResult {
+              id: ID
+              count: Int
             }
         ''']
         def underlyingSchema1 = typeDefinitions('''
@@ -396,51 +379,43 @@ class NadelE2ENamespacedSharedFieldTest extends Specification {
     def "query with 2 namespaced fields that have matching subfields"() {
         def nsdl = [
                 Issues     : '''
-            service Issues {
-              
-              directive @namespaced on FIELD_DEFINITION
-              
-              type Query {
-                issue: IssueQuery @namespaced
-              }
-              
-              type IssueQuery {
-                getIssue: Issue
-              }
-              
-              type Issue {
-                id: ID
-                text: String
-              }
+            directive @namespaced on FIELD_DEFINITION
+            
+            type Query {
+              issue: IssueQuery @namespaced
+            }
+            
+            type IssueQuery {
+              getIssue: Issue
+            }
+            
+            type Issue {
+              id: ID
+              text: String
             }
         ''',
                 IssueSearch: '''
-            service IssueSearch {
-              
-              extend type IssueQuery {
-                search: SearchResult 
-              }
-              
-              type SearchResult {
-                id: ID
-                count: Int
-              }
+            extend type IssueQuery {
+              search: SearchResult 
+            }
+            
+            type SearchResult {
+              id: ID
+              count: Int
             }
         ''',
                 Pages      : '''
-            service Pages {
-              type Query {
-                page: PagesQuery @namespaced
-              }
-              
-              type PagesQuery {
-                getIssue: IssuePage
-              }
-              
-              type IssuePage {
-                id: ID
-                pageText: String
-              }
+            type Query {
+              page: PagesQuery @namespaced
+            }
+            
+            type PagesQuery {
+              getIssue: IssuePage
+            }
+            
+            type IssuePage {
+              id: ID
+              pageText: String
             }
         ''']
         def underlyingSchema1 = typeDefinitions('''
