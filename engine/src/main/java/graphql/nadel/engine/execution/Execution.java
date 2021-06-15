@@ -12,13 +12,9 @@ import graphql.execution.instrumentation.InstrumentationState;
 import graphql.execution.nextgen.ExecutionHelper;
 import graphql.execution.nextgen.FieldSubSelection;
 import graphql.language.Document;
-import graphql.language.FieldDefinition;
-import graphql.language.ObjectTypeDefinition;
-import graphql.language.SDLDefinition;
 import graphql.nadel.NadelExecutionParams;
 import graphql.nadel.Service;
 import graphql.nadel.engine.BenchmarkContext;
-import graphql.nadel.engine.FieldInfo;
 import graphql.nadel.engine.FieldInfos;
 import graphql.nadel.engine.NadelContext;
 import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation;
@@ -32,26 +28,16 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOpera
 import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.normalized.NormalizedQueryFactory;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
-import graphql.nadel.util.FpKit;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLNamedType;
-import graphql.schema.GraphQLObjectType;
-import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 @Internal
 public class Execution {
 
-    private final List<Service> services;
     private final GraphQLSchema overallSchema;
     private final NadelInstrumentation instrumentation;
     private final IntrospectionRunner introspectionRunner;
@@ -66,11 +52,10 @@ public class Execution {
                      IntrospectionRunner introspectionRunner,
                      ServiceExecutionHooks serviceExecutionHooks,
                      Object userSuppliedContext) {
-        this.services = services;
         this.overallSchema = overallSchema;
         this.instrumentation = instrumentation;
         this.introspectionRunner = introspectionRunner;
-        FieldInfos fieldsInfos = createFieldsInfos();
+        FieldInfos fieldsInfos = FieldInfos.createFieldsInfos(overallSchema, services);
         if (userSuppliedContext instanceof BenchmarkContext) {
             BenchmarkContext.NadelExecutionStrategyArgs args = ((BenchmarkContext) userSuppliedContext).nadelExecutionStrategyArgs;
             args.services = services;
@@ -164,85 +149,6 @@ public class Execution {
                 executionContext.getOperationDefinition(),
                 instrumentationState,
                 executionContext.getContext());
-    }
-
-    private FieldInfos createFieldsInfos() {
-        Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition = new LinkedHashMap<>();
-
-        Set<GraphQLOutputType> namespacedGraphqlTypes = overallSchema.getQueryType()
-                .getFieldDefinitions()
-                .stream()
-                .filter(topLevelFieldDef -> !topLevelFieldDef.getDirectives("namespaced").isEmpty())
-                .map(GraphQLFieldDefinition::getType)
-                .collect(Collectors.toSet());
-
-        if (!namespacedGraphqlTypes.isEmpty()) {
-            extractNamespacedFieldInfos(fieldInfoByDefinition, namespacedGraphqlTypes);
-        }
-
-        for (Service service : services) {
-            List<ObjectTypeDefinition> queryType = service.getDefinitionRegistry().getQueryType();
-            GraphQLObjectType schemaQueryType = overallSchema.getQueryType();
-            for (ObjectTypeDefinition objectTypeDefinition : queryType) {
-                for (FieldDefinition fieldDefinition : objectTypeDefinition.getFieldDefinitions()) {
-                    GraphQLFieldDefinition graphQLFieldDefinition = schemaQueryType.getFieldDefinition(fieldDefinition.getName());
-                    FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
-                    fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
-                }
-            }
-            List<ObjectTypeDefinition> mutationTypeDefinitions = service.getDefinitionRegistry().getMutationType();
-            for (ObjectTypeDefinition mutationTypeDefinition : mutationTypeDefinitions) {
-                GraphQLObjectType schemaMutationType = overallSchema.getMutationType();
-                for (FieldDefinition fieldDefinition : mutationTypeDefinition.getFieldDefinitions()) {
-                    GraphQLFieldDefinition graphQLFieldDefinition = schemaMutationType.getFieldDefinition(fieldDefinition.getName());
-                    FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
-                    fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
-                }
-            }
-
-            List<ObjectTypeDefinition> subscriptionTypeDefinitions = service.getDefinitionRegistry().getSubscriptionType();
-            for (ObjectTypeDefinition subscriptionTypeDefinition : subscriptionTypeDefinitions) {
-                GraphQLObjectType schemaSubscriptionType = overallSchema.getSubscriptionType();
-                for (FieldDefinition fieldDefinition : subscriptionTypeDefinition.getFieldDefinitions()) {
-                    GraphQLFieldDefinition graphQLFieldDefinition = schemaSubscriptionType.getFieldDefinition(fieldDefinition.getName());
-                    FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.TOPLEVEL, service, graphQLFieldDefinition);
-                    fieldInfoByDefinition.put(graphQLFieldDefinition, fieldInfo);
-                }
-            }
-        }
-        return new FieldInfos(fieldInfoByDefinition);
-    }
-
-    private void extractNamespacedFieldInfos(Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition, Set<GraphQLOutputType> namespacedGraphqlTypes) {
-        for (Service service : services) {
-            for (SDLDefinition<?> definition : service.getDefinitionRegistry().getDefinitions()) {
-                if (!(definition instanceof ObjectTypeDefinition)) {
-                    continue;
-                }
-                ObjectTypeDefinition typeDefinition = (ObjectTypeDefinition) definition;
-                boolean isNamespacedDefinition = namespacedGraphqlTypes.stream()
-                        .filter(type -> type instanceof GraphQLNamedType)
-                        .map(type -> (GraphQLNamedType) type)
-                        .anyMatch(type -> type.getName().equals(typeDefinition.getName()));
-                if (!isNamespacedDefinition) {
-                    continue;
-                }
-                GraphQLObjectType namespacedGraphQLObjectType = overallSchema.getObjectType(typeDefinition.getName());
-                List<GraphQLFieldDefinition> graphQLFieldDefinitionsWithinNamespacedType = namespacedGraphQLObjectType.getFieldDefinitions();
-
-                List<FieldDefinition> serviceFieldDefinitionsWithinNamespacedType = typeDefinition.getFieldDefinitions();
-
-                for (FieldDefinition serviceSecondLevelFieldDefinition : serviceFieldDefinitionsWithinNamespacedType) {
-                    GraphQLFieldDefinition secondLeveGraphqlFieldDefinition = FpKit.findOne(
-                            graphQLFieldDefinitionsWithinNamespacedType,
-                            gqlDef -> gqlDef.getName().equals(serviceSecondLevelFieldDefinition.getName())
-                    ).get();
-
-                    FieldInfo fieldInfo = new FieldInfo(FieldInfo.FieldKind.NAMESPACE_SUBFIELD, service, secondLeveGraphqlFieldDefinition);
-                    fieldInfoByDefinition.put(secondLeveGraphqlFieldDefinition, fieldInfo);
-                }
-            }
-        }
     }
 
     public ExecutionResult withNodeComplexity(ExecutionResult executionResult, ResultComplexityAggregator resultComplexityAggregator) {

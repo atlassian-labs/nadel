@@ -1,5 +1,6 @@
 package graphql.nadel.engine.execution;
 
+import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.Async;
@@ -47,11 +48,11 @@ import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
+import static graphql.nadel.schema.NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 
-@SuppressWarnings("DuplicatedCode")
 @Internal
 public class NadelExecutionStrategy {
 
@@ -125,31 +126,9 @@ public class NadelExecutionStrategy {
         List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
-            boolean isNamespaced = !fieldExecutionStepInfo.getFieldDefinition().getDirectives("namespaced").isEmpty();
+            boolean isNamespaced = !fieldExecutionStepInfo.getFieldDefinition().getDirectives(NAMESPACED_DIRECTIVE_DEFINITION.getName()).isEmpty();
             if (isNamespaced) {
-                GraphQLObjectType namespacedObjectType = (GraphQLObjectType) fieldExecutionStepInfo.getUnwrappedNonNullType();
-                for (Map.Entry<Service, Set<GraphQLFieldDefinition>> serviceWithCorrespondingFieldDefinitions : fieldInfos.fieldDefinitionsByService.entrySet()) {
-                    Service service1 = serviceWithCorrespondingFieldDefinitions.getKey();
-                    Set<GraphQLFieldDefinition> secondLevelFieldDefinitionsForService = serviceWithCorrespondingFieldDefinitions.getValue();
-
-                    Optional<MergedField> newMergedField = MergedFieldUtil.includeSubSelection(mergedField, namespacedObjectType, executionCtx,
-                            field -> secondLevelFieldDefinitionsForService.stream()
-                                    .filter(namespacedObjectType.getFieldDefinitions()::contains)
-                                    .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName())));
-                    if (!newMergedField.isPresent()) {
-                        continue;
-                    }
-                    ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField.get(), rootExecutionStepInfo);
-                    CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
-                            .from(executionCtx)
-                            .service(service1)
-                            .executionStepInfo(newFieldExecutionStepInfo)
-                            .build();
-
-                    CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
-                    CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service1, serviceContext, newFieldExecutionStepInfo));
-                    result.add(serviceCF);
-                }
+                result.addAll(getServiceExecutionsForNamespacedField(executionCtx, rootExecutionStepInfo, mergedField, fieldExecutionStepInfo));
             }
             else {
                 boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition().getDirectives()
@@ -170,18 +149,46 @@ public class NadelExecutionStrategy {
                     service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
                 }
 
-                CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
-                        .from(executionCtx)
-                        .service(service)
-                        .executionStepInfo(fieldExecutionStepInfo)
-                        .build();
-
-                CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
-                CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo));
-                result.add(serviceCF);
+                result.add(getOneServiceExecution(executionCtx, fieldExecutionStepInfo, service));
             }
         }
         return Async.each(result);
+    }
+
+    private List<CompletableFuture<OneServiceExecution>> getServiceExecutionsForNamespacedField(
+            ExecutionContext executionCtx, ExecutionStepInfo rootExecutionStepInfo, MergedField mergedField, ExecutionStepInfo stepInfoForNamespacedField
+    ) {
+        ArrayList<CompletableFuture<OneServiceExecution>> serviceExecutions = new ArrayList<>();
+        Assert.assertTrue(
+                stepInfoForNamespacedField.getUnwrappedNonNullType() instanceof GraphQLObjectType,
+                () -> "field annotated with @namespaced directive is expected to be of GraphQLObjectType");
+
+        GraphQLObjectType namespacedObjectType = (GraphQLObjectType) stepInfoForNamespacedField.getUnwrappedNonNullType();
+        for (Map.Entry<Service, Set<GraphQLFieldDefinition>> entry : fieldInfos.fieldDefinitionsByService.entrySet()) {
+            Service service = entry.getKey();
+            Set<GraphQLFieldDefinition> secondLevelFieldDefinitionsForService = entry.getValue();
+
+            Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(mergedField, namespacedObjectType, executionCtx,
+                    field -> secondLevelFieldDefinitionsForService.stream()
+                            .filter(namespacedObjectType.getFieldDefinitions()::contains)
+                            .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName())));
+            maybeNewMergedField.ifPresent(newMergedField -> {
+                ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
+                serviceExecutions.add(getOneServiceExecution(executionCtx, newFieldExecutionStepInfo, service));
+            });
+        }
+        return serviceExecutions;
+    }
+
+    private CompletableFuture<OneServiceExecution> getOneServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo fieldExecutionStepInfo, Service service) {
+        CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
+                .from(executionCtx)
+                .service(service)
+                .executionStepInfo(fieldExecutionStepInfo)
+                .build();
+
+        CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
+        return serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo));
     }
 
     private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(
@@ -268,7 +275,7 @@ public class NadelExecutionStrategy {
                 CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult;
 
                 if (serviceExecutionHooks instanceof EngineServiceExecutionHooks) {
-                    serviceResult = serviceResult.thenCompose((rootResultNode) -> {
+                    serviceResult = serviceResult.thenCompose(rootResultNode -> {
                         ResultRewriteParams resultRewriteParams = ResultRewriteParams.newParameters()
                                 .from(executionContext)
                                 .service(service)
