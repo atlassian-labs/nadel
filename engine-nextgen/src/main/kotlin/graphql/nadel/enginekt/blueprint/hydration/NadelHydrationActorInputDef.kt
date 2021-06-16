@@ -1,6 +1,5 @@
 package graphql.nadel.enginekt.blueprint.hydration
 
-import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition

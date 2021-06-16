@@ -18,12 +18,9 @@ import graphql.nadel.enginekt.util.AnyMutableMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
-import graphql.schema.GraphQLSchema
 import kotlin.reflect.KClass
 
-internal class NadelResultTransformer(
-    private val overallSchema: GraphQLSchema,
-) {
+internal class NadelResultTransformer {
     suspend fun transform(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,

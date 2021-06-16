@@ -39,7 +39,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema, nadel.services)
     private val executionPlanner = NadelExecutionPlanFactory.create(executionBlueprint, nadel.overallSchema, this)
     private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema, executionBlueprint)
-    private val resultTransformer = NadelResultTransformer(nadel.overallSchema)
+    private val resultTransformer = NadelResultTransformer()
     private val instrumentation = nadel.instrumentation
 
     override fun execute(
