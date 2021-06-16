@@ -10,7 +10,6 @@ overallSchema:
       }
       type Foo {
         renamedField: String => renamed from issue.field
-        details: [Detail] => hydrated from Foo.detail(detailIds: $source.issue.fooId)
         issue: Issue
       }
       type Issue {
