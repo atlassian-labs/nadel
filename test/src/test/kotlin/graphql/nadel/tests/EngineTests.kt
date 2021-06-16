@@ -78,14 +78,14 @@ class EngineTests : FunSpec({
                 .filter { (key) ->
                     fixture.enabled.get(engine = key)
                 }
-                .forEach { (key, engineFactory) ->
+                .forEach { (engine, engineFactory) ->
                     val execute: suspend TestContext.() -> Unit = {
-                        execute(fixture, key, engineFactory)
+                        execute(fixture, engine, engineFactory)
                     }
-                    if (fixture.ignored.get(engine = key)) {
-                        xtest("$key ${fixture.name}", execute)
+                    if (fixture.ignored.get(engine = engine)) {
+                        xtest("$engine ${fixture.name}", execute)
                     } else {
-                        test("$key ${fixture.name}", execute)
+                        test("$engine ${fixture.name}", execute)
                     }
                 }
         }
