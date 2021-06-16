@@ -279,24 +279,6 @@ class NadelE2EDynamicServiceResolutionTest extends Specification {
             }
         '''
 
-        // Have a look at NormalizedQueryToAstCompiler
-        def expectedQuery = '''
-        {
-                node(id: "pull-request:id-123") {
-                   ... on PullRequest {
-                        id
-                   }
-                   ... on PullRequest {
-                        description
-                   }
-                   ... on PullRequest {
-                        author {
-                            name
-                        }
-                   }
-                }
-        }
-        '''
         ServiceExecution repoExecution = Mock(ServiceExecution)
         ServiceExecution issueExecution = Mock(ServiceExecution)
 
