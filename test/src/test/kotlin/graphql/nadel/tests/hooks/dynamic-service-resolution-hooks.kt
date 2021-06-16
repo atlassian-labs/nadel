@@ -77,3 +77,17 @@ class `dynamic-service-resolution-handles-complex-fragments` : EngineTestHook {
         return builder.serviceExecutionHooks(Hooks())
     }
 }
+
+@KeepHook
+class `dynamic-service-resolution-with-no-fragments` : EngineTestHook {
+    override fun makeNadel(engine: Engine, builder: Nadel.Builder): Nadel.Builder {
+        return builder.serviceExecutionHooks(Hooks())
+    }
+}
+
+@KeepHook
+class `dynamic-service-resolution-directive-not-in-interface` : EngineTestHook {
+    override fun makeNadel(engine: Engine, builder: Nadel.Builder): Nadel.Builder {
+        return builder.serviceExecutionHooks(Hooks())
+    }
+}
