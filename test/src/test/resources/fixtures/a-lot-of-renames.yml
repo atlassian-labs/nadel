@@ -1,0 +1,175 @@
+name: a lot of renames
+enabled:
+  nextgen: true
+overallSchema:
+  Boards: |
+    service Boards {
+      type Query {
+        boardScope: BoardScope
+      }
+      type BoardScope {
+        cardParents: [CardParent]! => renamed from issueParents
+      }
+      type CardParent => renamed from IssueParent {
+        cardType: CardType! => renamed from issueType
+      }
+      type CardType => renamed from IssueType {
+        id: ID
+        inlineCardCreate: InlineCardCreateConfig => renamed from inlineIssueCreate
+      }
+      type InlineCardCreateConfig => renamed from InlineIssueCreateConfig {
+        enabled: Boolean!
+      }
+    }
+underlyingSchema:
+  Boards: |
+    type BoardScope {
+      issueParents: [IssueParent]!
+    }
+
+    type InlineIssueCreateConfig {
+      enabled: Boolean!
+    }
+
+    type IssueParent {
+      issueType: IssueType!
+    }
+
+    type IssueType {
+      id: ID
+      inlineIssueCreate: InlineIssueCreateConfig
+    }
+
+    type Query {
+      boardScope: BoardScope
+    }
+query: |
+  query {
+    boardScope {
+      cardParents {
+        cardType {
+          id
+          inlineCardCreate {
+            enabled
+          }
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Boards
+      request:
+        query: |
+          query nadel_2_Boards {
+            boardScope {
+              issueParents {
+                issueType {
+                  id
+                  inlineIssueCreate {
+                    enabled
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Boards
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "boardScope": {
+              "issueParents": [
+                {
+                  "issueType": {
+                    "id": "ID-1",
+                    "inlineIssueCreate": {
+                      "enabled": true
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Boards
+      request:
+        query: |-
+          query {
+            ... on Query {
+              boardScope {
+                ... on BoardScope {
+                  rename__cardParents__issueParents: issueParents {
+                    ... on IssueParent {
+                      rename__cardType__issueType: issueType {
+                        ... on IssueType {
+                          id
+                        }
+                        ... on IssueType {
+                          rename__inlineCardCreate__inlineIssueCreate: inlineIssueCreate {
+                            ... on InlineIssueCreateConfig {
+                              enabled
+                            }
+                          }
+                        }
+                        ... on IssueType {
+                          __typename__rename__inlineCardCreate: __typename
+                        }
+                      }
+                    }
+                    ... on IssueParent {
+                      __typename__rename__cardType: __typename
+                    }
+                  }
+                }
+                ... on BoardScope {
+                  __typename__rename__cardParents: __typename
+                }
+              }
+            }
+          }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "boardScope": {
+              "rename__cardParents__issueParents": [
+                {
+                  "rename__cardType__issueType": {
+                    "id": "ID-1",
+                    "rename__inlineCardCreate__inlineIssueCreate": {
+                      "enabled": true
+                    },
+                    "__typename__rename__inlineCardCreate": "IssueType"
+                  },
+                  "__typename__rename__cardType": "IssueParent"
+                }
+              ],
+              "__typename__rename__cardParents": "BoardScope"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "boardScope": {
+        "cardParents": [
+          {
+            "cardType": {
+              "id": "ID-1",
+              "inlineCardCreate": {
+                "enabled": true
+              }
+            }
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }

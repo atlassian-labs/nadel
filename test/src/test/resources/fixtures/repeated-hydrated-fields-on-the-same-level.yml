@@ -1,0 +1,102 @@
+name: repeated hydrated fields on the same level
+overallSchema:
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        issue: Issue => hydrated from Foo.issue(issueId: $source.issueId)
+      }
+      type Issue {
+        id: ID
+        name: String
+        desc: String
+      }
+    }
+underlyingSchema:
+  Foo: |
+    type Foo {
+      issueId: ID
+    }
+
+    type Issue {
+      desc: String
+      id: ID
+      name: String
+    }
+
+    type Query {
+      foo: Foo
+      issue(issueId: ID): Issue
+    }
+query: |
+  query {
+    foo {
+      issue {
+        name
+      }
+      issue {
+        desc
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            foo {
+              issueId
+              issueId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "issueId": "ISSUE-1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            issue(issueId: "ISSUE-1") {
+              name
+              desc
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "name": "I AM A NAME",
+              "desc": "I AM A DESC"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "issue": {
+          "name": "I AM A NAME",
+          "desc": "I AM A DESC"
+        }
+      }
+    },
+    "extensions": {}
+  }

@@ -7,27 +7,27 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 
 internal object NadelHydrationUtil {
-    fun getSourceFieldDefinition(
+    fun getActorField(
         instruction: NadelGenericHydrationInstruction,
     ): GraphQLFieldDefinition {
-        return getSourceFieldDefinition(
+        return getActorField(
             service = instruction.actorService,
-            pathToSourceField = instruction.queryPathToActorField,
+            queryPathToActorField = instruction.queryPathToActorField,
         )
     }
 
-    private fun getSourceFieldDefinition(
+    private fun getActorField(
         service: Service,
-        pathToSourceField: QueryPath,
+        queryPathToActorField: QueryPath,
     ): GraphQLFieldDefinition {
-        val parentType = pathToSourceField
+        val parentType = queryPathToActorField
             .segments
             .asSequence()
-            .take(pathToSourceField.segments.size - 1) // All but last element
+            .take(queryPathToActorField.segments.size - 1) // All but last element
             .fold(service.underlyingSchema.queryType) { prevType, fieldName ->
                 prevType.getField(fieldName)!!.type as GraphQLObjectType
             }
 
-        return parentType.getField(pathToSourceField.last())
+        return parentType.getField(queryPathToActorField.last())
     }
 }

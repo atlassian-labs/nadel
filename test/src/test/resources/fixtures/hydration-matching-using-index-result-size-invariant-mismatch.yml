@@ -1,0 +1,114 @@
+name: hydration matching using index result size invariant mismatch
+overallSchema:
+  UserService: |
+    service UserService {
+      type Query {
+        usersByIds(ids: [ID]): [User]
+      }
+      type User {
+        id: ID
+        name: String
+      }
+    }
+  Issues: |
+    service Issues {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) using indexes, batch size 5
+      }
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      usersByIds(ids: [ID]): [User]
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+  Issues: |
+    type Issue {
+      authorIds: [ID]
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      authors {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              id
+              authorIds
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1",
+                "authorIds": [
+                  "1"
+                ]
+              },
+              {
+                "id": "ISSUE-2",
+                "authorIds": [
+                  "1",
+                  "2"
+                ]
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query nadel_2_UserService {
+            usersByIds(ids: ["1", "1", "2"]) {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_UserService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
+              {
+                "id": "USER-1",
+                "name": "Name"
+              },
+              null
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: null
+exception:
+  message: If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments. We expected 3 returned nodes but only got 2

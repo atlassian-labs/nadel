@@ -1,0 +1,114 @@
+name: deep rename of an object
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        authorName: Name => renamed from authorDetails.name
+      }
+      type Name {
+        firstName: String => renamed from fName
+        lastName: String => renamed from lName
+      }
+    }
+underlyingSchema:
+  Issues: |
+    type AuthorDetail {
+      name: Name
+    }
+
+    type Issue {
+      authorDetails: AuthorDetail
+      id: ID
+    }
+
+    type Name {
+      fName: String
+      lName: String
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      authorName {
+        firstName
+        lastName
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              id
+              authorDetails {
+                name {
+                  fName
+                  lName
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1",
+                "authorDetails": {
+                  "name": {
+                    "fName": "George",
+                    "lName": "Smith"
+                  }
+                }
+              },
+              {
+                "id": "ISSUE-2",
+                "authorDetails": {
+                  "name": {
+                    "fName": "Elizabeth",
+                    "lName": "Windsor"
+                  }
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authorName": {
+            "firstName": "George",
+            "lastName": "Smith"
+          }
+        },
+        {
+          "id": "ISSUE-2",
+          "authorName": {
+            "firstName": "Elizabeth",
+            "lastName": "Windsor"
+          }
+        }
+      ]
+    },
+    "extensions": {}
+  }

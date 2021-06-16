@@ -1,0 +1,106 @@
+name: repeated hydrated fields on the same level when using batch hydration
+overallSchema:
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        issue: Issue => hydrated from Foo.issues(issueIds: $source.issueId)
+      }
+      type Issue {
+        id: ID
+        name: String
+        desc: String
+      }
+    }
+underlyingSchema:
+  Foo: |
+    type Foo {
+      issueId: ID
+    }
+
+    type Issue {
+      desc: String
+      id: ID
+      name: String
+    }
+
+    type Query {
+      foo: Foo
+      issues(issueIds: [ID!]): [Issue!]
+    }
+query: |
+  query {
+    foo {
+      issue {
+        name
+      }
+      issue {
+        desc
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            foo {
+              issueId
+              issueId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "issueId": "ISSUE-1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            issues(issueIds: ["ISSUE-1"]) {
+              name
+              desc
+              object_identifier__UUID: id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "name": "I AM A NAME",
+                "desc": "I AM A DESC",
+                "object_identifier__UUID": "ISSUE-1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "issue": {
+          "name": "I AM A NAME",
+          "desc": "I AM A DESC"
+        }
+      }
+    },
+    "extensions": {}
+  }

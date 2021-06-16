@@ -1,0 +1,96 @@
+name: two deep renames, merged fields with same path and field rename
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        id: ID
+        authorId: ID => renamed from authorDetails.authorId
+        authorName: ID => renamed from authorDetails.name
+        details: AuthorDetail  => renamed from authorDetails
+      }
+      type AuthorDetail {
+        extra: String => renamed from extraInfo
+      }
+    }
+underlyingSchema:
+  Issues: |
+    type AuthorDetail {
+      authorId: ID
+      extraInfo: String
+      name: String
+    }
+
+    type Issue {
+      authorDetails: AuthorDetail
+      id: ID
+    }
+
+    type Query {
+      issue: Issue
+    }
+query: |
+  query {
+    issue {
+      id
+      authorId
+      authorName
+      details {
+        extra
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issue {
+              id
+              authorDetails {
+                authorId
+              }
+              authorDetails {
+                name
+              }
+              authorDetails {
+                extraInfo
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "ISSUE-1",
+              "authorDetails": {
+                "authorId": "USER-1",
+                "name": "User 1",
+                "extraInfo": "extra 1"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "id": "ISSUE-1",
+        "authorId": "USER-1",
+        "authorName": "User 1",
+        "details": {
+          "extra": "extra 1"
+        }
+      }
+    },
+    "extensions": {}
+  }
