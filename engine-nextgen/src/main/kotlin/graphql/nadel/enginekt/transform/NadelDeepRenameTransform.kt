@@ -279,12 +279,19 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
             val queryPathForSourceField = state.aliasHelper.getQueryPath(instruction.queryPathToField)
             val sourceFieldNode = JsonNodeExtractor.getNodesAt(parentNode, queryPathForSourceField)
-                .emptyOrSingle() ?: return@instruction null
+                .emptyOrSingle()
 
-            NadelResultInstruction.Copy(
-                subjectPath = sourceFieldNode.resultPath,
-                destinationPath = parentNode.resultPath + overallField.resultKey,
-            )
+            val destinationPath = parentNode.resultPath + overallField.resultKey
+            when (sourceFieldNode) {
+                null -> NadelResultInstruction.Set(
+                    subjectPath = destinationPath,
+                    newValue = null,
+                )
+                else -> NadelResultInstruction.Copy(
+                    subjectPath = sourceFieldNode.resultPath,
+                    destinationPath = destinationPath,
+                )
+            }
         }
     }
 }
