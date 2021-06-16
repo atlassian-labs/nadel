@@ -165,6 +165,11 @@ public class NadelExecutionStrategy {
             return CompletableFuture.completedFuture(new OneServiceExecution(null, null, null, true, graphQLError, fieldExecutionStepInfo));
         }
 
+        Assert.assertTrue(
+                fieldExecutionStepInfo.getUnwrappedNonNullType() instanceof GraphQLInterfaceType,
+                () -> format("field annotated with %s directive is expected to be of GraphQLInterfaceType", DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName())
+        );
+
         Service service = serviceOrError.getService();
 
         List<String> serviceObjectTypes = service.getDefinitionRegistry().getDefinitions()
@@ -199,11 +204,6 @@ public class NadelExecutionStrategy {
                 .transform(builder -> builder.selectionSet(selectionSet));
 
         MergedField newMergedField = MergedField.newMergedField().addField(transform).build();
-
-        Assert.assertTrue(
-                fieldExecutionStepInfo.getUnwrappedNonNullType() instanceof GraphQLInterfaceType,
-                () -> format("field annotated with %s directive is expected to be of GraphQLInterfaceType", DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName())
-        );
 
         ExecutionStepInfo executionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
 
