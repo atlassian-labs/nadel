@@ -262,4 +262,119 @@ class NadelE2EDynamicServiceResolutionTest extends Specification {
         result.errors.size() == 1
         result.errors.get(0).message == "Could not resolve service for field: /commit"
     }
+
+    def "handles multiple inline fragments"() {
+        def query = '''
+            {
+                node(id: "pull-request:id-123") {
+                   ... on PullRequest {
+                        id
+                        description
+                   }
+                   ... on Issue {
+                        id
+                        issueKey
+                   }
+                }
+            }
+        '''
+
+        // Have a look at NormalizedQueryToAstCompiler
+        def expectedQuery = '''
+        {
+                node(id: "pull-request:id-123") {
+                   ... on PullRequest {
+                        id
+                   }
+                   ... on PullRequest {
+                        description
+                   }
+                   ... on PullRequest {
+                        author {
+                            name
+                        }
+                   }
+                }
+        }
+        '''
+        ServiceExecution repoExecution = Mock(ServiceExecution)
+        ServiceExecution issueExecution = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                RepoService: new Tuple2(repoExecution, repoSchema),
+                IssueService: new Tuple2(issueExecution, issueSchema)
+        ])
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .serviceExecutionHooks(serviceHooks)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        Map response1 = [node: [id: "123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(response1)
+
+        repoExecution.execute(_) >>
+                completedFuture(topLevelResult)
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).get()
+
+        then:
+        result.data == [node: [id: "123", description: "this is a pull request"]]
+        result.errors.size() == 0
+    }
+
+    def "handles complex fragments"() {
+        def query = '''
+            {
+                node(id: "pull-request:id-123") {
+                   ... {
+                       ... on PullRequest {
+                            id
+                       }
+                   }
+                   ... on PullRequest {
+                        description
+                   }
+                }
+            }
+        '''
+        ServiceExecution repoExecution = Mock(ServiceExecution)
+        ServiceExecution issueExecution = Mock(ServiceExecution)
+
+        ServiceExecutionFactory serviceFactory = TestUtil.serviceFactory([
+                RepoService: new Tuple2(repoExecution, repoSchema),
+                IssueService: new Tuple2(issueExecution, issueSchema)
+        ])
+        given:
+        Nadel nadel = newNadel()
+                .dsl(nsdl)
+                .serviceExecutionFactory(serviceFactory)
+                .serviceExecutionHooks(serviceHooks)
+                .build()
+
+        NadelExecutionInput nadelExecutionInput = newNadelExecutionInput()
+                .query(query)
+                .artificialFieldsUUID("UUID")
+                .build()
+
+        Map response1 = [node: [id: "123", description: "this is a pull request", type_hint_typename__UUID: "PullRequest"]]
+        ServiceExecutionResult topLevelResult = new ServiceExecutionResult(response1)
+
+        repoExecution.execute(_) >>
+                completedFuture(topLevelResult)
+
+        when:
+        def result = nadel.execute(nadelExecutionInput).get()
+
+        then:
+        result.data == [node: [id: "123", description: "this is a pull request"]]
+        result.errors.size() == 0
+    }
 }

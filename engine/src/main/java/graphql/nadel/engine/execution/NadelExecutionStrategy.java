@@ -1,5 +1,6 @@
 package graphql.nadel.engine.execution;
 
+import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.Async;
@@ -9,6 +10,11 @@ import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.ResultPath;
 import graphql.execution.nextgen.FieldSubSelection;
+import graphql.language.Field;
+import graphql.language.InlineFragment;
+import graphql.language.ObjectTypeDefinition;
+import graphql.language.SelectionSet;
+import graphql.language.TypeName;
 import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.NodeId;
@@ -30,8 +36,8 @@ import graphql.nadel.hooks.ServiceOrError;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
-import graphql.nadel.schema.NadelDirectives;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInterfaceType;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,11 +53,16 @@ import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
+import static graphql.language.InlineFragment.newInlineFragment;
+import static graphql.language.SelectionSet.newSelectionSet;
+import static graphql.language.TypeName.newTypeName;
 import static graphql.nadel.engine.result.RootExecutionResultNode.newRootExecutionResultNode;
+import static graphql.nadel.schema.NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION;
 import static graphql.nadel.util.FpKit.map;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 
 @Internal
 public class NadelExecutionStrategy {
@@ -129,37 +140,85 @@ public class NadelExecutionStrategy {
 
             boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition().getDirectives()
                     .stream()
-                    .anyMatch(directive -> directive.getName().equals(NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()));
+                    .anyMatch(directive -> directive.getName().equals(DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()));
 
-            final Service service;
-
-            if(usesDynamicService) {
-                ServiceOrError serviceOrError = assertNotNull(serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo));
-
-                if(serviceOrError.getService() != null) {
-                    service = serviceOrError.getService();
-                } else {
-                    GraphQLError graphQLError = assertNotNull(serviceOrError.getError());
-
-                    result.add(CompletableFuture.completedFuture(new OneServiceExecution(null, null, null, true, graphQLError, fieldExecutionStepInfo)));
-                    continue;
-                }
-
+            if (usesDynamicService) {
+                result.add(prepareDynamicServiceExecution(executionCtx, rootExecutionStepInfo, fieldExecutionStepInfo));
             } else {
-                service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+                Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+                result.add(getOneServiceExecution(executionCtx, fieldExecutionStepInfo, service));
             }
 
-            CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
-                    .from(executionCtx)
-                    .service(service)
-                    .executionStepInfo(fieldExecutionStepInfo)
-                    .build();
-
-            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
-            CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo, false, null, fieldExecutionStepInfo));
-            result.add(serviceCF);
         }
         return Async.each(result);
+    }
+
+    private CompletableFuture<OneServiceExecution> prepareDynamicServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo rootExecutionStepInfo, ExecutionStepInfo fieldExecutionStepInfo) {
+        ServiceOrError serviceOrError = assertNotNull(
+                serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo),
+                () -> "Service resolution hook must never return null."
+        );
+
+        if (serviceOrError.getService() == null) {
+            GraphQLError graphQLError = assertNotNull(serviceOrError.getError(), () -> "Hook must return an error object when Service is null");
+
+            return CompletableFuture.completedFuture(new OneServiceExecution(null, null, null, true, graphQLError, fieldExecutionStepInfo));
+        }
+
+        Service service = serviceOrError.getService();
+
+        List<String> serviceObjectTypes = service.getDefinitionRegistry().getDefinitions()
+                .stream()
+                .filter(definition -> definition instanceof ObjectTypeDefinition)
+                .map(definition -> (ObjectTypeDefinition) definition)
+                .map(ObjectTypeDefinition::getName)
+                .collect(toList());
+
+        NormalizedQueryFromAst normalizedQuery = getNadelContext(executionCtx).getNormalizedOverallQuery();
+
+        List<InlineFragment> inlineFragments = normalizedQuery.getTopLevelFields()
+                .stream()
+                .filter(field -> field.getFieldDefinition().getName().equals(fieldExecutionStepInfo.getFieldDefinition().getName()))
+                .flatMap(field -> field.getChildren()
+                        .stream()
+                        .filter(childField -> serviceObjectTypes.contains(childField.getObjectType().getName()))
+                        .map(normalizedQueryField -> {
+                            TypeName typeName = newTypeName(normalizedQueryField.getObjectType().getName()).build();
+                            return newInlineFragment()
+                                    .typeCondition(typeName)
+                                    .selectionSet(newSelectionSet().selection(normalizedQuery.getMergedFieldByNormalizedFields().get(normalizedQueryField).getSingleField()).build())
+                                    .build();
+                        }))
+                .collect(toList());
+
+        SelectionSet selectionSet = SelectionSet.newSelectionSet(inlineFragments).build();
+
+        Field transform = fieldExecutionStepInfo
+                .getField()
+                .getSingleField()
+                .transform(builder -> builder.selectionSet(selectionSet));
+
+        MergedField newMergedField = MergedField.newMergedField().addField(transform).build();
+
+        Assert.assertTrue(
+                fieldExecutionStepInfo.getUnwrappedNonNullType() instanceof GraphQLInterfaceType,
+                () -> format("field annotated with %s directive is expected to be of GraphQLInterfaceType", DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName())
+        );
+
+        ExecutionStepInfo executionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
+
+        return getOneServiceExecution(executionCtx, executionStepInfo, service);
+    }
+
+    private CompletableFuture<OneServiceExecution> getOneServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo fieldExecutionStepInfo, Service service) {
+        CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
+                .from(executionCtx)
+                .service(service)
+                .executionStepInfo(fieldExecutionStepInfo)
+                .build();
+
+        CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
+        return serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo, false, null, fieldExecutionStepInfo));
     }
 
     private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(
