@@ -16,7 +16,6 @@ import graphql.schema.GraphQLSchema
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
-    private val overallSchema: GraphQLSchema,
     private val transforms: List<AnyNadelTransform>,
 ) {
     /**
@@ -68,12 +67,10 @@ internal class NadelExecutionPlanFactory(
     companion object {
         fun create(
             executionBlueprint: NadelOverallExecutionBlueprint,
-            overallSchema: GraphQLSchema,
             engine: NextgenEngine,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
                 executionBlueprint,
-                overallSchema,
                 transforms = listOfTransforms(
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),

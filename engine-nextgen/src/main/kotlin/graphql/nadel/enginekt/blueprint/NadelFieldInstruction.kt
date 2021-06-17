@@ -13,26 +13,29 @@ sealed class NadelFieldInstruction {
 }
 
 interface NadelGenericHydrationInstruction {
+    val hydratedFieldDef: GraphQLFieldDefinition
     val actorService: Service
     val queryPathToActorField: QueryPath
-    val actorFieldDefinition: GraphQLFieldDefinition
+    val actorFieldDef: GraphQLFieldDefinition
     val actorInputValueDefs: List<NadelHydrationActorInputDef>
 }
 
 data class NadelHydrationFieldInstruction(
     override val location: FieldCoordinates,
+    override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
     override val queryPathToActorField: QueryPath,
-    override val actorFieldDefinition: GraphQLFieldDefinition,
+    override val actorFieldDef: GraphQLFieldDefinition,
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     val hydrationStrategy: NadelHydrationStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
 data class NadelBatchHydrationFieldInstruction(
     override val location: FieldCoordinates,
+    override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
     override val queryPathToActorField: QueryPath,
-    override val actorFieldDefinition: GraphQLFieldDefinition,
+    override val actorFieldDef: GraphQLFieldDefinition,
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,

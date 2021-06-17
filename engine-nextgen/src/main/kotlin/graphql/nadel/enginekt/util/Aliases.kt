@@ -14,6 +14,8 @@ typealias AnyMutableMap = MutableMap<*, *>
 
 typealias AnyList = List<*>
 
+typealias AnySet = Set<*>
+
 typealias AnyMutableList = MutableList<*>
 
 typealias AnyIterable = Iterable<*>

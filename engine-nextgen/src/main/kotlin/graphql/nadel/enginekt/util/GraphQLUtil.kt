@@ -1,8 +1,10 @@
 package graphql.nadel.enginekt.util
 
+import graphql.ErrorType
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
+import graphql.GraphqlErrorBuilder.newError
 import graphql.language.Definition
 import graphql.language.Document
 import graphql.language.ObjectTypeDefinition
@@ -19,6 +21,24 @@ import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
 
 typealias AnyAstDefinition = Definition<*>
+
+fun newGraphQLError(
+    message: String,
+    errorType: ErrorType,
+): GraphQLError {
+    return newError()
+        .message(message)
+        .errorType(errorType)
+        .build()
+}
+
+fun toGraphQLError(
+    raw: JsonMap,
+): GraphQLError {
+    return newError()
+        .message(raw["message"] as String?)
+        .build()
+}
 
 fun GraphQLSchema.getField(coordinates: FieldCoordinates): GraphQLFieldDefinition? {
     return getType(coordinates.typeName)

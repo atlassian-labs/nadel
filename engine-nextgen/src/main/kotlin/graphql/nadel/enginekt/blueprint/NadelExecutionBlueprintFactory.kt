@@ -60,7 +60,7 @@ private class Factory(
         val typeRenameInstructions = makeTypeRenameInstructions().strictAssociateBy {
             it.overallName
         }
-        val fieldInstructions = makeInstructions().strictAssociateBy {
+        val fieldInstructions = makeFieldInstructions().strictAssociateBy {
             it.location
         }
 
@@ -72,7 +72,7 @@ private class Factory(
         )
     }
 
-    private fun makeInstructions(): List<NadelFieldInstruction> {
+    private fun makeFieldInstructions(): List<NadelFieldInstruction> {
         return overallSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLObjectType>()
@@ -139,9 +139,10 @@ private class Factory(
         )
         return NadelHydrationFieldInstruction(
             location = makeFieldCoordinates(hydratedFieldParentType, hydratedFieldDef),
+            hydratedFieldDef = hydratedFieldDef,
             actorService = hydrationActorService,
             queryPathToActorField = QueryPath(queryPathToActorField),
-            actorFieldDefinition = actorFieldDef,
+            actorFieldDef = actorFieldDef,
             actorInputValueDefs = actorInputValueDefs,
             hydrationStrategy = getHydrationStrategy(
                 hydratedFieldParentType = hydratedFieldParentType,
@@ -197,10 +198,11 @@ private class Factory(
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
 
         return NadelBatchHydrationFieldInstruction(
-            location,
+            location = location,
+            hydratedFieldDef = hydratedFieldDef,
             actorService = actorService,
             queryPathToActorField = QueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
-            actorFieldDefinition = actorFieldDef,
+            actorFieldDef = actorFieldDef,
             actorInputValueDefs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef),
             batchSize = hydration.batchSize ?: 50,
             batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {

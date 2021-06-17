@@ -20,6 +20,7 @@ import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.asJsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
+import graphql.nadel.enginekt.util.flatten
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedInputValue
@@ -46,7 +47,7 @@ internal object NadelHydrationInputBuilder {
         val argsForAllCalls = mapFrom(
             inputDefsForAllCalls
                 .map { actorInputDef ->
-                    val argumentDef = instruction.actorFieldDefinition.getArgument(actorInputDef.name)
+                    val argumentDef = instruction.actorFieldDef.getArgument(actorInputDef.name)
                     actorInputDef.name to makeInputValue(
                         actorInputDef = actorInputDef,
                         argumentDef = argumentDef,
@@ -66,13 +67,17 @@ internal object NadelHydrationInputBuilder {
                     is ValueSource.FieldResultValue -> getResultValues(valueSource, parentNode, aliasHelper)
                     else -> error("Can only split field result value into multiple hydration calls")
                 }
-                valuesToSplit.map { value ->
-                    val inputValuePerCall = inputDefToSplit.name to makeNormalizedInputValue(
-                        inputDefToSplit.actorArgumentDef,
-                        value = valueToAstValue(value),
-                    )
-                    argsForAllCalls + inputValuePerCall
-                }
+                valuesToSplit
+                    .asSequence()
+                    .flatten(recursively = true) // Honestly: I think we need to revisit this, we kind of make big assumptions on the schema
+                    .map { value ->
+                        val inputValuePerCall = inputDefToSplit.name to makeNormalizedInputValue(
+                            inputDefToSplit.actorArgumentDef,
+                            value = valueToAstValue(value),
+                        )
+                        argsForAllCalls + inputValuePerCall
+                    }
+                    .toList()
             }
         }
     }

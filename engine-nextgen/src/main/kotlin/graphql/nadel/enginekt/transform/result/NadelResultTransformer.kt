@@ -20,10 +20,9 @@ import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import kotlin.reflect.KClass
 
-internal class NadelResultTransformer {
+internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
     suspend fun transform(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         executionPlan: NadelExecutionPlan,
         artificialFields: List<NormalizedField>,
         overallToUnderlyingFields: Map<NormalizedField, List<NormalizedField>>,
@@ -65,6 +64,7 @@ internal class NadelResultTransformer {
                 is NadelResultInstruction.Set -> prepareSet(result.data, transformation)
                 is NadelResultInstruction.Remove -> prepareRemove(result.data, transformation)
                 is NadelResultInstruction.Copy -> prepareCopy(result.data, transformation)
+                is NadelResultInstruction.AddError -> prepareAddError(result.errors, transformation)
             }
         }
 
@@ -94,7 +94,10 @@ internal class NadelResultTransformer {
             .forEach(result.data::cleanup)
     }
 
-    private fun prepareSet(data: JsonMap, instruction: NadelResultInstruction.Set): DataMutation {
+    private fun prepareSet(
+        data: JsonMap,
+        instruction: NadelResultInstruction.Set,
+    ): DataMutation {
         val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
         val subjectKey = instruction.subjectKey
 
@@ -104,7 +107,10 @@ internal class NadelResultTransformer {
         }
     }
 
-    private fun prepareRemove(data: JsonMap, instruction: NadelResultInstruction.Remove): DataMutation {
+    private fun prepareRemove(
+        data: JsonMap,
+        instruction: NadelResultInstruction.Remove,
+    ): DataMutation {
         val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
         val subjectKey = instruction.subjectKey
 
@@ -120,7 +126,10 @@ internal class NadelResultTransformer {
         }
     }
 
-    private fun prepareCopy(data: JsonMap, instruction: NadelResultInstruction.Copy): DataMutation {
+    private fun prepareCopy(
+        data: JsonMap,
+        instruction: NadelResultInstruction.Copy,
+    ): DataMutation {
         val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
         val dataToCopy = parent[instruction.subjectKey]
 
@@ -130,6 +139,18 @@ internal class NadelResultTransformer {
         return DataMutation {
             val mutableData = destinationParent.asMutable()
             mutableData[destinationKey] = dataToCopy
+        }
+    }
+
+    private fun prepareAddError(
+        errors: List<JsonMap>,
+        instruction: NadelResultInstruction.AddError,
+    ): DataMutation {
+        val newError = instruction.error.toSpecification()
+
+        return DataMutation {
+            val mutableErrors = errors.asMutable()
+            mutableErrors.add(newError)
         }
     }
 

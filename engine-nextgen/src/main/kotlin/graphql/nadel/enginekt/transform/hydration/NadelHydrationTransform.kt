@@ -160,9 +160,9 @@ internal class NadelHydrationTransform(
                 // Should not have more than one query for one to one
                 val result = actorQueryResults.emptyOrSingle()
 
-                val data = result?.let {
+                val data = result?.data?.let { data ->
                     JsonNodeExtractor.getNodesAt(
-                        data = result.data,
+                        data = data,
                         queryPath = instruction.queryPathToActorField,
                     ).emptyOrSingle()
                 }
@@ -175,13 +175,11 @@ internal class NadelHydrationTransform(
                 )
             }
             is NadelHydrationStrategy.ManyToOne -> {
-                val data = actorQueryResults.flatMap { result ->
+                val data = actorQueryResults.map { result ->
                     JsonNodeExtractor.getNodesAt(
                         data = result.data,
                         queryPath = instruction.queryPathToActorField,
-                    ).map {
-                        it.value
-                    }
+                    ).emptyOrSingle()?.value
                 }
 
                 return listOf(

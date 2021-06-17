@@ -16,14 +16,14 @@ import graphql.nadel.enginekt.transform.result.asMutable
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.AnyList
-import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
 import graphql.nadel.enginekt.util.isList
 import graphql.nadel.enginekt.util.queryPath
+import graphql.nadel.enginekt.util.subListOrNull
+import graphql.nadel.enginekt.util.toGraphQLError
 import graphql.nadel.enginekt.util.unwrapNonNull
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -69,16 +69,17 @@ internal class NadelBatchHydrator(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
-        val deferredBatches: List<Deferred<ServiceExecutionResult>> = executeBatchesAsync(
+        val batches: List<ServiceExecutionResult> = executeBatches(
             state = state,
             instruction = instruction,
-            parentNodes = parentNodes
+            parentNodes = parentNodes,
         )
-        val resultNodes: List<JsonMap> = getHydrationActorResultNodes(instruction, deferredBatches)
+        val resultNodes: List<JsonNode> = getHydrationActorResultNodes(instruction, batches)
 
         return when (val matchStrategy = instruction.batchHydrationMatchStrategy) {
             is NadelBatchHydrationMatchStrategy.MatchIndex -> getHydrateInstructionsMatchingIndex(
                 state = state,
+                instruction = instruction,
                 parentNodes = parentNodes,
                 resultNodes = resultNodes,
             )
@@ -90,22 +91,66 @@ internal class NadelBatchHydrator(
                 resultNodes = resultNodes,
                 matchStrategy = matchStrategy,
             )
-        }
+        } + getAddErrorInstructions(batches)
     }
 
     private fun getHydrateInstructionsMatchingIndex(
         state: State,
+        instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
-        resultNodes: List<JsonMap>,
+        resultNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
-        require(resultNodes.size == parentNodes.size) { "Could not hydrate by index: illegal element count" }
+        val batchDef = NadelBatchHydrationInputBuilder.getBatchInputDef(instruction)
+        val isHydratedTypeList = instruction.hydratedFieldDef.type.unwrapNonNull().isList
 
-        return parentNodes.mapIndexed { index, parentNode ->
-            NadelResultInstruction.Set(
-                subjectPath = parentNode.resultPath + state.hydratedField.resultKey,
-                newValue = resultNodes[index],
-            )
-        }
+        val resultValues = resultNodes
+            .asSequence()
+            .map(JsonNode::value)
+            .flatten(recursively = false)
+            .toList()
+
+        var resultIndex = 0
+        return parentNodes
+            .asSequence()
+            // Ensure we don't go out of bounds
+            .takeWhile { resultIndex <= resultValues.lastIndex }
+            .map { parentNode ->
+                val newValue: Any?
+
+                if (batchDef != null) {
+                    val numValuesToTake = NadelBatchHydrationInputBuilder.getFieldResultValues(
+                        valueSource = batchDef.second,
+                        parentNode = parentNode,
+                        aliasHelper = state.aliasHelper,
+                    ).size
+
+                    newValue = when {
+                        isHydratedTypeList -> resultValues
+                            .subListOrNull(resultIndex, toIndex = resultIndex + numValuesToTake)
+                            .also {
+                                // Null means index was out of bounds
+                                it
+                                    ?: error("Index based hydration failed due to mismatch of input and result value counts")
+                                resultIndex += numValuesToTake
+                            }
+                        numValuesToTake > 1 -> error("Output type is not a List, so cannot set multiple values")
+                        else -> resultValues[resultIndex++]
+                    }
+                } else {
+                    newValue = resultValues[resultIndex++]
+                }
+
+                NadelResultInstruction.Set(
+                    subjectPath = parentNode.resultPath + state.hydratedField.resultKey,
+                    newValue = newValue,
+                )
+            }
+            .toList()
+            .also {
+                if (resultIndex != resultValues.size) {
+                    error("Index based hydration failed due to mismatch of input and result value counts")
+                }
+            }
     }
 
     private fun getHydrateInstructionsMatchingObjectId(
@@ -113,14 +158,19 @@ internal class NadelBatchHydrator(
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
-        resultNodes: List<JsonMap>,
+        resultNodes: List<JsonNode>,
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
     ): List<NadelResultInstruction> {
         // Associate by does not need to be strict here
-        val resultNodesByObjectId = resultNodes.associateBy {
-            // We don't want to show this in the overall result, so remove it here as we use it
-            it.asMutable().remove(state.aliasHelper.getObjectIdentifierKey(matchStrategy.objectId))
-        }
+        val resultNodesByObjectId = resultNodes.asSequence()
+            .filterNotNull()
+            .map(JsonNode::value)
+            .flatten(recursively = true)
+            .filterIsInstance<JsonMap>()
+            .associateBy {
+                // We don't want to show this in the overall result, so remove it here as we use it
+                it.asMutable().remove(state.aliasHelper.getObjectIdentifierKey(matchStrategy.objectId))
+            }
 
         val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.getQueryPath(
             getPathToObjectIdentifierOnHydrationParentNode(instruction),
@@ -182,11 +232,11 @@ internal class NadelBatchHydrator(
         )
     }
 
-    private suspend fun executeBatchesAsync(
+    private suspend fun executeBatches(
         state: State,
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
-    ): List<Deferred<ServiceExecutionResult>> {
+    ): List<ServiceExecutionResult> {
         val actorQueries = NadelHydrationFieldsBuilder.makeBatchActorQueries(
             instruction = instruction,
             aliasHelper = state.aliasHelper,
@@ -206,34 +256,21 @@ internal class NadelBatchHydrator(
                         )
                     }
                 }
+                .awaitAll()
         }
     }
 
-    private suspend fun getHydrationActorResultNodes(
+    private fun getHydrationActorResultNodes(
         instruction: NadelBatchHydrationFieldInstruction,
-        batches: List<Deferred<ServiceExecutionResult>>,
-    ): List<JsonMap> {
+        batches: List<ServiceExecutionResult>,
+    ): List<JsonNode> {
         return batches
-            .awaitAll()
             .asSequence()
-            .flatMap { batch ->
-                val nodes = JsonNodeExtractor.getNodesAt(
-                    data = batch.data,
+            .flatMap getNodes@{ batch ->
+                JsonNodeExtractor.getNodesAt(
+                    data = batch.data ?: return@getNodes emptySequence(),
                     queryPath = instruction.queryPathToActorField,
-                    flatten = true,
-                )
-
-                nodes
-                    .asSequence()
-                    .mapNotNull { node ->
-                        when (val nodeValue = node.value) {
-                            is AnyMap -> nodeValue.let {
-                                @Suppress("UNCHECKED_CAST")
-                                it as JsonMap
-                            }
-                            else -> null
-                        }
-                    }
+                ).asSequence()
             }
             .toList()
     }
@@ -266,5 +303,16 @@ internal class NadelBatchHydrator(
             .filterIsInstance<NadelHydrationActorInputDef.ValueSource.FieldResultValue>()
             .single()
             .queryPathToField
+    }
+
+    private fun getAddErrorInstructions(
+        batches: List<ServiceExecutionResult>,
+    ): List<NadelResultInstruction> {
+        return batches
+            .asSequence()
+            .flatMap { it.errors }
+            .map(::toGraphQLError)
+            .map(NadelResultInstruction::AddError)
+            .toList()
     }
 }

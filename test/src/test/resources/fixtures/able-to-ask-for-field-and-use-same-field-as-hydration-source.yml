@@ -3,7 +3,7 @@ enabled:
   current: true
   nextgen: true
 overallSchema:
-  Bar: |
+  Bar: |-
     service Bar {
       type Query {
         bar: Bar
@@ -15,7 +15,7 @@ overallSchema:
       }
     }
 underlyingSchema:
-  Bar: |
+  Bar: |-
     type Bar {
       barId: ID
       name: String
@@ -25,7 +25,7 @@ underlyingSchema:
       bar: Bar
       barById(id: ID): Bar
     }
-query: |
+query: |-
   query {
     bar {
       barId

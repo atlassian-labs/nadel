@@ -119,7 +119,7 @@ internal object NadelHydrationFieldsBuilder {
     ): NormalizedField? {
         return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
             is MatchObjectIdentifier -> {
-                val actorFieldDef = batchHydrationInstruction.actorFieldDefinition
+                val actorFieldDef = batchHydrationInstruction.actorFieldDef
                 val underlyingSchema = batchHydrationInstruction.actorService.underlyingSchema
                 val objectTypes: List<GraphQLObjectType> = when (val type = actorFieldDef.type.unwrap(all = true)) {
                     is GraphQLObjectType -> listOf(type)

@@ -114,4 +114,4 @@ serviceCalls:
 # language=JSON
 response: null
 exception:
-  message: If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments. We expected 3 returned nodes but only got 2
+  message: Index based hydration failed due to mismatch of input and result value counts

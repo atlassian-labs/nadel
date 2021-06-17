@@ -29,11 +29,14 @@ import graphql.nadel.enginekt.util.getDefinitionsOfType
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.tests.util.fixtures.EngineTestHook
 import graphql.nadel.tests.util.keysEqual
 import graphql.nadel.tests.util.packageName
 import graphql.normalized.NormalizedField
+import graphql.normalized.NormalizedQuery
 import graphql.normalized.NormalizedQueryFactory
+import graphql.normalized.NormalizedQueryToAstCompiler
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
@@ -67,9 +70,6 @@ class EngineTests : FunSpec({
         }
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
-        // .filter {
-        //     it.name == "call with variables inside input objects"
-        // }
         .forEach { fixture ->
             engineFactories.all
                 .asSequence()
@@ -96,8 +96,10 @@ private suspend fun execute(
     engine: Engine,
     engineFactory: NadelExecutionEngineFactory,
 ) {
+    println("Running: ${fixture.name}")
     val testHooks = getTestHook(fixture)
 
+    val services = mutableMapOf<String, Service>()
     val nadel = Nadel.newNadel()
         .engineFactory(engineFactory)
         .dsl(fixture.overallSchema)
@@ -106,30 +108,54 @@ private suspend fun execute(
 
             private val callsByTopLevelField by lazy {
                 fixture.serviceCalls.current.strictAssociateBy { call ->
-                    getTopLevelField(call.request.document).transform {
-                        // Remove children, we want to match purely on the top level field itself
-                        it
-                            .alias(null)
-                            .selectionSet(SelectionSet.newSelectionSet().build())
-                    }.toString()
+                    val service = services[call.serviceName] ?: error("No matching service")
+
+                    val nq = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
+                        service.underlyingSchema, /* schema */
+                        call.request.document, /* query */
+                        null, /* operation name */
+                        call.request.variables, /* variables */
+                    )
+
+                    toMatchableTopLevelCall(nq)
                 }
             }
 
-            private fun getMatchingCall(query: Document): ServiceCall? {
+            private fun getMatchingCall(query: Document, serviceName: String): ServiceCall? {
+                val service = services[serviceName] ?: error("No matching service")
+
+                val nq = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
+                    service.underlyingSchema, /* schema */
+                    query, /* query */
+                    null, /* operation name */
+                    emptyMap(), /* variables */
+                )
+
                 return callsByTopLevelField[
-                    getTopLevelField(query).transform {
-                        it
-                            .alias(null)
-                            .selectionSet(SelectionSet.newSelectionSet().build())
-                    }.toString(),
+                    toMatchableTopLevelCall(nq),
                 ]
+            }
+
+            private fun toMatchableTopLevelCall(nq: NormalizedQuery): String {
+                return AstPrinter.printAst(
+                    NormalizedQueryToAstCompiler.compileToDocument(
+                        nq.topLevelFields.map {
+                            it.toBuilder()
+                                .alias(null)
+                                .children(emptyList())
+                                .build()
+                        }
+                    )
+                )
             }
 
             private fun transform(
                 incomingQuery: Document,
                 response: JsonMap,
-                service: Service,
+                serviceName: String,
             ): JsonMap {
+                val service = services[serviceName] ?: error("No matching service")
+
                 val nq = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
                     service.underlyingSchema, /* schema */
                     incomingQuery, /* query */
@@ -180,9 +206,11 @@ private suspend fun execute(
                                 @Suppress("UNCHECKED_CAST")
                                 return when (value) {
                                     is AnyList -> value.map(::mapValue)
-                                    is AnyMap -> transform(field.children,
+                                    is AnyMap -> transform(
+                                        fields = field.children,
                                         parent = value as JsonMap,
-                                        underlyingSchema)
+                                        underlyingSchema = underlyingSchema,
+                                    )
                                     else -> value
                                 }
                             }
@@ -235,10 +263,10 @@ private suspend fun execute(
                                 var match: JsonMap? = null
                                 if (engine == Engine.nextgen) {
                                     println("Attempting to match query")
-                                    val matchingCall = getMatchingCall(incomingQuery)
+                                    val matchingCall = getMatchingCall(incomingQuery, serviceName)
                                     if (matchingCall != null) {
                                         val response = matchingCall.response
-                                        match = transform(incomingQuery, response, params.getServiceContext())
+                                        match = transform(incomingQuery, response, serviceName)
                                     }
                                 }
 
@@ -249,8 +277,8 @@ private suspend fun execute(
                         CompletableFuture.completedFuture(
                             ServiceExecutionResult(
                                 response["data"] as JsonMap?,
-                                response["errors"] as List<JsonMap>?,
-                                response["extensions"] as JsonMap?,
+                                response["errors"] as List<JsonMap>? ?: mutableListOf(),
+                                response["extensions"] as JsonMap? ?: mutableMapOf(),
                             ),
                         )
                     } catch (e: Throwable) {
@@ -267,6 +295,11 @@ private suspend fun execute(
             testHooks?.makeNadel(engine, it) ?: it
         }
         .build()
+        .also { nadel ->
+            nadel.services.forEach { service ->
+                services[service.name] = service
+            }
+        }
 
     val response = try {
         nadel.execute(newNadelExecutionInput()

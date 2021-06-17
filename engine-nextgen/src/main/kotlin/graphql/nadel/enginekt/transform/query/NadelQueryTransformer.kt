@@ -7,10 +7,8 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.NormalizedField
-import graphql.schema.GraphQLSchema
 
 class NadelQueryTransformer internal constructor(
-    private val overallSchema: GraphQLSchema,
     private val executionBlueprint: NadelOverallExecutionBlueprint,
 ) {
     interface Continuation {
@@ -77,7 +75,7 @@ class NadelQueryTransformer internal constructor(
                     fields = it.children,
                     executionPlan = executionPlan
                 )
-                patchObjectTypeNames(field, executionPlan)
+                patchObjectTypeNames(field)
                     .children(transformedChildFields)
                     .build()
                     .also { newField ->
@@ -127,8 +125,8 @@ class NadelQueryTransformer internal constructor(
         // TODO: I think that patching names here is wrong, we're giving mixed signals to the transformations
         // i.e. yes please give us a field in the underlying sense, but only field name
         // I think this introduces confusion
-        val patchedArtificialFields = patchObjectTypeNames(transformResult.artificialFields, executionPlan)
-        val patchedNewField = patchObjectTypeNames(listOfNotNull(transformResult.newField), executionPlan)
+        val patchedArtificialFields = patchObjectTypeNames(transformResult.artificialFields)
+        val patchedNewField = patchObjectTypeNames(listOfNotNull(transformResult.newField))
         transformContext.artificialFields.addAll(patchedArtificialFields)
 
         // Track overall -> underlying fields
@@ -141,16 +139,14 @@ class NadelQueryTransformer internal constructor(
 
     private fun patchObjectTypeNames(
         fields: List<NormalizedField>,
-        executionPlan: NadelExecutionPlan,
     ): List<NormalizedField> {
         return fields.map { field ->
-            patchObjectTypeNames(field, executionPlan).build()
+            patchObjectTypeNames(field).build()
         }
     }
 
     private fun patchObjectTypeNames(
         field: NormalizedField,
-        executionPlan: NadelExecutionPlan,
     ): NormalizedField.Builder {
         return field.toBuilder()
             .clearObjectTypesNames()
@@ -184,10 +180,9 @@ class NadelQueryTransformer internal constructor(
 
     companion object {
         fun create(
-            overallSchema: GraphQLSchema,
             executionBlueprint: NadelOverallExecutionBlueprint,
         ): NadelQueryTransformer {
-            return NadelQueryTransformer(overallSchema, executionBlueprint)
+            return NadelQueryTransformer(executionBlueprint)
         }
     }
 }

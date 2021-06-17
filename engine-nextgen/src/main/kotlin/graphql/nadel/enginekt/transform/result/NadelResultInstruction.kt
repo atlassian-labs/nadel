@@ -1,5 +1,6 @@
 package graphql.nadel.enginekt.transform.result
 
+import graphql.GraphQLError
 import graphql.nadel.enginekt.transform.result.json.JsonNodePath
 
 sealed class NadelResultInstruction {
@@ -19,6 +20,10 @@ sealed class NadelResultInstruction {
         val destinationKey: String
             get() = destinationPath.segments.last().value as String
     }
+
+    data class AddError(
+        val error: GraphQLError,
+    ) : NadelResultInstruction()
 }
 
 interface NadelResultInstructionWithSubject {

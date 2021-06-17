@@ -46,7 +46,12 @@ inline fun <K, E> Sequence<E>.strictAssociateBy(crossinline keyExtractor: (E) ->
 fun <K, V> mapFrom(entries: Collection<Pair<K, V>>): Map<K, V> {
     val map = HashMap<K, V>(entries.size)
     map.putAll(entries)
-    require(map.size == entries.size)
+    require(map.size == entries.size) {
+        @Suppress("SimpleRedundantLet") // For debugging purposes if you want to visit the values
+        "Duplicate keys: " + entries.groupBy { it.first }.filterValues { it.size > 1 }.let {
+            it.keys
+        }
+    }
     return map
 }
 
@@ -153,16 +158,10 @@ inline fun <K, reified T> Map<K, *>.filterValuesOfType(): Map<K, T> {
     } as Map<K, T>
 }
 
-inline fun <I, T> Iterable<I>.mapToArrayList(
-    destination: ArrayList<T> = ArrayList(),
-    transform: (I) -> T,
-): ArrayList<T> {
-    return mapTo(destination, transform)
-}
-
 fun Sequence<Any?>.flatten(recursively: Boolean): Sequence<Any?> {
     return flatMap { element ->
         when (element) {
+            is AnyMap -> sequenceOf(element)
             is AnyIterable -> element.asSequence().let {
                 if (recursively) {
                     it.flatten(recursively = true)
@@ -173,4 +172,15 @@ fun Sequence<Any?>.flatten(recursively: Boolean): Sequence<Any?> {
             else -> sequenceOf(element)
         }
     }
+}
+
+/**
+ * See [List.subList], but if input is out of bounds then null is returned instead.
+ */
+fun <T> List<T>.subListOrNull(fromIndex: Int, toIndex: Int): List<T>? {
+    if (fromIndex < 0 || /*toIndex is exclusive, hence minus 1*/ toIndex - 1 > lastIndex) {
+        return null
+    }
+
+    return subList(fromIndex = fromIndex, toIndex = toIndex)
 }
