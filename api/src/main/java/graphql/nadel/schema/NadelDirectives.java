@@ -56,7 +56,7 @@ public class NadelDirectives {
     static {
         DYNAMIC_SERVICE_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
                 .name("dynamicServiceResolution")
-                .directiveLocation(newDirectiveLocation().name(INTERFACE.name()).build())
+                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
                 .description(createDescription("Indicates that the field uses dynamic service resolution. This directive should only be used in commons fields, i.e. fields that are not part of a particular service."))
                 .build();
 

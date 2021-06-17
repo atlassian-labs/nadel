@@ -138,9 +138,8 @@ public class NadelExecutionStrategy {
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
 
-            boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition().getDirectives()
-                    .stream()
-                    .anyMatch(directive -> directive.getName().equals(DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()));
+            boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition()
+                    .getDirective(DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()) != null;
 
             if (usesDynamicService) {
                 result.add(prepareDynamicServiceExecution(executionCtx, rootExecutionStepInfo, fieldExecutionStepInfo));
@@ -172,10 +171,8 @@ public class NadelExecutionStrategy {
 
         Service service = serviceOrError.getService();
 
-        List<String> serviceObjectTypes = service.getDefinitionRegistry().getDefinitions()
+        List<String> serviceObjectTypes = service.getDefinitionRegistry().getDefinitions(ObjectTypeDefinition.class)
                 .stream()
-                .filter(definition -> definition instanceof ObjectTypeDefinition)
-                .map(definition -> (ObjectTypeDefinition) definition)
                 .map(ObjectTypeDefinition::getName)
                 .collect(toList());
 
