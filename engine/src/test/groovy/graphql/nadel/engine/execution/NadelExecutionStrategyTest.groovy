@@ -3016,5 +3016,92 @@ fragment F1 on TestingCharacter {
         resultComplexityAggregator.getTypeRenamesCount() == 2
     }
 
+    def '''bugfix: check that a field that is used as an input for a hydration is not dropped from the response if it's
+           explicitly requested and the top level field is renamed'''() {
 
+        def overallSchema = TestUtil.schemaFromNdsl([
+                CommentService: '''   
+                    service CommentService {
+                       type Query {
+                           commentRenamed(id: ID): Comment => renamed from comment
+                           comment(id: ID): Comment
+                       }
+                       
+                       type Comment {
+                           id: ID
+                           text: String
+                           authorId: ID
+                           author: User => hydrated from UserService.userById(id: $source.authorId)
+                       }
+                    }
+                    ''',
+                UserService   : '''
+                    service UserService {
+                        type Query {
+                            userById(id: ID): User
+                        }
+                        
+                        type User {
+                            userId: ID
+                            displayName: String
+                        }
+                    }'''
+        ])
+
+        def commentSchema = TestUtil.schema("""
+            type Query {
+                comment(id: ID): Comment
+            }
+            
+            type Comment {
+                id: ID
+                text: String
+                authorId: ID
+            }""")
+
+        def userServiceSchema = TestUtil.schema("""
+            type Query {
+                userById(id: ID): User
+            }
+            type User {
+                userId: ID
+                displayName: String
+            }""")
+
+        given:
+
+        def query = '''
+        {
+            commentRenamed(id:"C1") {
+                authorId
+                author {displayName}
+            }
+        }
+        '''
+        def expectedQuery1 = 'query nadel_2_CommentService {comment(id:"C1") {authorId authorId}}'
+        def expectedQuery2 = """query nadel_2_UserService {userById(id:"fred") {displayName}}"""
+        Map response1 = [comment: [authorId: "fred"]]
+        Map response2 = [userById: [displayName: "Display name of Fred"]]
+
+        Map response
+        List<GraphQLError> errors
+        when:
+        (response, errors) = test2Services(
+                overallSchema,
+                "CommentService",
+                commentSchema,
+                "UserService",
+                userServiceSchema,
+                query,
+                ["commentRenamed"],
+                expectedQuery1,
+                response1,
+                expectedQuery2,
+                response2,
+                Mock(ResultComplexityAggregator)
+        )
+        then:
+        response == [commentRenamed: [authorId: "fred", author: [displayName: "Display name of Fred"]]]
+        errors.size() == 0
+    }
 }
