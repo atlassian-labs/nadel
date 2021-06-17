@@ -8,6 +8,7 @@ import graphql.language.OperationTypeDefinition;
 import graphql.language.SDLDefinition;
 import graphql.language.SchemaDefinition;
 import graphql.language.TypeDefinition;
+import graphql.nadel.util.FpKit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,5 +105,10 @@ public class DefinitionRegistry {
     @NotNull
     public List<SDLDefinition> getDefinitions() {
         return definitions;
+    }
+
+    @NotNull
+    public <T extends SDLDefinition> List<T> getDefinitions(Class<T> targetClass) {
+        return (List<T>) FpKit.filter(getDefinitions(), targetClass::isInstance);
     }
 }
