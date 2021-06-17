@@ -181,20 +181,7 @@ public class NadelExecutionStrategy {
 
         NormalizedQueryFromAst normalizedQuery = getNadelContext(executionCtx).getNormalizedOverallQuery();
 
-        List<InlineFragment> inlineFragments = normalizedQuery.getTopLevelFields()
-                .stream()
-                .filter(field -> field.getFieldDefinition().getName().equals(fieldExecutionStepInfo.getFieldDefinition().getName()))
-                .flatMap(field -> field.getChildren()
-                        .stream()
-                        .filter(childField -> serviceObjectTypes.contains(childField.getObjectType().getName()))
-                        .map(normalizedQueryField -> {
-                            TypeName typeName = newTypeName(normalizedQueryField.getObjectType().getName()).build();
-                            return newInlineFragment()
-                                    .typeCondition(typeName)
-                                    .selectionSet(newSelectionSet().selection(normalizedQuery.getMergedFieldByNormalizedFields().get(normalizedQueryField).getSingleField()).build())
-                                    .build();
-                        }))
-                .collect(toList());
+        List<InlineFragment> inlineFragments = wrapFieldsInInlineFragments(fieldExecutionStepInfo, serviceObjectTypes, normalizedQuery);
 
         SelectionSet selectionSet = SelectionSet.newSelectionSet(inlineFragments).build();
 
@@ -208,6 +195,23 @@ public class NadelExecutionStrategy {
         ExecutionStepInfo executionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
 
         return getOneServiceExecution(executionCtx, executionStepInfo, service);
+    }
+
+    private List<InlineFragment> wrapFieldsInInlineFragments(ExecutionStepInfo fieldExecutionStepInfo, List<String> serviceObjectTypes, NormalizedQueryFromAst normalizedQuery) {
+        return normalizedQuery.getTopLevelFields()
+                .stream()
+                .filter(field -> field.getFieldDefinition().getName().equals(fieldExecutionStepInfo.getFieldDefinition().getName()))
+                .flatMap(field -> field.getChildren()
+                        .stream()
+                        .filter(childField -> serviceObjectTypes.contains(childField.getObjectType().getName()))
+                        .map(normalizedQueryField -> {
+                            TypeName typeName = newTypeName(normalizedQueryField.getObjectType().getName()).build();
+                            return newInlineFragment()
+                                    .typeCondition(typeName)
+                                    .selectionSet(newSelectionSet().selection(normalizedQuery.getMergedFieldByNormalizedFields().get(normalizedQueryField).getSingleField()).build())
+                                    .build();
+                        }))
+                .collect(toList());
     }
 
     private CompletableFuture<OneServiceExecution> getOneServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo fieldExecutionStepInfo, Service service) {
