@@ -144,7 +144,7 @@ public class NadelExecutionStrategy {
             if (isNamespaced) {
                 result.addAll(getServiceExecutionsForNamespacedField(executionCtx, rootExecutionStepInfo, mergedField, fieldExecutionStepInfo));
             } else if (usesDynamicService) {
-                result.add(prepareDynamicServiceExecution(executionCtx, rootExecutionStepInfo, fieldExecutionStepInfo));
+                result.add(getServiceExecutionForDynamicServiceField(executionCtx, rootExecutionStepInfo, fieldExecutionStepInfo));
             } else {
                 Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
                 result.add(getOneServiceExecution(executionCtx, fieldExecutionStepInfo, service));
@@ -153,7 +153,7 @@ public class NadelExecutionStrategy {
         return Async.each(result);
     }
 
-    private CompletableFuture<OneServiceExecution> prepareDynamicServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo rootExecutionStepInfo, ExecutionStepInfo fieldExecutionStepInfo) {
+    private CompletableFuture<OneServiceExecution> getServiceExecutionForDynamicServiceField(ExecutionContext executionCtx, ExecutionStepInfo rootExecutionStepInfo, ExecutionStepInfo fieldExecutionStepInfo) {
         ServiceOrError serviceOrError = assertNotNull(
                 serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo),
                 () -> "Service resolution hook must never return null."
