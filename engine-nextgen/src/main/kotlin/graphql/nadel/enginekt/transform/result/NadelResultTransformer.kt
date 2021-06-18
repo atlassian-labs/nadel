@@ -53,13 +53,13 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         return result
     }
 
-    private fun mutate(result: ServiceExecutionResult, transformations: List<NadelResultInstruction>) {
+    private fun mutate(result: ServiceExecutionResult, instructions: List<NadelResultInstruction>) {
         // For now we don't have any instructions to modify anything other than data, so return early
         if (result.data == null) {
             return
         }
 
-        val mutations = transformations.map { transformation ->
+        val mutations = instructions.map { transformation ->
             when (transformation) {
                 is NadelResultInstruction.Set -> prepareSet(result.data, transformation)
                 is NadelResultInstruction.Remove -> prepareRemove(result.data, transformation)
@@ -83,7 +83,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         //     toCleanup.add(parent)
         //   }
         // }
-        transformations
+        instructions
             .asSequence()
             .mapNotNull {
                 when (it) {

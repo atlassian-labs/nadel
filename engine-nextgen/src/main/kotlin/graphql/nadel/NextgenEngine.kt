@@ -14,6 +14,8 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.SomethingToSplitFields
+import graphql.nadel.enginekt.transform.query.SomethingToSplitFields.getFieldsToExecute
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
@@ -65,6 +67,10 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
     ): ExecutionResult {
+        // comparison old vs new
+        // testing
+        // 3 step transform
+
         val query = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
             overallExecutionBlueprint.schema,
             queryDocument,
@@ -77,10 +83,11 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
         val operationKind = getOperationKind(queryDocument, executionInput.operationName)
 
+        val somethingToSplitFields = SomethingToSplitFields(overallExecutionBlueprint)
         val results = coroutineScope {
-            query.topLevelFields.map { topLevelField ->
+            somethingToSplitFields.getFieldsToExecute(query).map { result ->
                 async {
-                    executeTopLevelField(topLevelField, operationKind, executionInput)
+                    executeTopLevelField(result.field, operationKind, executionInput)
                 }
             }
         }.awaitAll()
@@ -93,8 +100,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         operationKind: OperationKind,
         executionInput: ExecutionInput,
     ): ExecutionResult {
-        val service = getService(topLevelField, operationKind)
-
         val executionContext = NadelExecutionContext(executionInput)
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
         val queryTransform = queryTransformer.transformQuery(
