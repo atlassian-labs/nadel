@@ -1,0 +1,195 @@
+name: query with 2 namespaced fields that have matching subfields
+enabled:
+  nextgen: false
+  current: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    extend type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  Pages: |
+    type Query {
+      page: PagesQuery @namespaced
+    }
+
+    type PagesQuery {
+      getIssue: IssuePage
+    }
+
+    type IssuePage {
+      id: ID
+      pageText: String
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  Pages: |
+    type Query {
+      page: PageQuery
+    }
+
+    type PageQuery {
+      getIssue: IssuePage
+    }
+
+    type IssuePage {
+      id: ID
+      pageText: String
+    }
+query: |
+  {
+    issue {
+      getIssue {
+        text
+      }
+
+      search {
+        count
+      }
+    }
+
+    page {
+      getIssue {
+        pageText
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issue {
+              getIssue {
+                text
+              }
+            }
+          }
+        variables: { }
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "getIssue": {
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: IssueSearch
+      request:
+        query: |
+          query nadel_2_IssueSearch {
+            issue {
+              search {
+                count
+              }
+            }
+          }
+        variables: { }
+        operationName: nadel_2_IssueSearch
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "search": {
+                "count": 100
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Pages
+      request:
+        query: |
+          query nadel_2_Pages {
+            page {
+              getIssue {
+                pageText
+              }
+            }
+          }
+        variables: { }
+        operationName: nadel_2_IssueSearch
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "page": {
+              "getIssue": {
+                "pageText": "Bar"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "getIssue": {
+          "text": "Foo"
+        },
+        "search": {
+          "count": 100
+        }
+      },
+      "page": {
+        "getIssue": {
+          "pageText": "Bar"
+        }
+      }
+    },
+    "extensions": {}
+  }

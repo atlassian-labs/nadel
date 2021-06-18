@@ -11,7 +11,8 @@ public class FieldInfo {
         /**
          * A top level field is declared directly under the GraphQL operation types: query, mutation and subscription
          */
-        TOPLEVEL
+        TOPLEVEL,
+        NAMESPACE_SUBFIELD
     }
 
     private final FieldKind fieldKind;

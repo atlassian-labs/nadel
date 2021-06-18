@@ -26,7 +26,6 @@ import graphql.nadel.engine.execution.transformation.FieldTransformation;
 import graphql.nadel.engine.execution.transformation.TransformationMetadata.NormalizedFieldAndError;
 import graphql.nadel.engine.hooks.EngineServiceExecutionHooks;
 import graphql.nadel.engine.hooks.ResultRewriteParams;
-import graphql.nadel.engine.result.ExecutionResultNode;
 import graphql.nadel.engine.result.LeafExecutionResultNode;
 import graphql.nadel.engine.result.ResultComplexityAggregator;
 import graphql.nadel.engine.result.RootExecutionResultNode;
@@ -36,8 +35,10 @@ import graphql.nadel.hooks.ServiceOrError;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.nadel.util.MergedFieldUtil;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,9 +57,8 @@ import static graphql.Assert.assertNotNull;
 import static graphql.language.InlineFragment.newInlineFragment;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.language.TypeName.newTypeName;
-import static graphql.nadel.engine.result.RootExecutionResultNode.newRootExecutionResultNode;
 import static graphql.nadel.schema.NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION;
-import static graphql.nadel.util.FpKit.map;
+import static graphql.nadel.schema.NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
@@ -138,16 +138,17 @@ public class NadelExecutionStrategy {
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
 
-            boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition()
-                    .getDirective(DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()) != null;
+            boolean isNamespaced = !fieldExecutionStepInfo.getFieldDefinition().getDirectives(NAMESPACED_DIRECTIVE_DEFINITION.getName()).isEmpty();
+            boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition().getDirective(DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()) != null;
 
-            if (usesDynamicService) {
+            if (isNamespaced) {
+                result.addAll(getServiceExecutionsForNamespacedField(executionCtx, rootExecutionStepInfo, mergedField, fieldExecutionStepInfo));
+            } else if (usesDynamicService) {
                 result.add(prepareDynamicServiceExecution(executionCtx, rootExecutionStepInfo, fieldExecutionStepInfo));
             } else {
                 Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
                 result.add(getOneServiceExecution(executionCtx, fieldExecutionStepInfo, service));
             }
-
         }
         return Async.each(result);
     }
@@ -209,6 +210,31 @@ public class NadelExecutionStrategy {
                                     .build();
                         }))
                 .collect(toList());
+    }
+
+    private List<CompletableFuture<OneServiceExecution>> getServiceExecutionsForNamespacedField(
+            ExecutionContext executionCtx, ExecutionStepInfo rootExecutionStepInfo, MergedField mergedField, ExecutionStepInfo stepInfoForNamespacedField
+    ) {
+        ArrayList<CompletableFuture<OneServiceExecution>> serviceExecutions = new ArrayList<>();
+        Assert.assertTrue(
+                stepInfoForNamespacedField.getUnwrappedNonNullType() instanceof GraphQLObjectType,
+                () -> "field annotated with @namespaced directive is expected to be of GraphQLObjectType");
+
+        GraphQLObjectType namespacedObjectType = (GraphQLObjectType) stepInfoForNamespacedField.getUnwrappedNonNullType();
+        for (Map.Entry<Service, Set<GraphQLFieldDefinition>> entry : fieldInfos.fieldDefinitionsByService.entrySet()) {
+            Service service = entry.getKey();
+            Set<GraphQLFieldDefinition> secondLevelFieldDefinitionsForService = entry.getValue();
+
+            Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(mergedField, namespacedObjectType, executionCtx,
+                    field -> secondLevelFieldDefinitionsForService.stream()
+                            .filter(namespacedObjectType.getFieldDefinitions()::contains)
+                            .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName())));
+            maybeNewMergedField.ifPresent(newMergedField -> {
+                ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
+                serviceExecutions.add(getOneServiceExecution(executionCtx, newFieldExecutionStepInfo, service));
+            });
+        }
+        return serviceExecutions;
     }
 
     private CompletableFuture<OneServiceExecution> getOneServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo fieldExecutionStepInfo, Service service) {
@@ -326,7 +352,7 @@ public class NadelExecutionStrategy {
                 CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult;
 
                 if (serviceExecutionHooks instanceof EngineServiceExecutionHooks) {
-                    serviceResult = serviceResult.thenCompose((rootResultNode) -> {
+                    serviceResult = serviceResult.thenCompose(rootResultNode -> {
                         ResultRewriteParams resultRewriteParams = ResultRewriteParams.newParameters()
                                 .from(executionContext)
                                 .service(service)
@@ -400,19 +426,7 @@ public class NadelExecutionStrategy {
     }
 
     private CompletableFuture<RootExecutionResultNode> mergeTrees(List<CompletableFuture<RootExecutionResultNode>> resultNodes) {
-        return Async.each(resultNodes).thenApply(rootNodes -> {
-            List<ExecutionResultNode> mergedChildren = new ArrayList<>();
-            List<GraphQLError> errors = new ArrayList<>();
-            map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
-            map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
-            Map<String, Object> extensions = new LinkedHashMap<>();
-            rootNodes.forEach(node -> extensions.putAll(node.getExtensions()));
-            return newRootExecutionResultNode()
-                    .children(mergedChildren)
-                    .errors(errors)
-                    .extensions(extensions)
-                    .build();
-        });
+        return Async.each(resultNodes).thenApply(StrategyUtil::mergeTrees);
     }
 
     private static class OneServiceExecution {
@@ -473,5 +487,3 @@ public class NadelExecutionStrategy {
                 transformations.getHintTypenames().isEmpty();
     }
 }
-
-
