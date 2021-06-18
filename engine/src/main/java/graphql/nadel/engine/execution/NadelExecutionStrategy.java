@@ -166,13 +166,13 @@ public class NadelExecutionStrategy {
                 () -> "field annotated with @namespaced directive is expected to be of GraphQLObjectType");
 
         GraphQLObjectType namespacedObjectType = (GraphQLObjectType) stepInfoForNamespacedField.getUnwrappedNonNullType();
-        for (Map.Entry<Service, Set<GraphQLFieldDefinition>> entry : fieldInfos.fieldDefinitionsByService.entrySet()) {
+        Map<Service, Set<GraphQLFieldDefinition>> serviceSetHashMap = fieldInfos.splitObjectFieldsByServices(namespacedObjectType);
+        for (Map.Entry<Service, Set<GraphQLFieldDefinition>> entry : serviceSetHashMap.entrySet()) {
             Service service = entry.getKey();
             Set<GraphQLFieldDefinition> secondLevelFieldDefinitionsForService = entry.getValue();
 
             Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(mergedField, namespacedObjectType, executionCtx,
                     field -> secondLevelFieldDefinitionsForService.stream()
-                            .filter(namespacedObjectType.getFieldDefinitions()::contains)
                             .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName())));
             maybeNewMergedField.ifPresent(newMergedField -> {
                 ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
