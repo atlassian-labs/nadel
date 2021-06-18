@@ -1,0 +1,183 @@
+name: query with two services sharing a namespaced field
+enabled:
+  nextgen: false
+  current: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+      getIssue(id: ID): Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    extend type IssueQuery {
+      search(arg: String): SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  Pages: |
+    type Query {
+      page: Page
+    }
+
+    type Page {
+      id: ID
+      issue: Issue => hydrated from Issues.issue.getIssue(id: $source.issueId)
+      search: SearchResult => hydrated from IssueSearch.issue.search(arg: $source.arg)
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue(id: ID): Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search(arg: String): SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  Pages: |
+    type Query {
+      page: Page
+    }
+
+    type Page {
+      id: ID
+      issueId: ID
+      arg: String
+    }
+query: |
+  {
+    page {
+      id
+      search {
+        count
+      }
+      issue {
+        id
+        text
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  current:
+    - serviceName: Pages
+      request:
+        query: |
+          query nadel_2_Pages {
+            page {
+              id
+              issueId
+              arg
+            }
+          }
+        variables: { }
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "page": {
+              "id": "PAGE-ID",
+              "issueId": "ISSUE-ID",
+              "arg": "i am a search token"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issue {
+              getIssue(id: "ISSUE-ID") {
+                id
+                text
+              }
+            }
+          }
+        variables: { }
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "getIssue": {
+                "id": "ISSUE-ID",
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: IssueSearch
+      request:
+        query: |
+          query nadel_2_IssueSearch {
+            issue {
+              search(arg: "i am a search token") {
+                count
+              }
+            }
+          }
+        variables: { }
+        operationName: nadel_2_IssueSearch
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "search": {
+                "count": 100
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "page": {
+        "id": "PAGE-ID",
+        "issue": {
+          "id": "ISSUE-ID",
+          "text": "Foo"
+        },
+        "search": {
+            "count": 100
+          }
+        }
+    },
+    "extensions": {}
+  }
