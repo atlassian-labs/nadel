@@ -134,6 +134,101 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issues {
+                ... on Issue {
+                  id
+                }
+                ... on Issue {
+                  batch_hydration__authors__authorDetails: authorDetails {
+                    ... on AuthorDetail {
+                      authorId
+                    }
+                  }
+                }
+                ... on Issue {
+                  __typename__batch_hydration__authors: __typename
+                }
+                ... on Issue {
+                  authorDetails {
+                    ... on AuthorDetail {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "id": "ISSUE-1",
+                "batch_hydration__authors__authorDetails": [
+                  {
+                    "authorId": "USER-1"
+                  },
+                  {
+                    "authorId": "USER-2"
+                  }
+                ],
+                "authorDetails": [
+                  {
+                    "name": "User 1"
+                  },
+                  {
+                    "name": "User 2"
+                  }
+                ]
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            ... on Query {
+              usersByIds(id: ["USER-1", "USER-2"]) {
+                ... on User {
+                  id
+                }
+                ... on User {
+                  batch_hydration__authors__object_ID__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
+              {
+                "id": "USER-1",
+                "batch_hydration__authors__object_ID__id": "USER-1"
+              },
+              {
+                "id": "USER-2",
+                "batch_hydration__authors__object_ID__id": "USER-2"
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

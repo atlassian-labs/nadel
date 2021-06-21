@@ -84,6 +84,51 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issues {
+                ... on Issue {
+                  __typename
+                }
+                ... on Issue {
+                  id
+                }
+                ... on Issue {
+                  authorIds
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "authorIds": [
+                  "USER-1",
+                  "USER-2"
+                ],
+                "__typename": "Issue",
+                "id": "ISSUE-1"
+              },
+              {
+                "authorIds": [
+                  "USER-3"
+                ],
+                "__typename": "Issue",
+                "id": "ISSUE-2"
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

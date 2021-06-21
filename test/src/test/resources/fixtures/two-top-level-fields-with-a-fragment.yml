@@ -117,6 +117,64 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            ... on Query {
+              user {
+                ... on User {
+                  id
+                }
+                ... on User {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "user": {
+              "name": "User 1",
+              "id": "USER-1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issues {
+                ... on Issue {
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1"
+              },
+              {
+                "id": "ISSUE-2"
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

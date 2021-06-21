@@ -23,6 +23,8 @@ query: |
 variables: {}
 serviceCalls: {}
 # language=JSON
+# language=JSON
+# language=JSON
 response: |-
   {
     "errors": [

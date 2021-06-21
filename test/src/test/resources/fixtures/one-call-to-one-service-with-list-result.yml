@@ -40,6 +40,28 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": [
+              "foo1",
+              "foo2"
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

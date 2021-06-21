@@ -93,6 +93,61 @@ serviceCalls:
         {
           "extensions": {}
         }
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  batch_hydration__bar__barId: barId
+                }
+                ... on Foo {
+                  __typename__batch_hydration__bar: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "__typename__batch_hydration__bar": "Foo",
+              "batch_hydration__bar__barId": [
+                "barId1",
+                "barId2",
+                "barId3"
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              barsById(id: ["barId1", "barId2", "barId3"]) {
+                ... on Bar {
+                  name
+                }
+                ... on Bar {
+                  batch_hydration__bar__object_ID__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

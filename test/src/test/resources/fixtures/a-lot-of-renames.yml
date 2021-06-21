@@ -1,5 +1,6 @@
 name: a lot of renames
 enabled:
+  current: true
   nextgen: true
 overallSchema:
   Boards: |
@@ -98,7 +99,7 @@ serviceCalls:
   nextgen:
     - serviceName: Boards
       request:
-        query: |-
+        query: |
           query {
             ... on Query {
               boardScope {
@@ -132,6 +133,8 @@ serviceCalls:
               }
             }
           }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {
