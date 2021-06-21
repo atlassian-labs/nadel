@@ -4,12 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.LITERAL_BLOCK_STYLE
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.MINIMIZE_QUOTES
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_DOC_START_MARKER
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.google.gson.GsonBuilder
-import graphql.introspection.Introspection
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.language.Document
@@ -18,25 +13,15 @@ import graphql.nadel.NadelEngine
 import graphql.nadel.NadelExecutionEngineFactory
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import graphql.nadel.NextgenEngine
-import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.enginekt.util.mapFrom
-import graphql.nadel.enginekt.util.queryPath
-import graphql.nadel.enginekt.util.strictAssociateBy
-import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.tests.util.fixtures.EngineTestHook
 import graphql.nadel.tests.util.keysEqual
 import graphql.nadel.tests.util.packageName
-import graphql.normalized.NormalizedField
-import graphql.normalized.NormalizedQuery
-import graphql.normalized.NormalizedQueryFactory
-import graphql.normalized.NormalizedQueryToAstCompiler
-import graphql.schema.GraphQLSchema
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
@@ -57,18 +42,9 @@ import graphql.parser.Parser as DocumentParser
 
 private val jsonObjectMapper = ObjectMapper().findAndRegisterModules()
 
-private val yamlObjectMapper = YAMLFactory()
-    .enable(LITERAL_BLOCK_STYLE)
-    .enable(MINIMIZE_QUOTES)
-    .disable(WRITE_DOC_START_MARKER)
-    .let(::ObjectMapper)
-    .findAndRegisterModules()
-
-private val serviceCalls = mutableListOf<ServiceCall>()
+private val yamlObjectMapper = YAMLFactory().let(::ObjectMapper).findAndRegisterModules()
 
 class EngineTests : FunSpec({
-    println("wtf")
-
     val engineFactories = EngineFactories()
     val fixturesDir = File(javaClass.classLoader.getResource("fixtures")!!.path)
     fixturesDir.listFiles()!!
@@ -78,9 +54,6 @@ class EngineTests : FunSpec({
         }
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
-        // .filter {
-        //     it.name == "hydration matching using index" // with lists"
-        // }
         .forEach { fixture ->
             engineFactories.all
                 .asSequence()
@@ -107,152 +80,13 @@ private suspend fun execute(
     engine: Engine,
     engineFactory: NadelExecutionEngineFactory,
 ) {
-    println("Running: ${fixture.name}")
     val testHooks = getTestHook(fixture)
 
-    val services = mutableMapOf<String, Service>()
     val nadel = Nadel.newNadel()
         .engineFactory(engineFactory)
         .dsl(fixture.overallSchema)
         .serviceExecutionFactory(object : ServiceExecutionFactory {
             private val astSorter = AstSorter()
-
-            private val callsByTopLevelField by lazy {
-                fixture.serviceCalls.current.strictAssociateBy { call ->
-                    val service = services[call.serviceName] ?: error("No matching service")
-
-                    val nq = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
-                        service.underlyingSchema, /* schema */
-                        call.request.document, /* query */
-                        null, /* operation name */
-                        call.request.variables, /* variables */
-                    )
-
-                    toMatchableTopLevelCall(nq)
-                }
-            }
-
-            private fun getMatchingCall(query: Document, serviceName: String): ServiceCall? {
-                val service = services[serviceName] ?: error("No matching service")
-
-                val nq = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
-                    service.underlyingSchema, /* schema */
-                    query, /* query */
-                    null, /* operation name */
-                    emptyMap(), /* variables */
-                )
-
-                return callsByTopLevelField[
-                    toMatchableTopLevelCall(nq),
-                ]
-            }
-
-            private fun toMatchableTopLevelCall(nq: NormalizedQuery): String {
-                return AstPrinter.printAst(
-                    NormalizedQueryToAstCompiler.compileToDocument(
-                        nq.topLevelFields.map {
-                            it.toBuilder()
-                                .alias(null)
-                                .children(emptyList())
-                                .build()
-                        }
-                    )
-                )
-            }
-
-            private fun transform(
-                incomingQuery: Document,
-                response: JsonMap,
-                serviceName: String,
-            ): JsonMap {
-                val service = services[serviceName] ?: error("No matching service")
-
-                val nq = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
-                    service.underlyingSchema, /* schema */
-                    incomingQuery, /* query */
-                    null, /* operation name */
-                    emptyMap(), /* variables */
-                )
-
-                println("Original service response")
-                println(response)
-                println()
-
-                @Suppress("UNCHECKED_CAST")
-                return response.mapValues { (key, value) ->
-                    when (key) {
-                        "data" -> transform(nq.topLevelFields, value as JsonMap, service.underlyingSchema)
-                        else -> value
-                    }
-                }.also {
-                    println("Mapped service response")
-                    println(it)
-                    println()
-                }
-            }
-
-            private fun transform(
-                fields: List<NormalizedField>,
-                parent: JsonMap,
-                underlyingSchema: GraphQLSchema,
-            ): JsonMap {
-                return mapFrom(
-                    fields.map { field ->
-                        field.resultKey to (if (field.name in parent) {
-                            parent[field.name]
-                        } else if (field.name == Introspection.TypeNameMetaFieldDef.name) {
-                            field.objectTypeNames.single().also {
-                                println("Inferring type of ${field.queryPath} as $it")
-                            }
-                        } else if ("__object_ID__" in field.resultKey) {
-                            if ("object_identifier__UUID" in parent) {
-                                parent["object_identifier__UUID"]
-                            } else {
-                                fail("Could not determine object identifier")
-                            }
-                        } else {
-                            fail("Could not determine value")
-                        }).let { value ->
-                            fun mapValue(value: Any?): Any? {
-                                @Suppress("UNCHECKED_CAST")
-                                return when (value) {
-                                    is AnyList -> value.map(::mapValue)
-                                    is AnyMap -> transform(
-                                        fields = field.children,
-                                        parent = value as JsonMap,
-                                        underlyingSchema = underlyingSchema,
-                                    )
-                                    else -> value
-                                }
-                            }
-
-                            mapValue(value)
-                        }
-                    },
-                )
-            }
-
-            private fun <K, V> Map<K, V>.deepClone(): Map<K, V> {
-                return mapValues { (_, value) ->
-                    @Suppress("UNCHECKED_CAST")
-                    when (value) {
-                        is AnyList -> value.deepClone() as V
-                        is AnyMap -> value.deepClone() as V
-                        else -> value
-                    }
-                }
-            }
-
-            private fun <T> List<T>.deepClone(): List<T> {
-                return map { value ->
-                    @Suppress("UNCHECKED_CAST")
-                    when (value) {
-                        is AnyMap -> value.deepClone() as T
-                        is AnyList -> value.deepClone() as T
-                        else -> value
-                    }
-                }
-            }
 
             override fun getServiceExecution(serviceName: String): ServiceExecution {
                 return ServiceExecution { params ->
@@ -270,33 +104,7 @@ private suspend fun execute(
                             .singleOrNull {
                                 AstPrinter.printAst(it.request.document) == incomingQueryPrinted
                             }?.response
-                            ?: Unit.let { // Creates code block for null
-                                var match: JsonMap? = null
-                                if (engine == Engine.nextgen) {
-                                    println("Attempting to match query")
-                                    val matchingCall = getMatchingCall(incomingQuery, serviceName)
-                                    if (matchingCall != null) {
-                                        val response = matchingCall.response
-                                        match = transform(incomingQuery, response, serviceName)
-                                    }
-                                }
-
-                                match ?: fail("Unable to match service call")
-                            }
-
-                        serviceCalls.add(ServiceCall(
-                            serviceName = serviceName,
-                            request = ServiceCall.Request(
-                                incomingQueryPrinted,
-                                variables = emptyMap(),
-                                operationName = null,
-                            ),
-                            responseJsonString = GsonBuilder()
-                                .setPrettyPrinting()
-                                .serializeNulls()
-                                .create()
-                                .toJson(response),
-                        ))
+                            ?: fail("Unable to match service call")
 
                         @Suppress("UNCHECKED_CAST")
                         CompletableFuture.completedFuture(
@@ -320,11 +128,6 @@ private suspend fun execute(
             testHooks?.makeNadel(engine, it) ?: it
         }
         .build()
-        .also { nadel ->
-            nadel.services.forEach { service ->
-                services[service.name] = service
-            }
-        }
 
     val response = try {
         nadel.execute(newNadelExecutionInput()
@@ -372,19 +175,6 @@ private suspend fun execute(
             }
         },
     )
-
-    println()
-    println()
-    println("New YAML")
-    val thing = yamlObjectMapper.writeValueAsString(
-        fixture.copy(
-            serviceCalls = fixture.serviceCalls.copy(
-                nextgen = serviceCalls,
-            ),
-        ),
-    )
-    println(thing)
-    serviceCalls.clear()
 }
 
 private fun getTestHook(fixture: TestFixture): EngineTestHook? {
