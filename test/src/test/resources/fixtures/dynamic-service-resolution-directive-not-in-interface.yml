@@ -30,13 +30,13 @@ query: |
         description
       }
   }
-variables: { }
+variables: {}
 serviceCalls:
   current:
     - serviceName: RepoService
       request:
         query: |
-        variables: { }
+        variables: {}
         operationName:
       # language=JSON
       response: |

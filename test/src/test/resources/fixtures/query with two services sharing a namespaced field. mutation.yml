@@ -82,7 +82,7 @@ query: |
       }
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
   current:
     - serviceName: Issues
@@ -95,7 +95,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_Issues
       # language=JSON
       response: |-
@@ -119,7 +119,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_IssueSearch
       # language=JSON
       response: |-
