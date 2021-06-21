@@ -29,6 +29,7 @@ import io.kotest.core.test.TestContext
 import kotlinx.coroutines.future.await
 import org.junit.jupiter.api.fail
 import strikt.api.Assertion
+import strikt.api.expect
 import strikt.api.expectThat
 import strikt.assertions.isA
 import java.io.File
@@ -79,6 +80,7 @@ private suspend fun execute(
     engineFactory: NadelExecutionEngineFactory,
 ) {
     val testHooks = getTestHook(fixture)
+    val serviceCalls = fixture.serviceCalls[engine].toMutableList()
 
     val nadel = Nadel.newNadel()
         .engineFactory(engineFactory)
@@ -95,14 +97,16 @@ private suspend fun execute(
                         )
                         println(incomingQueryPrinted)
 
-                        val response = fixture.serviceCalls[engine]
-                            .filter { call ->
-                                call.serviceName == serviceName
-                            }
-                            .singleOrNull {
-                                AstPrinter.printAst(it.request.document) == incomingQueryPrinted
-                            }?.response
-                            ?: fail("Unable to match service call")
+                        val response = synchronized(serviceCalls) {
+                            val indexOfCall = serviceCalls
+                                .indexOfFirst {
+                                    it.serviceName == serviceName && AstPrinter.printAst(it.request.document) == incomingQueryPrinted
+                                }
+                                .takeIf { it != -1 }
+                                ?: error("Unable to match service call")
+
+                            serviceCalls.removeAt(indexOfCall).response
+                        }
 
                         @Suppress("UNCHECKED_CAST")
                         CompletableFuture.completedFuture(
@@ -225,6 +229,21 @@ fun Assertion.Builder<JsonMap>.assertJsonEntry(key: String, subjectValue: Any?, 
         .assertJsonValue(subjectValue, expectedValue)
 }
 
+private fun jsonTypeOf(element: Any?): String {
+    return when (element) {
+        is AnyList -> "JSON array"
+        is AnyMap -> "JSON object"
+        is Boolean -> "boolean"
+        is Float -> "float"
+        is Double -> "double"
+        is Int -> "int"
+        is Number -> "number"
+        is String -> "string"
+        null -> "null"
+        else -> element.javaClass.simpleName
+    }
+}
+
 fun <T> Assertion.Builder<T>.assertJsonValue(subjectValue: Any?, expectedValue: Any?) {
     when (subjectValue) {
         is AnyMap -> {
@@ -234,7 +253,7 @@ fun <T> Assertion.Builder<T>.assertJsonValue(subjectValue: Any?, expectedValue: 
                     @Suppress("UNCHECKED_CAST")
                     isA<JsonMap>().assertJsonObject(expectedMap = expectedValue as JsonMap)
                 } else {
-                    fail("did not expect JSON object")
+                    fail("expected ${jsonTypeOf(expectedValue)} not ${jsonTypeOf(subjectValue)}")
                 }
             }
         }
@@ -245,7 +264,7 @@ fun <T> Assertion.Builder<T>.assertJsonValue(subjectValue: Any?, expectedValue: 
                     @Suppress("UNCHECKED_CAST")
                     isA<List<Any>>().assertJsonArray(expectedValue = expectedValue as List<Any>)
                 } else {
-                    fail("did not expect JSON array")
+                    fail("expected ${jsonTypeOf(expectedValue)} not ${jsonTypeOf(subjectValue)}")
                 }
             }
         }
