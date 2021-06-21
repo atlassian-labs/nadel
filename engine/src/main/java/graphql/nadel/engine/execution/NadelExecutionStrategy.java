@@ -1,5 +1,6 @@
 package graphql.nadel.engine.execution;
 
+import graphql.Assert;
 import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.Async;
@@ -9,6 +10,11 @@ import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.ResultPath;
 import graphql.execution.nextgen.FieldSubSelection;
+import graphql.language.Field;
+import graphql.language.InlineFragment;
+import graphql.language.ObjectTypeDefinition;
+import graphql.language.SelectionSet;
+import graphql.language.TypeName;
 import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.dsl.NodeId;
@@ -20,15 +26,19 @@ import graphql.nadel.engine.execution.transformation.FieldTransformation;
 import graphql.nadel.engine.execution.transformation.TransformationMetadata.NormalizedFieldAndError;
 import graphql.nadel.engine.hooks.EngineServiceExecutionHooks;
 import graphql.nadel.engine.hooks.ResultRewriteParams;
-import graphql.nadel.engine.result.ExecutionResultNode;
+import graphql.nadel.engine.result.LeafExecutionResultNode;
 import graphql.nadel.engine.result.ResultComplexityAggregator;
 import graphql.nadel.engine.result.RootExecutionResultNode;
 import graphql.nadel.hooks.CreateServiceContextParams;
 import graphql.nadel.hooks.ServiceExecutionHooks;
+import graphql.nadel.hooks.ServiceOrError;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.nadel.util.MergedFieldUtil;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,11 +54,15 @@ import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotEmpty;
 import static graphql.Assert.assertNotNull;
-import static graphql.nadel.engine.result.RootExecutionResultNode.newRootExecutionResultNode;
-import static graphql.nadel.util.FpKit.map;
+import static graphql.language.InlineFragment.newInlineFragment;
+import static graphql.language.SelectionSet.newSelectionSet;
+import static graphql.language.TypeName.newTypeName;
+import static graphql.nadel.schema.NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION;
+import static graphql.nadel.schema.NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 
 @Internal
 public class NadelExecutionStrategy {
@@ -64,6 +78,7 @@ public class NadelExecutionStrategy {
     private final HydrationInputResolver hydrationInputResolver;
     private final ServiceExecutionHooks serviceExecutionHooks;
     private final ExecutionPathSet hydrationInputPaths;
+    private final List<Service> services;
 
     private static final Logger log = LoggerFactory.getLogger(NadelExecutionStrategy.class);
 
@@ -79,6 +94,7 @@ public class NadelExecutionStrategy {
         this.serviceExecutor = new ServiceExecutor(instrumentation);
         this.hydrationInputPaths = new ExecutionPathSet();
         this.hydrationInputResolver = new HydrationInputResolver(services, overallSchema, serviceExecutor, serviceExecutionHooks, hydrationInputPaths);
+        this.services = services;
     }
 
     public CompletableFuture<RootExecutionResultNode> execute(ExecutionContext executionContext, FieldSubSelection fieldSubSelection, ResultComplexityAggregator resultComplexityAggregator) {
@@ -121,19 +137,115 @@ public class NadelExecutionStrategy {
         List<CompletableFuture<OneServiceExecution>> result = new ArrayList<>();
         for (MergedField mergedField : fieldSubSelection.getMergedSelectionSet().getSubFieldsList()) {
             ExecutionStepInfo fieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, mergedField, rootExecutionStepInfo);
-            Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
 
-            CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
-                    .from(executionCtx)
-                    .service(service)
-                    .executionStepInfo(fieldExecutionStepInfo)
-                    .build();
+            boolean isNamespaced = !fieldExecutionStepInfo.getFieldDefinition().getDirectives(NAMESPACED_DIRECTIVE_DEFINITION.getName()).isEmpty();
+            boolean usesDynamicService = fieldExecutionStepInfo.getFieldDefinition().getDirective(DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()) != null;
 
-            CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
-            CompletableFuture<OneServiceExecution> serviceCF = serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo));
-            result.add(serviceCF);
+            if (isNamespaced) {
+                result.addAll(getServiceExecutionsForNamespacedField(executionCtx, rootExecutionStepInfo, mergedField, fieldExecutionStepInfo));
+            } else if (usesDynamicService) {
+                result.add(getServiceExecutionForDynamicServiceField(executionCtx, rootExecutionStepInfo, fieldExecutionStepInfo));
+            } else {
+                Service service = getServiceForFieldDefinition(fieldExecutionStepInfo.getFieldDefinition());
+                result.add(getOneServiceExecution(executionCtx, fieldExecutionStepInfo, service));
+            }
         }
         return Async.each(result);
+    }
+
+    private CompletableFuture<OneServiceExecution> getServiceExecutionForDynamicServiceField(ExecutionContext executionCtx, ExecutionStepInfo rootExecutionStepInfo, ExecutionStepInfo fieldExecutionStepInfo) {
+        ServiceOrError serviceOrError = assertNotNull(
+                serviceExecutionHooks.resolveServiceForField(services, fieldExecutionStepInfo),
+                () -> "Service resolution hook must never return null."
+        );
+
+        if (serviceOrError.getService() == null) {
+            GraphQLError graphQLError = assertNotNull(serviceOrError.getError(), () -> "Hook must return an error object when Service is null");
+
+            return CompletableFuture.completedFuture(new OneServiceExecution(null, null, null, true, graphQLError, fieldExecutionStepInfo));
+        }
+
+        Assert.assertTrue(
+                fieldExecutionStepInfo.getUnwrappedNonNullType() instanceof GraphQLInterfaceType,
+                () -> format("field annotated with %s directive is expected to be of GraphQLInterfaceType", DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName())
+        );
+
+        Service service = serviceOrError.getService();
+
+        List<String> serviceObjectTypes = service.getDefinitionRegistry().getDefinitions(ObjectTypeDefinition.class)
+                .stream()
+                .map(ObjectTypeDefinition::getName)
+                .collect(toList());
+
+        NormalizedQueryFromAst normalizedQuery = getNadelContext(executionCtx).getNormalizedOverallQuery();
+
+        List<InlineFragment> inlineFragments = wrapFieldsInInlineFragments(fieldExecutionStepInfo, serviceObjectTypes, normalizedQuery);
+
+        SelectionSet selectionSet = SelectionSet.newSelectionSet(inlineFragments).build();
+
+        Field transform = fieldExecutionStepInfo
+                .getField()
+                .getSingleField()
+                .transform(builder -> builder.selectionSet(selectionSet));
+
+        MergedField newMergedField = MergedField.newMergedField().addField(transform).build();
+
+        ExecutionStepInfo executionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
+
+        return getOneServiceExecution(executionCtx, executionStepInfo, service);
+    }
+
+    private List<InlineFragment> wrapFieldsInInlineFragments(ExecutionStepInfo fieldExecutionStepInfo, List<String> serviceObjectTypes, NormalizedQueryFromAst normalizedQuery) {
+        return normalizedQuery.getTopLevelFields()
+                .stream()
+                .filter(field -> field.getFieldDefinition().getName().equals(fieldExecutionStepInfo.getFieldDefinition().getName()))
+                .flatMap(field -> field.getChildren()
+                        .stream()
+                        .filter(childField -> serviceObjectTypes.contains(childField.getObjectType().getName()))
+                        .map(normalizedQueryField -> {
+                            TypeName typeName = newTypeName(normalizedQueryField.getObjectType().getName()).build();
+                            return newInlineFragment()
+                                    .typeCondition(typeName)
+                                    .selectionSet(newSelectionSet().selection(normalizedQuery.getMergedFieldByNormalizedFields().get(normalizedQueryField).getSingleField()).build())
+                                    .build();
+                        }))
+                .collect(toList());
+    }
+
+    private List<CompletableFuture<OneServiceExecution>> getServiceExecutionsForNamespacedField(
+            ExecutionContext executionCtx, ExecutionStepInfo rootExecutionStepInfo, MergedField mergedField, ExecutionStepInfo stepInfoForNamespacedField
+    ) {
+        ArrayList<CompletableFuture<OneServiceExecution>> serviceExecutions = new ArrayList<>();
+        Assert.assertTrue(
+                stepInfoForNamespacedField.getUnwrappedNonNullType() instanceof GraphQLObjectType,
+                () -> "field annotated with @namespaced directive is expected to be of GraphQLObjectType");
+
+        GraphQLObjectType namespacedObjectType = (GraphQLObjectType) stepInfoForNamespacedField.getUnwrappedNonNullType();
+        Map<Service, Set<GraphQLFieldDefinition>> serviceSetHashMap = fieldInfos.splitObjectFieldsByServices(namespacedObjectType);
+        for (Map.Entry<Service, Set<GraphQLFieldDefinition>> entry : serviceSetHashMap.entrySet()) {
+            Service service = entry.getKey();
+            Set<GraphQLFieldDefinition> secondLevelFieldDefinitionsForService = entry.getValue();
+
+            Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(mergedField, namespacedObjectType, executionCtx,
+                    field -> secondLevelFieldDefinitionsForService.stream()
+                            .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName())));
+            maybeNewMergedField.ifPresent(newMergedField -> {
+                ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
+                serviceExecutions.add(getOneServiceExecution(executionCtx, newFieldExecutionStepInfo, service));
+            });
+        }
+        return serviceExecutions;
+    }
+
+    private CompletableFuture<OneServiceExecution> getOneServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo fieldExecutionStepInfo, Service service) {
+        CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
+                .from(executionCtx)
+                .service(service)
+                .executionStepInfo(fieldExecutionStepInfo)
+                .build();
+
+        CompletableFuture<Object> serviceContextCF = serviceExecutionHooks.createServiceContext(parameters);
+        return serviceContextCF.thenApply(serviceContext -> new OneServiceExecution(service, serviceContext, fieldExecutionStepInfo, false, null, fieldExecutionStepInfo));
     }
 
     private List<CompletableFuture<RootExecutionResultNode>> executeTopLevelFields(
@@ -146,6 +258,26 @@ public class NadelExecutionStrategy {
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
+            if(oneServiceExecution.earlyFailure) {
+                LeafExecutionResultNode leafExecutionResultNode = new LeafExecutionResultNode
+                        .Builder()
+                        .addError(oneServiceExecution.error)
+                        .completedValue(null)
+                        .fieldDefinition(oneServiceExecution.fieldExecutionStepInfo.getFieldDefinition())
+                        .resultPath(oneServiceExecution.fieldExecutionStepInfo.getPath())
+                        .alias(oneServiceExecution.fieldExecutionStepInfo.getField().getSingleField().getAlias())
+                        .objectType(oneServiceExecution.fieldExecutionStepInfo.getObjectType())
+                        .build();
+
+                RootExecutionResultNode rootExecutionResultNode = new RootExecutionResultNode.Builder()
+                        .addChild(leafExecutionResultNode)
+                        .build();
+
+                resultNodes.add(CompletableFuture.completedFuture(rootExecutionResultNode));
+
+                continue;
+            }
+
             Service service = oneServiceExecution.service;
             ExecutionStepInfo esi = oneServiceExecution.stepInfo;
             Object serviceContext = oneServiceExecution.serviceContext;
@@ -161,7 +293,7 @@ public class NadelExecutionStrategy {
                     .transformMergedFields(executionContext, underlyingSchema, operationName, operationKind, singletonList(mergedField), serviceExecutionHooks, service, serviceContext);
 
             resultNodes.add(transformedQueryCF.thenCompose(transformedQuery -> {
-                Map<String, FieldTransformation> fieldIdToTransformation = transformedQuery.getTransformations().getFieldIdToTransformation();
+                Map<String, FieldTransformation> transformationIdToTransformation = transformedQuery.getTransformations().getTransformationIdToTransformation();
                 Map<String, String> typeRenameMappings = transformedQuery.getTransformations().getTypeRenameMappings();
                 Map<FieldTransformation, String> transformationToFieldId = transformedQuery.getTransformations().getTransformationToFieldId();
 
@@ -176,7 +308,7 @@ public class NadelExecutionStrategy {
 
                 CompletableFuture<RootExecutionResultNode> convertedResult;
 
-                if (skipTransformationProcessing(nadelContext, transformedQuery)) {
+                if (skipTransformationProcessing(transformedQuery)) {
                     convertedResult = serviceExecutor
                             .execute(newExecutionContext, transformedQuery, service, operationKind, serviceContext, overallSchema, false);
                     resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);
@@ -191,7 +323,7 @@ public class NadelExecutionStrategy {
                                     benchmarkContext.serviceResultNodesToOverallResult.resultNode = resultNode;
                                     benchmarkContext.serviceResultNodesToOverallResult.overallSchema = overallSchema;
                                     benchmarkContext.serviceResultNodesToOverallResult.correctRootNode = resultNode;
-                                    benchmarkContext.serviceResultNodesToOverallResult.fieldIdToTransformation = fieldIdToTransformation;
+                                    benchmarkContext.serviceResultNodesToOverallResult.transformationIdToTransformation = transformationIdToTransformation;
                                     benchmarkContext.serviceResultNodesToOverallResult.typeRenameMappings = typeRenameMappings;
                                     benchmarkContext.serviceResultNodesToOverallResult.nadelContext = nadelContext;
                                     benchmarkContext.serviceResultNodesToOverallResult.transformationMetadata = transformedQuery.getRemovedFieldMap();
@@ -201,7 +333,7 @@ public class NadelExecutionStrategy {
                                                 resultNode,
                                                 overallSchema,
                                                 resultNode,
-                                                fieldIdToTransformation,
+                                                transformationIdToTransformation,
                                                 transformationToFieldId,
                                                 typeRenameMappings,
                                                 nadelContext,
@@ -220,7 +352,7 @@ public class NadelExecutionStrategy {
                 CompletableFuture<RootExecutionResultNode> serviceResult = convertedResult;
 
                 if (serviceExecutionHooks instanceof EngineServiceExecutionHooks) {
-                    serviceResult = serviceResult.thenCompose((rootResultNode) -> {
+                    serviceResult = serviceResult.thenCompose(rootResultNode -> {
                         ResultRewriteParams resultRewriteParams = ResultRewriteParams.newParameters()
                                 .from(executionContext)
                                 .service(service)
@@ -273,7 +405,6 @@ public class NadelExecutionStrategy {
         return resultToResultNode.createResultWithNullTopLevelField(overallQuery, topLevelField, singletonList(error), emptyMap());
     }
 
-    @SuppressWarnings("unused")
     private <T> void possiblyLogException(T result, Throwable exception) {
         if (exception != null) {
             exception.printStackTrace();
@@ -295,32 +426,26 @@ public class NadelExecutionStrategy {
     }
 
     private CompletableFuture<RootExecutionResultNode> mergeTrees(List<CompletableFuture<RootExecutionResultNode>> resultNodes) {
-        return Async.each(resultNodes).thenApply(rootNodes -> {
-            List<ExecutionResultNode> mergedChildren = new ArrayList<>();
-            List<GraphQLError> errors = new ArrayList<>();
-            map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
-            map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
-            Map<String, Object> extensions = new LinkedHashMap<>();
-            rootNodes.forEach(node -> extensions.putAll(node.getExtensions()));
-            return newRootExecutionResultNode()
-                    .children(mergedChildren)
-                    .errors(errors)
-                    .extensions(extensions)
-                    .build();
-        });
+        return Async.each(resultNodes).thenApply(StrategyUtil::mergeTrees);
     }
 
     private static class OneServiceExecution {
 
-        public OneServiceExecution(Service service, Object serviceContext, ExecutionStepInfo stepInfo) {
+        public OneServiceExecution(Service service, Object serviceContext, ExecutionStepInfo stepInfo, boolean earlyFailure, GraphQLError error, ExecutionStepInfo fieldExecutionStepInfo) {
             this.service = service;
             this.serviceContext = serviceContext;
             this.stepInfo = stepInfo;
+            this.earlyFailure = earlyFailure;
+            this.error = error;
+            this.fieldExecutionStepInfo = fieldExecutionStepInfo;
         }
 
         final Service service;
         final Object serviceContext;
         final ExecutionStepInfo stepInfo;
+        final boolean earlyFailure;
+        final GraphQLError error;
+        final ExecutionStepInfo fieldExecutionStepInfo;
     }
 
     public static class ExecutionPathSet extends LinkedHashSet<ResultPath> {
@@ -354,13 +479,11 @@ public class NadelExecutionStrategy {
         return executionContext.getContext();
     }
 
-    private boolean skipTransformationProcessing(NadelContext nadelContext, QueryTransformationResult transformedQuery) {
+    private boolean skipTransformationProcessing(QueryTransformationResult transformedQuery) {
         TransformationState transformations = transformedQuery.getTransformations();
-        return transformations.getFieldIdToTransformation().size() == 0 &&
-               transformations.getTypeRenameMappings().size() == 0 &&
-               !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
-               transformations.getHintTypenames().size() == 0;
+        return transformations.getTransformationIdToTransformation().isEmpty() &&
+                transformations.getTypeRenameMappings().isEmpty() &&
+                !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
+                transformations.getHintTypenames().isEmpty();
     }
 }
-
-

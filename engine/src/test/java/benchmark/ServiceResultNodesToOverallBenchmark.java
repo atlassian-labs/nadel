@@ -108,7 +108,7 @@ public class ServiceResultNodesToOverallBenchmark {
                 args.resultNode,
                 args.overallSchema,
                 args.correctRootNode,
-                args.fieldIdToTransformation,
+                args.transformationIdToTransformation,
                 args.transformationToFieldId,
                 args.typeRenameMappings,
                 args.nadelContext,

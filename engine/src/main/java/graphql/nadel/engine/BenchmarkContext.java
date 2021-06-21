@@ -36,7 +36,7 @@ public class BenchmarkContext {
         public RootExecutionResultNode resultNode;
         public GraphQLSchema overallSchema;
         public RootExecutionResultNode correctRootNode;
-        public Map<String, FieldTransformation> fieldIdToTransformation;
+        public Map<String, FieldTransformation> transformationIdToTransformation;
         public Map<FieldTransformation, String> transformationToFieldId;
         public Map<String, String> typeRenameMappings;
         public NadelContext nadelContext;
