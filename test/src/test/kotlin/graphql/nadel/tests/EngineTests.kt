@@ -57,10 +57,8 @@ class EngineTests : FunSpec({
         .forEach { fixture ->
             engineFactories.all
                 .asSequence()
-                // TODO: remove
-                .filter { (key) -> key == Engine.nextgen }
-                .filter { (key) ->
-                    fixture.enabled.get(engine = key)
+                .filter { (engine) ->
+                    fixture.enabled.get(engine = engine)
                 }
                 .forEach { (engine, engineFactory) ->
                     val execute: suspend TestContext.() -> Unit = {

@@ -111,7 +111,7 @@ internal class NadelBatchHydrator(
             .toList()
 
         fun raiseErrorDueToCountMismatch(): Nothing {
-            error("Index based hydration failed due to mismatch of input and result value counts")
+            error("If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments")
         }
 
         var resultIndex = 0

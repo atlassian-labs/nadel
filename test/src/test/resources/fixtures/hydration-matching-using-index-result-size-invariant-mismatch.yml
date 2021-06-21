@@ -184,6 +184,5 @@ serviceCalls:
         }
 response: null
 exception:
-  message: Index based hydration failed due to mismatch of input and result value
-    counts
+  message: If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments.*
   ignoreMessageCase: false
