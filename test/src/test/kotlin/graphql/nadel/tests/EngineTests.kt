@@ -70,6 +70,9 @@ class EngineTests : FunSpec({
         }
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
+        // .filter {
+        //     it.name == "hydration matching using index" // with lists"
+        // }
         .forEach { fixture ->
             engineFactories.all
                 .asSequence()
@@ -436,13 +439,20 @@ fun <T> Assertion.Builder<T>.assertJsonValue(subjectValue: Any?, expectedValue: 
 }
 
 private fun <T> Assertion.Builder<List<T>>.assertJsonArray(expectedValue: List<T>) {
-    compose("all elements match:") { subject ->
+    compose("all elements match expected:") { subject ->
         subject.forEachIndexed { index, element ->
             get("element $index") { element }
                 .assertJsonValue(subjectValue = element, expectedValue[index])
         }
     } then {
         if (allPassed) pass() else fail()
+    }
+    assert("size matches expected") { subject ->
+        if (subject.size == expectedValue.size) {
+            pass()
+        } else {
+            fail("expected size ${expectedValue.size} but got ${subject.size}")
+        }
     }
 }
 
@@ -573,20 +583,4 @@ fun String.toSlug(): String {
     val normalized = Normalizer.normalize(noWhitespace, Normalizer.Form.NFD)
     val slug = NON_LATIN.matcher(normalized).replaceAll("")
     return slug.toLowerCase(Locale.ENGLISH)
-}
-
-fun getTopLevelField(document: Document): Field {
-    return document
-        .getDefinitionsOfType<OperationDefinition>()
-        .single()
-        .children
-        .filterIsInstance<SelectionSet>()
-        .single()
-        .selections
-        .let { selections ->
-            val realSelections = selections.filterIsInstance<InlineFragment>()
-                .emptyOrSingle()?.selectionSet?.selections ?: selections
-            realSelections.filterIsInstance<Field>()
-                .single()
-        }
 }

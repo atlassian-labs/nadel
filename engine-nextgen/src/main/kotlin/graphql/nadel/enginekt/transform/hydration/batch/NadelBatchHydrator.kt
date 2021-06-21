@@ -16,7 +16,9 @@ import graphql.nadel.enginekt.transform.result.asMutable
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.AnyList
+import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.enginekt.util.asNullableJsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
 import graphql.nadel.enginekt.util.isList
@@ -100,8 +102,7 @@ internal class NadelBatchHydrator(
         parentNodes: List<JsonNode>,
         resultNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
-        val batchDef = NadelBatchHydrationInputBuilder.getBatchInputDef(instruction)
-        val isHydratedTypeList = instruction.hydratedFieldDef.type.unwrapNonNull().isList
+        val batchInputValueSource = NadelBatchHydrationInputBuilder.getBatchInputDef(instruction)?.second
 
         val resultValues = resultNodes
             .asSequence()
@@ -109,35 +110,33 @@ internal class NadelBatchHydrator(
             .flatten(recursively = false)
             .toList()
 
+        fun raiseErrorDueToCountMismatch(): Nothing {
+            error("Index based hydration failed due to mismatch of input and result value counts")
+        }
+
         var resultIndex = 0
         return parentNodes
             .asSequence()
             // Ensure we don't go out of bounds
             .takeWhile { resultIndex <= resultValues.lastIndex }
             .map { parentNode ->
-                val newValue: Any?
-
-                if (batchDef != null) {
+                val newValue = if (batchInputValueSource?.fieldDefinition?.type?.unwrapNonNull()?.isList == true) {
+                    // The number of elements from the input source determines how many objects to take
                     val numValuesToTake = NadelBatchHydrationInputBuilder.getFieldResultValues(
-                        valueSource = batchDef.second,
+                        valueSource = batchInputValueSource,
                         parentNode = parentNode,
                         aliasHelper = state.aliasHelper,
                     ).size
 
-                    newValue = when {
-                        isHydratedTypeList -> resultValues
-                            .subListOrNull(resultIndex, toIndex = resultIndex + numValuesToTake)
-                            .also {
-                                // Null means index was out of bounds
-                                it
-                                    ?: error("Index based hydration failed due to mismatch of input and result value counts")
-                                resultIndex += numValuesToTake
-                            }
-                        numValuesToTake > 1 -> error("Output type is not a List, so cannot set multiple values")
-                        else -> resultValues[resultIndex++]
-                    }
+                    resultValues
+                        .subListOrNull(resultIndex, toIndex = resultIndex + numValuesToTake)
+                        .also {
+                            // Null means index was out of bounds
+                            it ?: raiseErrorDueToCountMismatch()
+                            resultIndex += numValuesToTake
+                        }
                 } else {
-                    newValue = resultValues[resultIndex++]
+                    resultValues[resultIndex++]
                 }
 
                 NadelResultInstruction.Set(
@@ -148,7 +147,7 @@ internal class NadelBatchHydrator(
             .toList()
             .also {
                 if (resultIndex != resultValues.size) {
-                    error("Index based hydration failed due to mismatch of input and result value counts")
+                    raiseErrorDueToCountMismatch()
                 }
             }
     }
@@ -166,7 +165,12 @@ internal class NadelBatchHydrator(
             .filterNotNull()
             .map(JsonNode::value)
             .flatten(recursively = true)
-            .filterIsInstance<JsonMap>()
+            .mapNotNull {
+                when (it) {
+                    is AnyMap -> it.asNullableJsonMap()
+                    else -> error("Hydration actor result must be an object")
+                }
+            }
             .associateBy {
                 // We don't want to show this in the overall result, so remove it here as we use it
                 it.asMutable().remove(state.aliasHelper.getObjectIdentifierKey(matchStrategy.objectId))
