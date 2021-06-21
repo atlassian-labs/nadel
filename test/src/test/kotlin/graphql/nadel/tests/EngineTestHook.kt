@@ -7,7 +7,7 @@ import graphql.nadel.tests.util.toSlug
 import org.reflections.Reflections
 
 interface EngineTestHook {
-    fun makeNadel(engine: Engine, builder: Nadel.Builder): Nadel.Builder {
+    fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
     }
 }
