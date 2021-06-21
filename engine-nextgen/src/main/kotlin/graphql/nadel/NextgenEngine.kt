@@ -14,8 +14,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
-import graphql.nadel.enginekt.transform.query.SomethingToSplitFields
-import graphql.nadel.enginekt.transform.query.SomethingToSplitFields.getFieldsToExecute
+import graphql.nadel.enginekt.transform.query.SplitFieldsByUnderlyingService
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
@@ -35,8 +34,9 @@ import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
-    private val services = nadel.services.strictAssociateBy { it.name }
-    private val fieldInfos = NadelFieldInfos.create(nadel.services)
+    private val nadel = nadel
+    private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
+    private val fieldInfos = NadelFieldInfos.create(nadel.services, nadel.overallSchema)
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         overallSchema = nadel.overallSchema,
         services = nadel.services,
@@ -67,10 +67,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
     ): ExecutionResult {
-        // comparison old vs new
-        // testing
-        // 3 step transform
-
         val query = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
             overallExecutionBlueprint.schema,
             queryDocument,
@@ -83,13 +79,14 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
         val operationKind = getOperationKind(queryDocument, executionInput.operationName)
 
-        val somethingToSplitFields = SomethingToSplitFields(overallExecutionBlueprint)
+        val somethingToSplitFields = SplitFieldsByUnderlyingService(overallExecutionBlueprint, fieldInfos, operationKind)
         val results = coroutineScope {
-            somethingToSplitFields.getFieldsToExecute(query).map { result ->
-                async {
-                    executeTopLevelField(result.field, operationKind, executionInput)
+            somethingToSplitFields.getFieldsToExecute(query)
+                .map { result ->
+                    async {
+                        executeTopLevelField(result.field, operationKind, executionInput, result.service)
+                    }
                 }
-            }
         }.awaitAll()
 
         return mergeResults(results)
@@ -99,6 +96,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         topLevelField: NormalizedField,
         operationKind: OperationKind,
         executionInput: ExecutionInput,
+        service: Service
     ): ExecutionResult {
         val executionContext = NadelExecutionContext(executionInput)
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)

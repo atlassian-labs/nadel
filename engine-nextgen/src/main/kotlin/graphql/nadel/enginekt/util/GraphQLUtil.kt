@@ -165,9 +165,7 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
 
     for (result in results) {
         when (val resultData = result.getData<Any?>()) {
-            null -> {
-            }
-            is AnyMap -> data.hackPutAll(resultData)
+            is AnyMap -> updateMap(data, resultData)
         }
         errors.addAll(result.errors)
         result.extensions?.asJsonMap()?.let(extensions::putAll)
@@ -185,6 +183,25 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
         })
         .errors(errors)
         .build()
+}
+
+internal fun updateMap(overallResultMap: MutableJsonMap, oneResultMap: AnyMap) {
+    for (entry in oneResultMap) {
+
+        val topLevelFieldName = entry.key
+        val topLevelFieldChild = entry.value
+
+        if (overallResultMap.containsKey(topLevelFieldName)) {
+            if (topLevelFieldChild is AnyMap) {
+                (overallResultMap[topLevelFieldName] as MutableJsonMap)
+                    .putAll(topLevelFieldChild as Map<String, Any?>)
+            }
+        } else {
+            if (topLevelFieldName is String) {
+                overallResultMap[topLevelFieldName] = topLevelFieldChild
+            }
+        }
+    }
 }
 
 fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates {
