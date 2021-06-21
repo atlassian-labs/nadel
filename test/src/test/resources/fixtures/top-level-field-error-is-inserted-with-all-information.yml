@@ -2,6 +2,8 @@ name: top level field error is inserted with all information
 enabled:
   current: true
   nextgen: true
+ignored:
+  nextgen: true # TBD how hooks behave in nextgen
 overallSchema:
   service1: |
     service service1 {

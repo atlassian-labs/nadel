@@ -8,10 +8,6 @@ import graphql.introspection.Introspection
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.language.Document
-import graphql.language.Field
-import graphql.language.InlineFragment
-import graphql.language.OperationDefinition
-import graphql.language.SelectionSet
 import graphql.nadel.Nadel
 import graphql.nadel.NadelEngine
 import graphql.nadel.NadelExecutionEngineFactory
@@ -24,8 +20,6 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.enginekt.util.emptyOrSingle
-import graphql.nadel.enginekt.util.getDefinitionsOfType
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.strictAssociateBy
