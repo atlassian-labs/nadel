@@ -1,9 +1,14 @@
 package graphql.nadel.tests
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.LITERAL_BLOCK_STYLE
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.MINIMIZE_QUOTES
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_DOC_START_MARKER
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.google.gson.GsonBuilder
 import graphql.introspection.Introspection
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
@@ -52,9 +57,18 @@ import graphql.parser.Parser as DocumentParser
 
 private val jsonObjectMapper = ObjectMapper().findAndRegisterModules()
 
-private val yamlObjectMapper = YAMLFactory().let(::ObjectMapper).findAndRegisterModules()
+private val yamlObjectMapper = YAMLFactory()
+    .enable(LITERAL_BLOCK_STYLE)
+    .enable(MINIMIZE_QUOTES)
+    .disable(WRITE_DOC_START_MARKER)
+    .let(::ObjectMapper)
+    .findAndRegisterModules()
+
+private val serviceCalls = mutableListOf<ServiceCall>()
 
 class EngineTests : FunSpec({
+    println("wtf")
+
     val engineFactories = EngineFactories()
     val fixturesDir = File(javaClass.classLoader.getResource("fixtures")!!.path)
     fixturesDir.listFiles()!!
@@ -270,6 +284,20 @@ private suspend fun execute(
                                 match ?: fail("Unable to match service call")
                             }
 
+                        serviceCalls.add(ServiceCall(
+                            serviceName = serviceName,
+                            request = ServiceCall.Request(
+                                incomingQueryPrinted,
+                                variables = emptyMap(),
+                                operationName = null,
+                            ),
+                            responseJsonString = GsonBuilder()
+                                .setPrettyPrinting()
+                                .serializeNulls()
+                                .create()
+                                .toJson(response),
+                        ))
+
                         @Suppress("UNCHECKED_CAST")
                         CompletableFuture.completedFuture(
                             ServiceExecutionResult(
@@ -344,6 +372,19 @@ private suspend fun execute(
             }
         },
     )
+
+    println()
+    println()
+    println("New YAML")
+    val thing = yamlObjectMapper.writeValueAsString(
+        fixture.copy(
+            serviceCalls = fixture.serviceCalls.copy(
+                nextgen = serviceCalls,
+            ),
+        ),
+    )
+    println(thing)
+    serviceCalls.clear()
 }
 
 private fun getTestHook(fixture: TestFixture): EngineTestHook? {
@@ -460,9 +501,10 @@ private data class TestFixture(
     val variables: Map<String, Any?>,
     val serviceCalls: ServiceCalls,
     @JsonProperty("response")
-    private val responseJsonString: String?,
+    val responseJsonString: String?,
     val exception: ExpectedException?,
 ) {
+    @get:JsonIgnore
     val response: Map<String, Any?> by lazy {
         if (responseJsonString != null) {
             jsonObjectMapper.readValue(responseJsonString)
@@ -527,8 +569,9 @@ data class ServiceCall(
     val serviceName: String,
     val request: Request,
     @JsonProperty("response")
-    private val responseJsonString: String,
+    val responseJsonString: String,
 ) {
+    @get:JsonIgnore
     val response: JsonMap by lazy {
         jsonObjectMapper.readValue(responseJsonString)
     }
@@ -538,6 +581,7 @@ data class ServiceCall(
         val variables: Map<String, Any?> = emptyMap(),
         val operationName: String? = null,
     ) {
+        @get:JsonIgnore
         val document: Document by lazy {
             astSorter.sort(
                 documentParser.parseDocument(query)
@@ -553,9 +597,10 @@ data class ServiceCall(
 
 data class ExpectedException(
     @JsonProperty("message")
-    private val messageString: String = "",
-    private val ignoreMessageCase: Boolean = false,
+    val messageString: String = "",
+    val ignoreMessageCase: Boolean = false,
 ) {
+    @get:JsonIgnore
     val message: Regex by lazy {
         Regex(
             messageString,
