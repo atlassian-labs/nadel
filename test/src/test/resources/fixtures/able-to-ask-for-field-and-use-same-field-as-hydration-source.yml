@@ -105,6 +105,99 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              bar {
+                ... on Bar {
+                  barId
+                }
+                ... on Bar {
+                  hydration__nestedBar__barId: barId
+                }
+                ... on Bar {
+                  __typename__hydration__nestedBar: __typename
+                }
+                ... on Bar {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bar": {
+              "__typename__hydration__nestedBar": "Bar",
+              "barId": "1",
+              "hydration__nestedBar__barId": "1",
+              "name": "Test"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "1") {
+                ... on Bar {
+                  hydration__nestedBar__barId: barId
+                }
+                ... on Bar {
+                  __typename__hydration__nestedBar: __typename
+                }
+                ... on Bar {
+                  barId
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "__typename__hydration__nestedBar": "Bar",
+              "hydration__nestedBar__barId": "1",
+              "barId": "1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "1") {
+                ... on Bar {
+                  barId
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "barId": "1"
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
