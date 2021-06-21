@@ -28,17 +28,10 @@ import static graphql.nadel.schema.NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITI
 public class FieldInfos {
 
     private final Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition;
-    public final Map<Service, Set<GraphQLFieldDefinition>> fieldDefinitionsByService;
 
     @VisibleForTesting
     public FieldInfos(Map<GraphQLFieldDefinition, FieldInfo> fieldInfoByDefinition) {
         this.fieldInfoByDefinition = fieldInfoByDefinition;
-        this.fieldDefinitionsByService = fieldInfoByDefinition.entrySet()
-                .stream()
-                .collect(Collectors.groupingBy(
-                        entry -> entry.getValue().getService(),
-                        Collectors.mapping(Map.Entry::getKey, Collectors.toSet())));
-
     }
 
     public static FieldInfos createFieldsInfos(GraphQLSchema overallSchema, Collection<Service> services) {
@@ -122,4 +115,11 @@ public class FieldInfos {
         return fieldInfoByDefinition.get(fieldDefinition);
     }
 
+    public Map<Service, Set<GraphQLFieldDefinition>> splitObjectFieldsByServices(GraphQLObjectType namespacedObjectType) {
+        return namespacedObjectType.getFieldDefinitions()
+                .stream()
+                .collect(Collectors.groupingBy(
+                        fieldDefinition -> getInfo(fieldDefinition).getService(),
+                        Collectors.toSet()));
+    }
 }
