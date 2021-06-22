@@ -164,7 +164,7 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
     val errors: MutableList<GraphQLError> = mutableListOf()
 
     for (result in results) {
-        when (val resultData = result.getData<Any?>()) {
+        when (val resultData = result.getData<JsonMap?>()) {
             is AnyMap -> updateOverallResultAndMergeSameNameTopLevelFields(data, resultData)
         }
         errors.addAll(result.errors)
@@ -185,17 +185,15 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
         .build()
 }
 
-internal fun updateOverallResultAndMergeSameNameTopLevelFields(overallResultMap: MutableJsonMap, oneResultMap: AnyMap) {
-    for ((topLevelFieldName, topLevelFieldChild) in oneResultMap) {
+internal fun updateOverallResultAndMergeSameNameTopLevelFields(overallResultMap: MutableJsonMap, oneResultMap: JsonMap) {
+    for ((topLevelFieldName, newTopLevelFieldChildren) in oneResultMap) {
         if (overallResultMap.containsKey(topLevelFieldName)) {
-            if (topLevelFieldChild is AnyMap) {
-                (overallResultMap[topLevelFieldName] as MutableJsonMap)
-                    .putAll(topLevelFieldChild as Map<String, Any?>)
+            val existingTopLevelFieldMap = overallResultMap[topLevelFieldName]
+            if (newTopLevelFieldChildren is AnyMap && existingTopLevelFieldMap is AnyMutableMap) {
+                (existingTopLevelFieldMap.asMutableJsonMap()).putAll(newTopLevelFieldChildren.asJsonMap())
             }
         } else {
-            if (topLevelFieldName is String) {
-                overallResultMap[topLevelFieldName] = topLevelFieldChild
-            }
+            overallResultMap[topLevelFieldName] = newTopLevelFieldChildren
         }
     }
 }
