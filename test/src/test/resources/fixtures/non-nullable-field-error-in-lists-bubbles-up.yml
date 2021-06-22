@@ -48,7 +48,9 @@ serviceCalls:
             "issues": [
               [
                 [
-                  {},
+                  {
+                    "id": null
+                  },
                   {
                     "id": "will be discarded"
                   }

@@ -1,4 +1,4 @@
-name: fragment referenced twice from inside Query and inside another Fragment
+name: fragment referenced twice from inside query and inside another fragment
 enabled:
   current: true
   nextgen: true
