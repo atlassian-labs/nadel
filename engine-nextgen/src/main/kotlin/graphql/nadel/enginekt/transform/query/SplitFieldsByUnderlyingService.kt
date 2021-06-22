@@ -5,6 +5,7 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.schema.NadelFieldInfos
 import graphql.nadel.enginekt.util.copyWithChildren
+import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedQuery
 
@@ -18,7 +19,15 @@ class SplitFieldsByUnderlyingService(
             .flatMap { topLevelField ->
                 if (topLevelField.getOneFieldDefinition(blueprint.schema).getDirective("namespaced") != null) {
                     val fieldsByService = topLevelField.children
-                        .groupBy { fieldInfos.getFieldInfo(operationKind, it.name)!!.service }
+                        .groupBy {
+                            fieldInfos.getFieldInfo(
+                                operationKind,
+                                makeFieldCoordinates(
+                                    it.getOneObjectType(blueprint.schema),
+                                    it.getOneFieldDefinition(blueprint.schema)
+                                )
+                            )!!
+                        }
 
                     fieldsByService.map {
                         FieldExecution(topLevelField.copyWithChildren(it.value), it.key)
@@ -27,7 +36,12 @@ class SplitFieldsByUnderlyingService(
                     listOf(
                         FieldExecution(
                             field = topLevelField,
-                            service = fieldInfos.getFieldInfo(operationKind, topLevelField.name)!!.service
+                            service = fieldInfos.getFieldInfo(
+                                operationKind, makeFieldCoordinates(
+                                    topLevelField.getOneObjectType(blueprint.schema),
+                                    topLevelField.getOneFieldDefinition(blueprint.schema)
+                                )
+                            )!!
                         )
                     )
                 }

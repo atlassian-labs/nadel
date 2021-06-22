@@ -125,16 +125,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             .build()
     }
 
-    private fun getService(
-        topLevelField: NormalizedField,
-        operationKind: OperationKind,
-    ): Service {
-        // TODO: we need to support different services on the second level
-        val topLevelFieldInfo = fieldInfos.getFieldInfo(operationKind, topLevelField.name)
-            ?: error("Unknown top level field ${operationKind.displayName}.${topLevelField.name}")
-        return topLevelFieldInfo.service
-    }
-
     internal suspend fun executeHydration(
         service: Service,
         topLevelField: NormalizedField,
