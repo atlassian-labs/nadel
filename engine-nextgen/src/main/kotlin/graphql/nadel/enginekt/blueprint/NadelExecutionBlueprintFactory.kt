@@ -69,6 +69,7 @@ private class Factory(
             fieldInstructions = fieldInstructions,
             typeInstructions = typeRenameInstructions,
             underlyingBlueprints = deriveUnderlyingBlueprints(fieldInstructions, typeRenameInstructions),
+            coordinatesToService = coordinatesToService
         )
     }
 

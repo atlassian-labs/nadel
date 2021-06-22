@@ -11,7 +11,6 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
-import graphql.nadel.enginekt.schema.FieldCoordinatesToUnderlyingServiceMapping
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.query.SplitFieldsByUnderlyingService
@@ -35,7 +34,6 @@ import java.util.concurrent.CompletableFuture
 
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
-    private val fieldInfos = FieldCoordinatesToUnderlyingServiceMapping.create(nadel.services, nadel.overallSchema)
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         overallSchema = nadel.overallSchema,
         services = nadel.services,
@@ -78,10 +76,8 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         // TODO: determine what to do with NQ
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
 
-        val operationKind = getOperationKind(queryDocument, executionInput.operationName)
-
         val results = coroutineScope {
-            splitTopLevelFieldByServices.execute(query, overallExecutionBlueprint.schema, fieldInfos, operationKind)
+            splitTopLevelFieldByServices.execute(query, overallExecutionBlueprint)
                 .map { (field, service) ->
                     async {
                         executeTopLevelField(field, service, executionInput)

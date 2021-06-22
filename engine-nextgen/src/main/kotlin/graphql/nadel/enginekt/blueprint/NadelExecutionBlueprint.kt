@@ -22,6 +22,7 @@ data class NadelOverallExecutionBlueprint(
     override val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
     override val typeInstructions: Map<String, NadelTypeRenameInstruction>,
     private val underlyingBlueprints: Map<String, NadelExecutionBlueprint>,
+    val coordinatesToService: Map<FieldCoordinates, Service>,
 ) : NadelExecutionBlueprint {
     fun getUnderlyingTypeName(overallTypeName: String): String {
         return overallTypeName.let { overall ->
