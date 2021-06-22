@@ -165,7 +165,7 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
 
     for (result in results) {
         when (val resultData = result.getData<Any?>()) {
-            is AnyMap -> updateMap(data, resultData)
+            is AnyMap -> updateOverallResultAndMergeSameNameTopLevelFields(data, resultData)
         }
         errors.addAll(result.errors)
         result.extensions?.asJsonMap()?.let(extensions::putAll)
@@ -185,7 +185,7 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
         .build()
 }
 
-internal fun updateMap(overallResultMap: MutableJsonMap, oneResultMap: AnyMap) {
+internal fun updateOverallResultAndMergeSameNameTopLevelFields(overallResultMap: MutableJsonMap, oneResultMap: AnyMap) {
     for ((topLevelFieldName, topLevelFieldChild) in oneResultMap) {
         if (overallResultMap.containsKey(topLevelFieldName)) {
             if (topLevelFieldChild is AnyMap) {

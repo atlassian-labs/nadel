@@ -3,27 +3,24 @@ package graphql.nadel.enginekt.transform.query
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.util.copyWithChildren
-import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.schema.NadelDirectives
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedQuery
 import graphql.schema.GraphQLSchema
 
-class NadelFieldToServiceRouter {
+class NadelFieldToService {
 
-    fun execute(query: NormalizedQuery, overallExecutionBlueprint: NadelOverallExecutionBlueprint): List<FieldAndService> {
+    fun getServicesForTopLevelFields(query: NormalizedQuery, overallExecutionBlueprint: NadelOverallExecutionBlueprint): List<FieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
             when {
                 NadelNamespacedFields.isNamespacedField(topLevelField, overallExecutionBlueprint.schema) -> {
-                    val namespacedChildFieldsByService = topLevelField.children
-                        .groupBy {
-                            overallExecutionBlueprint.coordinatesToService[
-                                    makeFieldCoordinates(
-                                        it.getOneObjectType(overallExecutionBlueprint.schema),
-                                        it.getOneFieldDefinition(overallExecutionBlueprint.schema)
-                                    )
-                            ]!!
-                        }
+                    val namespacedChildFieldsByService: Map<Service, List<NormalizedField>> =
+                        topLevelField.children
+                            .groupBy {
+                                val parentType = it.getOneObjectType(overallExecutionBlueprint.schema)
+                                val graphQLFieldDefinition = it.getOneFieldDefinition(overallExecutionBlueprint.schema)
+                                overallExecutionBlueprint.getService(parentType, graphQLFieldDefinition)!!
+                            }
 
                     namespacedChildFieldsByService.map { (service, childTopLevelFields) ->
                         val topLevelFieldForService = topLevelField.copyWithChildren(childTopLevelFields)
@@ -33,11 +30,10 @@ class NadelFieldToServiceRouter {
                 else -> listOf(
                     FieldAndService(
                         field = topLevelField,
-                        service = overallExecutionBlueprint.coordinatesToService[
-                                makeFieldCoordinates(
-                                    topLevelField.getOneObjectType(overallExecutionBlueprint.schema),
-                                    topLevelField.getOneFieldDefinition(overallExecutionBlueprint.schema)
-                                )]!!
+                        service = overallExecutionBlueprint.getService(
+                            topLevelField.getOneObjectType(overallExecutionBlueprint.schema),
+                            topLevelField.getOneFieldDefinition(overallExecutionBlueprint.schema)
+                        )!!
                     )
                 )
             }

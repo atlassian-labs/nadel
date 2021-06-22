@@ -11,7 +11,7 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
-import graphql.nadel.enginekt.transform.query.NadelFieldToServiceRouter
+import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
@@ -47,7 +47,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val fieldToServiceRouter = NadelFieldToServiceRouter()
+    private val fieldToServiceRouter = NadelFieldToService()
 
     override fun execute(
         executionInput: ExecutionInput,
@@ -76,7 +76,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
 
         val results = coroutineScope {
-            fieldToServiceRouter.execute(query, overallExecutionBlueprint)
+            fieldToServiceRouter.getServicesForTopLevelFields(query, overallExecutionBlueprint)
                 .map { (field, service) ->
                     async {
                         executeTopLevelField(field, service, executionInput)

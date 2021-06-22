@@ -6,6 +6,8 @@ import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 
 interface NadelExecutionBlueprint {
@@ -22,7 +24,7 @@ data class NadelOverallExecutionBlueprint(
     override val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
     override val typeInstructions: Map<String, NadelTypeRenameInstruction>,
     private val underlyingBlueprints: Map<String, NadelExecutionBlueprint>,
-    val coordinatesToService: Map<FieldCoordinates, Service>,
+    private val coordinatesToService: Map<FieldCoordinates, Service>,
 ) : NadelExecutionBlueprint {
     fun getUnderlyingTypeName(overallTypeName: String): String {
         return overallTypeName.let { overall ->
@@ -45,6 +47,10 @@ data class NadelOverallExecutionBlueprint(
         return underlyingTypeName.let { underlying ->
             underlyingBlueprint.typeInstructions[underlying]?.overallName ?: underlying
         }
+    }
+
+    fun getService(parentType: GraphQLObjectType, graphQLFieldDefinition: GraphQLFieldDefinition): Service? {
+        return coordinatesToService[makeFieldCoordinates(parentType, graphQLFieldDefinition)]
     }
 }
 
