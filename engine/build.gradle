@@ -13,7 +13,6 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def slf4jVersion = "1.7.25"
-def graphqlJavaVersion = "0.0.0-2021-06-01T04-42-05-1a107087"
 
 apply plugin: "groovy"
 
@@ -26,7 +25,6 @@ jar {
 
 dependencies {
     implementation project(path: ":nadel-api", configuration: "default")
-    implementation "com.graphql-java:graphql-java:" + graphqlJavaVersion
     implementation "org.slf4j:slf4j-api:" + slf4jVersion
     testImplementation "junit:junit:4.11"
     testImplementation "org.spockframework:spock-core:1.0-groovy-2.4"

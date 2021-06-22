@@ -212,18 +212,23 @@ internal class NadelBatchHydrator(
         ) ?: error("Unable to find field definition for ${state.hydratedField.queryPath}")
 
         val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
-            parentNodeIdentifierNodes
-                .flatMap { parentNodeIdentifierNode ->
-                    when (val id = parentNodeIdentifierNode.value) {
-                        null -> emptySequence()
-                        is AnyList -> id.asSequence().flatten(recursively = true)
-                        else -> sequenceOf(id)
+            // Set to null if there were no identifier nodes
+            if (parentNodeIdentifierNodes.all { it.value == null }) {
+                null
+            } else {
+                parentNodeIdentifierNodes
+                    .flatMap { parentNodeIdentifierNode ->
+                        when (val id = parentNodeIdentifierNode.value) {
+                            null -> emptySequence()
+                            is AnyList -> id.asSequence().flatten(recursively = true)
+                            else -> sequenceOf(id)
+                        }
                     }
-                }
-                .map { id ->
-                    resultNodesByObjectId[id]
-                }
-                .toList()
+                    .map { id ->
+                        resultNodesByObjectId[id]
+                    }
+                    .toList()
+            }
         } else {
             parentNodeIdentifierNodes.emptyOrSingle()?.let { node ->
                 resultNodesByObjectId[node.value]
