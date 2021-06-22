@@ -221,7 +221,7 @@ serviceCalls:
                   id
                 }
                 ... on User {
-                  batch_hydration__authors__object_ID__id: id
+                  batch_hydration__authors__id: id
                 }
               }
             }
@@ -235,15 +235,15 @@ serviceCalls:
             "usersByIds": [
               {
                 "id": "USER-1",
-                "batch_hydration__authors__object_ID__id": "USER-1"
+                "batch_hydration__authors__id": "USER-1"
               },
               {
                 "id": "USER-2",
-                "batch_hydration__authors__object_ID__id": "USER-2"
+                "batch_hydration__authors__id": "USER-2"
               },
               {
                 "id": "USER-3",
-                "batch_hydration__authors__object_ID__id": "USER-3"
+                "batch_hydration__authors__id": "USER-3"
               }
             ]
           },
@@ -259,7 +259,7 @@ serviceCalls:
                   id
                 }
                 ... on User {
-                  batch_hydration__authors__object_ID__id: id
+                  batch_hydration__authors__id: id
                 }
               }
             }
@@ -273,15 +273,15 @@ serviceCalls:
             "usersByIds": [
               {
                 "id": "USER-2",
-                "batch_hydration__authors__object_ID__id": "USER-2"
+                "batch_hydration__authors__id": "USER-2"
               },
               {
                 "id": "USER-4",
-                "batch_hydration__authors__object_ID__id": "USER-4"
+                "batch_hydration__authors__id": "USER-4"
               },
               {
                 "id": "USER-5",
-                "batch_hydration__authors__object_ID__id": "USER-5"
+                "batch_hydration__authors__id": "USER-5"
               }
             ]
           },

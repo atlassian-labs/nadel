@@ -161,7 +161,7 @@ serviceCalls:
                       name
                     }
                     ... on User {
-                      batch_hydration__author__object_ID__id: id
+                      batch_hydration__author__id: id
                     }
                   }
                 }
@@ -178,7 +178,7 @@ serviceCalls:
               "usersByIds": [
                 {
                   "name": "User 1",
-                  "batch_hydration__author__object_ID__id": "USER-1"
+                  "batch_hydration__author__id": "USER-1"
                 }
               ]
             }

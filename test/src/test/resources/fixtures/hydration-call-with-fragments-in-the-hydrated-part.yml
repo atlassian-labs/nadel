@@ -284,7 +284,7 @@ serviceCalls:
                   name
                 }
                 ... on User {
-                  batch_hydration__authors__object_ID__id: id
+                  batch_hydration__authors__id: id
                 }
               }
             }
@@ -299,12 +299,12 @@ serviceCalls:
               {
                 "name": "User 1",
                 "id": "USER-1",
-                "batch_hydration__authors__object_ID__id": "USER-1"
+                "batch_hydration__authors__id": "USER-1"
               },
               {
                 "name": "User 2",
                 "id": "USER-2",
-                "batch_hydration__authors__object_ID__id": "USER-2"
+                "batch_hydration__authors__id": "USER-2"
               }
             ]
           },
