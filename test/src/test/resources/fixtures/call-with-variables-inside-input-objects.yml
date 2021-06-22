@@ -46,6 +46,25 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              hello(arg: {})
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": "world"
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

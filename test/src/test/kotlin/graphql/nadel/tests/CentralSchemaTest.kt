@@ -4,12 +4,9 @@ import graphql.nadel.Nadel
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
-import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy.MatchIndex
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.DescribeSpec
-import org.junit.jupiter.api.fail
 import java.io.File
 
 class CentralSchemaTest : DescribeSpec({

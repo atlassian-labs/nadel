@@ -1,12 +1,15 @@
 package graphql.nadel.engine.execution;
 
 import graphql.Assert;
+import graphql.GraphQLError;
 import graphql.Internal;
 import graphql.execution.ExecutionStepInfo;
 import graphql.execution.ResultPath;
 import graphql.nadel.OperationKind;
 import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.result.ExecutionResultNode;
+import graphql.nadel.engine.result.ObjectExecutionResultNode;
+import graphql.nadel.engine.result.RootExecutionResultNode;
 import graphql.schema.GraphQLSchema;
 import graphql.util.Breadcrumb;
 import graphql.util.NodeMultiZipper;
@@ -16,17 +19,22 @@ import graphql.util.Traverser;
 import graphql.util.TraverserContext;
 import graphql.util.TraverserVisitorStub;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import static graphql.execution.ExecutionStepInfo.newExecutionStepInfo;
 import static graphql.nadel.engine.result.ObjectExecutionResultNode.newObjectExecutionResultNode;
 import static graphql.nadel.engine.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
+import static graphql.nadel.engine.result.RootExecutionResultNode.newRootExecutionResultNode;
+import static graphql.nadel.util.FpKit.map;
 import static graphql.util.FpKit.groupingBy;
 import static graphql.util.FpKit.mapEntries;
 
@@ -111,5 +119,58 @@ public class StrategyUtil {
                 .build();
     }
 
+
+    /**
+     * This will merge together a list of root result nodes into one root result node.
+     *
+     * If there are child nodes that resolve to the same result key then they will be combined
+     *
+     * @param rootNodes the nodes to merge
+     *
+     * @return a single root result node
+     */
+    public static RootExecutionResultNode mergeTrees(List<RootExecutionResultNode> rootNodes) {
+        List<ExecutionResultNode> mergedChildren = new ArrayList<>();
+        List<GraphQLError> errors = new ArrayList<>();
+        map(rootNodes, RootExecutionResultNode::getChildren).forEach(mergedChildren::addAll);
+        map(rootNodes, RootExecutionResultNode::getErrors).forEach(errors::addAll);
+        Map<String, Object> extensions = new LinkedHashMap<>();
+        rootNodes.forEach(node -> extensions.putAll(node.getExtensions()));
+
+        Map<String, List<ExecutionResultNode>> resultNodesByResultKey = mergedChildren.stream().collect(Collectors.groupingBy(ExecutionResultNode::getResultKey));
+        mergedChildren = new ArrayList<>();
+        for (List<ExecutionResultNode> resultNodes : resultNodesByResultKey.values()) {
+            ExecutionResultNode resultNode = resultNodes.get(0);
+            if (resultNodes.size() > 1) {
+                // we MUST have a split top level field -we need to combine it
+                resultNode = combineResultNodes(resultNodes);
+            }
+            mergedChildren.add(resultNode);
+        }
+
+        return newRootExecutionResultNode()
+                .children(mergedChildren)
+                .errors(errors)
+                .extensions(extensions)
+                .build();
+    }
+
+    @SuppressWarnings({"ConstantConditions", "unchecked"})
+    private static ExecutionResultNode combineResultNodes(List<ExecutionResultNode> resultNodes) {
+        List<ExecutionResultNode> children = new ArrayList<>();
+        Map<String, Object> completedValueMap = new LinkedHashMap<>();
+
+        for (ExecutionResultNode resultNode : resultNodes) {
+            Object completedValue = resultNode.getCompletedValue();
+            Assert.assertTrue(resultNode instanceof ObjectExecutionResultNode, () -> String.format("We can only combine object fields not %s for result path %s", resultNode.getClass(), resultNode.getResultKey()));
+            Assert.assertTrue(completedValue instanceof Map, () -> String.format("We can only combine object field values that are maps not %s for result path %s", completedValue.getClass(), resultNode.getResultKey()));
+            children.addAll(resultNode.getChildren());
+            Map<String, Object> childValue = (Map<String, Object>) completedValue;
+            completedValueMap.putAll(childValue);
+        }
+        ObjectExecutionResultNode mergedObjectResult = (ObjectExecutionResultNode) resultNodes.get(0);
+        return mergedObjectResult.transform(
+                builder -> builder.children(children).completedValue(completedValueMap));
+    }
 
 }

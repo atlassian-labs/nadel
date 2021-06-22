@@ -88,7 +88,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -110,7 +109,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -134,7 +132,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -154,6 +151,122 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "space": {
+              "id": "apple"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__fooService__service: service {
+                ... on Service {
+                  hydration__otherServices__id: id
+                }
+                ... on Service {
+                  __typename__hydration__otherServices: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__fooService__service": {
+              "__typename__hydration__otherServices": "Service",
+              "hydration__otherServices__id": "ID"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              connection(id: "ID") {
+                ... on Connection {
+                  hydration__nodes__edges: edges {
+                    ... on Edge {
+                      node
+                    }
+                  }
+                }
+                ... on Connection {
+                  __typename__hydration__nodes: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "connection": {
+              "__typename__hydration__nodes": "Connection",
+              "hydration__nodes__edges": [
+                {
+                  "node": "1"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              node(id: "1") {
+                ... on Node {
+                  hydration__space__id: id
+                }
+                ... on Node {
+                  __typename__hydration__space: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "node": {
+              "hydration__space__id": "1a",
+              "__typename__hydration__space": "Node"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              space(id: "1a") {
+                ... on Space {
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

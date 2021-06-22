@@ -1,0 +1,46 @@
+name: dynamic service resolution directive not in interface
+overallSchema:
+  RepoService: |
+    service RepoService {
+      directive @dynamicServiceResolution on FIELD_DEFINITION
+
+      type Query {
+        pullRequest(id: ID!): PullRequest @dynamicServiceResolution
+      }
+
+      type PullRequest {
+        id: ID!
+        description: String
+      }
+    }
+underlyingSchema:
+  RepoService: |
+    type Query {
+        pullRequest(id: ID): PullRequest
+    }
+
+    type PullRequest {
+        id: ID!
+        description: String
+    }
+query: |
+  {
+      pullRequest(id: "pull-request:id-123") {
+        id
+        description
+      }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: RepoService
+      request:
+        query: |
+        variables: {}
+        operationName:
+      # language=JSON
+      response: |
+# language=JSON
+response: null
+exception:
+  message: field annotated with dynamicServiceResolution directive is expected to be of GraphQLInterfaceType

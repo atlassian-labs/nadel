@@ -2,6 +2,8 @@ name: top level field error does not redact other top level fields
 enabled:
   current: true
   nextgen: true
+ignored:
+  nextgen: true # TBD how hooks behave in nextgen
 overallSchema:
   service: |
     service service {

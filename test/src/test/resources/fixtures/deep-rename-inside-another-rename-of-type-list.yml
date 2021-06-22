@@ -107,6 +107,88 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              boardScope {
+                ... on BoardScope {
+                  board {
+                    ... on Board {
+                      rename__cardChildren__issueChildren: issueChildren {
+                        ... on Card {
+                          id
+                        }
+                        ... on Card {
+                          deep_rename__key__issue: issue {
+                            ... on Issue {
+                              key
+                            }
+                          }
+                        }
+                        ... on Card {
+                          __typename__deep_rename__key: __typename
+                        }
+                        ... on Card {
+                          deep_rename__summary__issue: issue {
+                            ... on Issue {
+                              summary
+                            }
+                          }
+                        }
+                        ... on Card {
+                          __typename__deep_rename__summary: __typename
+                        }
+                      }
+                    }
+                    ... on Board {
+                      __typename__rename__cardChildren: __typename
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "boardScope": {
+              "board": {
+                "__typename__rename__cardChildren": "Board",
+                "rename__cardChildren__issueChildren": [
+                  {
+                    "__typename__deep_rename__key": "Card",
+                    "id": "1234",
+                    "deep_rename__summary__issue": {
+                      "summary": "Summary 1"
+                    },
+                    "__typename__deep_rename__summary": "Card",
+                    "deep_rename__key__issue": {
+                      "key": "abc"
+                    }
+                  },
+                  {
+                    "__typename__deep_rename__key": "Card",
+                    "id": "456",
+                    "deep_rename__summary__issue": {
+                      "summary": "Summary 2"
+                    },
+                    "__typename__deep_rename__summary": "Card",
+                    "deep_rename__key__issue": {
+                      "key": "def"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

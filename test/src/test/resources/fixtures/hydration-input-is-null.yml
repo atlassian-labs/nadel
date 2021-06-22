@@ -78,6 +78,41 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issues {
+                ... on Issue {
+                  id
+                }
+                ... on Issue {
+                  batch_hydration__authors__authorIds: authorIds
+                }
+                ... on Issue {
+                  __typename__batch_hydration__authors: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "id": "ISSUE-1",
+                "batch_hydration__authors__authorIds": null
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -91,4 +126,3 @@ response: |-
     },
     "extensions": {}
   }
-

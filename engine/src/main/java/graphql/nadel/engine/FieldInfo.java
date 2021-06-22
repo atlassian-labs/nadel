@@ -8,7 +8,11 @@ import graphql.schema.GraphQLFieldDefinition;
 public class FieldInfo {
 
     public enum FieldKind {
-        TOPLEVEL
+        /**
+         * A top level field is declared directly under the GraphQL operation types: query, mutation and subscription
+         */
+        TOPLEVEL,
+        NAMESPACE_SUBFIELD
     }
 
     private final FieldKind fieldKind;

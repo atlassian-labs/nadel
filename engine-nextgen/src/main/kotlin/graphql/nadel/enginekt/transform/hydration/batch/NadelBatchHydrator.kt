@@ -9,6 +9,7 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
@@ -24,7 +25,6 @@ import graphql.nadel.enginekt.util.flatten
 import graphql.nadel.enginekt.util.isList
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.subListOrNull
-import graphql.nadel.enginekt.util.toGraphQLError
 import graphql.nadel.enginekt.util.unwrapNonNull
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -93,7 +93,7 @@ internal class NadelBatchHydrator(
                 resultNodes = resultNodes,
                 matchStrategy = matchStrategy,
             )
-        } + getAddErrorInstructions(batches)
+        } + getInstructionsToAddErrors(batches)
     }
 
     private fun getHydrateInstructionsMatchingIndex(
@@ -111,7 +111,7 @@ internal class NadelBatchHydrator(
             .toList()
 
         fun raiseErrorDueToCountMismatch(): Nothing {
-            error("Index based hydration failed due to mismatch of input and result value counts")
+            error("If you use indexed hydration then you MUST follow a contract where the resolved nodes matches the size of the input arguments")
         }
 
         var resultIndex = 0
@@ -212,18 +212,23 @@ internal class NadelBatchHydrator(
         ) ?: error("Unable to find field definition for ${state.hydratedField.queryPath}")
 
         val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
-            parentNodeIdentifierNodes
-                .flatMap { parentNodeIdentifierNode ->
-                    when (val id = parentNodeIdentifierNode.value) {
-                        null -> emptySequence()
-                        is AnyList -> id.asSequence().flatten(recursively = true)
-                        else -> sequenceOf(id)
+            // Set to null if there were no identifier nodes
+            if (parentNodeIdentifierNodes.all { it.value == null }) {
+                null
+            } else {
+                parentNodeIdentifierNodes
+                    .flatMap { parentNodeIdentifierNode ->
+                        when (val id = parentNodeIdentifierNode.value) {
+                            null -> emptySequence()
+                            is AnyList -> id.asSequence().flatten(recursively = true)
+                            else -> sequenceOf(id)
+                        }
                     }
-                }
-                .map { id ->
-                    resultNodesByObjectId[id]
-                }
-                .toList()
+                    .map { id ->
+                        resultNodesByObjectId[id]
+                    }
+                    .toList()
+            }
         } else {
             parentNodeIdentifierNodes.emptyOrSingle()?.let { node ->
                 resultNodesByObjectId[node.value]
@@ -307,16 +312,5 @@ internal class NadelBatchHydrator(
             .filterIsInstance<NadelHydrationActorInputDef.ValueSource.FieldResultValue>()
             .single()
             .queryPathToField
-    }
-
-    private fun getAddErrorInstructions(
-        batches: List<ServiceExecutionResult>,
-    ): List<NadelResultInstruction> {
-        return batches
-            .asSequence()
-            .flatMap { it.errors }
-            .map(::toGraphQLError)
-            .map(NadelResultInstruction::AddError)
-            .toList()
     }
 }

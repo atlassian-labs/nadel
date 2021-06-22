@@ -52,6 +52,8 @@ serviceCalls:
           "extensions": {}
         }
 # language=JSON
+# language=JSON
+# language=JSON
 response: |-
   {
     "errors": [

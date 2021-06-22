@@ -14,6 +14,7 @@ import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
@@ -23,6 +24,9 @@ import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 internal class NadelHydrationTransform(
     private val engine: NextgenEngine,
@@ -141,18 +145,22 @@ internal class NadelHydrationTransform(
         // Do nothing if there is no hydration instruction associated with this result
         instruction ?: return emptyList()
 
-        val actorQueryResults = NadelHydrationFieldsBuilder.makeActorQueries(
-            instruction = instruction,
-            aliasHelper = state.aliasHelper,
-            hydratedField = hydrationField,
-            parentNode = parentNode,
-        ).map { actorQuery ->
-            engine.executeHydration(
-                service = instruction.actorService,
-                topLevelField = actorQuery,
-                pathToActorField = instruction.queryPathToActorField,
-                executionContext = executionContext,
-            )
+        val actorQueryResults = coroutineScope {
+            NadelHydrationFieldsBuilder.makeActorQueries(
+                instruction = instruction,
+                aliasHelper = state.aliasHelper,
+                hydratedField = hydrationField,
+                parentNode = parentNode,
+            ).map { actorQuery ->
+                async {
+                    engine.executeHydration(
+                        service = instruction.actorService,
+                        topLevelField = actorQuery,
+                        pathToActorField = instruction.queryPathToActorField,
+                        executionContext = executionContext,
+                    )
+                }
+            }.awaitAll()
         }
 
         when (instruction.hydrationStrategy) {
@@ -167,12 +175,14 @@ internal class NadelHydrationTransform(
                     ).emptyOrSingle()
                 }
 
+                val errors = result?.let(::getInstructionsToAddErrors) ?: emptyList()
+
                 return listOf(
                     NadelResultInstruction.Set(
                         subjectPath = parentNode.resultPath + hydrationField.resultKey,
                         newValue = data?.value,
                     ),
-                )
+                ) + errors
             }
             is NadelHydrationStrategy.ManyToOne -> {
                 val data = actorQueryResults.map { result ->
@@ -182,12 +192,14 @@ internal class NadelHydrationTransform(
                     ).emptyOrSingle()?.value
                 }
 
+                val addErrors = getInstructionsToAddErrors(actorQueryResults)
+
                 return listOf(
                     NadelResultInstruction.Set(
                         subjectPath = parentNode.resultPath + hydrationField.resultKey,
                         newValue = data,
                     ),
-                )
+                ) + addErrors
             }
         }
     }

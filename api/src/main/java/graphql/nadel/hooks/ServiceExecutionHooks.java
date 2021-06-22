@@ -2,8 +2,11 @@ package graphql.nadel.hooks;
 
 import graphql.GraphQLError;
 import graphql.PublicSpi;
+import graphql.execution.ExecutionStepInfo;
+import graphql.nadel.Service;
 import graphql.nadel.normalized.NormalizedQueryField;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -45,5 +48,16 @@ public interface ServiceExecutionHooks {
             Object userSuppliedContext
     ) {
         return CompletableFuture.completedFuture(Optional.empty());
+    }
+
+    /***
+     * Called to resolve the service that should be used to fetch data for a field that uses dynamic service resolution.
+     *
+     * @param services a list of all services registered on Nadel
+     * @param executionStepInfo
+     * @return the Service that should be used to fetch data for that field or an error that was raised when trying to resolve the service.
+     */
+    default ServiceOrError resolveServiceForField(List<Service> services, ExecutionStepInfo executionStepInfo) {
+        return null;
     }
 }

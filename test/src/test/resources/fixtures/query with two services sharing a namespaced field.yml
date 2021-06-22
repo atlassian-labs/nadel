@@ -1,7 +1,7 @@
 name: query with two services sharing a namespaced field
 enabled:
-  nextgen: true
-  current: false
+  nextgen: false
+  current: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -65,7 +65,7 @@ query: |
       }
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
   current:
     - serviceName: Issues
@@ -78,7 +78,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_Issues
       # language=JSON
       response: |-
@@ -102,68 +102,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
-        operationName: nadel_2_IssueSearch
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 100
-              }
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            ... on Query {
-              issue {
-                ... on IssueQuery {
-                  getIssue {
-                    ... on Issue {
-                      text
-                    }
-                  }
-                }
-              }
-            }
-          }
-        variables: { }
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          query {
-            ... on Query {
-              issue {
-                ... on IssueQuery {
-                  search {
-                    ... on SearchResult {
-                      count
-                    }
-                  }
-                }
-              }
-            }
-          }
-        variables: { }
+        variables: {}
         operationName: nadel_2_IssueSearch
       # language=JSON
       response: |-
@@ -182,11 +121,11 @@ response: |-
   {
     "data": {
       "issue": {
-        "search": {
-          "count": 100
-        },
         "getIssue": {
           "text": "Foo"
+        },
+        "search": {
+          "count": 100
         }
       }
     },

@@ -85,6 +85,67 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: IssuesService
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__renamedIssue__issue: issue {
+                ... on Issue {
+                  rename__renamedTicket__ticket: ticket {
+                    ... on Ticket {
+                      rename__renamedTicketTypes__ticketTypes: ticketTypes {
+                        ... on TicketType {
+                          rename__renamedId__id: id
+                        }
+                        ... on TicketType {
+                          __typename__rename__renamedId: __typename
+                        }
+                        ... on TicketType {
+                          rename__renamedDate__date: date
+                        }
+                        ... on TicketType {
+                          __typename__rename__renamedDate: __typename
+                        }
+                      }
+                    }
+                    ... on Ticket {
+                      __typename__rename__renamedTicketTypes: __typename
+                    }
+                  }
+                }
+                ... on Issue {
+                  __typename__rename__renamedTicket: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__renamedIssue__issue": [
+              {
+                "__typename__rename__renamedTicket": "Issue",
+                "rename__renamedTicket__ticket": {
+                  "__typename__rename__renamedTicketTypes": "Ticket",
+                  "rename__renamedTicketTypes__ticketTypes": [
+                    {
+                      "rename__renamedId__id": "1",
+                      "rename__renamedDate__date": "20/11/2020",
+                      "__typename__rename__renamedDate": "TicketType",
+                      "__typename__rename__renamedId": "TicketType"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

@@ -58,7 +58,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -79,6 +78,62 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "name": "I AM A NAME",
+              "desc": "I AM A DESC"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  hydration__issue__issueId: issueId
+                }
+                ... on Foo {
+                  __typename__hydration__issue: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "hydration__issue__issueId": "ISSUE-1",
+              "__typename__hydration__issue": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue(issueId: "ISSUE-1") {
+                ... on Issue {
+                  name
+                }
+                ... on Issue {
+                  desc
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

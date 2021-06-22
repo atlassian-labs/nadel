@@ -62,6 +62,30 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "id": "ID"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Bar {
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

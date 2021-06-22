@@ -1,0 +1,123 @@
+name: dynamic service resolution multiple services with one unmapped node lookup
+overallSchema:
+  Common: |
+    directive @dynamicServiceResolution on FIELD_DEFINITION
+
+    type Query {
+      node(id: ID!): Node @dynamicServiceResolution
+    }
+
+    interface Node {
+      id: ID!
+    }
+  RepoService: |
+    service RepoService {
+       type PullRequest implements Node {
+            id: ID!
+            description: String
+       }
+    }
+  IssueService: |
+    service IssueService {
+       type Issue implements Node {
+            id: ID!
+            issueKey: String
+       }
+    }
+underlyingSchema:
+  Common: |
+    type Query {
+      echo: String
+    }
+  RepoService: |
+    type Query {
+        node(id: ID): Node
+    }
+
+    interface Node {
+        id: ID!
+    }
+
+    type PullRequest implements Node {
+        id: ID!
+        description: String
+    }
+  IssueService: |
+    type Query {
+        node(id: ID): Node
+    }
+
+    interface Node {
+        id: ID!
+    }
+
+    type Issue implements Node {
+        id: ID!
+        issueKey: String
+    }
+query: |
+  {
+      commit:node(id: "commit:id-123") {
+         ... on PullRequest {
+              id
+              description
+         }
+      }
+      issue:node(id: "issue/id-123") {
+         ... on Issue {
+              id
+              issueKey
+         }
+      }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: IssueService
+      request:
+        query: |
+          query nadel_2_IssueService {
+            issue:node(id:"issue/id-123") {
+              type_hint_typename__UUID:__typename
+              ... on Issue {
+                id
+              }
+              ... on Issue {
+                issueKey
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "issue/id-123",
+              "issueKey": "ISSUE-1",
+              "type_hint_typename__UUID": "Issue"
+            }
+          }
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "commit": null,
+      "issue": {
+        "id": "issue/id-123",
+        "issueKey": "ISSUE-1"
+      }
+    },
+    "errors": [
+      {
+        "message":  "Could not resolve service for field: /commit",
+        "locations": [],
+        "path": ["commit"],
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ]
+  }
