@@ -7,15 +7,14 @@ import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.schema.NadelDirectives
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedQuery
+import graphql.schema.GraphQLSchema
 
 class NadelFieldToServiceRouter {
 
     fun execute(query: NormalizedQuery, overallExecutionBlueprint: NadelOverallExecutionBlueprint): List<FieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
-            val isNamespacedField = topLevelField.getOneFieldDefinition(overallExecutionBlueprint.schema)
-                .getDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name) != null
             when {
-                isNamespacedField -> {
+                NadelNamespacedFields.isNamespacedField(topLevelField, overallExecutionBlueprint.schema) -> {
                     val namespacedChildFieldsByService = topLevelField.children
                         .groupBy {
                             overallExecutionBlueprint.coordinatesToService[
@@ -50,3 +49,10 @@ data class FieldAndService(
     val field: NormalizedField,
     val service: Service,
 )
+
+object NadelNamespacedFields {
+    fun isNamespacedField(field: NormalizedField, schema: GraphQLSchema): Boolean {
+        return field.getOneFieldDefinition(schema)
+            .getDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name) != null
+    }
+}
