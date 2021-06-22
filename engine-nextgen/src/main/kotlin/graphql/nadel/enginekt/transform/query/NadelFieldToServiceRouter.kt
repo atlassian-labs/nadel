@@ -8,7 +8,7 @@ import graphql.nadel.schema.NadelDirectives
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedQuery
 
-class SplitFieldsByUnderlyingService {
+class NadelFieldToServiceRouter {
 
     fun execute(query: NormalizedQuery, overallExecutionBlueprint: NadelOverallExecutionBlueprint): List<FieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
@@ -18,8 +18,7 @@ class SplitFieldsByUnderlyingService {
                 isNamespacedField -> {
                     val namespacedChildFieldsByService = topLevelField.children
                         .groupBy {
-
-                            return@groupBy overallExecutionBlueprint.coordinatesToService[
+                            overallExecutionBlueprint.coordinatesToService[
                                     makeFieldCoordinates(
                                         it.getOneObjectType(overallExecutionBlueprint.schema),
                                         it.getOneFieldDefinition(overallExecutionBlueprint.schema)
@@ -27,10 +26,8 @@ class SplitFieldsByUnderlyingService {
                             ]!!
                         }
 
-                    namespacedChildFieldsByService.map { entry ->
-                        val childTopLevelFields = entry.value
+                    namespacedChildFieldsByService.map { (service, childTopLevelFields) ->
                         val topLevelFieldForService = topLevelField.copyWithChildren(childTopLevelFields)
-                        val service = entry.key
                         FieldAndService(topLevelFieldForService, service)
                     }
                 }

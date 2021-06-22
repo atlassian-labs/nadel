@@ -186,11 +186,7 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
 }
 
 internal fun updateMap(overallResultMap: MutableJsonMap, oneResultMap: AnyMap) {
-    for (entry in oneResultMap) {
-
-        val topLevelFieldName = entry.key
-        val topLevelFieldChild = entry.value
-
+    for ((topLevelFieldName, topLevelFieldChild) in oneResultMap) {
         if (overallResultMap.containsKey(topLevelFieldName)) {
             if (topLevelFieldChild is AnyMap) {
                 (overallResultMap[topLevelFieldName] as MutableJsonMap)
