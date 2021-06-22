@@ -11,22 +11,22 @@ import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 
-data class NadelFieldInfos(
+data class FieldCoordinatesToUnderlyingServiceMapping(
     val queryTopLevelFields: Map<FieldCoordinates, Service>,
     val mutationTopLevelFields: Map<FieldCoordinates, Service>,
     val subscriptionTopLevelFields: Map<FieldCoordinates, Service>,
 ) {
-    fun getFieldInfo(operationKind: OperationKind, topLevelFieldName: FieldCoordinates): Service? {
+    fun getService(fieldCoordinates: FieldCoordinates, operationKind: OperationKind): Service? {
         return when (operationKind) {
-            OperationKind.QUERY -> queryTopLevelFields[topLevelFieldName]
-            OperationKind.MUTATION -> mutationTopLevelFields[topLevelFieldName]
-            OperationKind.SUBSCRIPTION -> subscriptionTopLevelFields[topLevelFieldName]
+            OperationKind.QUERY -> queryTopLevelFields[fieldCoordinates]
+            OperationKind.MUTATION -> mutationTopLevelFields[fieldCoordinates]
+            OperationKind.SUBSCRIPTION -> subscriptionTopLevelFields[fieldCoordinates]
         }
     }
 
     companion object {
-        fun create(services: List<Service>, overallSchema: GraphQLSchema): NadelFieldInfos {
-            return NadelFieldInfos(
+        fun create(services: List<Service>, overallSchema: GraphQLSchema): FieldCoordinatesToUnderlyingServiceMapping {
+            return FieldCoordinatesToUnderlyingServiceMapping(
                 getServiceForTopLevelField(services, overallSchema, OperationKind.QUERY),
                 getServiceForTopLevelField(services, overallSchema, OperationKind.MUTATION),
                 getServiceForTopLevelField(services, overallSchema, OperationKind.SUBSCRIPTION),
