@@ -3,52 +3,44 @@ package graphql.nadel.enginekt.transform.query
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.util.copyWithChildren
-import graphql.nadel.schema.NadelDirectives
+import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.normalized.NormalizedField
 import graphql.normalized.NormalizedQuery
-import graphql.schema.GraphQLSchema
 
-class NadelFieldToService {
+class NadelFieldToService(private val overallExecutionBlueprint: NadelOverallExecutionBlueprint) {
 
-    fun getServicesForTopLevelFields(query: NormalizedQuery, overallExecutionBlueprint: NadelOverallExecutionBlueprint): List<FieldAndService> {
+    fun getServicesForTopLevelFields(query: NormalizedQuery): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
             when {
                 NadelNamespacedFields.isNamespacedField(topLevelField, overallExecutionBlueprint.schema) -> {
                     val namespacedChildFieldsByService: Map<Service, List<NormalizedField>> =
                         topLevelField.children
-                            .groupBy {
-                                val parentType = it.getOneObjectType(overallExecutionBlueprint.schema)
-                                val graphQLFieldDefinition = it.getOneFieldDefinition(overallExecutionBlueprint.schema)
-                                overallExecutionBlueprint.getService(parentType, graphQLFieldDefinition)!!
-                            }
+                            .groupBy(::getService)
 
                     namespacedChildFieldsByService.map { (service, childTopLevelFields) ->
                         val topLevelFieldForService = topLevelField.copyWithChildren(childTopLevelFields)
-                        FieldAndService(topLevelFieldForService, service)
+                        NadelFieldAndService(topLevelFieldForService, service)
                     }
                 }
                 else -> listOf(
-                    FieldAndService(
+                    NadelFieldAndService(
                         field = topLevelField,
-                        service = overallExecutionBlueprint.getService(
-                            topLevelField.getOneObjectType(overallExecutionBlueprint.schema),
-                            topLevelField.getOneFieldDefinition(overallExecutionBlueprint.schema)
-                        )!!
+                        service = getService(topLevelField)
                     )
                 )
             }
         }
     }
+
+    private fun getService(field: NormalizedField): Service {
+        val operationTypeName = field.objectTypeNames.single()
+        val fieldCoordinates = makeFieldCoordinates(operationTypeName, field.name)
+        return overallExecutionBlueprint.getService(fieldCoordinates)
+            ?: error("Unable to find service for field at: $fieldCoordinates")
+    }
 }
 
-data class FieldAndService(
+data class NadelFieldAndService(
     val field: NormalizedField,
     val service: Service,
 )
-
-object NadelNamespacedFields {
-    fun isNamespacedField(field: NormalizedField, schema: GraphQLSchema): Boolean {
-        return field.getOneFieldDefinition(schema)
-            .getDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name) != null
-    }
-}

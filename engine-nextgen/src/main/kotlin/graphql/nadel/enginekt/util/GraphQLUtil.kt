@@ -164,8 +164,9 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
     val errors: MutableList<GraphQLError> = mutableListOf()
 
     for (result in results) {
-        when (val resultData = result.getData<JsonMap?>()) {
-            is AnyMap -> updateOverallResultAndMergeSameNameTopLevelFields(data, resultData)
+        val resultData = result.getData<JsonMap?>()
+        if (resultData != null) {
+            updateOverallResultAndMergeSameNameTopLevelFields(data, resultData)
         }
         errors.addAll(result.errors)
         result.extensions?.asJsonMap()?.let(extensions::putAll)

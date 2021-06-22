@@ -47,7 +47,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val fieldToServiceRouter = NadelFieldToService()
+    private val fieldToServiceRouter = NadelFieldToService(overallExecutionBlueprint)
 
     override fun execute(
         executionInput: ExecutionInput,
@@ -76,7 +76,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
 
         val results = coroutineScope {
-            fieldToServiceRouter.getServicesForTopLevelFields(query, overallExecutionBlueprint)
+            fieldToServiceRouter.getServicesForTopLevelFields(query)
                 .map { (field, service) ->
                     async {
                         executeTopLevelField(field, service, executionInput)
