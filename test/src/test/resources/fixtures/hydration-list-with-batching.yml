@@ -152,7 +152,7 @@ serviceCalls:
                   name
                 }
                 ... on Bar {
-                  batch_hydration__bar__object_ID__id: id
+                  batch_hydration__bar__id: id
                 }
               }
             }
@@ -166,15 +166,15 @@ serviceCalls:
             "barsById": [
               {
                 "name": "Bar1",
-                "batch_hydration__bar__object_ID__id": "barId1"
+                "batch_hydration__bar__id": "barId1"
               },
               {
                 "name": "Bar2",
-                "batch_hydration__bar__object_ID__id": "barId2"
+                "batch_hydration__bar__id": "barId2"
               },
               {
                 "name": "Bar3",
-                "batch_hydration__bar__object_ID__id": "barId3"
+                "batch_hydration__bar__id": "barId3"
               }
             ]
           },

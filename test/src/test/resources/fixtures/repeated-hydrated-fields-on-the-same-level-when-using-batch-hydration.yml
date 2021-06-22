@@ -134,7 +134,7 @@ serviceCalls:
                   desc
                 }
                 ... on Issue {
-                  batch_hydration__issue__object_ID__id: id
+                  batch_hydration__issue__id: id
                 }
               }
             }
@@ -148,7 +148,7 @@ serviceCalls:
             "issues": [
               {
                 "name": "I AM A NAME",
-                "batch_hydration__issue__object_ID__id": "ISSUE-1",
+                "batch_hydration__issue__id": "ISSUE-1",
                 "desc": "I AM A DESC"
               }
             ]

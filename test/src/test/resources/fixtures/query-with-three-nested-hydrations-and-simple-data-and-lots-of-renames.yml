@@ -346,7 +346,7 @@ serviceCalls:
                   __typename__batch_hydration__nestedBar: __typename
                 }
                 ... on Bar {
-                  batch_hydration__bar__object_ID__barId: barId
+                  batch_hydration__bar__barId: barId
                 }
               }
             }
@@ -359,7 +359,7 @@ serviceCalls:
           "data": {
             "barsById": [
               {
-                "batch_hydration__bar__object_ID__barId": "bar1",
+                "batch_hydration__bar__barId": "bar1",
                 "batch_hydration__nestedBar__nestedBarId": "nestedBar1",
                 "__typename__batch_hydration__nestedBar": "Bar",
                 "__typename__rename__barName": "Bar",
@@ -388,7 +388,7 @@ serviceCalls:
                   __typename__batch_hydration__nestedBar: __typename
                 }
                 ... on Bar {
-                  batch_hydration__nestedBar__object_ID__barId: barId
+                  batch_hydration__nestedBar__barId: barId
                 }
               }
             }
@@ -401,7 +401,7 @@ serviceCalls:
           "data": {
             "barsById": [
               {
-                "batch_hydration__nestedBar__object_ID__barId": "nestedBar1",
+                "batch_hydration__nestedBar__barId": "nestedBar1",
                 "batch_hydration__nestedBar__nestedBarId": "nestedBarId456",
                 "__typename__batch_hydration__nestedBar": "Bar",
                 "__typename__rename__barName": "Bar",
@@ -456,7 +456,7 @@ serviceCalls:
                   __typename__rename__barDetails: __typename
                 }
                 ... on Bar {
-                  batch_hydration__nestedBar__object_ID__barId: barId
+                  batch_hydration__nestedBar__barId: barId
                 }
               }
             }
@@ -469,7 +469,7 @@ serviceCalls:
           "data": {
             "barsById": [
               {
-                "batch_hydration__nestedBar__object_ID__barId": "nestedBarId456",
+                "batch_hydration__nestedBar__barId": "nestedBarId456",
                 "rename__barDetails__details": {
                   "rename__barContact__contact": {
                     "rename__barPhone__phone": 1,

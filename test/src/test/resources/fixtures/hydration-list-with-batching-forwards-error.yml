@@ -141,7 +141,7 @@ serviceCalls:
                   name
                 }
                 ... on Bar {
-                  batch_hydration__bar__object_ID__id: id
+                  batch_hydration__bar__id: id
                 }
               }
             }

@@ -250,7 +250,7 @@ serviceCalls:
                       accountId
                     }
                     ... on User {
-                      batch_hydration__assignee__object_ID__accountId: accountId
+                      batch_hydration__assignee__accountId: accountId
                     }
                   }
                 }
@@ -266,15 +266,15 @@ serviceCalls:
             "usersQuery": {
               "users": [
                 {
-                  "batch_hydration__assignee__object_ID__accountId": "1",
+                  "batch_hydration__assignee__accountId": "1",
                   "accountId": "1"
                 },
                 {
-                  "batch_hydration__assignee__object_ID__accountId": "2",
+                  "batch_hydration__assignee__accountId": "2",
                   "accountId": "2"
                 },
                 {
-                  "batch_hydration__assignee__object_ID__accountId": "3",
+                  "batch_hydration__assignee__accountId": "3",
                   "accountId": "3"
                 }
               ]

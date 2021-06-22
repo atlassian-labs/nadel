@@ -60,6 +60,7 @@
                     }
                   }
                 ],
+                "batched": false,
                 "objectIdentifier": "id",
                 "objectMatchByIndex": false
               }
