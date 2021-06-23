@@ -5,8 +5,8 @@ import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
 object NadelNamespacedFields {
-    fun isNamespacedField(field: NormalizedField, schema: GraphQLSchema): Boolean {
-        return field.getOneFieldDefinition(schema)
+    fun isNamespacedField(overallField: NormalizedField, schema: GraphQLSchema): Boolean {
+        return overallField.getOneFieldDefinition(schema)
             .getDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name) != null
     }
 }

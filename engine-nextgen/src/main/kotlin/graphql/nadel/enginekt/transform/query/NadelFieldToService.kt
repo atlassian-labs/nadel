@@ -32,9 +32,9 @@ class NadelFieldToService(private val overallExecutionBlueprint: NadelOverallExe
         }
     }
 
-    private fun getService(field: NormalizedField): Service {
-        val operationTypeName = field.objectTypeNames.single()
-        val fieldCoordinates = makeFieldCoordinates(operationTypeName, field.name)
+    private fun getService(overallField: NormalizedField): Service {
+        val operationTypeName = overallField.objectTypeNames.single()
+        val fieldCoordinates = makeFieldCoordinates(operationTypeName, overallField.name)
         return overallExecutionBlueprint.getService(fieldCoordinates)
             ?: error("Unable to find service for field at: $fieldCoordinates")
     }
