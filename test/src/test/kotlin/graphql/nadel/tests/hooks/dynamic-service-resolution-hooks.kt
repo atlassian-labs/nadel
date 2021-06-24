@@ -91,3 +91,10 @@ class `dynamic-service-resolution-directive-not-in-interface` : EngineTestHook {
         return builder.serviceExecutionHooks(Hooks())
     }
 }
+
+@KeepHook
+class `__typename-is-passed-on-queries-using-dynamic-resolved-services` : EngineTestHook {
+    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+        return builder.serviceExecutionHooks(Hooks())
+    }
+}
