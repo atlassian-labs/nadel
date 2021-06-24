@@ -70,7 +70,6 @@ object JsonNodeExtractor {
             val newPath = parentPath + index
             when (value) {
                 is AnyList -> getFlatNodes(newPath, value)
-                null -> emptyList()
                 else -> listOf(JsonNode(newPath, value))
             }
         }

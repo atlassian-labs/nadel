@@ -1,4 +1,7 @@
 name: deep rename of list of list
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issues: |
     service Issues {
@@ -60,6 +63,51 @@ serviceCalls:
                     ]
                   ]
                 }
+              }
+            ]
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              details {
+                ... on IssueDetail {
+                  deep_rename__labels__issue: issue {
+                    ... on Issue {
+                      labels
+                    }
+                  }
+                }
+                ... on IssueDetail {
+                  __typename__deep_rename__labels: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "details": [
+              {
+                "deep_rename__labels__issue": {
+                  "labels": [
+                    [
+                      "label1",
+                      "label2"
+                    ],
+                    [
+                      "label3"
+                    ]
+                  ]
+                },
+                "__typename__deep_rename__labels": "IssueDetail"
               }
             ]
           },

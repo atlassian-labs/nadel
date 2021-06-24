@@ -1,33 +1,34 @@
 package graphql.nadel.enginekt.transform.hydration
 
-import graphql.nadel.Service
-import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.enginekt.transform.query.QueryPath
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLObjectType
+import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.util.toGraphQLError
 
-internal object NadelHydrationUtil {
-    fun getActorField(
-        instruction: NadelGenericHydrationInstruction,
-    ): GraphQLFieldDefinition {
-        return getActorField(
-            service = instruction.actorService,
-            queryPathToActorField = instruction.queryPathToActorField,
-        )
+object NadelHydrationUtil {
+    fun getInstructionsToAddErrors(
+        results: List<ServiceExecutionResult>,
+    ): List<NadelResultInstruction> {
+        return results
+            .asSequence()
+            .flatMap(::sequenceOfInstructionsToAddErrors)
+            .toList()
     }
 
-    private fun getActorField(
-        service: Service,
-        queryPathToActorField: QueryPath,
-    ): GraphQLFieldDefinition {
-        val parentType = queryPathToActorField
-            .segments
-            .asSequence()
-            .take(queryPathToActorField.segments.size - 1) // All but last element
-            .fold(service.underlyingSchema.queryType) { prevType, fieldName ->
-                prevType.getField(fieldName)!!.type as GraphQLObjectType
-            }
+    fun getInstructionsToAddErrors(
+        result: ServiceExecutionResult,
+    ): List<NadelResultInstruction> {
+        return sequenceOfInstructionsToAddErrors(result).toList()
+    }
 
-        return parentType.getField(queryPathToActorField.last())
+    /**
+     * Do not expose sequences as those
+     */
+    private fun sequenceOfInstructionsToAddErrors(
+        result: ServiceExecutionResult,
+    ): Sequence<NadelResultInstruction> {
+        return result.errors
+            .asSequence()
+            .map(::toGraphQLError)
+            .map(NadelResultInstruction::AddError)
     }
 }

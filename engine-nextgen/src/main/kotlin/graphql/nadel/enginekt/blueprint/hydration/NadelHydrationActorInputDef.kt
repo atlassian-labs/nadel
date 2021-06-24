@@ -1,9 +1,12 @@
 package graphql.nadel.enginekt.blueprint.hydration
 
 import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.schema.GraphQLArgument
+import graphql.schema.GraphQLFieldDefinition
 
-data class NadelHydrationActorInput(
+data class NadelHydrationActorInputDef(
     val name: String,
+    val actorArgumentDef: GraphQLArgument,
     val valueSource: ValueSource,
 ) {
     sealed class ValueSource {
@@ -19,7 +22,10 @@ data class NadelHydrationActorInput(
          * }
          * ```
          */
-        data class FieldResultValue(val queryPathToField: QueryPath) : ValueSource()
+        data class FieldResultValue(
+            val queryPathToField: QueryPath,
+            val fieldDefinition: GraphQLFieldDefinition,
+        ) : ValueSource()
 
         /**
          * Uses a value from a field in the same object (or its children) as input e.g.
@@ -32,7 +38,10 @@ data class NadelHydrationActorInput(
          * }
          * ```
          */
-        data class ArgumentValue(val argumentName: String) : ValueSource()
+        data class ArgumentValue(
+            val argumentName: String,
+            val argumentDefinition: GraphQLArgument,
+        ) : ValueSource()
     }
 }
 

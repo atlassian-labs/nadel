@@ -3,8 +3,7 @@ package graphql.nadel.enginekt.plan
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.enginekt.NadelExecutionContext
-import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.NadelTypeRenameInstruction
+import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.AnyNadelTransform
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.NadelRenameTransform
@@ -16,8 +15,7 @@ import graphql.normalized.NormalizedField
 import graphql.schema.GraphQLSchema
 
 internal class NadelExecutionPlanFactory(
-    private val executionBlueprint: NadelExecutionBlueprint,
-    private val overallSchema: GraphQLSchema,
+    private val executionBlueprint: NadelOverallExecutionBlueprint,
     private val transforms: List<AnyNadelTransform>,
 ) {
     /**
@@ -31,17 +29,11 @@ internal class NadelExecutionPlanFactory(
         rootField: NormalizedField,
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
-        val relevantTypeRenames = mutableMapOf<String, NadelTypeRenameInstruction>()
 
         traverseQuery(rootField) { field ->
-            field.objectTypeNames
-                .mapNotNull { executionBlueprint.typeInstructions[it] }
-                .forEach { relevantTypeRenames[it.overallName] = it }
-
             transforms.forEach { transform ->
                 val state = transform.isApplicable(
                     executionContext,
-                    overallSchema,
                     executionBlueprint,
                     services,
                     service,
@@ -62,7 +54,6 @@ internal class NadelExecutionPlanFactory(
 
         return NadelExecutionPlan(
             executionSteps.groupBy { it.field },
-            relevantTypeRenames,
         )
     }
 
@@ -75,13 +66,11 @@ internal class NadelExecutionPlanFactory(
 
     companion object {
         fun create(
-            executionBlueprint: NadelExecutionBlueprint,
-            overallSchema: GraphQLSchema,
+            executionBlueprint: NadelOverallExecutionBlueprint,
             engine: NextgenEngine,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
                 executionBlueprint,
-                overallSchema,
                 transforms = listOfTransforms(
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),

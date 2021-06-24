@@ -1,4 +1,7 @@
 name: same source for 2 nested hydrations and a rename
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {
@@ -75,7 +78,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -98,7 +100,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -118,6 +119,116 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "detail": {
+              "name": "apple"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  hydration__issue__issue: issue {
+                    ... on Issue {
+                      fooId
+                    }
+                  }
+                }
+                ... on Foo {
+                  __typename__hydration__issue: __typename
+                }
+                ... on Foo {
+                  hydration__detail__issue: issue {
+                    ... on Issue {
+                      fooId
+                    }
+                  }
+                }
+                ... on Foo {
+                  __typename__hydration__detail: __typename
+                }
+                ... on Foo {
+                  deep_rename__renamedField__issue: issue {
+                    ... on Issue {
+                      field
+                    }
+                  }
+                }
+                ... on Foo {
+                  __typename__deep_rename__renamedField: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "__typename__deep_rename__renamedField": "Foo",
+              "hydration__issue__issue": {
+                "fooId": "ID"
+              },
+              "hydration__detail__issue": {
+                "fooId": "ID"
+              },
+              "__typename__hydration__issue": "Foo",
+              "__typename__hydration__detail": "Foo",
+              "deep_rename__renamedField__issue": {
+                "field": "field1"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue(issueId: "ID") {
+                ... on Issue {
+                  field
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "field": "field_name"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              detail(detailId: "ID") {
+                ... on Detail {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

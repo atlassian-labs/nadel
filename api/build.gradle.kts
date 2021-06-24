@@ -4,7 +4,7 @@ plugins {
     groovy
 }
 
-val graphqlJavaVersion = "0.0.0-2021-06-01T04-42-05-1a107087"
+val graphqlJavaVersion = "0.0.0-2021-06-22T01-59-26-ead75387"
 val slf4jVersion = "1.7.25"
 
 val graphqlJavaSource: Configuration by configurations.creating
@@ -77,7 +77,6 @@ dependencies {
     testImplementation("org.codehaus.groovy:groovy:2.5.1")
     testImplementation("cglib:cglib-nodep:3.1")
     testImplementation("org.objenesis:objenesis:2.1")
-    testImplementation("com.google.code.gson:gson:2.8.0")
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.9.6")
     testImplementation("org.openjdk.jmh:jmh-core:1.21")

@@ -1,4 +1,8 @@
 name: non-nullable field error in lists bubbles up
+enabled:
+  current: true
+  # Nextgen no longer does this check
+  nextgen: false
 overallSchema:
   Issues: |
     service Issues {
@@ -44,7 +48,9 @@ serviceCalls:
             "issues": [
               [
                 [
-                  {},
+                  {
+                    "id": null
+                  },
                   {
                     "id": "will be discarded"
                   }

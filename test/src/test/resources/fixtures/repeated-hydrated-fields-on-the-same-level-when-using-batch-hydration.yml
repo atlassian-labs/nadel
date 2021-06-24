@@ -1,4 +1,7 @@
 name: repeated hydrated fields on the same level when using batch hydration
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {
@@ -55,7 +58,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -77,7 +79,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -86,6 +87,69 @@ serviceCalls:
                 "name": "I AM A NAME",
                 "desc": "I AM A DESC",
                 "object_identifier__UUID": "ISSUE-1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  batch_hydration__issue__issueId: issueId
+                }
+                ... on Foo {
+                  __typename__batch_hydration__issue: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "batch_hydration__issue__issueId": "ISSUE-1",
+              "__typename__batch_hydration__issue": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              issues(issueIds: ["ISSUE-1"]) {
+                ... on Issue {
+                  name
+                }
+                ... on Issue {
+                  desc
+                }
+                ... on Issue {
+                  batch_hydration__issue__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "name": "I AM A NAME",
+                "batch_hydration__issue__id": "ISSUE-1",
+                "desc": "I AM A DESC"
               }
             ]
           },

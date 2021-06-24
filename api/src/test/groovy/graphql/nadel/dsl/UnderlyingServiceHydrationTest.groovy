@@ -16,6 +16,7 @@ class UnderlyingServiceHydrationTest extends Specification {
                 Collections.emptyList(),
                 "test",
                 true,
+                false,
                 5,
                 Collections.emptyMap()
         )
@@ -37,6 +38,7 @@ class UnderlyingServiceHydrationTest extends Specification {
                 Collections.emptyList(),
                 "test",
                 false,
+                false,
                 5,
                 Collections.emptyMap()
         )
@@ -56,6 +58,7 @@ class UnderlyingServiceHydrationTest extends Specification {
                 Collections.emptyList(),
                 null,
                 true,
+                false,
                 5,
                 Collections.emptyMap()
         )

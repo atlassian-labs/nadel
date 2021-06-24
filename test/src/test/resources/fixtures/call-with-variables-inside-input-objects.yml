@@ -1,4 +1,7 @@
 name: call with variables inside input objects
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {
@@ -35,6 +38,25 @@ serviceCalls:
           varIds: null
           otherVar: null
         operationName: nadel_2_MyService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": "world"
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              hello(arg: {})
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

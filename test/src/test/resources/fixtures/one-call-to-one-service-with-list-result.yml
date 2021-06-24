@@ -1,4 +1,7 @@
 name: one call to one service with list result
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service: |
     service service {
@@ -26,6 +29,28 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_service
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": [
+              "foo1",
+              "foo2"
+            ]
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

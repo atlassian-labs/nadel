@@ -61,7 +61,7 @@ query: |
         id
       }
   }
-variables: { }
+variables: {}
 serviceCalls:
   current:
     - serviceName: RepoService
@@ -75,7 +75,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_RepoService
       # language=JSON
       response: |-

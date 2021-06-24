@@ -1,10 +1,18 @@
 package graphql.nadel.enginekt.util
 
+import graphql.ErrorType
+import graphql.ExecutionResult
+import graphql.ExecutionResultImpl.newExecutionResult
+import graphql.GraphQLError
+import graphql.GraphqlErrorBuilder.newError
 import graphql.language.Definition
 import graphql.language.Document
+import graphql.language.ObjectTypeDefinition
+import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.normalized.NormalizedField
+import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
@@ -14,7 +22,39 @@ import graphql.schema.GraphQLTypeUtil
 
 typealias AnyAstDefinition = Definition<*>
 
+fun newGraphQLError(
+    message: String,
+    errorType: ErrorType,
+): GraphQLError {
+    return newError()
+        .message(message)
+        .errorType(errorType)
+        .build()
+}
+
+fun toGraphQLError(
+    raw: JsonMap,
+): GraphQLError {
+    return newError()
+        .message(raw["message"] as String?)
+        .build()
+}
+
+fun GraphQLSchema.getField(coordinates: FieldCoordinates): GraphQLFieldDefinition? {
+    return getType(coordinates.typeName)
+        ?.let { it as? GraphQLFieldsContainer }
+        ?.getField(coordinates.fieldName)
+}
+
 fun GraphQLSchema.getOperationType(kind: OperationKind): GraphQLObjectType? {
+    return when (kind) {
+        OperationKind.QUERY -> queryType
+        OperationKind.MUTATION -> mutationType
+        OperationKind.SUBSCRIPTION -> subscriptionType
+    }
+}
+
+fun DefinitionRegistry.getOperationTypes(kind: OperationKind): List<ObjectTypeDefinition> {
     return when (kind) {
         OperationKind.QUERY -> queryType
         OperationKind.MUTATION -> mutationType
@@ -28,6 +68,19 @@ fun GraphQLFieldsContainer.getFieldAt(
     return getFieldAt(pathToField, pathIndex = 0)
 }
 
+fun GraphQLFieldsContainer.getFieldsAlong(
+    pathToField: List<String>,
+): List<GraphQLFieldDefinition> {
+    var parent = this
+    return pathToField.mapIndexed { index, fieldName ->
+        val field = parent.getField(fieldName)
+        if (index != pathToField.lastIndex) {
+            parent = field.type.unwrap(all = true) as GraphQLFieldsContainer
+        }
+        field
+    }
+}
+
 private fun GraphQLFieldsContainer.getFieldAt(
     pathToField: List<String>,
     pathIndex: Int,
@@ -37,7 +90,7 @@ private fun GraphQLFieldsContainer.getFieldAt(
     return if (pathIndex == pathToField.lastIndex) {
         field
     } else {
-        val fieldOutputType = field.type as GraphQLFieldsContainer
+        val fieldOutputType = field.type.unwrap(all = true) as GraphQLFieldsContainer
         fieldOutputType.getFieldAt(pathToField, pathIndex + 1)
     }
 }
@@ -94,4 +147,50 @@ fun GraphQLType.unwrap(
         true -> GraphQLTypeUtil.unwrapAll(this)
         else -> GraphQLTypeUtil.unwrapOne(this)
     }
+}
+
+fun GraphQLType.unwrapNonNull(): GraphQLType {
+    return GraphQLTypeUtil.unwrapNonNull(this)
+}
+
+val GraphQLType.isList: Boolean get() = GraphQLTypeUtil.isList(this)
+val GraphQLType.isNonNull: Boolean get() = GraphQLTypeUtil.isNonNull(this)
+val GraphQLType.isWrapped: Boolean get() = GraphQLTypeUtil.isWrapped(this)
+val GraphQLType.isNotWrapped: Boolean get() = GraphQLTypeUtil.isNotWrapped(this)
+
+internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
+    val data: MutableJsonMap = mutableMapOf()
+    val extensions: MutableJsonMap = mutableMapOf()
+    val errors: MutableList<GraphQLError> = mutableListOf()
+
+    for (result in results) {
+        when (val resultData = result.getData<Any?>()) {
+            null -> {
+            }
+            is AnyMap -> data.hackPutAll(resultData)
+        }
+        errors.addAll(result.errors)
+        result.extensions?.asJsonMap()?.let(extensions::putAll)
+    }
+
+    return newExecutionResult()
+        .data(data.takeIf {
+            it.isNotEmpty()
+        })
+        .extensions(extensions.let {
+            @Suppress("UNCHECKED_CAST") // .extensions should take in a Map<*, *> instead of strictly Map<Any?, Any?>
+            it as Map<Any?, Any?>
+        }.takeIf {
+            it.isNotEmpty()
+        })
+        .errors(errors)
+        .build()
+}
+
+fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates {
+    return FieldCoordinates.coordinates(typeName, fieldName)
+}
+
+fun makeFieldCoordinates(parentType: GraphQLObjectType, field: GraphQLFieldDefinition): FieldCoordinates {
+    return makeFieldCoordinates(typeName = parentType.name, fieldName = field.name)
 }

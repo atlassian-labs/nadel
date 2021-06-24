@@ -1,4 +1,7 @@
 name: rename with first path element returning null
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issues: |
     service Issues {
@@ -49,6 +52,39 @@ serviceCalls:
           "data": {
             "issue": {
               "details": null
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on Issue {
+                  deep_rename__name__details: details {
+                    ... on IssueDetails {
+                      name
+                    }
+                  }
+                }
+                ... on Issue {
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "deep_rename__name__details": null,
+              "__typename__deep_rename__name": "Issue"
             }
           },
           "extensions": {}

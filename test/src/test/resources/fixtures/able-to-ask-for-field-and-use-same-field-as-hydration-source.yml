@@ -1,6 +1,9 @@
 name: able to ask for field and use same field as hydration source
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
-  Bar: |
+  Bar: |-
     service Bar {
       type Query {
         bar: Bar
@@ -12,7 +15,7 @@ overallSchema:
       }
     }
 underlyingSchema:
-  Bar: |
+  Bar: |-
     type Bar {
       barId: ID
       name: String
@@ -22,7 +25,7 @@ underlyingSchema:
       bar: Bar
       barById(id: ID): Bar
     }
-query: |
+query: |-
   query {
     bar {
       barId
@@ -92,6 +95,99 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "barId": "1"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              bar {
+                ... on Bar {
+                  barId
+                }
+                ... on Bar {
+                  hydration__nestedBar__barId: barId
+                }
+                ... on Bar {
+                  __typename__hydration__nestedBar: __typename
+                }
+                ... on Bar {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bar": {
+              "__typename__hydration__nestedBar": "Bar",
+              "barId": "1",
+              "hydration__nestedBar__barId": "1",
+              "name": "Test"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "1") {
+                ... on Bar {
+                  hydration__nestedBar__barId: barId
+                }
+                ... on Bar {
+                  __typename__hydration__nestedBar: __typename
+                }
+                ... on Bar {
+                  barId
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "__typename__hydration__nestedBar": "Bar",
+              "hydration__nestedBar__barId": "1",
+              "barId": "1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "1") {
+                ... on Bar {
+                  barId
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

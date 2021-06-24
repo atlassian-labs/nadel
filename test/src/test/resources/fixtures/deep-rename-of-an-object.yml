@@ -1,4 +1,7 @@
 name: deep rename of an object
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Issues: |
     service Issues {
@@ -82,6 +85,77 @@ serviceCalls:
                   "name": {
                     "fName": "Elizabeth",
                     "lName": "Windsor"
+                  }
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issues {
+                ... on Issue {
+                  id
+                }
+                ... on Issue {
+                  deep_rename__authorName__authorDetails: authorDetails {
+                    ... on AuthorDetail {
+                      name {
+                        ... on Name {
+                          rename__firstName__fName: fName
+                        }
+                        ... on Name {
+                          __typename__rename__firstName: __typename
+                        }
+                        ... on Name {
+                          rename__lastName__lName: lName
+                        }
+                        ... on Name {
+                          __typename__rename__lastName: __typename
+                        }
+                      }
+                    }
+                  }
+                }
+                ... on Issue {
+                  __typename__deep_rename__authorName: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "__typename__deep_rename__authorName": "Issue",
+                "id": "ISSUE-1",
+                "deep_rename__authorName__authorDetails": {
+                  "name": {
+                    "__typename__rename__firstName": "Name",
+                    "rename__lastName__lName": "Smith",
+                    "__typename__rename__lastName": "Name",
+                    "rename__firstName__fName": "George"
+                  }
+                }
+              },
+              {
+                "__typename__deep_rename__authorName": "Issue",
+                "id": "ISSUE-2",
+                "deep_rename__authorName__authorDetails": {
+                  "name": {
+                    "__typename__rename__firstName": "Name",
+                    "rename__lastName__lName": "Windsor",
+                    "__typename__rename__lastName": "Name",
+                    "rename__firstName__fName": "Elizabeth"
                   }
                 }
               }

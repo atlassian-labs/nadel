@@ -6,6 +6,7 @@ import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLTypeUtil
 
 object NFUtil {
     fun createField(
@@ -103,7 +104,7 @@ object NFUtil {
                 } else {
                     createFieldRecursively(
                         schema,
-                        parentType = fieldDef.type,
+                        parentType = GraphQLTypeUtil.unwrapAllAs(fieldDef.type),
                         queryPathToField,
                         fieldArguments,
                         fieldChildren,

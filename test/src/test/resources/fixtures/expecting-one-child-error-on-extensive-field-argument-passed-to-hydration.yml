@@ -1,4 +1,7 @@
-name: Expecting one child Error on extensive field argument passed to hydration
+name: expecting one child error on extensive field argument passed to hydration
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   TestBoard: |
     service TestBoard {
@@ -151,6 +154,123 @@ serviceCalls:
               {
                 "accountId": "3",
                 "object_identifier__UUID": "3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: TestBoard
+      request:
+        query: |
+          query {
+            ... on Query {
+              board(id: 1) {
+                ... on Board {
+                  id
+                }
+                ... on Board {
+                  rename__cardChildren__issueChildren: issueChildren {
+                    ... on Card {
+                      id
+                    }
+                    ... on Card {
+                      batch_hydration__assignee__issue: issue {
+                        ... on Issue {
+                          assignee {
+                            ... on TestUser {
+                              accountId
+                            }
+                          }
+                        }
+                      }
+                    }
+                    ... on Card {
+                      __typename__batch_hydration__assignee: __typename
+                    }
+                  }
+                }
+                ... on Board {
+                  __typename__rename__cardChildren: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "board": {
+              "__typename__rename__cardChildren": "Board",
+              "id": "1",
+              "rename__cardChildren__issueChildren": [
+                {
+                  "__typename__batch_hydration__assignee": "Card",
+                  "id": "a1",
+                  "batch_hydration__assignee__issue": {
+                    "assignee": {
+                      "accountId": "1"
+                    }
+                  }
+                },
+                {
+                  "__typename__batch_hydration__assignee": "Card",
+                  "id": "a2",
+                  "batch_hydration__assignee__issue": {
+                    "assignee": {
+                      "accountId": "2"
+                    }
+                  }
+                },
+                {
+                  "__typename__batch_hydration__assignee": "Card",
+                  "id": "a3",
+                  "batch_hydration__assignee__issue": {
+                    "assignee": {
+                      "accountId": "3"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Users
+      request:
+        query: |
+          query {
+            ... on Query {
+              users(accountIds: ["1", "2", "3"]) {
+                ... on User {
+                  accountId
+                }
+                ... on User {
+                  batch_hydration__assignee__accountId: accountId
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "users": [
+              {
+                "batch_hydration__assignee__accountId": "1",
+                "accountId": "1"
+              },
+              {
+                "batch_hydration__assignee__accountId": "2",
+                "accountId": "2"
+              },
+              {
+                "batch_hydration__assignee__accountId": "3",
+                "accountId": "3"
               }
             ]
           },

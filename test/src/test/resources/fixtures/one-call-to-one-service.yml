@@ -1,4 +1,7 @@
 name: one call to one service
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service: |
     service service {
@@ -29,6 +32,28 @@ serviceCalls:
       # language=JSON
       response: |-
         {
+          "data": {
+            "foo": null
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": null
+          },
           "extensions": {}
         }
 # language=JSON

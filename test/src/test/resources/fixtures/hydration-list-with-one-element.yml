@@ -1,4 +1,7 @@
 name: hydration list with one element
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service2: |
     service service2 {
@@ -91,6 +94,65 @@ serviceCalls:
             "barById": {
               "id": "barId1",
               "name": "Bar1"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  hydration__bar__barId: barId
+                }
+                ... on Foo {
+                  __typename__hydration__bar: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "hydration__bar__barId": [
+                "barId1"
+              ],
+              "__typename__hydration__bar": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "barId1") {
+                ... on Bar {
+                  id
+                }
+                ... on Bar {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "name": "Bar1",
+              "id": "barId1"
             }
           },
           "extensions": {}

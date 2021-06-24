@@ -2,32 +2,41 @@ package graphql.nadel.enginekt.blueprint
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInput
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLFieldDefinition
 
 sealed class NadelFieldInstruction {
     abstract val location: FieldCoordinates
 }
 
 interface NadelGenericHydrationInstruction {
+    val hydratedFieldDef: GraphQLFieldDefinition
     val actorService: Service
     val queryPathToActorField: QueryPath
-    val actorInputValues: List<NadelHydrationActorInput>
+    val actorFieldDef: GraphQLFieldDefinition
+    val actorInputValueDefs: List<NadelHydrationActorInputDef>
 }
 
 data class NadelHydrationFieldInstruction(
     override val location: FieldCoordinates,
+    override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
     override val queryPathToActorField: QueryPath,
-    override val actorInputValues: List<NadelHydrationActorInput>,
+    override val actorFieldDef: GraphQLFieldDefinition,
+    override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
+    val hydrationStrategy: NadelHydrationStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
 data class NadelBatchHydrationFieldInstruction(
     override val location: FieldCoordinates,
+    override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
     override val queryPathToActorField: QueryPath,
-    override val actorInputValues: List<NadelHydrationActorInput>,
+    override val actorFieldDef: GraphQLFieldDefinition,
+    override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction

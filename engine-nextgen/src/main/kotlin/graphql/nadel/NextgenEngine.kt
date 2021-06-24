@@ -2,7 +2,7 @@ package graphql.nadel
 
 import graphql.ExecutionInput
 import graphql.ExecutionResult
-import graphql.ExecutionResultImpl
+import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.language.NodeUtil
@@ -17,6 +17,7 @@ import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
+import graphql.nadel.enginekt.util.mergeResults
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.util.ErrorUtil
@@ -32,13 +33,20 @@ import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
-    private val overallSchema = nadel.overallSchema
     private val services = nadel.services.strictAssociateBy { it.name }
     private val fieldInfos = NadelFieldInfos.create(nadel.services)
-    private val executionBlueprint = NadelExecutionBlueprintFactory.create(overallSchema, nadel.services)
-    private val executionPlanner = NadelExecutionPlanFactory.create(executionBlueprint, nadel.overallSchema, this)
-    private val queryTransformer = NadelQueryTransformer.create(nadel.overallSchema)
-    private val resultTransformer = NadelResultTransformer(nadel.overallSchema)
+    private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
+        overallSchema = nadel.overallSchema,
+        services = nadel.services,
+    )
+    private val executionPlanner = NadelExecutionPlanFactory.create(
+        executionBlueprint = overallExecutionBlueprint,
+        engine = this,
+    )
+    private val queryTransformer = NadelQueryTransformer.create(
+        executionBlueprint = overallExecutionBlueprint,
+    )
+    private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
 
     override fun execute(
@@ -58,7 +66,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         instrumentationState: InstrumentationState?,
     ): ExecutionResult {
         val query = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
-            overallSchema,
+            overallExecutionBlueprint.schema,
             queryDocument,
             executionInput.operationName,
             executionInput.variables,
@@ -69,15 +77,15 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
         val operationKind = getOperationKind(queryDocument, executionInput.operationName)
 
-        val results = query.topLevelFields.map { topLevelField ->
-            coroutineScope {
+        val results = coroutineScope {
+            query.topLevelFields.map { topLevelField ->
                 async {
                     executeTopLevelField(topLevelField, operationKind, executionInput)
                 }
             }
         }.awaitAll()
 
-        return mergeTrees(results)
+        return mergeResults(results)
     }
 
     private suspend fun executeTopLevelField(
@@ -93,11 +101,11 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             executionContext,
             service,
             topLevelField,
-            executionPlan
+            executionPlan,
         )
         val transformedQuery = queryTransform.result.single()
         val result = executeService(service, transformedQuery, executionInput)
-        val executionResult = resultTransformer.transform(
+        val transformedResult = resultTransformer.transform(
             executionContext = executionContext,
             executionPlan = executionPlan,
             artificialFields = queryTransform.artificialFields,
@@ -107,10 +115,10 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         )
 
         @Suppress("UNCHECKED_CAST")
-        return ExecutionResultImpl.newExecutionResult()
-            .data(executionResult.data)
-            .errors(ErrorUtil.createGraphQlErrorsFromRawErrors(executionResult.errors))
-            .extensions(executionResult.extensions as Map<Any, Any>)
+        return newExecutionResult()
+            .data(transformedResult.data)
+            .errors(ErrorUtil.createGraphQlErrorsFromRawErrors(transformedResult.errors))
+            .extensions(transformedResult.extensions as Map<Any, Any>)
             .build()
     }
 
@@ -183,7 +191,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         transformedQuery: NormalizedField,
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
-        val document = compileToDocument(listOf(transformedQuery))
+        val document: Document = compileToDocument(listOf(transformedQuery))
 
         return service.serviceExecution.execute(
             newServiceExecutionParameters()
@@ -203,11 +211,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private fun getOperationKind(queryDocument: Document, operationName: String?): OperationKind {
         val operation = NodeUtil.getOperation(queryDocument, operationName)
         return OperationKind.fromAst(operation.operationDefinition.operation)
-    }
-
-    private fun mergeTrees(results: List<ExecutionResult>): ExecutionResult {
-        // TODO: merge these properly
-        return results.first()
     }
 
     companion object {

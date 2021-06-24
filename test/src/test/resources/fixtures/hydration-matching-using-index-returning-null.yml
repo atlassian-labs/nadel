@@ -1,4 +1,7 @@
 name: hydration matching using index returning null
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {
@@ -106,6 +109,81 @@ serviceCalls:
               null,
               {
                 "id": "USER-2",
+                "name": "Name 2"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issues {
+                ... on Issue {
+                  id
+                }
+                ... on Issue {
+                  batch_hydration__authors__authorIds: authorIds
+                }
+                ... on Issue {
+                  __typename__batch_hydration__authors: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__authorIds": [
+                  "1"
+                ],
+                "id": "ISSUE-1"
+              },
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__authorIds": [
+                  "1",
+                  "2"
+                ],
+                "id": "ISSUE-2"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            ... on Query {
+              usersByIds(ids: ["1", "1", "2"]) {
+                ... on User {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
+              {
+                "name": "Name"
+              },
+              null,
+              {
                 "name": "Name 2"
               }
             ]

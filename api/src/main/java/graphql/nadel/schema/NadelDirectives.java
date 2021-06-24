@@ -132,6 +132,13 @@ public class NadelDirectives {
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
+                                .name("batched")
+                                .description(createDescription("Is querying batched"))
+                                .type(typeOf("Boolean"))
+                                .defaultValue(BooleanValue.newBooleanValue(false).build())
+                                .build())
+                .inputValueDefinition(
+                        newInputValueDefinition()
                                 .name("batchSize")
                                 .description(createDescription("The batch size"))
                                 .type(typeOf("Int"))
@@ -168,6 +175,7 @@ public class NadelDirectives {
         String field = getDirectiveValue(directive, "field", String.class);
         String objectIdentifier = getDirectiveValue(directive, "identifiedBy", String.class);
         Boolean objectIndexed = getDirectiveValue(directive, "indexed", Boolean.class, false);
+        Boolean batched = getDirectiveValue(directive, "batched", Boolean.class, false);
         if (objectIndexed) {
             objectIdentifier = null; // we cant have both but it has a default
         }
@@ -184,13 +192,16 @@ public class NadelDirectives {
             topLevelFieldName = fieldNames.get(1);
         }
 
-        return new UnderlyingServiceHydration(emptySrc(), emptyList(),
+        return new UnderlyingServiceHydration(
+                emptySrc(),
+                emptyList(),
                 service,
                 topLevelFieldName,
                 syntheticField,
                 arguments,
                 objectIdentifier,
                 objectIndexed,
+                batched,
                 batchSize,
                 emptyMap()
         );

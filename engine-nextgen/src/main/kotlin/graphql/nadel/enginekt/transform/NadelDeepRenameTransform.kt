@@ -4,19 +4,18 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
-import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
+import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
-import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.artificial.AliasHelper
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
+import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.NormalizedField
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLSchema
 
 /**
  * A deep rename is a rename in where the field being "renamed" is not on the same level
@@ -77,8 +76,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
-        executionBlueprint: NadelExecutionBlueprint,
+        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: NormalizedField,
@@ -149,9 +147,8 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation, // this has an underlying schema
+        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallSchema: GraphQLSchema,
-        executionPlan: NadelExecutionPlan,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult {
@@ -161,7 +158,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                 makeDeepField(
                     state,
                     transformer,
-                    executionPlan,
+                    executionBlueprint,
                     service,
                     field,
                     coordinates,
@@ -209,13 +206,13 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     private suspend fun makeDeepField(
         state: State,
         transformer: NadelQueryTransformer.Continuation,
-        executionPlan: NadelExecutionPlan,
+        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: NormalizedField,
         fieldCoordinates: FieldCoordinates,
         deepRename: NadelDeepRenameFieldInstruction,
     ): NormalizedField {
-        val underlyingTypeName = executionPlan.getUnderlyingTypeName(fieldCoordinates.typeName)
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(fieldCoordinates.typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
@@ -259,35 +256,42 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
-        executionPlan: NadelExecutionPlan,
+        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: NormalizedField, // Overall field
-        underlyingParentField: NormalizedField,
+        overallField: NormalizedField,
+        underlyingParentField: NormalizedField?, // Overall field
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryPath = underlyingParentField.queryPath,
+            queryPath = underlyingParentField?.queryPath ?: QueryPath.root,
             flatten = true,
         )
 
         return parentNodes.mapNotNull instruction@{ parentNode ->
             val instruction = state.instructions.getInstructionForNode(
-                executionPlan = executionPlan,
+                executionBlueprint = executionBlueprint,
+                service = service,
                 aliasHelper = state.aliasHelper,
                 parentNode = parentNode,
             ) ?: return@instruction null
 
             val queryPathForSourceField = state.aliasHelper.getQueryPath(instruction.queryPathToField)
             val sourceFieldNode = JsonNodeExtractor.getNodesAt(parentNode, queryPathForSourceField)
-                .emptyOrSingle() ?: return@instruction null
+                .emptyOrSingle()
 
-            NadelResultInstruction.Copy(
-                subjectPath = sourceFieldNode.resultPath,
-                destinationPath = parentNode.resultPath + overallField.resultKey,
-            )
+            val destinationPath = parentNode.resultPath + overallField.resultKey
+            when (sourceFieldNode) {
+                null -> NadelResultInstruction.Set(
+                    subjectPath = destinationPath,
+                    newValue = null,
+                )
+                else -> NadelResultInstruction.Copy(
+                    subjectPath = sourceFieldNode.resultPath,
+                    destinationPath = destinationPath,
+                )
+            }
         }
     }
 }

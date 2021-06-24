@@ -1,4 +1,7 @@
 name: same source for 2 hydrations
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {
@@ -66,7 +69,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -86,7 +88,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -106,6 +107,90 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "detail": {
+              "name": "apple"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  hydration__issue__fooId: fooId
+                }
+                ... on Foo {
+                  __typename__hydration__issue: __typename
+                }
+                ... on Foo {
+                  hydration__detail__fooId: fooId
+                }
+                ... on Foo {
+                  __typename__hydration__detail: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "hydration__detail__fooId": "ID",
+              "hydration__issue__fooId": "ID",
+              "__typename__hydration__issue": "Foo",
+              "__typename__hydration__detail": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue(issueId: "ID") {
+                ... on Issue {
+                  field
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "field": "field_name"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              detail(detailId: "ID") {
+                ... on Detail {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

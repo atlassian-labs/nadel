@@ -5,7 +5,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
-import graphql.nadel.enginekt.plan.NadelExecutionPlan
+import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.NormalizedField
@@ -26,7 +26,6 @@ interface NadelTransform<State : Any> {
      * e.g. the names of fields that will be added etc. The implementation of [State] is completely up
      * to you. You can make it mutable if that makes your life easier etc.
      *
-     * @param userContext the context passed by the user into [graphql.nadel.NadelExecutionInput.context]
      * @param overallSchema the overall [GraphQLSchema] of the of the Nadel instance being operated on
      * @param executionBlueprint the [NadelExecutionBlueprint] of the Nadel instance being operated on
      * @param service the [Service] the [overallField] belongs to
@@ -36,8 +35,7 @@ interface NadelTransform<State : Any> {
      */
     suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
-        executionBlueprint: NadelExecutionBlueprint,
+        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: NormalizedField,
@@ -53,9 +51,8 @@ interface NadelTransform<State : Any> {
     suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer.Continuation,
+        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallSchema: GraphQLSchema,
-        executionPlan: NadelExecutionPlan,
         field: NormalizedField,
         state: State,
     ): NadelTransformFieldResult
@@ -68,11 +65,10 @@ interface NadelTransform<State : Any> {
      */
     suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        overallSchema: GraphQLSchema,
-        executionPlan: NadelExecutionPlan,
+        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: NormalizedField,
-        underlyingParentField: NormalizedField,
+        underlyingParentField: NormalizedField?,
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction>

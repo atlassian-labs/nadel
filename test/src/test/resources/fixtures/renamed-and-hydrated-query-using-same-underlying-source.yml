@@ -1,4 +1,7 @@
 name: renamed and hydrated query using same underlying source
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Foo: |
     service Foo {
@@ -63,7 +66,6 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
-      # language=JSON
       response: |-
         {
           "data": {
@@ -86,6 +88,78 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "detail": {
+              "name": "apple"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  deep_rename__renamedField__issue: issue {
+                    ... on Issue {
+                      field
+                    }
+                  }
+                }
+                ... on Foo {
+                  __typename__deep_rename__renamedField: __typename
+                }
+                ... on Foo {
+                  hydration__details__issue: issue {
+                    ... on Issue {
+                      fooId
+                    }
+                  }
+                }
+                ... on Foo {
+                  __typename__hydration__details: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "__typename__deep_rename__renamedField": "Foo",
+              "__typename__hydration__details": "Foo",
+              "hydration__details__issue": {
+                "fooId": "ID"
+              },
+              "deep_rename__renamedField__issue": {
+                "field": "field"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              detail(detailIds: "ID") {
+                ... on Detail {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {
