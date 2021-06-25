@@ -10,6 +10,7 @@ import graphql.execution.ExecutionStepInfoFactory;
 import graphql.execution.MergedField;
 import graphql.execution.ResultPath;
 import graphql.execution.nextgen.FieldSubSelection;
+import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.InlineFragment;
 import graphql.language.ObjectTypeDefinition;
@@ -228,7 +229,7 @@ public class NadelExecutionStrategy {
 
             Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(mergedField, namespacedObjectType, executionCtx,
                     field -> secondLevelFieldDefinitionsForService.stream()
-                            .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName())));
+                            .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName()) || field.getName().equals(Introspection.TypeNameMetaFieldDef.getName())));
             maybeNewMergedField.ifPresent(newMergedField -> {
                 ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
                 serviceExecutions.add(getOneServiceExecution(executionCtx, newFieldExecutionStepInfo, service));
