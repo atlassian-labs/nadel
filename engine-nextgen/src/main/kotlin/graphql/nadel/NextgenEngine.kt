@@ -11,7 +11,7 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
-import graphql.nadel.enginekt.schema.NadelFieldInfos
+import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
@@ -33,8 +33,7 @@ import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
-    private val services = nadel.services.strictAssociateBy { it.name }
-    private val fieldInfos = NadelFieldInfos.create(nadel.services)
+    private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         overallSchema = nadel.overallSchema,
         services = nadel.services,
@@ -48,6 +47,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
+    private val fieldToService = NadelFieldToService(overallExecutionBlueprint)
 
     override fun execute(
         executionInput: ExecutionInput,
@@ -75,14 +75,13 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         // TODO: determine what to do with NQ
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
 
-        val operationKind = getOperationKind(queryDocument, executionInput.operationName)
-
         val results = coroutineScope {
-            query.topLevelFields.map { topLevelField ->
-                async {
-                    executeTopLevelField(topLevelField, operationKind, executionInput)
+            fieldToService.getServicesForTopLevelFields(query)
+                .map { (field, service) ->
+                    async {
+                        executeTopLevelField(field, service, executionInput)
+                    }
                 }
-            }
         }.awaitAll()
 
         return mergeResults(results)
@@ -90,11 +89,9 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
     private suspend fun executeTopLevelField(
         topLevelField: NormalizedField,
-        operationKind: OperationKind,
-        executionInput: ExecutionInput,
+        service: Service,
+        executionInput: ExecutionInput
     ): ExecutionResult {
-        val service = getService(topLevelField, operationKind)
-
         val executionContext = NadelExecutionContext(executionInput)
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
         val queryTransform = queryTransformer.transformQuery(
@@ -120,16 +117,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             .errors(ErrorUtil.createGraphQlErrorsFromRawErrors(transformedResult.errors))
             .extensions(transformedResult.extensions as Map<Any, Any>)
             .build()
-    }
-
-    private fun getService(
-        topLevelField: NormalizedField,
-        operationKind: OperationKind,
-    ): Service {
-        // TODO: we need to support different services on the second level
-        val topLevelFieldInfo = fieldInfos.getFieldInfo(operationKind, topLevelField.name)
-            ?: error("Unknown top level field ${operationKind.displayName}.${topLevelField.name}")
-        return topLevelFieldInfo.service
     }
 
     internal suspend fun executeHydration(

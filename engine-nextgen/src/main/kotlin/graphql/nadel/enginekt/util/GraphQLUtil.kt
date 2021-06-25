@@ -164,10 +164,9 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
     val errors: MutableList<GraphQLError> = mutableListOf()
 
     for (result in results) {
-        when (val resultData = result.getData<Any?>()) {
-            null -> {
-            }
-            is AnyMap -> data.hackPutAll(resultData)
+        val resultData = result.getData<JsonMap?>()
+        if (resultData != null) {
+            updateOverallResultAndMergeSameNameTopLevelFields(data, resultData)
         }
         errors.addAll(result.errors)
         result.extensions?.asJsonMap()?.let(extensions::putAll)
@@ -185,6 +184,19 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
         })
         .errors(errors)
         .build()
+}
+
+internal fun updateOverallResultAndMergeSameNameTopLevelFields(overallResultMap: MutableJsonMap, oneResultMap: JsonMap) {
+    for ((topLevelFieldName, newTopLevelFieldChildren) in oneResultMap) {
+        if (overallResultMap.containsKey(topLevelFieldName)) {
+            val existingTopLevelFieldMap = overallResultMap[topLevelFieldName]
+            if (newTopLevelFieldChildren is AnyMap && existingTopLevelFieldMap is AnyMutableMap) {
+                (existingTopLevelFieldMap.asMutableJsonMap()).putAll(newTopLevelFieldChildren.asJsonMap())
+            }
+        } else {
+            overallResultMap[topLevelFieldName] = newTopLevelFieldChildren
+        }
+    }
 }
 
 fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates {

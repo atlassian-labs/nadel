@@ -1,6 +1,6 @@
 name: query with 2 namespaced fields that have matching subfields
 enabled:
-  nextgen: false
+  nextgen: true
   current: true
 overallSchema:
   Issues: |
@@ -156,6 +156,97 @@ serviceCalls:
             page {
               getIssue {
                 pageText
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueSearch
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "page": {
+              "getIssue": {
+                "pageText": "Bar"
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  getIssue {
+                    ... on Issue {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "getIssue": {
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: IssueSearch
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  search {
+                    ... on SearchResult {
+                      count
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueSearch
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "search": {
+                "count": 100
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Pages
+      request:
+        query: |
+          query {
+            ... on Query {
+              page {
+                ... on PagesQuery {
+                  getIssue {
+                    ... on IssuePage {
+                      pageText
+                    }
+                  }
+                }
               }
             }
           }

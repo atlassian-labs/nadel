@@ -1,6 +1,6 @@
 name: query with two services sharing a namespaced field
 enabled:
-  nextgen: false
+  nextgen: true
   current: true
 overallSchema:
   Issues: |
@@ -99,6 +99,67 @@ serviceCalls:
             issue {
               search {
                 count
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueSearch
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "search": {
+                "count": 100
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  getIssue {
+                    ... on Issue {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "getIssue": {
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: IssueSearch
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  search {
+                    ... on SearchResult {
+                      count
+                    }
+                  }
+                }
               }
             }
           }
