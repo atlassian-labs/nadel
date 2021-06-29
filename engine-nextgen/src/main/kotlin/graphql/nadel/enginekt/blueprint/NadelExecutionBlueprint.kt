@@ -48,7 +48,7 @@ data class NadelOverallExecutionBlueprint(
         }
     }
 
-    fun getService(field: NormalizedField): Service? {
+    fun getService(field: ExecutableNormalizedField): Service? {
         val typeName = field.objectTypeNames.single()
         if (field.name == Introspection.TypeNameMetaFieldDef.name) {
             return getService(field.parent)

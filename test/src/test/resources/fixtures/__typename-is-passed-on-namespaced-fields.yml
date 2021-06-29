@@ -36,12 +36,15 @@ query: |
   {
     issue {
       __typename
+      aliasTypename: __typename
       getIssue {
+        __typename
+        aliasTypename: __typename
         text
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
   current:
     - serviceName: Issues
@@ -50,12 +53,15 @@ serviceCalls:
           query nadel_2_Issues {
             issue {
               __typename
+              aliasTypename: __typename
               getIssue {
+                __typename
+                aliasTypename: __typename
                 text
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_Issues
       # language=JSON
       response: |-
@@ -63,8 +69,11 @@ serviceCalls:
           "data": {
             "issue": {
               "__typename": "IssueQuery",
+              "aliasTypename": "IssueQuery",
               "getIssue": {
-                "text": "Foo"
+                "text": "Foo",
+                "__typename": "Issue",
+                "aliasTypename": "Issue"
               }
             }
           },
@@ -81,7 +90,16 @@ serviceCalls:
                   __typename
                 }
                 ... on IssueQuery {
+                  aliasTypename: __typename
+                }
+                ... on IssueQuery {
                   getIssue {
+                    ... on Issue {
+                      __typename
+                    }
+                    ... on Issue {
+                      aliasTypename: __typename
+                    }
                     ... on Issue {
                       text
                     }
@@ -98,8 +116,11 @@ serviceCalls:
           "data": {
             "issue": {
               "__typename": "IssueQuery",
+              "aliasTypename": "IssueQuery",
               "getIssue": {
-                "text": "Foo"
+                "text": "Foo",
+                "__typename": "Issue",
+                "aliasTypename": "Issue"
               }
             }
           },
@@ -111,8 +132,11 @@ response: |-
     "data": {
       "issue": {
         "__typename": "IssueQuery",
+        "aliasTypename": "IssueQuery",
         "getIssue": {
-          "text": "Foo"
+          "text": "Foo",
+          "__typename": "Issue",
+          "aliasTypename": "Issue"
         }
       }
     },
