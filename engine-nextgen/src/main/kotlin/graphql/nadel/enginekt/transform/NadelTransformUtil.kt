@@ -9,8 +9,8 @@ import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.getField
 import graphql.nadel.enginekt.util.makeFieldCoordinates
-import graphql.normalized.NormalizedField
-import graphql.normalized.NormalizedField.newNormalizedField
+import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 
@@ -37,7 +37,7 @@ object NadelTransformUtil {
     fun makeTypeNameField(
         aliasHelper: AliasHelper,
         objectTypeNames: List<String>,
-    ): NormalizedField {
+    ): ExecutableNormalizedField {
         return newNormalizedField()
             .alias(aliasHelper.typeNameResultKey)
             .fieldName(TypeNameMetaFieldDef.name)
@@ -54,7 +54,7 @@ object NadelTransformUtil {
      */
     fun getOverallFieldDef(
         // Subject arguments
-        overallField: NormalizedField,
+        overallField: ExecutableNormalizedField,
         parentNode: JsonNode,
         service: Service,
         // Supplementary arguments

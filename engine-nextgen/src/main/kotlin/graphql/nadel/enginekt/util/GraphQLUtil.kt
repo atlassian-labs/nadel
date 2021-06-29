@@ -11,7 +11,7 @@ import graphql.language.ObjectTypeDefinition
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.enginekt.transform.query.QueryPath
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -95,14 +95,14 @@ private fun GraphQLFieldsContainer.getFieldAt(
     }
 }
 
-fun NormalizedField.toBuilder(): NormalizedField.Builder {
-    var builder: NormalizedField.Builder? = null
+fun ExecutableNormalizedField.toBuilder(): ExecutableNormalizedField.Builder {
+    var builder: ExecutableNormalizedField.Builder? = null
     transform { builder = it }
     return builder!!
 }
 
-fun NormalizedField.copyWithChildren(children: List<NormalizedField>): NormalizedField {
-    fun fixParents(old: NormalizedField?, new: NormalizedField?) {
+fun ExecutableNormalizedField.copyWithChildren(children: List<ExecutableNormalizedField>): ExecutableNormalizedField {
+    fun fixParents(old: ExecutableNormalizedField?, new: ExecutableNormalizedField?) {
         if (old == null || new == null || new.parent == null) {
             return
         }
@@ -126,13 +126,13 @@ fun NormalizedField.copyWithChildren(children: List<NormalizedField>): Normalize
         }
 }
 
-val NormalizedField.queryPath: QueryPath get() = QueryPath(listOfResultKeys)
+val ExecutableNormalizedField.queryPath: QueryPath get() = QueryPath(listOfResultKeys)
 
 inline fun <reified T : AnyAstDefinition> Document.getDefinitionsOfType(): List<T> {
     return getDefinitionsOfType(T::class.java)
 }
 
-fun deepClone(fields: List<NormalizedField>): List<NormalizedField> {
+fun deepClone(fields: List<ExecutableNormalizedField>): List<ExecutableNormalizedField> {
     return fields.map {
         it.toBuilder()
             .children(deepClone(fields = it.children))

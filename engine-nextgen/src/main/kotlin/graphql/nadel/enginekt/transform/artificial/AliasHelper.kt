@@ -3,7 +3,7 @@ package graphql.nadel.enginekt.transform.artificial
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.util.toBuilder
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 
 /**
  * Artificial fields are fields that do not exist in the original query.
@@ -47,7 +47,7 @@ class AliasHelper private constructor(private val alias: String) {
         TypeNameMetaFieldDef.name + "__" + alias
     }
 
-    fun getResultKey(field: NormalizedField): String {
+    fun getResultKey(field: ExecutableNormalizedField): String {
         return getResultKey(fieldName = field.name)
     }
 
@@ -66,7 +66,7 @@ class AliasHelper private constructor(private val alias: String) {
         }
     }
 
-    fun toArtificial(field: NormalizedField): NormalizedField {
+    fun toArtificial(field: ExecutableNormalizedField): ExecutableNormalizedField {
         // The first field must be aliased as it is an artificial field
         return field.toBuilder()
             .alias(getResultKey(field.fieldName))
@@ -74,7 +74,7 @@ class AliasHelper private constructor(private val alias: String) {
     }
 
     companion object {
-        fun forField(tag: String, field: NormalizedField): AliasHelper {
+        fun forField(tag: String, field: ExecutableNormalizedField): AliasHelper {
             // TODO: detect when not in test environment and provide UUID or similar
             return AliasHelper("${tag}__${field.name}")
         }

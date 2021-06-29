@@ -10,7 +10,7 @@ import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameResultTransform.State> {
     data class State(
@@ -22,7 +22,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: NormalizedField,
+        overallField: ExecutableNormalizedField,
     ): State? {
         return if (overallField.fieldName == Introspection.TypeNameMetaFieldDef.name) {
             State(
@@ -38,7 +38,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         transformer: NadelQueryTransformer.Continuation,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: NormalizedField,
+        field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
@@ -48,8 +48,8 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: NormalizedField,
-        underlyingParentField: NormalizedField?,
+        overallField: ExecutableNormalizedField,
+        underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {
