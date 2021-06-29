@@ -77,8 +77,8 @@ serviceCalls:
       request:
         query: |
           query nadel_2_RepoService {
-            node(id:"pull-request:id-123") {
-              type_hint_typename__UUID:__typename
+            node(id: "pull-request:id-123") {
+              type_hint_typename__UUID: __typename
               ... on PullRequest {
                 id
               }

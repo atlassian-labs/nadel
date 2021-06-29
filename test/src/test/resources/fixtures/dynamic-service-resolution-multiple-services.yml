@@ -57,18 +57,18 @@ underlyingSchema:
     }
 query: |
   {
-      pr:node(id: "pull-request:id-123") {
-         ... on PullRequest {
-              id
-              description
-         }
+    pr: node(id: "pull-request:id-123") {
+      ... on PullRequest {
+        id
+          description
       }
-      issue:node(id: "issue/id-123") {
-         ... on Issue {
-              id
-              issueKey
-         }
+    }
+    issue: node(id: "issue/id-123") {
+      ... on Issue {
+        id
+        issueKey
       }
+    }
   }
 variables: {}
 serviceCalls:
@@ -77,8 +77,8 @@ serviceCalls:
       request:
         query: |
           query nadel_2_RepoService {
-            pr:node(id:"pull-request:id-123") {
-              type_hint_typename__UUID:__typename
+            pr: node(id: "pull-request:id-123") {
+              type_hint_typename__UUID: __typename
               ... on PullRequest {
                 id
               }
@@ -104,8 +104,8 @@ serviceCalls:
       request:
         query: |
           query nadel_2_IssueService {
-            issue:node(id:"issue/id-123") {
-              type_hint_typename__UUID:__typename
+            issue: node(id: "issue/id-123") {
+              type_hint_typename__UUID: __typename
               ... on Issue {
                 id
               }

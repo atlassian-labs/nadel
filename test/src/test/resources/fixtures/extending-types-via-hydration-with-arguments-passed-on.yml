@@ -8,7 +8,7 @@ overallSchema:
       type Query {
         issue: Issue
       }
-      type Issue  {
+      type Issue {
         id: ID
       }
     }
@@ -17,7 +17,7 @@ overallSchema:
       type Query {
         association(id: ID, filter: Filter): Association
       }
-      input Filter  {
+      input Filter {
         name: String
       }
       type Association {

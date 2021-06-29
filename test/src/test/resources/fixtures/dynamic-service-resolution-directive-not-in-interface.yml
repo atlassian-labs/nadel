@@ -14,21 +14,21 @@ overallSchema:
       }
     }
 underlyingSchema:
-  RepoService: |
+  RepoService: |-
     type Query {
-        pullRequest(id: ID): PullRequest
+      pullRequest(id: ID): PullRequest
     }
 
     type PullRequest {
-        id: ID!
-        description: String
+      id: ID!
+      description: String
     }
-query: |
+query: |-
   {
-      pullRequest(id: "pull-request:id-123") {
-        id
-        description
-      }
+    pullRequest(id: "pull-request:id-123") {
+      id
+      description
+    }
   }
 variables: {}
 serviceCalls:
@@ -39,7 +39,7 @@ serviceCalls:
         variables: {}
         operationName:
       # language=JSON
-      response: |
+      response: |-
 # language=JSON
 response: null
 exception:

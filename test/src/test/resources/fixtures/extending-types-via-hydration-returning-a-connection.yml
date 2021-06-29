@@ -11,7 +11,7 @@ overallSchema:
       type Synth {
         issue: Issue
       }
-      type Issue  {
+      type Issue {
         id: ID
       }
     }
@@ -23,7 +23,7 @@ overallSchema:
       type AssociationConnection {
         nodes: [Association]
       }
-      input Filter  {
+      input Filter {
         name: String
       }
       type Association {

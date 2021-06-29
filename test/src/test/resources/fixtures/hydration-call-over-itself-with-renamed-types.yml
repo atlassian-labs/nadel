@@ -11,7 +11,7 @@ overallSchema:
       type Testing {
         movies: [TestingMovie]
       }
-      type TestingCharacter => renamed from Character  {
+      type TestingCharacter => renamed from Character {
         id: ID!
         name: String
       }
