@@ -45,7 +45,9 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "issue": {}
+            "issue": {
+              "id": null
+            }
           },
           "extensions": {}
         }

@@ -49,7 +49,7 @@ underlyingSchema:
       foo(id: ID): Foo
     }
 query: |
-  query ($var: ID) {
+  query($var: ID) {
     foo(id: $var) {
       bar {
         id
