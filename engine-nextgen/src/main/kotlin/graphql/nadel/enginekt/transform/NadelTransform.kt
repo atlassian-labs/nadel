@@ -8,7 +8,7 @@ import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLSchema
 
 internal typealias AnyNadelTransform = NadelTransform<Any>
@@ -29,7 +29,7 @@ interface NadelTransform<State : Any> {
      * @param overallSchema the overall [GraphQLSchema] of the of the Nadel instance being operated on
      * @param executionBlueprint the [NadelExecutionBlueprint] of the Nadel instance being operated on
      * @param service the [Service] the [overallField] belongs to
-     * @param overallField the [NormalizedField] in question, we are asking whether it [isApplicable] for transforms
+     * @param overallField the [ExecutableNormalizedField] in question, we are asking whether it [isApplicable] for transforms
      *
      * @return null if the [NadelTransform] should not run, non-null [State] otherwise
      */
@@ -38,7 +38,7 @@ interface NadelTransform<State : Any> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: NormalizedField,
+        overallField: ExecutableNormalizedField,
     ): State?
 
     /**
@@ -53,7 +53,7 @@ interface NadelTransform<State : Any> {
         transformer: NadelQueryTransformer.Continuation,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: NormalizedField,
+        field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult
 
@@ -67,8 +67,8 @@ interface NadelTransform<State : Any> {
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: NormalizedField,
-        underlyingParentField: NormalizedField?,
+        overallField: ExecutableNormalizedField,
+        underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction>
@@ -80,7 +80,7 @@ data class NadelTransformFieldResult(
      *
      * Set to null if you want to delete the field
      */
-    val newField: NormalizedField?,
+    val newField: ExecutableNormalizedField?,
     /**
      * Any additional artificial fields you want to add to the query for
      * transformation purposes.
@@ -89,13 +89,13 @@ data class NadelTransformFieldResult(
      * will be automatically removed by Nadel as GraphQL only allows for
      * fields specified by the incoming query to be in the result.
      */
-    val artificialFields: List<NormalizedField> = emptyList(),
+    val artificialFields: List<ExecutableNormalizedField> = emptyList(),
 ) {
     companion object {
         /**
          * Idiomatic helper for saying you didn't modify the field.
          */
-        fun unmodified(field: NormalizedField): NadelTransformFieldResult {
+        fun unmodified(field: ExecutableNormalizedField): NadelTransformFieldResult {
             return NadelTransformFieldResult(newField = field)
         }
     }

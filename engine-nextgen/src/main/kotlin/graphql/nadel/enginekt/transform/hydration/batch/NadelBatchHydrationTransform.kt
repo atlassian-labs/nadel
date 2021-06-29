@@ -18,7 +18,7 @@ import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 
 internal class NadelBatchHydrationTransform(
@@ -29,7 +29,7 @@ internal class NadelBatchHydrationTransform(
     data class State(
         val instructions: Map<FieldCoordinates, NadelBatchHydrationFieldInstruction>,
         val executionContext: NadelExecutionContext,
-        val hydratedField: NormalizedField,
+        val hydratedField: ExecutableNormalizedField,
         val hydratedFieldService: Service,
         val aliasHelper: AliasHelper,
     )
@@ -39,7 +39,7 @@ internal class NadelBatchHydrationTransform(
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: NormalizedField,
+        overallField: ExecutableNormalizedField,
     ): State? {
         val instructions = executionBlueprint.fieldInstructions
             .getInstructionsOfTypeForField<NadelBatchHydrationFieldInstruction>(overallField)
@@ -62,7 +62,7 @@ internal class NadelBatchHydrationTransform(
         transformer: NadelQueryTransformer.Continuation,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: NormalizedField,
+        field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
@@ -83,8 +83,8 @@ internal class NadelBatchHydrationTransform(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: NormalizedField,
-        underlyingParentField: NormalizedField?,
+        overallField: ExecutableNormalizedField,
+        underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {
@@ -97,7 +97,7 @@ internal class NadelBatchHydrationTransform(
         return hydrator.hydrate(state, executionBlueprint, parentNodes)
     }
 
-    private fun makeTypeNameField(state: State): NormalizedField {
+    private fun makeTypeNameField(state: State): ExecutableNormalizedField {
         return makeTypeNameField(
             aliasHelper = state.aliasHelper,
             objectTypeNames = state.instructions.keys.map { it.typeName },

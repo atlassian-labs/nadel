@@ -13,7 +13,7 @@ import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.deepClone
 import graphql.nadel.enginekt.util.unwrap
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLInterfaceType
@@ -24,9 +24,9 @@ internal object NadelHydrationFieldsBuilder {
     fun makeActorQueries(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: AliasHelper,
-        hydratedField: NormalizedField,
+        hydratedField: ExecutableNormalizedField,
         parentNode: JsonNode,
-    ): List<NormalizedField> {
+    ): List<ExecutableNormalizedField> {
         return NadelHydrationInputBuilder.getInputValues(
             instruction = instruction,
             aliasHelper = aliasHelper,
@@ -44,9 +44,9 @@ internal object NadelHydrationFieldsBuilder {
     fun makeBatchActorQueries(
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: AliasHelper,
-        hydratedField: NormalizedField,
+        hydratedField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
-    ): List<NormalizedField> {
+    ): List<ExecutableNormalizedField> {
         val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
             instruction = instruction,
             aliasHelper = aliasHelper,
@@ -76,7 +76,7 @@ internal object NadelHydrationFieldsBuilder {
         aliasHelper: AliasHelper,
         fieldCoordinates: FieldCoordinates,
         instruction: NadelGenericHydrationInstruction,
-    ): List<NormalizedField> {
+    ): List<ExecutableNormalizedField> {
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(overallTypeName = fieldCoordinates.typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
@@ -102,8 +102,8 @@ internal object NadelHydrationFieldsBuilder {
     private fun makeActorQueries(
         instruction: NadelGenericHydrationInstruction,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<NormalizedField>,
-    ): NormalizedField {
+        fieldChildren: List<ExecutableNormalizedField>,
+    ): ExecutableNormalizedField {
         return NFUtil.createField(
             schema = instruction.actorService.underlyingSchema,
             parentType = instruction.actorService.underlyingSchema.queryType,
@@ -116,7 +116,7 @@ internal object NadelHydrationFieldsBuilder {
     private fun makeObjectIdField(
         aliasHelper: AliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
-    ): NormalizedField? {
+    ): ExecutableNormalizedField? {
         return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
             is MatchObjectIdentifier -> {
                 val actorFieldDef = batchHydrationInstruction.actorFieldDef
@@ -128,7 +128,7 @@ internal object NadelHydrationFieldsBuilder {
                     else -> error("When matching by object identifier, output type of actor field must be an object")
                 }
 
-                NormalizedField.newNormalizedField()
+                ExecutableNormalizedField.newNormalizedField()
                     .objectTypeNames(objectTypes.map { it.name })
                     .fieldName(matchStrategy.objectId)
                     .alias(aliasHelper.getResultKey(matchStrategy.objectId))

@@ -1,6 +1,6 @@
 package graphql.nadel.enginekt.transform.query
 
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
@@ -14,8 +14,8 @@ object NFUtil {
         parentType: GraphQLOutputType,
         pathToField: QueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<NormalizedField>,
-    ): List<NormalizedField> {
+        fieldChildren: List<ExecutableNormalizedField>,
+    ): List<ExecutableNormalizedField> {
         return createFieldRecursively(
             schema,
             parentType,
@@ -31,8 +31,8 @@ object NFUtil {
         parentType: GraphQLObjectType,
         queryPathToField: QueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<NormalizedField>,
-    ): NormalizedField {
+        fieldChildren: List<ExecutableNormalizedField>,
+    ): ExecutableNormalizedField {
         return createParticularField(
             schema,
             parentType,
@@ -48,9 +48,9 @@ object NFUtil {
         parentType: GraphQLOutputType,
         queryPathToField: QueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<NormalizedField>,
+        fieldChildren: List<ExecutableNormalizedField>,
         pathToFieldIndex: Int,
-    ): List<NormalizedField> {
+    ): List<ExecutableNormalizedField> {
         // Note: remember that we are creating fields that do not exist in the original NF
         // Thus, we need to handle interfaces and object types
         return when (parentType) {
@@ -83,14 +83,14 @@ object NFUtil {
         parentType: GraphQLObjectType,
         queryPathToField: QueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
-        fieldChildren: List<NormalizedField>,
+        fieldChildren: List<ExecutableNormalizedField>,
         pathToFieldIndex: Int,
-    ): NormalizedField {
+    ): ExecutableNormalizedField {
         val fieldName = queryPathToField.segments[pathToFieldIndex]
         val fieldDef = parentType.getFieldDefinition(fieldName)
             ?: error("No definition for ${parentType.name}.$fieldName")
 
-        return NormalizedField.newNormalizedField()
+        return ExecutableNormalizedField.newNormalizedField()
             .objectTypeNames(listOf(parentType.name))
             .fieldName(fieldName)
             .also { builder ->

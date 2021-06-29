@@ -11,8 +11,7 @@ import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform
-import graphql.normalized.NormalizedField
-import graphql.schema.GraphQLSchema
+import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
@@ -26,7 +25,7 @@ internal class NadelExecutionPlanFactory(
         executionContext: NadelExecutionContext,
         services: Map<String, Service>,
         service: Service,
-        rootField: NormalizedField,
+        rootField: ExecutableNormalizedField,
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
 
@@ -57,7 +56,7 @@ internal class NadelExecutionPlanFactory(
         )
     }
 
-    private suspend fun traverseQuery(root: NormalizedField, consumer: suspend (NormalizedField) -> Unit) {
+    private suspend fun traverseQuery(root: ExecutableNormalizedField, consumer: suspend (ExecutableNormalizedField) -> Unit) {
         consumer(root)
         root.children.forEach {
             traverseQuery(it, consumer)

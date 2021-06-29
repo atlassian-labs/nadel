@@ -21,9 +21,9 @@ import graphql.nadel.enginekt.util.mergeResults
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.util.ErrorUtil
-import graphql.normalized.NormalizedField
-import graphql.normalized.NormalizedQueryFactory
-import graphql.normalized.NormalizedQueryToAstCompiler.compileToDocument
+import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedOperationFactory
+import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -65,7 +65,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
     ): ExecutionResult {
-        val query = NormalizedQueryFactory.createNormalizedQueryWithRawVariables(
+        val query = ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables(
             overallExecutionBlueprint.schema,
             queryDocument,
             executionInput.operationName,
@@ -88,7 +88,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     }
 
     private suspend fun executeTopLevelField(
-        topLevelField: NormalizedField,
+        topLevelField: ExecutableNormalizedField,
         service: Service,
         executionInput: ExecutionInput
     ): ExecutionResult {
@@ -121,7 +121,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
     internal suspend fun executeHydration(
         service: Service,
-        topLevelField: NormalizedField,
+        topLevelField: ExecutableNormalizedField,
         pathToActorField: QueryPath,
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
@@ -134,8 +134,8 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             executionPlanner.create(executionContext, services, service, rootField = it)
         }.reduce(NadelExecutionPlan::merge)
 
-        val artificialFields = mutableListOf<NormalizedField>()
-        val overallToUnderlyingFields = mutableMapOf<NormalizedField, List<NormalizedField>>()
+        val artificialFields = mutableListOf<ExecutableNormalizedField>()
+        val overallToUnderlyingFields = mutableMapOf<ExecutableNormalizedField, List<ExecutableNormalizedField>>()
 
         // Transform the children of the actor field
         // The actor field itself is already transformed
@@ -155,7 +155,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         )
 
         // Get to the top level field again using .parent N times on the new actor field
-        val transformedQuery: NormalizedField = fold(
+        val transformedQuery: ExecutableNormalizedField = fold(
             initial = actorFieldWithTransformedChildren,
             count = pathToActorField.segments.size - 1,
         ) {
@@ -175,7 +175,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
 
     private suspend fun executeService(
         service: Service,
-        transformedQuery: NormalizedField,
+        transformedQuery: ExecutableNormalizedField,
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
         val document: Document = compileToDocument(listOf(transformedQuery))

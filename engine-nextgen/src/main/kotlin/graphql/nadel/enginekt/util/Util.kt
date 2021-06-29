@@ -9,14 +9,14 @@ package graphql.nadel.enginekt.util
  * So instead of doing something like
  *
  * ```kotlin
- * val field: NormalizedField
+ * val field: ExecutableNormalizedField
  * field.parent.parent
  * ```
  *
  * you can do
  *
  * ```kotlin
- * val field: NormalizedField
+ * val field: ExecutableNormalizedField
  * fold(initial = field, count = 2) {
  *     it.parent
  * }

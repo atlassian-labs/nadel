@@ -175,7 +175,8 @@ public class NadelDirectives {
         String field = getDirectiveValue(directive, "field", String.class);
         String objectIdentifier = getDirectiveValue(directive, "identifiedBy", String.class);
         Boolean objectIndexed = getDirectiveValue(directive, "indexed", Boolean.class, false);
-        Boolean batched = getDirectiveValue(directive, "batched", Boolean.class, false);
+        // Note: this is not properly implemented yet, so the value does not matter
+        Boolean batched = false; // getDirectiveValue(directive, "batched", Boolean.class, false);
         if (objectIndexed) {
             objectIdentifier = null; // we cant have both but it has a default
         }

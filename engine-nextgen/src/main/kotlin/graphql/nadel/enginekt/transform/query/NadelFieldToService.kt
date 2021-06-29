@@ -4,16 +4,16 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.makeFieldCoordinates
-import graphql.normalized.NormalizedField
-import graphql.normalized.NormalizedQuery
+import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedOperation
 
 class NadelFieldToService(private val overallExecutionBlueprint: NadelOverallExecutionBlueprint) {
 
-    fun getServicesForTopLevelFields(query: NormalizedQuery): List<NadelFieldAndService> {
+    fun getServicesForTopLevelFields(query: ExecutableNormalizedOperation): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
             when {
                 NadelNamespacedFields.isNamespacedField(topLevelField, overallExecutionBlueprint.schema) -> {
-                    val namespacedChildFieldsByService: Map<Service, List<NormalizedField>> =
+                    val namespacedChildFieldsByService: Map<Service, List<ExecutableNormalizedField>> =
                         topLevelField.children
                             .groupBy(::getService)
 
@@ -32,7 +32,7 @@ class NadelFieldToService(private val overallExecutionBlueprint: NadelOverallExe
         }
     }
 
-    private fun getService(overallField: NormalizedField): Service {
+    private fun getService(overallField: ExecutableNormalizedField): Service {
         val operationTypeName = overallField.objectTypeNames.single()
         val fieldCoordinates = makeFieldCoordinates(operationTypeName, overallField.name)
         return overallExecutionBlueprint.getService(overallField)
@@ -41,6 +41,6 @@ class NadelFieldToService(private val overallExecutionBlueprint: NadelOverallExe
 }
 
 data class NadelFieldAndService(
-    val field: NormalizedField,
+    val field: ExecutableNormalizedField,
     val service: Service,
 )

@@ -10,7 +10,7 @@ import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
 import graphql.nadel.enginekt.util.mapFrom
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLTypeUtil
 
@@ -24,7 +24,7 @@ internal object NadelBatchHydrationInputBuilder {
     fun getInputValueBatches(
         aliasHelper: AliasHelper,
         instruction: NadelBatchHydrationFieldInstruction,
-        hydrationField: NormalizedField,
+        hydrationField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
     ): List<Map<NadelHydrationActorInputDef, NormalizedInputValue>> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
@@ -35,7 +35,7 @@ internal object NadelBatchHydrationInputBuilder {
 
     private fun getNonBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
-        hydrationField: NormalizedField,
+        hydrationField: ExecutableNormalizedField,
     ): Map<NadelHydrationActorInputDef, NormalizedInputValue> {
         return mapFrom(
             instruction.actorInputValueDefs.mapNotNull { actorFieldArg ->
