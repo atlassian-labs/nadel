@@ -17,15 +17,15 @@ import graphql.nadel.enginekt.util.AnyMutableList
 import graphql.nadel.enginekt.util.AnyMutableMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.queryPath
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import kotlin.reflect.KClass
 
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
     suspend fun transform(
         executionContext: NadelExecutionContext,
         executionPlan: NadelExecutionPlan,
-        artificialFields: List<NormalizedField>,
-        overallToUnderlyingFields: Map<NormalizedField, List<NormalizedField>>,
+        artificialFields: List<ExecutableNormalizedField>,
+        overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
@@ -33,7 +33,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             steps.flatMap step@{ step ->
                 // This can be null if we did not end up sending the field e.g. for hydration
                 val underlyingFields = overallToUnderlyingFields[field]
-                    ?.takeIf(List<NormalizedField>::isNotEmpty)
+                    ?.takeIf(List<ExecutableNormalizedField>::isNotEmpty)
                     ?: return@step emptyList()
 
                 step.transform.getResultInstructions(
@@ -160,7 +160,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
 
     private fun getRemoveArtificialFieldInstructions(
         result: ServiceExecutionResult,
-        artificialFields: List<NormalizedField>,
+        artificialFields: List<ExecutableNormalizedField>,
     ): List<NadelResultInstruction> {
         return artificialFields.flatMap { field ->
             JsonNodeExtractor.getNodesAt(

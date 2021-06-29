@@ -6,40 +6,40 @@ import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.util.toBuilder
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 
 class NadelQueryTransformer internal constructor(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
 ) {
     interface Continuation {
-        suspend fun transform(fields: NormalizedField): List<NormalizedField> {
+        suspend fun transform(fields: ExecutableNormalizedField): List<ExecutableNormalizedField> {
             return transform(listOf(fields))
         }
 
-        suspend fun transform(fields: List<NormalizedField>): List<NormalizedField>
+        suspend fun transform(fields: List<ExecutableNormalizedField>): List<ExecutableNormalizedField>
     }
 
     internal data class TransformContext(
-        val artificialFields: MutableList<NormalizedField>,
-        val overallToUnderlyingFields: MutableMap<NormalizedField, List<NormalizedField>>,
+        val artificialFields: MutableList<ExecutableNormalizedField>,
+        val overallToUnderlyingFields: MutableMap<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
     )
 
     data class TransformResult(
         /**
          * The transformed fields.
          */
-        val result: List<NormalizedField>,
+        val result: List<ExecutableNormalizedField>,
         /**
          * A list of fields that were added to the query that do not belong in the overall result.
          */
-        val artificialFields: List<NormalizedField>,
-        val overallToUnderlyingFields: Map<NormalizedField, List<NormalizedField>>,
+        val artificialFields: List<ExecutableNormalizedField>,
+        val overallToUnderlyingFields: Map<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
     )
 
     suspend fun transformQuery(
         executionContext: NadelExecutionContext,
         service: Service,
-        field: NormalizedField,
+        field: ExecutableNormalizedField,
         executionPlan: NadelExecutionPlan,
     ): TransformResult {
         val transformContext = TransformContext(
@@ -64,8 +64,8 @@ class NadelQueryTransformer internal constructor(
         transformContext: TransformContext,
         executionPlan: NadelExecutionPlan,
         service: Service,
-        field: NormalizedField,
-    ): List<NormalizedField> {
+        field: ExecutableNormalizedField,
+    ): List<ExecutableNormalizedField> {
         val transformationSteps = executionPlan.transformationSteps[field] ?: return listOf(
             field.let {
                 val transformedChildFields = transformFields(
@@ -102,7 +102,7 @@ class NadelQueryTransformer internal constructor(
          */
         val transformation = transformationSteps.single()
         val continuation = object : Continuation {
-            override suspend fun transform(fields: List<NormalizedField>): List<NormalizedField> {
+            override suspend fun transform(fields: List<ExecutableNormalizedField>): List<ExecutableNormalizedField> {
                 return transformFields(
                     executionContext = executionContext,
                     transformContext = transformContext,
@@ -138,16 +138,16 @@ class NadelQueryTransformer internal constructor(
     }
 
     private fun patchObjectTypeNames(
-        fields: List<NormalizedField>,
-    ): List<NormalizedField> {
+        fields: List<ExecutableNormalizedField>,
+    ): List<ExecutableNormalizedField> {
         return fields.map { field ->
             patchObjectTypeNames(field).build()
         }
     }
 
     private fun patchObjectTypeNames(
-        field: NormalizedField,
-    ): NormalizedField.Builder {
+        field: ExecutableNormalizedField,
+    ): ExecutableNormalizedField.Builder {
         return field.toBuilder()
             .clearObjectTypesNames()
             .objectTypeNames(field.objectTypeNames.map(executionBlueprint::getUnderlyingTypeName))
@@ -160,17 +160,17 @@ class NadelQueryTransformer internal constructor(
         executionContext: NadelExecutionContext,
         transformContext: TransformContext,
         service: Service,
-        fields: List<NormalizedField>,
+        fields: List<ExecutableNormalizedField>,
         executionPlan: NadelExecutionPlan,
-    ): List<NormalizedField> {
+    ): List<ExecutableNormalizedField> {
         return fields.flatMap {
             transformField(executionContext, transformContext, executionPlan, service, it)
         }
     }
 
     private fun fixParentRefs(
-        parent: NormalizedField?,
-        transformFields: List<NormalizedField>,
+        parent: ExecutableNormalizedField?,
+        transformFields: List<ExecutableNormalizedField>,
     ) {
         transformFields.forEach {
             it.replaceParent(parent)

@@ -22,7 +22,7 @@ import graphql.nadel.enginekt.util.asJsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
 import graphql.nadel.enginekt.util.mapFrom
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLTypeUtil
@@ -33,7 +33,7 @@ internal object NadelHydrationInputBuilder {
     fun getInputValues(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: AliasHelper,
-        hydratedField: NormalizedField,
+        hydratedField: ExecutableNormalizedField,
         parentNode: JsonNode,
     ): List<Map<String, NormalizedInputValue>> {
         val inputDefsForAllCalls = instruction.actorInputValueDefs.asSequence()
@@ -86,7 +86,7 @@ internal object NadelHydrationInputBuilder {
         actorInputDef: NadelHydrationActorInputDef,
         argumentDef: GraphQLArgument,
         parentNode: JsonNode,
-        hydrationField: NormalizedField,
+        hydrationField: ExecutableNormalizedField,
         aliasHelper: AliasHelper,
     ): NormalizedInputValue {
         return when (val valueSource = actorInputDef.valueSource) {

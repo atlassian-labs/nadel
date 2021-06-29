@@ -4,7 +4,7 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.util.filterValuesOfType
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.mapFrom
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLSchema
 
@@ -62,7 +62,7 @@ data class NadelUnderlyingExecutionBlueprint(
 ) : NadelExecutionBlueprint
 
 fun <T> Map<FieldCoordinates, T>.getForField(
-    field: NormalizedField,
+    field: ExecutableNormalizedField,
 ): Map<FieldCoordinates, T> {
     return mapFrom(
         field.objectTypeNames.asSequence()
@@ -77,7 +77,7 @@ fun <T> Map<FieldCoordinates, T>.getForField(
 }
 
 inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, NadelFieldInstruction>.getInstructionsOfTypeForField(
-    field: NormalizedField,
+    field: ExecutableNormalizedField,
 ): Map<FieldCoordinates, T> {
     return getForField(field).filterValuesOfType()
 }

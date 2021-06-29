@@ -18,7 +18,7 @@ import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toBuilder
-import graphql.normalized.NormalizedField
+import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 
 internal class NadelRenameTransform : NadelTransform<State> {
@@ -26,7 +26,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         val instructions: Map<FieldCoordinates, NadelRenameFieldInstruction>,
         val objectTypesWithoutRename: List<String>,
         val aliasHelper: AliasHelper,
-        val field: NormalizedField,
+        val field: ExecutableNormalizedField,
         val service: Service,
     )
 
@@ -35,7 +35,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: NormalizedField,
+        overallField: ExecutableNormalizedField,
     ): State? {
         val renameInstructions = executionBlueprint.fieldInstructions
             .getInstructionsOfTypeForField<NadelRenameFieldInstruction>(overallField)
@@ -61,7 +61,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer.Continuation,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: NormalizedField,
+        field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
@@ -85,7 +85,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
     /**
      * Read [State.instructions]
      *
-     * In the case that there are multiple [FieldCoordinates] for a single [NormalizedField]
+     * In the case that there are multiple [FieldCoordinates] for a single [ExecutableNormalizedField]
      * we need to know which type we are dealing with, so we use this to add a `__typename`
      * selection to determine the behavior on [getResultInstructions].
      *
@@ -93,7 +93,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
      */
     private fun makeTypeNameField(
         state: State,
-    ): NormalizedField? {
+    ): ExecutableNormalizedField? {
         // No need for typename on top level field
         if (state.field.queryPath.size == 1) {
             return null
@@ -109,7 +109,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         state: State,
         transformer: NadelQueryTransformer.Continuation,
         executionBlueprint: NadelOverallExecutionBlueprint,
-    ): List<NormalizedField> {
+    ): List<ExecutableNormalizedField> {
         return state.instructions.map { (coordinates, instruction) ->
             makeRenamedField(
                 state,
@@ -128,10 +128,10 @@ internal class NadelRenameTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer.Continuation,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        field: NormalizedField,
+        field: ExecutableNormalizedField,
         fieldCoordinates: FieldCoordinates,
         rename: NadelRenameFieldInstruction,
-    ): NormalizedField {
+    ): ExecutableNormalizedField {
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(fieldCoordinates.typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
@@ -150,8 +150,8 @@ internal class NadelRenameTransform : NadelTransform<State> {
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        overallField: NormalizedField,
-        underlyingParentField: NormalizedField?, // Overall field
+        overallField: ExecutableNormalizedField,
+        underlyingParentField: ExecutableNormalizedField?, // Overall field
         result: ServiceExecutionResult,
         state: State,
     ): List<NadelResultInstruction> {
