@@ -1,0 +1,116 @@
+name: synthetic hydration batching returns null
+overallSchema:
+  service2: |
+    service service2 {
+      type Query {
+        barsQuery: BarsQuery
+      }
+      type BarsQuery {
+        barsById(id: [ID]): [Bar]
+      }
+      type Bar {
+        id: ID
+        name: String
+      }
+    }
+  service1: |
+    service service1 {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        id: ID
+        bar: [Bar] => hydrated from service2.barsQuery.barsById(id: $source.barId)
+      }
+    }
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type BarsQuery {
+      barsById(id: [ID]): [Bar]
+    }
+
+    type Query {
+      barsQuery: BarsQuery
+    }
+  service1: |
+    type Foo {
+      barId: [ID]
+      id: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: service1
+      request:
+        query: |
+          query nadel_2_service1 {
+            foo {
+              barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service1
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "barId": [
+                "barId1",
+                "barId2",
+                "barId3"
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query nadel_2_service2 {
+            barsQuery {
+              barsById(id: ["barId1", "barId2", "barId3"]) {
+                name
+                object_identifier__UUID: id
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service2
+      # language=JSON
+      response: |-
+        {
+          "data": null,
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": [
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "extensions": {}
+  }

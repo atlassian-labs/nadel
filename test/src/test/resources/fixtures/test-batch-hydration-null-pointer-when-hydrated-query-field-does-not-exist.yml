@@ -1,0 +1,85 @@
+name: test batch hydration null pointer when hydrated query field does not exist
+overallSchema:
+  Bar: |
+    service Bar {
+      type Query {
+        bar: Bar
+      }
+      type Bar {
+        barId: ID
+        name: String
+      }
+    }
+  Foo: |
+    service Foo {
+      type Query {
+        foos: [Foo]
+      }
+      type Foo {
+        name: String
+        bar: Bar => hydrated from Bar.doesNotExist(id: $source.barId) object identified by barId, batch size 2
+      }
+    }
+underlyingSchema:
+  Bar: |
+    type Bar {
+      barId: ID
+      name: String
+      nestedBarId: ID
+    }
+
+    type Query {
+      bar: Bar
+      barsById(id: [ID]): [Bar]
+    }
+  Foo: |
+    type Foo {
+      barId: ID
+      name: String
+    }
+
+    type Query {
+      foos: [Foo]
+    }
+query: |
+  query {
+    foos {
+      bar {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            foos {
+              barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "foos": [
+              {
+                "barId": "bar1"
+              },
+              {
+                "barId": "bar2"
+              },
+              {
+                "barId": "bar3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: null
+exception:
+  message: hydration field 'doesNotExist' does not exist in underlying schema in service 'Bar'

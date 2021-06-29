@@ -1,0 +1,174 @@
+name: top level field is null in batched synthetic hydration
+overallSchema:
+  service2: |
+    service service2 {
+      type Query {
+        users: UsersQuery
+      }
+      type UsersQuery {
+        foo: String
+        usersByIds(id: [ID]): [User] default batch size 3
+      }
+      type User {
+        id: ID
+        lastName: String
+      }
+    }
+  service1: |
+    service service1 {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        authors: [User] => hydrated from service2.users.usersByIds(id: $source.authorIds) object identified by id
+      }
+    }
+underlyingSchema:
+  service2: |
+    type Query {
+      users: UsersQuery
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+
+    type UsersQuery {
+      usersByIds(id: [ID]): [User]
+    }
+  service1: |
+    type Issue {
+      authorIds: [ID]
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      authors {
+        id
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: service1
+      request:
+        query: |
+          query nadel_2_service1 {
+            issues {
+              id
+              authorIds
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service1
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1",
+                "authorIds": [
+                  "USER-1",
+                  "USER-2"
+                ]
+              },
+              {
+                "id": "ISSUE-2",
+                "authorIds": [
+                  "USER-3"
+                ]
+              },
+              {
+                "id": "ISSUE-3",
+                "authorIds": [
+                  "USER-2",
+                  "USER-4",
+                  "USER-5"
+                ]
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query nadel_2_service2 {
+            users {
+              usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
+                id
+                object_identifier__UUID: id
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service2
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "users": null
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query nadel_2_service2 {
+            users {
+              usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
+                id
+                object_identifier__UUID: id
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service2
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "users": null
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": [
+            null,
+            null
+          ]
+        },
+        {
+          "id": "ISSUE-2",
+          "authors": [
+            null
+          ]
+        },
+        {
+          "id": "ISSUE-3",
+          "authors": [
+            null,
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "extensions": {}
+  }

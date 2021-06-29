@@ -1,0 +1,97 @@
+name: synthetic hydration input is empty list
+overallSchema:
+  UserService: |
+    service UserService {
+      type Query {
+        usersQuery: UserQuery
+      }
+      type UserQuery {
+        usersByIds(ids: [ID]): [User]
+      }
+      type User {
+        id: ID
+        name: String
+      }
+    }
+  Issues: |
+    service Issues {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        authors: [User] => hydrated from UserService.usersQuery.usersByIds(ids: $source.authorIds) object identified by id, batch size 2
+      }
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      usersQuery: UserQuery
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+
+    type UserQuery {
+      usersByIds(ids: [ID]): [User]
+    }
+  Issues: |
+    type Issue {
+      authorIds: [ID]
+      id: ID
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      authors {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              id
+              authorIds
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "ISSUE-1",
+                "authorIds": []
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": []
+        }
+      ]
+    },
+    "extensions": {}
+  }

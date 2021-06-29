@@ -1,0 +1,147 @@
+name: extending types from another service is possible with synthetic fields
+overallSchema:
+  Service2: |
+    service Service2 {
+      extend type Root {
+        extension: Extension => hydrated from Service2.lookUpQuery.lookup(id: $source.id) object identified by id
+      }
+      type Extension {
+        id: ID
+        name: String
+      }
+    }
+  Service1: |
+    service Service1 {
+      extend type Query {
+        root: Root
+      }
+      extend type Query {
+        anotherRoot: String
+      }
+      type Root {
+        id: ID
+      }
+      extend type Root {
+        name: String
+      }
+    }
+underlyingSchema:
+  Service2: |
+    type Extension {
+      id: ID
+      name: String
+    }
+
+    type LookUpQuery {
+      lookup(id: ID): Extension
+    }
+
+    type Query {
+      lookUpQuery: LookUpQuery
+    }
+  Service1: |
+    type Query {
+      anotherRoot: String
+      root: Root
+    }
+
+    type Root {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    root {
+      id
+      name
+      extension {
+        id
+        name
+      }
+    }
+    anotherRoot
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Service1
+      request:
+        query: |
+          query nadel_2_Service1 {
+            root {
+              id
+              name
+              id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Service1
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "root": {
+              "id": "rootId",
+              "name": "rootName"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Service1
+      request:
+        query: |
+          query nadel_2_Service1 {
+            anotherRoot
+          }
+        variables: {}
+        operationName: nadel_2_Service1
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "anotherRoot": "anotherRoot"
+          },
+          "extensions": {}
+        }
+    - serviceName: Service2
+      request:
+        query: |
+          query nadel_2_Service2 {
+            lookUpQuery {
+              lookup(id: "rootId") {
+                id
+                name
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Service2
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "lookUpQuery": {
+              "lookup": {
+                "id": "rootId",
+                "name": "extensionName"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "root": {
+        "id": "rootId",
+        "extension": {
+          "id": "rootId",
+          "name": "extensionName"
+        },
+        "name": "rootName"
+      },
+      "anotherRoot": "anotherRoot"
+    },
+    "extensions": {}
+  }

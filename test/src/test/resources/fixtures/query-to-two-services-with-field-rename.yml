@@ -1,0 +1,111 @@
+name: query to two services with field rename
+overallSchema:
+  Bar: |
+    service Bar {
+      type Query {
+        bar: Bar
+      }
+      type Bar {
+        name: String => renamed from title
+      }
+    }
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Foo => renamed from fooOriginal
+      }
+      type Foo {
+        name: String
+      }
+    }
+underlyingSchema:
+  Bar: |
+    type Bar {
+      title: String
+    }
+
+    type Query {
+      bar: Bar
+    }
+  Foo: |
+    type Foo {
+      name: String
+    }
+
+    type Query {
+      fooOriginal: Foo
+    }
+query: |
+  query {
+    otherFoo: foo {
+      name
+    }
+    bar {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            otherFoo: fooOriginal {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "otherFoo": {
+              "name": "Foo"
+            }
+          },
+          "extensions": {
+            "ext1": "val1",
+            "merged": "m1"
+          }
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query nadel_2_Bar {
+            bar {
+              title
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bar": {
+              "title": "Bar"
+            }
+          },
+          "extensions": {
+            "ext2": "val2",
+            "merged": "m2"
+          }
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "otherFoo": {
+        "name": "Foo"
+      },
+      "bar": {
+        "name": "Bar"
+      }
+    },
+    "extensions": {
+      "ext1": "val1",
+      "merged": "m2",
+      "ext2": "val2"
+    }
+  }

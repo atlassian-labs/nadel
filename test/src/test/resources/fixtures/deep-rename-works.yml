@@ -1,0 +1,67 @@
+name: deep rename works
+overallSchema:
+  IssueService: |
+    service IssueService {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        name: String => renamed from detail.detailName
+      }
+    }
+underlyingSchema:
+  IssueService: |
+    type Issue {
+      detail: IssueDetails
+    }
+
+    type IssueDetails {
+      detailName: String
+    }
+
+    type Query {
+      issue: Issue
+    }
+query: |
+  query {
+    issue {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: IssueService
+      request:
+        query: |
+          query nadel_2_IssueService {
+            issue {
+              detail {
+                detailName
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "detail": {
+                "detailName": "My Issue"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "name": "My Issue"
+      }
+    },
+    "extensions": {}
+  }

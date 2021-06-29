@@ -154,4 +154,6 @@ private suspend fun execute(
             }
         },
     )
+
+    testHooks?.assertResult(engineType, response)
 }

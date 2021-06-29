@@ -1,0 +1,144 @@
+name: simple synthetic hydration with one service and type renaming
+overallSchema:
+  testing: |
+    service testing {
+      type Query {
+        tests: TestQuery
+      }
+      type TestQuery {
+        testing: Testing
+      }
+      type Testing {
+        movie: Movie
+      }
+      type TestingCharacter => renamed from Character {
+        id: ID!
+        name: String
+      }
+      type Movie {
+        id: ID!
+        name: String
+        character: TestingCharacter => hydrated from testing.tests.character(id: $source.characterId) object identified by id, batch size  3
+      }
+    }
+underlyingSchema:
+  testing: |
+    type Character {
+      id: ID!
+      name: String
+    }
+
+    type Movie {
+      characterId: ID
+      id: ID!
+      name: String
+    }
+
+    type Query {
+      tests: TestQuery
+    }
+
+    type TestQuery {
+      character(id: ID): Character
+      testing: Testing
+    }
+
+    type Testing {
+      movie: Movie
+    }
+query: |
+  query {
+    tests {
+      testing {
+        movie {
+          id
+          name
+          character {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: testing
+      request:
+        query: |
+          query nadel_2_testing {
+            tests {
+              testing {
+                movie {
+                  id
+                  name
+                  characterId
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_testing
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "tests": {
+              "testing": {
+                "movie": {
+                  "id": "M1",
+                  "name": "Movie 1",
+                  "characterId": "C1"
+                }
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: testing
+      request:
+        query: |
+          query nadel_2_testing {
+            tests {
+              character(id: "C1") {
+                id
+                name
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_testing
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "tests": {
+              "character": {
+                "id": "C1",
+                "name": "Luke",
+                "object_identifier__UUID": "C1"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "tests": {
+        "testing": {
+          "movie": {
+            "id": "M1",
+            "name": "Movie 1",
+            "character": {
+              "id": "C1",
+              "name": "Luke"
+            }
+          }
+        }
+      }
+    },
+    "extensions": {}
+  }
