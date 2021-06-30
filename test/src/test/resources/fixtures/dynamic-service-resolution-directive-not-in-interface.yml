@@ -40,7 +40,7 @@ serviceCalls:
         operationName:
       # language=JSON
       response: |-
-# language=JSON
+      # language=JSON
 response: null
 exception:
   message: field annotated with dynamicServiceResolution directive is expected to be of GraphQLInterfaceType

@@ -1,0 +1,776 @@
+name: exceptions in hydration call that fail with errors are reflected in the result
+overallSchema:
+  Bar: |
+    service Bar {
+      type Query{
+        bar: Bar
+      }
+      type Bar {
+        name: String
+        nestedBar: Bar => hydrated from Bar.barById(id: $source.nestedBarId)
+      }
+    }
+  Foo: |
+    service Foo {
+      type Query{
+        foo: Foo
+      }
+      type Foo {
+        name: String
+        bar: Bar => hydrated from Bar.barById(id: $source.barId)
+      }
+    }
+underlyingSchema:
+  Bar: |
+    type Bar {
+      id: ID
+      name: String
+      nestedBarId: ID
+    }
+
+    type Query {
+      bar: Bar
+      barById(id: ID): Bar
+    }
+  Foo: |
+    type Foo {
+      barId: ID
+      name: String
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+        nestedBar {
+          name
+          nestedBar {
+            name
+          }
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: nadel_2_Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            foo {
+              barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "barId": "barId123"
+            }
+          },
+          "extensions": {}
+        }
+response: |-
+  {
+    "errors": [
+      {
+        "message": "An exception occurred invoking the service \u0027Bar\u0027: \u0027Pop goes the weasel\u0027 - executionId \u002782aa8caf-060f-4147-9176-3db9a2d9e834\u0027",
+        "locations": [],
+        "path": [],
+        "extensions": {
+          "java.lang.Throwable": {
+            "detailMessage": "Pop goes the weasel",
+            "stackTrace": [
+              {
+                "declaringClass": "sun.reflect.NativeConstructorAccessorImpl",
+                "methodName": "newInstance0",
+                "fileName": "NativeConstructorAccessorImpl.java",
+                "lineNumber": -2
+              },
+              {
+                "declaringClass": "sun.reflect.NativeConstructorAccessorImpl",
+                "methodName": "newInstance",
+                "fileName": "NativeConstructorAccessorImpl.java",
+                "lineNumber": 62
+              },
+              {
+                "declaringClass": "sun.reflect.DelegatingConstructorAccessorImpl",
+                "methodName": "newInstance",
+                "fileName": "DelegatingConstructorAccessorImpl.java",
+                "lineNumber": 45
+              },
+              {
+                "declaringClass": "java.lang.reflect.Constructor",
+                "methodName": "newInstance",
+                "fileName": "Constructor.java",
+                "lineNumber": 423
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.reflection.CachedConstructor",
+                "methodName": "invoke",
+                "fileName": "CachedConstructor.java",
+                "lineNumber": 83
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.callsite.ConstructorSite$ConstructorSiteNoUnwrapNoCoerce",
+                "methodName": "callConstructor",
+                "fileName": "ConstructorSite.java",
+                "lineNumber": 105
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.callsite.CallSiteArray",
+                "methodName": "defaultCallConstructor",
+                "fileName": "CallSiteArray.java",
+                "lineNumber": 59
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.callsite.AbstractCallSite",
+                "methodName": "callConstructor",
+                "fileName": "AbstractCallSite.java",
+                "lineNumber": 238
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.callsite.AbstractCallSite",
+                "methodName": "callConstructor",
+                "fileName": "AbstractCallSite.java",
+                "lineNumber": 250
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.NadelErrorHandlingTest$__spock_feature_0_6_closure8",
+                "methodName": "doCall",
+                "fileName": "NadelErrorHandlingTest.groovy",
+                "lineNumber": 307
+              },
+              {
+                "declaringClass": "sun.reflect.NativeMethodAccessorImpl",
+                "methodName": "invoke0",
+                "fileName": "NativeMethodAccessorImpl.java",
+                "lineNumber": -2
+              },
+              {
+                "declaringClass": "sun.reflect.NativeMethodAccessorImpl",
+                "methodName": "invoke",
+                "fileName": "NativeMethodAccessorImpl.java",
+                "lineNumber": 62
+              },
+              {
+                "declaringClass": "sun.reflect.DelegatingMethodAccessorImpl",
+                "methodName": "invoke",
+                "fileName": "DelegatingMethodAccessorImpl.java",
+                "lineNumber": 43
+              },
+              {
+                "declaringClass": "java.lang.reflect.Method",
+                "methodName": "invoke",
+                "fileName": "Method.java",
+                "lineNumber": 498
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.reflection.CachedMethod",
+                "methodName": "invoke",
+                "fileName": "CachedMethod.java",
+                "lineNumber": 104
+              },
+              {
+                "declaringClass": "groovy.lang.MetaMethod",
+                "methodName": "doMethodInvoke",
+                "fileName": "MetaMethod.java",
+                "lineNumber": 326
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.metaclass.ClosureMetaClass",
+                "methodName": "invokeMethod",
+                "fileName": "ClosureMetaClass.java",
+                "lineNumber": 264
+              },
+              {
+                "declaringClass": "groovy.lang.MetaClassImpl",
+                "methodName": "invokeMethod",
+                "fileName": "MetaClassImpl.java",
+                "lineNumber": 1041
+              },
+              {
+                "declaringClass": "groovy.lang.Closure",
+                "methodName": "call",
+                "fileName": "Closure.java",
+                "lineNumber": 421
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.ConvertedClosure",
+                "methodName": "invokeCustom",
+                "fileName": "ConvertedClosure.java",
+                "lineNumber": 54
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.ConversionHandler",
+                "methodName": "invoke",
+                "fileName": "ConversionHandler.java",
+                "lineNumber": 124
+              },
+              {
+                "declaringClass": "com.sun.proxy.$Proxy21",
+                "methodName": "execute",
+                "fileName": null,
+                "lineNumber": -1
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.ServiceExecutor",
+                "methodName": "executeImpl",
+                "fileName": "ServiceExecutor.java",
+                "lineNumber": 96
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.ServiceExecutor",
+                "methodName": "execute",
+                "fileName": "ServiceExecutor.java",
+                "lineNumber": 83
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.HydrationInputResolver",
+                "methodName": "lambda$resolveSingleHydrationInput$6",
+                "fileName": "HydrationInputResolver.java",
+                "lineNumber": 277
+              },
+              {
+                "declaringClass": "java.util.concurrent.CompletableFuture",
+                "methodName": "uniComposeStage",
+                "fileName": "CompletableFuture.java",
+                "lineNumber": 995
+              },
+              {
+                "declaringClass": "java.util.concurrent.CompletableFuture",
+                "methodName": "thenCompose",
+                "fileName": "CompletableFuture.java",
+                "lineNumber": 2137
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.HydrationInputResolver",
+                "methodName": "resolveSingleHydrationInput",
+                "fileName": "HydrationInputResolver.java",
+                "lineNumber": 274
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.HydrationInputResolver",
+                "methodName": "resolveInputNodes",
+                "fileName": "HydrationInputResolver.java",
+                "lineNumber": 132
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.HydrationInputResolver",
+                "methodName": "resolveAllHydrationInputs",
+                "fileName": "HydrationInputResolver.java",
+                "lineNumber": 112
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.NadelExecutionStrategy",
+                "methodName": "lambda$null$1",
+                "fileName": "NadelExecutionStrategy.java",
+                "lineNumber": 107
+              },
+              {
+                "declaringClass": "java.util.concurrent.CompletableFuture",
+                "methodName": "uniComposeStage",
+                "fileName": "CompletableFuture.java",
+                "lineNumber": 995
+              },
+              {
+                "declaringClass": "java.util.concurrent.CompletableFuture",
+                "methodName": "thenCompose",
+                "fileName": "CompletableFuture.java",
+                "lineNumber": 2137
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.NadelExecutionStrategy",
+                "methodName": "lambda$execute$3",
+                "fileName": "NadelExecutionStrategy.java",
+                "lineNumber": 103
+              },
+              {
+                "declaringClass": "java.util.concurrent.CompletableFuture",
+                "methodName": "uniComposeStage",
+                "fileName": "CompletableFuture.java",
+                "lineNumber": 995
+              },
+              {
+                "declaringClass": "java.util.concurrent.CompletableFuture",
+                "methodName": "thenCompose",
+                "fileName": "CompletableFuture.java",
+                "lineNumber": 2137
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.NadelExecutionStrategy",
+                "methodName": "execute",
+                "fileName": "NadelExecutionStrategy.java",
+                "lineNumber": 96
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.Execution",
+                "methodName": "lambda$execute$2",
+                "fileName": "Execution.java",
+                "lineNumber": 131
+              },
+              {
+                "declaringClass": "java.util.concurrent.CompletableFuture",
+                "methodName": "uniComposeStage",
+                "fileName": "CompletableFuture.java",
+                "lineNumber": 995
+              },
+              {
+                "declaringClass": "java.util.concurrent.CompletableFuture",
+                "methodName": "thenCompose",
+                "fileName": "CompletableFuture.java",
+                "lineNumber": 2137
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.execution.Execution",
+                "methodName": "execute",
+                "fileName": "Execution.java",
+                "lineNumber": 118
+              },
+              {
+                "declaringClass": "graphql.nadel.NadelEngine",
+                "methodName": "execute",
+                "fileName": "NadelEngine.java",
+                "lineNumber": 78
+              },
+              {
+                "declaringClass": "graphql.nadel.Nadel",
+                "methodName": "parseValidateAndExecute",
+                "fileName": "Nadel.java",
+                "lineNumber": 272
+              },
+              {
+                "declaringClass": "graphql.nadel.Nadel",
+                "methodName": "execute",
+                "fileName": "Nadel.java",
+                "lineNumber": 229
+              },
+              {
+                "declaringClass": "graphql.nadel.Nadel$execute$0",
+                "methodName": "call",
+                "fileName": null,
+                "lineNumber": -1
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.callsite.CallSiteArray",
+                "methodName": "defaultCall",
+                "fileName": "CallSiteArray.java",
+                "lineNumber": 47
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.callsite.AbstractCallSite",
+                "methodName": "call",
+                "fileName": "AbstractCallSite.java",
+                "lineNumber": 116
+              },
+              {
+                "declaringClass": "org.codehaus.groovy.runtime.callsite.AbstractCallSite",
+                "methodName": "call",
+                "fileName": "AbstractCallSite.java",
+                "lineNumber": 128
+              },
+              {
+                "declaringClass": "graphql.nadel.engine.NadelErrorHandlingTest",
+                "methodName": "$spock_feature_0_6",
+                "fileName": "NadelErrorHandlingTest.groovy",
+                "lineNumber": 325
+              },
+              {
+                "declaringClass": "sun.reflect.NativeMethodAccessorImpl",
+                "methodName": "invoke0",
+                "fileName": "NativeMethodAccessorImpl.java",
+                "lineNumber": -2
+              },
+              {
+                "declaringClass": "sun.reflect.NativeMethodAccessorImpl",
+                "methodName": "invoke",
+                "fileName": "NativeMethodAccessorImpl.java",
+                "lineNumber": 62
+              },
+              {
+                "declaringClass": "sun.reflect.DelegatingMethodAccessorImpl",
+                "methodName": "invoke",
+                "fileName": "DelegatingMethodAccessorImpl.java",
+                "lineNumber": 43
+              },
+              {
+                "declaringClass": "java.lang.reflect.Method",
+                "methodName": "invoke",
+                "fileName": "Method.java",
+                "lineNumber": 498
+              },
+              {
+                "declaringClass": "org.spockframework.util.ReflectionUtil",
+                "methodName": "invokeMethod",
+                "fileName": "ReflectionUtil.java",
+                "lineNumber": 153
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.model.MethodInfo",
+                "methodName": "invoke",
+                "fileName": "MethodInfo.java",
+                "lineNumber": 84
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "invokeRaw",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 480
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "invoke",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 463
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "runFeatureMethod",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 405
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "doRunIteration",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 324
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner$6",
+                "methodName": "invoke",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 309
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.extension.MethodInvocation",
+                "methodName": "proceed",
+                "fileName": "MethodInvocation.java",
+                "lineNumber": 88
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.extension.builtin.AbstractRuleInterceptor$1",
+                "methodName": "evaluate",
+                "fileName": "AbstractRuleInterceptor.java",
+                "lineNumber": 37
+              },
+              {
+                "declaringClass": "org.junit.rules.TestWatcher$1",
+                "methodName": "evaluate",
+                "fileName": "TestWatcher.java",
+                "lineNumber": 55
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.extension.builtin.TestRuleInterceptor",
+                "methodName": "intercept",
+                "fileName": "TestRuleInterceptor.java",
+                "lineNumber": 38
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.extension.MethodInvocation",
+                "methodName": "proceed",
+                "fileName": "MethodInvocation.java",
+                "lineNumber": 87
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "invoke",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 471
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "runIteration",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 288
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "initializeAndRunIteration",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 278
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "runSimpleFeature",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 269
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "doRunFeature",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 263
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner$5",
+                "methodName": "invoke",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 246
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "invokeRaw",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 480
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "invoke",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 463
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "runFeature",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 238
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "runFeatures",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 188
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "doRunSpec",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 98
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner$1",
+                "methodName": "invoke",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 84
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "invokeRaw",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 480
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "invoke",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 463
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "runSpec",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 76
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.BaseSpecRunner",
+                "methodName": "run",
+                "fileName": "BaseSpecRunner.java",
+                "lineNumber": 67
+              },
+              {
+                "declaringClass": "org.spockframework.runtime.Sputnik",
+                "methodName": "run",
+                "fileName": "Sputnik.java",
+                "lineNumber": 63
+              },
+              {
+                "declaringClass": "org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor",
+                "methodName": "runTestClass",
+                "fileName": "JUnitTestClassExecutor.java",
+                "lineNumber": 110
+              },
+              {
+                "declaringClass": "org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor",
+                "methodName": "execute",
+                "fileName": "JUnitTestClassExecutor.java",
+                "lineNumber": 58
+              },
+              {
+                "declaringClass": "org.gradle.api.internal.tasks.testing.junit.JUnitTestClassExecutor",
+                "methodName": "execute",
+                "fileName": "JUnitTestClassExecutor.java",
+                "lineNumber": 38
+              },
+              {
+                "declaringClass": "org.gradle.api.internal.tasks.testing.junit.AbstractJUnitTestClassProcessor",
+                "methodName": "processTestClass",
+                "fileName": "AbstractJUnitTestClassProcessor.java",
+                "lineNumber": 62
+              },
+              {
+                "declaringClass": "org.gradle.api.internal.tasks.testing.SuiteTestClassProcessor",
+                "methodName": "processTestClass",
+                "fileName": "SuiteTestClassProcessor.java",
+                "lineNumber": 51
+              },
+              {
+                "declaringClass": "sun.reflect.NativeMethodAccessorImpl",
+                "methodName": "invoke0",
+                "fileName": "NativeMethodAccessorImpl.java",
+                "lineNumber": -2
+              },
+              {
+                "declaringClass": "sun.reflect.NativeMethodAccessorImpl",
+                "methodName": "invoke",
+                "fileName": "NativeMethodAccessorImpl.java",
+                "lineNumber": 62
+              },
+              {
+                "declaringClass": "sun.reflect.DelegatingMethodAccessorImpl",
+                "methodName": "invoke",
+                "fileName": "DelegatingMethodAccessorImpl.java",
+                "lineNumber": 43
+              },
+              {
+                "declaringClass": "java.lang.reflect.Method",
+                "methodName": "invoke",
+                "fileName": "Method.java",
+                "lineNumber": 498
+              },
+              {
+                "declaringClass": "org.gradle.internal.dispatch.ReflectionDispatch",
+                "methodName": "dispatch",
+                "fileName": "ReflectionDispatch.java",
+                "lineNumber": 36
+              },
+              {
+                "declaringClass": "org.gradle.internal.dispatch.ReflectionDispatch",
+                "methodName": "dispatch",
+                "fileName": "ReflectionDispatch.java",
+                "lineNumber": 24
+              },
+              {
+                "declaringClass": "org.gradle.internal.dispatch.ContextClassLoaderDispatch",
+                "methodName": "dispatch",
+                "fileName": "ContextClassLoaderDispatch.java",
+                "lineNumber": 33
+              },
+              {
+                "declaringClass": "org.gradle.internal.dispatch.ProxyDispatchAdapter$DispatchingInvocationHandler",
+                "methodName": "invoke",
+                "fileName": "ProxyDispatchAdapter.java",
+                "lineNumber": 94
+              },
+              {
+                "declaringClass": "com.sun.proxy.$Proxy2",
+                "methodName": "processTestClass",
+                "fileName": null,
+                "lineNumber": -1
+              },
+              {
+                "declaringClass": "org.gradle.api.internal.tasks.testing.worker.TestWorker",
+                "methodName": "processTestClass",
+                "fileName": "TestWorker.java",
+                "lineNumber": 119
+              },
+              {
+                "declaringClass": "sun.reflect.NativeMethodAccessorImpl",
+                "methodName": "invoke0",
+                "fileName": "NativeMethodAccessorImpl.java",
+                "lineNumber": -2
+              },
+              {
+                "declaringClass": "sun.reflect.NativeMethodAccessorImpl",
+                "methodName": "invoke",
+                "fileName": "NativeMethodAccessorImpl.java",
+                "lineNumber": 62
+              },
+              {
+                "declaringClass": "sun.reflect.DelegatingMethodAccessorImpl",
+                "methodName": "invoke",
+                "fileName": "DelegatingMethodAccessorImpl.java",
+                "lineNumber": 43
+              },
+              {
+                "declaringClass": "java.lang.reflect.Method",
+                "methodName": "invoke",
+                "fileName": "Method.java",
+                "lineNumber": 498
+              },
+              {
+                "declaringClass": "org.gradle.internal.dispatch.ReflectionDispatch",
+                "methodName": "dispatch",
+                "fileName": "ReflectionDispatch.java",
+                "lineNumber": 36
+              },
+              {
+                "declaringClass": "org.gradle.internal.dispatch.ReflectionDispatch",
+                "methodName": "dispatch",
+                "fileName": "ReflectionDispatch.java",
+                "lineNumber": 24
+              },
+              {
+                "declaringClass": "org.gradle.internal.remote.internal.hub.MessageHubBackedObjectConnection$DispatchWrapper",
+                "methodName": "dispatch",
+                "fileName": "MessageHubBackedObjectConnection.java",
+                "lineNumber": 182
+              },
+              {
+                "declaringClass": "org.gradle.internal.remote.internal.hub.MessageHubBackedObjectConnection$DispatchWrapper",
+                "methodName": "dispatch",
+                "fileName": "MessageHubBackedObjectConnection.java",
+                "lineNumber": 164
+              },
+              {
+                "declaringClass": "org.gradle.internal.remote.internal.hub.MessageHub$Handler",
+                "methodName": "run",
+                "fileName": "MessageHub.java",
+                "lineNumber": 414
+              },
+              {
+                "declaringClass": "org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures",
+                "methodName": "onExecute",
+                "fileName": "ExecutorPolicy.java",
+                "lineNumber": 64
+              },
+              {
+                "declaringClass": "org.gradle.internal.concurrent.ManagedExecutorImpl$1",
+                "methodName": "run",
+                "fileName": "ManagedExecutorImpl.java",
+                "lineNumber": 48
+              },
+              {
+                "declaringClass": "java.util.concurrent.ThreadPoolExecutor",
+                "methodName": "runWorker",
+                "fileName": "ThreadPoolExecutor.java",
+                "lineNumber": 1149
+              },
+              {
+                "declaringClass": "java.util.concurrent.ThreadPoolExecutor$Worker",
+                "methodName": "run",
+                "fileName": "ThreadPoolExecutor.java",
+                "lineNumber": 624
+              },
+              {
+                "declaringClass": "org.gradle.internal.concurrent.ThreadFactoryImpl$ManagedThreadRunnable",
+                "methodName": "run",
+                "fileName": "ThreadFactoryImpl.java",
+                "lineNumber": 56
+              },
+              {
+                "declaringClass": "java.lang.Thread",
+                "methodName": "run",
+                "fileName": "Thread.java",
+                "lineNumber": 748
+              }
+            ],
+            "suppressedExceptions": []
+          },
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "data": {
+      "foo": {
+        "bar": null
+      }
+    },
+    "extensions": {}
+  }

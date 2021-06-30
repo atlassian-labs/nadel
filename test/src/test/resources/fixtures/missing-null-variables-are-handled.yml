@@ -1,0 +1,41 @@
+name: missing null variables are handled
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query{
+        hello: World
+        helloWithArgs(arg1: String! arg2: String): World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation{
+        hello: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+      helloWithArgs(arg1: String!, arg2: String): World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query with($var1: String!) {
+    helloWithArgs(arg1: $var1) {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  current: []
+response: null

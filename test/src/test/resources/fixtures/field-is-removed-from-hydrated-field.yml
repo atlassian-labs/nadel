@@ -1,0 +1,142 @@
+name: field is removed from hydrated field
+overallSchema:
+  IssueService: |
+    service IssueService {
+      type Query {
+        issues(jql: String): [Issue]
+        issueById(id: String):  Issue
+      }
+      type Issue {
+        id: ID
+        key: String
+        summary: String
+        description: String
+        epic: Epic
+        reporter: User => hydrated from UserService.userById(id: $source.reporterId)
+        comments: [Comment] => hydrated from CommentService.commentById(id: $source.commentIds)
+      }
+      type Epic {
+        id: ID
+        title: String
+        description: String
+      }
+    }
+  UserService: |
+    service UserService {
+      type Query {
+        users(ids: [ID]): [User]
+        userById(id: ID): User
+      }
+      type User {
+        userId: ID
+        displayName: String
+        avatarUrl: String
+      }
+    }
+  CommentService: |
+    service CommentService {
+      type Query {
+        comments(ids: [ID]): [Comment]
+        commentById(id: ID): Comment
+      }
+      type Comment {
+        id: ID
+        commentText: String => renamed from text
+        created: String
+        author: User => hydrated from UserService.userById(id: $source.authorId)
+      }
+    }
+underlyingSchema:
+  CommentService: |
+    type Comment {
+      authorId: ID
+      created: String
+      id: ID
+      text: String
+    }
+
+    type Query {
+      commentById(id: ID): Comment
+      comments(ids: [ID]): [Comment]
+    }
+  UserService: |
+    type Query {
+      userById(id: ID): User
+      users(ids: [ID]): [User]
+    }
+
+    type User {
+      avatarUrl: String
+      displayName: String
+      userId: ID
+    }
+query: |
+  query {
+    commentById(id: "C1") {
+      author {
+        displayName
+        userId
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: nadel_2_CommentService
+      request:
+        query: |
+          query nadel_2_CommentService {
+            commentById(id: "C1") {
+              authorId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_CommentService
+      response: |-
+        {
+          "data": {
+            "commentById": {
+              "authorId": "fred"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: nadel_2_UserService
+      request:
+        query: |
+          query nadel_2_UserService {
+            userById(id: "fred") {
+              displayName
+            }
+          }
+        variables: {}
+        operationName: nadel_2_UserService
+      response: |-
+        {
+          "data": {
+            "userById": {
+              "displayName": "Display name of Fred"
+            }
+          },
+          "extensions": {}
+        }
+response: |-
+  {
+    "errors": [
+      {
+        "message": "removed field",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ],
+    "data": {
+      "commentById": {
+        "author": {
+          "displayName": "Display name of Fred",
+          "userId": null
+        }
+      }
+    },
+    "extensions": {}
+  }

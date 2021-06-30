@@ -1,0 +1,254 @@
+name: query with pass through interfaces and unions that have MIXED __typename in
+  them work as expected
+overallSchema:
+  PetService: |
+    service PetService {
+      type Query{
+        pets(isLoyal: Boolean): [Pet]
+        raining(isLoyal: Boolean): CatsAndDogs
+      }
+      interface Pet {
+        name: String
+        owners: [Owner] => hydrated from OwnerService.ownerById(id: $source.ownerIds)
+        collar: Collar
+        collarToRenamed: Collar => renamed from collar
+      }
+      type Cat implements Pet {
+        name: String
+        wearsBell: Boolean
+        owners: [Owner]
+        collar: Collar
+        collarToRenamed: Collar => renamed from collar
+      }
+      type Dog implements Pet {
+        name: String
+        wearsCollar: Boolean
+        owners: [Owner]
+        collar: Collar
+        collarToRenamed: Collar => renamed from collar
+      }
+      union CatsAndDogs = Cat | Dog
+      interface Collar {
+        color: String
+        size: String
+      }
+      type DogCollar implements Collar {
+        color: String
+        size: String
+      }
+      type CatCollar implements Collar {
+        color: String
+        size: String
+      }
+    }
+  OwnerService: |
+    service OwnerService {
+      type Query {
+        owner(id: String): Owner
+      }
+      interface Owner {
+        name: String
+      }
+      type CaringOwner implements Owner {
+        name: String
+        givesPats: Boolean
+      }
+      type CruelOwner implements Owner {
+        name: String
+        givesSmacks: Boolean
+      }
+    }
+underlyingSchema:
+  PetService: |
+    interface Collar {
+      color: String
+      size: String
+    }
+
+    interface Pet {
+      collar: Collar
+      name: String
+      ownerIds: [String]
+    }
+
+    union CatsAndDogs = Cat | Dog
+
+    type Cat implements Pet {
+      collar: Collar
+      name: String
+      ownerIds: [String]
+      wearsBell: Boolean
+    }
+
+    type CatCollar implements Collar {
+      color: String
+      size: String
+    }
+
+    type Dog implements Pet {
+      collar: Collar
+      name: String
+      ownerIds: [String]
+      wearsCollar: Boolean
+    }
+
+    type DogCollar implements Collar {
+      color: String
+      size: String
+    }
+
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+      pets(isLoyal: Boolean): [Pet]
+      raining(isLoyal: Boolean): CatsAndDogs
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+  OwnerService: |
+    interface Owner {
+      name: String
+    }
+
+    type CaringOwner implements Owner {
+      givesPats: Boolean
+      name: String
+    }
+
+    type CruelOwner implements Owner {
+      givesSmacks: Boolean
+      name: String
+    }
+
+    type Query {
+      ownerById(id: String): Owner
+    }
+query: |
+  query petQ($isLoyal: Boolean) {
+    pets(isLoyal: $isLoyal) {
+      name
+      ... on Dog {
+        wearsCollar
+        __typename
+      }
+      ... on Cat {
+        wearsBell
+      }
+    }
+    raining(isLoyal: $isLoyal) {
+      __typename
+      ... on Dog {
+        wearsCollar
+      }
+      ... on Cat {
+        wearsBell
+      }
+    }
+  }
+variables:
+  isLoyal: true
+serviceCalls:
+  current:
+    - serviceName: nadel_2_PetService_petQ
+      request:
+        query: |
+          query nadel_2_PetService_petQ($isLoyal: Boolean) {
+            pets(isLoyal: $isLoyal) {
+              name
+              ... on Dog {
+                wearsCollar
+                __typename
+              }
+              ... on Cat {
+                wearsBell
+              }
+              type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa: __typename
+            }
+          }
+        variables:
+          isLoyal: true
+        operationName: nadel_2_PetService_petQ
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "name": "Sparky",
+                "wearsCollar": true,
+                "__typename": "Dog",
+                "type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa": "Dog"
+              },
+              {
+                "name": "Whiskers",
+                "wearsBell": false,
+                "type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa": "Cat"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: nadel_2_PetService_petQ
+      request:
+        query: |
+          query nadel_2_PetService_petQ($isLoyal: Boolean) {
+            raining(isLoyal: $isLoyal) {
+              __typename
+              ... on Dog {
+                wearsCollar
+              }
+              ... on Cat {
+                wearsBell
+              }
+              type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa: __typename
+            }
+          }
+        variables:
+          isLoyal: true
+        operationName: nadel_2_PetService_petQ
+      response: |-
+        {
+          "data": {
+            "raining": {
+              "__typename": "Dog",
+              "wearsCollar": true,
+              "type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa": "Dog"
+            }
+          },
+          "extensions": {}
+        }
+response: |-
+  {
+    "data": {
+      "pets": [
+        {
+          "name": "Sparky",
+          "wearsCollar": true,
+          "__typename": "Dog"
+        },
+        {
+          "name": "Whiskers",
+          "wearsBell": false
+        }
+      ],
+      "raining": {
+        "__typename": "Dog",
+        "wearsCollar": true
+      }
+    },
+    "extensions": {
+      "resultComplexity": {
+        "totalNodeCount": 13,
+        "serviceNodeCounts": {
+          "PetService": 13
+        },
+        "fieldRenamesCount": 0,
+        "typeRenamesCount": 0
+      }
+    }
+  }

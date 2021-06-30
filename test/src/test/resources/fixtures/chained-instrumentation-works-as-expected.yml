@@ -1,0 +1,84 @@
+name: chained instrumentation works as expected
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query{
+        hello: World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation{
+        hello: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query OpName {
+    hello {
+      name
+    }
+    hello {
+      id
+    }
+  }
+variables:
+  var1: val1
+serviceCalls:
+  current:
+    - serviceName: nadel_2_MyService_OpName
+      request:
+        query: |
+          query nadel_2_MyService_OpName {
+            hello {
+              name
+            }
+            hello {
+              id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_MyService_OpName
+      response: |-
+        {
+          "data": {
+            "hello": {
+              "id": "3",
+              "name": "earth"
+            }
+          },
+          "extensions": {}
+        }
+response: |-
+  {
+    "data": {
+      "hello": {
+        "name": "earth",
+        "id": "3"
+      }
+    },
+    "extensions": {
+      "resultComplexity": {
+        "totalNodeCount": 0,
+        "serviceNodeCounts": {
+          "MyService": 0
+        },
+        "fieldRenamesCount": 0,
+        "typeRenamesCount": 0
+      }
+    }
+  }

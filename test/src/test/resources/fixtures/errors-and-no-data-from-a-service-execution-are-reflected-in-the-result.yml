@@ -1,0 +1,92 @@
+name: errors and no data from a service execution are reflected in the result
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query{
+        hello: World
+        helloWithArgs(arg1: String! arg2: String): World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation{
+        hello: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+      helloWithArgs(arg1: String!, arg2: String): World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    hello {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: nadel_2_MyService
+      request:
+        query: |
+          query nadel_2_MyService {
+            hello {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_MyService
+      response: |-
+        {
+          "errors": [
+            {
+              "message": "Problem1"
+            },
+            {
+              "message": "Problem2"
+            }
+          ],
+          "data": {
+            "hello": {
+              "name": "World"
+            }
+          },
+          "extensions": {}
+        }
+response: |-
+  {
+    "errors": [
+      {
+        "message": "Problem1",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      },
+      {
+        "message": "Problem2",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "data": {
+      "hello": {
+        "name": "World"
+      }
+    },
+    "extensions": {}
+  }

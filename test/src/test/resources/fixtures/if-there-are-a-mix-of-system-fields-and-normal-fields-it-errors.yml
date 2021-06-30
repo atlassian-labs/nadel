@@ -1,0 +1,56 @@
+name: if there are a mix of system fields and normal fields it errors
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query{
+        hello: World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation{
+        hello: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    __schema {
+      queryType {
+        name
+      }
+    }
+    __typename
+    hello {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  current: []
+response: |-
+  {
+    "errors": [
+      {
+        "message": "You cannot mix Introspection __ system fields and normal fields in Nadel.  They MUST be mutually exclusive!",
+        "locations": [],
+        "extensions": {
+          "classification": "MixedIntrospectionAndNormalFields"
+        }
+      }
+    ]
+  }

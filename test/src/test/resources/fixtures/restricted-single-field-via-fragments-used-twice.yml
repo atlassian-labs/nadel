@@ -1,0 +1,95 @@
+name: restricted single field via fragments used twice
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        id: ID
+        relatedIssue: Issue
+        restricted: String
+      }
+    }
+underlyingSchema:
+  Issues: |
+    type Issue {
+      id: ID
+      relatedIssue: Issue
+      restricted: String
+    }
+
+    type Query {
+      issue: Issue
+    }
+query: |
+  query {
+    issue {
+      ...IssueFragment
+      relatedIssue {
+        ...IssueFragment
+      }
+    }
+  }
+
+  fragment IssueFragment on Issue {
+    id
+    restricted
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: nadel_2_Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issue {
+              ...IssueFragment
+              relatedIssue {
+                ...IssueFragment
+              }
+            }
+          }
+
+          fragment IssueFragment on Issue {
+            id
+            restricted
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "ID1",
+              "restricted": "secret",
+              "relatedIssue": {
+                "id": "ID2",
+                "restricted": "secret"
+              }
+            }
+          },
+          "extensions": {}
+        }
+response: |-
+  {
+    "errors": [
+      {
+        "message": "removed field",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ],
+    "data": {
+      "issue": {
+        "id": "ID1",
+        "restricted": null,
+        "relatedIssue": {
+          "id": "ID2",
+          "restricted": "secret"
+        }
+      }
+    },
+    "extensions": {}
+  }
