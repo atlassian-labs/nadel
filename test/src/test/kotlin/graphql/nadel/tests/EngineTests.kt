@@ -56,6 +56,8 @@ private suspend fun execute(
     engineType: NadelEngineType,
     engineFactory: NadelExecutionEngineFactory,
 ) {
+    println("Running ${fixture.name}")
+
     val testHooks = getTestHook(fixture)
     val serviceCalls = fixture.serviceCalls[engineType].toMutableList()
 
