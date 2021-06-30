@@ -1,6 +1,6 @@
 package graphql.nadel.enginekt.blueprint.hydration
 
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLFieldDefinition
 
@@ -23,7 +23,7 @@ data class NadelHydrationActorInputDef(
          * ```
          */
         data class FieldResultValue(
-            val queryPathToField: QueryPath,
+            val queryPathToField: NadelQueryPath,
             val fieldDefinition: GraphQLFieldDefinition,
         ) : ValueSource()
 

@@ -11,12 +11,12 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
-import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -46,7 +46,7 @@ internal class NadelHydrationTransform(
          * the [State] is passed around.
          */
         val hydratedField: ExecutableNormalizedField,
-        val aliasHelper: AliasHelper,
+        val aliasHelper: NadelAliasHelper,
     )
 
     override suspend fun isApplicable(
@@ -66,7 +66,7 @@ internal class NadelHydrationTransform(
                 instructions = hydrationInstructions,
                 hydratedFieldService = service,
                 hydratedField = overallField,
-                aliasHelper = AliasHelper.forField(tag = "hydration", overallField),
+                aliasHelper = NadelAliasHelper.forField(tag = "hydration", overallField),
             )
         }
     }
@@ -113,7 +113,7 @@ internal class NadelHydrationTransform(
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryPath = underlyingParentField?.queryPath ?: QueryPath.root,
+            queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
 

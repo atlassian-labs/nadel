@@ -10,7 +10,7 @@ import graphql.language.Document
 import graphql.language.ObjectTypeDefinition
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
@@ -126,7 +126,7 @@ fun ExecutableNormalizedField.copyWithChildren(children: List<ExecutableNormaliz
         }
 }
 
-val ExecutableNormalizedField.queryPath: QueryPath get() = QueryPath(listOfResultKeys)
+val ExecutableNormalizedField.queryPath: NadelQueryPath get() = NadelQueryPath(listOfResultKeys)
 
 inline fun <reified T : AnyAstDefinition> Document.getDefinitionsOfType(): List<T> {
     return getDefinitionsOfType(T::class.java)

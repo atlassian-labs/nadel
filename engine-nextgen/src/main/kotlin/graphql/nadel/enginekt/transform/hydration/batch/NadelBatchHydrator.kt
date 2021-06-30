@@ -11,7 +11,7 @@ import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.asMutable
 import graphql.nadel.enginekt.transform.result.json.JsonNode
@@ -304,7 +304,7 @@ internal class NadelBatchHydrator(
      */
     private fun getPathToObjectIdentifierOnHydrationParentNode(
         instruction: NadelBatchHydrationFieldInstruction,
-    ): QueryPath {
+    ): NadelQueryPath {
         return instruction
             .actorInputValueDefs
             .asSequence()

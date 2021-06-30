@@ -1,7 +1,7 @@
 package graphql.nadel.enginekt.transform.artificial
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 
@@ -42,7 +42,7 @@ import graphql.normalized.ExecutableNormalizedField
  * }
  * ```
  */
-class AliasHelper private constructor(private val alias: String) {
+class NadelAliasHelper private constructor(private val alias: String) {
     val typeNameResultKey by lazy {
         TypeNameMetaFieldDef.name + "__" + alias
     }
@@ -56,8 +56,8 @@ class AliasHelper private constructor(private val alias: String) {
     }
 
     fun getQueryPath(
-        path: QueryPath,
-    ): QueryPath {
+        path: NadelQueryPath,
+    ): NadelQueryPath {
         return path.mapIndexed { index, segment ->
             when (index) {
                 0 -> getResultKey(segment)
@@ -74,9 +74,9 @@ class AliasHelper private constructor(private val alias: String) {
     }
 
     companion object {
-        fun forField(tag: String, field: ExecutableNormalizedField): AliasHelper {
+        fun forField(tag: String, field: ExecutableNormalizedField): NadelAliasHelper {
             // TODO: detect when not in test environment and provide UUID or similar
-            return AliasHelper("${tag}__${field.name}")
+            return NadelAliasHelper("${tag}__${field.name}")
         }
     }
 }

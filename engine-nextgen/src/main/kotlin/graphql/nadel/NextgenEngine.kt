@@ -13,7 +13,7 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
@@ -122,7 +122,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     internal suspend fun executeHydration(
         service: Service,
         topLevelField: ExecutableNormalizedField,
-        pathToActorField: QueryPath,
+        pathToActorField: NadelQueryPath,
         executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
         val actorField = fold(initial = topLevelField, count = pathToActorField.segments.size - 1) {

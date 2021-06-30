@@ -6,10 +6,10 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
-import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
@@ -60,9 +60,9 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
          */
         val instructions: Map<FieldCoordinates, NadelDeepRenameFieldInstruction>,
         /**
-         * See [AliasHelper]
+         * See [NadelAliasHelper]
          */
-        val aliasHelper: AliasHelper,
+        val aliasHelper: NadelAliasHelper,
         /**
          * Stored for easy access in other functions.
          */
@@ -89,7 +89,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
 
         return State(
             deepRenameInstructions,
-            AliasHelper.forField(tag = "deep_rename", overallField),
+            NadelAliasHelper.forField(tag = "deep_rename", overallField),
             overallField,
         )
     }
@@ -265,7 +265,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryPath = underlyingParentField?.queryPath ?: QueryPath.root,
+            queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
 
