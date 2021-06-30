@@ -4,7 +4,7 @@ overallSchema:
     service IssueService {
       type Query {
         issues(jql: String): [Issue]
-        issueById(id: String):  Issue
+        issueById(id: String): Issue
       }
       type Issue {
         id: ID

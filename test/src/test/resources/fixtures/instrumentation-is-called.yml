@@ -40,7 +40,7 @@ variables:
   var1: val1
 serviceCalls:
   current:
-    - serviceName: nadel_2_MyService_OpName
+    - serviceName: MyService
       request:
         query: |
           query nadel_2_MyService_OpName {

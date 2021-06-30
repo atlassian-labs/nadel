@@ -38,4 +38,22 @@ query: |
 variables: {}
 serviceCalls:
   current: []
-response: null
+# language=JSON
+response: |-
+  {
+    "data": null,
+    "errors": [
+      {
+        "message": "Variable 'var1' has coerced Null value for NonNull type 'String!'",
+        "locations": [
+          {
+            "line": 1,
+            "column": 12
+          }
+        ],
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ]
+  }

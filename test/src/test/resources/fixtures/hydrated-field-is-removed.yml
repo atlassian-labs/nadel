@@ -1,26 +1,5 @@
 name: hydrated field is removed
 overallSchema:
-  IssueService: |
-    service IssueService {
-      type Query {
-        issues(jql: String): [Issue]
-        issueById(id: String):  Issue
-      }
-      type Issue {
-        id: ID
-        key: String
-        summary: String
-        description: String
-        epic: Epic
-        reporter: User => hydrated from UserService.userById(id: $source.reporterId)
-        comments: [Comment] => hydrated from CommentService.commentById(id: $source.commentIds)
-      }
-      type Epic {
-        id: ID
-        title: String
-        description: String
-      }
-    }
   UserService: |
     service UserService {
       type Query {
@@ -47,6 +26,16 @@ overallSchema:
       }
     }
 underlyingSchema:
+  UserService: |
+    type Query {
+      users(ids: [ID]): [User]
+      userById(id: ID): User
+    }
+    type User {
+      userId: ID
+      displayName: String
+      avatarUrl: String
+    }
   CommentService: |
     type Comment {
       authorId: ID
@@ -71,7 +60,7 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - serviceName: nadel_2_CommentService
+    - serviceName: CommentService
       request:
         query: |
           query nadel_2_CommentService {

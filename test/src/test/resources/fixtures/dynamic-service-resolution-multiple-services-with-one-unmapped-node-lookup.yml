@@ -112,7 +112,7 @@ response: |-
     },
     "errors": [
       {
-        "message":  "Could not resolve service for field: /commit",
+        "message": "Could not resolve service for field: /commit",
         "locations": [],
         "path": ["commit"],
         "extensions": {

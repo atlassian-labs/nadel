@@ -148,7 +148,7 @@ variables:
   isLoyal: true
 serviceCalls:
   current:
-    - serviceName: nadel_2_PetService_petQ
+    - serviceName: PetService
       request:
         query: |
           query nadel_2_PetService_petQ($isLoyal: Boolean) {
@@ -159,7 +159,7 @@ serviceCalls:
                 wearsBell
                 aliasedCatTypeName: __typename
               }
-              type_hint_typename__5d093aab_b4b9_4f89_b421_3fc8989bef12: __typename
+              type_hint_typename__UUID: __typename
             }
           }
 
@@ -178,13 +178,13 @@ serviceCalls:
                 "name": "Sparky",
                 "wearsCollar": true,
                 "aliasedDogTypeName": "Dog",
-                "type_hint_typename__5d093aab_b4b9_4f89_b421_3fc8989bef12": "Dog"
+                "type_hint_typename__UUID": "Dog"
               },
               {
                 "name": "Whiskers",
                 "wearsBell": false,
                 "aliasedCatTypeName": "Cat",
-                "type_hint_typename__5d093aab_b4b9_4f89_b421_3fc8989bef12": "Cat"
+                "type_hint_typename__UUID": "Cat"
               }
             ]
           },

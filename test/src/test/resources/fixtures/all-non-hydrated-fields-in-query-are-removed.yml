@@ -4,7 +4,7 @@ overallSchema:
     service IssueService {
       type Query {
         issues(jql: String): [Issue]
-        issueById(id: String):  Issue
+        issueById(id: String): Issue
       }
       type Issue {
         id: ID
@@ -47,6 +47,35 @@ overallSchema:
       }
     }
 underlyingSchema:
+  IssueService: |
+    type Query {
+      issues(jql: String): [Issue]
+      issueById(id: String): Issue
+    }
+
+    type Issue {
+      id: ID
+      key: String
+      summary: String
+      description: String
+      epic: Epic
+    }
+
+    type Epic {
+      id: ID
+      title: String
+      description: String
+    }
+  UserService: |
+    type Query {
+      users(ids: [ID]): [User]
+      userById(id: ID): User
+    }
+    type User {
+      userId: ID
+      displayName: String
+      avatarUrl: String
+    }
   CommentService: |
     type Comment {
       authorId: ID
@@ -70,7 +99,7 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - serviceName: nadel_2_CommentService
+    - serviceName: CommentService
       request:
         query: |
           query nadel_2_CommentService {

@@ -147,7 +147,7 @@ variables:
   isLoyal: true
 serviceCalls:
   current:
-    - serviceName: nadel_2_PetService_petQ
+    - serviceName: PetService
       request:
         query: |
           query nadel_2_PetService_petQ($isLoyal: Boolean) {
@@ -182,7 +182,7 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - serviceName: nadel_2_OwnerService_petQ
+    - serviceName: OwnerService
       request:
         query: |
           query nadel_2_OwnerService_petQ {
@@ -210,7 +210,7 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - serviceName: nadel_2_OwnerService_petQ
+    - serviceName: OwnerService
       request:
         query: |
           query nadel_2_OwnerService_petQ {

@@ -95,7 +95,7 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - serviceName: nadel_2_MyService
+    - serviceName: MyService
       request:
         query: |
           query nadel_2_MyService {

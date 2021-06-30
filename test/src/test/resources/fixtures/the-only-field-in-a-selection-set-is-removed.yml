@@ -4,7 +4,7 @@ overallSchema:
     service IssueService {
       type Query {
         issues(jql: String): [Issue]
-        issueById(id: String):  Issue
+        issueById(id: String): Issue
       }
       type Issue {
         id: ID
@@ -12,38 +12,11 @@ overallSchema:
         summary: String
         description: String
         epic: Epic
-        reporter: User => hydrated from UserService.userById(id: $source.reporterId)
-        comments: [Comment] => hydrated from CommentService.commentById(id: $source.commentIds)
       }
       type Epic {
         id: ID
         title: String
         description: String
-      }
-    }
-  UserService: |
-    service UserService {
-      type Query {
-        users(ids: [ID]): [User]
-        userById(id: ID): User
-      }
-      type User {
-        userId: ID
-        displayName: String
-        avatarUrl: String
-      }
-    }
-  CommentService: |
-    service CommentService {
-      type Query {
-        comments(ids: [ID]): [Comment]
-        commentById(id: ID): Comment
-      }
-      type Comment {
-        id: ID
-        commentText: String => renamed from text
-        created: String
-        author: User => hydrated from UserService.userById(id: $source.authorId)
       }
     }
 underlyingSchema:
@@ -80,7 +53,7 @@ query: |
 variables: {}
 serviceCalls:
   current:
-    - serviceName: nadel_2_IssueService
+    - serviceName: IssueService
       request:
         query: |
           query nadel_2_IssueService {

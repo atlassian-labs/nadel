@@ -97,7 +97,7 @@ variables:
     inputVal: x
 serviceCalls:
   current:
-    - serviceName: nadel_2_MyService_X
+    - serviceName: MyService
       request:
         query: |
           query nadel_2_MyService_X($var1: InputUnderlying!, $var2: String, $var3: EnumUnderlying) {
