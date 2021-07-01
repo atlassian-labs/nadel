@@ -233,10 +233,10 @@ class NadelErrorHandlingTest extends Specification {
         !er.errors.isEmpty()
         def gqlError = er.errors[0]
         gqlError.message.contains("Pop goes the weasel")
-        Throwable throwable = gqlError.getExtensions().get(Throwable.class.getName())
-        throwable != null
-        throwable instanceof RuntimeException
-        throwable.getMessage() == "Pop goes the weasel"
+        Throwable thrown = gqlError.getExtensions().get(Throwable.class.getName())
+        thrown != null
+        thrown instanceof RuntimeException
+        thrown.getMessage() == "Pop goes the weasel"
 
     }
 
