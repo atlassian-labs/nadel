@@ -162,7 +162,7 @@ subprojects {
 }
 
 task myWrapper(type: Wrapper) {
-    gradleVersion = '6.8.3'
+    gradleVersion = '7.0.2'
     distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
 }
 
