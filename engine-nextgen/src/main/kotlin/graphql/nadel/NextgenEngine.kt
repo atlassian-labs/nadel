@@ -11,6 +11,7 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
+import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
@@ -32,7 +33,9 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
 
-class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
+class NextgenEngine(nadel: Nadel, transforms: List<NadelTransform<Any>> = emptyList()) : NadelExecutionEngine {
+    constructor(nadel: Nadel) : this(nadel, emptyList())
+
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         overallSchema = nadel.overallSchema,
@@ -41,7 +44,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
         engine = this,
-        javaCompatTransforms = nadel.nextGenTransforms
+        transforms = transforms
     )
     private val queryTransformer = NadelQueryTransformer.create(
         executionBlueprint = overallExecutionBlueprint,

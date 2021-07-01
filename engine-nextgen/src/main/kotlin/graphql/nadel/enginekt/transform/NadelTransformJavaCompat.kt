@@ -51,6 +51,7 @@ interface NadelTransformJavaCompat<State : Any> {
     ): CompletableFuture<List<NadelResultInstruction>>
 
     companion object {
+        @JvmStatic
         fun <State : Any> create(compat: NadelTransformJavaCompat<State>): NadelTransform<State> {
             return object : NadelTransform<State> {
                 override suspend fun isApplicable(
