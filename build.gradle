@@ -49,7 +49,6 @@ subprojects {
     apply plugin: "java"
     apply plugin: "java-library"
     apply plugin: "signing"
-    apply plugin: "maven"
     apply plugin: "maven-publish"
     apply plugin: "com.jfrog.artifactory"
 
