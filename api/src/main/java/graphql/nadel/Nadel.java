@@ -46,6 +46,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,7 @@ public class Nadel {
     final WiringFactory underlyingWiringFactory;
     final SchemaTransformationHook schemaTransformationHook;
     final OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
+    final List<Object> nextGenTransforms;
 
     private Nadel(
             Map<String, Reader> serviceNDSLs,
@@ -91,7 +93,8 @@ public class Nadel {
             ServiceExecutionHooks serviceExecutionHooks,
             WiringFactory overallWiringFactory,
             WiringFactory underlyingWiringFactory,
-            SchemaTransformationHook schemaTransformationHook
+            SchemaTransformationHook schemaTransformationHook,
+            List<Object> nextGenTransforms
     ) {
         this.serviceExecutionFactory = serviceExecutionFactory;
         this.instrumentation = instrumentation;
@@ -107,7 +110,7 @@ public class Nadel {
         this.services = createServices();
         this.commonTypes = createCommonTypes();
         this.overallSchema = createOverallSchema();
-
+        this.nextGenTransforms = nextGenTransforms;
         this.engine = null;
     }
 
@@ -127,6 +130,7 @@ public class Nadel {
         this.commonTypes = originalNadel.commonTypes;
         this.overallSchema = originalNadel.overallSchema;
         this.engine = engine;
+        this.nextGenTransforms = originalNadel.nextGenTransforms;
     }
 
     private Map<String, StitchingDsl> createDSLs(Map<String, Reader> serviceNDSLs) {
@@ -346,6 +350,7 @@ public class Nadel {
         private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
         private SchemaTransformationHook schemaTransformationHook = SchemaTransformationHook.IDENTITY;
         private NadelExecutionEngineFactory engineFactory;
+        private List<Object> nextGenTransforms = Collections.emptyList();
 
         private NadelExecutionEngine buildDefaultEngine(Nadel nadel) {
             try {
@@ -440,6 +445,11 @@ public class Nadel {
             return this;
         }
 
+        public Builder nextGenTransforms(List<Object> nextGenTransforms) {
+            this.nextGenTransforms = nextGenTransforms;
+            return this;
+        }
+
         public Nadel build() {
             Nadel nadelStep1 = new Nadel(
                     serviceNDSLs,
@@ -451,7 +461,9 @@ public class Nadel {
                     serviceExecutionHooks,
                     overallWiringFactory,
                     underlyingWiringFactory,
-                    schemaTransformationHook);
+                    schemaTransformationHook,
+                    nextGenTransforms
+            );
 
             NadelExecutionEngine executionEngine;
             if (engineFactory == null) {

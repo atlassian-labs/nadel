@@ -8,6 +8,7 @@ import graphql.nadel.enginekt.transform.AnyNadelTransform
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.NadelRenameTransform
 import graphql.nadel.enginekt.transform.NadelTransform
+import graphql.nadel.enginekt.transform.NadelTransformJavaCompat
 import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform
@@ -66,11 +67,15 @@ internal class NadelExecutionPlanFactory(
     companion object {
         fun create(
             executionBlueprint: NadelOverallExecutionBlueprint,
+            javaCompatTransforms: List<Any>,
             engine: NextgenEngine,
         ): NadelExecutionPlanFactory {
+            val customNadelTransforms = (javaCompatTransforms as List<NadelTransformJavaCompat<Any>>)
+                .map { NadelTransformJavaCompat.create(it) }
+
             return NadelExecutionPlanFactory(
                 executionBlueprint,
-                transforms = listOfTransforms(
+                transforms = customNadelTransforms + listOfTransforms(
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),
                     NadelHydrationTransform(engine),

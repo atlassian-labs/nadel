@@ -41,6 +41,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
         engine = this,
+        javaCompatTransforms = nadel.nextGenTransforms
     )
     private val queryTransformer = NadelQueryTransformer.create(
         executionBlueprint = overallExecutionBlueprint,
