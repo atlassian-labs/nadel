@@ -66,12 +66,13 @@ internal class NadelExecutionPlanFactory(
     companion object {
         fun create(
             executionBlueprint: NadelOverallExecutionBlueprint,
-            transforms: List<NadelTransform<Any>>,
+            transforms: List<NadelTransform<out Any>>,
             engine: NextgenEngine,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
                 executionBlueprint,
-                transforms = transforms + listOfTransforms(
+                transforms = listOfTransforms(
+                    *transforms.toTypedArray(),
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),
                     NadelHydrationTransform(engine),

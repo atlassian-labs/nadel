@@ -33,7 +33,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
 
-class NextgenEngine(nadel: Nadel, transforms: List<NadelTransform<Any>> = emptyList()) : NadelExecutionEngine {
+class NextgenEngine(nadel: Nadel, transforms: List<NadelTransform<out Any>> = emptyList()) : NadelExecutionEngine {
     constructor(nadel: Nadel) : this(nadel, emptyList())
 
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
