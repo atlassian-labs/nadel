@@ -93,7 +93,7 @@ subprojects {
                         it.parent().remove(it)
                     }
                     pomNode.children().last() + {
-                        resolveStrategy = DELEGATE_FIRST
+                        resolveStrategy = Closure.DELEGATE_FIRST
                         name project.name
                         url "https://github.com/atlassian-labs/nadel"
                         scm {
