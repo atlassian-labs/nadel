@@ -6,7 +6,7 @@ import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.testutils.TestUtil
-import org.junit.Ignore
+import spock.lang.Ignore
 import spock.lang.Specification
 
 import static graphql.nadel.NadelEngine.newNadel
