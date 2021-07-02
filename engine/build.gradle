@@ -8,8 +8,8 @@ apply plugin: "maven-publish"
 apply plugin: "com.jfrog.artifactory"
 apply plugin: "signing"
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 def slf4jVersion = "1.7.25"
 
