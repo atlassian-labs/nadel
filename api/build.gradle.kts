@@ -73,8 +73,9 @@ dependencies {
     antlr("org.antlr:antlr4:4.8")
 
     testImplementation("junit:junit:4.11")
-    testImplementation("org.spockframework:spock-core:1.0-groovy-2.4")
-    testImplementation("org.codehaus.groovy:groovy:2.5.1")
+    testImplementation("org.spockframework:spock-core:2.0-groovy-3.0")
+    testImplementation("org.codehaus.groovy:groovy:3.0.8")
+    testImplementation("org.codehaus.groovy:groovy-json:3.0.8")
     testImplementation("cglib:cglib-nodep:3.1")
     testImplementation("org.objenesis:objenesis:2.1")
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
@@ -97,4 +98,8 @@ tasks.generateGrammarSource {
 // compileJava.source file("build/generated-src"), sourceSets.main.java
 tasks.compileJava {
     source(file("build/generated-src"))
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }

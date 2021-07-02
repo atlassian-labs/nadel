@@ -49,7 +49,6 @@ subprojects {
     apply plugin: "java"
     apply plugin: "java-library"
     apply plugin: "signing"
-    apply plugin: "maven"
     apply plugin: "maven-publish"
     apply plugin: "com.jfrog.artifactory"
 
@@ -94,7 +93,7 @@ subprojects {
                         it.parent().remove(it)
                     }
                     pomNode.children().last() + {
-                        resolveStrategy = DELEGATE_FIRST
+                        resolveStrategy = Closure.DELEGATE_FIRST
                         name project.name
                         url "https://github.com/atlassian-labs/nadel"
                         scm {
@@ -159,11 +158,6 @@ subprojects {
             }
         }
     }
-}
-
-task myWrapper(type: Wrapper) {
-    gradleVersion = '6.8.3'
-    distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion}-bin.zip"
 }
 
 configurations {
