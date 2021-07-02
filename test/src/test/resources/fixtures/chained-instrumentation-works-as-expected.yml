@@ -2,14 +2,14 @@ name: chained instrumentation works as expected
 overallSchema:
   MyService: |
     service MyService {
-      type Query{
+      type Query {
         hello: World
       }
       type World {
         id: ID
         name: String
       }
-      type Mutation{
+      type Mutation {
         hello: String
       }
     }
@@ -53,6 +53,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_MyService_OpName
+      # language=JSON
       response: |-
         {
           "data": {
@@ -63,6 +64,7 @@ serviceCalls:
           },
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "data": {

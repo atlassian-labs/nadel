@@ -128,6 +128,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_IssueService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -166,6 +167,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -185,6 +187,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -205,6 +208,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_CommentService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -226,6 +230,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_CommentService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -247,6 +252,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_CommentService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -268,6 +274,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_CommentService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -289,6 +296,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_CommentService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -310,6 +318,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_CommentService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -330,6 +339,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -349,6 +359,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -368,6 +379,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -387,6 +399,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -406,6 +419,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -425,6 +439,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -434,40 +449,47 @@ serviceCalls:
           },
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "errors": [
       {
+        "path": ["issues", "comments", "author", "userId"],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
+        "path":  ["issues", "comments", "author", "userId"],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
+        "path":  ["issues", "comments", "author", "userId"],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
+        "path":  ["issues", "comments", "author", "userId"],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
+        "path":  ["issues", "comments", "author", "userId"],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
+        "path":  ["issues", "comments", "author", "userId"],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"

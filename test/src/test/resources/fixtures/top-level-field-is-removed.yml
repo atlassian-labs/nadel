@@ -100,10 +100,14 @@ query: |
 variables: {}
 serviceCalls:
   current: []
+# language=JSON
 response: |-
   {
     "errors": [
       {
+        "path": [
+          "commentById"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"

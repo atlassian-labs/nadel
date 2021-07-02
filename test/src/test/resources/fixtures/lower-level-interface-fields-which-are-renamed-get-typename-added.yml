@@ -2,7 +2,7 @@ name: lower level interface fields which are renamed get typename added
 overallSchema:
   PetService: |
     service PetService {
-      type Query{
+      type Query {
         pets(isLoyal: Boolean) : [Pet]
         raining(isLoyal: Boolean) : CatsAndDogs
       }
@@ -149,14 +149,15 @@ serviceCalls:
               name
               collar {
                 color
-                type_hint_typename__57b8fb38_5a9d_43e0_b288_003399fcec56: __typename
+                type_hint_typename__UUID: __typename
               }
-              type_hint_typename__57b8fb38_5a9d_43e0_b288_003399fcec56: __typename
+              type_hint_typename__UUID: __typename
             }
           }
         variables:
           isLoyal: true
         operationName: nadel_2_PetService_petQ
+      # language=JSON
       response: |-
         {
           "data": {
@@ -165,22 +166,23 @@ serviceCalls:
                 "name": "Sparky",
                 "collar": {
                   "color": "blue",
-                  "type_hint_typename__57b8fb38_5a9d_43e0_b288_003399fcec56": "CatCollar"
+                  "type_hint_typename__UUID": "CatCollar"
                 },
-                "type_hint_typename__57b8fb38_5a9d_43e0_b288_003399fcec56": "Dog"
+                "type_hint_typename__UUID": "Dog"
               },
               {
                 "name": "Whiskers",
                 "collar": {
                   "color": "red",
-                  "type_hint_typename__57b8fb38_5a9d_43e0_b288_003399fcec56": "CatCollar"
+                  "type_hint_typename__UUID": "CatCollar"
                 },
-                "type_hint_typename__57b8fb38_5a9d_43e0_b288_003399fcec56": "Cat"
+                "type_hint_typename__UUID": "Cat"
               }
             ]
           },
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "data": {

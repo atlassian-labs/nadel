@@ -10,6 +10,9 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.tests.util.getAncestorFile
+import graphql.nadel.tests.util.requireIsDirectory
+import graphql.nadel.tests.util.toSlug
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
@@ -21,32 +24,52 @@ import java.util.concurrent.CompletableFuture
 
 class EngineTests : FunSpec({
     val engineFactories = EngineTypeFactories()
+
     val fixturesDir = File(javaClass.classLoader.getResource("fixtures")!!.path)
+        // Note: resources end up in nadel/test/build/resources/test/fixtures/
+        .getAncestorFile("build").parentFile
+        .requireIsDirectory()
+        .let { moduleRootDir ->
+            File(moduleRootDir, "src/test/resources/fixtures/").requireIsDirectory()
+        }
+
+
     fixturesDir.listFiles()!!
         .asSequence()
         .onEach {
             println("Loading ${it.nameWithoutExtension}")
         }
-        .map(File::readText)
-        .map<String, TestFixture>(yamlObjectMapper::readValue)
-        .forEach { fixture ->
-            engineFactories.all
-                .asSequence()
-                .filter { (engine) ->
-                    true // fixture.name == "hydration input is null"
-                }
-                .filter { (engine) ->
-                    fixture.enabled.get(engine = engine)
-                }
-                .forEach { (engine, engineFactory) ->
-                    val execute: suspend TestContext.() -> Unit = {
-                        execute(fixture, engine, engineFactory)
+        .forEach { file ->
+            file
+                .let(File::readText)
+                .let<String, TestFixture>(yamlObjectMapper::readValue)
+                .also { fixture ->
+                    // Rename fixtures if they have the wrong name
+                    val expectedName = fixture.name.toSlug()
+                    if (file.nameWithoutExtension != expectedName) {
+                        file.renameTo(File(fixturesDir, "$expectedName.yml"))
                     }
-                    if (fixture.ignored.get(engine = engine)) {
-                        xtest("$engine ${fixture.name}", execute)
-                    } else {
-                        test("$engine ${fixture.name}", execute)
-                    }
+                }
+                // Execute the tests on all applicable engines
+                .also { fixture ->
+                    engineFactories.all
+                        .asSequence()
+                        .filter { (engine) ->
+                            true // fixture.name == "hydration input is null"
+                        }
+                        .filter { (engine) ->
+                            fixture.enabled.get(engine = engine)
+                        }
+                        .forEach { (engine, engineFactory) ->
+                            val execute: suspend TestContext.() -> Unit = {
+                                execute(fixture, engine, engineFactory)
+                            }
+                            if (fixture.ignored.get(engine = engine)) {
+                                xtest("$engine ${fixture.name}", execute)
+                            } else {
+                                test("$engine ${fixture.name}", execute)
+                            }
+                        }
                 }
         }
 })
@@ -131,31 +154,34 @@ private suspend fun execute(
         fail("Expected exception did not occur")
     }
 
-    // TODO: check extensions one day - right now they don't match up as dumped tests weren't fully E2E but tests are
-    assertJsonObject(
-        subject = response.toSpecification().let {
-            mapOf(
-                "data" to it["data"],
-                "errors" to (it["errors"] ?: emptyList<JsonMap>()),
-                // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
-            ).also {
-                println("Overall response")
-                println(it)
-                println()
-            }
-        },
-        expected = fixture.response.let {
-            mapOf(
-                "data" to it["data"],
-                "errors" to (it["errors"] ?: emptyList<JsonMap>()),
-                // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
-            ).also {
-                println("Expecting response")
-                println(it)
-                println()
-            }
-        },
-    )
+    val expectedResponse = fixture.response
+    if (expectedResponse != null) {
+        // TODO: check extensions one day - right now they don't match up as dumped tests weren't fully E2E but tests are
+        assertJsonObject(
+            subject = response.toSpecification().let {
+                mapOf(
+                    "data" to it["data"],
+                    "errors" to (it["errors"] ?: emptyList<JsonMap>()),
+                    // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
+                ).also {
+                    println("Overall response")
+                    println(it)
+                    println()
+                }
+            },
+            expected = expectedResponse.let {
+                mapOf(
+                    "data" to it["data"],
+                    "errors" to (it["errors"] ?: emptyList<JsonMap>()),
+                    // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
+                ).also {
+                    println("Expecting response")
+                    println(it)
+                    println()
+                }
+            },
+        )
+    }
 
     testHooks?.assertResult(engineType, response)
 }

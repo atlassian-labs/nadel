@@ -2,7 +2,7 @@ name: errors and some data from a service execution are reflected in the result
 overallSchema:
   MyService: |
     service MyService {
-      type Query{
+      type Query {
         hello: World
         helloWithArgs(arg1: String! arg2: String): World
       }
@@ -10,7 +10,7 @@ overallSchema:
         id: ID
         name: String
       }
-      type Mutation{
+      type Mutation {
         hello: String
       }
     }
@@ -48,6 +48,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_MyService
+      # language=JSON
       response: |-
         {
           "errors": [
@@ -61,6 +62,7 @@ serviceCalls:
           "data": null,
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "errors": [

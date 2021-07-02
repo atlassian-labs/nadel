@@ -1,10 +1,9 @@
-name: missing null variables are handled
+name: abort beginExecute within instrumentation will still call enhancing instrumentation functions
 overallSchema:
   MyService: |
     service MyService {
       type Query {
         hello: World
-        helloWithArgs(arg1: String! arg2: String): World
       }
       type World {
         id: ID
@@ -22,7 +21,6 @@ underlyingSchema:
 
     type Query {
       hello: World
-      helloWithArgs(arg1: String!, arg2: String): World
     }
 
     type World {
@@ -30,29 +28,27 @@ underlyingSchema:
       name: String
     }
 query: |
-  query with($var1: String!) {
-    helloWithArgs(arg1: $var1) {
+  query OpName {
+    hello {
       name
     }
+    hello {
+      id
+    }
   }
-variables: {}
+variables:
+  var1: val1
 serviceCalls:
   current: []
 # language=JSON
 response: |-
   {
-    "data": null,
+    "data": "enhanced beginExecute",
     "errors": [
       {
-        "message": "Variable 'var1' has coerced Null value for NonNull type 'String!'",
-        "locations": [
-          {
-            "line": 1,
-            "column": 12
-          }
-        ],
+        "message": "beginExecute",
         "extensions": {
-          "classification": "ValidationError"
+          "classification": "ExecutionAborted"
         }
       }
     ]

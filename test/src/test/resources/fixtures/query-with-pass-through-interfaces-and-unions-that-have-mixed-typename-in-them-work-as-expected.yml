@@ -3,7 +3,7 @@ name: query with pass through interfaces and unions that have MIXED __typename i
 overallSchema:
   PetService: |
     service PetService {
-      type Query{
+      type Query {
         pets(isLoyal: Boolean): [Pet]
         raining(isLoyal: Boolean): CatsAndDogs
       }
@@ -168,12 +168,13 @@ serviceCalls:
               ... on Cat {
                 wearsBell
               }
-              type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa: __typename
+              type_hint_typename__UUID: __typename
             }
           }
         variables:
           isLoyal: true
         operationName: nadel_2_PetService_petQ
+      # language=JSON
       response: |-
         {
           "data": {
@@ -182,12 +183,12 @@ serviceCalls:
                 "name": "Sparky",
                 "wearsCollar": true,
                 "__typename": "Dog",
-                "type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa": "Dog"
+                "type_hint_typename__UUID": "Dog"
               },
               {
                 "name": "Whiskers",
                 "wearsBell": false,
-                "type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa": "Cat"
+                "type_hint_typename__UUID": "Cat"
               }
             ]
           },
@@ -205,23 +206,25 @@ serviceCalls:
               ... on Cat {
                 wearsBell
               }
-              type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa: __typename
+              type_hint_typename__UUID: __typename
             }
           }
         variables:
           isLoyal: true
         operationName: nadel_2_PetService_petQ
+      # language=JSON
       response: |-
         {
           "data": {
             "raining": {
               "__typename": "Dog",
               "wearsCollar": true,
-              "type_hint_typename__4d72d828_b81c_4ef1_af70_d11a632894fa": "Dog"
+              "type_hint_typename__UUID": "Dog"
             }
           },
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "data": {

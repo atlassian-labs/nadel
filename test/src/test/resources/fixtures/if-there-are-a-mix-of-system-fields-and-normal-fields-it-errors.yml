@@ -2,14 +2,14 @@ name: if there are a mix of system fields and normal fields it errors
 overallSchema:
   MyService: |
     service MyService {
-      type Query{
+      type Query {
         hello: World
       }
       type World {
         id: ID
         name: String
       }
-      type Mutation{
+      type Mutation {
         hello: String
       }
     }
@@ -42,6 +42,7 @@ query: |
 variables: {}
 serviceCalls:
   current: []
+# language=JSON
 response: |-
   {
     "errors": [

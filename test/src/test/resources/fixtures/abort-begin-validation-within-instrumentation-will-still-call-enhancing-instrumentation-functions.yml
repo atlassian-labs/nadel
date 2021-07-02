@@ -1,15 +1,15 @@
-name: abort execution within instrumentation will still call enhancing instrumentation methods
+name: abort beginValidation within instrumentation will still call enhancing instrumentation functions
 overallSchema:
   MyService: |
     service MyService {
-      type Query{
+      type Query {
         hello: World
       }
       type World {
         id: ID
         name: String
       }
-      type Mutation{
+      type Mutation {
         hello: String
       }
     }
@@ -40,4 +40,16 @@ variables:
   var1: val1
 serviceCalls:
   current: []
-response: null
+# language=JSON
+response: |-
+  {
+    "data": "enhanced beginValidation",
+    "errors": [
+      {
+        "message": "beginValidation",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ]
+  }

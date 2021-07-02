@@ -45,6 +45,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_CommentService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -54,10 +55,15 @@ serviceCalls:
           },
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "errors": [
       {
+        "path": [
+          "commentById",
+          "created"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"

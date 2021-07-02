@@ -2,7 +2,7 @@ name: query with hydration that fail with errors are reflected in the result
 overallSchema:
   Bar: |
     service Bar {
-      type Query{
+      type Query {
         bar: Bar
       }
       type Bar {
@@ -12,7 +12,7 @@ overallSchema:
     }
   Foo: |
     service Foo {
-      type Query{
+      type Query {
         foo: Foo
       }
       type Foo {
@@ -88,6 +88,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Bar
+      # language=JSON
       response: |-
         {
           "errors": [
@@ -100,6 +101,7 @@ serviceCalls:
           },
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "errors": [

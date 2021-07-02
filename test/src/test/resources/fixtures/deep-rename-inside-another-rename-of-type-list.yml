@@ -11,7 +11,7 @@ overallSchema:
       type BoardScope {
         board: SoftwareBoard
       }
-      type SoftwareBoard => renamed from Board{
+      type SoftwareBoard => renamed from Board {
         cardChildren: [SoftwareCard] => renamed from issueChildren
       }
       type SoftwareCard => renamed from Card {

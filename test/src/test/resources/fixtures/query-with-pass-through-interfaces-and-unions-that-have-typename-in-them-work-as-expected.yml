@@ -1,8 +1,9 @@
-name: query with pass through interfaces and unions that have aliased __typename in fragments work as expected
+name: query with pass through interfaces and unions that have __typename in them work
+  as expected
 overallSchema:
   PetService: |
     service PetService {
-      type Query{
+      type Query {
         pets(isLoyal: Boolean): [Pet]
         raining(isLoyal: Boolean): CatsAndDogs
       }
@@ -132,17 +133,24 @@ query: |
   query petQ($isLoyal: Boolean) {
     pets(isLoyal: $isLoyal) {
       name
-      ...DogFrag
+      __typename
+      ... on Dog {
+        wearsCollar
+        __typename
+      }
       ... on Cat {
         wearsBell
-        aliasedCatTypeName: __typename
       }
     }
-  }
-
-  fragment DogFrag on Dog {
-    wearsCollar
-    aliasedDogTypeName: __typename
+    raining(isLoyal: $isLoyal) {
+      __typename
+      ... on Dog {
+        wearsCollar
+      }
+      ... on Cat {
+        wearsBell
+      }
+    }
   }
 variables:
   isLoyal: true
@@ -154,63 +162,97 @@ serviceCalls:
           query nadel_2_PetService_petQ($isLoyal: Boolean) {
             pets(isLoyal: $isLoyal) {
               name
-              ...DogFrag
+              __typename
+              ... on Dog {
+                wearsCollar
+                __typename
+              }
               ... on Cat {
                 wearsBell
-                aliasedCatTypeName: __typename
               }
               type_hint_typename__UUID: __typename
             }
           }
-
-          fragment DogFrag on Dog {
-            wearsCollar
-            aliasedDogTypeName: __typename
-          }
         variables:
           isLoyal: true
         operationName: nadel_2_PetService_petQ
+      # language=JSON
       response: |-
         {
           "data": {
             "pets": [
               {
                 "name": "Sparky",
+                "__typename": "Dog",
                 "wearsCollar": true,
-                "aliasedDogTypeName": "Dog",
                 "type_hint_typename__UUID": "Dog"
               },
               {
                 "name": "Whiskers",
+                "__typename": "Cat",
                 "wearsBell": false,
-                "aliasedCatTypeName": "Cat",
                 "type_hint_typename__UUID": "Cat"
               }
             ]
           },
           "extensions": {}
         }
+    - serviceName: PetService
+      request:
+        query: |
+          query nadel_2_PetService_petQ($isLoyal: Boolean) {
+            raining(isLoyal: $isLoyal) {
+              __typename
+              ... on Dog {
+                wearsCollar
+              }
+              ... on Cat {
+                wearsBell
+              }
+              type_hint_typename__UUID: __typename
+            }
+          }
+        variables:
+          isLoyal: true
+        operationName: nadel_2_PetService_petQ
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "raining": {
+              "__typename": "Dog",
+              "wearsCollar": true,
+              "type_hint_typename__UUID": "Dog"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
 response: |-
   {
     "data": {
       "pets": [
         {
           "name": "Sparky",
-          "wearsCollar": true,
-          "aliasedDogTypeName": "Dog"
+          "__typename": "Dog",
+          "wearsCollar": true
         },
         {
           "name": "Whiskers",
-          "wearsBell": false,
-          "aliasedCatTypeName": "Cat"
+          "__typename": "Cat",
+          "wearsBell": false
         }
-      ]
+      ],
+      "raining": {
+        "__typename": "Dog",
+        "wearsCollar": true
+      }
     },
     "extensions": {
       "resultComplexity": {
-        "totalNodeCount": 10,
+        "totalNodeCount": 14,
         "serviceNodeCounts": {
-          "PetService": 10
+          "PetService": 14
         },
         "fieldRenamesCount": 0,
         "typeRenamesCount": 0

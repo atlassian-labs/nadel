@@ -71,6 +71,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_CommentService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -90,6 +91,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -99,16 +101,27 @@ serviceCalls:
           },
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "errors": [
       {
+        "path": [
+          "commentById",
+          "author",
+          "displayName"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
+        "path": [
+          "commentById",
+          "author",
+          "userId"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"

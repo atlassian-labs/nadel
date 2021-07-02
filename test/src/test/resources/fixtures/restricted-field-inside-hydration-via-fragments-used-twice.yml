@@ -80,6 +80,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Issues
+      # language=JSON
       response: |-
         {
           "data": {
@@ -105,6 +106,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_UserService
+      # language=JSON
       response: |-
         {
           "data": {
@@ -121,10 +123,16 @@ serviceCalls:
           },
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "errors": [
       {
+        "path": [
+          "issue",
+          "author",
+          "restricted"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"

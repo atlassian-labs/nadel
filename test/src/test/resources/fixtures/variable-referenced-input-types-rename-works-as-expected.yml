@@ -2,7 +2,7 @@ name: variable referenced input types rename works as expected
 overallSchema:
   MyService: |
     service MyService {
-      type Query{
+      type Query {
         hello: World
         renameObject: ObjectOverall => renamed from renameObjectUnderlying # the field is renamed
         renameInterface: InterfaceOverall => renamed from renameInterfaceUnderlying
@@ -109,6 +109,7 @@ serviceCalls:
           var2: null
           var3: null
         operationName: nadel_2_MyService_X
+      # language=JSON
       response: |-
         {
           "data": {
@@ -116,6 +117,7 @@ serviceCalls:
           },
           "extensions": {}
         }
+# language=JSON
 response: |-
   {
     "data": {
