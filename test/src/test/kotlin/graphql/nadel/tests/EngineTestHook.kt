@@ -2,6 +2,7 @@ package graphql.nadel.tests
 
 import graphql.ExecutionResult
 import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionInput
 import graphql.nadel.tests.util.join
 import graphql.nadel.tests.util.packageName
 import graphql.nadel.tests.util.toSlug
@@ -9,6 +10,13 @@ import org.reflections.Reflections
 
 interface EngineTestHook {
     fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+        return builder
+    }
+
+    fun makeExecutionInput(
+        engineType: NadelEngineType,
+        builder: NadelExecutionInput.Builder,
+    ): NadelExecutionInput.Builder {
         return builder
     }
 

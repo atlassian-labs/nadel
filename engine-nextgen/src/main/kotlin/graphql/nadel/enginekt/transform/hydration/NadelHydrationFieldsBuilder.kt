@@ -131,7 +131,7 @@ internal object NadelHydrationFieldsBuilder {
                 ExecutableNormalizedField.newNormalizedField()
                     .objectTypeNames(objectTypes.map { it.name })
                     .fieldName(matchStrategy.objectId)
-                    .alias(aliasHelper.getResultKey(matchStrategy.objectId))
+                    .alias(aliasHelper.getObjectIdentifierKey(matchStrategy.objectId))
                     .build()
             }
             else -> null

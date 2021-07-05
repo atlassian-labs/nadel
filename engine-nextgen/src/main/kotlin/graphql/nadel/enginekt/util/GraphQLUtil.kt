@@ -1,10 +1,13 @@
 package graphql.nadel.enginekt.util
 
 import graphql.ErrorType
+import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder.newError
+import graphql.execution.ExecutionId
+import graphql.execution.ExecutionIdProvider
 import graphql.language.Definition
 import graphql.language.Document
 import graphql.language.ObjectTypeDefinition
@@ -186,7 +189,10 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
         .build()
 }
 
-internal fun updateOverallResultAndMergeSameNameTopLevelFields(overallResultMap: MutableJsonMap, oneResultMap: JsonMap) {
+internal fun updateOverallResultAndMergeSameNameTopLevelFields(
+    overallResultMap: MutableJsonMap,
+    oneResultMap: JsonMap,
+) {
     for ((topLevelFieldName, newTopLevelFieldChildren) in oneResultMap) {
         if (overallResultMap.containsKey(topLevelFieldName)) {
             val existingTopLevelFieldMap = overallResultMap[topLevelFieldName]
@@ -205,4 +211,8 @@ fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates 
 
 fun makeFieldCoordinates(parentType: GraphQLObjectType, field: GraphQLFieldDefinition): FieldCoordinates {
     return makeFieldCoordinates(typeName = parentType.name, fieldName = field.name)
+}
+
+fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId? {
+    return provide(executionInput.query, executionInput.operationName, executionInput.context)
 }

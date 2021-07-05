@@ -52,9 +52,9 @@ data class EngineTypeFactories(
 }
 
 data class EngineTypeEnabled(
-    override val current: Boolean = true,
-    override val nextgen: Boolean = false,
-) : NadelEngineTypeValueProvider<Boolean>
+    override val current: Boolean? = null,
+    override val nextgen: Boolean? = null,
+) : NadelEngineTypeValueProvider<Boolean?>
 
 data class EngineTypeIgnored(
     override val current: Boolean = false,

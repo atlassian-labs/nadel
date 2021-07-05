@@ -55,6 +55,11 @@ class NadelAliasHelper private constructor(private val alias: String) {
         return alias + "__" + fieldName
     }
 
+    @Deprecated("Temporary function to easily identify object id in result for auto mapping old engine -> new engine")
+    fun getObjectIdentifierKey(fieldName: String): String {
+        return alias + "__object_ID__" + fieldName
+    }
+
     fun getQueryPath(
         path: NadelQueryPath,
     ): NadelQueryPath {

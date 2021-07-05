@@ -173,7 +173,7 @@ internal class NadelBatchHydrator(
             }
             .associateBy {
                 // We don't want to show this in the overall result, so remove it here as we use it
-                it.asMutable().remove(state.aliasHelper.getResultKey(matchStrategy.objectId))
+                it.asMutable().remove(state.aliasHelper.getObjectIdentifierKey(matchStrategy.objectId))
             }
 
         val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.getQueryPath(

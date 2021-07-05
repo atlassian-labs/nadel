@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":nadel-api"))
     implementation(project(":nadel-engine"))
     implementation(project(":nadel-engine-nextgen"))
+    implementation("com.google.code.gson:gson:2.8.7")
     testImplementation("org.reflections:reflections:0.9.12")
     testImplementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.6")
     testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.6")

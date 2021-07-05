@@ -3,6 +3,8 @@ package graphql.nadel
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
+import graphql.execution.ExecutionId
+import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.language.NodeUtil
@@ -18,6 +20,7 @@ import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
 import graphql.nadel.enginekt.util.mergeResults
+import graphql.nadel.enginekt.util.provide
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.util.ErrorUtil
@@ -48,6 +51,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
     private val fieldToService = NadelFieldToService(overallExecutionBlueprint)
+    private val executionIdProvider = nadel.executionIdProvider
 
     override fun execute(
         executionInput: ExecutionInput,
@@ -90,7 +94,7 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
         service: Service,
-        executionInput: ExecutionInput
+        executionInput: ExecutionInput,
     ): ExecutionResult {
         val executionContext = NadelExecutionContext(executionInput)
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
@@ -178,13 +182,15 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         transformedQuery: ExecutableNormalizedField,
         executionInput: ExecutionInput,
     ): ServiceExecutionResult {
-        val document: Document = compileToDocument(listOf(transformedQuery))
+        val document: Document = compileToDocument(
+            listOf(transformedQuery),
+        )
 
         return service.serviceExecution.execute(
             newServiceExecutionParameters()
                 .query(document)
                 .context(executionInput.context)
-                .executionId(executionInput.executionId)
+                .executionId(executionInput.executionId ?: executionIdProvider.provide(executionInput))
                 .cacheControl(executionInput.cacheControl)
                 .variables(emptyMap())
                 .fragments(emptyMap())
@@ -193,11 +199,6 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
                 .hydrationCall(false)
                 .build()
         ).asDeferred().await()
-    }
-
-    private fun getOperationKind(queryDocument: Document, operationName: String?): OperationKind {
-        val operation = NodeUtil.getOperation(queryDocument, operationName)
-        return OperationKind.fromAst(operation.operationDefinition.operation)
     }
 
     companion object {
