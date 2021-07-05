@@ -129,6 +129,31 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__renameInterface__renameInterfaceUnderlying: renameInterfaceUnderlying {
+                ... on ObjectUnderlying {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__renameInterface__renameInterfaceUnderlying": {
+              "name": "val"
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -148,3 +173,4 @@ response: |-
       }
     }
   }
+exception: null

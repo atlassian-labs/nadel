@@ -123,6 +123,89 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: testing
+      request:
+        query: |
+          query {
+            ... on Query {
+              tests {
+                ... on TestQuery {
+                  testing {
+                    ... on Testing {
+                      movie {
+                        ... on Movie {
+                          id
+                        }
+                        ... on Movie {
+                          name
+                        }
+                        ... on Movie {
+                          hydration__character__characterId: characterId
+                        }
+                        ... on Movie {
+                          __typename__hydration__character: __typename
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "tests": {
+              "testing": {
+                "movie": {
+                  "name": "Movie 1",
+                  "__typename__hydration__character": "Movie",
+                  "hydration__character__characterId": "C1",
+                  "id": "M1"
+                }
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: testing
+      request:
+        query: |
+          query {
+            ... on Query {
+              tests {
+                ... on TestQuery {
+                  character(id: "C1") {
+                    ... on Character {
+                      id
+                    }
+                    ... on Character {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "tests": {
+              "character": {
+                "name": "Luke",
+                "id": "C1"
+              }
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -142,3 +225,4 @@ response: |-
     },
     "extensions": {}
   }
+exception: null

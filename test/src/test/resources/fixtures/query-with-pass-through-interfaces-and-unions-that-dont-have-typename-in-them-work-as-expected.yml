@@ -218,6 +218,74 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              raining(isLoyal: true) {
+                ... on Cat {
+                  wearsBell
+                }
+                ... on Dog {
+                  wearsCollar
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "raining": {
+              "wearsCollar": true
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              pets(isLoyal: true) {
+                ... on Cat {
+                  name
+                }
+                ... on Cat {
+                  wearsBell
+                }
+                ... on Dog {
+                  name
+                }
+                ... on Dog {
+                  wearsCollar
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "name": "Sparky",
+                "wearsCollar": true
+              },
+              {
+                "name": "Whiskers",
+                "wearsBell": false
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -247,3 +315,4 @@ response: |-
       }
     }
   }
+exception: null

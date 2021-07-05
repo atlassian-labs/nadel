@@ -182,6 +182,65 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              pets(isLoyal: true) {
+                ... on Cat {
+                  name
+                }
+                ... on Cat {
+                  collar {
+                    ... on CatCollar {
+                      color
+                    }
+                    ... on DogCollar {
+                      color
+                    }
+                  }
+                }
+                ... on Dog {
+                  name
+                }
+                ... on Dog {
+                  collar {
+                    ... on CatCollar {
+                      color
+                    }
+                    ... on DogCollar {
+                      color
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "name": "Sparky",
+                "collar": {
+                  "color": "blue"
+                }
+              },
+              {
+                "name": "Whiskers",
+                "collar": {
+                  "color": "red"
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -212,3 +271,4 @@ response: |-
       }
     }
   }
+exception: null

@@ -111,6 +111,25 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__renameString__renameStringUnderlying: renameStringUnderlying
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__renameString__renameStringUnderlying": "hello"
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -128,3 +147,4 @@ response: |-
       }
     }
   }
+exception: null

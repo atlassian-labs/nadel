@@ -241,6 +241,89 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              raining(isLoyal: true) {
+                ... on Cat {
+                  __typename
+                }
+                ... on Cat {
+                  wearsBell
+                }
+                ... on Dog {
+                  wearsCollar
+                }
+                ... on Dog {
+                  __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "raining": {
+              "wearsCollar": true,
+              "__typename": "Dog"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              pets(isLoyal: true) {
+                ... on Cat {
+                  name
+                }
+                ... on Cat {
+                  __typename
+                }
+                ... on Cat {
+                  wearsBell
+                }
+                ... on Dog {
+                  name
+                }
+                ... on Dog {
+                  wearsCollar
+                }
+                ... on Dog {
+                  __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "name": "Sparky",
+                "wearsCollar": true,
+                "__typename": "Dog"
+              },
+              {
+                "name": "Whiskers",
+                "wearsBell": false,
+                "__typename": "Cat"
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -273,3 +356,4 @@ response: |-
       }
     }
   }
+exception: null

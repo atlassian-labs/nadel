@@ -65,6 +65,31 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              node {
+                ... on Issue {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "node": {
+              "name": "My Issue"
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -75,3 +100,4 @@ response: |-
     },
     "extensions": {}
   }
+exception: null

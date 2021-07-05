@@ -100,6 +100,64 @@ serviceCalls:
           "data": null,
           "extensions": {}
         }
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  hydration__bar__barId: barId
+                }
+                ... on Foo {
+                  __typename__hydration__bar: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "hydration__bar__barId": "barId1",
+              "__typename__hydration__bar": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              barsQuery {
+                ... on BarsQuery {
+                  barById(id: "barId1") {
+                    ... on Bar {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "errors": [
+            {
+              "message": "Some error occurred"
+            }
+          ],
+          "data": null,
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -119,3 +177,4 @@ response: |-
     },
     "extensions": {}
   }
+exception: null

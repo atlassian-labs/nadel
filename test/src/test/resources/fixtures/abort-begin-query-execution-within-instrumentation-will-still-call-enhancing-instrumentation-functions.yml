@@ -40,6 +40,7 @@ variables:
   var1: val1
 serviceCalls:
   current: []
+  nextgen: []
 # language=JSON
 response: |-
   {
@@ -53,3 +54,4 @@ response: |-
       }
     ]
   }
+exception: null

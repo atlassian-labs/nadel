@@ -182,6 +182,73 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              pets(isLoyal: true) {
+                ... on Cat {
+                  name
+                }
+                ... on Cat {
+                  rename__collarToRenamed__collar: collar {
+                    ... on CatCollar {
+                      color
+                    }
+                    ... on DogCollar {
+                      color
+                    }
+                  }
+                }
+                ... on Cat {
+                  __typename__rename__collarToRenamed: __typename
+                }
+                ... on Dog {
+                  name
+                }
+                ... on Dog {
+                  rename__collarToRenamed__collar: collar {
+                    ... on CatCollar {
+                      color
+                    }
+                    ... on DogCollar {
+                      color
+                    }
+                  }
+                }
+                ... on Dog {
+                  __typename__rename__collarToRenamed: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "name": "Sparky",
+                "rename__collarToRenamed__collar": {
+                  "color": "blue"
+                },
+                "__typename__rename__collarToRenamed": "Dog"
+              },
+              {
+                "name": "Whiskers",
+                "rename__collarToRenamed__collar": {
+                  "color": "red"
+                },
+                "__typename__rename__collarToRenamed": "Cat"
+              }
+            ]
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -212,3 +279,4 @@ response: |-
       }
     }
   }
+exception: null

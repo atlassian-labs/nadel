@@ -64,7 +64,35 @@ serviceCalls:
       # language=JSON
       response: |-
         {
-          "data": {},
+          "data": {
+            "hello": null
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              hello {
+                ... on World {
+                  name
+                }
+                ... on World {
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": null
+          },
           "extensions": {}
         }
 # language=JSON
@@ -75,3 +103,4 @@ response: |-
     },
     "extensions": {}
   }
+exception: null

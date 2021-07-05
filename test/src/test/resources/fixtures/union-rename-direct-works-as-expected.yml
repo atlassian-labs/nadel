@@ -133,6 +133,31 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__renameUnion__renameUnionUnderlying: renameUnionUnderlying {
+                ... on XUnderlying {
+                  x
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__renameUnion__renameUnionUnderlying": {
+              "x": 1
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -152,3 +177,4 @@ response: |-
       }
     }
   }
+exception: null

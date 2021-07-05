@@ -64,6 +64,35 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              hello {
+                ... on World {
+                  name
+                }
+                ... on World {
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": {
+              "name": "earth",
+              "id": "3"
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -84,3 +113,4 @@ response: |-
       }
     }
   }
+exception: null

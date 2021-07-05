@@ -103,6 +103,65 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on Issue {
+                  hydration__project__projectId: projectId
+                }
+                ... on Issue {
+                  __typename__hydration__project: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "hydration__project__projectId": "project1",
+              "__typename__hydration__project": "Issue"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              projects {
+                ... on ProjectsQuery {
+                  project(id: "project1") {
+                    ... on Project {
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "projects": {
+              "project": {
+                "name": "Project 1"
+              }
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -115,3 +174,4 @@ response: |-
     },
     "extensions": {}
   }
+exception: null

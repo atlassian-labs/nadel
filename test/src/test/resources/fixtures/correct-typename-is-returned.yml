@@ -140,6 +140,56 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              typenameTest {
+                ... on TypenameTest {
+                  __typename
+                }
+                ... on TypenameTest {
+                  object {
+                    ... on ObjectUnderlying {
+                      __typename
+                    }
+                  }
+                }
+                ... on TypenameTest {
+                  objects {
+                    ... on ObjectUnderlying {
+                      __typename
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "typenameTest": {
+              "__typename": "TypenameTest",
+              "object": {
+                "__typename": "ObjectUnderlying"
+              },
+              "objects": [
+                {
+                  "__typename": "ObjectUnderlying"
+                },
+                {
+                  "__typename": "ObjectUnderlying"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -170,3 +220,4 @@ response: |-
       }
     }
   }
+exception: null
