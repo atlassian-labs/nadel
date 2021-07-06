@@ -59,13 +59,17 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
             flatten = true,
         )
 
-        return typeNameNodes.map { typeNameNode ->
-            val underlyingTypeName = typeNameNode.value as String
+        return typeNameNodes.mapNotNull { typeNameNode ->
+            val underlyingTypeName = typeNameNode.value as String?
+                ?: return@mapNotNull null
             val overallTypeName = executionBlueprint.getOverallTypeName(
                 service = service,
                 underlyingTypeName = underlyingTypeName,
             )
-            NadelResultInstruction.Set(typeNameNode.resultPath, overallTypeName)
+            NadelResultInstruction.Set(
+                subjectPath = typeNameNode.resultPath,
+                newValue = overallTypeName,
+            )
         }
     }
 }

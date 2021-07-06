@@ -7,7 +7,7 @@ overallSchema:
       }
       type UsersQuery {
         foo: String
-        usersByIds(id: [ID]): [User] default batch size 3
+        usersByIds(id: [ID]): [User]
       }
       type User {
         id: ID
@@ -21,7 +21,7 @@ overallSchema:
       }
       type Issue {
         id: ID
-        authors: [User] => hydrated from service2.users.usersByIds(id: $source.authorIds) object identified by id
+        authors: [User] => hydrated from service2.users.usersByIds(id: $source.authorIds) object identified by id, batch size 3
       }
     }
 underlyingSchema:
@@ -134,6 +134,118 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_service2
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "users": null
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              issues {
+                ... on Issue {
+                  id
+                }
+                ... on Issue {
+                  batch_hydration__authors__authorIds: authorIds
+                }
+                ... on Issue {
+                  __typename__batch_hydration__authors: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__authorIds": [
+                  "USER-1",
+                  "USER-2"
+                ],
+                "id": "ISSUE-1"
+              },
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__authorIds": [
+                  "USER-3"
+                ],
+                "id": "ISSUE-2"
+              },
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__authorIds": [
+                  "USER-2",
+                  "USER-4",
+                  "USER-5"
+                ],
+                "id": "ISSUE-3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              users {
+                ... on UsersQuery {
+                  usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
+                    ... on User {
+                      id
+                    }
+                    ... on User {
+                      batch_hydration__authors__id: id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "users": null
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              users {
+                ... on UsersQuery {
+                  usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
+                    ... on User {
+                      id
+                    }
+                    ... on User {
+                      batch_hydration__authors__id: id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

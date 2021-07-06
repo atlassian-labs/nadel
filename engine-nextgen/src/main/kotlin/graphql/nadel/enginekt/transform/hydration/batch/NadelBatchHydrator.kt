@@ -167,7 +167,7 @@ internal class NadelBatchHydrator(
             .flatten(recursively = true)
             .mapNotNull {
                 when (it) {
-                    is AnyMap -> it.asNullableJsonMap()
+                    is AnyMap? -> it.asNullableJsonMap()
                     else -> error("Hydration actor result must be an object")
                 }
             }

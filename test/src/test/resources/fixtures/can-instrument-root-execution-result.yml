@@ -92,5 +92,13 @@ response: |-
     "data": {
       "hello": null
     },
+    "errors": [
+      {
+        "message": "instrumented-error",
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
     "extensions": {}
   }

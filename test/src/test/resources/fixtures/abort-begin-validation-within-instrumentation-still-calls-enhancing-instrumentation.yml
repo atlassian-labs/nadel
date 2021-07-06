@@ -1,4 +1,4 @@
-name: abort beginValidation within instrumentation will still call enhancing instrumentation functions
+name: abort beginValidation within instrumentation still calls enhancing instrumentation
 overallSchema:
   MyService: |
     service MyService {

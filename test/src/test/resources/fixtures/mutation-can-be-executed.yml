@@ -1,4 +1,6 @@
 name: mutation can be executed
+enabled:
+  current: true
 overallSchema:
   MyService: |
     service MyService {

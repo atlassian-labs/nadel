@@ -59,7 +59,44 @@ serviceCalls:
               "message": "Problem2"
             }
           ],
-          "data": null,
+          "data": {
+            "hello": {
+              "name": "World"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              hello {
+                ... on World {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "errors": [
+            {
+              "message": "Problem1"
+            },
+            {
+              "message": "Problem2"
+            }
+          ],
+          "data": {
+            "hello": {
+              "name": "World"
+            }
+          },
           "extensions": {}
         }
 # language=JSON
@@ -82,7 +119,9 @@ response: |-
       }
     ],
     "data": {
-      "hello": null
+      "hello": {
+        "name": "World"
+      }
     },
     "extensions": {}
   }

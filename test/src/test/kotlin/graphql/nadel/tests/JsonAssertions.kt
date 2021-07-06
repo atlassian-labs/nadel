@@ -102,18 +102,25 @@ private fun <T> Assertion.Builder<T>.assertJsonValue(subjectValue: Any?, expecte
 
 private fun <T> Assertion.Builder<List<T>>.assertJsonArray(expectedValue: List<T>) {
     compose("all elements match expected:") { subject ->
+        assert("size matches expected") {
+            if (subject.size == expectedValue.size) {
+                pass()
+            } else {
+                fail("expected size ${expectedValue.size} but got ${subject.size}")
+            }
+        }
+
         subject.forEachIndexed { index, element ->
-            get("element $index") { element }
-                .assertJsonValue(subjectValue = element, expectedValue[index])
+            if (index > expectedValue.lastIndex) {
+                assert("element $index") {
+                    fail("is not expected")
+                }
+            } else {
+                get("element $index") { element }
+                    .assertJsonValue(subjectValue = element, expectedValue[index])
+            }
         }
     } then {
         if (allPassed) pass() else fail()
-    }
-    assert("size matches expected") { subject ->
-        if (subject.size == expectedValue.size) {
-            pass()
-        } else {
-            fail("expected size ${expectedValue.size} but got ${subject.size}")
-        }
     }
 }

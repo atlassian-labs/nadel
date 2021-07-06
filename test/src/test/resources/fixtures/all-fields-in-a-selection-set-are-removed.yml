@@ -124,7 +124,7 @@ serviceCalls:
             "issueById": {
               "id": "I1",
               "epic": {
-                "empty_selection_set_typename__UUID": "Query"
+                "empty_selection_set_typename__UUID": "Issue"
               }
             }
           },

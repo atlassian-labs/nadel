@@ -1,4 +1,4 @@
-name: abort beginQueryExecution within instrumentation will still call enhancing instrumentation functions
+name: abort beginQueryExecution within instrumentation still calls enhancing instrumentation
 overallSchema:
   MyService: |
     service MyService {

@@ -1,4 +1,7 @@
 name: makes timing metrics available
+enabled:
+  current: true
+  nextgen: false # Not something available in nextgen
 overallSchema:
   service2: |
     service service2 {

@@ -14,9 +14,10 @@ import graphql.nadel.tests.KeepHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.validation.ValidationError
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletableFuture.completedFuture
 
 @KeepHook
-class `abort-begin-execute-within-instrumentation-will-still-call-enhancing-instrumentation-functions` :
+class `abort-begin-execute-within-instrumentation-still-calls-enhancing-instrumentation` :
     EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -31,7 +32,7 @@ class `abort-begin-execute-within-instrumentation-will-still-call-enhancing-inst
                     executionResult: ExecutionResult,
                     parameters: NadelInstrumentationQueryExecutionParameters,
                 ): CompletableFuture<ExecutionResult> {
-                    return CompletableFuture.completedFuture(
+                    return completedFuture(
                         ExecutionResultImpl
                             .newExecutionResult()
                             .from(executionResult)
@@ -44,7 +45,37 @@ class `abort-begin-execute-within-instrumentation-will-still-call-enhancing-inst
 }
 
 @KeepHook
-class `abort-begin-query-execution-within-instrumentation-will-still-call-enhancing-instrumentation-functions` :
+class `abort-begin-execute-in-cf-within-instrumentation-still-calls-enhancing-instrumentation` : EngineTestHook {
+    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+        return builder
+            .instrumentation(object : NadelInstrumentation {
+                override fun beginExecute(
+                    parameters: NadelInstrumentationExecuteOperationParameters,
+                ): CompletableFuture<InstrumentationContext<ExecutionResult>> {
+                    return completedFuture(null)
+                        .thenCompose {
+                            throw AbortExecutionException("beginExecute")
+                        }
+                }
+
+                override fun instrumentExecutionResult(
+                    executionResult: ExecutionResult,
+                    parameters: NadelInstrumentationQueryExecutionParameters,
+                ): CompletableFuture<ExecutionResult> {
+                    return completedFuture(
+                        ExecutionResultImpl
+                            .newExecutionResult()
+                            .from(executionResult)
+                            .data("enhanced beginExecute")
+                            .build(),
+                    )
+                }
+            })
+    }
+}
+
+@KeepHook
+class `abort-begin-query-execution-within-instrumentation-still-calls-enhancing-instrumentation` :
     EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -59,7 +90,7 @@ class `abort-begin-query-execution-within-instrumentation-will-still-call-enhanc
                     executionResult: ExecutionResult,
                     parameters: NadelInstrumentationQueryExecutionParameters,
                 ): CompletableFuture<ExecutionResult> {
-                    return CompletableFuture.completedFuture(
+                    return completedFuture(
                         ExecutionResultImpl
                             .newExecutionResult()
                             .from(executionResult)
@@ -72,7 +103,7 @@ class `abort-begin-query-execution-within-instrumentation-will-still-call-enhanc
 }
 
 @KeepHook
-class `abort-begin-validation-within-instrumentation-will-still-call-enhancing-instrumentation-functions` :
+class `abort-begin-validation-within-instrumentation-still-calls-enhancing-instrumentation` :
     EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -87,7 +118,7 @@ class `abort-begin-validation-within-instrumentation-will-still-call-enhancing-i
                     executionResult: ExecutionResult,
                     parameters: NadelInstrumentationQueryExecutionParameters,
                 ): CompletableFuture<ExecutionResult> {
-                    return CompletableFuture.completedFuture(
+                    return completedFuture(
                         ExecutionResultImpl
                             .newExecutionResult()
                             .from(executionResult)

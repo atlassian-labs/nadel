@@ -21,7 +21,7 @@ import graphql.nadel.enginekt.util.mapFrom
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.enginekt.util.toBuilder
-import graphql.nadel.tests.NadelEngineType.nextgen
+import graphql.nadel.tests.NadelEngineType.current
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
@@ -55,41 +55,6 @@ class EngineTests : FunSpec({
 
     fixturesDir.listFiles()!!
         .asSequence()
-        .filter {
-            when (it.nameWithoutExtension) {
-                // Field forbidden
-                "hydrated-field-is-removed",
-                "nested-hydrated-field-is-removed",
-                "field-is-removed-from-nested-hydrated-field",
-                "all-fields-in-a-selection-set-are-removed",
-                "field-in-a-selection-set-is-removed",
-                "one-of-top-level-fields-is-removed",
-                "top-level-field-is-removed",
-                "top-level-field-in-batched-query-is-removed",
-                "all-fields-are-removed-from-hydrated-field",
-                "field-is-removed-from-hydrated-field",
-                "all-non-hydrated-fields-in-query-are-removed",
-                "field-with-selections-is-removed",
-                "the-only-field-in-a-selection-set-is-removed",
-                "field-in-non-hydrated-query-is-removed",
-                "restricted-field-inside-hydration-via-fragments-used-twice",
-                "restricted-field-via-fragments-used-twice",
-                "inserts-one-error-for-a-forbidden-field-in-a-list",
-                "restricted-single-field-inside-hydration-via-fragments-used-twice",
-                "restricted-single-field-via-fragments-used-twice",
-                    // Dynamic service resolution
-                "dynamic-service-resolution-multiple-services",
-                "dynamic-service-resolution-simple-success-case",
-                "dynamic-service-resolution-multiple-services-with-one-unmapped-node-lookup",
-                "dynamic-service-resolution-handles-inline-fragments-from-multiple-services",
-                "dynamic-service-resolution-handles-complex-fragments",
-                "dynamic-service-resolution-with-no-fragments",
-                "dynamic-service-resolution-directive-not-in-interface",
-                "typename-is-passed-on-queries-using-dynamic-resolved-services",
-                -> false
-                else -> true
-            }
-        }
         .onEach {
             println("Loading ${it.nameWithoutExtension}")
         }
@@ -110,16 +75,16 @@ class EngineTests : FunSpec({
                         .asSequence()
                         .filter { (engine) ->
                             true
-                            // fixture.name == "simple synthetic hydration with one service and type renaming"
+                            // fixture.name == "extending types from another service is possible with synthetic fields"
                         }
                         .filter { (engine) ->
-                            fixture.enabled.get(engine = engine) == null && engine == nextgen
+                            fixture.enabled.get(engine = engine) && engine == current // nextgen
                         }
                         .forEach { (engine, engineFactory) ->
                             // Run for tests that don't have nextgen calls
-                            if (fixture.serviceCalls.nextgen.isNotEmpty()) {
-                                return@forEach
-                            }
+                            // if (fixture.serviceCalls.nextgen.isEmpty()) {
+                            //     return@forEach
+                            // }
                             val execute: suspend TestContext.() -> Unit = {
                                 execute(file, fixture, engine, engineFactory)
                             }
@@ -140,7 +105,26 @@ private suspend fun execute(
     engineType: NadelEngineType,
     engineFactory: NadelExecutionEngineFactory,
 ) {
-    println("Running ${fixture.name}")
+    val printLock = Any()
+    fun printSyncLine(message: String) {
+        synchronized(printLock) {
+            println(message)
+        }
+    }
+
+    fun printSyncLine(message: Any?) {
+        synchronized(printLock) {
+            println(message)
+        }
+    }
+
+    fun printSyncLine() {
+        synchronized(printLock) {
+            println()
+        }
+    }
+
+    printSyncLine("Running ${fixture.name}")
 
     val testHooks = getTestHook(fixture)
     val serviceCalls = fixture.serviceCalls[engineType].toMutableList()
@@ -201,7 +185,7 @@ private suspend fun execute(
                                 it to strip(it)
                             }
                             .map { (field, stripped) ->
-                                if (stripped.resolvedArguments.isEmpty()) {
+                                if (stripped.resolvedArguments.isEmpty() && stripped.name != "issues") {
                                     stripped.copyWithChildren(
                                         field.children
                                             .filterNot { it.name == Introspection.TypeNameMetaFieldDef.name }
@@ -230,9 +214,9 @@ private suspend fun execute(
                     emptyMap(), /* variables */
                 )
 
-                println("Original service response")
-                println(response)
-                println()
+                printSyncLine("Original service response")
+                printSyncLine(response)
+                printSyncLine()
 
                 @Suppress("UNCHECKED_CAST")
                 return response.mapValues { (key, value) ->
@@ -244,9 +228,9 @@ private suspend fun execute(
                         }
                     }
                 }.also {
-                    println("Mapped service response")
-                    println(it)
-                    println()
+                    printSyncLine("Mapped service response")
+                    printSyncLine(it)
+                    printSyncLine()
                 }
             }
 
@@ -268,7 +252,7 @@ private suspend fun execute(
                                 parent["type_hint_typename__UUID"] as String
                             } else {
                                 field.objectTypeNames.single().also {
-                                    println("Inferring type of ${field.queryPath} as $it")
+                                    printSyncLine("Inferring type of ${field.queryPath} as $it")
                                 }
                             }
                         } else if ("__object_ID__" in field.resultKey) {
@@ -328,7 +312,7 @@ private suspend fun execute(
                         val incomingQueryPrinted = AstPrinter.printAst(
                             astSorter.sort(incomingQuery),
                         )
-                        println(incomingQueryPrinted)
+                        printSyncLine(incomingQueryPrinted)
 
                         val response = synchronized(serviceCalls) {
                             val indexOfCall = serviceCalls
@@ -341,14 +325,14 @@ private suspend fun execute(
                                 serviceCalls.removeAt(indexOfCall).response
                             } else {
                                 var match: JsonMap? = null
-                                if (engineType == nextgen) {
-                                    println("Attempting to match query")
-                                    val matchingCall = getMatchingCall(incomingQuery, serviceName)
-                                    if (matchingCall != null) {
-                                        val response = matchingCall.response
-                                        match = transform(incomingQuery, response, serviceName)
-                                    }
-                                }
+                                // if (engineType == nextgen) {
+                                //     printSyncLine("Attempting to match query")
+                                //     val matchingCall = getMatchingCall(incomingQuery, serviceName)
+                                //     if (matchingCall != null) {
+                                //         val response = matchingCall.response
+                                //         match = transform(incomingQuery, response, serviceName)
+                                //     }
+                                // }
 
                                 match
                                     ?: fail("Unable to match service call")
@@ -441,9 +425,9 @@ private suspend fun execute(
                     "errors" to (it["errors"] ?: emptyList<JsonMap>()),
                     // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
                 ).also {
-                    println("Overall response")
-                    println(it)
-                    println()
+                    printSyncLine("Overall response")
+                    printSyncLine(it)
+                    printSyncLine()
                 }
             },
             expected = expectedResponse.let {
@@ -452,9 +436,9 @@ private suspend fun execute(
                     "errors" to (it["errors"] ?: emptyList<JsonMap>()),
                     // "extensions" to (it["extensions"] ?: emptyMap<String, Any?>()),
                 ).also {
-                    println("Expecting response")
-                    println(it)
-                    println()
+                    printSyncLine("Expecting response")
+                    printSyncLine(it)
+                    printSyncLine()
                 }
             },
         )
@@ -462,9 +446,9 @@ private suspend fun execute(
 
     testHooks?.assertResult(engineType, response)
 
-    println()
-    println()
-    println("New test fixture")
+    printSyncLine()
+    printSyncLine()
+    printSyncLine("New test fixture")
     val yaml = yamlObjectMapper.writeValueAsString(
         fixture.copy(
             serviceCalls = fixture.serviceCalls.copy(
@@ -473,5 +457,5 @@ private suspend fun execute(
         ),
     )
     // file.writeText(yaml)
-    println(yaml)
+    printSyncLine(yaml)
 }

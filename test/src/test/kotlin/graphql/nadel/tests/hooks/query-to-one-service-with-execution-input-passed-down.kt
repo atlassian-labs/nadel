@@ -1,7 +1,5 @@
 package graphql.nadel.tests.hooks
 
-import graphql.ExecutionResult
-import graphql.execution.ExecutionId
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
@@ -12,23 +10,23 @@ import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.serviceExecutionFactory
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
-import strikt.assertions.isGreaterThan
 
 @KeepHook
-class `execution-id-is-transferred-from-input` : EngineTestHook {
-    private var calls = 0
-
+class `query-to-one-service-with-execution-input-passed-down` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         val serviceExecutionFactory = builder.serviceExecutionFactory
 
         return builder
             .serviceExecutionFactory(object : ServiceExecutionFactory by serviceExecutionFactory {
                 override fun getServiceExecution(serviceName: String): ServiceExecution {
-                    val serviceExecution = serviceExecutionFactory.getServiceExecution(serviceName)
+                    val default = serviceExecutionFactory.getServiceExecution(serviceName)
+
                     return ServiceExecution { params ->
-                        calls++
-                        expectThat(params.executionId).isEqualTo(ExecutionId.from("from-input"))
-                        serviceExecution.execute(params)
+                        expectThat(params)
+                            .get { context }
+                            .isEqualTo("contextObj")
+
+                        default.execute(params)
                     }
                 }
             })
@@ -39,11 +37,6 @@ class `execution-id-is-transferred-from-input` : EngineTestHook {
         builder: NadelExecutionInput.Builder,
     ): NadelExecutionInput.Builder {
         return builder
-            .executionId(ExecutionId.from("from-input"))
-    }
-
-    override fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
-        expectThat(calls).isGreaterThan(0)
+            .context("contextObj")
     }
 }
-

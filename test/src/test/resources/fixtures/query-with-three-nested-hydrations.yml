@@ -248,7 +248,7 @@ serviceCalls:
                   __typename__batch_hydration__nestedBar: __typename
                 }
                 ... on Bar {
-                  batch_hydration__bar__object_ID__barId: barId
+                  batch_hydration__bar__barId: barId
                 }
               }
             }
@@ -262,7 +262,7 @@ serviceCalls:
             "barsById": [
               {
                 "name": "Bar 3",
-                "batch_hydration__bar__object_ID__barId": "bar3",
+                "batch_hydration__bar__barId": "bar3",
                 "batch_hydration__nestedBar__nestedBarId": null,
                 "__typename__batch_hydration__nestedBar": "Bar"
               }
@@ -286,7 +286,7 @@ serviceCalls:
                   __typename__batch_hydration__nestedBar: __typename
                 }
                 ... on Bar {
-                  batch_hydration__bar__object_ID__barId: barId
+                  batch_hydration__bar__barId: barId
                 }
               }
             }
@@ -300,13 +300,13 @@ serviceCalls:
             "barsById": [
               {
                 "name": "Bar 1",
-                "batch_hydration__bar__object_ID__barId": "bar1",
+                "batch_hydration__bar__barId": "bar1",
                 "batch_hydration__nestedBar__nestedBarId": "nestedBar1",
                 "__typename__batch_hydration__nestedBar": "Bar"
               },
               {
                 "name": "Bar 2",
-                "batch_hydration__bar__object_ID__barId": "bar2",
+                "batch_hydration__bar__barId": "bar2",
                 "batch_hydration__nestedBar__nestedBarId": "nestedBar2",
                 "__typename__batch_hydration__nestedBar": "Bar"
               }
@@ -330,7 +330,7 @@ serviceCalls:
                   __typename__batch_hydration__nestedBar: __typename
                 }
                 ... on Bar {
-                  batch_hydration__nestedBar__object_ID__barId: barId
+                  batch_hydration__nestedBar__barId: barId
                 }
               }
             }
@@ -344,7 +344,7 @@ serviceCalls:
             "barsById": [
               {
                 "name": "NestedBarName1",
-                "batch_hydration__nestedBar__object_ID__barId": "nestedBar1",
+                "batch_hydration__nestedBar__barId": "nestedBar1",
                 "batch_hydration__nestedBar__nestedBarId": "nestedBarId456",
                 "__typename__batch_hydration__nestedBar": "Bar"
               }
@@ -362,7 +362,7 @@ serviceCalls:
                   name
                 }
                 ... on Bar {
-                  batch_hydration__nestedBar__object_ID__barId: barId
+                  batch_hydration__nestedBar__barId: barId
                 }
               }
             }
@@ -376,7 +376,7 @@ serviceCalls:
             "barsById": [
               {
                 "name": "NestedBarName2",
-                "batch_hydration__nestedBar__object_ID__barId": "nestedBarId456"
+                "batch_hydration__nestedBar__barId": "nestedBarId456"
               }
             ]
           },

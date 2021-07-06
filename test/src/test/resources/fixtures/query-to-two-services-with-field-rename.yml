@@ -57,6 +57,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -85,6 +86,65 @@ serviceCalls:
           "data": {
             "bar": {
               "title": "Bar"
+            }
+          },
+          "extensions": {
+            "ext2": "val2",
+            "merged": "m2"
+          }
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__foo__fooOriginal: fooOriginal {
+                ... on Foo {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__foo__fooOriginal": {
+              "name": "Foo"
+            }
+          },
+          "extensions": {
+            "ext1": "val1",
+            "merged": "m1"
+          }
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              bar {
+                ... on Bar {
+                  rename__name__title: title
+                }
+                ... on Bar {
+                  __typename__rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bar": {
+              "rename__name__title": "Bar",
+              "__typename__rename__name": "Bar"
             }
           },
           "extensions": {

@@ -75,7 +75,7 @@ serviceCalls:
         {
           "data": {
             "commentById": {
-              "authorId": "fred"
+              "empty_selection_set_typename__UUID": "Comment"
             }
           },
           "extensions": {}

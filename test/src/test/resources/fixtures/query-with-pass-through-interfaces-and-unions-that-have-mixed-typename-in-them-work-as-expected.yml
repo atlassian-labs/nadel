@@ -1,5 +1,4 @@
-name: query with pass through interfaces and unions that have MIXED __typename in
-  them work as expected
+name: query with pass through interfaces and unions that have MIXED __typename in them work as expected
 overallSchema:
   PetService: |
     service PetService {
@@ -221,6 +220,85 @@ serviceCalls:
               "wearsCollar": true,
               "type_hint_typename__UUID": "Dog"
             }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              raining(isLoyal: true) {
+                ... on Cat {
+                  __typename
+                }
+                ... on Cat {
+                  wearsBell
+                }
+                ... on Dog {
+                  __typename
+                }
+                ... on Dog {
+                  wearsCollar
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "raining": {
+              "wearsCollar": true,
+              "__typename": "Dog"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              pets(isLoyal: true) {
+                ... on Cat {
+                  name
+                }
+                ... on Cat {
+                  wearsBell
+                }
+                ... on Dog {
+                  name
+                }
+                ... on Dog {
+                  wearsCollar
+                }
+                ... on Dog {
+                  __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "name": "Sparky",
+                "wearsCollar": true,
+                "__typename": "Dog"
+              },
+              {
+                "name": "Whiskers",
+                "wearsBell": false
+              }
+            ]
           },
           "extensions": {}
         }

@@ -67,6 +67,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -89,6 +90,69 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bars": {
+              "barById": {
+                "id": "hydrated-bar"
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__foo__fooOriginal: fooOriginal {
+                ... on Foo {
+                  id
+                }
+                ... on Foo {
+                  hydration__fooBar__fooBarId: fooBarId
+                }
+                ... on Foo {
+                  __typename__hydration__fooBar: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__foo__fooOriginal": {
+              "hydration__fooBar__fooBarId": "hydrated-bar",
+              "id": "Foo",
+              "__typename__hydration__fooBar": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              bars {
+                ... on BarQuery {
+                  barById(id: "hydrated-bar") {
+                    ... on Bar {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

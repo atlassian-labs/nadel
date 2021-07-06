@@ -25,10 +25,10 @@ import java.util.concurrent.CompletableFuture.completedFuture
 
 @KeepHook
 class `execution-is-aborted-when-begin-execute-completes-exceptionally-using-chained-instrumentation` : EngineTestHook {
-    var firstBeginExecuteCalled: Int = 0
-    var secondBeginExecuteCalled: Int = 0
-    var firstInstrumentExecutionResultCalled: Int = 0
-    var secondInstrumentExecutionResultCalled: Int = 0
+    var firstBeginExecuteCalled = 0
+    var secondBeginExecuteCalled = 0
+    var firstInstrumentExecutionResultCalled = 0
+    var secondInstrumentExecutionResultCalled = 0
 
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         val first = object : NadelInstrumentation {

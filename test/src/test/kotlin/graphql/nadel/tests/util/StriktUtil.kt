@@ -55,3 +55,15 @@ val Assertion.Builder<out ExecutionResult>.data: Assertion.Builder<AnyMap?>
             getData()
         }
     }
+
+fun Assertion.Builder<out Any>.getHashCode(): Assertion.Builder<Int> {
+    return get {
+        hashCode()
+    }
+}
+
+fun Assertion.Builder<out Any>.getToString(): Assertion.Builder<String> {
+    return get {
+        toString()
+    }
+}

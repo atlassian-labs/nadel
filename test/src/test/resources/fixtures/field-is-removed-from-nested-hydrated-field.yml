@@ -454,42 +454,72 @@ response: |-
   {
     "errors": [
       {
-        "path": ["issues", "comments", "author", "userId"],
+        "path": [
+          "issues",
+          "comments",
+          "author",
+          "userId"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
-        "path":  ["issues", "comments", "author", "userId"],
+        "path": [
+          "issues",
+          "comments",
+          "author",
+          "userId"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
-        "path":  ["issues", "comments", "author", "userId"],
+        "path": [
+          "issues",
+          "comments",
+          "author",
+          "userId"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
-        "path":  ["issues", "comments", "author", "userId"],
+        "path": [
+          "issues",
+          "comments",
+          "author",
+          "userId"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
-        "path":  ["issues", "comments", "author", "userId"],
+        "path": [
+          "issues",
+          "comments",
+          "author",
+          "userId"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"
         }
       },
       {
-        "path":  ["issues", "comments", "author", "userId"],
+        "path": [
+          "issues",
+          "comments",
+          "author",
+          "userId"
+        ],
         "message": "removed field",
         "extensions": {
           "classification": "ExecutionAborted"

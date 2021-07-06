@@ -114,7 +114,7 @@ serviceCalls:
         {
           "data": {
             "commentById": {
-              "empty_selection_set_typename__UUID": "Query"
+              "empty_selection_set_typename__UUID": "Comment"
             }
           },
           "extensions": {}

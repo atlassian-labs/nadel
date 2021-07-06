@@ -72,7 +72,6 @@ serviceCalls:
         {
           "data": {
             "issue": {
-              "id": "1",
               "projectId": "project1"
             }
           },
@@ -96,7 +95,6 @@ serviceCalls:
           "data": {
             "projects": {
               "project": {
-                "id": "project1",
                 "name": "Project 1"
               }
             }

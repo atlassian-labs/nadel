@@ -117,6 +117,25 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              renameInput(arg1: {inputVal : "x"})
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "renameInput": "done"
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

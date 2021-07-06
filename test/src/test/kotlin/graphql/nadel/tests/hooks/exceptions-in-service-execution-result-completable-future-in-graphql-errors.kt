@@ -19,9 +19,10 @@ import strikt.assertions.get
 import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 import strikt.assertions.single
+import java.util.concurrent.CompletableFuture
 
 @KeepHook
-class `exceptions-in-service-execution-call-in-graphql-errors` : EngineTestHook {
+class `exceptions-in-service-execution-result-completable-future-in-graphql-errors` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         val serviceExecutionFactory = builder.serviceExecutionFactory
 
@@ -29,7 +30,10 @@ class `exceptions-in-service-execution-call-in-graphql-errors` : EngineTestHook 
             .serviceExecutionFactory(object : ServiceExecutionFactory {
                 override fun getServiceExecution(serviceName: String): ServiceExecution {
                     return ServiceExecution {
-                        throw RuntimeException("Pop goes the weasel")
+                        CompletableFuture.completedFuture(null)
+                            .thenCompose {
+                                throw RuntimeException("Pop goes the weasel")
+                            }
                     }
                 }
 

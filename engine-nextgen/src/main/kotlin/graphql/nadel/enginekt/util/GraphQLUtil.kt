@@ -13,6 +13,7 @@ import graphql.language.Document
 import graphql.language.ObjectTypeDefinition
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
@@ -28,10 +29,12 @@ typealias AnyAstDefinition = Definition<*>
 fun newGraphQLError(
     message: String,
     errorType: ErrorType,
+    extensions: MutableJsonMap = mutableMapOf(),
 ): GraphQLError {
     return newError()
         .message(message)
         .errorType(errorType)
+        .extensions(extensions)
         .build()
 }
 
@@ -215,4 +218,20 @@ fun makeFieldCoordinates(parentType: GraphQLObjectType, field: GraphQLFieldDefin
 
 fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId? {
     return provide(executionInput.query, executionInput.operationName, executionInput.context)
+}
+
+fun ServiceExecutionResult.copy(
+    data: MutableJsonMap = this.data,
+    errors: MutableList<MutableJsonMap> = this.errors,
+    extensions: MutableJsonMap = this.extensions,
+): ServiceExecutionResult {
+    return newServiceExecutionResult(data, errors, extensions)
+}
+
+fun newServiceExecutionResult(
+    data: MutableJsonMap = mutableMapOf(),
+    errors: MutableList<MutableJsonMap> = mutableListOf(),
+    extensions: MutableJsonMap = mutableMapOf(),
+): ServiceExecutionResult {
+    return ServiceExecutionResult(data, errors, extensions)
 }

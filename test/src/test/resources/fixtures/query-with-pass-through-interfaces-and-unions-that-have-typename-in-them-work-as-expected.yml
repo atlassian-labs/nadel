@@ -1,5 +1,4 @@
-name: query with pass through interfaces and unions that have __typename in them work
-  as expected
+name: query with pass through interfaces and unions that have __typename in them work as expected
 overallSchema:
   PetService: |
     service PetService {

@@ -112,7 +112,7 @@ internal class NadelHydrationTransform(
         state: State,
     ): List<NadelResultInstruction> {
         val parentNodes = JsonNodeExtractor.getNodesAt(
-            data = result.data,
+            data = result.data ?: return emptyList(),
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )

@@ -18,7 +18,7 @@ overallSchema:
       type TestingMovie => renamed from Movie {
         id: ID!
         name: String
-        characters: [TestingCharacter] => hydrated from testing.characters(ids: $source.characterIds) object identified by id, batch size  3
+        characters: [TestingCharacter] => hydrated from testing.characters(ids: $source.characterIds) object identified by id, batch size 3
       }
     }
 underlyingSchema:

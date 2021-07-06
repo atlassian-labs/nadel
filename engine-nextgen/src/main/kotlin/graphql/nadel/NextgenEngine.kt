@@ -1,13 +1,11 @@
 package graphql.nadel
 
+import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
-import graphql.execution.ExecutionId
-import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
-import graphql.language.NodeUtil
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
@@ -17,9 +15,12 @@ import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
+import graphql.nadel.enginekt.util.copy
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
 import graphql.nadel.enginekt.util.mergeResults
+import graphql.nadel.enginekt.util.newGraphQLError
+import graphql.nadel.enginekt.util.newServiceExecutionResult
 import graphql.nadel.enginekt.util.provide
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
@@ -186,19 +187,44 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             listOf(transformedQuery),
         )
 
-        return service.serviceExecution.execute(
-            newServiceExecutionParameters()
-                .query(document)
-                .context(executionInput.context)
-                .executionId(executionInput.executionId ?: executionIdProvider.provide(executionInput))
-                .cacheControl(executionInput.cacheControl)
-                .variables(emptyMap())
-                .fragments(emptyMap())
-                .operationDefinition(document.definitions.singleOfType())
-                .serviceContext(null)
-                .hydrationCall(false)
-                .build()
-        ).asDeferred().await()
+        val serviceExecParams = newServiceExecutionParameters()
+            .query(document)
+            .context(executionInput.context)
+            .executionId(executionInput.executionId ?: executionIdProvider.provide(executionInput))
+            .cacheControl(executionInput.cacheControl)
+            .variables(emptyMap())
+            .fragments(emptyMap())
+            .operationDefinition(document.definitions.singleOfType())
+            .serviceContext(null)
+            .hydrationCall(false)
+            .build()
+
+        val serviceExecResult = try {
+            service.serviceExecution
+                .execute(serviceExecParams)
+                .asDeferred()
+                .await()
+        } catch (e: Exception) {
+            newServiceExecutionResult(
+                errors = mutableListOf(
+                    newGraphQLError(
+                        message = "An exception occurred invoking the service '${service.name}': ${e.message}",
+                        errorType = ErrorType.DataFetchingException,
+                        extensions = mutableMapOf(
+                            "executionId" to serviceExecParams.executionId.toString(),
+                        ),
+                    ).toSpecification(),
+                ),
+            )
+        }
+
+
+        return serviceExecResult.copy(
+            data = serviceExecResult.data.let { data ->
+                data.takeIf { transformedQuery.resultKey in data }
+                    ?: mutableMapOf(transformedQuery.resultKey to null)
+            },
+        )
     }
 
     companion object {

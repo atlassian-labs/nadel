@@ -59,11 +59,7 @@ serviceCalls:
               "message": "Problem2"
             }
           ],
-          "data": {
-            "hello": {
-              "name": "World"
-            }
-          },
+          "data": null,
           "extensions": {}
         }
   nextgen:
@@ -92,11 +88,7 @@ serviceCalls:
               "message": "Problem2"
             }
           ],
-          "data": {
-            "hello": {
-              "name": "World"
-            }
-          },
+          "data": null,
           "extensions": {}
         }
 # language=JSON
@@ -119,9 +111,7 @@ response: |-
       }
     ],
     "data": {
-      "hello": {
-        "name": "World"
-      }
+      "hello": null
     },
     "extensions": {}
   }

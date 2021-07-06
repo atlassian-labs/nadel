@@ -37,12 +37,18 @@ underlyingSchema:
     }
   Service1: |
     type Query {
-      anotherRoot: String
       root: Root
+    }
+
+    extend type Query {
+      anotherRoot: String
     }
 
     type Root {
       id: ID
+    }
+
+    extend type Root {
       name: String
     }
 query: |
@@ -110,6 +116,89 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Service2
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "lookup": {
+              "id": "rootId",
+              "name": "extensionName"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              root {
+                ... on Root {
+                  id
+                }
+                ... on Root {
+                  name
+                }
+                ... on Root {
+                  hydration__extension__id: id
+                }
+                ... on Root {
+                  __typename__hydration__extension: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "root": {
+              "id": "rootId",
+              "hydration__extension__id": "rootId",
+              "__typename__hydration__extension": "Root",
+              "name": "rootName"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              anotherRoot
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "anotherRoot": "anotherRoot"
+          },
+          "extensions": {}
+        }
+    - serviceName: Service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              lookup(id: "rootId") {
+                ... on Extension {
+                  id
+                }
+                ... on Extension {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

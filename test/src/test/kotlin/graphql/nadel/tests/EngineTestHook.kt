@@ -37,8 +37,8 @@ internal fun getTestHook(fixture: TestFixture): EngineTestHook? {
         Class.forName(
             join(hooksPackage, fixture.name.toSlug(), separator = "."),
         )
-    } catch (_: ClassNotFoundException) {
-        println("No hook class found")
+    } catch (e: ClassNotFoundException) {
+        println("No hook class found: ${e.message}")
         return null
     }
     return hookClass.newInstance() as EngineTestHook

@@ -13,13 +13,17 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.KeepHook
 import graphql.nadel.tests.NadelEngineType
+import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
 import graphql.nadel.tests.util.extensions
+import graphql.nadel.tests.util.getHashCode
+import graphql.nadel.tests.util.getToString
 import graphql.nadel.tests.util.message
 import strikt.api.expectThat
 import strikt.assertions.get
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
+import strikt.assertions.isNull
 import strikt.assertions.single
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
@@ -69,6 +73,10 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally` : Engine
             .extensions["instrumentedExtension"]
             .isEqualTo("dummy extension")
 
+        expectThat(result)
+            .data
+            .isNull()
+
         expectThat(resultBeforeFinalInstrumentation)
             .isNotNull()
             .errors
@@ -81,9 +89,7 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally` : Engine
             .get {
                 getInstrumentationState<InstrumentationState>()
             }
-            .get {
-                toString()
-            }
+            .getToString()
             .isEqualTo("so-annoying")
     }
 }
