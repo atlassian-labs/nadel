@@ -7,29 +7,37 @@ import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
 
-class NadelFieldToService(private val overallExecutionBlueprint: NadelOverallExecutionBlueprint) {
-
+internal class NadelFieldToService(
+    private val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
+) {
     fun getServicesForTopLevelFields(query: ExecutableNormalizedOperation): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
-            when {
-                NadelNamespacedFields.isNamespacedField(topLevelField, overallExecutionBlueprint.schema) -> {
-                    val namespacedChildFieldsByService: Map<Service, List<ExecutableNormalizedField>> =
-                        topLevelField.children
-                            .groupBy(::getService)
-
-                    namespacedChildFieldsByService.map { (service, childTopLevelFields) ->
-                        val topLevelFieldForService = topLevelField.copyWithChildren(childTopLevelFields)
-                        NadelFieldAndService(topLevelFieldForService, service)
-                    }
-                }
-                else -> listOf(
-                    NadelFieldAndService(
-                        field = topLevelField,
-                        service = getService(topLevelField)
-                    )
-                )
+            if (isNamespacedField(topLevelField)) {
+                getServicePairsForNamespacedFields(topLevelField)
+            } else {
+                listOf(getServicePairFor(field = topLevelField))
             }
         }
+    }
+
+    private fun getServicePairsForNamespacedFields(
+        topLevelField: ExecutableNormalizedField,
+    ): List<NadelFieldAndService> {
+        return topLevelField.children
+            .map { childField ->
+                val service = getService(childField)
+                val topLevelFieldForService = topLevelField.copyWithChildren(
+                    children = listOf(childField),
+                )
+                NadelFieldAndService(topLevelFieldForService, service)
+            }
+    }
+
+    private fun getServicePairFor(field: ExecutableNormalizedField): NadelFieldAndService {
+        return NadelFieldAndService(
+            field = field,
+            service = getService(field),
+        )
     }
 
     private fun getService(overallField: ExecutableNormalizedField): Service {
@@ -37,6 +45,10 @@ class NadelFieldToService(private val overallExecutionBlueprint: NadelOverallExe
         val fieldCoordinates = makeFieldCoordinates(operationTypeName, overallField.name)
         return overallExecutionBlueprint.getService(fieldCoordinates)
             ?: error("Unable to find service for field at: $fieldCoordinates")
+    }
+
+    private fun isNamespacedField(field: ExecutableNormalizedField): Boolean {
+        return NadelNamespacedFields.isNamespacedField(field, overallExecutionBlueprint.schema)
     }
 }
 
