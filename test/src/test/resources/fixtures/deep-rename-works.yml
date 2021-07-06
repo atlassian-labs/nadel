@@ -1,4 +1,7 @@
 name: deep rename works
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   IssueService: |
     service IssueService {

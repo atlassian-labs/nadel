@@ -1,4 +1,7 @@
 name: string field rename
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

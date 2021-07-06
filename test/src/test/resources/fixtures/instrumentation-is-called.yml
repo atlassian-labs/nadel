@@ -1,4 +1,7 @@
 name: instrumentation is called
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

@@ -1,4 +1,7 @@
 name: can instrument root execution result
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

@@ -1,4 +1,7 @@
 name: introspection can be performed even with fragments
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

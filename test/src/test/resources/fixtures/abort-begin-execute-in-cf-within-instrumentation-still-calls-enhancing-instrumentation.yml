@@ -1,4 +1,7 @@
 name: abort beginExecute in CF within instrumentation still calls enhancing instrumentation
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

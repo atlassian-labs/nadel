@@ -1,4 +1,7 @@
 name: subscription can be executed
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

@@ -1,4 +1,7 @@
 name: top level field is removed
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   IssueService: |
     service IssueService {

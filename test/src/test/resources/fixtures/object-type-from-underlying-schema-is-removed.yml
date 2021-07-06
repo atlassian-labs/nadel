@@ -1,4 +1,7 @@
 name: object type from underlying schema is removed
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

@@ -1,4 +1,7 @@
 name: synthetic hydration with renamed type
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Bar: |
     service Bar {

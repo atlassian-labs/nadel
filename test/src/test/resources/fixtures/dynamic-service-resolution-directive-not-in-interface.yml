@@ -1,4 +1,7 @@
 name: dynamic service resolution directive not in interface
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   RepoService: |
     service RepoService {

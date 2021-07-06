@@ -1,4 +1,7 @@
 name: lower level interface fields get typename added
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   PetService: |
     service PetService {

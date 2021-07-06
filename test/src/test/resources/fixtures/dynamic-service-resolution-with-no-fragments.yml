@@ -1,4 +1,7 @@
 name: dynamic service resolution with no fragments
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Common: |
     directive @dynamicServiceResolution on FIELD_DEFINITION

@@ -1,4 +1,7 @@
 name: simple type rename and field rename works as expected
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

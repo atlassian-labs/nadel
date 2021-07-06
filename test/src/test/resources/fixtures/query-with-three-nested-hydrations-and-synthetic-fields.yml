@@ -1,4 +1,7 @@
 name: query with three nested hydrations and synthetic fields
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Bar: |
     type Query {

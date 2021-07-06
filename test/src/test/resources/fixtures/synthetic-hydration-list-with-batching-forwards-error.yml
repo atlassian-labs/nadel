@@ -1,4 +1,7 @@
 name: synthetic hydration list with batching forwards error
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service2: |
     service service2 {

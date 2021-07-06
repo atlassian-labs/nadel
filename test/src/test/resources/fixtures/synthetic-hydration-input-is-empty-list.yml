@@ -1,4 +1,7 @@
 name: synthetic hydration input is empty list
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {

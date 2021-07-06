@@ -1,4 +1,7 @@
 name: field with selections is removed
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   IssueService: |
     service IssueService {

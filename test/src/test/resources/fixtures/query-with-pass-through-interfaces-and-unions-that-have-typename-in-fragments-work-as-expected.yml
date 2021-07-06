@@ -1,4 +1,7 @@
 name: query with pass through interfaces and unions that have __typename in fragments work as expected
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   PetService: |
     service PetService {

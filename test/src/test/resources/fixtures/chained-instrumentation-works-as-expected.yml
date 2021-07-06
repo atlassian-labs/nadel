@@ -1,4 +1,7 @@
 name: chained instrumentation works as expected
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

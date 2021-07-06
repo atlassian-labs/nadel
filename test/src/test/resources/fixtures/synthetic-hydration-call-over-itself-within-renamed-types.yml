@@ -1,4 +1,7 @@
 name: synthetic hydration call over itself within renamed types
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   testing: |
     service testing {

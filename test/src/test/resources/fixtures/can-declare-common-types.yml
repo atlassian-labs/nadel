@@ -1,4 +1,7 @@
 name: can declare common types
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   IssueService: |
     service IssueService {

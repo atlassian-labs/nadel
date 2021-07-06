@@ -1,4 +1,7 @@
 name: exceptions in service execution result completable future in graphql errors
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

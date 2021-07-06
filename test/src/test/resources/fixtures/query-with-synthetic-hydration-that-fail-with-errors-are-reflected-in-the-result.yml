@@ -1,4 +1,7 @@
 name: query with synthetic hydration that fail with errors are reflected in the result
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Bar: |
     service Bar {

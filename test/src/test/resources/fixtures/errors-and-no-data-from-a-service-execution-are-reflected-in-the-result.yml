@@ -1,4 +1,7 @@
 name: errors and no data from a service execution are reflected in the result
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

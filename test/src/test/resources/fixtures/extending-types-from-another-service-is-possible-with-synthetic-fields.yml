@@ -1,4 +1,7 @@
 name: extending types from another service is possible with synthetic fields
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Service2: |
     service Service2 {

@@ -1,4 +1,7 @@
 name: variable referenced input types rename works as expected
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

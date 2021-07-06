@@ -1,4 +1,7 @@
 name: missing null variables are handled
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

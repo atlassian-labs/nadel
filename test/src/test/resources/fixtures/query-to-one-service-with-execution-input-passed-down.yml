@@ -1,4 +1,7 @@
 name: query to one service with execution input passed down
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

@@ -1,4 +1,7 @@
 name: correct __typename is returned
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

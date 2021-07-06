@@ -1,4 +1,7 @@
 name: field in non-hydrated query is removed
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   CommentService: |
     service CommentService {

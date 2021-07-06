@@ -1,4 +1,7 @@
 name: hydration call with fragments in the hydrated part and synthetic field
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   UserService: |
     service UserService {

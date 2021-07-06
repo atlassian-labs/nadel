@@ -1,4 +1,7 @@
 name: query with three nested hydrations
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Bar: |
     service Bar {

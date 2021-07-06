@@ -1,4 +1,7 @@
 name: simple hydration query with a synthetic field
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   service2: |
     service service2 {

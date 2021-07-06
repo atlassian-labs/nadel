@@ -1,4 +1,7 @@
 name: test batch hydration null pointer when hydrated query field does not exist
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Bar: |
     service Bar {

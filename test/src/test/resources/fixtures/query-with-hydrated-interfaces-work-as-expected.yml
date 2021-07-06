@@ -1,4 +1,7 @@
 name: query with hydrated interfaces work as expected
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   PetService: |
     service PetService {

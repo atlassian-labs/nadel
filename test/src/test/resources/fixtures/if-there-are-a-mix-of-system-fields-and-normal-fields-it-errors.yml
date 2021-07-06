@@ -1,4 +1,7 @@
 name: if there are a mix of system fields and normal fields it errors
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

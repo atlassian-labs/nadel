@@ -1,4 +1,7 @@
 name: execution id is transferred from provider if missing in input
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

@@ -1,4 +1,7 @@
 name: __typename is passed on queries using dynamic resolved services
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Common: |
     directive @dynamicServiceResolution on FIELD_DEFINITION

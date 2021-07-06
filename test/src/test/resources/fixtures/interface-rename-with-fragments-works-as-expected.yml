@@ -1,4 +1,7 @@
 name: interface rename with fragments works as expected
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {

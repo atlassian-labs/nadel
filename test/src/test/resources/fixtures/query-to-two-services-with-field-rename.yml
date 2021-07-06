@@ -1,4 +1,7 @@
 name: query to two services with field rename
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   Bar: |
     service Bar {

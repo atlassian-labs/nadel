@@ -1,4 +1,7 @@
 name: simple synthetic hydration with one service and type renaming
+enabled:
+  current: true
+  nextgen: true
 overallSchema:
   testing: |
     service testing {
