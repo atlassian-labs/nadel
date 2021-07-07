@@ -66,6 +66,29 @@ serviceCalls:
           },
           "extensions": {}
         }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          subscription {
+            ... on Subscription {
+              onWorldUpdate {
+                ... on World {
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "onWorldUpdate": null
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {

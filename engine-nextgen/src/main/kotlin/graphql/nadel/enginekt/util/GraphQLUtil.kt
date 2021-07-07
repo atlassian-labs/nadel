@@ -11,6 +11,7 @@ import graphql.execution.ExecutionIdProvider
 import graphql.language.Definition
 import graphql.language.Document
 import graphql.language.ObjectTypeDefinition
+import graphql.language.OperationDefinition
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.ServiceExecutionResult
@@ -234,4 +235,17 @@ fun newServiceExecutionResult(
     extensions: MutableJsonMap = mutableMapOf(),
 ): ServiceExecutionResult {
     return ServiceExecutionResult(data, errors, extensions)
+}
+
+fun ExecutableNormalizedField.getOperationKind(
+    schema: GraphQLSchema,
+): OperationDefinition.Operation {
+    val objectTypeName = objectTypeNames.singleOrNull()
+        ?: error("Top level field can only belong to one operation type")
+    return when {
+        schema.queryType.name == objectTypeName -> OperationDefinition.Operation.QUERY
+        schema.mutationType?.name?.equals(objectTypeName) == true -> OperationDefinition.Operation.MUTATION
+        schema.subscriptionType?.name?.equals(objectTypeName) == true -> OperationDefinition.Operation.SUBSCRIPTION
+        else -> error("Type '$objectTypeName' is not one of the standard GraphQL operation types")
+    }
 }
