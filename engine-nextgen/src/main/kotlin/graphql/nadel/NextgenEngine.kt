@@ -21,6 +21,8 @@ import graphql.nadel.enginekt.util.fold
 import graphql.nadel.enginekt.util.mergeResults
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.hooks.CreateServiceContextParams
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory
@@ -35,6 +37,7 @@ import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<NadelTransform<out Any>> = emptyList()) : NadelExecutionEngine {
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
+    private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         overallSchema = nadel.overallSchema,
         services = nadel.services,
@@ -81,7 +84,11 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
             fieldToService.getServicesForTopLevelFields(query)
                 .map { (field, service) ->
                     async {
-                        executeTopLevelField(field, service, executionInput)
+                        val serviceContext = serviceExecutionHooks.createServiceContext(
+                            CreateServiceContextParams.newParameters().service(service).build()
+                        )
+
+                        executeTopLevelField(field, service.withContext(serviceContext), executionInput)
                     }
                 }
         }.awaitAll()
@@ -191,7 +198,7 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
                 .variables(emptyMap())
                 .fragments(emptyMap())
                 .operationDefinition(document.definitions.singleOfType())
-                .serviceContext(null)
+                .serviceContext(service.serviceContext)
                 .hydrationCall(false)
                 .build()
         ).asDeferred().await()
