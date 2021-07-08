@@ -33,6 +33,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<NadelTransform<out Any>> = emptyList()) : NadelExecutionEngine {
@@ -88,7 +89,7 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
                             CreateServiceContextParams.newParameters().service(service).build()
                         )
 
-                        executeTopLevelField(field, service.withContext(serviceContext), executionInput)
+                        executeTopLevelField(field, service.withContext(serviceContext.await()), executionInput)
                     }
                 }
         }.awaitAll()
