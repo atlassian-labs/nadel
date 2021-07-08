@@ -13,28 +13,17 @@ public class Service {
     private final ServiceExecution serviceExecution;
     private final ServiceDefinition serviceDefinition;
     private final DefinitionRegistry definitionRegistry;
-    private final Object serviceContext;
-
-    public Service(String name,
-                   GraphQLSchema underlyingSchema,
-                   ServiceExecution serviceExecution,
-                   ServiceDefinition serviceDefinition,
-                   DefinitionRegistry definitionRegistry,
-                   Object serviceContext) {
-        this.name = name;
-        this.underlyingSchema = underlyingSchema;
-        this.serviceExecution = serviceExecution;
-        this.serviceDefinition = serviceDefinition;
-        this.definitionRegistry = definitionRegistry;
-        this.serviceContext = serviceContext;
-    }
 
     public Service(String name,
                    GraphQLSchema underlyingSchema,
                    ServiceExecution serviceExecution,
                    ServiceDefinition serviceDefinition,
                    DefinitionRegistry definitionRegistry) {
-        this(name, underlyingSchema, serviceExecution, serviceDefinition, definitionRegistry, null);
+        this.name = name;
+        this.underlyingSchema = underlyingSchema;
+        this.serviceExecution = serviceExecution;
+        this.serviceDefinition = serviceDefinition;
+        this.definitionRegistry = definitionRegistry;
     }
 
     public String getName() {
@@ -55,20 +44,5 @@ public class Service {
 
     public DefinitionRegistry getDefinitionRegistry() {
         return definitionRegistry;
-    }
-
-    public Object getServiceContext() {
-        return serviceContext;
-    }
-
-    public Service withContext(Object serviceContext) {
-        return new Service(
-                this.name,
-                this.underlyingSchema,
-                this.serviceExecution,
-                this.serviceDefinition,
-                this.definitionRegistry,
-                serviceContext
-        );
     }
 }
