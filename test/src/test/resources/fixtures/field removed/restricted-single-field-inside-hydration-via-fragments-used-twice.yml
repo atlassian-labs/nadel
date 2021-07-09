@@ -1,7 +1,7 @@
 name: restricted single field inside hydration via fragments used twice
 enabled:
   current: true
-  nextgen: true
+  nextgen: false
 overallSchema:
   UserService: |
     service UserService {

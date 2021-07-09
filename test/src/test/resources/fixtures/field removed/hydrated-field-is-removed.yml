@@ -1,7 +1,7 @@
 name: hydrated field is removed
 enabled:
   current: true
-  nextgen: true
+  nextgen: false
 overallSchema:
   UserService: |
     service UserService {

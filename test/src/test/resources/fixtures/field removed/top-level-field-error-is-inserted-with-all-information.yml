@@ -1,7 +1,7 @@
 name: top level field error is inserted with all information
 enabled:
   current: true
-  nextgen: true
+  nextgen: false
 ignored:
   nextgen: true # TBD how hooks behave in nextgen
 overallSchema:

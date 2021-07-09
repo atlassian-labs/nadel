@@ -2,6 +2,8 @@ name: if there are a mix of system fields and normal fields it errors
 enabled:
   current: true
   nextgen: true
+ignored:
+  nextgen: true # TODO: implement on nextgen
 overallSchema:
   MyService: |
     service MyService {

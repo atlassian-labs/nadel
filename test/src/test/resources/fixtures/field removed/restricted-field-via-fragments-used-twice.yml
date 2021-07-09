@@ -1,7 +1,7 @@
 name: restricted field via fragments used twice
 enabled:
   current: true
-  nextgen: true
+  nextgen: false
 overallSchema:
   Issues: |
     service Issues {

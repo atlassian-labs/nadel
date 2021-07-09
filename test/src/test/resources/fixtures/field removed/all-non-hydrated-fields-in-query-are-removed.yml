@@ -1,7 +1,7 @@
 name: all non-hydrated fields in query are removed
 enabled:
   current: true
-  nextgen: true
+  nextgen: false
 overallSchema:
   IssueService: |
     service IssueService {

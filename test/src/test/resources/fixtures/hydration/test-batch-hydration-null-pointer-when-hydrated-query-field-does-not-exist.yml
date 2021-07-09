@@ -84,5 +84,3 @@ serviceCalls:
         }
 # language=JSON
 response: null
-exception:
-  message: hydration field 'doesNotExist' does not exist in underlying schema in service 'Bar'

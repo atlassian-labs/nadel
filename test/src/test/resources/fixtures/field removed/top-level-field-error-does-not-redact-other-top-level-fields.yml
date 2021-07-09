@@ -1,7 +1,7 @@
 name: top level field error does not redact other top level fields
 enabled:
   current: true
-  nextgen: true
+  nextgen: false
 ignored:
   nextgen: true # TBD how hooks behave in nextgen
 overallSchema:

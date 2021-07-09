@@ -4,6 +4,7 @@ import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
+import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
@@ -20,6 +21,7 @@ import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
 import graphql.nadel.enginekt.util.getOperationKind
 import graphql.nadel.enginekt.util.mergeResults
+import graphql.nadel.enginekt.util.newExecutionResult
 import graphql.nadel.enginekt.util.newGraphQLError
 import graphql.nadel.enginekt.util.newServiceExecutionResult
 import graphql.nadel.enginekt.util.provide
@@ -72,12 +74,19 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
     ): ExecutionResult {
-        val query = ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables(
-            overallExecutionBlueprint.schema,
-            queryDocument,
-            executionInput.operationName,
-            executionInput.variables,
-        )
+        val query = try {
+            ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables(
+                overallExecutionBlueprint.schema,
+                queryDocument,
+                executionInput.operationName,
+                executionInput.variables,
+            )
+        } catch (e: Throwable) {
+            when (e) {
+                is GraphQLError -> return newExecutionResult(error = e)
+                else -> throw e
+            }
+        }
 
         // TODO: determine what to do with NQ
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
@@ -86,7 +95,14 @@ class NextgenEngine(nadel: Nadel) : NadelExecutionEngine {
             fieldToService.getServicesForTopLevelFields(query)
                 .map { (field, service) ->
                     async {
-                        executeTopLevelField(field, service, executionInput)
+                        try {
+                            executeTopLevelField(field, service, executionInput)
+                        } catch (e: Throwable) {
+                            when (e) {
+                                is GraphQLError -> newExecutionResult(error = e)
+                                else -> throw e
+                            }
+                        }
                     }
                 }
         }.awaitAll()

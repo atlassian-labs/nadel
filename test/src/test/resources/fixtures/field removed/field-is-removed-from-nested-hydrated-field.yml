@@ -1,7 +1,7 @@
 name: field is removed from nested hydrated field
 enabled:
   current: true
-  nextgen: true
+  nextgen: false
 overallSchema:
   IssueService: |
     service IssueService {

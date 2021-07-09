@@ -9,8 +9,8 @@ interface NadelEngineTypeValueProvider<T> {
     val current: T
     val nextgen: T
 
-    operator fun get(engine: NadelEngineType): T {
-        return when (engine) {
+    operator fun get(engineType: NadelEngineType): T {
+        return when (engineType) {
             NadelEngineType.current -> current
             NadelEngineType.nextgen -> nextgen
         }

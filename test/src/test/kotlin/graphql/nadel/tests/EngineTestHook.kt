@@ -7,6 +7,7 @@ import graphql.nadel.tests.util.join
 import graphql.nadel.tests.util.packageName
 import graphql.nadel.tests.util.toSlug
 import org.reflections.Reflections
+import java.io.File
 
 interface EngineTestHook {
     fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
@@ -21,6 +22,10 @@ interface EngineTestHook {
     }
 
     fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
+    }
+
+    fun assertFailure(engineType: NadelEngineType, throwable: Throwable): Boolean {
+        return false
     }
 }
 
@@ -50,10 +55,22 @@ private object Util {
     private fun validate(): Boolean {
         val reflections = Reflections(hooksPackage)
         val hookImpls = reflections.getSubTypesOf(EngineTestHook::class.java)
+
+        // TODO: provide single source of truth for this logic - duplicated in EngineTests
+        @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+        val allFixtureFileNames = File(javaClass.classLoader.getResource("fixtures").path)
+            .walkTopDown()
+            .filter { it.extension == "yml" }
+            .map { it.nameWithoutExtension }
+            .toHashSet()
+
         hookImpls.forEach { hookImpl ->
-            javaClass.classLoader.getResource("fixtures/${hookImpl.simpleName}.yml")
-                ?: error("Unable to find matching test for hook: ${hookImpl.simpleName}")
+            val fixtureName = hookImpl.simpleName
+            if (fixtureName !in allFixtureFileNames) {
+                error("Unable to find matching test for hook: $fixtureName")
+            }
         }
+
         return true
     }
 }

@@ -1,7 +1,7 @@
 name: inserts one error for a forbidden field in a list
 enabled:
   current: true
-  nextgen: true
+  nextgen: false
 overallSchema:
   Issues: |
     service Issues {
