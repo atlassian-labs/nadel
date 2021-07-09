@@ -22,6 +22,21 @@ import org.junit.jupiter.api.fail
 import java.io.File
 import java.util.concurrent.CompletableFuture
 
+/**
+ * Enter in the name of the test here, leave blank to run all tests.
+ *
+ * Name can be any of:
+ * The test file name e.g. hydration-inside-a-renamed-field.yml
+ * Test name e.g. hydration inside a renamed field
+ * Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
+ */
+private val singleTestToRun = ""
+    .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
+    .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
+    .removeSuffix(".yml")
+    .removeSuffix(".yaml")
+    .trim()
+
 class EngineTests : FunSpec({
     val engineFactories = EngineTypeFactories()
 
@@ -36,7 +51,7 @@ class EngineTests : FunSpec({
     fixturesDir.walkTopDown()
         .asSequence()
         .filter {
-            it.extension == "yml"
+            it.extension == "yml" || it.extension == "yaml"
         }
         .onEach {
             println("Loading ${it.nameWithoutExtension}")
@@ -49,15 +64,19 @@ class EngineTests : FunSpec({
                     // Rename fixtures if they have the wrong name
                     val expectedName = fixture.name.toSlug()
                     if (file.nameWithoutExtension != expectedName) {
-                        file.renameTo(File(file.parentFile, "$expectedName.yml"))
+                        file.renameTo(File(file.parentFile, "$expectedName.${file.extension}"))
                     }
                 }
         }
         .forEach { fixture ->
             engineFactories.all
-                .filter { (engineType) ->
-                    true
-                    // fixture.name == "extending types from another service is possible with synthetic fields"
+                .filter {
+                    if (singleTestToRun.isBlank()) {
+                        true
+                    } else {
+                        fixture.name.equals(singleTestToRun, ignoreCase = true)
+                            || fixture.name.toSlug().equals(singleTestToRun, ignoreCase = true)
+                    }
                 }
                 .filter { (engineType) ->
                     fixture.enabled.get(engineType = engineType) // && engineType == current
