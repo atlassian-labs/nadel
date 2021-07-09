@@ -1,7 +1,7 @@
-name: query with hydrated interfaces work as expected
+name: query with hydrated interfaces work as expected on nextgen
 enabled:
-  current: true
-  nextgen: false
+  current: false
+  nextgen: true
 overallSchema:
   PetService: |
     service PetService {
@@ -11,21 +11,21 @@ overallSchema:
       }
       interface Pet {
         name: String
-        owners: [Owner] => hydrated from OwnerService.ownerById(id: $source.ownerIds)
+        owners: [Owner]
         collar: Collar
         collarToRenamed: Collar => renamed from collar
       }
       type Cat implements Pet {
         name: String
         wearsBell: Boolean
-        owners: [Owner]
+        owners: [Owner] => hydrated from OwnerService.ownerById(id: $source.ownerIds)
         collar: Collar
         collarToRenamed: Collar => renamed from collar
       }
       type Dog implements Pet {
         name: String
         wearsCollar: Boolean
-        owners: [Owner]
+        owners: [Owner] => hydrated from OwnerService.ownerById(id: $source.ownerIds)
         collar: Collar
         collarToRenamed: Collar => renamed from collar
       }
@@ -240,6 +240,128 @@ serviceCalls:
               "name": "Cruella De Vil",
               "givesSmacks": true,
               "type_hint_typename__UUID": "CruelOwner"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              pets(isLoyal: true) {
+                ... on Cat {
+                  name
+                }
+                ... on Cat {
+                  hydration__owners__ownerIds: ownerIds
+                }
+                ... on Cat {
+                  __typename__hydration__owners: __typename
+                }
+                ... on Dog {
+                  name
+                }
+                ... on Dog {
+                  hydration__owners__ownerIds: ownerIds
+                }
+                ... on Dog {
+                  __typename__hydration__owners: __typename
+                }
+              }
+            }
+          }
+        variables:
+          isLoyal: true
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "name": "Sparky",
+                "hydration__owners__ownerIds": [
+                  "dearly"
+                ],
+                "__typename__hydration__owners": "Dog"
+              },
+              {
+                "name": "Whiskers",
+                "hydration__owners__ownerIds": [
+                  "cruella"
+                ],
+                "__typename__hydration__owners": "Cat"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: OwnerService
+      request:
+        query: |
+          query {
+            ... on Query {
+              ownerById(id: "dearly") {
+                ... on CaringOwner {
+                  name
+                }
+                ... on CaringOwner {
+                  givesPats
+                }
+                ... on CruelOwner {
+                  name
+                }
+                ... on CruelOwner {
+                  givesSmacks
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "ownerById": {
+              "name": "Mr Dearly",
+              "givesPats": true
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: OwnerService
+      request:
+        query: |
+          query {
+            ... on Query {
+              ownerById(id: "cruella") {
+                ... on CaringOwner {
+                  name
+                }
+                ... on CaringOwner {
+                  givesPats
+                }
+                ... on CruelOwner {
+                  name
+                }
+                ... on CruelOwner {
+                  givesSmacks
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "ownerById": {
+              "name": "Cruella De Vil",
+              "givesSmacks": true
             }
           },
           "extensions": {}
