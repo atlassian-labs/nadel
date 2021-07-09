@@ -60,8 +60,7 @@ query: |
   }
 variables:
   filter:
-    name:
-      - value
+    name: value
 serviceCalls:
   current:
     - serviceName: Issue
@@ -94,7 +93,7 @@ serviceCalls:
           }
         variables:
           filter:
-            name: '[value]'
+            name: value
         operationName: nadel_2_Association_MyQuery
       # language=JSON
       response: |-
@@ -140,7 +139,7 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              association(filter: {name : "[value]"}, id: "ISSUE-1") {
+              association(filter: {name: "value"}, id: "ISSUE-1") {
                 ... on Association {
                   nameOfAssociation
                 }
