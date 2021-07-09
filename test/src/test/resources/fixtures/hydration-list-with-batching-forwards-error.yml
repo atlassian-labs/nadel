@@ -91,6 +91,7 @@ serviceCalls:
       # language=JSON
       response: |-
         {
+          "data": null,
           "errors": [
             {
               "message": "Some error occurred"
@@ -151,6 +152,7 @@ serviceCalls:
       # language=JSON
       response: |-
         {
+          "data": null,
           "errors": [
             {
               "message": "Some error occurred"

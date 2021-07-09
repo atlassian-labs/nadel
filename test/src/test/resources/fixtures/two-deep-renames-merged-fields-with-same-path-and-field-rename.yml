@@ -12,7 +12,7 @@ overallSchema:
         id: ID
         authorId: ID => renamed from authorDetails.authorId
         authorName: ID => renamed from authorDetails.name
-        details: AuthorDetail  => renamed from authorDetails
+        details: AuthorDetail => renamed from authorDetails
       }
       type AuthorDetail {
         extra: String => renamed from extraInfo

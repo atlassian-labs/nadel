@@ -11,7 +11,7 @@ overallSchema:
       type Synth {
         issue: Issue
       }
-      type Issue  {
+      type Issue {
         id: ID
       }
     }
