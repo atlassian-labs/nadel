@@ -1,0 +1,212 @@
+name: replicate bug
+enabled:
+  current: true
+  nextgen: false
+overallSchema:
+  #language=graphQL
+  devops_container_relationships: |
+    type Query {
+        issueProjectAndOperationsTeamRelationship(
+            id: ID!
+        ): IssueProjectAndOperationsTeamRelationship
+    }
+
+    extend type IssueProject {
+        operationsTeamsAvailableToLinkWith(
+            first: Int = 20,
+            after: String
+        ) : OperationsTeamConnection
+        @hydrated(service: "operations" field: "operations.operationsTeamsWithServiceModificationPermissions" arguments : [
+            { name:"cloudId" value:"$source.cloudId"},
+            { name:"first" value:"$argument.first"},
+            { name:"after" value:"$argument.after"},
+        ])
+
+    }
+
+    type IssueProjectAndOperationsTeamRelationship {
+        id: ID!
+
+        revision: ID!
+
+        issueProject: IssueProject
+        @hydrated(service: "issue_projects" field: "issue.issueProject" arguments : [
+            { name : "id", value : "$source.issueProjectId"}] identifiedBy : "id"
+        )
+    }
+
+  #language=graphQL
+  operations: |
+    directive @namespaced on FIELD_DEFINITION
+    type Query {
+        operations: OperationsQuery @namespaced
+    }
+
+    type OperationsQuery {
+        operationsTeamsWithServiceModificationPermissions(cloudId: ID!, first: Int, after: String, last: Int, before: String): OperationsTeamConnection
+    }
+
+    type OperationsTeamConnection {
+        totalCount: Int
+    }
+
+  #language=graphQL
+  issue_projects: |
+    type Query {
+        issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+        issueProject(
+            id: ID!
+        ): IssueProject
+    }
+
+    type IssueProject {
+        id: ID!
+
+        cloudId: ID!
+    }
+
+underlyingSchema:
+  devops_container_relationships: |
+    type Query {
+        issueProjectAndOperationsTeamRelationship(id: ID!): IssueProjectAndOperationsTeamRelationship
+    }
+
+    type IssueProjectAndOperationsTeamRelationship {
+        id: ID!
+
+        revision: ID!
+
+        issueProjectId: ID!
+    }
+
+  operations: |
+    type Query {
+        operations: OperationsQuery
+    }
+
+    type OperationsQuery {
+        operationsTeamsWithServiceModificationPermissions(cloudId: ID!, first: Int, after: String, last: Int, before: String): OperationsTeamConnection
+    }
+
+    type OperationsTeamConnection {
+        totalCount: Int
+    }
+
+  issue_projects: |
+    type Query {
+        issue: IssueQuery
+    }
+
+    type IssueQuery {
+        issueProject(
+            id: ID!
+        ): IssueProject
+    }
+
+    type IssueProject {
+        id: ID!
+
+        cloudId: ID!
+    }
+query: |
+  query($id: ID!, $first: Int) {
+    issueProjectAndOperationsTeamRelationship(id: $id) {
+      issueProject {
+        operationsTeamsAvailableToLinkWith(first: $first) {
+          totalCount
+        }
+      }
+    }
+  }
+variables: {
+  "id": "some-id",
+  "first": 10
+}
+serviceCalls:
+  current:
+    - serviceName: devops_container_relationships
+      request:
+        query: |
+          query nadel_2_devops_container_relationships($id: ID!) {
+            issueProjectAndOperationsTeamRelationship(id: $id) {
+              issueProjectId
+            }
+          }
+        variables: { id: "some-id" }
+        operationName: nadel_2_devops_container_relationships
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issueProjectAndOperationsTeamRelationship": {
+              "issueProjectId": "project-1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: issue_projects
+      request:
+        query: |
+          query nadel_2_issue_projects($first: Int) {
+            issue {
+              issueProject(id: "project-1") {
+                cloudId
+              }
+            }
+          }
+        variables: { }
+        operationName: nadel_2_issue_projects
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "issueProject": {
+                "cloudId": "cloudId-1"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: operations
+      request:
+        query: |
+          query nadel_2_operations($first: Int) {
+            operations {
+              operationsTeamsWithServiceModificationPermissions(cloudId: "cloudId-1", first: $first) {
+                totalCount
+              }
+            }
+          }
+        variables: { }
+        operationName: nadel_2_operations
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "operations": {
+              "operationsTeamsWithServiceModificationPermissions": {
+                "totalCount": 10
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data":
+      {
+        "issueProjectAndOperationsTeamRelationship": {
+          "issueProject": {
+            "operationsTeamsAvailableToLinkWith": {
+              "totalCount":10
+            }
+          }
+        }
+      },
+  "extensions": {}
+  }
