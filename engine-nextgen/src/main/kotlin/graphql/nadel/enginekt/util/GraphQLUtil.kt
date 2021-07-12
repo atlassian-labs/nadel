@@ -202,7 +202,7 @@ internal fun updateOverallResultAndMergeSameNameTopLevelFields(
         if (overallResultMap.containsKey(topLevelFieldName)) {
             val existingTopLevelFieldMap = overallResultMap[topLevelFieldName]
             if (newTopLevelFieldChildren is AnyMap && existingTopLevelFieldMap is AnyMutableMap) {
-                (existingTopLevelFieldMap.asMutableJsonMap()).putAll(newTopLevelFieldChildren.asJsonMap())
+                existingTopLevelFieldMap.asMutableJsonMap().putAll(newTopLevelFieldChildren.asJsonMap())
             }
         } else {
             overallResultMap[topLevelFieldName] = newTopLevelFieldChildren
