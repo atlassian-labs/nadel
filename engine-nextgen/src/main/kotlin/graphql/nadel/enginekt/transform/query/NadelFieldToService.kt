@@ -43,6 +43,10 @@ internal class NadelFieldToService(
     }
 
     private fun getService(overallField: ExecutableNormalizedField): Service {
+        if (overallField.name == Introspection.TypeNameMetaFieldDef.name) {
+            return getService(overallField.parent)
+        }
+
         val operationTypeName = overallField.objectTypeNames.single()
         val fieldCoordinates = makeFieldCoordinates(operationTypeName, overallField.name)
         return overallExecutionBlueprint.getService(fieldCoordinates)
