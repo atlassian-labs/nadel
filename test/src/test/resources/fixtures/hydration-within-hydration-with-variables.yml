@@ -84,7 +84,6 @@ query: |
     }
   }
 variables: {
-  "id": "some-id",
   "first": 10
 }
 serviceCalls:
