@@ -1,7 +1,7 @@
 name: hydration within hydration with variables
 enabled:
   current: true
-  nextgen: false
+  nextgen: true
 overallSchema:
   boards: |
     type Query {
@@ -134,6 +134,87 @@ serviceCalls:
           query nadel_2_comments($first: Int) {
             comments(cloudId: "CLOUD_ID-1", first: $first) {
               totalCount
+            }
+          }
+        variables: { }
+        operationName: nadel_2_comments
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "comments": {
+              "totalCount": 10
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: boards
+      request:
+        query: |
+          query {
+            ... on Query {
+              board {
+                ... on Board {
+                  hydration__issue__issueId: issueId
+                }
+                ... on Board {
+                  __typename__hydration__issue: __typename
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: nadel_2_boards
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "board": {
+              "hydration__issue__issueId": "ISSUE-1",
+              "__typename__hydration__issue": "Board"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue(id: "ISSUE-1") {
+                ... on Issue {
+                  hydration__comments__cloudId: cloudId
+                }
+                ... on Issue {
+                  __typename__hydration__comments: __typename
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: nadel_2_issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "hydration__comments__cloudId": "CLOUD_ID-1",
+              "__typename__hydration__comments": "Issue"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: comments
+      request:
+        query: |
+          query {
+            ... on Query {
+              comments(cloudId: "CLOUD_ID-1", first: 10) {
+                ... on CommentConnection {
+                  totalCount
+                }
+              }
             }
           }
         variables: { }
