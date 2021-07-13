@@ -123,9 +123,9 @@ class NadelQueryTransformer internal constructor(
         service: Service
     ): NadelTransformFieldResult {
         var fieldFromPreviousTransform: ExecutableNormalizedField = field
-        var transformFieldResult: NadelTransformFieldResult? = null
+        var aggregatedTransformResult: NadelTransformFieldResult? = null
         for ((_, _, transform, state) in transformationSteps) {
-            transformFieldResult = transform.transformField(
+            val transformResultForStep = transform.transformField(
                 executionContext,
                 continuation,
                 executionBlueprint,
@@ -133,9 +133,18 @@ class NadelQueryTransformer internal constructor(
                 fieldFromPreviousTransform,
                 state,
             )
-            fieldFromPreviousTransform = transformFieldResult.newField ?: break
+            aggregatedTransformResult =
+                if (aggregatedTransformResult == null) {
+                    transformResultForStep
+                } else {
+                    NadelTransformFieldResult(
+                        transformResultForStep.newField,
+                        aggregatedTransformResult.artificialFields + transformResultForStep.artificialFields
+                    )
+                }
+            fieldFromPreviousTransform = transformResultForStep.newField ?: break
         }
-        return transformFieldResult!!
+        return aggregatedTransformResult!!
     }
 
     private fun patchObjectTypeNames(
