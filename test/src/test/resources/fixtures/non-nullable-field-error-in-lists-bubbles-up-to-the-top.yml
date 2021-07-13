@@ -46,7 +46,9 @@ serviceCalls:
         {
           "data": {
             "issues": [
-              {}
+              {
+                "id":  null
+              }
             ]
           },
           "extensions": {}

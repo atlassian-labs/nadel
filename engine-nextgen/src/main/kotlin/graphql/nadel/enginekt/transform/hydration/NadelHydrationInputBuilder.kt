@@ -46,15 +46,16 @@ internal object NadelHydrationInputBuilder {
 
         val argsForAllCalls = mapFrom(
             inputDefsForAllCalls
-                .map { actorInputDef ->
+                .mapNotNull { actorInputDef ->
                     val argumentDef = instruction.actorFieldDef.getArgument(actorInputDef.name)
-                    actorInputDef.name to makeInputValue(
+                    val inputValue = makeInputValue(
                         actorInputDef = actorInputDef,
                         argumentDef = argumentDef,
                         parentNode = parentNode,
                         hydrationField = hydratedField,
                         aliasHelper = aliasHelper,
-                    )
+                    ) ?: return@mapNotNull null
+                    actorInputDef.name to inputValue
                 }
                 .toList()
         )
@@ -88,7 +89,7 @@ internal object NadelHydrationInputBuilder {
         parentNode: JsonNode,
         hydrationField: ExecutableNormalizedField,
         aliasHelper: AliasHelper,
-    ): NormalizedInputValue {
+    ): NormalizedInputValue? {
         return when (val valueSource = actorInputDef.valueSource) {
             is ValueSource.ArgumentValue -> hydrationField.getNormalizedArgument(valueSource.argumentName)
             is ValueSource.FieldResultValue -> makeNormalizedInputValue(

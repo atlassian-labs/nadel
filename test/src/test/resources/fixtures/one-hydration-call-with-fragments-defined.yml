@@ -61,14 +61,6 @@ query: |
       name
     }
   }
-
-  # TODO: why does this generate an error?
-  # fragment unusedFrag2 on Foo {
-  #   bar {
-  #     id
-  #     name
-  #   }
-  # }
 variables: {}
 serviceCalls:
   current:

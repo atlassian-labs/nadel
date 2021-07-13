@@ -12,7 +12,7 @@ overallSchema:
         renamedTicket: RenamedTicket => renamed from ticket
       }
       type RenamedTicket => renamed from Ticket  {
-        renamedTicketTypes: [RenamedTicketType]  => renamed from ticketTypes
+        renamedTicketTypes: [RenamedTicketType] => renamed from ticketTypes
       }
       type RenamedTicketType => renamed from TicketType {
         renamedId: String => renamed from id
