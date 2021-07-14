@@ -1,4 +1,4 @@
-package graphql.nadel.enginekt.transform
+package graphql.nadel.tests.transforms
 
 import graphql.GraphQLError
 import graphql.introspection.Introspection
@@ -6,6 +6,8 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.enginekt.transform.NadelTransform
+import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
@@ -15,7 +17,7 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.validation.ValidationError
 import graphql.validation.ValidationErrorType
 
-class OauthTransform : NadelTransform<GraphQLError> {
+class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
@@ -32,7 +34,7 @@ class OauthTransform : NadelTransform<GraphQLError> {
         }
 
         if (overallField.getOneFieldDefinition(executionBlueprint.schema)
-                .getDirective("scopes") != null
+                .getDirective("toBeDeleted") != null
         ) {
             return ValidationError(ValidationErrorType.WrongType)
         }
@@ -52,7 +54,7 @@ class OauthTransform : NadelTransform<GraphQLError> {
             artificialFields = listOf(
                 ExecutableNormalizedField.newNormalizedField()
                     .level(field.level)
-                    .objectTypeNames(listOf(field.objectTypeNames.iterator().next()))
+                    .objectTypeNames(field.objectTypeNames.toList())
                     .fieldName(Introspection.TypeNameMetaFieldDef.name)
                     .parent(field.parent)
                     .alias("uuid_typename")

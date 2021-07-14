@@ -9,7 +9,6 @@ import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.NadelRenameTransform
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform
-import graphql.nadel.enginekt.transform.OauthTransform
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform
 import graphql.normalized.ExecutableNormalizedField
@@ -74,7 +73,6 @@ internal class NadelExecutionPlanFactory(
                 executionBlueprint,
                 transforms = listOfTransforms(
                     *transforms.toTypedArray(),
-                    OauthTransform(),
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),
                     NadelHydrationTransform(engine),
