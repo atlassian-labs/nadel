@@ -1,32 +1,33 @@
 package graphql.nadel.enginekt
 
 import graphql.ExecutionInput
+import graphql.PublicApi
 import graphql.nadel.Service
 import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.ServiceExecutionHooks
-import kotlinx.coroutines.future.await
-import java.util.Optional
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
+@PublicApi
 data class NadelExecutionContext(
     val executionInput: ExecutionInput,
     val hooks: ServiceExecutionHooks,
 ) {
-    private val serviceContexts = ConcurrentHashMap<String, Optional<Any>>()
+    private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
 
     val userContext: Any?
         get() {
             return executionInput.context
         }
 
-    suspend fun getContextForService(service: Service): Any? {
+    /**
+     * Get the service context for a given service
+     */
+    fun getContextForService(service: Service): CompletableFuture<Any?> {
         return serviceContexts.getOrPut(service.name) {
-            // Optional here because not all maps take null values
-            Optional.ofNullable(
-                hooks.createServiceContext(
-                    CreateServiceContextParams.newParameters().service(service).build()
-                ).await()
+            hooks.createServiceContext(
+                CreateServiceContextParams.newParameters().service(service).build()
             )
-        }.orElse(null)
+        }
     }
 }

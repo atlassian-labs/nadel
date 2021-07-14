@@ -33,6 +33,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<NadelTransform<out Any>> = emptyList()) : NadelExecutionEngine {
@@ -196,7 +197,7 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
                 .variables(emptyMap())
                 .fragments(emptyMap())
                 .operationDefinition(document.definitions.singleOfType())
-                .serviceContext(executionContext.getContextForService(service))
+                .serviceContext(executionContext.getContextForService(service).await())
                 .hydrationCall(false)
                 .build()
         ).asDeferred().await()
