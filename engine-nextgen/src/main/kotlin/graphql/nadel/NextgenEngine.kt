@@ -21,6 +21,8 @@ import graphql.nadel.enginekt.util.fold
 import graphql.nadel.enginekt.util.mergeResults
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.hooks.CreateServiceContextParams
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory
@@ -35,6 +37,7 @@ import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<NadelTransform<out Any>> = emptyList()) : NadelExecutionEngine {
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
+    private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         overallSchema = nadel.overallSchema,
         services = nadel.services,
@@ -74,6 +77,8 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
             executionInput.variables,
         )
 
+        val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
+
         // TODO: determine what to do with NQ
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
 
@@ -81,7 +86,7 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
             fieldToService.getServicesForTopLevelFields(query)
                 .map { (field, service) ->
                     async {
-                        executeTopLevelField(field, service, executionInput)
+                        executeTopLevelField(field, service, executionContext)
                     }
                 }
         }.awaitAll()
@@ -92,9 +97,8 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
         service: Service,
-        executionInput: ExecutionInput
+        executionContext: NadelExecutionContext
     ): ExecutionResult {
-        val executionContext = NadelExecutionContext(executionInput)
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
         val queryTransform = queryTransformer.transformQuery(
             executionContext,
@@ -103,7 +107,7 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
             executionPlan,
         )
         val transformedQuery = queryTransform.result.single()
-        val result = executeService(service, transformedQuery, executionInput)
+        val result = executeService(service, transformedQuery, executionContext)
         val transformedResult = resultTransformer.transform(
             executionContext = executionContext,
             executionPlan = executionPlan,
@@ -164,7 +168,7 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
             it.parent ?: error("No parent")
         }
 
-        val result = executeService(service, transformedQuery, executionContext.executionInput)
+        val result = executeService(service, transformedQuery, executionContext)
         return resultTransformer.transform(
             executionContext = executionContext,
             executionPlan = executionPlan,
@@ -178,9 +182,10 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
     private suspend fun executeService(
         service: Service,
         transformedQuery: ExecutableNormalizedField,
-        executionInput: ExecutionInput,
+        executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
         val document: Document = compileToDocument(listOf(transformedQuery))
+        val executionInput = executionContext.executionInput
 
         return service.serviceExecution.execute(
             newServiceExecutionParameters()
@@ -191,7 +196,7 @@ class NextgenEngine @JvmOverloads constructor(nadel: Nadel, transforms: List<Nad
                 .variables(emptyMap())
                 .fragments(emptyMap())
                 .operationDefinition(document.definitions.singleOfType())
-                .serviceContext(null)
+                .serviceContext(executionContext.getContextForService(service))
                 .hydrationCall(false)
                 .build()
         ).asDeferred().await()
