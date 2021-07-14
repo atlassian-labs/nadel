@@ -17,6 +17,10 @@ data class JsonNodePath(
         return copy(segments = segments + other.segments)
     }
 
+    operator fun plus(other: AnyJsonNodePathSegment): JsonNodePath {
+        return copy(segments = segments + other)
+    }
+
     fun dropLast(n: Int): JsonNodePath {
         return copy(segments = segments.dropLast(n))
     }
