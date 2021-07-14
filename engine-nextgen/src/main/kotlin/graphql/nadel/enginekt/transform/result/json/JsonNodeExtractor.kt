@@ -1,20 +1,22 @@
 package graphql.nadel.enginekt.transform.result.json
 
 import graphql.nadel.enginekt.transform.query.QueryPath
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 
-/**
- * Use the [getNodesAt] function to extract get the nodes at the given query selection path.
- */
 object JsonNodeExtractor {
+    /**
+     * Extracts the nodes at the given query selection path.
+     */
     fun getNodesAt(data: JsonMap, queryPath: QueryPath, flatten: Boolean = false): List<JsonNode> {
         val rootNode = JsonNode(JsonNodePath.root, data)
         return getNodesAt(rootNode, queryPath, flatten)
     }
 
+    /**
+     * Extracts the nodes at the given query selection path.
+     */
     fun getNodesAt(rootNode: JsonNode, queryPath: QueryPath, flatten: Boolean = false): List<JsonNode> {
         // This is a breadth-first search
         return queryPath.segments.foldIndexed(listOf(rootNode)) { index, queue, pathSegment ->
@@ -24,6 +26,34 @@ object JsonNodeExtractor {
             queue.flatMap { node ->
                 // At the end when we see lists we do NOT want to flatten them for BFS queue
                 getNodes(node, pathSegment, flattenLists = !atEnd || flatten)
+            }
+        }
+    }
+
+    /**
+     * Extract the node at the given json node path.
+     */
+    fun getNodeAt(data: JsonMap, path: JsonNodePath): JsonNode? {
+        val rootNode = JsonNode(JsonNodePath.root, data)
+        return getNodeAt(rootNode, path)
+    }
+
+    /**
+     * Extract the node at the given json node path.
+     */
+    fun getNodeAt(rootNode: JsonNode, path: JsonNodePath): JsonNode? {
+        return path.segments.fold(rootNode as JsonNode?) { currentNode, segment ->
+            when (currentNode?.value) {
+                is Map<*, *> -> currentNode.value[segment.value]?.let {
+                    JsonNode(currentNode.resultPath + segment, it)
+                }
+                is List<*> -> when (segment.value) {
+                    is Int -> currentNode.value.getOrNull(segment.value as Int)?.let {
+                        JsonNode(currentNode.resultPath + segment, it )
+                    }
+                    else -> null
+                }
+                else -> null
             }
         }
     }
