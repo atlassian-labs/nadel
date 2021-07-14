@@ -191,7 +191,12 @@ class NextgenEngine @JvmOverloads constructor(
             it.parent ?: error("No parent")
         }
 
-        val result = executeService(service, transformedQuery, executionContext.executionInput)
+        val result = executeService(
+            service,
+            transformedQuery,
+            executionContext.executionInput,
+            isHydration = true,
+        )
         return resultTransformer.transform(
             executionContext = executionContext,
             executionPlan = executionPlan,
@@ -206,6 +211,7 @@ class NextgenEngine @JvmOverloads constructor(
         service: Service,
         transformedQuery: ExecutableNormalizedField,
         executionInput: ExecutionInput,
+        isHydration: Boolean = false,
     ): ServiceExecutionResult {
         val document: Document = compileToDocument(
             transformedQuery.getOperationKind(overallSchema),
@@ -221,7 +227,7 @@ class NextgenEngine @JvmOverloads constructor(
             .fragments(emptyMap())
             .operationDefinition(document.definitions.singleOfType())
             .serviceContext(null)
-            .hydrationCall(false)
+            .hydrationCall(isHydration)
             .build()
 
         val serviceExecResult = try {
