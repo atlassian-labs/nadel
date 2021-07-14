@@ -118,8 +118,8 @@ interface NadelTransformJavaCompat<State : Any> {
     }
 
     interface Continuation {
-        fun transform(fields: ExecutableNormalizedField): CompletableFuture<List<ExecutableNormalizedField>> {
-            return transform(listOf(fields))
+        fun transform(field: ExecutableNormalizedField): CompletableFuture<List<ExecutableNormalizedField>> {
+            return transform(listOf(field))
         }
 
         fun transform(fields: List<ExecutableNormalizedField>): CompletableFuture<List<ExecutableNormalizedField>>
