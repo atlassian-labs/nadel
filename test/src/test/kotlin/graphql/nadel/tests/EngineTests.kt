@@ -96,7 +96,6 @@ class EngineTests : FunSpec({
                         test("$engineType ${fixture.name}", execute)
                     }
                 }
-
         }
 })
 
