@@ -84,7 +84,6 @@ public class OverallQueryTransformer {
     ) {
         long startTime = System.currentTimeMillis();
         Set<String> referencedFragmentNames = new LinkedHashSet<>();
-        Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
         Map<String, Object> variableValues = new LinkedHashMap<>(executionContext.getVariables());
         TransformationMetadata removedFieldMap = new TransformationMetadata();
         TransformationState transformations = new TransformationState();
@@ -101,17 +100,7 @@ public class OverallQueryTransformer {
         HydrationArguments hydrationArguments = getHydrationArguments(executionContext, operationKind, rootField, topLevelField, isSynthetic);
 
         Map<String, VariableDefinition> variableDefinitionMap = FpKit.getByName(executionContext.getOperationDefinition().getVariableDefinitions(), VariableDefinition::getName);
-        NodeVisitorStub collectReferencedVariables = new NodeVisitorStub() {
-            @Override
-            public TraversalControl visitVariableReference(VariableReference variableReference, TraverserContext<Node> context) {
-                String name = variableReference.getName();
-                referencedVariables.put(name, variableDefinitionMap.get(name));
-                return super.visitVariableReference(variableReference, context);
-            }
-        };
-
-        NodeTraverser nodeTraverser = new NodeTraverser();
-        nodeTraverser.depthFirst(collectReferencedVariables, topLevelField);
+        Map<String, VariableDefinition> referencedVariables = collectReferencedVariables(topLevelField, variableDefinitionMap);
 
         CompletableFuture<SelectionSet> topLevelFieldSelectionSetCF = transformNode(
                 executionContext,
@@ -145,9 +134,9 @@ public class OverallQueryTransformer {
                 Field tempTransformedRootLevelField = transformedRootField;
                 transformedRootField = rootField.transform(builder -> builder.selectionSet(newSelectionSet().selection(tempTransformedRootLevelField).build()));
             }
-
-            List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariables, executionContext.getGraphQLSchema(), transformations.getTypeRenameMappings());
-            List<String> referencedVariableNames = new ArrayList<>(referencedVariables.keySet());
+            Map<String, VariableDefinition> referencedVariablesForTransformedField = collectReferencedVariables(transformedRootField, variableDefinitionMap);
+            List<VariableDefinition> variableDefinitions = buildReferencedVariableDefinitions(referencedVariablesForTransformedField, executionContext.getGraphQLSchema(), transformations.getTypeRenameMappings());
+            List<String> referencedVariableNames = new ArrayList<>(referencedVariablesForTransformedField.keySet());
 
             CompletableFuture<Map<String, FragmentDefinition>> transformedFragmentsCF = transformFragments(executionContext,
                     underlyingSchema,
@@ -188,6 +177,20 @@ public class OverallQueryTransformer {
             });
         });
 
+    }
+
+    private static Map<String, VariableDefinition> collectReferencedVariables(Field field, Map<String, VariableDefinition> variableDefinitionMap) {
+        Map<String, VariableDefinition> referencedVariables = new LinkedHashMap<>();
+        NodeVisitorStub collectReferencedVariables = new NodeVisitorStub() {
+            @Override
+            public TraversalControl visitVariableReference(VariableReference variableReference, TraverserContext<Node> context) {
+                String name = variableReference.getName();
+                referencedVariables.put(name, variableDefinitionMap.get(name));
+                return super.visitVariableReference(variableReference, context);
+            }
+        };
+        new NodeTraverser().depthFirst(collectReferencedVariables, field);
+        return referencedVariables;
     }
 
     private static HydrationArguments getHydrationArguments(ExecutionContext executionContext, OperationKind operation, Field rootField, Field topLevelField, boolean isSynthetic) {
