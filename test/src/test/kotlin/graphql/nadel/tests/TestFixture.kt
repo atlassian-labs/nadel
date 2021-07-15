@@ -41,6 +41,7 @@ val customTestTransforms = listOf(RemoveFieldTestTransform())
 
 data class EngineTypeFactories(
     override val current: NadelExecutionEngineFactory = NadelExecutionEngineFactory(::NadelEngine),
+    // TODO: test transforms should be set via the engine test hook.
     override val nextgen: NadelExecutionEngineFactory = NadelExecutionEngineFactory { nadel -> NextgenEngine(nadel, customTestTransforms) },
 ) : NadelEngineTypeValueProvider<NadelExecutionEngineFactory> {
     val all = engines(factories = this)

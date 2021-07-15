@@ -19,7 +19,7 @@ class NadelQueryTransformer internal constructor(
         suspend fun transform(fields: List<ExecutableNormalizedField>): List<ExecutableNormalizedField>
     }
 
-    data class TransformContext(
+    internal data class TransformContext(
         val artificialFields: MutableList<ExecutableNormalizedField>,
         val overallToUnderlyingFields: MutableMap<ExecutableNormalizedField, List<ExecutableNormalizedField>>,
     )
