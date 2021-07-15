@@ -1,0 +1,143 @@
+name: custom-transform-with-hydration
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Comments: |
+    service Comments {
+        type Query {
+            comment(id: ID!): Comment
+        }
+
+        type Comment {
+          commentId: ID!
+          title: String
+          user: User => hydrated from Users.userById(id: $source.userId)
+        }
+    }
+  Users: |
+    service Users {
+        type Query {
+            userById(id: ID!): User
+        }
+
+        type User {
+          userId: ID!
+          email: String
+        }
+    }
+
+underlyingSchema:
+  Comments: |
+    type Query {
+        comment(id: ID!): Comment
+    }
+
+    type Comment {
+        commentId: ID!
+        title: String
+        userId: ID
+    }
+  Users: |
+    type Query {
+        userById(id: ID!): User
+    }
+
+    type User {
+        userId: ID!
+        email: String
+    }
+
+query: |
+  query {
+    comment(id: "COMMENT-1") {
+      commentId
+      title
+      user {
+        userId
+        email
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Comments
+      request:
+        query: |
+          query {
+            ... on Query {
+              comment(id: "COMMENT-1") {
+                ... on Comment {
+                  commentId
+                }
+                ... on Comment {
+                  title
+                }
+                ... on Comment {
+                  hydration__user__userId: userId
+                }
+                ... on Comment {
+                  __typename__hydration__user: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "comment": {
+              "commentId": "COMMENT-1",
+              "title": "heya!",
+              "hydration__user__userId": "USER-1",
+              "__typename__hydration__user": "Comment"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Users
+      request:
+        query: |
+          query {
+            ... on Query {
+              userById(id: "USER-1") {
+                ... on User {
+                  userId
+                }
+                ... on User {
+                  email
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "userById": {
+              "userId": "USER-1",
+              "email": "user1@company.com"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "comment": {
+        "commentId": "COMMENT-1",
+        "title": "heya!",
+        "user": {
+          "userId": "user-transformed:1",
+          "email": "user1@company.com"
+        }
+      }
+    },
+    "extensions": {}
+  }

@@ -4,8 +4,10 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionEngine
 import graphql.nadel.NadelExecutionEngineFactory
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
+import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
@@ -20,13 +22,19 @@ import java.io.File
 import java.util.concurrent.CompletableFuture
 
 class EngineTests : FunSpec({
-    val engineFactories = EngineTypeFactories()
+    val engineFactories = EngineTypeFactories(
+        nextgen = { nadel ->
+            NextgenEngine(nadel, listOf(ResultTransformer(), ArgumentTransformer()))
+        }
+    )
+//    val engineFactories = EngineTypeFactories()
     val fixturesDir = File(javaClass.classLoader.getResource("fixtures")!!.path)
     fixturesDir.listFiles()!!
         .asSequence()
         .onEach {
             println("Loading ${it.nameWithoutExtension}")
         }
+        .filter { it.nameWithoutExtension == "custom-transform-with-hydration" }
         .map(File::readText)
         .map<String, TestFixture>(yamlObjectMapper::readValue)
         .forEach { fixture ->
