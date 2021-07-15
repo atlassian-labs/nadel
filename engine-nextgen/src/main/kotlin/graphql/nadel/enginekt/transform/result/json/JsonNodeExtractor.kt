@@ -1,14 +1,13 @@
 package graphql.nadel.enginekt.transform.result.json
 
 import graphql.nadel.enginekt.transform.query.QueryPath
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 
 object JsonNodeExtractor {
     /**
-     * Extract the nodes at the given query selection path.
+     * Extracts the nodes at the given query selection path.
      */
     fun getNodesAt(data: JsonMap, queryPath: QueryPath, flatten: Boolean = false): List<JsonNode> {
         val rootNode = JsonNode(JsonNodePath.root, data)
@@ -16,7 +15,7 @@ object JsonNodeExtractor {
     }
 
     /**
-     * Extract the nodes at the given query selection path.
+     * Extracts the nodes at the given query selection path.
      */
     fun getNodesAt(rootNode: JsonNode, queryPath: QueryPath, flatten: Boolean = false): List<JsonNode> {
         // This is a breadth-first search
@@ -29,6 +28,14 @@ object JsonNodeExtractor {
                 getNodes(node, pathSegment, flattenLists = !atEnd || flatten)
             }
         }
+    }
+
+    /**
+     * Extract the node at the given json node path.
+     */
+    fun getNodeAt(data: JsonMap, path: JsonNodePath): JsonNode? {
+        val rootNode = JsonNode(JsonNodePath.root, data)
+        return getNodeAt(rootNode, path)
     }
 
     /**
