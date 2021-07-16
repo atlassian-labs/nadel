@@ -2,7 +2,6 @@ package graphql.nadel.tests.hooks
 
 import graphql.ErrorClassification
 import graphql.GraphQLError
-import graphql.execution.AbortExecutionException
 import graphql.nadel.Nadel
 import graphql.nadel.hooks.HydrationArguments
 import graphql.nadel.hooks.ServiceExecutionHooks

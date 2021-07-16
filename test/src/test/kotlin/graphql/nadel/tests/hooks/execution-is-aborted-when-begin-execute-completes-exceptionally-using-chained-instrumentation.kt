@@ -15,7 +15,6 @@ import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
 import graphql.nadel.tests.util.message
-import org.junit.jupiter.api.fail
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNull

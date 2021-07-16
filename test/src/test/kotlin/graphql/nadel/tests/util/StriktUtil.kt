@@ -6,7 +6,6 @@ import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.tests.assertJsonKeys
 import strikt.api.Assertion
-import strikt.assertions.isNotNull
 
 fun <T : Map<K, V>, K, V> Assertion.Builder<T>.keysEqual(expectedKeys: Collection<K>): Assertion.Builder<T> {
     compose("keys match expected") { actual ->

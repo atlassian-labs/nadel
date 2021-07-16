@@ -1,6 +1,5 @@
 package graphql.nadel.enginekt.blueprint
 
-import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.filterValuesOfType
 import graphql.nadel.enginekt.util.makeFieldCoordinates

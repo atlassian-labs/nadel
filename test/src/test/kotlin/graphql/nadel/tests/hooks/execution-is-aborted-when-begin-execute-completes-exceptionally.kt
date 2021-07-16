@@ -16,7 +16,6 @@ import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
 import graphql.nadel.tests.util.extensions
-import graphql.nadel.tests.util.getHashCode
 import graphql.nadel.tests.util.getToString
 import graphql.nadel.tests.util.message
 import strikt.api.expectThat

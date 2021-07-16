@@ -9,8 +9,8 @@ import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.transform.NadelRenameTransform.State
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.query.NFUtil.createField
-import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
