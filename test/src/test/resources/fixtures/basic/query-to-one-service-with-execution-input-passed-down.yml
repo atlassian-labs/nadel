@@ -1,0 +1,117 @@
+name: query to one service with execution input passed down
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query {
+        hello: World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation {
+        hello: String
+      }
+      type Subscription {
+        onWorldUpdate: World
+        onAnotherUpdate: World
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type Subscription {
+      onAnotherUpdate: World
+      onWorldUpdate: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query OpName {
+    hello {
+      name
+    }
+    hello {
+      id
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: MyService
+      request:
+        query: |
+          query nadel_2_MyService_OpName {
+            hello {
+              name
+            }
+            hello {
+              id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_MyService_OpName
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": {
+              "id": "3",
+              "name": "earth"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              hello {
+                ... on World {
+                  name
+                }
+                ... on World {
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": {
+              "name": "earth",
+              "id": "3"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "hello": {
+        "name": "earth",
+        "id": "3"
+      }
+    },
+    "extensions": {}
+  }

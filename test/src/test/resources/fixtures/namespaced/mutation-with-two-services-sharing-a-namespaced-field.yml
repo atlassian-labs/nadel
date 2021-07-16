@@ -1,0 +1,212 @@
+name: mutation with two services sharing a namespaced field
+enabled:
+  nextgen: true
+  current: true
+overallSchema:
+  Issues: |
+    type Query {
+      echo: String
+    }
+
+    directive @namespaced on FIELD_DEFINITION
+
+    type Mutation {
+      issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      echoes: String
+    }
+
+    extend type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      echo: String
+    }
+
+    type Mutation {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      echo: String
+    }
+
+    type Mutation {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+query: |
+  mutation {
+    issue {
+      getIssue {
+        text
+      }
+
+      search {
+        count
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          mutation nadel_2_Issues {
+            issue {
+              getIssue {
+                text
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "getIssue": {
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: IssueSearch
+      request:
+        query: |
+          mutation nadel_2_IssueSearch {
+            issue {
+              search {
+                count
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueSearch
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "search": {
+                "count": 100
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          mutation {
+            ... on Mutation {
+              issue {
+                ... on IssueQuery {
+                  getIssue {
+                    ... on Issue {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "getIssue": {
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: IssueSearch
+      request:
+        query: |
+          mutation {
+            ... on Mutation {
+              issue {
+                ... on IssueQuery {
+                  search {
+                    ... on SearchResult {
+                      count
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueSearch
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "search": {
+                "count": 100
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "getIssue": {
+          "text": "Foo"
+        },
+        "search": {
+          "count": 100
+        }
+      }
+    },
+    "extensions": {}
+  }
+

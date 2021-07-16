@@ -1,0 +1,183 @@
+name: synthetic hydration with renamed type
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  Bar: |
+    service Bar {
+      type Query {
+        bars: BarQuery
+      }
+      type BarQuery {
+        barById(id: ID!): Bar
+      }
+      type Bar {
+        id: ID!
+      }
+    }
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Foo => renamed from fooOriginal
+      }
+      type Foo {
+        id: ID!
+        fooBar: Bar => hydrated from Bar.bars.barById(id: $source.fooBarId)
+      }
+    }
+underlyingSchema:
+  Bar: |
+    type Bar {
+      id: ID
+    }
+
+    type BarQuery {
+      barById(id: ID!): Bar
+    }
+
+    type Query {
+      bars: BarQuery
+    }
+  Foo: |
+    type Foo {
+      fooBarId: ID
+      id: ID!
+    }
+
+    type Query {
+      fooOriginal: Foo
+    }
+query: |
+  query {
+    foo {
+      id
+      fooBar {
+        id
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            fooOriginal {
+              id
+              fooBarId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "fooOriginal": {
+              "id": "Foo",
+              "fooBarId": "hydrated-bar"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query nadel_2_Bar {
+            bars {
+              barById(id: "hydrated-bar") {
+                id
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bars": {
+              "barById": {
+                "id": "hydrated-bar"
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__foo__fooOriginal: fooOriginal {
+                ... on Foo {
+                  id
+                }
+                ... on Foo {
+                  hydration__fooBar__fooBarId: fooBarId
+                }
+                ... on Foo {
+                  __typename__hydration__fooBar: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__foo__fooOriginal": {
+              "hydration__fooBar__fooBarId": "hydrated-bar",
+              "id": "Foo",
+              "__typename__hydration__fooBar": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              bars {
+                ... on BarQuery {
+                  barById(id: "hydrated-bar") {
+                    ... on Bar {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bars": {
+              "barById": {
+                "id": "hydrated-bar"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "id": "Foo",
+        "fooBar": {
+          "id": "hydrated-bar"
+        }
+      }
+    },
+    "extensions": {}
+  }

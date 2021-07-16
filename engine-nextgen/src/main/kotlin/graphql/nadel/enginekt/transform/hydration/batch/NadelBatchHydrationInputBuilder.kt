@@ -3,7 +3,7 @@ package graphql.nadel.enginekt.transform.hydration.batch
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
-import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationInputBuilder.valueToAstValue
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
@@ -22,7 +22,7 @@ import graphql.schema.GraphQLTypeUtil
  */
 internal object NadelBatchHydrationInputBuilder {
     fun getInputValueBatches(
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
@@ -56,7 +56,7 @@ internal object NadelBatchHydrationInputBuilder {
     private fun getBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
     ): List<Pair<NadelHydrationActorInputDef, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
@@ -110,7 +110,7 @@ internal object NadelBatchHydrationInputBuilder {
     internal fun getFieldResultValues(
         valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
         parentNodes: List<JsonNode>,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
     ): List<Any?> {
         return parentNodes.flatMap { parentNode ->
             getFieldResultValues(
@@ -124,7 +124,7 @@ internal object NadelBatchHydrationInputBuilder {
     internal fun getFieldResultValues(
         valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
         parentNode: JsonNode,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
     ): List<Any?> {
         val nodes = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,

@@ -48,12 +48,8 @@ data class NadelOverallExecutionBlueprint(
         }
     }
 
-    fun getService(field: ExecutableNormalizedField): Service? {
-        val typeName = field.objectTypeNames.single()
-        if (field.name == Introspection.TypeNameMetaFieldDef.name) {
-            return getService(field.parent)
-        }
-        return coordinatesToService[makeFieldCoordinates(typeName, field.name)]
+    fun getService(fieldCoordinates: FieldCoordinates): Service? {
+        return coordinatesToService[fieldCoordinates]
     }
 }
 

@@ -1,0 +1,284 @@
+name: lower level interface fields which are renamed get typename added
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  PetService: |
+    service PetService {
+      type Query {
+        pets(isLoyal: Boolean) : [Pet]
+        raining(isLoyal: Boolean) : CatsAndDogs
+      }
+      interface Pet {
+        name: String
+        owners: [Owner] => hydrated from OwnerService.ownerById(id: $source.ownerIds)
+        collar: Collar
+        collarToRenamed: Collar => renamed from collar
+      }
+      type Cat implements Pet {
+        name: String
+        wearsBell: Boolean
+        owners: [Owner]
+        collar: Collar
+        collarToRenamed: Collar => renamed from collar
+      }
+      type Dog implements Pet {
+        name: String
+        wearsCollar: Boolean
+        owners: [Owner]
+        collar: Collar
+        collarToRenamed: Collar => renamed from collar
+      }
+      union CatsAndDogs = Cat | Dog
+      interface Collar {
+        color: String
+        size: String
+      }
+      type DogCollar implements Collar {
+        color: String
+        size: String
+      }
+      type CatCollar implements Collar {
+        color: String
+        size: String
+      }
+    }
+  OwnerService: |
+    service OwnerService {
+      type Query {
+        owner(id: String) : Owner
+      }
+      interface Owner {
+        name: String
+      }
+      type CaringOwner implements Owner {
+        name: String
+        givesPats: Boolean
+      }
+      type CruelOwner implements Owner {
+        name: String
+        givesSmacks: Boolean
+      }
+    }
+underlyingSchema:
+  PetService: |
+    interface Collar {
+      color: String
+      size: String
+    }
+
+    interface Pet {
+      collar: Collar
+      name: String
+      ownerIds: [String]
+    }
+
+    union CatsAndDogs = Cat | Dog
+
+    type Cat implements Pet {
+      collar: Collar
+      name: String
+      ownerIds: [String]
+      wearsBell: Boolean
+    }
+
+    type CatCollar implements Collar {
+      color: String
+      size: String
+    }
+
+    type Dog implements Pet {
+      collar: Collar
+      name: String
+      ownerIds: [String]
+      wearsCollar: Boolean
+    }
+
+    type DogCollar implements Collar {
+      color: String
+      size: String
+    }
+
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+      pets(isLoyal: Boolean): [Pet]
+      raining(isLoyal: Boolean): CatsAndDogs
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+  OwnerService: |
+    interface Owner {
+      name: String
+    }
+
+    type CaringOwner implements Owner {
+      givesPats: Boolean
+      name: String
+    }
+
+    type CruelOwner implements Owner {
+      givesSmacks: Boolean
+      name: String
+    }
+
+    type Query {
+      ownerById(id: String): Owner
+    }
+query: |
+  query petQ($isLoyal: Boolean) {
+    pets(isLoyal: $isLoyal) {
+      name
+      collarToRenamed {
+        color
+      }
+    }
+  }
+variables:
+  isLoyal: true
+serviceCalls:
+  current:
+    - serviceName: PetService
+      request:
+        query: |
+          query nadel_2_PetService_petQ($isLoyal: Boolean) {
+            pets(isLoyal: $isLoyal) {
+              name
+              collar {
+                color
+                type_hint_typename__UUID: __typename
+              }
+              type_hint_typename__UUID: __typename
+            }
+          }
+        variables:
+          isLoyal: true
+        operationName: nadel_2_PetService_petQ
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "name": "Sparky",
+                "collar": {
+                  "color": "blue",
+                  "type_hint_typename__UUID": "CatCollar"
+                },
+                "type_hint_typename__UUID": "Dog"
+              },
+              {
+                "name": "Whiskers",
+                "collar": {
+                  "color": "red",
+                  "type_hint_typename__UUID": "CatCollar"
+                },
+                "type_hint_typename__UUID": "Cat"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              pets(isLoyal: true) {
+                ... on Cat {
+                  name
+                }
+                ... on Cat {
+                  rename__collarToRenamed__collar: collar {
+                    ... on CatCollar {
+                      color
+                    }
+                    ... on DogCollar {
+                      color
+                    }
+                  }
+                }
+                ... on Cat {
+                  __typename__rename__collarToRenamed: __typename
+                }
+                ... on Dog {
+                  name
+                }
+                ... on Dog {
+                  rename__collarToRenamed__collar: collar {
+                    ... on CatCollar {
+                      color
+                    }
+                    ... on DogCollar {
+                      color
+                    }
+                  }
+                }
+                ... on Dog {
+                  __typename__rename__collarToRenamed: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "name": "Sparky",
+                "rename__collarToRenamed__collar": {
+                  "color": "blue"
+                },
+                "__typename__rename__collarToRenamed": "Dog"
+              },
+              {
+                "name": "Whiskers",
+                "rename__collarToRenamed__collar": {
+                  "color": "red"
+                },
+                "__typename__rename__collarToRenamed": "Cat"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "pets": [
+        {
+          "name": "Sparky",
+          "collarToRenamed": {
+            "color": "blue"
+          }
+        },
+        {
+          "name": "Whiskers",
+          "collarToRenamed": {
+            "color": "red"
+          }
+        }
+      ]
+    },
+    "extensions": {
+      "resultComplexity": {
+        "totalNodeCount": 8,
+        "serviceNodeCounts": {
+          "PetService": 8
+        },
+        "fieldRenamesCount": 2,
+        "typeRenamesCount": 0
+      }
+    }
+  }

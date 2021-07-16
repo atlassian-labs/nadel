@@ -12,7 +12,7 @@ object NFUtil {
     fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
-        pathToField: QueryPath,
+        pathToField: NadelQueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
     ): List<ExecutableNormalizedField> {
@@ -29,7 +29,7 @@ object NFUtil {
     fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
-        queryPathToField: QueryPath,
+        queryPathToField: NadelQueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
     ): ExecutableNormalizedField {
@@ -46,7 +46,7 @@ object NFUtil {
     private fun createFieldRecursively(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
-        queryPathToField: QueryPath,
+        queryPathToField: NadelQueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
         pathToFieldIndex: Int,
@@ -81,7 +81,7 @@ object NFUtil {
     private fun createParticularField(
         schema: GraphQLSchema,
         parentType: GraphQLObjectType,
-        queryPathToField: QueryPath,
+        queryPathToField: NadelQueryPath,
         fieldArguments: Map<String, NormalizedInputValue>,
         fieldChildren: List<ExecutableNormalizedField>,
         pathToFieldIndex: Int,

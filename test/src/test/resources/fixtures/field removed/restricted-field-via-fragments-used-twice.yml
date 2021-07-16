@@ -1,0 +1,112 @@
+name: restricted field via fragments used twice
+enabled:
+  current: true
+  nextgen: false
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        id: ID
+        relatedIssue: Issue
+        restricted: String
+      }
+    }
+underlyingSchema:
+  Issues: |
+    type Issue {
+      id: ID
+      relatedIssue: Issue
+      restricted: String
+    }
+
+    type Query {
+      issue: Issue
+    }
+query: |
+  query {
+    issue {
+      ...IssueFragment
+      relatedIssue {
+        ...IssueFragment
+      }
+    }
+  }
+
+  fragment IssueFragment on Issue {
+    id
+    restricted
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issue {
+              ...IssueFragment
+              relatedIssue {
+                ...IssueFragment
+              }
+            }
+          }
+
+          fragment IssueFragment on Issue {
+            id
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "ID1",
+              "relatedIssue": {
+                "id": "ID2"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "errors": [
+      {
+        "path": [
+          "issue",
+          "relatedIssue",
+          "restricted"
+        ],
+        "message": "removed field",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      },
+      {
+        "path": [
+          "issue",
+          "restricted"
+        ],
+        "message": "removed field",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ],
+    "data": {
+      "issue": {
+        "id": "ID1",
+        "relatedIssue": {
+          "id": "ID2",
+          "restricted": null
+        },
+        "restricted": null
+      }
+    },
+    "extensions": {}
+  }

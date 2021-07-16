@@ -1,0 +1,205 @@
+name: query with synthetic hydration that fail with errors are reflected in the result
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  Bar: |
+    service Bar {
+      type Query {
+        barQuery: BarQuery
+      }
+      type BarQuery {
+        bar: Bar
+        barById(id: ID): Bar
+      }
+      type Bar {
+        name: String
+        nestedBar: Bar => hydrated from Bar.barQuery.barById(id: $source.nestedBarId)
+      }
+    }
+  Foo: |
+    service Foo {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        name: String
+        bar: Bar => hydrated from Bar.barQuery.barById(id: $source.barId)
+      }
+    }
+underlyingSchema:
+  Bar: |
+    type Bar {
+      id: ID
+      name: String
+      nestedBarId: ID
+    }
+
+    type BarQuery {
+      bar: Bar
+      barById(id: ID): Bar
+    }
+
+    type Query {
+      barQuery: BarQuery
+    }
+  Foo: |
+    type Foo {
+      barId: ID
+      name: String
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+        nestedBar {
+          name
+          nestedBar {
+            name
+          }
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Foo
+      request:
+        query: |
+          query nadel_2_Foo {
+            foo {
+              barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Foo
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "barId": "barId123"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query nadel_2_Bar {
+            barQuery {
+              barById(id: "barId123") {
+                name
+                nestedBarId
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Bar
+      # language=JSON
+      response: |-
+        {
+          "errors": [
+            {
+              "message": "Error during hydration"
+            }
+          ],
+          "data": {
+            "barQuery": {
+              "barById": null
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  hydration__bar__barId: barId
+                }
+                ... on Foo {
+                  __typename__hydration__bar: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "hydration__bar__barId": "barId123",
+              "__typename__hydration__bar": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              barQuery {
+                ... on BarQuery {
+                  barById(id: "barId123") {
+                    ... on Bar {
+                      name
+                    }
+                    ... on Bar {
+                      hydration__nestedBar__nestedBarId: nestedBarId
+                    }
+                    ... on Bar {
+                      __typename__hydration__nestedBar: __typename
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "errors": [
+            {
+              "message": "Error during hydration"
+            }
+          ],
+          "data": {
+            "barQuery": {
+              "barById": null
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "errors": [
+      {
+        "message": "Error during hydration",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "data": {
+      "foo": {
+        "bar": null
+      }
+    },
+    "extensions": {}
+  }

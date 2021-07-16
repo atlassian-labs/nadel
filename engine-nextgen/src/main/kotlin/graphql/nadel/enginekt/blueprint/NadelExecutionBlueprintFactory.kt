@@ -24,7 +24,7 @@ import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.getFieldsAlong
@@ -106,7 +106,7 @@ private class Factory(
 
         return NadelDeepRenameFieldInstruction(
             location,
-            QueryPath(mappingDefinition.inputPath),
+            NadelQueryPath(mappingDefinition.inputPath),
         )
     }
 
@@ -142,7 +142,7 @@ private class Factory(
             location = makeFieldCoordinates(hydratedFieldParentType, hydratedFieldDef),
             hydratedFieldDef = hydratedFieldDef,
             actorService = hydrationActorService,
-            queryPathToActorField = QueryPath(queryPathToActorField),
+            queryPathToActorField = NadelQueryPath(queryPathToActorField),
             actorFieldDef = actorFieldDef,
             actorInputValueDefs = actorInputValueDefs,
             hydrationStrategy = getHydrationStrategy(
@@ -202,7 +202,7 @@ private class Factory(
             location = location,
             hydratedFieldDef = hydratedFieldDef,
             actorService = actorService,
-            queryPathToActorField = QueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
+            queryPathToActorField = NadelQueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
             actorFieldDef = actorFieldDef,
             actorInputValueDefs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef),
             batchSize = hydration.batchSize ?: 50,
@@ -271,7 +271,7 @@ private class Factory(
                 OBJECT_FIELD -> {
                     val pathToField = remoteArgDef.remoteArgumentSource.path
                     NadelHydrationActorInputDef.ValueSource.FieldResultValue(
-                        queryPathToField = QueryPath(pathToField),
+                        queryPathToField = NadelQueryPath(pathToField),
                         fieldDefinition = getUnderlyingType(hydratedFieldParentType)?.getFieldAt(
                             pathToField)
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),

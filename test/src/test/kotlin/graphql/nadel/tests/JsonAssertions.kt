@@ -14,11 +14,9 @@ fun assertJsonObject(subject: JsonMap, expected: JsonMap) {
     }
 }
 
-private fun Assertion.Builder<JsonMap>.assertJsonObject(expectedMap: JsonMap) {
-    keysEqual(expectedMap.keys)
-
+fun Assertion.Builder<out AnyMap>.assertJsonKeys(): Assertion.Builder<JsonMap> {
     assert("keys are all strings") { subject ->
-        @Suppress("USELESS_CAST") // We're checking if the erased type holds up
+        @Suppress("UNCHECKED_CAST") // We're checking if the erased type holds up
         for (key in (subject.keys as Set<Any>)) {
             if (key !is String) {
                 fail(description = "%s is not a string", actual = key)
@@ -27,6 +25,15 @@ private fun Assertion.Builder<JsonMap>.assertJsonObject(expectedMap: JsonMap) {
         }
         pass()
     }
+
+    @Suppress("UNCHECKED_CAST")
+    return this as Assertion.Builder<JsonMap>
+}
+
+private fun Assertion.Builder<JsonMap>.assertJsonObject(expectedMap: JsonMap) {
+    keysEqual(expectedMap.keys)
+
+    assertJsonKeys()
 
     compose("contents match expected") { subjectMap ->
         subjectMap.entries.forEach { (key, subjectValue) ->
@@ -95,18 +102,25 @@ private fun <T> Assertion.Builder<T>.assertJsonValue(subjectValue: Any?, expecte
 
 private fun <T> Assertion.Builder<List<T>>.assertJsonArray(expectedValue: List<T>) {
     compose("all elements match expected:") { subject ->
+        assert("size matches expected") {
+            if (subject.size == expectedValue.size) {
+                pass()
+            } else {
+                fail("expected size ${expectedValue.size} but got ${subject.size}")
+            }
+        }
+
         subject.forEachIndexed { index, element ->
-            get("element $index") { element }
-                .assertJsonValue(subjectValue = element, expectedValue[index])
+            if (index > expectedValue.lastIndex) {
+                assert("element $index") {
+                    fail("is not expected")
+                }
+            } else {
+                get("element $index") { element }
+                    .assertJsonValue(subjectValue = element, expectedValue[index])
+            }
         }
     } then {
         if (allPassed) pass() else fail()
-    }
-    assert("size matches expected") { subject ->
-        if (subject.size == expectedValue.size) {
-            pass()
-        } else {
-            fail("expected size ${expectedValue.size} but got ${subject.size}")
-        }
     }
 }

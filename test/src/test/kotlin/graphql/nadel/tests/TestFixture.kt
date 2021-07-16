@@ -27,12 +27,8 @@ data class TestFixture(
     val exception: ExpectedException?,
 ) {
     @get:JsonIgnore
-    val response: Map<String, Any?> by lazy {
-        if (responseJsonString != null) {
-            jsonObjectMapper.readValue(responseJsonString)
-        } else {
-            emptyMap()
-        }
+    val response: JsonMap? by lazy {
+        responseJsonString?.let(jsonObjectMapper::readValue)
     }
 }
 

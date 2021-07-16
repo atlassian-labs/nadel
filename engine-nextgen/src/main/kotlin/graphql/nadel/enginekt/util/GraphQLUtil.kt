@@ -1,16 +1,22 @@
 package graphql.nadel.enginekt.util
 
 import graphql.ErrorType
+import graphql.ExecutionInput
 import graphql.ExecutionResult
+import graphql.ExecutionResultImpl
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder.newError
+import graphql.execution.ExecutionId
+import graphql.execution.ExecutionIdProvider
 import graphql.language.Definition
 import graphql.language.Document
 import graphql.language.ObjectTypeDefinition
+import graphql.language.OperationDefinition
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
@@ -25,10 +31,12 @@ typealias AnyAstDefinition = Definition<*>
 fun newGraphQLError(
     message: String,
     errorType: ErrorType,
+    extensions: MutableJsonMap = mutableMapOf(),
 ): GraphQLError {
     return newError()
         .message(message)
         .errorType(errorType)
+        .extensions(extensions)
         .build()
 }
 
@@ -126,7 +134,7 @@ fun ExecutableNormalizedField.copyWithChildren(children: List<ExecutableNormaliz
         }
 }
 
-val ExecutableNormalizedField.queryPath: QueryPath get() = QueryPath(listOfResultKeys)
+val ExecutableNormalizedField.queryPath: NadelQueryPath get() = NadelQueryPath(listOfResultKeys)
 
 inline fun <reified T : AnyAstDefinition> Document.getDefinitionsOfType(): List<T> {
     return getDefinitionsOfType(T::class.java)
@@ -186,12 +194,15 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
         .build()
 }
 
-internal fun updateOverallResultAndMergeSameNameTopLevelFields(overallResultMap: MutableJsonMap, oneResultMap: JsonMap) {
+internal fun updateOverallResultAndMergeSameNameTopLevelFields(
+    overallResultMap: MutableJsonMap,
+    oneResultMap: JsonMap,
+) {
     for ((topLevelFieldName, newTopLevelFieldChildren) in oneResultMap) {
         if (overallResultMap.containsKey(topLevelFieldName)) {
             val existingTopLevelFieldMap = overallResultMap[topLevelFieldName]
             if (newTopLevelFieldChildren is AnyMap && existingTopLevelFieldMap is AnyMutableMap) {
-                (existingTopLevelFieldMap.asMutableJsonMap()).putAll(newTopLevelFieldChildren.asJsonMap())
+                existingTopLevelFieldMap.asMutableJsonMap().putAll(newTopLevelFieldChildren.asJsonMap())
             }
         } else {
             overallResultMap[topLevelFieldName] = newTopLevelFieldChildren
@@ -205,4 +216,55 @@ fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates 
 
 fun makeFieldCoordinates(parentType: GraphQLObjectType, field: GraphQLFieldDefinition): FieldCoordinates {
     return makeFieldCoordinates(typeName = parentType.name, fieldName = field.name)
+}
+
+fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId? {
+    return provide(executionInput.query, executionInput.operationName, executionInput.context)
+}
+
+fun ServiceExecutionResult.copy(
+    data: MutableJsonMap = this.data,
+    errors: MutableList<MutableJsonMap> = this.errors,
+    extensions: MutableJsonMap = this.extensions,
+): ServiceExecutionResult {
+    return newServiceExecutionResult(data, errors, extensions)
+}
+
+fun newServiceExecutionResult(
+    data: MutableJsonMap = mutableMapOf(),
+    errors: MutableList<MutableJsonMap> = mutableListOf(),
+    extensions: MutableJsonMap = mutableMapOf(),
+): ServiceExecutionResult {
+    return ServiceExecutionResult(data, errors, extensions)
+}
+
+fun newServiceExecutionResult(
+    error: GraphQLError,
+): ServiceExecutionResult {
+    return newServiceExecutionResult(
+        errors = mutableListOf(
+            error.toSpecification(),
+        ),
+    )
+}
+
+fun newExecutionResult(
+    error: GraphQLError,
+): ExecutionResultImpl {
+    return newExecutionResult()
+        .addError(error)
+        .build()
+}
+
+fun ExecutableNormalizedField.getOperationKind(
+    schema: GraphQLSchema,
+): OperationDefinition.Operation {
+    val objectTypeName = objectTypeNames.singleOrNull()
+        ?: error("Top level field can only belong to one operation type")
+    return when {
+        schema.queryType.name == objectTypeName -> OperationDefinition.Operation.QUERY
+        schema.mutationType?.name?.equals(objectTypeName) == true -> OperationDefinition.Operation.MUTATION
+        schema.subscriptionType?.name?.equals(objectTypeName) == true -> OperationDefinition.Operation.SUBSCRIPTION
+        else -> error("Type '$objectTypeName' is not one of the standard GraphQL operation types")
+    }
 }

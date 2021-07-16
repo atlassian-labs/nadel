@@ -1,0 +1,105 @@
+name: can declare common types
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  IssueService: |
+    service IssueService {
+      type Query {
+        node: Node
+      }
+      type Issue implements Node {
+        id: ID!
+        name: String
+      }
+    }
+  common: |
+    common {
+      interface Node {
+        id: ID!
+      }
+    }
+underlyingSchema:
+  IssueService: |
+    interface Node {
+      id: ID!
+    }
+
+    type Issue implements Node {
+      id: ID!
+      name: String
+    }
+
+    type Query {
+      node: Node
+    }
+query: |
+  query {
+    node {
+      ... on Issue {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: IssueService
+      request:
+        query: |
+          query nadel_2_IssueService {
+            node {
+              type_hint_typename__UUID: __typename
+              ... on Issue {
+                name
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "node": {
+              "type_hint_typename__UUID": "Issue",
+              "name": "My Issue"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              node {
+                ... on Issue {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "node": {
+              "name": "My Issue"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "node": {
+        "name": "My Issue"
+      }
+    },
+    "extensions": {}
+  }
