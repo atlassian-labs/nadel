@@ -11,8 +11,6 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLSchema
 
-internal typealias AnyNadelTransform = NadelTransform<Any>
-
 interface NadelTransform<State : Any> {
     /**
      * Determines whether the [NadelTransform] should run. If it should run return a [State].

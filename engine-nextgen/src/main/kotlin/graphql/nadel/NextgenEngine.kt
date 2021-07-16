@@ -12,7 +12,6 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
-import graphql.nadel.enginekt.transform.AnyNadelTransform
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
@@ -43,7 +42,7 @@ import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
-    transforms: List<AnyNadelTransform> = emptyList(),
+    transforms: List<NadelTransform<out Any>> = emptyList(),
 ) : NadelExecutionEngine {
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallSchema = nadel.overallSchema

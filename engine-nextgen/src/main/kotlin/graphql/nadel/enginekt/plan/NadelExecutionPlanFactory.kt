@@ -4,7 +4,6 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.transform.AnyNadelTransform
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.NadelRenameTransform
 import graphql.nadel.enginekt.transform.NadelTransform
@@ -15,7 +14,7 @@ import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
-    private val transforms: List<AnyNadelTransform>,
+    private val transforms: List<NadelTransform<Any>>,
 ) {
     /**
      * This derives an execution plan from with the main input parameters being the
@@ -56,7 +55,10 @@ internal class NadelExecutionPlanFactory(
         )
     }
 
-    private suspend fun traverseQuery(root: ExecutableNormalizedField, consumer: suspend (ExecutableNormalizedField) -> Unit) {
+    private suspend fun traverseQuery(
+        root: ExecutableNormalizedField,
+        consumer: suspend (ExecutableNormalizedField) -> Unit,
+    ) {
         consumer(root)
         root.children.forEach {
             traverseQuery(it, consumer)
@@ -82,10 +84,10 @@ internal class NadelExecutionPlanFactory(
             )
         }
 
-        private fun listOfTransforms(vararg elements: NadelTransform<out Any>): List<AnyNadelTransform> {
+        private fun listOfTransforms(vararg elements: NadelTransform<out Any>): List<NadelTransform<Any>> {
             return elements.map {
                 @Suppress("UNCHECKED_CAST") // Ssh it's okay
-                it as AnyNadelTransform
+                it as NadelTransform<Any>
             }
         }
     }
