@@ -28,6 +28,7 @@ import graphql.nadel.enginekt.util.newServiceExecutionResult
 import graphql.nadel.enginekt.util.provide
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory
@@ -38,6 +39,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(
@@ -46,6 +48,7 @@ class NextgenEngine @JvmOverloads constructor(
 ) : NadelExecutionEngine {
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallSchema = nadel.overallSchema
+    private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         overallSchema = nadel.overallSchema,
         services = nadel.services,
@@ -93,6 +96,8 @@ class NextgenEngine @JvmOverloads constructor(
             }
         }
 
+        val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
+
         // TODO: determine what to do with NQ
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
 
@@ -101,7 +106,7 @@ class NextgenEngine @JvmOverloads constructor(
                 .map { (field, service) ->
                     async {
                         try {
-                            executeTopLevelField(field, service, executionInput)
+                            executeTopLevelField(field, service, executionContext)
                         } catch (e: Throwable) {
                             when (e) {
                                 is GraphQLError -> newExecutionResult(error = e)
@@ -118,9 +123,8 @@ class NextgenEngine @JvmOverloads constructor(
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
         service: Service,
-        executionInput: ExecutionInput,
+        executionContext: NadelExecutionContext
     ): ExecutionResult {
-        val executionContext = NadelExecutionContext(executionInput)
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
         val queryTransform = queryTransformer.transformQuery(
             executionContext,
@@ -129,7 +133,7 @@ class NextgenEngine @JvmOverloads constructor(
             executionPlan,
         )
         val transformedQuery = queryTransform.result.single()
-        val result = executeService(service, transformedQuery, executionInput)
+        val result = executeService(service, transformedQuery, executionContext)
         val transformedResult = resultTransformer.transform(
             executionContext = executionContext,
             executionPlan = executionPlan,
@@ -193,7 +197,7 @@ class NextgenEngine @JvmOverloads constructor(
         val result = executeService(
             service,
             transformedQuery,
-            executionContext.executionInput,
+            executionContext,
             isHydration = true,
         )
         return resultTransformer.transform(
@@ -209,9 +213,10 @@ class NextgenEngine @JvmOverloads constructor(
     private suspend fun executeService(
         service: Service,
         transformedQuery: ExecutableNormalizedField,
-        executionInput: ExecutionInput,
+        executionContext: NadelExecutionContext,
         isHydration: Boolean = false,
     ): ServiceExecutionResult {
+        val executionInput = executionContext.executionInput
         val document: Document = compileToDocument(
             transformedQuery.getOperationKind(overallSchema),
             listOf(transformedQuery),
@@ -225,7 +230,7 @@ class NextgenEngine @JvmOverloads constructor(
             .variables(emptyMap())
             .fragments(emptyMap())
             .operationDefinition(document.definitions.singleOfType())
-            .serviceContext(null)
+            .serviceContext(executionContext.getContextForService(service).await())
             .hydrationCall(isHydration)
             .build()
 
