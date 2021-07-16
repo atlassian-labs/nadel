@@ -1,0 +1,66 @@
+name: service context is being set
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query {
+        foo: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Query {
+      foo: String
+    }
+query: |
+  query {
+    foo
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: MyService
+      request:
+        query: |
+          query nadel_2_MyService {
+            foo
+          }
+        variables: {}
+        operationName: nadel_2_MyService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": null
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": null
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": null
+    },
+    "extensions": {}
+  }
