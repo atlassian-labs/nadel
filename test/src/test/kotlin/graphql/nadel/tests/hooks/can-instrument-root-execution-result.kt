@@ -6,7 +6,6 @@ import graphql.nadel.Nadel
 import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.engine.result.ResultNodesUtil
 import graphql.nadel.engine.result.RootExecutionResultNode
-import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.tests.EngineTestHook

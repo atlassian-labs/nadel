@@ -13,8 +13,8 @@ import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
-import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath

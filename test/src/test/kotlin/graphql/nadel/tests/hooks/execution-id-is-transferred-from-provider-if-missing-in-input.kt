@@ -9,7 +9,6 @@ import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.KeepHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.serviceExecutionFactory
-import graphql.schema.idl.TypeDefinitionRegistry
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isGreaterThan
