@@ -184,3 +184,11 @@ fun <T> List<T>.subListOrNull(fromIndex: Int, toIndex: Int): List<T>? {
 
     return subList(fromIndex = fromIndex, toIndex = toIndex)
 }
+
+fun <T, R> Iterable<T>.foldWhileNotNull(initial: R, operation: (acc: R, T) -> R): R? {
+    var accumulator = initial
+    for (element in this) {
+        accumulator = operation(accumulator, element) ?: return null
+    }
+    return accumulator
+}
