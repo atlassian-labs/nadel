@@ -4,6 +4,7 @@ import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.enginekt.util.foldWhileNotNull
 
 object JsonNodeExtractor {
     /**
@@ -42,14 +43,14 @@ object JsonNodeExtractor {
      * Extract the node at the given json node path.
      */
     fun getNodeAt(rootNode: JsonNode, path: JsonNodePath): JsonNode? {
-        return path.segments.fold(rootNode as JsonNode?) { currentNode, segment ->
+        return path.segments.foldWhileNotNull(rootNode as JsonNode?) { currentNode, segment ->
             when (currentNode?.value) {
-                is Map<*, *> -> currentNode.value[segment.value]?.let {
+                is AnyMap -> currentNode.value[segment.value]?.let {
                     JsonNode(currentNode.resultPath + segment, it)
                 }
-                is List<*> -> when (segment.value) {
-                    is Int -> currentNode.value.getOrNull(segment.value as Int)?.let {
-                        JsonNode(currentNode.resultPath + segment, it )
+                is AnyList -> when (segment) {
+                    is JsonNodePathSegment.Int -> currentNode.value.getOrNull(segment.value)?.let {
+                        JsonNode(currentNode.resultPath + segment, it)
                     }
                     else -> null
                 }
