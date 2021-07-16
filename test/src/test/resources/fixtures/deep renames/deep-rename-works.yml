@@ -1,0 +1,105 @@
+name: deep rename works
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  IssueService: |
+    service IssueService {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        name: String => renamed from detail.detailName
+      }
+    }
+underlyingSchema:
+  IssueService: |
+    type Issue {
+      detail: IssueDetails
+    }
+
+    type IssueDetails {
+      detailName: String
+    }
+
+    type Query {
+      issue: Issue
+    }
+query: |
+  query {
+    issue {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: IssueService
+      request:
+        query: |
+          query nadel_2_IssueService {
+            issue {
+              detail {
+                detailName
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "detail": {
+                "detailName": "My Issue"
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on Issue {
+                  deep_rename__name__detail: detail {
+                    ... on IssueDetails {
+                      detailName
+                    }
+                  }
+                }
+                ... on Issue {
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "deep_rename__name__detail": {
+                "detailName": "My Issue"
+              },
+              "__typename__deep_rename__name": "Issue"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "name": "My Issue"
+      }
+    },
+    "extensions": {}
+  }

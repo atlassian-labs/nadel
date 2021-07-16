@@ -4,7 +4,7 @@ import graphql.introspection.Introspection.TypeNameMetaFieldDef
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.NadelFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.getField
@@ -18,7 +18,7 @@ object NadelTransformUtil {
     fun getOverallTypeNameOfNode(
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
         node: JsonNode,
     ): String? {
         @Suppress("UNCHECKED_CAST")
@@ -35,7 +35,7 @@ object NadelTransformUtil {
     }
 
     fun makeTypeNameField(
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
         objectTypeNames: List<String>,
     ): ExecutableNormalizedField {
         return newNormalizedField()
@@ -59,7 +59,7 @@ object NadelTransformUtil {
         service: Service,
         // Supplementary arguments
         executionBlueprint: NadelOverallExecutionBlueprint,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
     ): GraphQLFieldDefinition? {
         val overallTypeName = getOverallTypeNameOfNode(
             executionBlueprint = executionBlueprint,
@@ -79,7 +79,7 @@ object NadelTransformUtil {
 fun <T : NadelFieldInstruction> Map<FieldCoordinates, T>.getInstructionForNode(
     executionBlueprint: NadelOverallExecutionBlueprint,
     service: Service,
-    aliasHelper: AliasHelper,
+    aliasHelper: NadelAliasHelper,
     parentNode: JsonNode,
 ): T? = let { instructions ->
     val overallTypeName = NadelTransformUtil.getOverallTypeNameOfNode(

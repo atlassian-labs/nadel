@@ -1,0 +1,166 @@
+name: extending types via hydration with arguments passed on
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  Issue: |
+    service Issue {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        id: ID
+      }
+    }
+  Association: |
+    service Association {
+      type Query {
+        association(id: ID, filter: Filter): Association
+      }
+      input Filter {
+        name: String
+      }
+      type Association {
+        id: ID
+        nameOfAssociation: String
+      }
+      extend type Issue {
+        association(filter: Filter): Association => hydrated from Association.association(id: $source.id, filter: $argument.filter)
+      }
+    }
+underlyingSchema:
+  Issue: |
+    type Issue {
+      id: ID
+    }
+
+    type Query {
+      issue: Issue
+    }
+  Association: |
+    type Association {
+      id: ID
+      nameOfAssociation: String
+    }
+
+    type Query {
+      association(filter: Filter, id: ID): Association
+    }
+
+    input Filter {
+      name: String
+    }
+query: |
+  query {
+    issue {
+      association(filter: {name: "value"}) {
+        nameOfAssociation
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issue
+      request:
+        query: |
+          query nadel_2_Issue {
+            issue {
+              id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issue
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "ISSUE-1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Association
+      request:
+        query: |
+          query nadel_2_Association {
+            association(id: "ISSUE-1", filter: {name: "value"}) {
+              nameOfAssociation
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Association
+      response: |-
+        {
+          "data": {
+            "association": {
+              "nameOfAssociation": "ASSOC NAME"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issue
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on Issue {
+                  hydration__association__id: id
+                }
+                ... on Issue {
+                  __typename__hydration__association: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "hydration__association__id": "ISSUE-1",
+              "__typename__hydration__association": "Issue"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Association
+      request:
+        query: |
+          query {
+            ... on Query {
+              association(filter: {name : "value"}, id: "ISSUE-1") {
+                ... on Association {
+                  nameOfAssociation
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "association": {
+              "nameOfAssociation": "ASSOC NAME"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "association": {
+          "nameOfAssociation": "ASSOC NAME"
+        }
+      }
+    },
+    "extensions": {}
+  }

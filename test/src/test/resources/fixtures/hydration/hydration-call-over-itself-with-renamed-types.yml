@@ -1,0 +1,363 @@
+name: hydration call over itself with renamed types
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  testing: |
+    service testing {
+      type Query {
+        testing: Testing
+      }
+      type Testing {
+        movies: [TestingMovie]
+      }
+      type TestingCharacter => renamed from Character {
+        id: ID!
+        name: String
+      }
+      type TestingMovie => renamed from Movie {
+        id: ID!
+        name: String
+        characters: [TestingCharacter] => hydrated from testing.characters(ids: $source.characterIds) object identified by id, batch size 3
+      }
+    }
+underlyingSchema:
+  testing: |
+    type Character {
+      id: ID!
+      name: String
+    }
+
+    type Movie {
+      characterIds: [ID]
+      id: ID!
+      name: String
+    }
+
+    type Query {
+      characters(ids: [ID!]!): [Character]
+      testing: Testing
+    }
+
+    type Testing {
+      movies: [Movie]
+    }
+query: |
+  query {
+    testing {
+      movies {
+        id
+        name
+        characters {
+          id
+          name
+        }
+        ...F1
+      }
+    }
+  }
+
+  fragment F1 on TestingMovie {
+    name
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: testing
+      request:
+        query: |
+          query nadel_2_testing {
+            testing {
+              movies {
+                id
+                name
+                characterIds
+                ...F1
+              }
+            }
+          }
+
+          fragment F1 on Movie {
+            name
+          }
+        variables: {}
+        operationName: nadel_2_testing
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "testing": {
+              "movies": [
+                {
+                  "id": "M1",
+                  "name": "Movie 1",
+                  "characterIds": [
+                    "C1",
+                    "C2"
+                  ]
+                },
+                {
+                  "id": "M2",
+                  "name": "Movie 2",
+                  "characterIds": [
+                    "C1",
+                    "C2",
+                    "C3"
+                  ]
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: testing
+      request:
+        query: |
+          query nadel_2_testing {
+            characters(ids: ["C1", "C2", "C1"]) {
+              id
+              name
+              object_identifier__UUID: id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_testing
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "characters": [
+              {
+                "id": "C1",
+                "name": "Luke",
+                "object_identifier__UUID": "C1"
+              },
+              {
+                "id": "C2",
+                "name": "Leia",
+                "object_identifier__UUID": "C2"
+              },
+              {
+                "id": "C1",
+                "name": "Luke",
+                "object_identifier__UUID": "C1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: testing
+      request:
+        query: |
+          query nadel_2_testing {
+            characters(ids: ["C2", "C3"]) {
+              id
+              name
+              object_identifier__UUID: id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_testing
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "characters": [
+              {
+                "id": "C2",
+                "name": "Leia",
+                "object_identifier__UUID": "C2"
+              },
+              {
+                "id": "C3",
+                "name": "Anakin",
+                "object_identifier__UUID": "C3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: testing
+      request:
+        query: |
+          query {
+            ... on Query {
+              testing {
+                ... on Testing {
+                  movies {
+                    ... on Movie {
+                      id
+                    }
+                    ... on Movie {
+                      name
+                    }
+                    ... on Movie {
+                      batch_hydration__characters__characterIds: characterIds
+                    }
+                    ... on Movie {
+                      __typename__batch_hydration__characters: __typename
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "testing": {
+              "movies": [
+                {
+                  "name": "Movie 1",
+                  "id": "M1",
+                  "batch_hydration__characters__characterIds": [
+                    "C1",
+                    "C2"
+                  ],
+                  "__typename__batch_hydration__characters": "Movie"
+                },
+                {
+                  "name": "Movie 2",
+                  "id": "M2",
+                  "batch_hydration__characters__characterIds": [
+                    "C1",
+                    "C2",
+                    "C3"
+                  ],
+                  "__typename__batch_hydration__characters": "Movie"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: testing
+      request:
+        query: |
+          query {
+            ... on Query {
+              characters(ids: ["C2", "C3"]) {
+                ... on Character {
+                  id
+                }
+                ... on Character {
+                  name
+                }
+                ... on Character {
+                  batch_hydration__characters__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "characters": [
+              {
+                "name": "Leia",
+                "batch_hydration__characters__id": "C2",
+                "id": "C2"
+              },
+              {
+                "name": "Anakin",
+                "batch_hydration__characters__id": "C3",
+                "id": "C3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: testing
+      request:
+        query: |
+          query {
+            ... on Query {
+              characters(ids: ["C1", "C2", "C1"]) {
+                ... on Character {
+                  id
+                }
+                ... on Character {
+                  name
+                }
+                ... on Character {
+                  batch_hydration__characters__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "characters": [
+              {
+                "name": "Luke",
+                "batch_hydration__characters__id": "C1",
+                "id": "C1"
+              },
+              {
+                "name": "Leia",
+                "batch_hydration__characters__id": "C2",
+                "id": "C2"
+              },
+              {
+                "name": "Luke",
+                "batch_hydration__characters__id": "C1",
+                "id": "C1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "testing": {
+        "movies": [
+          {
+            "id": "M1",
+            "name": "Movie 1",
+            "characters": [
+              {
+                "id": "C1",
+                "name": "Luke"
+              },
+              {
+                "id": "C2",
+                "name": "Leia"
+              }
+            ]
+          },
+          {
+            "id": "M2",
+            "name": "Movie 2",
+            "characters": [
+              {
+                "id": "C1",
+                "name": "Luke"
+              },
+              {
+                "id": "C2",
+                "name": "Leia"
+              },
+              {
+                "id": "C3",
+                "name": "Anakin"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,214 @@
+name: deep rename inside another rename of type List
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        boardScope: BoardScope
+      }
+      type BoardScope {
+        board: SoftwareBoard
+      }
+      type SoftwareBoard => renamed from Board {
+        cardChildren: [SoftwareCard] => renamed from issueChildren
+      }
+      type SoftwareCard => renamed from Card {
+        id: ID
+        key: String => renamed from issue.key
+        summary: String => renamed from issue.summary
+      }
+    }
+underlyingSchema:
+  Issues: |
+    type Board {
+      id: ID
+      issueChildren: [Card]
+    }
+
+    type BoardScope {
+      board: Board
+    }
+
+    type Card {
+      id: ID
+      issue: Issue
+    }
+
+    type Issue {
+      id: ID
+      key: String
+      summary: String
+    }
+
+    type Query {
+      boardScope: BoardScope
+    }
+query: |
+  query {
+    boardScope {
+      board {
+        cardChildren {
+          id
+          key
+          summary
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            boardScope {
+              board {
+                issueChildren {
+                  id
+                  issue {
+                    key
+                  }
+                  issue {
+                    summary
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "boardScope": {
+              "board": {
+                "issueChildren": [
+                  {
+                    "id": "1234",
+                    "issue": {
+                      "key": "abc",
+                      "summary": "Summary 1"
+                    }
+                  },
+                  {
+                    "id": "456",
+                    "issue": {
+                      "key": "def",
+                      "summary": "Summary 2"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              boardScope {
+                ... on BoardScope {
+                  board {
+                    ... on Board {
+                      rename__cardChildren__issueChildren: issueChildren {
+                        ... on Card {
+                          id
+                        }
+                        ... on Card {
+                          deep_rename__key__issue: issue {
+                            ... on Issue {
+                              key
+                            }
+                          }
+                        }
+                        ... on Card {
+                          __typename__deep_rename__key: __typename
+                        }
+                        ... on Card {
+                          deep_rename__summary__issue: issue {
+                            ... on Issue {
+                              summary
+                            }
+                          }
+                        }
+                        ... on Card {
+                          __typename__deep_rename__summary: __typename
+                        }
+                      }
+                    }
+                    ... on Board {
+                      __typename__rename__cardChildren: __typename
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "boardScope": {
+              "board": {
+                "__typename__rename__cardChildren": "Board",
+                "rename__cardChildren__issueChildren": [
+                  {
+                    "__typename__deep_rename__key": "Card",
+                    "id": "1234",
+                    "deep_rename__summary__issue": {
+                      "summary": "Summary 1"
+                    },
+                    "__typename__deep_rename__summary": "Card",
+                    "deep_rename__key__issue": {
+                      "key": "abc"
+                    }
+                  },
+                  {
+                    "__typename__deep_rename__key": "Card",
+                    "id": "456",
+                    "deep_rename__summary__issue": {
+                      "summary": "Summary 2"
+                    },
+                    "__typename__deep_rename__summary": "Card",
+                    "deep_rename__key__issue": {
+                      "key": "def"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "boardScope": {
+        "board": {
+          "cardChildren": [
+            {
+              "id": "1234",
+              "key": "abc",
+              "summary": "Summary 1"
+            },
+            {
+              "id": "456",
+              "key": "def",
+              "summary": "Summary 2"
+            }
+          ]
+        }
+      }
+    },
+    "extensions": {}
+  }

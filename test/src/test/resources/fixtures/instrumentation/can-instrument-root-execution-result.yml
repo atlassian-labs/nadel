@@ -1,0 +1,109 @@
+name: can instrument root execution result
+enabled:
+  current: true
+  nextgen: true
+ignored:
+  nextgen: true # TODO: implement on nextgen
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query {
+        hello: World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation {
+        hello: String
+      }
+      type Subscription {
+        onWorldUpdate: World
+        onAnotherUpdate: World
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type Subscription {
+      onAnotherUpdate: World
+      onWorldUpdate: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query OpName {
+    hello {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: MyService
+      request:
+        query: |
+          query nadel_2_MyService_OpName {
+            hello {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_MyService_OpName
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": null
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              hello {
+                ... on World {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": null
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "hello": null
+    },
+    "errors": [
+      {
+        "message": "instrumented-error",
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "extensions": {}
+  }

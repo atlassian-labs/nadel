@@ -13,7 +13,7 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef.ValueSource
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
-import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.AnyList
@@ -32,7 +32,7 @@ internal typealias AnyAstValue = Value<*>
 internal object NadelHydrationInputBuilder {
     fun getInputValues(
         instruction: NadelHydrationFieldInstruction,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
         parentNode: JsonNode,
     ): List<Map<String, NormalizedInputValue>> {
@@ -46,15 +46,16 @@ internal object NadelHydrationInputBuilder {
 
         val argsForAllCalls = mapFrom(
             inputDefsForAllCalls
-                .map { actorInputDef ->
+                .mapNotNull { actorInputDef ->
                     val argumentDef = instruction.actorFieldDef.getArgument(actorInputDef.name)
-                    actorInputDef.name to makeInputValue(
+                    val inputValue = makeInputValue(
                         actorInputDef = actorInputDef,
                         argumentDef = argumentDef,
                         parentNode = parentNode,
                         hydrationField = hydratedField,
                         aliasHelper = aliasHelper,
-                    )
+                    ) ?: return@mapNotNull null
+                    actorInputDef.name to inputValue
                 }
                 .toList()
         )
@@ -87,8 +88,8 @@ internal object NadelHydrationInputBuilder {
         argumentDef: GraphQLArgument,
         parentNode: JsonNode,
         hydrationField: ExecutableNormalizedField,
-        aliasHelper: AliasHelper,
-    ): NormalizedInputValue {
+        aliasHelper: NadelAliasHelper,
+    ): NormalizedInputValue? {
         return when (val valueSource = actorInputDef.valueSource) {
             is ValueSource.ArgumentValue -> hydrationField.getNormalizedArgument(valueSource.argumentName)
             is ValueSource.FieldResultValue -> makeNormalizedInputValue(
@@ -103,7 +104,7 @@ internal object NadelHydrationInputBuilder {
     private fun getResultValue(
         valueSource: ValueSource.FieldResultValue,
         parentNode: JsonNode,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
     ): Any? {
         return JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
@@ -114,7 +115,7 @@ internal object NadelHydrationInputBuilder {
     private fun getResultValues(
         valueSource: ValueSource.FieldResultValue,
         parentNode: JsonNode,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
     ): List<Any?> {
         return JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,

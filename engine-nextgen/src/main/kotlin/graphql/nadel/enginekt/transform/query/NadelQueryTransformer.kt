@@ -12,8 +12,8 @@ class NadelQueryTransformer internal constructor(
     private val executionBlueprint: NadelOverallExecutionBlueprint,
 ) {
     interface Continuation {
-        suspend fun transform(fields: ExecutableNormalizedField): List<ExecutableNormalizedField> {
-            return transform(listOf(fields))
+        suspend fun transform(field: ExecutableNormalizedField): List<ExecutableNormalizedField> {
+            return transform(listOf(field))
         }
 
         suspend fun transform(fields: List<ExecutableNormalizedField>): List<ExecutableNormalizedField>

@@ -2,6 +2,8 @@ package graphql.nadel;
 
 import graphql.PublicApi;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,8 +18,8 @@ public class ServiceExecutionResult {
 
     public ServiceExecutionResult(Map<String, Object> data, List<Map<String, Object>> errors, Map<String, Object> extensions) {
         this.data = data;
-        this.errors = errors == null ? emptyList() : errors;
-        this.extensions = extensions == null ? emptyMap() : extensions;
+        this.errors = errors == null ? new ArrayList<>() : errors;
+        this.extensions = extensions == null ? new HashMap<>() : extensions;
     }
 
     public ServiceExecutionResult(Map<String, Object> data, List<Map<String, Object>> errors) {
