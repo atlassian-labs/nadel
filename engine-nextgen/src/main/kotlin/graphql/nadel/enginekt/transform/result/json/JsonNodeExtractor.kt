@@ -1,6 +1,6 @@
 package graphql.nadel.enginekt.transform.result.json
 
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
@@ -10,7 +10,7 @@ object JsonNodeExtractor {
     /**
      * Extracts the nodes at the given query selection path.
      */
-    fun getNodesAt(data: JsonMap, queryPath: QueryPath, flatten: Boolean = false): List<JsonNode> {
+    fun getNodesAt(data: JsonMap, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
         val rootNode = JsonNode(JsonNodePath.root, data)
         return getNodesAt(rootNode, queryPath, flatten)
     }
@@ -18,7 +18,7 @@ object JsonNodeExtractor {
     /**
      * Extracts the nodes at the given query selection path.
      */
-    fun getNodesAt(rootNode: JsonNode, queryPath: QueryPath, flatten: Boolean = false): List<JsonNode> {
+    fun getNodesAt(rootNode: JsonNode, queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
         // This is a breadth-first search
         return queryPath.segments.foldIndexed(listOf(rootNode)) { index, queue, pathSegment ->
             val atEnd = index == queryPath.segments.lastIndex

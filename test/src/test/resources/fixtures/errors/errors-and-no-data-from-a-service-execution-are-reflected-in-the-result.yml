@@ -1,0 +1,120 @@
+name: errors and no data from a service execution are reflected in the result
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query {
+        hello: World
+        helloWithArgs(arg1: String! arg2: String): World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation {
+        hello: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+      helloWithArgs(arg1: String!, arg2: String): World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    hello {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: MyService
+      request:
+        query: |
+          query nadel_2_MyService {
+            hello {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_MyService
+      # language=JSON
+      response: |-
+        {
+          "errors": [
+            {
+              "message": "Problem1"
+            },
+            {
+              "message": "Problem2"
+            }
+          ],
+          "data": null,
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              hello {
+                ... on World {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "errors": [
+            {
+              "message": "Problem1"
+            },
+            {
+              "message": "Problem2"
+            }
+          ],
+          "data": null,
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "errors": [
+      {
+        "message": "Problem1",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      },
+      {
+        "message": "Problem2",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "data": {
+      "hello": null
+    },
+    "extensions": {}
+  }

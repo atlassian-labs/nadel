@@ -1,6 +1,5 @@
 package graphql.nadel.enginekt.blueprint
 
-import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.filterValuesOfType
 import graphql.nadel.enginekt.util.makeFieldCoordinates
@@ -48,12 +47,8 @@ data class NadelOverallExecutionBlueprint(
         }
     }
 
-    fun getService(field: ExecutableNormalizedField): Service? {
-        val typeName = field.objectTypeNames.single()
-        if (field.name == Introspection.TypeNameMetaFieldDef.name) {
-            return getService(field.parent)
-        }
-        return coordinatesToService[makeFieldCoordinates(typeName, field.name)]
+    fun getService(fieldCoordinates: FieldCoordinates): Service? {
+        return coordinatesToService[fieldCoordinates]
     }
 }
 

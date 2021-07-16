@@ -1,0 +1,98 @@
+name: inserts one error for a forbidden field in a list
+enabled:
+  current: true
+  nextgen: false
+overallSchema:
+  Issues: |
+    service Issues {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        relatedIssue: Issue
+        restricted: String
+      }
+    }
+underlyingSchema:
+  Issues: |
+    type Issue {
+      id: ID
+      relatedIssue: Issue
+      restricted: String
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      restricted
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issues {
+              id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "id": "test-1"
+              },
+              {
+                "id": "test-2"
+              },
+              {
+                "id": "test-3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "errors": [
+      {
+        "path": [
+          "issues",
+          "restricted"
+        ],
+        "message": "removed field",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ],
+    "data": {
+      "issues": [
+        {
+          "id": "test-1",
+          "restricted": null
+        },
+        {
+          "id": "test-2",
+          "restricted": null
+        },
+        {
+          "id": "test-3",
+          "restricted": null
+        }
+      ]
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,96 @@
+name: two transforms on a field
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service: |
+    service service {
+      directive @toBeDeleted on FIELD_DEFINITION
+      type Query {
+        foo: Foo
+      }
+
+      type Foo {
+        id: ID
+        epicEntity: Epic @renamed(from: "epic") @toBeDeleted
+      }
+
+      type Epic {
+        id: ID
+        name: String
+      }
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+
+    type Foo {
+      id: ID
+      epic: Epic
+    }
+
+    type Epic {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    foo {
+      id
+      epicEntity {
+        id
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  id
+                }
+                ... on Foo {
+                  uuid_typename: __typename
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+                "id": "FOO-1",
+                "uuid_typename": "Foo"
+              }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+          "id": "FOO-1",
+          "epicEntity":null
+        }
+    },
+    "errors": [{
+    "message": "Validation error of type WrongType: null",
+      "locations":[],
+      "extensions":{
+        "classification": "ValidationError"
+      }
+    }],
+    "extensions": {}
+  }

@@ -1,0 +1,168 @@
+name: all non-hydrated fields in query are removed
+enabled:
+  current: true
+  nextgen: false
+overallSchema:
+  IssueService: |
+    service IssueService {
+      type Query {
+        issues(jql: String): [Issue]
+        issueById(id: String): Issue
+      }
+      type Issue {
+        id: ID
+        key: String
+        summary: String
+        description: String
+        epic: Epic
+        reporter: User => hydrated from UserService.userById(id: $source.reporterId)
+        comments: [Comment] => hydrated from CommentService.commentById(id: $source.commentIds)
+      }
+      type Epic {
+        id: ID
+        title: String
+        description: String
+      }
+    }
+  UserService: |
+    service UserService {
+      type Query {
+        users(ids: [ID]): [User]
+        userById(id: ID): User
+      }
+      type User {
+        userId: ID
+        displayName: String
+        avatarUrl: String
+      }
+    }
+  CommentService: |
+    service CommentService {
+      type Query {
+        comments(ids: [ID]): [Comment]
+        commentById(id: ID): Comment
+      }
+      type Comment {
+        id: ID
+        commentText: String => renamed from text
+        created: String
+        author: User => hydrated from UserService.userById(id: $source.authorId)
+      }
+    }
+underlyingSchema:
+  IssueService: |
+    type Query {
+      issues(jql: String): [Issue]
+      issueById(id: String): Issue
+    }
+
+    type Issue {
+      id: ID
+      key: String
+      summary: String
+      description: String
+      epic: Epic
+    }
+
+    type Epic {
+      id: ID
+      title: String
+      description: String
+    }
+  UserService: |
+    type Query {
+      users(ids: [ID]): [User]
+      userById(id: ID): User
+    }
+    type User {
+      userId: ID
+      displayName: String
+      avatarUrl: String
+    }
+  CommentService: |
+    type Comment {
+      authorId: ID
+      created: String
+      id: ID
+      text: String
+    }
+
+    type Query {
+      commentById(id: ID): Comment
+      comments(ids: [ID]): [Comment]
+    }
+query: |
+  query {
+    commentById(id: "C1") {
+      id
+      created
+      commentText
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: CommentService
+      request:
+        query: |
+          query nadel_2_CommentService {
+            commentById(id: "C1") {
+              empty_selection_set_typename__UUID: __typename
+            }
+          }
+        variables: {}
+        operationName: nadel_2_CommentService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "commentById": {
+              "empty_selection_set_typename__UUID": "Comment"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "errors": [
+      {
+        "path": [
+          "commentById",
+          "id"
+        ],
+        "message": "removed field",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      },
+      {
+        "path": [
+          "commentById",
+          "created"
+        ],
+        "message": "removed field",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      },
+      {
+        "path": [
+          "commentById",
+          "commentText"
+        ],
+        "message": "removed field",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ],
+    "data": {
+      "commentById": {
+        "id": null,
+        "created": null,
+        "commentText": null
+      }
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,68 @@
+name: introspection can be performed even with fragments
+enabled:
+  current: true
+  nextgen: true
+ignored:
+  nextgen: true # TODO: implement on nextgen
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query {
+        hello: World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation {
+        hello: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    ...IntrospectionFrag
+    __type(name: "World") {
+      name
+    }
+    __typename
+  }
+
+  fragment IntrospectionFrag on Query {
+    __schema {
+      queryType {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current: []
+# language=JSON
+response: |-
+  {
+    "data": {
+      "__schema": {
+        "queryType": {
+          "name": "Query"
+        }
+      },
+      "__type": {
+        "name": "World"
+      },
+      "__typename": "Query"
+    }
+  }

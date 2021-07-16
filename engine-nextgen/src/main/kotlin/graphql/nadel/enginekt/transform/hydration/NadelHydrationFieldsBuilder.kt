@@ -7,7 +7,7 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy.MatchObjectIdentifier
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
-import graphql.nadel.enginekt.transform.artificial.AliasHelper
+import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationInputBuilder
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
@@ -23,7 +23,7 @@ import graphql.schema.GraphQLUnionType
 internal object NadelHydrationFieldsBuilder {
     fun makeActorQueries(
         instruction: NadelHydrationFieldInstruction,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
         parentNode: JsonNode,
     ): List<ExecutableNormalizedField> {
@@ -43,7 +43,7 @@ internal object NadelHydrationFieldsBuilder {
 
     fun makeBatchActorQueries(
         instruction: NadelBatchHydrationFieldInstruction,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
     ): List<ExecutableNormalizedField> {
@@ -73,7 +73,7 @@ internal object NadelHydrationFieldsBuilder {
     fun makeFieldsUsedAsActorInputValues(
         service: Service,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
         fieldCoordinates: FieldCoordinates,
         instruction: NadelGenericHydrationInstruction,
     ): List<ExecutableNormalizedField> {
@@ -114,7 +114,7 @@ internal object NadelHydrationFieldsBuilder {
     }
 
     private fun makeObjectIdField(
-        aliasHelper: AliasHelper,
+        aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
     ): ExecutableNormalizedField? {
         return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {

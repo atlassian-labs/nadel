@@ -1,0 +1,162 @@
+name: restricted field inside hydration via fragments used twice
+enabled:
+  current: true
+  nextgen: false
+overallSchema:
+  UserService: |
+    service UserService {
+      type Query {
+        userByIds(id: ID): User
+      }
+      type User {
+        id: ID
+        restricted: String
+      }
+    }
+  Issues: |
+    service Issues {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        id: ID
+        relatedIssue: Issue
+        author: User => hydrated from UserService.usersById(id: $source.authorId) object identified by id
+      }
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      usersById(id: [ID]): [User]
+    }
+
+    type User {
+      id: ID
+      restricted: String
+    }
+  Issues: |
+    type Issue {
+      authorId: ID
+      id: ID
+      relatedIssue: Issue
+    }
+
+    type Query {
+      issue: Issue
+      myIssue: Issue
+    }
+query: |
+  query {
+    issue {
+      ...IssueFragment
+      relatedIssue {
+        ...IssueFragment
+      }
+    }
+  }
+
+  fragment IssueFragment on Issue {
+    id
+    author {
+      id
+      restricted
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issue {
+              ...IssueFragment
+              relatedIssue {
+                ...IssueFragment
+              }
+            }
+          }
+
+          fragment IssueFragment on Issue {
+            id
+            authorId
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "ID1",
+              "authorId": "USER-1",
+              "relatedIssue": {
+                "id": "ID2",
+                "authorId": "USER-2"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query nadel_2_UserService {
+            usersById(id: ["USER-1", "USER-2"]) {
+              id
+              object_identifier__UUID: id
+            }
+          }
+        variables: {}
+        operationName: nadel_2_UserService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersById": [
+              {
+                "id": "USER-1",
+                "object_identifier__UUID": "USER-1"
+              },
+              {
+                "id": "USER-2",
+                "object_identifier__UUID": "USER-2"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "errors": [
+      {
+        "path": [
+          "issue",
+          "author",
+          "restricted"
+        ],
+        "message": "removed field",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ],
+    "data": {
+      "issue": {
+        "id": "ID1",
+        "author": {
+          "id": "USER-1",
+          "restricted": null
+        },
+        "relatedIssue": {
+          "id": "ID2",
+          "author": {
+            "id": "USER-2",
+            "restricted": null
+          }
+        }
+      }
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,58 @@
+name: abort beginValidation within instrumentation still calls enhancing instrumentation
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query {
+        hello: World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation {
+        hello: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query OpName {
+    hello {
+      name
+    }
+    hello {
+      id
+    }
+  }
+variables:
+  var1: val1
+serviceCalls:
+  current: []
+# language=JSON
+response: |-
+  {
+    "data": "enhanced beginValidation",
+    "errors": [
+      {
+        "message": "beginValidation",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ]
+  }

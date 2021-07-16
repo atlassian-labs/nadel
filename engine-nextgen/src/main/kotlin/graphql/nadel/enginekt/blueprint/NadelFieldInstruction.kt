@@ -4,7 +4,7 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
-import graphql.nadel.enginekt.transform.query.QueryPath
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 
@@ -15,7 +15,7 @@ sealed class NadelFieldInstruction {
 interface NadelGenericHydrationInstruction {
     val hydratedFieldDef: GraphQLFieldDefinition
     val actorService: Service
-    val queryPathToActorField: QueryPath
+    val queryPathToActorField: NadelQueryPath
     val actorFieldDef: GraphQLFieldDefinition
     val actorInputValueDefs: List<NadelHydrationActorInputDef>
 }
@@ -24,7 +24,7 @@ data class NadelHydrationFieldInstruction(
     override val location: FieldCoordinates,
     override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
-    override val queryPathToActorField: QueryPath,
+    override val queryPathToActorField: NadelQueryPath,
     override val actorFieldDef: GraphQLFieldDefinition,
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     val hydrationStrategy: NadelHydrationStrategy,
@@ -34,7 +34,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val location: FieldCoordinates,
     override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
-    override val queryPathToActorField: QueryPath,
+    override val queryPathToActorField: NadelQueryPath,
     override val actorFieldDef: GraphQLFieldDefinition,
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     val batchSize: Int,
@@ -43,7 +43,7 @@ data class NadelBatchHydrationFieldInstruction(
 
 data class NadelDeepRenameFieldInstruction(
     override val location: FieldCoordinates,
-    val queryPathToField: QueryPath,
+    val queryPathToField: NadelQueryPath,
 ) : NadelFieldInstruction()
 
 data class NadelRenameFieldInstruction(

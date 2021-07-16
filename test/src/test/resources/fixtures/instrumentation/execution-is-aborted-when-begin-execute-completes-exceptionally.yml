@@ -1,0 +1,69 @@
+name: execution is aborted when beginExecute completes exceptionally
+enabled:
+  current: true
+  nextgen: true
+ignored:
+  nextgen: true # TODO: implement on nextgen
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query {
+        hello: World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation {
+        hello: String
+      }
+      type Subscription {
+        onWorldUpdate: World
+        onAnotherUpdate: World
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type Subscription {
+      onAnotherUpdate: World
+      onWorldUpdate: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query OpName {
+    hello {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  current: []
+# language=JSON
+response: |-
+  {
+    "data": null,
+    "errors": [
+      {
+        "message": "instrumented-error",
+        "extensions": {
+          "classification": "ExecutionAborted"
+        }
+      }
+    ],
+    "extensions": {
+      "instrumentedExtension": "dummy extension"
+    }
+  }
+
