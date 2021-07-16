@@ -77,7 +77,7 @@ internal class NadelExecutionPlanFactory(
                     NadelTypeRenameResultTransform(),
                     NadelHydrationTransform(engine),
                     NadelBatchHydrationTransform(engine),
-                    NadelRenameTransform()
+                    NadelRenameTransform(),
                 ),
             )
         }

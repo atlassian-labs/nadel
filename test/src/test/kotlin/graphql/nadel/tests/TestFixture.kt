@@ -9,6 +9,7 @@ import graphql.nadel.NadelEngine
 import graphql.nadel.NadelExecutionEngineFactory
 import graphql.nadel.NextgenEngine
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.tests.transforms.RemoveFieldTestTransform
 import graphql.parser.Parser
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
@@ -32,9 +33,12 @@ data class TestFixture(
     }
 }
 
+val customTestTransforms = listOf(RemoveFieldTestTransform())
+
 data class EngineTypeFactories(
     override val current: NadelExecutionEngineFactory = NadelExecutionEngineFactory(::NadelEngine),
-    override val nextgen: NadelExecutionEngineFactory = NadelExecutionEngineFactory(::NextgenEngine),
+    // TODO: test transforms should be set via the engine test hook.
+    override val nextgen: NadelExecutionEngineFactory = NadelExecutionEngineFactory { nadel -> NextgenEngine(nadel, customTestTransforms) },
 ) : NadelEngineTypeValueProvider<NadelExecutionEngineFactory> {
     val all = engines(factories = this)
 
