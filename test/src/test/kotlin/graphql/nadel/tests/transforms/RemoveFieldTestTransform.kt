@@ -8,8 +8,8 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
-import graphql.nadel.enginekt.transform.query.QueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
@@ -18,13 +18,12 @@ import graphql.validation.ValidationError
 import graphql.validation.ValidationErrorType
 
 class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
-
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField
+        overallField: ExecutableNormalizedField,
     ): GraphQLError? {
         if (overallField.objectTypeNames
                 .map { executionBlueprint.schema.getType(it) }
@@ -47,7 +46,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        state: GraphQLError
+        state: GraphQLError,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult(
             newField = null,
@@ -70,15 +69,15 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: GraphQLError
+        state: GraphQLError,
     ): List<NadelResultInstruction> {
-        val nodesAt = JsonNodeExtractor.getNodesAt(
+        val parentNodes = JsonNodeExtractor.getNodesAt(
             data = result.data,
-            queryPath = underlyingParentField?.queryPath ?: QueryPath.root,
+            queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
 
-        return nodesAt.map { parentNode ->
+        return parentNodes.map { parentNode ->
             val destinationPath = parentNode.resultPath + overallField.resultKey
             NadelResultInstruction.Set(
                 subjectPath = destinationPath,

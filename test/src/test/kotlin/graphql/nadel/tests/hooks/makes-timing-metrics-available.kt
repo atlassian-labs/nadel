@@ -13,7 +13,6 @@ import graphql.nadel.tests.KeepHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.serviceExecutionFactory
 import strikt.api.expectThat
-import strikt.assertions.first
 import strikt.assertions.isGreaterThan
 import strikt.assertions.isLessThan
 import strikt.assertions.isNotNull

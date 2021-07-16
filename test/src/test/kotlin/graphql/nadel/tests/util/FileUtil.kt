@@ -1,6 +1,5 @@
 package graphql.nadel.tests.util
 
-import io.kotest.matchers.file.exist
 import java.io.File
 import java.io.FileNotFoundException
 
