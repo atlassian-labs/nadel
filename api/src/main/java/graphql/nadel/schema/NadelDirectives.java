@@ -31,6 +31,7 @@ import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.introspection.Introspection.DirectiveLocation.ENUM;
 import static graphql.introspection.Introspection.DirectiveLocation.FIELD_DEFINITION;
+import static graphql.introspection.Introspection.DirectiveLocation.FRAGMENT_SPREAD;
 import static graphql.introspection.Introspection.DirectiveLocation.INPUT_OBJECT;
 import static graphql.introspection.Introspection.DirectiveLocation.INTERFACE;
 import static graphql.introspection.Introspection.DirectiveLocation.OBJECT;
@@ -53,6 +54,9 @@ public class NadelDirectives {
     public static final InputObjectTypeDefinition NADEL_HYDRATION_ARGUMENT_DEFINITION;
     public static final DirectiveDefinition DYNAMIC_SERVICE_DIRECTIVE_DEFINITION;
     public static final DirectiveDefinition NAMESPACED_DIRECTIVE_DEFINITION;
+
+    // TODO: this should be in GraphQL Java
+    public static final DirectiveDefinition DEFER_DIRECTIVE_DEFINITION;
 
     static {
         DYNAMIC_SERVICE_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
@@ -151,6 +155,19 @@ public class NadelDirectives {
                                 .type(newListType().type(nonNull("NadelHydrationArgument")).build())
                                 .build())
                 .build();
+
+        DEFER_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
+                .name("defer")
+                .directiveLocation(newDirectiveLocation().name(FRAGMENT_SPREAD.name()).build())
+                .description(createDescription("This directive allows results to be deferred during execution"))
+                .inputValueDefinition(
+                        newInputValueDefinition()
+                                .name("if")
+                                .description(createDescription("Deferred behaviour is controlled by this argument"))
+                                .type(typeOf("Boolean"))
+                                .defaultValue(BooleanValue.newBooleanValue(true).build())
+                                .build()
+                ).build();
     }
 
     private static TypeName typeOf(String typename) {

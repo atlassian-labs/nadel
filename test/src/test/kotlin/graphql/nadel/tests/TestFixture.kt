@@ -26,6 +26,7 @@ data class TestFixture(
     @JsonProperty("response")
     val responseJsonString: String?,
     val exception: ExpectedException?,
+    val deferredResponses: List<DeferredResponse>?
 ) {
     @get:JsonIgnore
     val response: JsonMap? by lazy {
@@ -101,6 +102,19 @@ data class ServiceCall(
             private val astSorter = AstSorter()
             private val documentParser = Parser()
         }
+    }
+}
+
+data class DeferredResponse(
+    val path: String,
+    val label: String,
+    @JsonProperty("data")
+    val dataString: String,
+) {
+
+    @get:JsonIgnore
+    val data: JsonMap by lazy {
+        jsonObjectMapper.readValue(dataString)
     }
 }
 

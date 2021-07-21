@@ -6,6 +6,7 @@ plugins {
 
 val graphqlJavaVersion = "0.0.0-2021-07-06T00-28-13-573087f7"
 val slf4jVersion = "1.7.25"
+val reactiveStreamsVersion = "1.0.3"
 
 val graphqlJavaSource: Configuration by configurations.creating
 
@@ -68,6 +69,7 @@ dependencies {
         isTransitive = false
     }
     api("com.graphql-java:graphql-java:$graphqlJavaVersion")
+    api ("org.reactivestreams:reactive-streams:$reactiveStreamsVersion")
     implementation("org.antlr:antlr4-runtime:4.8")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     antlr("org.antlr:antlr4:4.8")

@@ -5,11 +5,15 @@ import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
+import graphql.execution.ResultPath
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
+import graphql.nadel.defer.DeferSupportJava
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
+import graphql.nadel.enginekt.defer.DeferSupport
+import graphql.nadel.enginekt.defer.DeferredCall
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelTransform
@@ -101,12 +105,25 @@ class NextgenEngine @JvmOverloads constructor(
         // TODO: determine what to do with NQ
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
 
+
         val results = coroutineScope {
             fieldToService.getServicesForTopLevelFields(query)
                 .map { (field, service) ->
                     async {
                         try {
-                            executeTopLevelField(field, service, executionContext)
+                            val deferLabel = DeferSupport.getDeferLabel(query, field)
+                            if (deferLabel != null) {
+                                val call = DeferredCall(
+                                    path = ResultPath.rootPath(),
+                                    label = deferLabel,
+                                    call = { executeTopLevelField(field, service, executionContext) }
+                                )
+                                executionContext.deferSupport.enqueue(call)
+                                null
+                            } else {
+                                executeTopLevelField(field, service, executionContext)
+                            }
+
                         } catch (e: Throwable) {
                             when (e) {
                                 is GraphQLError -> newExecutionResult(error = e)
@@ -116,14 +133,33 @@ class NextgenEngine @JvmOverloads constructor(
                     }
                 }
         }.awaitAll()
+            .filterNotNull()
 
-        return mergeResults(results)
+        return deferSupport(executionContext, mergeResults((results)))
     }
+
+    private fun deferSupport(
+        executionContext: NadelExecutionContext,
+        result: ExecutionResult
+    ): ExecutionResult {
+        val deferSupport: DeferSupport = executionContext.deferSupport
+        if (deferSupport.isDeferDetected()) {
+            // we start the rest of the query now to maximize throughput.  We have the initial important results
+            // and now we can start the rest of the calls as early as possible (even before some one subscribes)
+            val publisher = deferSupport.startDeferredCalls()
+            return newExecutionResult().from(result)
+                .addExtension("GRAPHQL_DEFERRED", publisher)
+                .build()
+        }
+
+        return result
+    }
+
 
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
         service: Service,
-        executionContext: NadelExecutionContext
+        executionContext: NadelExecutionContext,
     ): ExecutionResult {
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
         val queryTransform = queryTransformer.transformQuery(
@@ -133,6 +169,7 @@ class NextgenEngine @JvmOverloads constructor(
             executionPlan,
         )
         val transformedQuery = queryTransform.result.single()
+
         val result = executeService(service, transformedQuery, executionContext)
         val transformedResult = resultTransformer.transform(
             executionContext = executionContext,

@@ -1,6 +1,7 @@
 package graphql.nadel.tests
 
 import com.fasterxml.jackson.module.kotlin.readValue
+import graphql.ExecutionResult
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.Nadel
@@ -9,6 +10,7 @@ import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.defer.DeferredExecutionResult
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
@@ -19,6 +21,10 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
 import kotlinx.coroutines.future.await
 import org.junit.jupiter.api.fail
+import org.reactivestreams.Publisher
+import reactor.test.StepVerifier
+import strikt.api.expectThat
+import strikt.assertions.isEqualTo
 import java.io.File
 import java.util.concurrent.CompletableFuture
 
@@ -30,7 +36,7 @@ import java.util.concurrent.CompletableFuture
  * Test name e.g. hydration inside a renamed field
  * Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = ""
+private val singleTestToRun = "defer-top-level"
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")
@@ -221,6 +227,9 @@ private suspend fun execute(
         }
 
         testHooks?.assertResult(engineType, response)
+
+        assertDeferredResults(fixture, response)
+
     } catch (e: Throwable) {
         if (fixture.exception?.message?.matches(e.message ?: "") == true) {
             return
@@ -230,4 +239,46 @@ private suspend fun execute(
         }
         fail("Unexpected error during engine execution", e)
     }
+}
+
+private fun assertDeferredResults(fixture: TestFixture, response: ExecutionResult) {
+    val expectedResponses = fixture.deferredResponses
+
+    if (expectedResponses != null) {
+        val publisher = response.extensions["GRAPHQL_DEFERRED"] as Publisher<DeferredExecutionResult>
+
+        consumeResults(publisher) { results ->
+            expectThat(results.size)
+                .describedAs("deferred results count")
+                .isEqualTo(expectedResponses.size)
+
+            expectedResponses
+                .sortedBy { it.label }
+                .zip(results.sortedBy { it.label })
+                .forEach{(actual, expected) -> assertStep(expected, actual)}
+        }
+    }
+}
+
+private fun consumeResults(
+    publisher: Publisher<DeferredExecutionResult>,
+    consumer: (Collection<DeferredExecutionResult>) -> Unit
+) {
+    StepVerifier.create(publisher)
+        .recordWith { ArrayList() }
+        .thenConsumeWhile { true }
+        .consumeRecordedWith(consumer)
+        .verifyComplete()
+}
+
+private fun assertStep(
+    actual: DeferredExecutionResult,
+    expected: DeferredResponse
+) {
+    assertJsonObject(
+        subject = mapOf("data" to actual.toSpecification()["data"]),
+        expected = mapOf("data" to expected.data)
+    )
+    expectThat(actual.path.toString()).isEqualTo(expected.path)
+    expectThat(actual.label).isEqualTo(expected.label)
 }

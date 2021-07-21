@@ -3,6 +3,7 @@ package graphql.nadel.enginekt
 import graphql.ExecutionInput
 import graphql.PublicApi
 import graphql.nadel.Service
+import graphql.nadel.enginekt.defer.DeferSupport
 import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.ServiceExecutionHooks
 import java.util.concurrent.CompletableFuture
@@ -14,6 +15,7 @@ data class NadelExecutionContext(
     val hooks: ServiceExecutionHooks,
 ) {
     private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
+    val deferSupport = DeferSupport()
 
     val userContext: Any?
         get() {
