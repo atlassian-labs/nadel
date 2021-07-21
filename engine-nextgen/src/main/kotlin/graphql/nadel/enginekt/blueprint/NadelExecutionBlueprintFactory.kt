@@ -68,7 +68,7 @@ private class Factory(
             schema = overallSchema,
             fieldInstructions = fieldInstructions,
             typeInstructions = typeRenameInstructions,
-            underlyingBlueprints = deriveUnderlyingBlueprints(fieldInstructions, typeRenameInstructions),
+            underlyingBlueprints = deriveUnderlyingBlueprints(typeRenameInstructions),
             coordinatesToService = coordinatesToService
         )
     }
@@ -309,7 +309,6 @@ private class Factory(
     }
 
     private fun deriveUnderlyingBlueprints(
-        fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
         typeRenameInstructions: Map<String, NadelTypeRenameInstruction>,
     ): Map<String, NadelExecutionBlueprint> {
         val typeInstructionsByServiceName = typeRenameInstructions.values
@@ -325,34 +324,10 @@ private class Factory(
                 )
             }
 
-        val fieldInstructionsByServiceName = fieldInstructions.values
-            .groupBy { instruction ->
-                coordinatesToService[instruction.location]!!.name
-            }
-            .mapValues { (_, fieldInstructionsForService) ->
-                mapFrom(
-                    fieldInstructionsForService.mapNotNull { instruction: NadelFieldInstruction ->
-                        val underlyingTypeName = instruction.location.typeName.let { overallTypeName ->
-                            typeRenameInstructions[overallTypeName]?.underlyingName ?: overallTypeName
-                        }
-                        val underlyingFieldName = when (instruction) {
-                            is NadelRenameFieldInstruction -> instruction.underlyingName
-                            else -> return@mapNotNull null
-                        }
-                        val underlyingFieldCoordinates = makeFieldCoordinates(underlyingTypeName, underlyingFieldName)
-                        instruction.copy(location = underlyingFieldCoordinates)
-                            .let {
-                                it.location to it
-                            }
-                    },
-                )
-            }
-
         return mapFrom(
             services.map { service ->
                 service.name to NadelUnderlyingExecutionBlueprint(
                     schema = service.underlyingSchema,
-                    fieldInstructions = fieldInstructionsByServiceName[service.name] ?: emptyMap(),
                     typeInstructions = typeInstructionsByServiceName[service.name] ?: emptyMap(),
                 )
             }
