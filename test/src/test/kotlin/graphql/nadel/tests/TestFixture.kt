@@ -106,7 +106,7 @@ data class ServiceCall(
 }
 
 data class DeferredResponse(
-    val path: String,
+    val path: List<String>,
     val label: String,
     @JsonProperty("data")
     val dataString: String,

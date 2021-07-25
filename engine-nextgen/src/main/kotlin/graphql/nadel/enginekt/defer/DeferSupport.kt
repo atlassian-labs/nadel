@@ -15,10 +15,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class DeferSupport {
     private val deferDetected = AtomicBoolean(false)
-    private val deferredCalls: Deque<DeferredCall> = ConcurrentLinkedDeque()
-    private val publisher = SingleSubscriberPublisher<DeferredExecutionResult>()
+    private val deferredCalls: Deque<DeferredCall<*>> = ConcurrentLinkedDeque()
+    val publisher = SingleSubscriberPublisher<DeferredExecutionResult>()
 
-    fun enqueue(deferredCall: DeferredCall) {
+    fun enqueue(deferredCall: DeferredCall<*>) {
         deferDetected.set(true)
         deferredCalls.offer(deferredCall)
     }
@@ -48,11 +48,12 @@ class DeferSupport {
     }
 
     companion object {
-        // TODO: Make "static"
         fun getDeferLabel(
             normalizedOperation: ExecutableNormalizedOperation,
             topLevelField: ExecutableNormalizedField
         ): String? {
+//            normalizedOperation.normalizedFieldToMergedField.filter { it.key }
+
             return normalizedOperation.getMergedField(topLevelField).fields
                 .flatMap { obj: Field -> obj.directives }
                 // TODO: resolve "if" expression

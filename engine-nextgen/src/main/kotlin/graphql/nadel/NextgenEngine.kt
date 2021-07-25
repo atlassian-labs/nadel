@@ -9,11 +9,11 @@ import graphql.execution.ResultPath
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
-import graphql.nadel.defer.DeferSupportJava
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.defer.DeferSupport
-import graphql.nadel.enginekt.defer.DeferredCall
+import graphql.nadel.enginekt.defer.ExecutionDeferredCall
+import graphql.nadel.enginekt.defer.ServiceDeferredCall
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelTransform
@@ -30,6 +30,7 @@ import graphql.nadel.enginekt.util.newExecutionResult
 import graphql.nadel.enginekt.util.newGraphQLError
 import graphql.nadel.enginekt.util.newServiceExecutionResult
 import graphql.nadel.enginekt.util.provide
+import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
@@ -100,7 +101,11 @@ class NextgenEngine @JvmOverloads constructor(
             }
         }
 
-        val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
+        val executionContext = NadelExecutionContext(
+            executionInput = executionInput,
+            hooks = serviceExecutionHooks,
+            normalizedOperation = query
+        )
 
         // TODO: determine what to do with NQ
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
@@ -113,7 +118,7 @@ class NextgenEngine @JvmOverloads constructor(
                         try {
                             val deferLabel = DeferSupport.getDeferLabel(query, field)
                             if (deferLabel != null) {
-                                val call = DeferredCall(
+                                val call = ExecutionDeferredCall(
                                     path = ResultPath.rootPath(),
                                     label = deferLabel,
                                     call = { executeTopLevelField(field, service, executionContext) }
@@ -132,7 +137,9 @@ class NextgenEngine @JvmOverloads constructor(
                         }
                     }
                 }
-        }.awaitAll()
+        }
+            .also { executionContext.deferSupport.startDeferredCalls() }
+            .awaitAll()
             .filterNotNull()
 
         return deferSupport(executionContext, mergeResults((results)))
@@ -146,7 +153,7 @@ class NextgenEngine @JvmOverloads constructor(
         if (deferSupport.isDeferDetected()) {
             // we start the rest of the query now to maximize throughput.  We have the initial important results
             // and now we can start the rest of the calls as early as possible (even before some one subscribes)
-            val publisher = deferSupport.startDeferredCalls()
+            val publisher = deferSupport.publisher
             return newExecutionResult().from(result)
                 .addExtension("GRAPHQL_DEFERRED", publisher)
                 .build()
@@ -193,7 +200,44 @@ class NextgenEngine @JvmOverloads constructor(
         topLevelField: ExecutableNormalizedField,
         pathToActorField: NadelQueryPath,
         executionContext: NadelExecutionContext,
+        hydratedField: ExecutableNormalizedField,
+    ): ServiceExecutionResult? {
+        val deferLabel = DeferSupport.getDeferLabel(executionContext.normalizedOperation, hydratedField)
+
+        if (deferLabel != null) {
+            val call = ServiceDeferredCall(
+                // TODO: This won't be correct if hydration is on list item NadelQueryPath don't know items indexes
+                path = ResultPath.fromList(hydratedField.queryPath.dropLast(1).segments),
+                label = deferLabel,
+                call = {
+                    executeHydrationImpl(
+                        service = service,
+                        topLevelField = topLevelField,
+                        pathToActorField = pathToActorField,
+                        executionContext = executionContext
+                    )
+                }
+            )
+            executionContext.deferSupport.enqueue(call)
+            return null
+        }
+
+        return executeHydrationImpl(
+            service = service,
+            topLevelField = topLevelField,
+            pathToActorField = pathToActorField,
+            executionContext = executionContext
+        )
+    }
+
+    private suspend fun executeHydrationImpl(
+        service: Service,
+        topLevelField: ExecutableNormalizedField,
+        pathToActorField: NadelQueryPath,
+        executionContext: NadelExecutionContext,
     ): ServiceExecutionResult {
+
+
         val actorField = fold(initial = topLevelField, count = pathToActorField.segments.size - 1) {
             it.children.single()
         }

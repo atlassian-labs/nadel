@@ -19,6 +19,8 @@ import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.kotest.matchers.types.shouldBeTypeOf
 import kotlinx.coroutines.future.await
 import org.junit.jupiter.api.fail
 import org.reactivestreams.Publisher
@@ -27,6 +29,7 @@ import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import java.io.File
 import java.util.concurrent.CompletableFuture
+import kotlin.math.exp
 
 /**
  * Enter in the name of the test here, leave blank to run all tests.
@@ -36,7 +39,7 @@ import java.util.concurrent.CompletableFuture
  * Test name e.g. hydration inside a renamed field
  * Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = "defer-top-level"
+private val singleTestToRun = "defer-hydrated"
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")
@@ -242,21 +245,19 @@ private suspend fun execute(
 }
 
 private fun assertDeferredResults(fixture: TestFixture, response: ExecutionResult) {
-    val expectedResponses = fixture.deferredResponses
+    val expectedResponses = fixture.deferredResponses ?: emptyList()
 
-    if (expectedResponses != null) {
-        val publisher = response.extensions["GRAPHQL_DEFERRED"] as Publisher<DeferredExecutionResult>
+    val publisher = response.extensions["GRAPHQL_DEFERRED"] as Publisher<DeferredExecutionResult>
 
-        consumeResults(publisher) { results ->
-            expectThat(results.size)
-                .describedAs("deferred results count")
-                .isEqualTo(expectedResponses.size)
+    consumeResults(publisher) { results ->
+        expectThat(results.size)
+            .describedAs("deferred results count")
+            .isEqualTo(expectedResponses.size)
 
-            expectedResponses
-                .sortedBy { it.label }
-                .zip(results.sortedBy { it.label })
-                .forEach{(actual, expected) -> assertStep(expected, actual)}
-        }
+        expectedResponses
+            .sortedBy { it.label }
+            .zip(results.sortedBy { it.label })
+            .forEach{(actual, expected) -> assertStep(expected, actual)}
     }
 }
 
@@ -279,6 +280,7 @@ private fun assertStep(
         subject = mapOf("data" to actual.toSpecification()["data"]),
         expected = mapOf("data" to expected.data)
     )
-    expectThat(actual.path.toString()).isEqualTo(expected.path)
+    actual.path.shouldBeInstanceOf<List<String>>()
+    expectThat(actual.path).isEqualTo(expected.path)
     expectThat(actual.label).isEqualTo(expected.label)
 }

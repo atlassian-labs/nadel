@@ -158,24 +158,30 @@ internal class NadelHydrationTransform(
                         topLevelField = actorQuery,
                         pathToActorField = instruction.queryPathToActorField,
                         executionContext = executionContext,
+                        hydratedField = hydrationField,
                     )
                 }
             }.awaitAll()
+                .filterNotNull()
         }
 
         when (instruction.hydrationStrategy) {
             is NadelHydrationStrategy.OneToOne -> {
                 // Should not have more than one query for one to one
-                val result = actorQueryResults.emptyOrSingle()
+                val result = actorQueryResults.emptyOrSingle() ?: return listOf(
+                    NadelResultInstruction.Remove(
+                        subjectPath = parentNode.resultPath + hydrationField.resultKey
+                    )
+                )
 
-                val data = result?.data?.let { data ->
+                val data = result.data?.let { data ->
                     JsonNodeExtractor.getNodesAt(
                         data = data,
                         queryPath = instruction.queryPathToActorField,
                     ).emptyOrSingle()
                 }
 
-                val errors = result?.let(::getInstructionsToAddErrors) ?: emptyList()
+                val errors = result.let(::getInstructionsToAddErrors) ?: emptyList()
 
                 return listOf(
                     NadelResultInstruction.Set(
@@ -185,6 +191,7 @@ internal class NadelHydrationTransform(
                 ) + errors
             }
             is NadelHydrationStrategy.ManyToOne -> {
+                // TODO: Need to implement defer support here
                 val data = actorQueryResults.map { result ->
                     JsonNodeExtractor.getNodesAt(
                         data = result.data,

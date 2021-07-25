@@ -1,0 +1,138 @@
+name: defer hydrated
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Foo: |
+    service Foo {
+      directive @defer(label: String!) on FRAGMENT_SPREAD | INLINE_FRAGMENT | FIELD
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        id: ID!
+        bar: Bar => hydrated from Bar.bar(id: $source.barId)
+      }
+    }
+  Bar: |
+    service Bar {
+      type Query {
+        bar(id: ID!): Bar
+      }
+
+      type Bar {
+        id: ID!
+        value: String
+      }
+    }
+underlyingSchema:
+  Foo: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID!
+      barId: ID
+    }
+  Bar: |
+    type Query {
+      bar(id: ID!): Bar
+    }
+    type Bar {
+      id: ID!
+      value: String
+    }
+query: |
+  query {
+    foo {
+      id
+      bar @defer(label: "barDefer"){
+        id
+        value
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  id
+                }
+                ... on Foo {
+                  hydration__bar__barId: barId
+                }
+                ... on Foo {
+                  __typename__hydration__bar: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "id": "fooId",
+              "hydration__bar__barId": "barId",
+              "__typename__hydration__bar": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              bar(id: "barId") {
+                ... on Bar {
+                  id
+                }
+                ... on Bar {
+                  value
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bar": {
+              "id": "barId",
+              "value": "barbar"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "id": "fooId"
+      }
+    },
+    "extensions": {}
+  }
+deferredResponses:
+  - path: ["foo"]
+    label: "barDefer"
+    # language=JSON
+    data: |-
+      {
+        "bar": {
+          "id": "barId",
+          "value": "barbar"
+        }
+      }

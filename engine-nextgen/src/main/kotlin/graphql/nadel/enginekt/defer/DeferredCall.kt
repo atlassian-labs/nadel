@@ -1,23 +1,53 @@
 package graphql.nadel.enginekt.defer
 
 import graphql.ExecutionResult
+import graphql.ExecutionResultImpl
 import graphql.execution.ResultPath
+import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.defer.DeferredExecutionResult
 
-class DeferredCall(
+abstract class DeferredCall<ResultType>(
     val path: ResultPath,
     val label: String,
-    val call: suspend () -> ExecutionResult
+    val call: suspend () -> ResultType
 ) {
     suspend fun invoke(): DeferredExecutionResult {
-        Thread.sleep(1000)
         return transformToDeferredResult(call.invoke())
     }
 
-    private fun transformToDeferredResult(executionResult: ExecutionResult): DeferredExecutionResult {
+    abstract fun transformToDeferredResult(result: ResultType): DeferredExecutionResult
+}
+
+class ExecutionDeferredCall(
+    path: ResultPath,
+    label: String,
+    call: suspend () -> ExecutionResult
+): DeferredCall<ExecutionResult>(path, label, call) {
+    override fun transformToDeferredResult(result: ExecutionResult): DeferredExecutionResult {
+        return DeferredExecutionResultImpl.newDeferredExecutionResult().from(result)
+            .path(path)
+            .label(label)
+            .build()
+    }
+}
+
+class ServiceDeferredCall(
+    path: ResultPath,
+    label: String,
+    call: suspend () -> ServiceExecutionResult
+): DeferredCall<ServiceExecutionResult>(path, label, call) {
+    override fun transformToDeferredResult(result: ServiceExecutionResult): DeferredExecutionResult {
+        val executionResult = ExecutionResultImpl.newExecutionResult()
+            .data(result.data)
+            // TODO: Transform and set errors
+//            .errors(serviceExecutionResult.errors.map { GraphqlErrorBuilder.newError().message(it).build() })
+            .build()
+
+
         return DeferredExecutionResultImpl.newDeferredExecutionResult().from(executionResult)
             .path(path)
             .label(label)
             .build()
     }
 }
+
