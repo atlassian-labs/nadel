@@ -10,7 +10,6 @@ import graphql.schema.GraphQLSchema
 
 interface NadelExecutionBlueprint {
     val schema: GraphQLSchema
-    val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>
     val typeInstructions: Map<String, NadelTypeRenameInstruction>
 }
 
@@ -19,8 +18,8 @@ interface NadelExecutionBlueprint {
  */
 data class NadelOverallExecutionBlueprint(
     override val schema: GraphQLSchema,
-    override val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
     override val typeInstructions: Map<String, NadelTypeRenameInstruction>,
+    val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
     private val underlyingBlueprints: Map<String, NadelExecutionBlueprint>,
     private val coordinatesToService: Map<FieldCoordinates, Service>,
 ) : NadelExecutionBlueprint {
@@ -57,7 +56,6 @@ data class NadelOverallExecutionBlueprint(
  */
 data class NadelUnderlyingExecutionBlueprint(
     override val schema: GraphQLSchema,
-    override val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
     override val typeInstructions: Map<String, NadelTypeRenameInstruction>,
 ) : NadelExecutionBlueprint
 
