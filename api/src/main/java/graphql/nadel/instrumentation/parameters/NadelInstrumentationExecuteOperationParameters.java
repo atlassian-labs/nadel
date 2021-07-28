@@ -6,7 +6,9 @@ import graphql.execution.instrumentation.InstrumentationState;
 import graphql.language.Document;
 import graphql.language.OperationDefinition;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
+import graphql.normalized.ExecutableNormalizedOperation;
 import graphql.schema.GraphQLSchema;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -17,7 +19,10 @@ import java.util.Map;
 @PublicApi
 public class NadelInstrumentationExecuteOperationParameters {
     private final InstrumentationState instrumentationState;
+    @Nullable
     private final NormalizedQueryFromAst normalizedQueryFromAst;
+    @Nullable
+    private final ExecutableNormalizedOperation normalizedOperation;
     private final Document document;
     private final GraphQLSchema graphQLSchema;
     private final Map<String, Object> variables;
@@ -33,7 +38,33 @@ public class NadelInstrumentationExecuteOperationParameters {
             InstrumentationState instrumentationState,
             Object context
     ) {
+        this(normalizedQueryFromAst, null, document, graphQLSchema, variables, operationDefinition, instrumentationState, context);
+    }
+
+    public NadelInstrumentationExecuteOperationParameters(
+            ExecutableNormalizedOperation normalizedOperation,
+            Document document,
+            GraphQLSchema graphQLSchema,
+            Map<String, Object> variables,
+            OperationDefinition operationDefinition,
+            InstrumentationState instrumentationState,
+            Object context
+    ) {
+        this(null, normalizedOperation, document, graphQLSchema, variables, operationDefinition, instrumentationState, context);
+    }
+
+    private NadelInstrumentationExecuteOperationParameters(
+            @Nullable NormalizedQueryFromAst normalizedQueryFromAst,
+            @Nullable ExecutableNormalizedOperation normalizedOperation,
+            Document document,
+            GraphQLSchema graphQLSchema,
+            Map<String, Object> variables,
+            OperationDefinition operationDefinition,
+            InstrumentationState instrumentationState,
+            Object context
+    ) {
         this.instrumentationState = instrumentationState;
+        this.normalizedOperation = normalizedOperation;
         this.normalizedQueryFromAst = normalizedQueryFromAst;
         this.document = document;
         this.graphQLSchema = graphQLSchema;
@@ -49,11 +80,17 @@ public class NadelInstrumentationExecuteOperationParameters {
      * @return a new parameters object with the new state
      */
     public NadelInstrumentationExecuteOperationParameters withNewState(InstrumentationState instrumentationState) {
-        return new NadelInstrumentationExecuteOperationParameters(normalizedQueryFromAst, document, graphQLSchema, variables, operationDefinition, instrumentationState, context);
+        return new NadelInstrumentationExecuteOperationParameters(normalizedQueryFromAst, normalizedOperation, document, graphQLSchema, variables, operationDefinition, instrumentationState, context);
     }
 
+    @Nullable
     public NormalizedQueryFromAst getNormalizedQueryFromAst() {
         return normalizedQueryFromAst;
+    }
+
+    @Nullable
+    public ExecutableNormalizedOperation getNormalizedOperation() {
+        return normalizedOperation;
     }
 
     public <T extends InstrumentationState> T getInstrumentationState() {

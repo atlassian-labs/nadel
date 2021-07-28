@@ -5,6 +5,7 @@ import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
+import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
@@ -29,8 +30,10 @@ import graphql.nadel.enginekt.util.provide
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedOperation
 import graphql.normalized.ExecutableNormalizedOperationFactory
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import kotlinx.coroutines.GlobalScope
@@ -97,27 +100,63 @@ class NextgenEngine @JvmOverloads constructor(
         }
 
         val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
+        val instrumentationContext = getInstrumentationContext(query, queryDocument, executionInput, instrumentationState)
 
-        // TODO: determine what to do with NQ
-        // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
-
-        val results = coroutineScope {
-            fieldToService.getServicesForTopLevelFields(query)
-                .map { (field, service) ->
-                    async {
-                        try {
-                            executeTopLevelField(field, service, executionContext)
-                        } catch (e: Throwable) {
-                            when (e) {
-                                is GraphQLError -> newExecutionResult(error = e)
-                                else -> throw e
+        val result: ExecutionResult
+        try {
+            val results = coroutineScope {
+                fieldToService.getServicesForTopLevelFields(query)
+                    .map { (field, service) ->
+                        async {
+                            try {
+                                executeTopLevelField(field, service, executionContext)
+                            } catch (e: Throwable) {
+                                when (e) {
+                                    is GraphQLError -> newExecutionResult(error = e)
+                                    else -> throw e
+                                }
                             }
                         }
                     }
-                }
-        }.awaitAll()
+            }.awaitAll()
 
-        return mergeResults(results)
+            result = mergeResults(results)
+        } catch (e: Throwable) {
+            instrumentationContext.onCompleted(null, e)
+            throw e
+        }
+        instrumentationContext.onCompleted(result, null)
+        return result
+    }
+
+    private suspend fun getInstrumentationContext(
+        query: ExecutableNormalizedOperation,
+        queryDocument: Document,
+        executionInput: ExecutionInput,
+        instrumentationState: InstrumentationState?
+    ): InstrumentationContext<ExecutionResult> {
+        val nadelInstrumentationExecuteOperationParameters = buildInstrumentationExecutionParameters(query, queryDocument, executionInput, instrumentationState)
+
+        return instrumentation.beginExecute(nadelInstrumentationExecuteOperationParameters)
+            .asDeferred()
+            .await()
+    }
+
+    private fun buildInstrumentationExecutionParameters(
+        query: ExecutableNormalizedOperation,
+        queryDocument: Document,
+        executionInput: ExecutionInput,
+        instrumentationState: InstrumentationState?
+    ): NadelInstrumentationExecuteOperationParameters {
+        return NadelInstrumentationExecuteOperationParameters(
+            query,
+            queryDocument,
+            overallSchema,
+            executionInput.variables,
+            queryDocument.definitions.singleOfType(),
+            instrumentationState,
+            executionInput.context
+        )
     }
 
     private suspend fun executeTopLevelField(
