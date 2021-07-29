@@ -20,6 +20,7 @@ import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.copy
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
+import graphql.nadel.enginekt.util.getInstrumentationContext
 import graphql.nadel.enginekt.util.getOperationKind
 import graphql.nadel.enginekt.util.mergeResults
 import graphql.nadel.enginekt.util.newExecutionResult
@@ -97,27 +98,32 @@ class NextgenEngine @JvmOverloads constructor(
         }
 
         val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
+        val instrumentationContext = getInstrumentationContext(query, queryDocument, executionInput, overallSchema, instrumentation, instrumentationState)
 
-        // TODO: determine what to do with NQ
-        // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
-
-        val results = coroutineScope {
-            fieldToService.getServicesForTopLevelFields(query)
-                .map { (field, service) ->
-                    async {
-                        try {
-                            executeTopLevelField(field, service, executionContext)
-                        } catch (e: Throwable) {
-                            when (e) {
-                                is GraphQLError -> newExecutionResult(error = e)
-                                else -> throw e
+        val result: ExecutionResult = try {
+            mergeResults(
+                coroutineScope {
+                    fieldToService.getServicesForTopLevelFields(query)
+                        .map { (field, service) ->
+                            async {
+                                try {
+                                    executeTopLevelField(field, service, executionContext)
+                                } catch (e: Throwable) {
+                                    when (e) {
+                                        is GraphQLError -> newExecutionResult(error = e)
+                                        else -> throw e
+                                    }
+                                }
                             }
                         }
-                    }
-                }
-        }.awaitAll()
-
-        return mergeResults(results)
+                }.awaitAll()
+            )
+        } catch (e: Throwable) {
+            instrumentationContext.onCompleted(null, e)
+            throw e
+        }
+        instrumentationContext.onCompleted(result, null)
+        return result
     }
 
     private suspend fun executeTopLevelField(

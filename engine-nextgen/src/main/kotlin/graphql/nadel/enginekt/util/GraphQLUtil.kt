@@ -9,6 +9,8 @@ import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder.newError
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
+import graphql.execution.instrumentation.InstrumentationContext
+import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Definition
 import graphql.language.Document
 import graphql.language.ObjectTypeDefinition
@@ -17,7 +19,10 @@ import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
+import graphql.nadel.instrumentation.NadelInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedOperation
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -25,6 +30,7 @@ import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
+import kotlinx.coroutines.future.asDeferred
 
 typealias AnyAstDefinition = Definition<*>
 
@@ -267,4 +273,37 @@ fun ExecutableNormalizedField.getOperationKind(
         schema.subscriptionType?.name?.equals(objectTypeName) == true -> OperationDefinition.Operation.SUBSCRIPTION
         else -> error("Type '$objectTypeName' is not one of the standard GraphQL operation types")
     }
+}
+
+internal suspend fun getInstrumentationContext(
+    query: ExecutableNormalizedOperation,
+    queryDocument: Document,
+    executionInput: ExecutionInput,
+    graphQLSchema: GraphQLSchema,
+    instrumentation: NadelInstrumentation,
+    instrumentationState: InstrumentationState?,
+): InstrumentationContext<ExecutionResult> {
+    val nadelInstrumentationExecuteOperationParameters = buildInstrumentationExecutionParameters(query, queryDocument, executionInput, graphQLSchema, instrumentationState)
+
+    return instrumentation.beginExecute(nadelInstrumentationExecuteOperationParameters)
+        .asDeferred()
+        .await()
+}
+
+private fun buildInstrumentationExecutionParameters(
+    query: ExecutableNormalizedOperation,
+    queryDocument: Document,
+    executionInput: ExecutionInput,
+    graphQLSchema: GraphQLSchema,
+    instrumentationState: InstrumentationState?
+): NadelInstrumentationExecuteOperationParameters {
+    return NadelInstrumentationExecuteOperationParameters(
+        query,
+        queryDocument,
+        graphQLSchema,
+        executionInput.variables,
+        queryDocument.definitions.singleOfType(),
+        instrumentationState,
+        executionInput.context
+    )
 }
