@@ -13,6 +13,7 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.defer.DeferSupport
 import graphql.nadel.enginekt.defer.ExecutionDeferredCall
+import graphql.nadel.enginekt.defer.FirstDeferredExecutionResult
 import graphql.nadel.enginekt.defer.ServiceDeferredCall
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
@@ -154,9 +155,11 @@ class NextgenEngine @JvmOverloads constructor(
             // we start the rest of the query now to maximize throughput.  We have the initial important results
             // and now we can start the rest of the calls as early as possible (even before some one subscribes)
             val publisher = deferSupport.publisher
-            return newExecutionResult().from(result)
+            val executionResultImpl = newExecutionResult().from(result)
                 .addExtension("GRAPHQL_DEFERRED", publisher)
                 .build()
+
+            return FirstDeferredExecutionResult(executionResultImpl)
         }
 
         return result

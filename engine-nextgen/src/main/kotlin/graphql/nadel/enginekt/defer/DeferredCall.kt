@@ -24,7 +24,7 @@ class ExecutionDeferredCall(
     call: suspend () -> ExecutionResult
 ): DeferredCall<ExecutionResult>(path, label, call) {
     override fun transformToDeferredResult(result: ExecutionResult): DeferredExecutionResult {
-        return DeferredExecutionResultImpl.newDeferredExecutionResult().from(result)
+        return LabeledDeferredExecutionResult.newDeferredExecutionResult().from(result)
             .path(path)
             .label(label)
             .build()
@@ -44,7 +44,7 @@ class ServiceDeferredCall(
             .build()
 
 
-        return DeferredExecutionResultImpl.newDeferredExecutionResult().from(executionResult)
+        return LabeledDeferredExecutionResult.newDeferredExecutionResult().from(executionResult)
             .path(path)
             .label(label)
             .build()

@@ -2,6 +2,8 @@ package graphql.nadel.enginekt.defer
 
 import graphql.execution.reactive.SingleSubscriberPublisher
 import graphql.language.Field
+import graphql.language.FragmentSpread
+import graphql.language.InlineFragment
 import graphql.language.StringValue
 import graphql.nadel.defer.DeferredExecutionResult
 import graphql.normalized.ExecutableNormalizedField
@@ -13,6 +15,9 @@ import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Implements https://github.com/graphql/graphql-spec/pull/742
+ */
 class DeferSupport {
     private val deferDetected = AtomicBoolean(false)
     private val deferredCalls: Deque<DeferredCall<*>> = ConcurrentLinkedDeque()
@@ -25,8 +30,8 @@ class DeferSupport {
 
     private fun drainDeferredCalls() {
         if (deferredCalls.isEmpty()) {
+            publisher.offer(FinalDeferredExecutionResult)
             publisher.noMoreData()
-            // Publish with "hasNext: false" ?
             return
         }
         val deferredCall = deferredCalls.pop()
@@ -53,6 +58,24 @@ class DeferSupport {
             topLevelField: ExecutableNormalizedField
         ): String? {
 //            normalizedOperation.normalizedFieldToMergedField.filter { it.key }
+
+//            return normalizedOperation.getMergedField(topLevelField)
+//                .fields
+//                .flatMap { it.selectionSet?.selections ?: emptyList() }
+//                .flatMap {
+//                    when (it) {
+//                        is InlineFragment -> it.directives
+//                        is FragmentSpread -> it.directives
+//                        else -> emptyList()
+//                    }
+//                }
+//                .find { it.name == "defer" }
+//                ?.let { it.arguments }
+//                ?.let { args -> args.find { it.name == "label" } }
+//                ?.let { it.value }
+//                ?.let { it as? StringValue }
+//                ?.let { it.value }
+
 
             return normalizedOperation.getMergedField(topLevelField).fields
                 .flatMap { obj: Field -> obj.directives }

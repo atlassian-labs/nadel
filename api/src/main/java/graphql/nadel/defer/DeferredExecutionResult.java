@@ -19,4 +19,7 @@ public interface DeferredExecutionResult extends ExecutionResult {
 
     // TODO: Javadoc
     String getLabel();
+
+    // TODO: Javadoc
+    boolean hasNext();
 }

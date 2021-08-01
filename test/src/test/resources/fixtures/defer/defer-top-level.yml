@@ -38,8 +38,10 @@ underlyingSchema:
 query: |
   query {
     foo
-    bar @defer(label: "barDefer")
-    baz @defer(label: "bazDefer")
+    ... on Query @defer(label: "queryDefer") {
+      bar
+      baz
+    }
   }
 variables: {}
 serviceCalls:
