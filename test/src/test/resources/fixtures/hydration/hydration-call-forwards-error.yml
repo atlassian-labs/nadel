@@ -50,7 +50,7 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
   current:
     - serviceName: service1
@@ -61,7 +61,7 @@ serviceCalls:
               barId
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_service1
       # language=JSON
       response: |-
@@ -81,7 +81,7 @@ serviceCalls:
               name
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_service2
       # language=JSON
       response: |-
@@ -90,6 +90,12 @@ serviceCalls:
           "errors": [
             {
               "message": "Some error occurred"
+            },
+            {
+              "message": "Some error with extension occurred",
+              "extensions": {
+                "classification": "SomeCustomError"
+              }
             }
           ],
           "extensions": {}
@@ -110,7 +116,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
@@ -135,7 +141,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
@@ -143,6 +149,12 @@ serviceCalls:
           "errors": [
             {
               "message": "Some error occurred"
+            },
+            {
+              "message": "Some error with extension occurred",
+              "extensions": {
+                "classification": "SomeCustomError"
+              }
             }
           ],
           "extensions": {}
@@ -156,6 +168,12 @@ response: |-
         "locations": [],
         "extensions": {
           "classification": "DataFetchingException"
+        }
+      }, {
+        "message": "Some error with extension occurred",
+        "locations": [],
+        "extensions": {
+          "classification": "SomeCustomError"
         }
       }
     ],
