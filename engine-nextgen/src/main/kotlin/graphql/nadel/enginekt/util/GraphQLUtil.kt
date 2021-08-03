@@ -49,9 +49,12 @@ fun newGraphQLError(
 fun toGraphQLError(
     raw: JsonMap,
 ): GraphQLError {
-    return newError()
+    val errorBuilder = newError()
         .message(raw["message"] as String?)
-        .build()
+    raw["extensions"]?.let { extensions ->
+        errorBuilder.extensions(extensions as JsonMap)
+    }
+    return errorBuilder.build()
 }
 
 fun GraphQLSchema.getField(coordinates: FieldCoordinates): GraphQLFieldDefinition? {
