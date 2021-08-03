@@ -43,7 +43,7 @@ internal class NadelFieldToService(
     }
 
     private fun getService(overallField: ExecutableNormalizedField): Service {
-        if (overallField.name == Introspection.TypeNameMetaFieldDef.name) {
+        if (overallField.name == Introspection.TypeNameMetaFieldDef.name && overallField.parent != null) {
             return getService(overallField.parent)
         }
 

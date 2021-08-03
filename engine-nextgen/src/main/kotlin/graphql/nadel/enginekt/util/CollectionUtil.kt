@@ -43,7 +43,7 @@ inline fun <K, E> Sequence<E>.strictAssociateBy(crossinline keyExtractor: (E) ->
  * into the [Map] is [List.map]ped from another [Collection].
  */
 @JvmName("mapFromPairs")
-fun <K, V> mapFrom(entries: Collection<Pair<K, V>>): Map<K, V> {
+fun <K, V> mapFrom(entries: Collection<Pair<K, V>>): MutableMap<K, V> {
     val map = HashMap<K, V>(entries.size)
     map.putAll(entries)
     require(map.size == entries.size) {
