@@ -54,6 +54,9 @@ fun toGraphQLError(
     raw["extensions"]?.let { extensions ->
         errorBuilder.extensions(extensions as JsonMap)
     }
+    raw["path"]?.let { path ->
+        errorBuilder.path(path as AnyList)
+    }
     return errorBuilder.build()
 }
 

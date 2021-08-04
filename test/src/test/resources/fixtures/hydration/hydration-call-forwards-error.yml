@@ -93,6 +93,7 @@ serviceCalls:
             },
             {
               "message": "Some error with extension occurred",
+              "path": ["barById", "name"],
               "extensions": {
                 "classification": "SomeCustomError"
               }
@@ -152,6 +153,7 @@ serviceCalls:
             },
             {
               "message": "Some error with extension occurred",
+              "path": ["barById", "name"],
               "extensions": {
                 "classification": "SomeCustomError"
               }
@@ -171,6 +173,7 @@ response: |-
         }
       }, {
         "message": "Some error with extension occurred",
+        "path": ["barById", "name"],
         "locations": [],
         "extensions": {
           "classification": "SomeCustomError"
