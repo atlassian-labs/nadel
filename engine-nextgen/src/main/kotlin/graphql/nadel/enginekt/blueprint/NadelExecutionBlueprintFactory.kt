@@ -1,9 +1,6 @@
 package graphql.nadel.enginekt.blueprint
 
-import graphql.ExecutionInput
-import graphql.GraphQL
 import graphql.introspection.Introspection
-import graphql.language.AstPrinter
 import graphql.language.EnumTypeDefinition
 import graphql.language.EnumTypeExtensionDefinition
 import graphql.language.ImplementingTypeDefinition
@@ -15,8 +12,6 @@ import graphql.language.ScalarTypeExtensionDefinition
 import graphql.language.SchemaExtensionDefinition
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.nadel.Service
-import graphql.nadel.ServiceExecution
-import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
 import graphql.nadel.dsl.ExtendedFieldDefinition
 import graphql.nadel.dsl.FieldMappingDefinition
@@ -337,7 +332,7 @@ private class Factory(
                     schema = service.underlyingSchema,
                     typeInstructions = typeInstructionsByServiceName[service.name] ?: emptyMap(),
                 )
-            } + ("__introspection" to NadelUnderlyingExecutionBlueprint(overallSchema, emptyMap()))
+            } + (IntrospectionService.name to NadelUnderlyingExecutionBlueprint(overallSchema, emptyMap()))
         )
     }
 
@@ -381,23 +376,21 @@ private class Factory(
                     .map { coordinates -> coordinates to service }
             }
         )
-
-        val serviceExecution = ServiceExecution { params ->
-            GraphQL.newGraphQL(overallSchema)
-                .build()
-                .executeAsync(ExecutionInput.newExecutionInput().query(AstPrinter.printAstCompact(params.query)))
-                .thenApply { ServiceExecutionResult(it.getData()) }
-        }
-        val introspectionService = Service(
-            "__introspection",
-            overallSchema,
-            serviceExecution,
-            null,
-            null
-        )
-        coordinatesToService[FieldCoordinates.coordinates("Query", Introspection.SchemaMetaFieldDef.name)] = introspectionService
-        coordinatesToService[FieldCoordinates.coordinates("Query", Introspection.TypeMetaFieldDef.name)] = introspectionService
-        coordinatesToService[FieldCoordinates.coordinates("Query", Introspection.TypeNameMetaFieldDef.name)] = introspectionService
+        mapIntrospectionFieldsToIntrospectionService(coordinatesToService)
         return coordinatesToService
     }
+
+    private fun mapIntrospectionFieldsToIntrospectionService(coordinatesToService: MutableMap<FieldCoordinates, Service>) {
+        val introspectionService = IntrospectionService(overallSchema)
+        for (fieldCoordinates in introspectionTopLevelFields()) {
+            coordinatesToService[fieldCoordinates] = introspectionService
+        }
+    }
+
+    private fun introspectionTopLevelFields(): List<FieldCoordinates> =
+        listOf(
+            Introspection.SchemaMetaFieldDef,
+            Introspection.TypeMetaFieldDef,
+            Introspection.TypeNameMetaFieldDef
+        ).map { FieldCoordinates.coordinates("Query", it.name) }
 }
