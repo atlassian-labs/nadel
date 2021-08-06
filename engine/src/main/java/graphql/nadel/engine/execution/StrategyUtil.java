@@ -159,18 +159,28 @@ public class StrategyUtil {
     private static ExecutionResultNode combineResultNodes(List<ExecutionResultNode> resultNodes) {
         List<ExecutionResultNode> children = new ArrayList<>();
         Map<String, Object> completedValueMap = new LinkedHashMap<>();
+        // TODO: feature flag check, perhaps?
+        List<ExecutionResultNode> nonNullNodes = resultNodes
+                .stream()
+                .filter(resultNode -> resultNode.getCompletedValue() != null)
+                .collect(Collectors.toList());
 
-        for (ExecutionResultNode resultNode : resultNodes) {
+        for (ExecutionResultNode resultNode : nonNullNodes) {
             Object completedValue = resultNode.getCompletedValue();
+
             Assert.assertTrue(resultNode instanceof ObjectExecutionResultNode, () -> String.format("We can only combine object fields not %s for result path %s", resultNode.getClass(), resultNode.getResultKey()));
             Assert.assertTrue(completedValue instanceof Map, () -> String.format("We can only combine object field values that are maps not %s for result path %s", completedValue.getClass(), resultNode.getResultKey()));
             children.addAll(resultNode.getChildren());
             Map<String, Object> childValue = (Map<String, Object>) completedValue;
             completedValueMap.putAll(childValue);
         }
-        ObjectExecutionResultNode mergedObjectResult = (ObjectExecutionResultNode) resultNodes.get(0);
-        return mergedObjectResult.transform(
-                builder -> builder.children(children).completedValue(completedValueMap));
+
+        return nonNullNodes.stream().findFirst()
+                .map(objectNode -> objectNode.transform(
+                        builder -> builder.children(children).completedValue(completedValueMap)
+                ))
+                // all result nodes are null. So just return the first of them
+                .orElse(resultNodes.get(0));
     }
 
 }
