@@ -1,7 +1,8 @@
 name: hydration from field in interface
 enabled:
   current: true
-  nextgen: true
+  # will implement nextgen next
+  nextgen: false
 overallSchema:
   issues: |
     service issues {
@@ -72,6 +73,7 @@ serviceCalls:
             issue(id: "1") {
               title
               author {
+                type_hint_typename__UUID: __typename
                 userId
               }
             }
@@ -85,6 +87,7 @@ serviceCalls:
             "issue": {
               "title": "Issue 1",
               "author":{
+                "type_hint_typename__UUID": "ProductUser",
                 "userId": "1001"
               }
             }

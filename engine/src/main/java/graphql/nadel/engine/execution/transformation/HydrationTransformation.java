@@ -9,6 +9,7 @@ import graphql.language.SelectionSet;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
+import graphql.nadel.engine.execution.ArtificialFieldUtils;
 import graphql.nadel.engine.execution.ExecutionResultNodeMapper;
 import graphql.nadel.engine.execution.HydrationInputNode;
 import graphql.nadel.engine.execution.PathMapper;
@@ -18,6 +19,7 @@ import graphql.nadel.engine.result.LeafExecutionResultNode;
 import graphql.nadel.engine.result.ListExecutionResultNode;
 import graphql.nadel.engine.result.ObjectExecutionResultNode;
 import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.schema.GraphQLOutputType;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
@@ -60,6 +62,11 @@ public class HydrationTransformation extends FieldTransformation {
         List<String> hydrationSourceName = remoteArgumentSource.getPath();
         String transformationId = getTransformationId();
         Field newField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), transformationId, Collections.emptyList(), true, environment.getMetadataByFieldId());
+
+        if(environment.getUnderlyingSchemaType() != null) {
+            // TODO: feature flag this
+            newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(environment.getNadelContext(), newField, (GraphQLOutputType) environment.getUnderlyingSchemaType());
+        }
 
         List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
         assertTrue(sourceValues.size() + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");

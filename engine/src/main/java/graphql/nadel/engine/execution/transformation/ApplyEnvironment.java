@@ -4,10 +4,13 @@ import graphql.Internal;
 import graphql.language.Field;
 import graphql.language.FragmentDefinition;
 import graphql.language.Node;
+import graphql.nadel.engine.NadelContext;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
+import graphql.schema.GraphQLType;
 import graphql.util.TraverserContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +24,8 @@ public class ApplyEnvironment {
     private List<NormalizedQueryField> normalizedQueryFieldsOverall;
     private final Map<String, List<FieldMetadata>> metadataByFieldId;
     private Map<String, FragmentDefinition> fragmentDefinitionMap;
+    private final GraphQLType underlyingSchemaType;
+    private final NadelContext nadelContext;
 
     public ApplyEnvironment(Field field,
                             GraphQLFieldDefinition fieldDefinitionOverall,
@@ -28,7 +33,9 @@ public class ApplyEnvironment {
                             TraverserContext<Node> traverserContext,
                             List<NormalizedQueryField> normalizedQueryFieldsOverall,
                             Map<String, List<FieldMetadata>> metadataByFieldId,
-                            Map<String, FragmentDefinition> fragmentDefinitionMap) {
+                            Map<String, FragmentDefinition> fragmentDefinitionMap,
+                            @Nullable GraphQLType underlyingSchemaType,
+                            NadelContext nadelContext) {
         this.field = field;
         this.fieldDefinitionOverall = fieldDefinitionOverall;
         this.fieldsContainerOverall = fieldsContainerOverall;
@@ -36,6 +43,8 @@ public class ApplyEnvironment {
         this.normalizedQueryFieldsOverall = normalizedQueryFieldsOverall;
         this.metadataByFieldId = metadataByFieldId;
         this.fragmentDefinitionMap = fragmentDefinitionMap;
+        this.underlyingSchemaType = underlyingSchemaType;
+        this.nadelContext = nadelContext;
     }
 
     public Field getField() {
@@ -65,4 +74,14 @@ public class ApplyEnvironment {
     public Map<String, FragmentDefinition> getFragmentDefinitionMap() {
         return fragmentDefinitionMap;
     }
+
+    public NadelContext getNadelContext() {
+        return nadelContext;
+    }
+
+    @Nullable
+    public GraphQLType getUnderlyingSchemaType() {
+        return underlyingSchemaType;
+    }
+
 }
