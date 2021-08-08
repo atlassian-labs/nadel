@@ -136,3 +136,5 @@ deferredResponses:
           "value": "barbar"
         }
       }
+    hasNext: true
+  - hasNext: false

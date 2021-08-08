@@ -106,15 +106,24 @@ data class ServiceCall(
 }
 
 data class DeferredResponse(
-    val path: List<String>,
-    val label: String,
+    val path: List<String>?,
+    val label: String?,
     @JsonProperty("data")
-    val dataString: String,
+    val dataString: String?,
+    val hasNext: Boolean
 ) {
 
     @get:JsonIgnore
-    val data: JsonMap by lazy {
-        jsonObjectMapper.readValue(dataString)
+    val data: JsonMap? by lazy {
+        x()
+    }
+    
+    fun x (): JsonMap? {
+        return if(dataString != null) {
+            jsonObjectMapper.readValue(dataString)
+        } else {
+            null
+        }
     }
 }
 

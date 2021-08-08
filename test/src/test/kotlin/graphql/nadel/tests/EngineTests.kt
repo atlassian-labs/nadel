@@ -19,8 +19,6 @@ import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.core.test.TestContext
-import io.kotest.matchers.types.shouldBeInstanceOf
-import io.kotest.matchers.types.shouldBeTypeOf
 import kotlinx.coroutines.future.await
 import org.junit.jupiter.api.fail
 import org.reactivestreams.Publisher
@@ -29,7 +27,6 @@ import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import java.io.File
 import java.util.concurrent.CompletableFuture
-import kotlin.math.exp
 
 /**
  * Enter in the name of the test here, leave blank to run all tests.
@@ -39,7 +36,7 @@ import kotlin.math.exp
  * Test name e.g. hydration inside a renamed field
  * Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = "defer-top-level"
+private val singleTestToRun = "defer-hydrated"
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")
@@ -247,6 +244,8 @@ private suspend fun execute(
 private fun assertDeferredResults(fixture: TestFixture, response: ExecutionResult) {
     val expectedResponses = fixture.deferredResponses ?: emptyList()
 
+    expectThat((response as DeferredExecutionResult).hasNext()).isEqualTo(true)
+
     val publisher = response.extensions["GRAPHQL_DEFERRED"] as Publisher<DeferredExecutionResult>
 
     consumeResults(publisher) { results ->
@@ -280,7 +279,10 @@ private fun assertStep(
         subject = mapOf("data" to actual.toSpecification()["data"]),
         expected = mapOf("data" to expected.data)
     )
-    actual.path.shouldBeInstanceOf<List<String>>()
+
     expectThat(actual.path).isEqualTo(expected.path)
     expectThat(actual.label).isEqualTo(expected.label)
+    expectThat(actual.hasNext()).isEqualTo(expected.hasNext)
+
+    // TODO better assertions here
 }

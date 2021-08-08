@@ -2,8 +2,6 @@ package graphql.nadel.enginekt.defer
 
 import graphql.execution.reactive.SingleSubscriberPublisher
 import graphql.language.Field
-import graphql.language.FragmentSpread
-import graphql.language.InlineFragment
 import graphql.language.StringValue
 import graphql.nadel.defer.DeferredExecutionResult
 import graphql.normalized.ExecutableNormalizedField
@@ -15,6 +13,7 @@ import java.util.Deque
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.AtomicBoolean
 
+// TODO: belongs in GraphQL Java
 /**
  * Implements https://github.com/graphql/graphql-spec/pull/742
  */
@@ -30,7 +29,7 @@ class DeferSupport {
 
     private fun drainDeferredCalls() {
         if (deferredCalls.isEmpty()) {
-            publisher.offer(FinalDeferredExecutionResult)
+            publisher.offer(DeferredExecutionResultImpl.newFinalExecutionResult())
             publisher.noMoreData()
             return
         }

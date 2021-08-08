@@ -24,10 +24,11 @@ class ExecutionDeferredCall(
     call: suspend () -> ExecutionResult
 ): DeferredCall<ExecutionResult>(path, label, call) {
     override fun transformToDeferredResult(result: ExecutionResult): DeferredExecutionResult {
-        return LabeledDeferredExecutionResult.newDeferredExecutionResult().from(result)
-            .path(path)
-            .label(label)
-            .build()
+        return DeferredExecutionResultImpl.newLabeledExecutionResult(
+            executionResultImpl = result as ExecutionResultImpl,
+            path = path.toList(),
+            label = label,
+        )
     }
 }
 
@@ -44,10 +45,11 @@ class ServiceDeferredCall(
             .build()
 
 
-        return LabeledDeferredExecutionResult.newDeferredExecutionResult().from(executionResult)
-            .path(path)
-            .label(label)
-            .build()
+        return DeferredExecutionResultImpl.newLabeledExecutionResult(
+            executionResultImpl = executionResult,
+            path = path.toList(),
+            label = label,
+        )
     }
 }
 

@@ -8,6 +8,7 @@ import graphql.execution.ExecutionStrategyParameters;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+// TODO: belongs in GraphQL Java
 /**
  * This captures errors that occur while a deferred call is being made
  */

@@ -38,10 +38,8 @@ underlyingSchema:
 query: |
   query {
     foo
-    ... on Query @defer(label: "queryDefer") {
-      bar
-      baz
-    }
+    bar @defer(label: "barDefer")
+    baz @defer(label: "bazDefer")
   }
 variables: {}
 serviceCalls:
@@ -116,6 +114,7 @@ deferredResponses:
       {
         "bar": "barbar"
       }
+    hasNext: true
   - path: []
     label: "bazDefer"
     # language=JSON
@@ -123,3 +122,5 @@ deferredResponses:
       {
         "baz": "bazbaz"
       }
+    hasNext: true
+  - hasNext: false

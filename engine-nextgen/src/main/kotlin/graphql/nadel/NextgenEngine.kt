@@ -12,8 +12,8 @@ import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.defer.DeferSupport
+import graphql.nadel.enginekt.defer.DeferredExecutionResultImpl
 import graphql.nadel.enginekt.defer.ExecutionDeferredCall
-import graphql.nadel.enginekt.defer.FirstDeferredExecutionResult
 import graphql.nadel.enginekt.defer.ServiceDeferredCall
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
@@ -159,7 +159,7 @@ class NextgenEngine @JvmOverloads constructor(
                 .addExtension("GRAPHQL_DEFERRED", publisher)
                 .build()
 
-            return FirstDeferredExecutionResult(executionResultImpl)
+            return DeferredExecutionResultImpl.newFirstExecutionResult(executionResultImpl)
         }
 
         return result

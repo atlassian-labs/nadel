@@ -1,12 +1,9 @@
 package graphql.nadel.enginekt.defer
 
-import graphql.ExecutionResult
 import graphql.ExecutionResultImpl
-import graphql.GraphQLError
-import graphql.execution.ResultPath
 import graphql.nadel.defer.DeferredExecutionResult
 
-abstract class DeferredExecutionResultImpl(
+class DeferredExecutionResultImpl private constructor(
     executionResultImpl: ExecutionResultImpl,
     //TODO: can this be a list of something more well-defined? ResultPath maybe
     private val path: List<Any>?,
@@ -36,4 +33,37 @@ abstract class DeferredExecutionResultImpl(
             ", extensions=" + extensions +
             '}'
 
+    companion object {
+        fun newFirstExecutionResult(executionResultImpl: ExecutionResultImpl): DeferredExecutionResult {
+            return DeferredExecutionResultImpl(
+                executionResultImpl = executionResultImpl,
+                hasNext = true,
+                label = null,
+                path = null
+            )
+        }
+
+        fun newLabeledExecutionResult(
+            executionResultImpl: ExecutionResultImpl,
+            label: String,
+            path: List<Any>,
+            hasNext: Boolean = true
+        ): DeferredExecutionResult {
+            return DeferredExecutionResultImpl(
+                executionResultImpl = executionResultImpl,
+                hasNext = hasNext,
+                label = label,
+                path = path
+            )
+        }
+
+        fun newFinalExecutionResult(): DeferredExecutionResult {
+            return DeferredExecutionResultImpl(
+                label = null,
+                path = null,
+                hasNext = false,
+                executionResultImpl = newExecutionResult().build()
+            )
+        }
+    }
 }
