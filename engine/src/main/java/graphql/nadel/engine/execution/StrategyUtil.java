@@ -10,6 +10,7 @@ import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.result.ExecutionResultNode;
 import graphql.nadel.engine.result.ObjectExecutionResultNode;
 import graphql.nadel.engine.result.RootExecutionResultNode;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLSchema;
 import graphql.util.Breadcrumb;
 import graphql.util.NodeMultiZipper;
@@ -159,11 +160,9 @@ public class StrategyUtil {
     private static ExecutionResultNode combineResultNodes(List<ExecutionResultNode> resultNodes) {
         List<ExecutionResultNode> children = new ArrayList<>();
         Map<String, Object> completedValueMap = new LinkedHashMap<>();
-        // TODO: feature flag check, perhaps?
-        List<ExecutionResultNode> nonNullNodes = resultNodes
-                .stream()
-                .filter(resultNode -> resultNode.getCompletedValue() != null)
-                .collect(Collectors.toList());
+
+        List<ExecutionResultNode> nonNullNodes =
+                FpKit.filter(resultNodes, resultNode -> resultNode.getCompletedValue() != null);
 
         for (ExecutionResultNode resultNode : nonNullNodes) {
             Object completedValue = resultNode.getCompletedValue();
@@ -175,7 +174,7 @@ public class StrategyUtil {
             completedValueMap.putAll(childValue);
         }
 
-        return nonNullNodes.stream().findFirst()
+        return FpKit.findOne(nonNullNodes, node -> true)
                 .map(objectNode -> objectNode.transform(
                         builder -> builder.children(children).completedValue(completedValueMap)
                 ))
