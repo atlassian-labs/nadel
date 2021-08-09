@@ -1,6 +1,5 @@
 package graphql.nadel.enginekt.blueprint
 
-import graphql.introspection.Introspection
 import graphql.language.EnumTypeDefinition
 import graphql.language.EnumTypeExtensionDefinition
 import graphql.language.ImplementingTypeDefinition
@@ -174,7 +173,7 @@ private class Factory(
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
-                            && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
+                                && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
                     }
                 }
             }
@@ -344,12 +343,12 @@ private class Factory(
                     .filterIsInstance<AnyNamedNode>()
                     .filterNot {
                         it is ObjectTypeExtensionDefinition
-                            || it is InterfaceTypeExtensionDefinition
-                            || it is EnumTypeExtensionDefinition
-                            || it is ScalarTypeExtensionDefinition
-                            || it is InputObjectTypeExtensionDefinition
-                            || it is SchemaExtensionDefinition
-                            || it is UnionTypeExtensionDefinition
+                                || it is InterfaceTypeExtensionDefinition
+                                || it is EnumTypeExtensionDefinition
+                                || it is ScalarTypeExtensionDefinition
+                                || it is InputObjectTypeExtensionDefinition
+                                || it is SchemaExtensionDefinition
+                                || it is UnionTypeExtensionDefinition
                     }
                     .filterNot { def -> def in operationTypes }
                     .map { def -> def.name to service }
@@ -358,7 +357,7 @@ private class Factory(
     }
 
     private fun makeCoordinatesToService(): Map<FieldCoordinates, Service> {
-        val coordinatesToService = mapFrom(
+        return mapFrom(
             services.flatMap { service ->
                 service.definitionRegistry.definitions
                     .filterIsInstance<AnyNamedNode>()
@@ -376,21 +375,5 @@ private class Factory(
                     .map { coordinates -> coordinates to service }
             }
         )
-        mapIntrospectionFieldsToIntrospectionService(coordinatesToService)
-        return coordinatesToService
     }
-
-    private fun mapIntrospectionFieldsToIntrospectionService(coordinatesToService: MutableMap<FieldCoordinates, Service>) {
-        val introspectionService = IntrospectionService(overallSchema)
-        for (fieldCoordinates in introspectionTopLevelFields()) {
-            coordinatesToService[fieldCoordinates] = introspectionService
-        }
-    }
-
-    private fun introspectionTopLevelFields(): List<FieldCoordinates> =
-        listOf(
-            Introspection.SchemaMetaFieldDef,
-            Introspection.TypeMetaFieldDef,
-            Introspection.TypeNameMetaFieldDef
-        ).map { FieldCoordinates.coordinates("Query", it.name) }
 }

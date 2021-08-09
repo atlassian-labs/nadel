@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.transform.query
 
 import graphql.introspection.Introspection
 import graphql.nadel.Service
+import graphql.nadel.enginekt.blueprint.IntrospectionService
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelNamespacedFields.isNamespacedField
 import graphql.nadel.enginekt.util.copyWithChildren
@@ -45,6 +46,8 @@ internal class NadelFieldToService(
     private fun getService(overallField: ExecutableNormalizedField): Service {
         if (overallField.name == Introspection.TypeNameMetaFieldDef.name && overallField.parent != null) {
             return getService(overallField.parent)
+        } else if (overallField.name.startsWith("__")) {
+            return IntrospectionService(overallExecutionBlueprint.schema)
         }
 
         val operationTypeName = overallField.objectTypeNames.single()

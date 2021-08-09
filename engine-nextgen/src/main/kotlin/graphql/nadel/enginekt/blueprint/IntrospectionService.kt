@@ -16,12 +16,14 @@ internal class IntrospectionService constructor(schema: GraphQLSchema) :
         const val name = "__introspection"
 
         private fun makeServiceExecution(schema: GraphQLSchema): ServiceExecution {
+            val introspectionRunner = GraphQL.newGraphQL(schema)
+                .build()
+
             return ServiceExecution { params ->
                 val executionInput = ExecutionInput.newExecutionInput()
                     .query(AstPrinter.printAstCompact(params.query))
-                GraphQL.newGraphQL(schema)
-                    .build()
-                    .executeAsync(executionInput)
+
+                introspectionRunner.executeAsync(executionInput)
                     .thenApply { ServiceExecutionResult(it.getData(), it.errors.map(::toSpecification)) }
             }
         }
