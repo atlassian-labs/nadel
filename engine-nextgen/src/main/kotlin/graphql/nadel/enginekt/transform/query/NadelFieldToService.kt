@@ -13,6 +13,8 @@ import graphql.normalized.ExecutableNormalizedOperation
 internal class NadelFieldToService(
     private val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
 ) {
+    private val introspectionService = IntrospectionService(overallExecutionBlueprint.schema)
+
     fun getServicesForTopLevelFields(query: ExecutableNormalizedOperation): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
             if (isNamespacedField(topLevelField)) {
@@ -47,7 +49,7 @@ internal class NadelFieldToService(
         if (overallField.name == Introspection.TypeNameMetaFieldDef.name && overallField.parent != null) {
             return getService(overallField.parent)
         } else if (overallField.name.startsWith("__")) {
-            return IntrospectionService(overallExecutionBlueprint.schema)
+            return introspectionService
         }
 
         val operationTypeName = overallField.objectTypeNames.single()
