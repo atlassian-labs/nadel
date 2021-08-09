@@ -173,7 +173,7 @@ private class Factory(
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
-                                && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
+                            && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
                     }
                 }
             }
@@ -272,9 +272,8 @@ private class Factory(
                     val pathToField = remoteArgDef.remoteArgumentSource.path
                     NadelHydrationActorInputDef.ValueSource.FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
-                        fieldDefinition = getUnderlyingType(hydratedFieldParentType)?.getFieldAt(
-                            pathToField
-                        )
+                        fieldDefinition = getUnderlyingType(hydratedFieldParentType)
+                            ?.getFieldAt(pathToField)
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
                 }
@@ -343,12 +342,12 @@ private class Factory(
                     .filterIsInstance<AnyNamedNode>()
                     .filterNot {
                         it is ObjectTypeExtensionDefinition
-                                || it is InterfaceTypeExtensionDefinition
-                                || it is EnumTypeExtensionDefinition
-                                || it is ScalarTypeExtensionDefinition
-                                || it is InputObjectTypeExtensionDefinition
-                                || it is SchemaExtensionDefinition
-                                || it is UnionTypeExtensionDefinition
+                            || it is InterfaceTypeExtensionDefinition
+                            || it is EnumTypeExtensionDefinition
+                            || it is ScalarTypeExtensionDefinition
+                            || it is InputObjectTypeExtensionDefinition
+                            || it is SchemaExtensionDefinition
+                            || it is UnionTypeExtensionDefinition
                     }
                     .filterNot { def -> def in operationTypes }
                     .map { def -> def.name to service }
