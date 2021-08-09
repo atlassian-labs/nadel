@@ -331,7 +331,7 @@ private class Factory(
                     schema = service.underlyingSchema,
                     typeInstructions = typeInstructionsByServiceName[service.name] ?: emptyMap(),
                 )
-            } + (IntrospectionService.name to NadelUnderlyingExecutionBlueprint(overallSchema, emptyMap()))
+            }
         )
     }
 

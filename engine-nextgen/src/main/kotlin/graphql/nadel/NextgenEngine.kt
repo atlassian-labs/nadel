@@ -139,15 +139,18 @@ class NextgenEngine @JvmOverloads constructor(
             executionPlan,
         )
         val transformedQuery = queryTransform.result.single()
-        val result = executeService(service, transformedQuery, executionContext)
-        val transformedResult = resultTransformer.transform(
-            executionContext = executionContext,
-            executionPlan = executionPlan,
-            artificialFields = queryTransform.artificialFields,
-            overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
-            service = service,
-            result = result,
-        )
+        val result: ServiceExecutionResult = executeService(service, transformedQuery, executionContext)
+        val transformedResult: ServiceExecutionResult = when {
+            topLevelField.name.startsWith("__") -> result
+            else -> resultTransformer.transform(
+                executionContext = executionContext,
+                executionPlan = executionPlan,
+                artificialFields = queryTransform.artificialFields,
+                overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
+                service = service,
+                result = result,
+            )
+        }
 
         @Suppress("UNCHECKED_CAST")
         return newExecutionResult()
