@@ -35,6 +35,7 @@ import graphql.nadel.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedOperation
 import graphql.normalized.ExecutableNormalizedOperationFactory
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import kotlinx.coroutines.GlobalScope
@@ -134,7 +135,14 @@ class NextgenEngine @JvmOverloads constructor(
             throw e
         }
         if (instrumentation is NadelEngineInstrumentation) {
-            runEngineInstrumentation(instrumentation, result, queryDocument, executionInput, instrumentationState)
+            runEngineInstrumentation(
+                instrumentation,
+                query,
+                result,
+                queryDocument,
+                executionInput,
+                instrumentationState
+            )
         }
         instrumentationContext.onCompleted(result, null)
         return result
@@ -283,6 +291,7 @@ class NextgenEngine @JvmOverloads constructor(
 
     private fun runEngineInstrumentation(
         instrumentation: NadelEngineInstrumentation,
+        query: ExecutableNormalizedOperation,
         result: ExecutionResult,
         queryDocument: Document,
         executionInput: ExecutionInput,
@@ -297,7 +306,7 @@ class NextgenEngine @JvmOverloads constructor(
         )
         instrumentation.instrumentRootExecutionResult(
             result,
-            NadelInstrumentRootExecutionResultParameters(executionData.executionContext, instrumentationState)
+            NadelInstrumentRootExecutionResultParameters(executionData.executionContext, instrumentationState, query)
         )
     }
 
