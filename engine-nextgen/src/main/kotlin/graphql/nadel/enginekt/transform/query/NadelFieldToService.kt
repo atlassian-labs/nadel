@@ -3,6 +3,7 @@ package graphql.nadel.enginekt.transform.query
 import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.enginekt.blueprint.IntrospectionService
+import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelNamespacedFields.isNamespacedField
 import graphql.nadel.enginekt.util.copyWithChildren
@@ -12,8 +13,10 @@ import graphql.normalized.ExecutableNormalizedOperation
 
 internal class NadelFieldToService(
     private val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
+    introspectionRunnerFactory: NadelIntrospectionRunnerFactory
 ) {
-    private val introspectionService = IntrospectionService(overallExecutionBlueprint.schema)
+    private val introspectionService =
+        IntrospectionService(overallExecutionBlueprint.schema, introspectionRunnerFactory)
 
     fun getServicesForTopLevelFields(query: ExecutableNormalizedOperation): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->

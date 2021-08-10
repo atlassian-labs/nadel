@@ -6,26 +6,32 @@ import graphql.GraphqlErrorHelper.toSpecification
 import graphql.language.AstPrinter
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
+import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
 import graphql.schema.GraphQLSchema
+import java.util.concurrent.CompletableFuture
 
-internal class IntrospectionService constructor(schema: GraphQLSchema) :
-    Service(name, schema, makeServiceExecution(schema), null, null) {
+internal class IntrospectionService constructor(
+    schema: GraphQLSchema,
+    introspectionRunnerFactory: NadelIntrospectionRunnerFactory
+) : Service(name, schema, introspectionRunnerFactory.make(schema), null, null) {
 
     companion object {
         const val name = "__introspection"
-
-        private fun makeServiceExecution(schema: GraphQLSchema): ServiceExecution {
-            val introspectionRunner = GraphQL.newGraphQL(schema)
-                .build()
-
-            return ServiceExecution { params ->
-                val executionInput = ExecutionInput.newExecutionInput()
-                    .query(AstPrinter.printAstCompact(params.query))
-
-                introspectionRunner.executeAsync(executionInput)
-                    .thenApply { ServiceExecutionResult(it.getData(), it.errors.map(::toSpecification)) }
-            }
-        }
     }
+}
+
+fun interface NadelIntrospectionRunnerFactory {
+    fun make(schema: GraphQLSchema): ServiceExecution
+}
+
+open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecution {
+    private val graphQL = GraphQL.newGraphQL(schema).build()
+
+    override fun execute(params: ServiceExecutionParameters): CompletableFuture<ServiceExecutionResult> =
+        graphQL.executeAsync(
+            ExecutionInput.newExecutionInput()
+                .query(AstPrinter.printAstCompact(params.query))
+        )
+            .thenApply { ServiceExecutionResult(it.getData(), it.errors.map(::toSpecification)) }
 }

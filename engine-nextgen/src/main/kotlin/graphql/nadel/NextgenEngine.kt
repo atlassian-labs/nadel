@@ -9,7 +9,9 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
+import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
+import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelTransform
@@ -46,6 +48,7 @@ import java.util.concurrent.CompletableFuture
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
     transforms: List<NadelTransform<out Any>> = emptyList(),
+    introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) : NadelExecutionEngine {
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallSchema = nadel.overallSchema
@@ -64,7 +67,7 @@ class NextgenEngine @JvmOverloads constructor(
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val fieldToService = NadelFieldToService(overallExecutionBlueprint)
+    private val fieldToService = NadelFieldToService(overallExecutionBlueprint, introspectionRunnerFactory)
     private val executionIdProvider = nadel.executionIdProvider
 
     override fun execute(
