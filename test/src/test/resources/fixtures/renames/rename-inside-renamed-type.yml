@@ -1,0 +1,79 @@
+name: rename inside renamed type
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service1: |
+    service service1 {
+      type Query {
+        foo: FooX
+      }
+
+      type FooX @renamed(from: "Foo") {
+        id: ID
+        title: ID @renamed(from: "barId")
+      }
+    }
+underlyingSchema:
+  service1: |
+    type Foo {
+      barId: ID
+      id: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      __typename
+      title
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  __typename
+                }
+                ... on Foo {
+                  rename__title__barId: barId
+                }
+                ... on Foo {
+                  __typename__rename__title: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "__typename": "Foo",
+              "__typename__rename__title": "Foo",
+              "rename__title__barId": "Bar1"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "__typename": "FooX",
+        "title": "Bar1"
+      }
+    },
+    "extensions": {}
+  }

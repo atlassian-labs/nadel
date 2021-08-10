@@ -11,8 +11,8 @@ overallSchema:
     type Board {
       id: ID
       issue: Issue
-      @hydrated(service: "issues" field: "issue" arguments : [
-          { name : "id", value : "$source.issueId"}
+      @hydrated(service: "issues" field: "issue" arguments: [
+          { name: "id", value: "$source.issueId"}
       ])
     }
 
@@ -25,8 +25,8 @@ overallSchema:
       id: ID!
       cloudId: ID!
 
-      comments(after: String) : CommentConnection
-        @hydrated(service: "comments" field: "comments" arguments : [
+      comments(after: String): CommentConnection
+        @hydrated(service: "comments" field: "comments" arguments: [
             { name:"cloudId" value:"$source.cloudId"},
             { name:"after" value:"$argument.after"},
         ])
@@ -94,7 +94,7 @@ serviceCalls:
               issueId
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_boards
       # language=JSON
       response: |-
@@ -114,7 +114,7 @@ serviceCalls:
               cloudId
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_issues
       # language=JSON
       response: |-
@@ -134,7 +134,7 @@ serviceCalls:
               totalCount
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_comments
       # language=JSON
       response: |-
@@ -162,7 +162,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_boards
       # language=JSON
       response: |-
@@ -190,7 +190,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_issues
       # language=JSON
       response: |-
@@ -215,7 +215,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_comments
       # language=JSON
       response: |-

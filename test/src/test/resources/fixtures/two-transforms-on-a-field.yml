@@ -45,7 +45,7 @@ query: |
       }
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
   nextgen:
     - serviceName: service
@@ -63,7 +63,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: null
       # language=JSON
       response: |-

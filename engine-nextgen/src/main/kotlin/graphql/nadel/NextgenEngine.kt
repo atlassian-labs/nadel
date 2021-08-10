@@ -12,7 +12,12 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
+import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
+import graphql.nadel.enginekt.transform.NadelRenameTransform
 import graphql.nadel.enginekt.transform.NadelTransform
+import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform
+import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform
+import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform
 import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
@@ -98,7 +103,14 @@ class NextgenEngine @JvmOverloads constructor(
         }
 
         val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
-        val instrumentationContext = getInstrumentationContext(query, queryDocument, executionInput, overallSchema, instrumentation, instrumentationState)
+        val instrumentationContext = getInstrumentationContext(
+            query,
+            queryDocument,
+            executionInput,
+            overallSchema,
+            instrumentation,
+            instrumentationState,
+        )
 
         val result: ExecutionResult = try {
             mergeResults(
@@ -129,9 +141,41 @@ class NextgenEngine @JvmOverloads constructor(
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
         service: Service,
-        executionContext: NadelExecutionContext
+        executionContext: NadelExecutionContext,
     ): ExecutionResult {
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
+
+        val ancestorTransformsByPath = mutableMapOf<List<String>, List<String>>()
+        topLevelField.traverseSubTree { field ->
+            val parentPath = field.parent?.listOfResultKeys
+
+            val transforms = executionPlan.transformationSteps[field]
+                ?.map {
+                    @Suppress("USELESS_CAST")
+                    when (it.transform as NadelTransform<*>) {
+                        is NadelHydrationTransform -> "hydration"
+                        is NadelBatchHydrationTransform -> "batch hydration"
+                        is NadelDeepRenameTransform -> "deep rename"
+                        is NadelRenameTransform -> "rename"
+                        is NadelTypeRenameResultTransform -> "type rename result"
+                        else -> it.transform.javaClass.name
+                    }
+                }
+                ?: emptyList()
+            val ancestorTransforms = ancestorTransformsByPath[parentPath]
+                ?: emptyList()
+
+            if (transforms.isNotEmpty()) {
+                if (ancestorTransforms.isEmpty()) {
+                    println("Found $transforms")
+                } else {
+                    println("Found $transforms under $ancestorTransforms")
+                }
+            }
+
+            ancestorTransformsByPath[field.listOfResultKeys] = ancestorTransforms + transforms
+        }
+
         val queryTransform = queryTransformer.transformQuery(
             executionContext,
             service,

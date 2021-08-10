@@ -283,7 +283,13 @@ internal suspend fun getInstrumentationContext(
     instrumentation: NadelInstrumentation,
     instrumentationState: InstrumentationState?,
 ): InstrumentationContext<ExecutionResult> {
-    val nadelInstrumentationExecuteOperationParameters = buildInstrumentationExecutionParameters(query, queryDocument, executionInput, graphQLSchema, instrumentationState)
+    val nadelInstrumentationExecuteOperationParameters = buildInstrumentationExecutionParameters(
+        query,
+        queryDocument,
+        executionInput,
+        graphQLSchema,
+        instrumentationState,
+    )
 
     return instrumentation.beginExecute(nadelInstrumentationExecuteOperationParameters)
         .asDeferred()
@@ -295,7 +301,7 @@ private fun buildInstrumentationExecutionParameters(
     queryDocument: Document,
     executionInput: ExecutionInput,
     graphQLSchema: GraphQLSchema,
-    instrumentationState: InstrumentationState?
+    instrumentationState: InstrumentationState?,
 ): NadelInstrumentationExecuteOperationParameters {
     return NadelInstrumentationExecuteOperationParameters(
         query,
@@ -304,6 +310,6 @@ private fun buildInstrumentationExecutionParameters(
         executionInput.variables,
         queryDocument.definitions.singleOfType(),
         instrumentationState,
-        executionInput.context
+        executionInput.context,
     )
 }

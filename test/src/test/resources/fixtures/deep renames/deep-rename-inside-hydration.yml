@@ -1,0 +1,132 @@
+name: deep rename inside hydration
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  IssueService: |
+    type Query {
+      issueById(id: ID!): Issue
+    }
+    type Issue {
+      name: String @renamed(from: "detail.detailName")
+    }
+  UserService: |
+    type Query {
+      me: User
+    }
+    type User {
+      issueId: ID
+      issue: Issue @hydrated(
+        service: "IssueService"
+        field: "issueById"
+        arguments: [
+          {name: "id" value: "$source.issueId"}
+        ]
+      )
+    }
+underlyingSchema:
+  IssueService: |
+    type Issue {
+      detail: IssueDetails
+    }
+
+    type IssueDetails {
+      detailName: String
+    }
+
+    type Query {
+      issueById(id: ID!): Issue
+    }
+  UserService: |
+    type Query {
+      me: User
+    }
+    type User {
+      issueId: ID
+    }
+query: |
+  query {
+    me {
+      issue {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            ... on Query {
+              me {
+                ... on User {
+                  hydration__issue__issueId: issueId
+                }
+                ... on User {
+                  __typename__hydration__issue: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "me": {
+              "__typename__hydration__issue": "User",
+              "hydration__issue__issueId": "issue-1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              issueById(id: "issue-1") {
+                ... on Issue {
+                  deep_rename__name__detail: detail {
+                    ... on IssueDetails {
+                      detailName
+                    }
+                  }
+                }
+                ... on Issue {
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issueById": {
+              "deep_rename__name__detail": {
+                "detailName": "Detail-1"
+              },
+              "__typename__deep_rename__name": "Issue"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "me": {
+        "issue": {
+          "name": "Detail-1"
+        }
+      }
+    },
+    "extensions": {}
+  }
+

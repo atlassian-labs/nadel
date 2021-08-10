@@ -206,7 +206,7 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              association(filter: {name : "value"}, id: "ISSUE-1") {
+              association(filter: {name: "value"}, id: "ISSUE-1") {
                 ... on AssociationConnection {
                   nodes {
                     ... on Association {

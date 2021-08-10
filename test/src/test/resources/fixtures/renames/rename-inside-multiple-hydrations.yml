@@ -1,0 +1,170 @@
+name: rename inside multiple hydrations
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service2: |
+    service service2 {
+      type Query {
+        barById(id: ID): Bar
+      }
+      type Bar {
+        id: ID
+        title: String @renamed(from: "name")
+      }
+    }
+  service1: |
+    service service1 {
+      type Query {
+        foos: [Foo]
+      }
+      type Foo {
+        id: ID
+        bar: Bar => hydrated from service2.barById(id: $source.barId)
+        barLongerInput: Bar => hydrated from service2.barById(id: $source.fooDetails.externalBarId)
+      }
+    }
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID): Bar
+    }
+  service1: |
+    type Foo {
+      barId: ID
+      fooDetails: FooDetails
+      id: ID
+    }
+
+    type FooDetails {
+      externalBarId: ID
+    }
+
+    type Query {
+      foos: [Foo]
+    }
+query: |
+  query {
+    foos {
+      bar {
+        title
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foos {
+                ... on Foo {
+                  hydration__bar__barId: barId
+                }
+                ... on Foo {
+                  __typename__hydration__bar: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foos": [
+              {
+                "hydration__bar__barId": "barId",
+                "__typename__hydration__bar": "Foo"
+              },
+              {
+                "hydration__bar__barId": "barId2",
+                "__typename__hydration__bar": "Foo"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "barId") {
+                ... on Bar {
+                  rename__title__name: name
+                }
+                ... on Bar {
+                  __typename__rename__title: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "rename__title__name": "Bar1",
+              "__typename__rename__title": "Bar"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "barId2") {
+                ... on Bar {
+                  rename__title__name: name
+                }
+                ... on Bar {
+                  __typename__rename__title: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "rename__title__name": "Bar2",
+              "__typename__rename__title": "Bar"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foos": [
+        {
+          "bar": {
+            "title": "Bar1"
+          }
+        },
+        {
+          "bar": {
+            "title": "Bar2"
+          }
+        }
+      ]
+    },
+    "extensions": {}
+  }

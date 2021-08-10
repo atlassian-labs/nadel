@@ -1,0 +1,122 @@
+name: deep rename inside rename
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      issue: JiraIssue @renamed(from: "first")
+    }
+    type JiraIssue @renamed(from: "Issue") {
+      name: String @renamed(from: "details.name")
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      first: Issue
+    }
+    type Issue {
+      details: IssueDetail
+    }
+    type IssueDetail {
+      name: String
+    }
+query: |
+  query {
+    first: issue {
+      __typename
+      name
+    }
+    issue {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__issue__first: first {
+                ... on Issue {
+                  __typename
+                }
+                ... on Issue {
+                  deep_rename__name__details: details {
+                    ... on IssueDetail {
+                      name
+                    }
+                  }
+                }
+                ... on Issue {
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__issue__first": {
+              "__typename": "Issue",
+              "deep_rename__name__details": {
+                "name": "name-from-details"
+              },
+              "__typename__deep_rename__name": "Issue"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__issue__first: first {
+                ... on Issue {
+                  deep_rename__name__details: details {
+                    ... on IssueDetail {
+                      name
+                    }
+                  }
+                }
+                ... on Issue {
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__issue__first": {
+              "deep_rename__name__details": {
+                "name": "name-from-details-2"
+              },
+              "__typename__deep_rename__name": "Issue"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "first": {
+        "__typename": "JiraIssue",
+        "name": "name-from-details"
+      },
+      "issue": {
+        "name": "name-from-details-2"
+      }
+    },
+    "extensions": {}
+  }
