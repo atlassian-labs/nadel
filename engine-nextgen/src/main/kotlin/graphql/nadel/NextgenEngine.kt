@@ -102,7 +102,14 @@ class NextgenEngine @JvmOverloads constructor(
         }
 
         val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
-        val instrumentationContext = getInstrumentationContext(query, queryDocument, executionInput, overallSchema, instrumentation, instrumentationState)
+        val instrumentationContext = getInstrumentationContext(
+            query,
+            queryDocument,
+            executionInput,
+            overallSchema,
+            instrumentation,
+            instrumentationState
+        )
 
         val result: ExecutionResult = try {
             mergeResults(
