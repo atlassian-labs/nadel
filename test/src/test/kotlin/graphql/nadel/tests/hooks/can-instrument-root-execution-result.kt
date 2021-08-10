@@ -3,9 +3,9 @@ package graphql.nadel.tests.hooks
 import graphql.ExecutionResult
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.Nadel
-import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.engine.result.ResultNodesUtil
 import graphql.nadel.engine.result.RootExecutionResultNode
+import graphql.nadel.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.tests.EngineTestHook
@@ -16,18 +16,13 @@ import strikt.api.expectThat
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
-import graphql.GraphqlErrorException as GraphQLErrorException
 
 @KeepHook
 class `can-instrument-root-execution-result` : EngineTestHook {
-    var originalExecutionResult: RootExecutionResultNode? = null
+    var originalExecutionResult: Any? = null
     var instrumentationParams: NadelInstrumentRootExecutionResultParameters? = null
 
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
-        if (engineType != NadelEngineType.current) {
-            error("Test only supported by current engine")
-        }
-
         return builder
             .instrumentation(object : NadelEngineInstrumentation {
                 override fun createState(parameters: NadelInstrumentationCreateStateParameters): InstrumentationState {
@@ -39,19 +34,11 @@ class `can-instrument-root-execution-result` : EngineTestHook {
                 }
 
                 override fun instrumentRootExecutionResult(
-                    rootExecutionResultNode: RootExecutionResultNode,
+                    rootExecutionResult: Any,
                     parameters: NadelInstrumentRootExecutionResultParameters,
-                ): RootExecutionResultNode {
-                    originalExecutionResult = rootExecutionResultNode
+                ) {
+                    originalExecutionResult = rootExecutionResult
                     instrumentationParams = parameters
-
-                    return rootExecutionResultNode.withNewErrors(
-                        listOf(
-                            GraphQLErrorException.newErrorException()
-                                .message("instrumented-error")
-                                .build()
-                        ),
-                    ) as RootExecutionResultNode
                 }
             })
     }
@@ -72,7 +59,17 @@ class `can-instrument-root-execution-result` : EngineTestHook {
             .isEqualTo("OpName")
         expectThat(originalExecutionResult)
             .isNotNull()
-            .get(ResultNodesUtil::toExecutionResult)
+            .get {
+                when (originalExecutionResult) {
+                    is RootExecutionResultNode -> {
+                        return@get ResultNodesUtil.toExecutionResult(originalExecutionResult as RootExecutionResultNode)
+                    }
+                    is ExecutionResult -> {
+                        return@get originalExecutionResult as ExecutionResult
+                    }
+                    else -> error("should either be RootExecutionResultNode or ExecutionResult")
+                }
+            }
             .get { errors }
             .isEmpty()
     }

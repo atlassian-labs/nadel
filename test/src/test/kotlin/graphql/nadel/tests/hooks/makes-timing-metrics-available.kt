@@ -5,8 +5,8 @@ import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.engine.result.RootExecutionResultNode
+import graphql.nadel.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.KeepHook
@@ -46,10 +46,10 @@ class `makes-timing-metrics-available` : EngineTestHook {
             })
             .instrumentation(object : NadelEngineInstrumentation {
                 override fun instrumentRootExecutionResult(
-                    rootExecutionResultNode: RootExecutionResultNode,
+                    rootExecutionResult: Any,
                     parameters: NadelInstrumentRootExecutionResultParameters,
-                ): RootExecutionResultNode {
-                    return rootExecutionResultNode.also { rootResultNode = it }
+                ) {
+                    rootResultNode = rootExecutionResult as RootExecutionResultNode
                 }
             })
     }

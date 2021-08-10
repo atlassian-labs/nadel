@@ -6,6 +6,7 @@ import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.execution.nextgen.ExecutionHelper
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
@@ -30,6 +31,8 @@ import graphql.nadel.enginekt.util.provide
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.instrumentation.NadelEngineInstrumentation
+import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory
@@ -66,6 +69,7 @@ class NextgenEngine @JvmOverloads constructor(
     private val instrumentation = nadel.instrumentation
     private val fieldToService = NadelFieldToService(overallExecutionBlueprint)
     private val executionIdProvider = nadel.executionIdProvider
+    private val executionHelper = ExecutionHelper()
 
     override fun execute(
         executionInput: ExecutionInput,
@@ -121,6 +125,9 @@ class NextgenEngine @JvmOverloads constructor(
         } catch (e: Throwable) {
             instrumentationContext.onCompleted(null, e)
             throw e
+        }
+        if (instrumentation is NadelEngineInstrumentation) {
+            runEngineInstrumentation(instrumentation, result, queryDocument, executionInput, instrumentationState)
         }
         instrumentationContext.onCompleted(result, null)
         return result
@@ -264,6 +271,26 @@ class NextgenEngine @JvmOverloads constructor(
                 data?.takeIf { transformedQuery.resultKey in data }
                     ?: mutableMapOf(transformedQuery.resultKey to null)
             },
+        )
+    }
+
+    private fun runEngineInstrumentation(
+        instrumentation: NadelEngineInstrumentation,
+        result: ExecutionResult,
+        queryDocument: Document,
+        executionInput: ExecutionInput,
+        instrumentationState: InstrumentationState?,
+    ) {
+        val executionData = executionHelper.createExecutionData(
+            queryDocument,
+            overallSchema,
+            executionIdProvider.provide(executionInput),
+            executionInput,
+            instrumentationState
+        )
+        instrumentation.instrumentRootExecutionResult(
+            result,
+            NadelInstrumentRootExecutionResultParameters(executionData.executionContext, instrumentationState)
         )
     }
 

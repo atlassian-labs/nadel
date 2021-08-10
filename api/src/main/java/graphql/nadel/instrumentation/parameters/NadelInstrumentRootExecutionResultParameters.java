@@ -3,7 +3,6 @@ package graphql.nadel.instrumentation.parameters;
 import graphql.PublicApi;
 import graphql.execution.ExecutionContext;
 import graphql.execution.instrumentation.InstrumentationState;
-import graphql.nadel.normalized.NormalizedQueryFromAst;
 
 /**
  * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
@@ -13,12 +12,10 @@ public class NadelInstrumentRootExecutionResultParameters {
 
     private final ExecutionContext executionContext;
     private final InstrumentationState instrumentationState;
-    private final NormalizedQueryFromAst normalizedQueryFromAst;
 
-    public NadelInstrumentRootExecutionResultParameters(ExecutionContext executionContext, NormalizedQueryFromAst normalizedQueryFromAst, InstrumentationState instrumentationState) {
+    public NadelInstrumentRootExecutionResultParameters(ExecutionContext executionContext, InstrumentationState instrumentationState) {
         this.executionContext = executionContext;
         this.instrumentationState = instrumentationState;
-        this.normalizedQueryFromAst = normalizedQueryFromAst;
     }
 
     /**
@@ -28,7 +25,7 @@ public class NadelInstrumentRootExecutionResultParameters {
      * @return a new parameters object with the new state
      */
     public NadelInstrumentRootExecutionResultParameters withNewState(InstrumentationState instrumentationState) {
-        return new NadelInstrumentRootExecutionResultParameters(executionContext, normalizedQueryFromAst, instrumentationState);
+        return new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState);
     }
 
     public ExecutionContext getExecutionContext() {
