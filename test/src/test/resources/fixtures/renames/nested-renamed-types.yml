@@ -59,24 +59,16 @@ serviceCalls:
               foo {
                 ... on Foo {
                   __typename
-                }
-                ... on Foo {
                   parent {
                     ... on Foo {
-                      id
-                    }
-                    ... on Foo {
                       __typename
-                    }
-                    ... on Foo {
                       building {
                         ... on Building {
                           __typename
-                        }
-                        ... on Building {
                           id
                         }
                       }
+                      id
                     }
                   }
                 }

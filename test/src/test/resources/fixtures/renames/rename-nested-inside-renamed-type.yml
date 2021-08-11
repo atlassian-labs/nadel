@@ -46,14 +46,10 @@ serviceCalls:
               foo {
                 ... on Foo {
                   __typename
-                }
-                ... on Foo {
                   parent {
                     ... on Foo {
-                      rename__title__barId: barId
-                    }
-                    ... on Foo {
                       __typename__rename__title: __typename
+                      rename__title__barId: barId
                     }
                   }
                 }

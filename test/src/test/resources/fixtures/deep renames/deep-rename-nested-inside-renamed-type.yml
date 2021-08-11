@@ -54,14 +54,12 @@ serviceCalls:
                 ... on Issue {
                   user {
                     ... on User {
+                      __typename__deep_rename__name: __typename
                       deep_rename__name__details: details {
                         ... on UserDetails {
                           firstName
                         }
                       }
-                    }
-                    ... on User {
-                      __typename__deep_rename__name: __typename
                     }
                   }
                 }
@@ -93,18 +91,14 @@ serviceCalls:
               second: first {
                 ... on Issue {
                   __typename
-                }
-                ... on Issue {
                   user {
                     ... on User {
+                      __typename__deep_rename__name: __typename
                       deep_rename__name__details: details {
                         ... on UserDetails {
                           firstName
                         }
                       }
-                    }
-                    ... on User {
-                      __typename__deep_rename__name: __typename
                     }
                   }
                 }

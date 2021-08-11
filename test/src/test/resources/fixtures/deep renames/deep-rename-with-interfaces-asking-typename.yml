@@ -52,22 +52,16 @@ serviceCalls:
               names {
                 ... on Issue {
                   __typename
-                }
-                ... on User {
-                  __typename
-                }
-                ... on Issue {
                   name
                 }
                 ... on User {
+                  __typename
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__details: details {
                     ... on UserDetails {
                       firstName
                     }
                   }
-                }
-                ... on User {
-                  __typename__deep_rename__name: __typename
                 }
               }
             }

@@ -42,6 +42,7 @@ serviceCalls:
             ... on Query {
               troll {
                 ... on Troll {
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__firstEat: firstEat {
                     ... on EatLog {
                       item {
@@ -51,9 +52,6 @@ serviceCalls:
                       }
                     }
                   }
-                }
-                ... on Troll {
-                  __typename__deep_rename__name: __typename
                 }
               }
             }

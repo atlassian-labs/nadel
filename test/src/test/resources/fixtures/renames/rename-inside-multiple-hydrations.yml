@@ -66,10 +66,8 @@ serviceCalls:
             ... on Query {
               foos {
                 ... on Foo {
-                  hydration__bar__barId: barId
-                }
-                ... on Foo {
                   __typename__hydration__bar: __typename
+                  hydration__bar__barId: barId
                 }
               }
             }
@@ -100,10 +98,8 @@ serviceCalls:
             ... on Query {
               barById(id: "barId") {
                 ... on Bar {
-                  rename__title__name: name
-                }
-                ... on Bar {
                   __typename__rename__title: __typename
+                  rename__title__name: name
                 }
               }
             }
@@ -128,10 +124,8 @@ serviceCalls:
             ... on Query {
               barById(id: "barId2") {
                 ... on Bar {
-                  rename__title__name: name
-                }
-                ... on Bar {
                   __typename__rename__title: __typename
+                  rename__title__name: name
                 }
               }
             }

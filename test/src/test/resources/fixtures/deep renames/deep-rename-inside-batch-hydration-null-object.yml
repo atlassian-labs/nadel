@@ -65,10 +65,8 @@ serviceCalls:
             ... on Query {
               users {
                 ... on User {
-                  batch_hydration__issue__issueId: issueId
-                }
-                ... on User {
                   __typename__batch_hydration__issue: __typename
+                  batch_hydration__issue__issueId: issueId
                 }
               }
             }
@@ -103,16 +101,12 @@ serviceCalls:
             ... on Query {
               issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
                 ... on Issue {
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__detail: detail {
                     ... on IssueDetails {
                       detailName
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
-                }
-                ... on Issue {
                   batch_hydration__issue__id: id
                 }
               }

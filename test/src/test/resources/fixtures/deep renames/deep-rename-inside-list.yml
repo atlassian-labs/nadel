@@ -37,14 +37,12 @@ serviceCalls:
             ... on Query {
               rename__issues__all: all {
                 ... on Issue {
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__details: details {
                     ... on IssueDetail {
                       key
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
                 }
               }
             }

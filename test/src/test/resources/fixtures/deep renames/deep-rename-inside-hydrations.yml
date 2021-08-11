@@ -62,10 +62,8 @@ serviceCalls:
             ... on Query {
               users {
                 ... on User {
-                  hydration__issue__issueId: issueId
-                }
-                ... on User {
                   __typename__hydration__issue: __typename
+                  hydration__issue__issueId: issueId
                 }
               }
             }
@@ -100,14 +98,12 @@ serviceCalls:
             ... on Query {
               issueById(id: "issue-1") {
                 ... on Issue {
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__detail: detail {
                     ... on IssueDetails {
                       detailName
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
                 }
               }
             }
@@ -134,14 +130,12 @@ serviceCalls:
             ... on Query {
               issueById(id: "issue-2") {
                 ... on Issue {
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__detail: detail {
                     ... on IssueDetails {
                       detailName
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
                 }
               }
             }
@@ -168,14 +162,12 @@ serviceCalls:
             ... on Query {
               issueById(id: "issue-3") {
                 ... on Issue {
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__detail: detail {
                     ... on IssueDetails {
                       detailName
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
                 }
               }
             }
@@ -219,4 +211,3 @@ response: |-
     },
     "extensions": {}
   }
-

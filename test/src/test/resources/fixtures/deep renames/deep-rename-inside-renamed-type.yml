@@ -42,16 +42,12 @@ serviceCalls:
               first {
                 ... on Issue {
                   __typename
-                }
-                ... on Issue {
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__details: details {
                     ... on IssueDetail {
                       name
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
                 }
               }
             }
@@ -79,14 +75,12 @@ serviceCalls:
             ... on Query {
               second: first {
                 ... on Issue {
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__details: details {
                     ... on IssueDetail {
                       name
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
                 }
               }
             }

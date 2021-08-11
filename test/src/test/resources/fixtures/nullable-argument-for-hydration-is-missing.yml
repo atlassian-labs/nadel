@@ -154,11 +154,7 @@ serviceCalls:
             }
           }
         variables: {}
-<<<<<<< HEAD
-        operationName: nadel_2_boards
-=======
         operationName: null
->>>>>>> fwang/fix-tests
       # language=JSON
       response: |-
         {
@@ -184,11 +180,7 @@ serviceCalls:
             }
           }
         variables: {}
-<<<<<<< HEAD
-        operationName: nadel_2_issues
-=======
         operationName: null
->>>>>>> fwang/fix-tests
       # language=JSON
       response: |-
         {
@@ -213,11 +205,7 @@ serviceCalls:
             }
           }
         variables: {}
-<<<<<<< HEAD
-        operationName: nadel_2_comments
-=======
         operationName: null
->>>>>>> fwang/fix-tests
       # language=JSON
       response: |-
         {
