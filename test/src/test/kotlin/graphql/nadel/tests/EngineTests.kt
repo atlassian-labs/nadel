@@ -3,22 +3,16 @@ package graphql.nadel.tests
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
-import graphql.language.OperationDefinition
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionEngineFactory
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
-import graphql.nadel.Service
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.enginekt.util.singleOfType
-import graphql.nadel.tests.NadelEngineType.nextgen
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
-import graphql.normalized.ExecutableNormalizedOperationFactory
-import graphql.normalized.ExecutableNormalizedOperationToAstCompiler
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import io.kotest.core.spec.style.FunSpec
@@ -63,7 +57,7 @@ class EngineTests : FunSpec({
             println("Loading ${it.nameWithoutExtension}")
         }
         .map { file ->
-            file to file
+            file
                 .let(File::readText)
                 .let<String, TestFixture>(yamlObjectMapper::readValue)
                 .also { fixture ->
@@ -74,7 +68,7 @@ class EngineTests : FunSpec({
                     }
                 }
         }
-        .forEach { (file, fixture) ->
+        .forEach { fixture ->
             engineFactories.all
                 .filter {
                     if (singleTestToRun.isBlank()) {
@@ -85,7 +79,7 @@ class EngineTests : FunSpec({
                     }
                 }
                 .filter { (engineType) ->
-                    fixture.enabled.get(engineType = engineType) && engineType == nextgen
+                    fixture.enabled.get(engineType = engineType) // && engineType == current
                 }
                 .forEach { (engineType, engineFactory) ->
                     // Run for tests that don't have nextgen calls
@@ -94,7 +88,6 @@ class EngineTests : FunSpec({
                             fixture = fixture,
                             engineType = engineType,
                             engineFactory = engineFactory,
-                            fixtureFile = file,
                         )
                     }
                     if (fixture.ignored.get(engineType = engineType)) {
@@ -111,7 +104,6 @@ private suspend fun execute(
     testHooks: EngineTestHook? = getTestHook(fixture),
     engineType: NadelEngineType,
     engineFactory: NadelExecutionEngineFactory,
-    fixtureFile: File,
 ) {
     val printLock = Any()
     fun printSyncLine(message: String): Unit = synchronized(printLock) {
@@ -128,8 +120,6 @@ private suspend fun execute(
 
     printSyncLine("Running ${fixture.name}")
 
-    val calls = mutableListOf<ServiceCall>()
-    lateinit var services: List<Service>
     try {
         val nadel = Nadel.newNadel()
             .engineFactory(engineFactory)
@@ -139,9 +129,6 @@ private suspend fun execute(
                 private val serviceCalls = fixture.serviceCalls[engineType].toMutableList()
 
                 override fun getServiceExecution(serviceName: String): ServiceExecution {
-                    val service by lazy {
-                        services.first { it.name == serviceName }
-                    }
                     return ServiceExecution { params ->
                         try {
                             val incomingQuery = params.query
@@ -152,37 +139,15 @@ private suspend fun execute(
 
                             val response = synchronized(serviceCalls) {
                                 val indexOfCall = serviceCalls
-                                    .indexOfFirst { call ->
-                                        call.serviceName == serviceName
-                                            && AstPrinter.printAst(call.request.document.let { document ->
-                                            ExecutableNormalizedOperationToAstCompiler.compileToDocument(
-                                                call.request.document.definitions.singleOfType<OperationDefinition> {
-                                                    it.name == call.request.operationName
-                                                }.operation,
-                                                ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables(
-                                                    service.underlyingSchema,
-                                                    document,
-                                                    call.request.operationName,
-                                                    call.request.variables,
-                                                ).topLevelFields
-                                            )
-                                        }.let {
-                                            astSorter.sort(it)
-                                        }).also {
-                                            println(it.replaceIndent(">  "))
-                                        } == incomingQueryPrinted
-                                            && call.request.operationName == params.operationDefinition.name
+                                    .indexOfFirst {
+                                        it.serviceName == serviceName
+                                            && AstPrinter.printAst(it.request.document) == incomingQueryPrinted
+                                            && it.request.operationName == params.operationDefinition.name
                                     }
                                     .takeIf { it != -1 }
 
                                 if (indexOfCall != null) {
-                                    serviceCalls.removeAt(indexOfCall).also { call ->
-                                        calls += call.copy(
-                                            request = call.request.copy(
-                                                query = incomingQueryPrinted
-                                            )
-                                        )
-                                    }.response
+                                    serviceCalls.removeAt(indexOfCall).response
                                 } else {
                                     fail("Unable to match service call")
                                 }
@@ -210,9 +175,6 @@ private suspend fun execute(
                 testHooks?.makeNadel(engineType, it) ?: it
             }
             .build()
-            .also {
-                services = it.services
-            }
 
         val response = nadel.execute(
             newNadelExecutionInput()
@@ -259,16 +221,6 @@ private suspend fun execute(
         }
 
         testHooks?.assertResult(engineType, response)
-
-        val newFixture = fixture.copy(
-            serviceCalls = fixture.serviceCalls.copy(
-                nextgen = calls,
-            )
-        )
-
-        val newFixtureYAML = newFixture.let(yamlObjectMapper::writeValueAsString)
-        println(newFixtureYAML)
-        // fixtureFile.writeText(newFixtureYAML)
     } catch (e: Throwable) {
         if (fixture.exception?.message?.matches(e.message ?: "") == true) {
             return
