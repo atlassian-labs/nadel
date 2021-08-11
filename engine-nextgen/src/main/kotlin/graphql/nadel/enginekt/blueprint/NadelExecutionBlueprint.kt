@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.blueprint
 
 import graphql.nadel.Service
+import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
 import graphql.nadel.enginekt.util.filterValuesOfType
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.mapFrom
@@ -78,4 +79,17 @@ inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, NadelFieldI
     field: ExecutableNormalizedField,
 ): Map<FieldCoordinates, T> {
     return getForField(field).filterValuesOfType()
+}
+
+inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, NadelFieldInstruction>.getInstructionsForField(
+    field: ExecutableNormalizedField,
+): Map<GraphQLObjectTypeName, T> {
+    return mapFrom(
+        field.objectTypeNames
+            .mapNotNull { objectTypeName ->
+                val coordinates = makeFieldCoordinates(objectTypeName, field.name)
+                val instruction = this[coordinates] as? T ?: return@mapNotNull null
+                objectTypeName to instruction
+            },
+    )
 }

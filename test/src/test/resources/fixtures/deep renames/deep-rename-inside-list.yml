@@ -1,0 +1,96 @@
+name: deep rename inside list
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      issues: [JiraIssue] @renamed(from: "all")
+    }
+    type JiraIssue @renamed(from: "Issue") {
+      name: String @renamed(from: "details.key")
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      all: [Issue]
+    }
+    type Issue {
+      details: IssueDetail
+    }
+    type IssueDetail {
+      key: String
+    }
+query: |
+  query {
+    issues {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__issues__all: all {
+                ... on Issue {
+                  deep_rename__name__details: details {
+                    ... on IssueDetail {
+                      key
+                    }
+                  }
+                }
+                ... on Issue {
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__issues__all": [
+              {
+                "deep_rename__name__details": {
+                  "key": "GQLGW-1012"
+                },
+                "__typename__deep_rename__name": "Issue"
+              },
+              {
+                "deep_rename__name__details": null,
+                "__typename__deep_rename__name": "Issue"
+              },
+              {
+                "deep_rename__name__details": {
+                  "key": "Fix the bug"
+                },
+                "__typename__deep_rename__name": "Issue"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "name": "GQLGW-1012"
+        },
+        {
+          "name": null
+        },
+        {
+          "name": "Fix the bug"
+        }
+      ]
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,121 @@
+name: deep rename with interfaces asking typename
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      names: [HasName]
+    }
+    type JiraIssue implements HasName @renamed(from: "Issue") {
+      name: String
+    }
+    interface HasName {
+      name: String
+    }
+    type User implements HasName {
+      name: String @renamed(from: "details.firstName")
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      names: [HasName]
+    }
+    interface HasName {
+      name: String
+    }
+    type Issue implements HasName {
+      name: String
+    }
+    type UserDetails {
+      firstName: String
+    }
+    type User {
+      id: ID
+      details: UserDetails
+    }
+query: |
+  query {
+    names {
+      __typename
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              names {
+                ... on Issue {
+                  __typename
+                }
+                ... on User {
+                  __typename
+                }
+                ... on Issue {
+                  name
+                }
+                ... on User {
+                  deep_rename__name__details: details {
+                    ... on UserDetails {
+                      firstName
+                    }
+                  }
+                }
+                ... on User {
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "names": [
+              {
+                "__typename": "Issue",
+                "name": "GQLGW-001"
+              },
+              {
+                "__typename": "Issue",
+                "name": "GQLGW-1102"
+              },
+              {
+                "__typename": "User",
+                "__typename__deep_rename__name": "User",
+                "deep_rename__name__details": {
+                  "firstName": "Franklin"
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "names": [
+        {
+          "__typename": "JiraIssue",
+          "name": "GQLGW-001"
+        },
+        {
+          "__typename": "JiraIssue",
+          "name": "GQLGW-1102"
+        },
+        {
+          "__typename": "User",
+          "name": "Franklin"
+        }
+      ]
+    },
+    "extensions": {}
+  }

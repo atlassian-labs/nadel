@@ -1,0 +1,166 @@
+name: deep rename with more unions
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      names: [HasName]
+    }
+    union HasName = JiraIssue | Edible | Troll | User
+    type JiraIssue @renamed(from: "Issue") {
+      name: String
+    }
+    type Edible {
+      name: String
+    }
+    type Troll {
+      name: String @renamed(from: "firstEat.item.name")
+    }
+    type User {
+      name: String @renamed(from: "details.firstName")
+    }
+underlyingSchema:
+  Issues: |
+    union HasName = Issue | Edible
+    type Query {
+      names: [HasName]
+    }
+    type Troll {
+      id: ID
+      firstEat: EatLog
+    }
+    type EatLog {
+      id: ID
+      item: Edible
+    }
+    type Edible {
+      name: String
+    }
+    type Issue {
+      name: String
+    }
+    type UserDetails {
+      firstName: String
+    }
+    type User {
+      id: ID
+      details: UserDetails
+    }
+query: |
+  query {
+    names {
+      ... on JiraIssue {
+        name
+      }
+      ... on Edible {
+        name
+      }
+      ... on Troll {
+        name
+      }
+      ... on User {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              names {
+                ... on Edible {
+                  name
+                }
+                ... on Issue {
+                  name
+                }
+                ... on Troll {
+                  deep_rename__name__firstEat: firstEat {
+                    ... on EatLog {
+                      item {
+                        ... on Edible {
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+                ... on Troll {
+                  __typename__deep_rename__name: __typename
+                }
+                ... on User {
+                  deep_rename__name__details: details {
+                    ... on UserDetails {
+                      firstName
+                    }
+                  }
+                }
+                ... on User {
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "names": [
+              {
+                "name": "GQLGW-001"
+              },
+              {
+                "name": "GQLGW-1102"
+              },
+              {
+                "__typename__deep_rename__name": "Troll",
+                "deep_rename__name__firstEat": {
+                  "item": {
+                    "name": "My Arm"
+                  }
+                }
+              },
+              {
+                "__typename__deep_rename__name": "User",
+                "deep_rename__name__details": {
+                  "firstName": "Franklin"
+                }
+              },
+              {
+                "name": "Spaghetti"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "names": [
+        {
+          "name": "GQLGW-001"
+        },
+        {
+          "name": "GQLGW-1102"
+        },
+        {
+          "name": "My Arm"
+        },
+        {
+          "name": "Franklin"
+        },
+        {
+          "name": "Spaghetti"
+        }
+      ]
+    },
+    "extensions": {}
+  }

@@ -5,7 +5,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
+import graphql.nadel.enginekt.blueprint.getInstructionsForField
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
@@ -14,8 +14,11 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
+import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
+
+typealias GraphQLObjectTypeName = String
 
 /**
  * A deep rename is a rename in where the field being "renamed" is not on the same level
@@ -58,7 +61,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
          * }
          * ```
          */
-        val instructions: Map<FieldCoordinates, NadelDeepRenameFieldInstruction>,
+        val instructions: Map<GraphQLObjectTypeName, NadelDeepRenameFieldInstruction>,
         /**
          * See [NadelAliasHelper]
          */
@@ -82,7 +85,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         overallField: ExecutableNormalizedField,
     ): State? {
         val deepRenameInstructions = executionBlueprint.fieldInstructions
-            .getInstructionsOfTypeForField<NadelDeepRenameFieldInstruction>(overallField)
+            .getInstructionsForField<NadelDeepRenameFieldInstruction>(overallField)
         if (deepRenameInstructions.isEmpty()) {
             return null
         }
@@ -152,16 +155,25 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
+        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructions }
+
         return NadelTransformFieldResult(
-            newField = null,
-            artificialFields = state.instructions.map { (coordinates, instruction) ->
+            newField = objectTypesNoRenames
+                .takeIf(List<GraphQLObjectTypeName>::isNotEmpty)
+                ?.let {
+                    field.toBuilder()
+                        .clearObjectTypesNames()
+                        .objectTypeNames(it)
+                        .build()
+                },
+            artificialFields = state.instructions.map { (objectTypeWithRename, instruction) ->
                 makeDeepField(
                     state,
                     transformer,
                     executionBlueprint,
                     service,
                     field,
-                    coordinates,
+                    objectTypeWithRename,
                     deepRename = instruction,
                 )
             } + makeTypeNameField(state),
@@ -182,7 +194,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     ): ExecutableNormalizedField {
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = state.instructions.keys.map { it.typeName },
+            objectTypeNames = state.instructions.keys.toList(),
         )
     }
 
@@ -209,10 +221,10 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        fieldCoordinates: FieldCoordinates,
+        objectTypeName: GraphQLObjectTypeName,
         deepRename: NadelDeepRenameFieldInstruction,
     ): ExecutableNormalizedField {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(fieldCoordinates.typeName)
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(objectTypeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 

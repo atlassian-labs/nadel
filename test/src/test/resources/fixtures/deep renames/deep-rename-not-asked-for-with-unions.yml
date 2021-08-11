@@ -1,0 +1,116 @@
+name: deep rename not asked for with unions
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      names: [HasName]
+    }
+    union HasName = JiraIssue | Edible | Troll | User
+    type JiraIssue @renamed(from: "Issue") {
+      name: String
+    }
+    type Edible {
+      name: String
+    }
+    type Troll {
+      name: String @renamed(from: "firstEat.item.name")
+    }
+    type User {
+      name: String @renamed(from: "details.firstName")
+    }
+underlyingSchema:
+  Issues: |
+    union HasName = Issue | Edible
+    type Query {
+      names: [HasName]
+    }
+    type Troll {
+      id: ID
+      firstEat: EatLog
+    }
+    type EatLog {
+      id: ID
+      item: Edible
+    }
+    type Edible {
+      name: String
+    }
+    type Issue {
+      name: String
+    }
+    type UserDetails {
+      firstName: String
+    }
+    type User {
+      id: ID
+      details: UserDetails
+    }
+query: |
+  query {
+    names {
+      ... on JiraIssue {
+        name
+      }
+      ... on Edible {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              names {
+                ... on Edible {
+                  name
+                }
+                ... on Issue {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "names": [
+              {
+                "name": "GQLGW-001"
+              },
+              {
+                "name": "GQLGW-1102"
+              },
+              {
+                "name": "Spaghetti"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "names": [
+        {
+          "name": "GQLGW-001"
+        },
+        {
+          "name": "GQLGW-1102"
+        },
+        {
+          "name": "Spaghetti"
+        }
+      ]
+    },
+    "extensions": {}
+  }
