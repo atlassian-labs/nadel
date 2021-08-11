@@ -1,6 +1,6 @@
-name: rename inside hydration
+name: basic hydration directive based
 enabled:
-  current: false
+  current: true
   nextgen: true
 overallSchema:
   service2: |
@@ -10,31 +10,29 @@ overallSchema:
       }
       type Bar {
         id: ID
-        title: String @renamed(from: "name")
+        name: String
       }
     }
   service1: |
-    service service1 {
-      type Query {
-        foo: Foo
-      }
-      type Foo {
-        id: ID
-        bar: Bar @hydrated(
-          service: "service2"
-          field: "barById"
-          arguments: [
-            {name: "id" value: "$source.barId"}
-          ]
-        )
-        barLongerInput: Bar @hydrated(
-          service: "service2"
-          field: "barById"
-          arguments: [
-            {name: "id" value: "$source.fooDetails.externalBarId"}
-          ]
-        )
-      }
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      bar: Bar @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          {name: "id" value: "$source.barId"}
+        ]
+      )
+      barLongerInput: Bar @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          {name: "id" value: "$source.fooDetails.externalBarId"}
+        ]
+      )
     }
 underlyingSchema:
   service2: |
@@ -64,12 +62,54 @@ query: |
   query {
     foo {
       bar {
-        title
+        name
       }
     }
   }
 variables: {}
 serviceCalls:
+  current:
+    - serviceName: service1
+      request:
+        query: |
+          query nadel_2_service1 {
+            foo {
+              barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service1
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "barId": "barId"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query nadel_2_service2 {
+            barById(id: "barId") {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service2
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "id": "barId",
+              "name": "Bar1"
+            }
+          },
+          "extensions": {}
+        }
   nextgen:
     - serviceName: service1
       request:
@@ -104,8 +144,7 @@ serviceCalls:
             ... on Query {
               barById(id: "barId") {
                 ... on Bar {
-                  __typename__rename__title: __typename
-                  rename__title__name: name
+                  name
                 }
               }
             }
@@ -117,8 +156,7 @@ serviceCalls:
         {
           "data": {
             "barById": {
-              "rename__title__name": "Bar1",
-              "__typename__rename__title": "Bar"
+              "name": "Bar1"
             }
           },
           "extensions": {}
@@ -129,7 +167,7 @@ response: |-
     "data": {
       "foo": {
         "bar": {
-          "title": "Bar1"
+          "name": "Bar1"
         }
       }
     },

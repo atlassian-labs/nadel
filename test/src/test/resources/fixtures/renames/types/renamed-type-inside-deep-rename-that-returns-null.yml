@@ -1,0 +1,103 @@
+name: renamed type inside deep rename that returns null
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  IssueService: |
+    type Query {
+      issueById(id: ID!): Issue
+    }
+    type Issue {
+      assignee: IssueUser @renamed(from: "details.assignee")
+    }
+    type IssueUser @renamed(from: "User") {
+      name: String
+      friends: [IssueUser]
+    }
+    type IssueDetails @renamed(from: "Details") {
+      name: String
+    }
+underlyingSchema:
+  IssueService: |
+    type Issue {
+      id: ID
+      details: Details
+    }
+    type Details {
+      name: String
+      assignee: User
+    }
+    type User {
+      name: String
+      friends: [User]
+    }
+    type Query {
+      issueById(id: ID!): Issue
+    }
+query: |
+  query {
+    issueById(id: "issue-1") {
+      assignee {
+        name
+        __typename
+        friends {
+          __typename
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              issueById(id: "issue-1") {
+                ... on Issue {
+                  __typename__deep_rename__assignee: __typename
+                  deep_rename__assignee__details: details {
+                    ... on Details {
+                      assignee {
+                        ... on User {
+                          __typename
+                          friends {
+                            ... on User {
+                              __typename
+                            }
+                          }
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issueById": {
+              "__typename__deep_rename__assignee": "Issue",
+              "deep_rename__assignee__details": {
+                "assignee": null
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issueById": {
+        "assignee": null
+      }
+    },
+    "extensions": {}
+  }

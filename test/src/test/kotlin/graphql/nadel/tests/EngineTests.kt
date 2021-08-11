@@ -64,7 +64,11 @@ class EngineTests : FunSpec({
                     // Rename fixtures if they have the wrong name
                     val expectedName = fixture.name.toSlug()
                     if (file.nameWithoutExtension != expectedName) {
-                        file.renameTo(File(file.parentFile, "$expectedName.${file.extension}"))
+                        val expectedFile = File(file.parentFile, "$expectedName.${file.extension}")
+                        if (expectedFile.exists()) {
+                            fail("${file.path} should be named ${expectedFile.path} but the latter already exists")
+                        }
+                        file.renameTo(expectedFile)
                     }
                 }
         }

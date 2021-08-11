@@ -1,0 +1,101 @@
+name: deep rename inside deep rename
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      issue: JiraIssue @renamed(from: "first")
+    }
+    type JiraIssue @renamed(from: "Issue") {
+      extras: IssueExtra @renamed(from: "details.extras")
+    }
+    type IssueExtra {
+      ownerName: String @renamed(from: "owner.name")
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      first: Issue
+    }
+    type Issue {
+      details: IssueDetail
+    }
+    type IssueDetail {
+      extras: IssueExtra
+    }
+    type IssueExtra {
+      owner: User
+    }
+    type User {
+      name: String
+    }
+query: |
+  query {
+    issue {
+      extras {
+        ownerName
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__issue__first: first {
+                ... on Issue {
+                  __typename__deep_rename__extras: __typename
+                  deep_rename__extras__details: details {
+                    ... on IssueDetail {
+                      extras {
+                        ... on IssueExtra {
+                          __typename__deep_rename__ownerName: __typename
+                          deep_rename__ownerName__owner: owner {
+                            ... on User {
+                              name
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__issue__first": {
+              "__typename__deep_rename__extras": "Issue",
+              "deep_rename__extras__details": {
+                "extras": {
+                  "__typename__deep_rename__ownerName": "IssueExtra",
+                  "deep_rename__ownerName__owner": {
+                    "name": "Franklin"
+                  }
+                }
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "extras": {
+          "ownerName": "Franklin"
+        }
+      }
+    },
+    "extensions": {}
+  }
