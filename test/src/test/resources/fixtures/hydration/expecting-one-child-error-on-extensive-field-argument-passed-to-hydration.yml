@@ -167,14 +167,12 @@ serviceCalls:
             ... on Query {
               board(id: 1) {
                 ... on Board {
+                  __typename__rename__cardChildren: __typename
                   id
-                }
-                ... on Board {
                   rename__cardChildren__issueChildren: issueChildren {
                     ... on Card {
+                      __typename__batch_hydration__assignee: __typename
                       id
-                    }
-                    ... on Card {
                       batch_hydration__assignee__issue: issue {
                         ... on Issue {
                           assignee {
@@ -185,13 +183,7 @@ serviceCalls:
                         }
                       }
                     }
-                    ... on Card {
-                      __typename__batch_hydration__assignee: __typename
-                    }
                   }
-                }
-                ... on Board {
-                  __typename__rename__cardChildren: __typename
                 }
               }
             }
@@ -246,8 +238,6 @@ serviceCalls:
               users(accountIds: ["1", "2", "3"]) {
                 ... on User {
                   accountId
-                }
-                ... on User {
                   batch_hydration__assignee__accountId: accountId
                 }
               }

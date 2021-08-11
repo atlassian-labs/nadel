@@ -138,16 +138,10 @@ serviceCalls:
                     ... on Testing {
                       movie {
                         ... on Movie {
-                          id
-                        }
-                        ... on Movie {
-                          name
-                        }
-                        ... on Movie {
-                          hydration__character__characterId: characterId
-                        }
-                        ... on Movie {
                           __typename__hydration__character: __typename
+                          hydration__character__characterId: characterId
+                          id
+                          name
                         }
                       }
                     }
@@ -185,8 +179,6 @@ serviceCalls:
                   character(id: "C1") {
                     ... on Character {
                       id
-                    }
-                    ... on Character {
                       name
                     }
                   }

@@ -193,9 +193,7 @@ serviceCalls:
             ... on Query {
               pets(isLoyal: true) {
                 ... on Cat {
-                  name
-                }
-                ... on Cat {
+                  __typename__rename__collarToRenamed: __typename
                   rename__collarToRenamed__collar: collar {
                     ... on CatCollar {
                       color
@@ -204,14 +202,10 @@ serviceCalls:
                       color
                     }
                   }
-                }
-                ... on Cat {
-                  __typename__rename__collarToRenamed: __typename
-                }
-                ... on Dog {
                   name
                 }
                 ... on Dog {
+                  __typename__rename__collarToRenamed: __typename
                   rename__collarToRenamed__collar: collar {
                     ... on CatCollar {
                       color
@@ -220,9 +214,7 @@ serviceCalls:
                       color
                     }
                   }
-                }
-                ... on Dog {
-                  __typename__rename__collarToRenamed: __typename
+                  name
                 }
               }
             }

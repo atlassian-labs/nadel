@@ -90,40 +90,26 @@ serviceCalls:
             ... on Query {
               issue {
                 ... on Issue {
-                  id
-                }
-                ... on Issue {
+                  __typename__deep_rename__authorId: __typename
+                  __typename__deep_rename__authorName: __typename
+                  __typename__rename__details: __typename
                   deep_rename__authorId__authorDetails: authorDetails {
                     ... on AuthorDetail {
                       authorId
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__authorId: __typename
-                }
-                ... on Issue {
                   deep_rename__authorName__authorDetails: authorDetails {
                     ... on AuthorDetail {
                       name
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__authorName: __typename
-                }
-                ... on Issue {
                   rename__details__authorDetails: authorDetails {
                     ... on AuthorDetail {
+                      __typename__rename__extra: __typename
                       rename__extra__extraInfo: extraInfo
                     }
-                    ... on AuthorDetail {
-                      __typename__rename__extra: __typename
-                    }
                   }
-                }
-                ... on Issue {
-                  __typename__rename__details: __typename
+                  id
                 }
               }
             }

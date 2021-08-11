@@ -15,7 +15,6 @@ overallSchema:
           { name: "id", value: "$source.issueId"}
       ])
     }
-
   issues: |
     type Query {
         issue(id: ID): Issue
@@ -31,7 +30,6 @@ overallSchema:
             { name:"after" value:"$argument.after"},
         ])
     }
-
   comments: |
     type Query {
         comments(cloudId: ID!, after: String): CommentConnection
@@ -40,7 +38,6 @@ overallSchema:
     type CommentConnection {
         totalCount: Int
     }
-
 underlyingSchema:
   boards: |
     type Query {
@@ -51,7 +48,6 @@ underlyingSchema:
       id: ID
       issueId: ID!
     }
-
   issues: |
     type Query {
         issue(id: ID): Issue
@@ -61,7 +57,6 @@ underlyingSchema:
         id: ID!
         cloudId: ID!
     }
-
   comments: |
     type Query {
         comments(cloudId: ID!, after: String): CommentConnection
@@ -70,7 +65,6 @@ underlyingSchema:
     type CommentConnection {
         totalCount: Int
     }
-
 query: |
   query {
     board {
@@ -81,9 +75,8 @@ query: |
       }
     }
   }
-variables: {
-  "first": 10
-}
+variables:
+  first: 10
 serviceCalls:
   current:
     - serviceName: boards
@@ -154,16 +147,18 @@ serviceCalls:
             ... on Query {
               board {
                 ... on Board {
-                  hydration__issue__issueId: issueId
-                }
-                ... on Board {
                   __typename__hydration__issue: __typename
+                  hydration__issue__issueId: issueId
                 }
               }
             }
           }
         variables: {}
+<<<<<<< HEAD
         operationName: nadel_2_boards
+=======
+        operationName: null
+>>>>>>> fwang/fix-tests
       # language=JSON
       response: |-
         {
@@ -182,16 +177,18 @@ serviceCalls:
             ... on Query {
               issue(id: "ISSUE-1") {
                 ... on Issue {
-                  hydration__comments__cloudId: cloudId
-                }
-                ... on Issue {
                   __typename__hydration__comments: __typename
+                  hydration__comments__cloudId: cloudId
                 }
               }
             }
           }
         variables: {}
+<<<<<<< HEAD
         operationName: nadel_2_issues
+=======
+        operationName: null
+>>>>>>> fwang/fix-tests
       # language=JSON
       response: |-
         {
@@ -216,7 +213,11 @@ serviceCalls:
             }
           }
         variables: {}
+<<<<<<< HEAD
         operationName: nadel_2_comments
+=======
+        operationName: null
+>>>>>>> fwang/fix-tests
       # language=JSON
       response: |-
         {

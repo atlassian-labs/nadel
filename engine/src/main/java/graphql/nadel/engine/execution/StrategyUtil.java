@@ -10,6 +10,7 @@ import graphql.nadel.dsl.NodeId;
 import graphql.nadel.engine.result.ExecutionResultNode;
 import graphql.nadel.engine.result.ObjectExecutionResultNode;
 import graphql.nadel.engine.result.RootExecutionResultNode;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLSchema;
 import graphql.util.Breadcrumb;
 import graphql.util.NodeMultiZipper;
@@ -160,17 +161,25 @@ public class StrategyUtil {
         List<ExecutionResultNode> children = new ArrayList<>();
         Map<String, Object> completedValueMap = new LinkedHashMap<>();
 
-        for (ExecutionResultNode resultNode : resultNodes) {
+        List<ExecutionResultNode> nonNullNodes =
+                FpKit.filter(resultNodes, resultNode -> resultNode.getCompletedValue() != null);
+
+        for (ExecutionResultNode resultNode : nonNullNodes) {
             Object completedValue = resultNode.getCompletedValue();
+
             Assert.assertTrue(resultNode instanceof ObjectExecutionResultNode, () -> String.format("We can only combine object fields not %s for result path %s", resultNode.getClass(), resultNode.getResultKey()));
             Assert.assertTrue(completedValue instanceof Map, () -> String.format("We can only combine object field values that are maps not %s for result path %s", completedValue.getClass(), resultNode.getResultKey()));
             children.addAll(resultNode.getChildren());
             Map<String, Object> childValue = (Map<String, Object>) completedValue;
             completedValueMap.putAll(childValue);
         }
-        ObjectExecutionResultNode mergedObjectResult = (ObjectExecutionResultNode) resultNodes.get(0);
-        return mergedObjectResult.transform(
-                builder -> builder.children(children).completedValue(completedValueMap));
+
+        return FpKit.findOne(nonNullNodes, node -> true)
+                .map(objectNode -> objectNode.transform(
+                        builder -> builder.children(children).completedValue(completedValueMap)
+                ))
+                // all result nodes are null. So just return the first of them
+                .orElse(resultNodes.get(0));
     }
 
 }

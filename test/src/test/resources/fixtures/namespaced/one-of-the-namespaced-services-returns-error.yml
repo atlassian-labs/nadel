@@ -1,16 +1,12 @@
-name: mutation with two services sharing a namespaced field
+name: one of the namespaced services returns error
 enabled:
   nextgen: true
   current: true
 overallSchema:
   Issues: |
-    type Query {
-      echo: String
-    }
-
     directive @namespaced on FIELD_DEFINITION
 
-    type Mutation {
+    type Query {
       issue: IssueQuery @namespaced
     }
 
@@ -23,10 +19,6 @@ overallSchema:
       text: String
     }
   IssueSearch: |
-    type Query {
-      echoes: String
-    }
-
     extend type IssueQuery {
       search: SearchResult
     }
@@ -38,10 +30,6 @@ overallSchema:
 underlyingSchema:
   Issues: |
     type Query {
-      echo: String
-    }
-
-    type Mutation {
       issue: IssueQuery
     }
 
@@ -55,10 +43,6 @@ underlyingSchema:
     }
   IssueSearch: |
     type Query {
-      echo: String
-    }
-
-    type Mutation {
       issue: IssueQuery
     }
 
@@ -71,12 +55,11 @@ underlyingSchema:
       count: Int
     }
 query: |
-  mutation {
+  {
     issue {
       getIssue {
         text
       }
-
       search {
         count
       }
@@ -88,7 +71,7 @@ serviceCalls:
     - serviceName: Issues
       request:
         query: |
-          mutation nadel_2_Issues {
+          query nadel_2_Issues {
             issue {
               getIssue {
                 text
@@ -112,7 +95,7 @@ serviceCalls:
     - serviceName: IssueSearch
       request:
         query: |
-          mutation nadel_2_IssueSearch {
+          query nadel_2_IssueSearch {
             issue {
               search {
                 count
@@ -125,20 +108,21 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "issue": {
-              "search": {
-                "count": 100
-              }
-            }
+            "issue": null
           },
+          "errors": [
+            {
+              "message": "Error on IssueSearch"
+            }
+          ],
           "extensions": {}
         }
   nextgen:
     - serviceName: Issues
       request:
         query: |
-          mutation {
-            ... on Mutation {
+          query {
+            ... on Query {
               issue {
                 ... on IssueQuery {
                   getIssue {
@@ -167,8 +151,8 @@ serviceCalls:
     - serviceName: IssueSearch
       request:
         query: |
-          mutation {
-            ... on Mutation {
+          query {
+            ... on Query {
               issue {
                 ... on IssueQuery {
                   search {
@@ -186,12 +170,13 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "issue": {
-              "search": {
-                "count": 100
-              }
-            }
+            "issue": null
           },
+          "errors": [
+            {
+              "message": "Error on IssueSearch"
+            }
+          ],
           "extensions": {}
         }
 # language=JSON
@@ -201,11 +186,17 @@ response: |-
       "issue": {
         "getIssue": {
           "text": "Foo"
-        },
-        "search": {
-          "count": 100
         }
       }
     },
+    "errors": [
+      {
+        "message": "Error on IssueSearch",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
     "extensions": {}
   }

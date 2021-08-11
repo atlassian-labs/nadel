@@ -66,14 +66,12 @@ serviceCalls:
             ... on Query {
               issue {
                 ... on Issue {
+                  __typename__deep_rename__name: __typename
                   deep_rename__name__details: details {
                     ... on IssueDetails {
                       name
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
                 }
               }
             }

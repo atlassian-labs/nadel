@@ -232,55 +232,15 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              raining(isLoyal: true) {
-                ... on Cat {
-                  __typename
-                }
-                ... on Cat {
-                  wearsBell
-                }
-                ... on Dog {
-                  __typename
-                }
-                ... on Dog {
-                  wearsCollar
-                }
-              }
-            }
-          }
-        variables: {}
-        operationName: null
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "raining": {
-              "wearsCollar": true,
-              "__typename": "Dog"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: PetService
-      request:
-        query: |
-          query {
-            ... on Query {
               pets(isLoyal: true) {
                 ... on Cat {
                   name
-                }
-                ... on Cat {
                   wearsBell
                 }
                 ... on Dog {
-                  name
-                }
-                ... on Dog {
-                  wearsCollar
-                }
-                ... on Dog {
                   __typename
+                  name
+                  wearsCollar
                 }
               }
             }
@@ -302,6 +262,36 @@ serviceCalls:
                 "wearsBell": false
               }
             ]
+          },
+          "extensions": {}
+        }
+    - serviceName: PetService
+      request:
+        query: |
+          query {
+            ... on Query {
+              raining(isLoyal: true) {
+                ... on Cat {
+                  __typename
+                  wearsBell
+                }
+                ... on Dog {
+                  __typename
+                  wearsCollar
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "raining": {
+              "wearsCollar": true,
+              "__typename": "Dog"
+            }
           },
           "extensions": {}
         }

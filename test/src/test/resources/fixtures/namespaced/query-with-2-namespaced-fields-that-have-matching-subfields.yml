@@ -69,10 +69,10 @@ underlyingSchema:
     }
   Pages: |
     type Query {
-      page: PageQuery
+      page: PagesQuery
     }
 
-    type PageQuery {
+    type PagesQuery {
       getIssue: IssuePage
     }
 
@@ -160,7 +160,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: nadel_2_IssueSearch
+        operationName: nadel_2_Pages
       # language=JSON
       response: |-
         {
@@ -174,36 +174,6 @@ serviceCalls:
           "extensions": {}
         }
   nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            ... on Query {
-              issue {
-                ... on IssueQuery {
-                  getIssue {
-                    ... on Issue {
-                      text
-                    }
-                  }
-                }
-              }
-            }
-          }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
-        }
     - serviceName: IssueSearch
       request:
         query: |
@@ -221,7 +191,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: nadel_2_IssueSearch
+        operationName: null
       # language=JSON
       response: |-
         {
@@ -229,6 +199,36 @@ serviceCalls:
             "issue": {
               "search": {
                 "count": 100
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  getIssue {
+                    ... on Issue {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "getIssue": {
+                "text": "Foo"
               }
             }
           },
@@ -251,7 +251,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: nadel_2_IssueSearch
+        operationName: null
       # language=JSON
       response: |-
         {

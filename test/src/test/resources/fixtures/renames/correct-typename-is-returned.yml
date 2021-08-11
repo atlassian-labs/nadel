@@ -152,15 +152,11 @@ serviceCalls:
               typenameTest {
                 ... on TypenameTest {
                   __typename
-                }
-                ... on TypenameTest {
                   object {
                     ... on ObjectUnderlying {
                       __typename
                     }
                   }
-                }
-                ... on TypenameTest {
                   objects {
                     ... on ObjectUnderlying {
                       __typename
