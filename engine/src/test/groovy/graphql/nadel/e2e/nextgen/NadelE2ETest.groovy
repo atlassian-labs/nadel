@@ -54,8 +54,6 @@ class NadelE2ETest extends Specification {
             detailName
           }
         }
-      }
-      ... on Issue {
         __typename__deep_rename__name: __typename
       }
     }
@@ -127,6 +125,7 @@ class NadelE2ETest extends Specification {
             petName
           }
         }
+        __typename__deep_rename__name: __typename
       }
       ... on Cat {
         deep_rename__name__detail: detail {
@@ -134,11 +133,6 @@ class NadelE2ETest extends Specification {
             petName
           }
         }
-      }
-      ... on Dog {
-        __typename__deep_rename__name: __typename
-      }
-      ... on Cat {
         __typename__deep_rename__name: __typename
       }
     }
@@ -217,10 +211,8 @@ class NadelE2ETest extends Specification {
     ... on Query {
         issue {
             ... on Issue {
-                hydration__author__authorId: authorId
-            }
-            ... on Issue {
                 __typename__hydration__author: __typename
+                hydration__author__authorId: authorId
             }
         }
     }
@@ -321,8 +313,6 @@ class NadelE2ETest extends Specification {
         issues {
             ... on Issue {
                 batch_hydration__author__authorId: authorId
-            }
-            ... on Issue {
                 __typename__batch_hydration__author: __typename
             }
         }
@@ -351,8 +341,6 @@ class NadelE2ETest extends Specification {
         usersByIds(userIds: ["user-1", "user-2"]) {
             ... on User {
                 name
-            }
-            ... on User {
                 batch_hydration__author__id: id
             }
         }
@@ -368,8 +356,6 @@ class NadelE2ETest extends Specification {
         usersByIds(userIds: ["user-5"]) {
             ... on User {
                 name
-            }
-            ... on User {
                 batch_hydration__author__id: id
             }
         }
@@ -458,8 +444,6 @@ class NadelE2ETest extends Specification {
         issues {
             ... on Issue {
                 batch_hydration__author__id: id
-            }
-            ... on Issue {
                 __typename__batch_hydration__author: __typename
             }
         }
@@ -596,8 +580,6 @@ class NadelE2ETest extends Specification {
         issue {
             ... on Issue {
                 hydration__author__authorId: authorId
-            }
-            ... on Issue {
                 __typename__hydration__author: __typename
             }
         }
@@ -616,15 +598,11 @@ class NadelE2ETest extends Specification {
         userById(userId: "user-1") {
             ... on User {
                 id
-            }
-            ... on User {
                 deep_rename__name__details: details {
                     ... on UserDetails {
                         name
                     }
                 }
-            }
-            ... on User {
                 __typename__deep_rename__name: __typename
             }
         }
@@ -632,7 +610,7 @@ class NadelE2ETest extends Specification {
 }""")): [
                         userById: [
                                 __typename__deep_rename__name: "User",
-                                id                     : "user-1",
+                                id                           : "user-1",
                                 deep_rename__name__details   : [name: "Atlassian"],
                         ]
                 ],
@@ -712,6 +690,7 @@ class NadelE2ETest extends Specification {
             petName
           }
         }
+        __typename__deep_rename__name: __typename
       }
       ... on Cat {
         deep_rename__name__microchip: microchip {
@@ -719,11 +698,6 @@ class NadelE2ETest extends Specification {
             petName
           }
         }
-      }
-      ... on Dog {
-        __typename__deep_rename__name: __typename
-      }
-      ... on Cat {
         __typename__deep_rename__name: __typename
       }
     }
@@ -773,7 +747,7 @@ class NadelE2ETest extends Specification {
         def query = """
         { issue { __typename name } } 
         """
-        def expectedQuery = '''query {... on Query {issue {... on UnderlyingIssue {__typename} ... on UnderlyingIssue {name}}}}'''
+        def expectedQuery = '''query {... on Query {issue {... on UnderlyingIssue {__typename name}}}}'''
         def serviceResponse = [issue: [__typename: "UnderlyingIssue", name: "My Issue"]]
 
         def overallResponse = [issue: [__typename: "Issue", name: "My Issue"]]
@@ -833,16 +807,16 @@ class NadelE2ETest extends Specification {
             detailName
           }
         }
-      }
-      ... on UnderlyingIssue {
         __typename__deep_rename__name: __typename
+        detail {
+          ... on UnderlyingIssueDetails {otherDetail}
+        }
       }
-      ... on UnderlyingIssue {detail {... on UnderlyingIssueDetails {otherDetail}}}
     }
   }
 }"""
         def serviceResponse = [issue: [
-                detail                 : [otherDetail: "other detail"],
+                detail                       : [otherDetail: "other detail"],
                 __typename__deep_rename__name: "UnderlyingIssue",
                 deep_rename__name__detail    : [detailName: "My Issue"],
         ]]
@@ -939,9 +913,7 @@ class NadelE2ETest extends Specification {
   ... on Query {
     issue {
       ... on Issue {
-            rename__name__underlyingName: underlyingName
-      }
-      ... on Issue {
+        rename__name__underlyingName: underlyingName
         __typename__rename__name: __typename
       }
     }
@@ -1039,8 +1011,9 @@ class NadelE2ETest extends Specification {
                 println printAstCompact(expectedDocument)
                 1 * execution.execute({ ServiceExecutionParameters sep ->
                     println "Service '$serviceName' got query"
-                    println printAstCompact(sep.query)
-                    printAstCompact(sep.query) == printAstCompact(expectedDocument)
+                    def sortedIncomingQuery = astSorter.sort(sep.query)
+                    println printAstCompact(sortedIncomingQuery)
+                    printAstCompact(sortedIncomingQuery) == printAstCompact(expectedDocument)
                 }) >> completedFuture(result)
             }
             execution
