@@ -160,7 +160,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: nadel_2_IssueSearch
+        operationName: nadel_2_Pages
       # language=JSON
       response: |-
         {

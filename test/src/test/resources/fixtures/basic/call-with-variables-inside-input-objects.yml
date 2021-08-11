@@ -37,7 +37,7 @@ serviceCalls:
         variables:
           varIds: null
           otherVar: null
-        operationName: nadel_2_MyService
+        operationName: nadel_2_MyService_myQuery
       # language=JSON
       response: |-
         {
