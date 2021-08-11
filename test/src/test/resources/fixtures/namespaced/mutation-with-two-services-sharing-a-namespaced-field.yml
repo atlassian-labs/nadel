@@ -151,7 +151,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: nadel_2_Issues
+        operationName: null
       # language=JSON
       response: |-
         {
@@ -181,7 +181,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: nadel_2_IssueSearch
+        operationName: null
       # language=JSON
       response: |-
         {

@@ -96,7 +96,7 @@ serviceCalls:
               issueId
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_boards
       # language=JSON
       response: |-
@@ -116,7 +116,7 @@ serviceCalls:
               cloudId
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_issues
       # language=JSON
       response: |-
@@ -136,7 +136,7 @@ serviceCalls:
               totalCount
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_comments
       # language=JSON
       response: |-
@@ -164,8 +164,8 @@ serviceCalls:
               }
             }
           }
-        variables: { }
-        operationName: nadel_2_boards
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {
@@ -192,8 +192,8 @@ serviceCalls:
               }
             }
           }
-        variables: { }
-        operationName: nadel_2_issues
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {
@@ -217,8 +217,8 @@ serviceCalls:
               }
             }
           }
-        variables: { }
-        operationName: nadel_2_comments
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

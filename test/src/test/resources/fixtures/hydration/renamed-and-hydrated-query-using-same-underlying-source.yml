@@ -10,7 +10,7 @@ overallSchema:
       }
       type Foo {
         renamedField: String => renamed from issue.field
-        details: [Detail] => hydrated from Foo.detail(detailIds: $source.issue.fooId)
+        details: [Detail] => hydrated from Foo.detail(detailId: $source.issue.fooId)
       }
       type Detail {
         detailId: ID!
@@ -36,7 +36,7 @@ underlyingSchema:
     }
 
     type Query {
-      detail(detailIds: [ID]): Detail
+      detail(detailId: ID): Detail
       foo: Foo
     }
 query: |
@@ -82,7 +82,7 @@ serviceCalls:
       request:
         query: |
           query nadel_2_Foo {
-            detail(detailIds: "ID") {
+            detail(detailId: "ID") {
               name
             }
           }
@@ -151,7 +151,7 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              detail(detailIds: "ID") {
+              detail(detailId: "ID") {
                 ... on Detail {
                   name
                 }
