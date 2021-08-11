@@ -47,6 +47,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
@@ -138,6 +139,11 @@ class NextgenEngine @JvmOverloads constructor(
         return result
     }
 
+    fun ExecutableNormalizedField.traverse(function: Consumer<ExecutableNormalizedField>) {
+        function.accept(this)
+        traverseSubTree(function)
+    }
+
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
         service: Service,
@@ -146,7 +152,7 @@ class NextgenEngine @JvmOverloads constructor(
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
 
         val ancestorTransformsByPath = mutableMapOf<List<String>, List<String>>()
-        topLevelField.traverseSubTree { field ->
+        topLevelField.traverse { field ->
             val parentPath = field.parent?.listOfResultKeys
 
             val transforms = executionPlan.transformationSteps[field]
