@@ -106,10 +106,8 @@ serviceCalls:
                 ... on RelationshipConnection {
                   nodes {
                     ... on Relationship {
-                      hydration__devOpsIssue__issueId: issueId
-                    }
-                    ... on Relationship {
                       __typename__hydration__devOpsIssue: __typename
+                      hydration__devOpsIssue__issueId: issueId
                     }
                   }
                 }

@@ -113,15 +113,9 @@ serviceCalls:
             ... on Query {
               bar {
                 ... on Bar {
-                  barId
-                }
-                ... on Bar {
-                  hydration__nestedBar__barId: barId
-                }
-                ... on Bar {
                   __typename__hydration__nestedBar: __typename
-                }
-                ... on Bar {
+                  barId
+                  hydration__nestedBar__barId: barId
                   name
                 }
               }
@@ -149,12 +143,8 @@ serviceCalls:
             ... on Query {
               barById(id: "1") {
                 ... on Bar {
-                  hydration__nestedBar__barId: barId
-                }
-                ... on Bar {
                   __typename__hydration__nestedBar: __typename
-                }
-                ... on Bar {
+                  hydration__nestedBar__barId: barId
                   barId
                 }
               }

@@ -9,7 +9,7 @@ import kotlin.collections.set
  * Like [singleOrNull] but the single item must be of type [T].
  */
 inline fun <reified T> Collection<*>.singleOfTypeOrNull(predicate: (T) -> Boolean = { true }): T? {
-    return singleOrNull { it is T && predicate(it) } as? T
+    return singleOrNull { it is T && predicate(it) } as T?
 }
 
 /**

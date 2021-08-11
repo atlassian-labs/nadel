@@ -75,10 +75,8 @@ serviceCalls:
             ... on Query {
               hello {
                 ... on World {
-                  name
-                }
-                ... on World {
                   id
+                  name
                 }
               }
             }

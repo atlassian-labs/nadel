@@ -71,14 +71,12 @@ serviceCalls:
             ... on Query {
               details {
                 ... on IssueDetail {
+                  __typename__deep_rename__labels: __typename
                   deep_rename__labels__issue: issue {
                     ... on Issue {
                       labels
                     }
                   }
-                }
-                ... on IssueDetail {
-                  __typename__deep_rename__labels: __typename
                 }
               }
             }
