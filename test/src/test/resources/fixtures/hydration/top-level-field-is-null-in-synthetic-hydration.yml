@@ -109,10 +109,8 @@ serviceCalls:
             ... on Query {
               issue {
                 ... on Issue {
-                  hydration__project__projectId: projectId
-                }
-                ... on Issue {
                   __typename__hydration__project: __typename
+                  hydration__project__projectId: projectId
                 }
               }
             }

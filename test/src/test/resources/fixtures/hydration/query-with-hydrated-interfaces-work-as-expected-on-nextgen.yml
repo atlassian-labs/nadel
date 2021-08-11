@@ -252,22 +252,14 @@ serviceCalls:
             ... on Query {
               pets(isLoyal: true) {
                 ... on Cat {
-                  name
-                }
-                ... on Cat {
-                  hydration__owners__ownerIds: ownerIds
-                }
-                ... on Cat {
                   __typename__hydration__owners: __typename
-                }
-                ... on Dog {
                   name
-                }
-                ... on Dog {
                   hydration__owners__ownerIds: ownerIds
                 }
                 ... on Dog {
                   __typename__hydration__owners: __typename
+                  name
+                  hydration__owners__ownerIds: ownerIds
                 }
               }
             }
@@ -305,16 +297,12 @@ serviceCalls:
             ... on Query {
               ownerById(id: "dearly") {
                 ... on CaringOwner {
-                  name
-                }
-                ... on CaringOwner {
                   givesPats
-                }
-                ... on CruelOwner {
                   name
                 }
                 ... on CruelOwner {
                   givesSmacks
+                  name
                 }
               }
             }
@@ -339,16 +327,12 @@ serviceCalls:
             ... on Query {
               ownerById(id: "cruella") {
                 ... on CaringOwner {
-                  name
-                }
-                ... on CaringOwner {
                   givesPats
-                }
-                ... on CruelOwner {
                   name
                 }
                 ... on CruelOwner {
                   givesSmacks
+                  name
                 }
               }
             }

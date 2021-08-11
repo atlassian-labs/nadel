@@ -107,6 +107,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Issue
+      # language=JSON
       response: |-
         {
           "data": {
@@ -130,6 +131,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Association
+      # language=JSON
       response: |-
         {
           "data": {
@@ -155,6 +157,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Association
+      # language=JSON
       response: |-
         {
           "data": {
@@ -176,10 +179,8 @@ serviceCalls:
                 ... on Synth {
                   issue {
                     ... on Issue {
-                      hydration__association__id: id
-                    }
-                    ... on Issue {
                       __typename__hydration__association: __typename
+                      hydration__association__id: id
                     }
                   }
                 }
@@ -210,10 +211,8 @@ serviceCalls:
                 ... on AssociationConnection {
                   nodes {
                     ... on Association {
-                      hydration__page__pageId: pageId
-                    }
-                    ... on Association {
                       __typename__hydration__page: __typename
+                      hydration__page__pageId: pageId
                     }
                   }
                 }

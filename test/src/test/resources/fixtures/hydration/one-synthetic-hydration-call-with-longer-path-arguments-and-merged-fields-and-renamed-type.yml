@@ -144,17 +144,13 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  id
-                }
-                ... on Issue {
+                  __typename__batch_hydration__authors: __typename
                   batch_hydration__authors__authors: authors {
                     ... on IssueUser {
                       authorId
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__batch_hydration__authors: __typename
+                  id
                 }
               }
             }
@@ -191,13 +187,9 @@ serviceCalls:
                 ... on UserQuery {
                   usersByIds(id: ["USER-1", "USER-2"]) {
                     ... on User {
-                      name
-                    }
-                    ... on User {
                       id
-                    }
-                    ... on User {
                       batch_hydration__authors__id: id
+                      name
                     }
                   }
                 }

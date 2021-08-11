@@ -63,7 +63,7 @@ class EngineTests : FunSpec({
             println("Loading ${it.nameWithoutExtension}")
         }
         .map { file ->
-            file
+            file to file
                 .let(File::readText)
                 .let<String, TestFixture>(yamlObjectMapper::readValue)
                 .also { fixture ->
@@ -74,7 +74,7 @@ class EngineTests : FunSpec({
                     }
                 }
         }
-        .forEach { fixture ->
+        .forEach { (file, fixture) ->
             engineFactories.all
                 .filter {
                     if (singleTestToRun.isBlank()) {
@@ -94,6 +94,7 @@ class EngineTests : FunSpec({
                             fixture = fixture,
                             engineType = engineType,
                             engineFactory = engineFactory,
+                            fixtureFile = file,
                         )
                     }
                     if (fixture.ignored.get(engineType = engineType)) {
@@ -110,6 +111,7 @@ private suspend fun execute(
     testHooks: EngineTestHook? = getTestHook(fixture),
     engineType: NadelEngineType,
     engineFactory: NadelExecutionEngineFactory,
+    fixtureFile: File,
 ) {
     val printLock = Any()
     fun printSyncLine(message: String): Unit = synchronized(printLock) {
@@ -169,7 +171,7 @@ private suspend fun execute(
                                         }).also {
                                             println(it.replaceIndent(">  "))
                                         } == incomingQueryPrinted
-                                        // && it.request.operationName == params.operationDefinition.name
+                                            && call.request.operationName == params.operationDefinition.name
                                     }
                                     .takeIf { it != -1 }
 
@@ -264,7 +266,9 @@ private suspend fun execute(
             )
         )
 
-        println(newFixture.let(yamlObjectMapper::writeValueAsString))
+        val newFixtureYAML = newFixture.let(yamlObjectMapper::writeValueAsString)
+        println(newFixtureYAML)
+        // fixtureFile.writeText(newFixtureYAML)
     } catch (e: Throwable) {
         if (fixture.exception?.message?.matches(e.message ?: "") == true) {
             return

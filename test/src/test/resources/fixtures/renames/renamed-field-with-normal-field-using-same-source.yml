@@ -72,6 +72,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -94,6 +95,7 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
+                  __typename__deep_rename__renamedField: __typename
                   issue {
                     ... on Issue {
                       fooDetail {
@@ -103,16 +105,11 @@ serviceCalls:
                       }
                     }
                   }
-                }
-                ... on Foo {
                   deep_rename__renamedField__issue: issue {
                     ... on Issue {
                       field
                     }
                   }
-                }
-                ... on Foo {
-                  __typename__deep_rename__renamedField: __typename
                 }
               }
             }

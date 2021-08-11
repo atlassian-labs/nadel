@@ -174,36 +174,6 @@ serviceCalls:
           "extensions": {}
         }
   nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            ... on Query {
-              issue {
-                ... on IssueQuery {
-                  getIssue {
-                    ... on Issue {
-                      text
-                    }
-                  }
-                }
-              }
-            }
-          }
-        variables: {}
-        operationName: null
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
-        }
     - serviceName: IssueSearch
       request:
         query: |
@@ -229,6 +199,36 @@ serviceCalls:
             "issue": {
               "search": {
                 "count": 100
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  getIssue {
+                    ... on Issue {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "getIssue": {
+                "text": "Foo"
               }
             }
           },

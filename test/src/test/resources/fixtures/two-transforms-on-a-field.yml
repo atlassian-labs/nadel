@@ -55,10 +55,8 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
-                  id
-                }
-                ... on Foo {
                   uuid_typename: __typename
+                  id
                 }
               }
             }

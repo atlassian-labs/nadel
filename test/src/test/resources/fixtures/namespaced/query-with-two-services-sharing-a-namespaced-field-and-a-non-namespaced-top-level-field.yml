@@ -159,13 +159,9 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              issue {
-                ... on IssueQuery {
-                  getIssue {
-                    ... on Issue {
-                      text
-                    }
-                  }
+              conf {
+                ... on Page {
+                  title
                 }
               }
             }
@@ -176,10 +172,8 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
+            "conf": {
+              "title": "Page title"
             }
           },
           "extensions": {}
@@ -219,9 +213,13 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              conf {
-                ... on Page {
-                  title
+              issue {
+                ... on IssueQuery {
+                  getIssue {
+                    ... on Issue {
+                      text
+                    }
+                  }
                 }
               }
             }
@@ -232,8 +230,10 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "conf": {
-              "title": "Page title"
+            "issue": {
+              "getIssue": {
+                "text": "Foo"
+              }
             }
           },
           "extensions": {}

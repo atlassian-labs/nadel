@@ -128,8 +128,9 @@ query: |
     }
   }
 variables:
-  var1: "service-1"
+  var1: service-1
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: Users
       request:
@@ -139,471 +140,267 @@ serviceCalls:
               service(id: "service-1") {
                 ... on Service {
                   __typename
-                }
-                ... on Service {
                   dependedOn {
                     ... on RelationshipConnection {
                       __typename
-                    }
-                    ... on RelationshipConnection {
                       nodes {
                         ... on Relationship {
                           __typename
-                        }
-                        ... on Relationship {
                           endService {
                             ... on Service {
                               __typename
-                            }
-                            ... on Service {
                               dependedOn {
                                 ... on RelationshipConnection {
                                   __typename
-                                }
-                                ... on RelationshipConnection {
                                   nodes {
                                     ... on Relationship {
                                       __typename
-                                    }
-                                    ... on Relationship {
                                       endService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       id
-                                    }
-                                    ... on Relationship {
                                       startService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       type
                                     }
                                   }
                                 }
                               }
-                            }
-                            ... on Service {
                               dependsOn {
                                 ... on RelationshipConnection {
                                   __typename
-                                }
-                                ... on RelationshipConnection {
                                   nodes {
                                     ... on Relationship {
                                       __typename
-                                    }
-                                    ... on Relationship {
                                       endService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       id
-                                    }
-                                    ... on Relationship {
                                       startService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       type
                                     }
                                   }
                                 }
                               }
-                            }
-                            ... on Service {
                               id
-                            }
-                            ... on Service {
                               name
                             }
                           }
-                        }
-                        ... on Relationship {
                           id
-                        }
-                        ... on Relationship {
                           startService {
                             ... on Service {
                               __typename
-                            }
-                            ... on Service {
                               dependedOn {
                                 ... on RelationshipConnection {
                                   __typename
-                                }
-                                ... on RelationshipConnection {
                                   nodes {
                                     ... on Relationship {
                                       __typename
-                                    }
-                                    ... on Relationship {
                                       endService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       id
-                                    }
-                                    ... on Relationship {
                                       startService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       type
                                     }
                                   }
                                 }
                               }
-                            }
-                            ... on Service {
                               dependsOn {
                                 ... on RelationshipConnection {
                                   __typename
-                                }
-                                ... on RelationshipConnection {
                                   nodes {
                                     ... on Relationship {
                                       __typename
-                                    }
-                                    ... on Relationship {
                                       endService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       id
-                                    }
-                                    ... on Relationship {
                                       startService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       type
                                     }
                                   }
                                 }
                               }
-                            }
-                            ... on Service {
                               id
-                            }
-                            ... on Service {
                               name
                             }
                           }
-                        }
-                        ... on Relationship {
                           type
                         }
                       }
                     }
                   }
-                }
-                ... on Service {
                   dependsOn {
                     ... on RelationshipConnection {
                       __typename
-                    }
-                    ... on RelationshipConnection {
                       nodes {
                         ... on Relationship {
                           __typename
-                        }
-                        ... on Relationship {
                           endService {
                             ... on Service {
                               __typename
-                            }
-                            ... on Service {
                               dependedOn {
                                 ... on RelationshipConnection {
                                   __typename
-                                }
-                                ... on RelationshipConnection {
                                   nodes {
                                     ... on Relationship {
                                       __typename
-                                    }
-                                    ... on Relationship {
                                       endService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       id
-                                    }
-                                    ... on Relationship {
                                       startService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       type
                                     }
                                   }
                                 }
                               }
-                            }
-                            ... on Service {
                               dependsOn {
                                 ... on RelationshipConnection {
                                   __typename
-                                }
-                                ... on RelationshipConnection {
                                   nodes {
                                     ... on Relationship {
                                       __typename
-                                    }
-                                    ... on Relationship {
                                       endService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       id
-                                    }
-                                    ... on Relationship {
                                       startService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       type
                                     }
                                   }
                                 }
                               }
-                            }
-                            ... on Service {
                               id
-                            }
-                            ... on Service {
                               name
                             }
                           }
-                        }
-                        ... on Relationship {
                           id
-                        }
-                        ... on Relationship {
                           startService {
                             ... on Service {
                               __typename
-                            }
-                            ... on Service {
                               dependedOn {
                                 ... on RelationshipConnection {
                                   __typename
-                                }
-                                ... on RelationshipConnection {
                                   nodes {
                                     ... on Relationship {
                                       __typename
-                                    }
-                                    ... on Relationship {
                                       endService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       id
-                                    }
-                                    ... on Relationship {
                                       startService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       type
                                     }
                                   }
                                 }
                               }
-                            }
-                            ... on Service {
                               dependsOn {
                                 ... on RelationshipConnection {
                                   __typename
-                                }
-                                ... on RelationshipConnection {
                                   nodes {
                                     ... on Relationship {
                                       __typename
-                                    }
-                                    ... on Relationship {
                                       endService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       id
-                                    }
-                                    ... on Relationship {
                                       startService {
                                         ... on Service {
                                           __typename
-                                        }
-                                        ... on Service {
                                           id
-                                        }
-                                        ... on Service {
                                           name
                                         }
                                       }
-                                    }
-                                    ... on Relationship {
                                       type
                                     }
                                   }
                                 }
                               }
-                            }
-                            ... on Service {
                               id
-                            }
-                            ... on Service {
                               name
                             }
                           }
-                        }
-                        ... on Relationship {
                           type
                         }
                       }
                     }
                   }
-                }
-                ... on Service {
                   id
-                }
-                ... on Service {
                   name
                 }
               }

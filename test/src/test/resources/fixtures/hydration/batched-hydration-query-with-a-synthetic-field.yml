@@ -1,7 +1,7 @@
 name: batched hydration query with a synthetic field
 enabled:
   current: true
-  nextgen: false
+  nextgen: false # Why is this disabled?
 overallSchema:
   service2: |
     service service2 {

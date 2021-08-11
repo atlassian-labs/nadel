@@ -238,14 +238,10 @@ serviceCalls:
               raining(isLoyal: true) {
                 ... on Cat {
                   __typename
-                }
-                ... on Cat {
                   wearsBell
                 }
                 ... on Dog {
                   __typename
-                }
-                ... on Dog {
                   wearsCollar
                 }
               }
@@ -271,21 +267,13 @@ serviceCalls:
             ... on Query {
               pets(isLoyal: true) {
                 ... on Cat {
-                  name
-                }
-                ... on Cat {
                   __typename
-                }
-                ... on Cat {
+                  name
                   wearsBell
                 }
                 ... on Dog {
-                  name
-                }
-                ... on Dog {
                   __typename
-                }
-                ... on Dog {
+                  name
                   wearsCollar
                 }
               }
