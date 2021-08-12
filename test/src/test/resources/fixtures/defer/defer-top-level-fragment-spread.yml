@@ -1,0 +1,130 @@
+name: defer top level fragment spread
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Foo: |
+    service Foo {
+      directive @defer(label: String!) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+      type Query {
+        foo: String
+      }
+    }
+  Bar: |
+    service Bar {
+      type Query {
+        bar: String
+      }
+    }
+  Baz: |
+    service Baz {
+      type Query {
+        baz: String
+      }
+    }
+underlyingSchema:
+  Foo: |
+    type Query {
+      foo: String
+    }
+  Bar: |
+    type Query {
+      bar: String
+    }
+  Baz: |
+    type Query {
+      baz: String
+    }
+query: |
+  query {
+    foo
+    ... barBazFrag @defer(label: "barBazDefer")
+  }
+
+  fragment barBazFrag on Query {
+      bar
+      baz
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": "foofoo"
+          },
+          "extensions": {}
+        }
+    - serviceName: Bar
+      request:
+        query: |
+          query {
+            ... on Query {
+              bar
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bar": "barbar"
+          },
+          "extensions": {}
+        }
+    - serviceName: Baz
+      request:
+        query: |
+          query {
+            ... on Query {
+              baz
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "baz": "bazbaz"
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": "foofoo"
+    },
+    "extensions": {}
+  }
+deferredResponses:
+  - path: []
+    label: "barBazDefer"
+    # language=JSON
+    data: |-
+      {
+        "baz": "bazbaz"
+      }
+    hasNext: true
+  - path: []
+    label: "barBazDefer"
+    # language=JSON
+    data: |-
+      {
+        "bar": "barbar"
+      }
+    hasNext: true
+  - hasNext: false

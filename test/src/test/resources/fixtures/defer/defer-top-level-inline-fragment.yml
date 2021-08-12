@@ -1,4 +1,4 @@
-name: defer top level fragment
+name: defer top level inline fragment
 enabled:
   current: false
   nextgen: true
