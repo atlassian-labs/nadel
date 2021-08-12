@@ -63,6 +63,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -101,13 +102,9 @@ serviceCalls:
             ... on Query {
               rename__foo__fooOriginal: fooOriginal {
                 ... on Foo {
-                  id
-                }
-                ... on Foo {
-                  hydration__fooBar__fooBarId: fooBarId
-                }
-                ... on Foo {
                   __typename__hydration__fooBar: __typename
+                  hydration__fooBar__fooBarId: fooBarId
+                  id
                 }
               }
             }

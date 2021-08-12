@@ -87,27 +87,19 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  id
-                }
-                ... on Issue {
+                  __typename__deep_rename__authorId: __typename
+                  __typename__deep_rename__authorName: __typename
                   deep_rename__authorId__authorDetails: authorDetails {
                     ... on AuthorDetail {
                       authorId
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__authorId: __typename
-                }
-                ... on Issue {
                   deep_rename__authorName__authorDetails: authorDetails {
                     ... on AuthorDetail {
                       name
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__deep_rename__authorName: __typename
+                  id
                 }
               }
             }

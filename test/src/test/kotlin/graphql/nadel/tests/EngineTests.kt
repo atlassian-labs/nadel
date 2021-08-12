@@ -148,7 +148,7 @@ private suspend fun execute(
                                     .indexOfFirst {
                                         it.serviceName == serviceName
                                             && AstPrinter.printAst(it.request.document) == incomingQueryPrinted
-                                        // && it.request.operationName == params.operationDefinition.name
+                                            && it.request.operationName == params.operationDefinition.name
                                     }
                                     .takeIf { it != -1 }
 

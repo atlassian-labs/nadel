@@ -79,6 +79,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -124,10 +125,8 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
-                  hydration__bar__barId: barId
-                }
-                ... on Foo {
                   __typename__hydration__bar: __typename
+                  hydration__bar__barId: barId
                 }
               }
             }
@@ -154,13 +153,9 @@ serviceCalls:
                 ... on BarQuery {
                   barById(id: "barId123") {
                     ... on Bar {
-                      name
-                    }
-                    ... on Bar {
-                      hydration__nestedBar__nestedBarId: nestedBarId
-                    }
-                    ... on Bar {
                       __typename__hydration__nestedBar: __typename
+                      name
+                      hydration__nestedBar__nestedBarId: nestedBarId
                     }
                   }
                 }

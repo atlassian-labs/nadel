@@ -120,13 +120,9 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  id
-                }
-                ... on Issue {
-                  batch_hydration__authors__id: id
-                }
-                ... on Issue {
                   __typename__batch_hydration__authors: __typename
+                  id
+                  batch_hydration__authors__id: id
                 }
               }
             }

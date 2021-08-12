@@ -193,9 +193,6 @@ serviceCalls:
             ... on Query {
               pets(isLoyal: true) {
                 ... on Cat {
-                  name
-                }
-                ... on Cat {
                   collar {
                     ... on CatCollar {
                       color
@@ -204,8 +201,6 @@ serviceCalls:
                       color
                     }
                   }
-                }
-                ... on Dog {
                   name
                 }
                 ... on Dog {
@@ -217,6 +212,7 @@ serviceCalls:
                       color
                     }
                   }
+                  name
                 }
               }
             }

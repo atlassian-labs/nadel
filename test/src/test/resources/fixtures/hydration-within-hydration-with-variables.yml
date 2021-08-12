@@ -16,7 +16,6 @@ overallSchema:
           { name : "id", value : "$source.issueId"}
       ])
     }
-
   issues: |
     type Query {
         issue(id: ID!): Issue
@@ -32,7 +31,6 @@ overallSchema:
             { name:"first" value:"$argument.first"},
         ])
     }
-
   comments: |
     type Query {
         comments(cloudId: ID!, first: Int): CommentConnection
@@ -41,7 +39,6 @@ overallSchema:
     type CommentConnection {
         totalCount: Int
     }
-
 underlyingSchema:
   boards: |
     type Query {
@@ -53,7 +50,6 @@ underlyingSchema:
       title: String
       issueId: ID!
     }
-
   issues: |
     type Query {
         issue(id: ID!): Issue
@@ -63,7 +59,6 @@ underlyingSchema:
         id: ID!
         cloudId: ID!
     }
-
   comments: |
     type Query {
         comments(cloudId: ID!, first: Int): CommentConnection
@@ -72,7 +67,6 @@ underlyingSchema:
     type CommentConnection {
         totalCount: Int
     }
-
 query: |
   query($first: Int) {
     board {
@@ -83,9 +77,8 @@ query: |
       }
     }
   }
-variables: {
-  "first": 10
-}
+variables:
+  first: 10
 serviceCalls:
   current:
     - serviceName: boards
@@ -96,7 +89,7 @@ serviceCalls:
               issueId
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_boards
       # language=JSON
       response: |-
@@ -116,7 +109,7 @@ serviceCalls:
               cloudId
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_issues
       # language=JSON
       response: |-
@@ -136,7 +129,7 @@ serviceCalls:
               totalCount
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_comments
       # language=JSON
       response: |-
@@ -156,16 +149,14 @@ serviceCalls:
             ... on Query {
               board {
                 ... on Board {
-                  hydration__issue__issueId: issueId
-                }
-                ... on Board {
                   __typename__hydration__issue: __typename
+                  hydration__issue__issueId: issueId
                 }
               }
             }
           }
-        variables: { }
-        operationName: nadel_2_boards
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {
@@ -184,16 +175,14 @@ serviceCalls:
             ... on Query {
               issue(id: "ISSUE-1") {
                 ... on Issue {
-                  hydration__comments__cloudId: cloudId
-                }
-                ... on Issue {
                   __typename__hydration__comments: __typename
+                  hydration__comments__cloudId: cloudId
                 }
               }
             }
           }
-        variables: { }
-        operationName: nadel_2_issues
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {
@@ -217,8 +206,8 @@ serviceCalls:
               }
             }
           }
-        variables: { }
-        operationName: nadel_2_comments
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {

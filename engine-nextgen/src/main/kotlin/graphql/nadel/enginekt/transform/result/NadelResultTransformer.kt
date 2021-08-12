@@ -16,6 +16,7 @@ import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.AnyMutableList
 import graphql.nadel.enginekt.util.AnyMutableMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.enginekt.util.MutableJsonMap
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import kotlin.reflect.KClass
@@ -68,42 +69,26 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             }
         }
 
-        mutations.forEach(DataMutation::run)
+        val transformContext = TransformContext()
+        mutations.forEach {
+            it.run(context = transformContext)
+        }
 
-        // Clean up data at the end
-        // TODO: optimize this, we can shave a lot of time here if we track which nodes need to be cleaned up e.g.
-        // transform(parent = parentNode) {
-        //   it.remove(x)
-        // }
-        // Where transform is something like
-        //
-        // inline fun transform(parent: JsonNode, func: (parent: JsonNode) -> Unit) {
-        //   func()
-        //   if (parent.isEmpty()) {
-        //     toCleanup.add(parent)
-        //   }
-        // }
-        instructions
-            .asSequence()
-            .mapNotNull {
-                when (it) {
-                    is NadelResultInstruction.Remove -> it.subjectPath
-                    else -> null
-                }
-            }
-            .forEach(result.data::cleanup)
+        transformContext.emptyPaths.forEach(result.data::cleanup)
     }
 
     private fun prepareSet(
         data: JsonMap,
         instruction: NadelResultInstruction.Set,
     ): DataMutation {
-        val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
+        val parentPath = instruction.subjectPath.dropLast(1)
+        val parentMap = data.getJsonMapAt(parentPath) ?: return DataMutation {}
         val subjectKey = instruction.subjectKey
 
-        return DataMutation {
-            val mutableData = parent.asMutable()
-            mutableData[subjectKey] = instruction.newValue
+        return DataMutation { context ->
+            modifyMap(context, parentPath, parentMap) {
+                it[subjectKey] = instruction.newValue
+            }
         }
     }
 
@@ -111,17 +96,18 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         data: JsonMap,
         instruction: NadelResultInstruction.Remove,
     ): DataMutation {
-        val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
+        val parentPath = instruction.subjectPath.dropLast(1)
+        val parentMap = data.getJsonMapAt(parentPath) ?: return DataMutation {}
         val subjectKey = instruction.subjectKey
 
-        val dataToDelete = parent[subjectKey]
+        val dataToDelete = parentMap[subjectKey]
 
-        return DataMutation {
-            val mutableData = parent.asMutable()
-
+        return DataMutation { context ->
             // Ensure that the node is still the same before removing it, ensures we don't remove the wrong thing
-            if (mutableData[subjectKey] === dataToDelete) {
-                mutableData.remove(subjectKey)
+            if (parentMap[subjectKey] === dataToDelete) {
+                modifyMap(context, parentPath, parentMap) {
+                    it.remove(subjectKey)
+                }
             }
         }
     }
@@ -130,15 +116,17 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         data: JsonMap,
         instruction: NadelResultInstruction.Copy,
     ): DataMutation {
-        val parent = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
-        val dataToCopy = parent[instruction.subjectKey]
+        val parentMap = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
+        val dataToCopy = parentMap[instruction.subjectKey]
 
-        val destinationParent = data.getParentOf(instruction.destinationPath) ?: return DataMutation {}
-        val destinationKey = instruction.destinationKey
+        val destParentPath = instruction.destinationPath.dropLast(1)
+        val destParentMap = data.getJsonMapAt(destParentPath) ?: return DataMutation {}
+        val destKey = instruction.destinationKey
 
-        return DataMutation {
-            val mutableData = destinationParent.asMutable()
-            mutableData[destinationKey] = dataToCopy
+        return DataMutation { context ->
+            modifyMap(context, destParentPath, destParentMap) {
+                it[destKey] = dataToCopy
+            }
         }
     }
 
@@ -154,8 +142,26 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         }
     }
 
+    private inline fun modifyMap(
+        context: TransformContext,
+        mapPath: JsonNodePath,
+        map: JsonMap,
+        modification: (MutableJsonMap) -> Unit,
+    ) {
+        val wasEmpty = map.isEmpty()
+        modification(map.asMutable())
+
+        if (map.isEmpty()) {
+            if (!wasEmpty) {
+                context.emptyPaths.add(mapPath)
+            }
+        } else if (wasEmpty) {
+            context.emptyPaths.remove(mapPath)
+        }
+    }
+
     private fun interface DataMutation {
-        fun run()
+        fun run(context: TransformContext)
     }
 
     private fun getRemoveArtificialFieldInstructions(
@@ -173,6 +179,10 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             }
         }
     }
+
+    private data class TransformContext(
+        val emptyPaths: HashSet<JsonNodePath> = hashSetOf(),
+    )
 }
 
 internal fun <K, V> Map<K, V>.asMutable(): MutableMap<K, V> {

@@ -88,6 +88,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -109,6 +110,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -132,6 +134,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -151,6 +154,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -168,10 +172,8 @@ serviceCalls:
             ... on Query {
               rename__fooService__service: service {
                 ... on Service {
-                  hydration__otherServices__id: id
-                }
-                ... on Service {
                   __typename__hydration__otherServices: __typename
+                  hydration__otherServices__id: id
                 }
               }
             }
@@ -196,14 +198,12 @@ serviceCalls:
             ... on Query {
               connection(id: "ID") {
                 ... on Connection {
+                  __typename__hydration__nodes: __typename
                   hydration__nodes__edges: edges {
                     ... on Edge {
                       node
                     }
                   }
-                }
-                ... on Connection {
-                  __typename__hydration__nodes: __typename
                 }
               }
             }
@@ -232,10 +232,8 @@ serviceCalls:
             ... on Query {
               node(id: "1") {
                 ... on Node {
-                  hydration__space__id: id
-                }
-                ... on Node {
                   __typename__hydration__space: __typename
+                  hydration__space__id: id
                 }
               }
             }

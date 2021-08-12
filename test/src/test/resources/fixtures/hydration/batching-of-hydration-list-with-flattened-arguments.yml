@@ -184,17 +184,13 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  id
-                }
-                ... on Issue {
+                  __typename__batch_hydration__authors: __typename
                   batch_hydration__authors__authors: authors {
                     ... on IssueUser {
                       authorId
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__batch_hydration__authors: __typename
+                  id
                 }
               }
             }
@@ -251,49 +247,9 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
-                ... on User {
-                  id
-                }
-                ... on User {
-                  batch_hydration__authors__id: id
-                }
-              }
-            }
-          }
-        variables: {}
-        operationName: null
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "usersByIds": [
-              {
-                "id": "USER-2",
-                "batch_hydration__authors__id": "USER-2"
-              },
-              {
-                "id": "USER-4",
-                "batch_hydration__authors__id": "USER-4"
-              },
-              {
-                "id": "USER-5",
-                "batch_hydration__authors__id": "USER-5"
-              }
-            ]
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query {
-            ... on Query {
               usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
                 ... on User {
                   id
-                }
-                ... on User {
                   batch_hydration__authors__id: id
                 }
               }
@@ -317,6 +273,42 @@ serviceCalls:
               {
                 "id": "USER-3",
                 "batch_hydration__authors__id": "USER-3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            ... on Query {
+              usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
+                ... on User {
+                  id
+                  batch_hydration__authors__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
+              {
+                "id": "USER-2",
+                "batch_hydration__authors__id": "USER-2"
+              },
+              {
+                "id": "USER-4",
+                "batch_hydration__authors__id": "USER-4"
+              },
+              {
+                "id": "USER-5",
+                "batch_hydration__authors__id": "USER-5"
               }
             ]
           },

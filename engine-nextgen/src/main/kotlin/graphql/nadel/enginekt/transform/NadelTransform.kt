@@ -4,7 +4,6 @@ import graphql.language.Directive
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
-import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
@@ -18,14 +17,13 @@ interface NadelTransform<State : Any> {
      * The returned [State] is then fed into [transformField] and [getResultInstructions].
      *
      * So here you will want to check whether the [overallField] has a specific [Directive] or
-     * if the field has an instruction inside [NadelExecutionBlueprint] etc.
+     * if the field has an instruction inside [NadelOverallExecutionBlueprint] etc.
      *
      * The state should hold data that is shared between [transformField] and [getResultInstructions]
      * e.g. the names of fields that will be added etc. The implementation of [State] is completely up
      * to you. You can make it mutable if that makes your life easier etc.
      *
-     * @param overallSchema the overall [GraphQLSchema] of the of the Nadel instance being operated on
-     * @param executionBlueprint the [NadelExecutionBlueprint] of the Nadel instance being operated on
+     * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
      * @param service the [Service] the [overallField] belongs to
      * @param overallField the [ExecutableNormalizedField] in question, we are asking whether it [isApplicable] for transforms
      *

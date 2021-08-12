@@ -25,6 +25,7 @@ import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.copy
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
+import graphql.nadel.enginekt.util.getInstrumentationContext
 import graphql.nadel.enginekt.util.getOperationKind
 import graphql.nadel.enginekt.util.mergeResults
 import graphql.nadel.enginekt.util.newExecutionResult
@@ -107,43 +108,52 @@ class NextgenEngine @JvmOverloads constructor(
             hooks = serviceExecutionHooks,
             normalizedOperation = query
         )
+        val instrumentationContext = getInstrumentationContext(query, queryDocument, executionInput, overallSchema, instrumentation, instrumentationState)
 
         // TODO: determine what to do with NQ
         // instrumentation.beginExecute(NadelInstrumentationExecuteOperationParameters(query))
 
 
-        val results = coroutineScope {
-            fieldToService.getServicesForTopLevelFields(query)
-                .map { (field, service) ->
-                    async {
-                        try {
-                            val deferLabel = DeferSupport.getDeferLabel(query, field)
-                            if (deferLabel != null) {
-                                val call = ExecutionDeferredCall(
-                                    path = ResultPath.rootPath(),
-                                    label = deferLabel,
-                                    call = { executeTopLevelField(field, service, executionContext) }
-                                )
-                                executionContext.deferSupport.enqueue(call)
-                                null
-                            } else {
-                                executeTopLevelField(field, service, executionContext)
-                            }
+        val result: ExecutionResult = try {
+            mergeResults(
+                coroutineScope {
+                    fieldToService.getServicesForTopLevelFields(query)
+                        .map { (field, service) ->
+                            async {
+                                try {
+                                    val deferLabel = DeferSupport.getDeferLabel(query, field)
+                                    if (deferLabel != null) {
+                                        val call = ExecutionDeferredCall(
+                                            path = ResultPath.rootPath(),
+                                            label = deferLabel,
+                                            call = { executeTopLevelField(field, service, executionContext) }
+                                        )
+                                        executionContext.deferSupport.enqueue(call)
+                                        null
+                                    } else {
+                                        executeTopLevelField(field, service, executionContext)
+                                    }
 
-                        } catch (e: Throwable) {
-                            when (e) {
-                                is GraphQLError -> newExecutionResult(error = e)
-                                else -> throw e
+                                } catch (e: Throwable) {
+                                    when (e) {
+                                        is GraphQLError -> newExecutionResult(error = e)
+                                        else -> throw e
+                                    }
+                                }
                             }
                         }
-                    }
                 }
+                    .also { executionContext.deferSupport.startDeferredCalls() }
+                    .awaitAll()
+                    .filterNotNull()
+            )
+        } catch (e: Throwable) {
+            instrumentationContext.onCompleted(null, e)
+            throw e
         }
-            .also { executionContext.deferSupport.startDeferredCalls() }
-            .awaitAll()
-            .filterNotNull()
+        instrumentationContext.onCompleted(result, null)
 
-        return deferSupport(executionContext, mergeResults((results)))
+        return deferSupport(executionContext, result)
     }
 
     private fun deferSupport(

@@ -213,6 +213,40 @@ serviceCalls:
           "extensions": {}
         }
   nextgen:
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            ... on Query {
+              userQuery {
+                ... on UserQuery {
+                  usersByIds(id: ["USER-1"]) {
+                    ... on User {
+                      id
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "userQuery": {
+              "usersByIds": [
+                {
+                  "name": "User 1",
+                  "id": "USER-1"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
     - serviceName: Issues
       request:
         query: |
@@ -220,17 +254,13 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  id
-                }
-                ... on Issue {
+                  __typename__batch_hydration__authors: __typename
                   batch_hydration__authors__authorDetails: authorDetails {
                     ... on AuthorDetail {
                       authorId
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__batch_hydration__authors: __typename
+                  id
                 }
               }
             }
@@ -265,51 +295,11 @@ serviceCalls:
             ... on Query {
               userQuery {
                 ... on UserQuery {
-                  usersByIds(id: ["USER-1"]) {
-                    ... on User {
-                      id
-                    }
-                    ... on User {
-                      name
-                    }
-                  }
-                }
-              }
-            }
-          }
-        variables: {}
-        operationName: null
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userQuery": {
-              "usersByIds": [
-                {
-                  "name": "User 1",
-                  "id": "USER-1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query {
-            ... on Query {
-              userQuery {
-                ... on UserQuery {
                   usersByIds(id: ["USER-1", "USER-2"]) {
                     ... on User {
                       id
-                    }
-                    ... on User {
-                      name
-                    }
-                    ... on User {
                       batch_hydration__authors__id: id
+                      name
                     }
                   }
                 }

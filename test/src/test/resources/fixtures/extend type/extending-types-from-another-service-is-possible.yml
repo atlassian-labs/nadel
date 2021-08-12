@@ -136,18 +136,30 @@ serviceCalls:
         query: |
           query {
             ... on Query {
+              anotherRoot
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "anotherRoot": "anotherRoot"
+          },
+          "extensions": {}
+        }
+    - serviceName: Service1
+      request:
+        query: |
+          query {
+            ... on Query {
               root {
                 ... on Root {
-                  id
-                }
-                ... on Root {
-                  name
-                }
-                ... on Root {
-                  hydration__extension__id: id
-                }
-                ... on Root {
                   __typename__hydration__extension: __typename
+                  id
+                  hydration__extension__id: id
+                  name
                 }
               }
             }
@@ -167,24 +179,6 @@ serviceCalls:
           },
           "extensions": {}
         }
-    - serviceName: Service1
-      request:
-        query: |
-          query {
-            ... on Query {
-              anotherRoot
-            }
-          }
-        variables: {}
-        operationName: null
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "anotherRoot": "anotherRoot"
-          },
-          "extensions": {}
-        }
     - serviceName: Service2
       request:
         query: |
@@ -193,8 +187,6 @@ serviceCalls:
               lookup(id: "rootId") {
                 ... on Extension {
                   id
-                }
-                ... on Extension {
                   name
                 }
               }
