@@ -242,7 +242,7 @@ private suspend fun execute(
 }
 
 private fun assertDeferredResults(fixture: TestFixture, response: ExecutionResult) {
-    val expectedResponses = fixture.deferredResponses ?: emptyList()
+    val expectedResponses = fixture.deferredResponses ?: return
 
     expectThat((response as DeferredExecutionResult).hasNext()).isEqualTo(true)
 
