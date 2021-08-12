@@ -4,7 +4,7 @@ plugins {
     groovy
 }
 
-val graphqlJavaVersion = "0.0.0-2021-07-06T00-28-13-573087f7"
+val graphqlJavaVersion = "0.0.0-2021-08-12T10-41-54-68c01ece"
 val slf4jVersion = "1.7.25"
 val reactiveStreamsVersion = "1.0.3"
 
@@ -32,7 +32,9 @@ task("generateAntrlToJavaSource") {
             into("build/generated-src/antlr/main/graphql/nadel/parser")
         }
         val replacePatterns = listOf(
-            "package graphql.parser;" to "package graphql.nadel.parser;\nimport graphql.parser.MultiSourceReader;\nimport graphql.parser.AntlrHelper;\nimport graphql.parser.Parser;",
+            "package graphql.parser;" to "package graphql.nadel.parser;\nimport graphql.parser.MultiSourceReader;\n" +
+                    "import graphql.parser.AntlrHelper;\nimport graphql.parser.Parser;\n" +
+                    "import graphql.parser.ParserOptions;",
             "import graphql.parser.antlr.GraphqlParser;" to "import graphql.nadel.parser.antlr.StitchingDSLParser;",
             "import graphql.parser.antlr.GraphqlLexer;" to "import graphql.nadel.parser.antlr.StitchingDSLLexer;",
             "import graphql.parser.antlr.GraphqlBaseVisitor;" to "import graphql.nadel.parser.antlr.StitchingDSLBaseVisitor;",

@@ -5,7 +5,7 @@ enabled:
 overallSchema:
   Foo: |
     service Foo {
-      directive @defer(label: String!) on FRAGMENT_SPREAD | INLINE_FRAGMENT | FIELD
+      directive @defer(label: String!) on FRAGMENT_SPREAD | INLINE_FRAGMENT
       type Query {
         foo: Foo
       }
@@ -46,9 +46,11 @@ query: |
   query {
     foo {
       id
-      bar @defer(label: "barDefer"){
-        id
-        value
+      ... on Foo @defer(label: "barDefer"){
+        bar {
+          id
+          value
+        }
       }
     }
   }
@@ -62,13 +64,9 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
-                  id
-                }
-                ... on Foo {
-                  hydration__bar__barId: barId
-                }
-                ... on Foo {
                   __typename__hydration__bar: __typename
+                  hydration__bar__barId: barId
+                  id
                 }
               }
             }
@@ -95,8 +93,6 @@ serviceCalls:
               bar(id: "barId") {
                 ... on Bar {
                   id
-                }
-                ... on Bar {
                   value
                 }
               }

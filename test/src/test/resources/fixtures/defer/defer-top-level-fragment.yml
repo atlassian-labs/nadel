@@ -5,7 +5,7 @@ enabled:
 overallSchema:
   Foo: |
     service Foo {
-      directive @defer(label: String!) on FRAGMENT_SPREAD | INLINE_FRAGMENT | FIELD
+      directive @defer(label: String!) on FRAGMENT_SPREAD | INLINE_FRAGMENT
       type Query {
         foo: String
       }
@@ -110,19 +110,19 @@ response: |-
   }
 deferredResponses:
   - path: []
-    label: "barDefer"
-    # language=JSON
-    data: |-
-      {
-        "bar": "barbar"
-      }
-    hasNext: true
-  - path: []
-    label: "bazDefer"
+    label: "barBazDefer"
     # language=JSON
     data: |-
       {
         "baz": "bazbaz"
+      }
+    hasNext: true
+  - path: []
+    label: "barBazDefer"
+    # language=JSON
+    data: |-
+      {
+        "bar": "barbar"
       }
     hasNext: true
   - hasNext: false

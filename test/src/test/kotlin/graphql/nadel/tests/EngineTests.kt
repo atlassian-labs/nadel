@@ -36,7 +36,7 @@ import java.util.concurrent.CompletableFuture
  * Test name e.g. hydration inside a renamed field
  * Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = "defer-top-level-fragment"
+private val singleTestToRun = ""
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")
@@ -254,9 +254,10 @@ private fun assertDeferredResults(fixture: TestFixture, response: ExecutionResul
             .isEqualTo(expectedResponses.size)
 
         expectedResponses
-            .sortedBy { it.label }
-            .zip(results.sortedBy { it.label })
-            .forEach{(actual, expected) -> assertStep(expected, actual)}
+            // TODO: this is a horrible way of comparing the list of expected/actual results
+            .sortedBy { it.label + it.dataString }
+            .zip(results.sortedBy { it.label + it.getData<Any?>()?.toString() })
+            .forEach { (actual, expected) -> assertStep(expected, actual) }
     }
 }
 

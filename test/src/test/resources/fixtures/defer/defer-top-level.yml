@@ -1,11 +1,11 @@
 name: defer top level
 enabled:
   current: false
-  nextgen: true
+  nextgen: false
 overallSchema:
   Foo: |
     service Foo {
-      directive @defer(label: String!) on FRAGMENT_SPREAD | INLINE_FRAGMENT | FIELD
+      directive @defer(label: String!) on FIELD
       type Query {
         foo: String
       }

@@ -1,9 +1,8 @@
 package graphql.nadel.enginekt.defer
 
 import graphql.execution.reactive.SingleSubscriberPublisher
-import graphql.language.Field
-import graphql.language.StringValue
 import graphql.nadel.defer.DeferredExecutionResult
+import graphql.normalized.DeferredNormalizedField
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
 import kotlinx.coroutines.GlobalScope
@@ -76,15 +75,20 @@ class DeferSupport {
 //                ?.let { it.value }
 
 
-            return normalizedOperation.getMergedField(topLevelField).fields
-                .flatMap { obj: Field -> obj.directives }
-                // TODO: resolve "if" expression
-                .find { it.name == "defer" }
-                ?.let { it.arguments }
-                ?.let { args -> args.find { it.name == "label" } }
-                ?.let { it.value }
-                ?.let { it as? StringValue }
-                ?.let { it.value }
+//            return normalizedOperation.getMergedField(topLevelField).fields
+//                .flatMap { obj: Field -> obj.directives }
+//                // TODO: resolve "if" expression
+//                .find { it.name == "defer" }
+//                ?.let { it.arguments }
+//                ?.let { args -> args.find { it.name == "label" } }
+//                ?.let { it.value }
+//                ?.let { it as? StringValue }
+//                ?.let { it.value }
+
+            return when (topLevelField) {
+                is DeferredNormalizedField -> topLevelField.deferredLabel
+                else -> null
+            }
 
         }
     }
