@@ -27,6 +27,11 @@ overallSchema:
       id: ID
       count: Int
     }
+
+  IssueComments: |
+    extend type IssueQuery {
+      commentsCount: Int
+    }
 underlyingSchema:
   Issues: |
     type Query {
@@ -53,6 +58,14 @@ underlyingSchema:
     type SearchResult {
       id: ID
       count: Int
+    }
+  IssueComments: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      commentsCount: Int
     }
 query: |
   {
