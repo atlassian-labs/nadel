@@ -228,10 +228,6 @@ public class NadelExecutionStrategy {
             Service service = entry.getKey();
             Set<GraphQLFieldDefinition> secondLevelFieldDefinitionsForService = entry.getValue();
 
-            final boolean serviceExtendsNamespaceType = service.getDefinitionRegistry().getDefinitions(ObjectTypeExtensionDefinition.class)
-                    .stream()
-                    .anyMatch(objectTypeDef -> objectTypeDef.getName().equals(namespacedObjectType.getName()));
-
             Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(
                     mergedField,
                     namespacedObjectType,
@@ -239,8 +235,8 @@ public class NadelExecutionStrategy {
                     field -> secondLevelFieldDefinitionsForService
                             .stream()
                             .anyMatch(graphQLFieldDefinition ->
-                                    graphQLFieldDefinition.getName().equals(field.getName()) ||
-                                            (field.getName().equals(Introspection.TypeNameMetaFieldDef.getName()) && !serviceExtendsNamespaceType)
+                                    fieldMatchesDefinition(graphQLFieldDefinition, field) ||
+                                            (isTypename(field) && serviceOwnsNamespacedField(namespacedObjectType, service))
                             )
             );
 
@@ -250,6 +246,23 @@ public class NadelExecutionStrategy {
             });
         }
         return serviceExecutions;
+    }
+
+
+    private static boolean isTypename(MergedField field) {
+        return field.getName().equals(Introspection.TypeNameMetaFieldDef.getName());
+    }
+
+    private static boolean fieldMatchesDefinition(GraphQLFieldDefinition graphQLFieldDefinition, MergedField field) {
+        return graphQLFieldDefinition.getName().equals(field.getName());
+    }
+
+    private static boolean serviceOwnsNamespacedField(GraphQLObjectType namespacedObjectType, Service service) {
+        final boolean serviceExtendsNamespaceType = service.getDefinitionRegistry().getDefinitions(ObjectTypeExtensionDefinition.class)
+                .stream()
+                .anyMatch(objectTypeDef -> objectTypeDef.getName().equals(namespacedObjectType.getName()));
+
+        return !serviceExtendsNamespaceType;
     }
 
     private CompletableFuture<OneServiceExecution> getOneServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo fieldExecutionStepInfo, Service service) {
@@ -501,4 +514,5 @@ public class NadelExecutionStrategy {
                 !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
                 transformations.getHintTypenames().isEmpty();
     }
+
 }
