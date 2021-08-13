@@ -14,6 +14,7 @@ import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.InlineFragment;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.ObjectTypeExtensionDefinition;
 import graphql.language.SelectionSet;
 import graphql.language.TypeName;
 import graphql.nadel.OperationKind;
@@ -227,9 +228,22 @@ public class NadelExecutionStrategy {
             Service service = entry.getKey();
             Set<GraphQLFieldDefinition> secondLevelFieldDefinitionsForService = entry.getValue();
 
-            Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(mergedField, namespacedObjectType, executionCtx,
-                    field -> secondLevelFieldDefinitionsForService.stream()
-                            .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName()) || field.getName().equals(Introspection.TypeNameMetaFieldDef.getName())));
+            final boolean serviceExtendsNamespaceType = service.getDefinitionRegistry().getDefinitions(ObjectTypeExtensionDefinition.class)
+                    .stream()
+                    .anyMatch(objectTypeDef -> objectTypeDef.getName().equals(namespacedObjectType.getName()));
+
+            Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(
+                    mergedField,
+                    namespacedObjectType,
+                    executionCtx,
+                    field -> secondLevelFieldDefinitionsForService
+                            .stream()
+                            .anyMatch(graphQLFieldDefinition ->
+                                    graphQLFieldDefinition.getName().equals(field.getName()) ||
+                                            (field.getName().equals(Introspection.TypeNameMetaFieldDef.getName()) && !serviceExtendsNamespaceType)
+                            )
+            );
+
             maybeNewMergedField.ifPresent(newMergedField -> {
                 ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
                 serviceExecutions.add(getOneServiceExecution(executionCtx, newFieldExecutionStepInfo, service));
