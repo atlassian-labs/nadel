@@ -1,0 +1,107 @@
+name: typename is sent only to service that owns namespace type
+enabled:
+  nextgen: false
+  current: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    extend type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+query: |
+  {
+    issue {
+      __typename
+      getIssue {
+        text
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issue {
+              __typename
+              getIssue {
+                text
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "__typename": "IssueQuery",
+              "getIssue": {
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "__typename": "IssueQuery",
+        "getIssue": {
+          "text": "Foo"
+        }
+      }
+    },
+    "extensions": {}
+  }
