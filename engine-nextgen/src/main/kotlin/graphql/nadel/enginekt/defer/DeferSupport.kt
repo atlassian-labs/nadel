@@ -6,8 +6,6 @@ import graphql.normalized.DeferredNormalizedField
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import org.reactivestreams.Publisher
 import java.util.Deque
@@ -29,18 +27,20 @@ class DeferSupport {
     }
 
     private fun drainDeferredCalls() {
-        GlobalScope.launch {
-            deferredCalls
-                .map {
-                    async {
-                        val executionResult = it.invoke()
-                        publisher.offer(executionResult)
-                    }
-                }
-                .awaitAll()
-
+        if (deferredCalls.isEmpty()) {
             publisher.offer(DeferredExecutionResultImpl.newFinalExecutionResult())
             publisher.noMoreData()
+            return
+        }
+        val deferredCall = deferredCalls.pop()
+
+        // Not ideal: deferredCalls will be invoked sequentially.
+        // Ideal: deferredCalls would be invoked ASAP.
+        // Perhaps invoke immediately -> put CompletableFuture in publisher -> convert CF publisher to value publisher
+        GlobalScope.launch {
+            val executionResult = deferredCall.invoke()
+            publisher.offer(executionResult)
+            drainDeferredCalls()
         }
     }
 
