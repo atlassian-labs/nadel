@@ -1,6 +1,6 @@
 name: typename is sent only to service that owns namespace type
 enabled:
-  nextgen: false
+  nextgen: true
   current: true
 overallSchema:
   Issues: |
@@ -79,6 +79,39 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "__typename": "IssueQuery",
+              "getIssue": {
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  __typename
+                  getIssue {
+                    ... on Issue {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
       # language=JSON
       response: |-
         {
