@@ -27,6 +27,7 @@ import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import java.io.File
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 /**
  * Enter in the name of the test here, leave blank to run all tests.
@@ -36,7 +37,7 @@ import java.util.concurrent.CompletableFuture
  * Test name e.g. hydration inside a renamed field
  * Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = ""
+private val singleTestToRun = "defer-top-level-inline-fragment"
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")
@@ -147,8 +148,8 @@ private suspend fun execute(
                                 val indexOfCall = serviceCalls
                                     .indexOfFirst {
                                         it.serviceName == serviceName
-                                            && AstPrinter.printAst(it.request.document) == incomingQueryPrinted
-                                            && it.request.operationName == params.operationDefinition.name
+                                                && AstPrinter.printAst(it.request.document) == incomingQueryPrinted
+                                                && it.request.operationName == params.operationDefinition.name
                                     }
                                     .takeIf { it != -1 }
 
@@ -159,14 +160,15 @@ private suspend fun execute(
                                 }
                             }
 
-                            @Suppress("UNCHECKED_CAST")
-                            CompletableFuture.completedFuture(
+                            CompletableFuture.supplyAsync({
+                                @Suppress("UNCHECKED_CAST")
                                 ServiceExecutionResult(
                                     response["data"] as JsonMap?,
                                     response["errors"] as List<JsonMap>?,
-                                    response["extensions"] as JsonMap?,
-                                ),
-                            )
+                                    response["extensions"] as JsonMap?
+                                )
+                            }, CompletableFuture.delayedExecutor(1L, TimeUnit.SECONDS))
+
                         } catch (e: Throwable) {
                             fail("Unable to invoke service", e)
                         }

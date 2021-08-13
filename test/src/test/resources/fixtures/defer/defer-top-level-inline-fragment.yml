@@ -22,6 +22,12 @@ overallSchema:
         baz: String
       }
     }
+  Biz: |
+    service Biz {
+      type Query {
+        biz: String
+      }
+    }
 underlyingSchema:
   Foo: |
     type Query {
@@ -35,12 +41,17 @@ underlyingSchema:
     type Query {
       baz: String
     }
+  Biz: |
+    type Query {
+      biz: String
+    }
 query: |
   query {
     foo
     ... on Query @defer(label: "barBazDefer"){
       bar
       baz
+      biz
     }
   }
 variables: {}
@@ -100,6 +111,24 @@ serviceCalls:
           },
           "extensions": {}
         }
+    - serviceName: Biz
+      request:
+        query: |
+          query {
+            ... on Query {
+              biz
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "biz": "bizbiz"
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
@@ -123,6 +152,14 @@ deferredResponses:
     data: |-
       {
         "bar": "barbar"
+      }
+    hasNext: true
+  - path: []
+    label: "barBazDefer"
+    # language=JSON
+    data: |-
+      {
+        "biz": "bizbiz"
       }
     hasNext: true
   - hasNext: false
