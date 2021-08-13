@@ -1,0 +1,87 @@
+name: renamed top level field with argument
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query {
+        renameObject(id: ID!): ObjectOverall @renamed(from: "renameObjectUnderlying")
+      }
+      type ObjectOverall @renamed(from: "ObjectUnderlying") {
+        name: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type ObjectUnderlying {
+      name: String
+    }
+
+    type Query {
+      renameObjectUnderlying(id: ID!): ObjectUnderlying
+    }
+query: |
+  query {
+    renameObject(id: "OBJECT-001") {
+      name
+    }
+  }
+variables: { }
+serviceCalls:
+  current:
+    - serviceName: MyService
+      request:
+        query: |
+          query nadel_2_MyService {
+            renameObjectUnderlying(id: "OBJECT-001") {
+              name
+            }
+          }
+        variables: { }
+        operationName: nadel_2_MyService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "renameObjectUnderlying": {
+              "name": "Object 001"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
+                ... on ObjectUnderlying {
+                  name
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__renameObject__renameObjectUnderlying": {
+              "name": "Object 001"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "renameObject": {
+        "name": "Object 001"
+      }
+    },
+    "extensions": { }
+  }
