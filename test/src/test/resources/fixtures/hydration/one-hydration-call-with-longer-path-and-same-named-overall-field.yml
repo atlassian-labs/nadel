@@ -142,24 +142,18 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  id
-                }
-                ... on Issue {
+                  __typename__batch_hydration__authors: __typename
                   batch_hydration__authors__authorDetails: authorDetails {
                     ... on AuthorDetail {
                       authorId
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__batch_hydration__authors: __typename
-                }
-                ... on Issue {
                   authorDetails {
                     ... on AuthorDetail {
                       name
                     }
                   }
+                  id
                 }
               }
             }
@@ -203,8 +197,6 @@ serviceCalls:
               usersByIds(id: ["USER-1", "USER-2"]) {
                 ... on User {
                   id
-                }
-                ... on User {
                   batch_hydration__authors__id: id
                 }
               }

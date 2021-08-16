@@ -111,13 +111,9 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  id
-                }
-                ... on Issue {
-                  batch_hydration__author__authorId: authorId
-                }
-                ... on Issue {
                   __typename__batch_hydration__author: __typename
+                  batch_hydration__author__authorId: authorId
+                  id
                 }
               }
             }
@@ -145,10 +141,8 @@ serviceCalls:
             ... on Query {
               usersByIds(extraArg1: "extraArg1", extraArg2: 10, id: ["USER-1"]) {
                 ... on User {
-                  name
-                }
-                ... on User {
                   batch_hydration__author__id: id
+                  name
                 }
               }
             }

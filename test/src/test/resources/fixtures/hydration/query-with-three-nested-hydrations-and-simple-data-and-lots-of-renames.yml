@@ -135,6 +135,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -252,48 +253,26 @@ serviceCalls:
             ... on Query {
               rename__fooz__foos: foos {
                 ... on Foo {
+                  __typename__rename__fooDetails: __typename
+                  __typename__batch_hydration__bar: __typename
+                  batch_hydration__bar__barId: barId
                   rename__fooDetails__details: details {
                     ... on Details {
-                      rename__fooName__name: name
-                    }
-                    ... on Details {
                       __typename__rename__fooName: __typename
-                    }
-                    ... on Details {
-                      rename__fooAge__age: age
-                    }
-                    ... on Details {
                       __typename__rename__fooAge: __typename
-                    }
-                    ... on Details {
+                      __typename__rename__fooContact: __typename
+                      rename__fooAge__age: age
                       rename__fooContact__contact: contact {
                         ... on ContactDetails {
-                          rename__fooEmail__email: email
-                        }
-                        ... on ContactDetails {
                           __typename__rename__fooEmail: __typename
-                        }
-                        ... on ContactDetails {
+                          __typename__rename__fooPhone: __typename
+                          rename__fooEmail__email: email
                           rename__fooPhone__phone: phone
                         }
-                        ... on ContactDetails {
-                          __typename__rename__fooPhone: __typename
-                        }
                       }
-                    }
-                    ... on Details {
-                      __typename__rename__fooContact: __typename
+                      rename__fooName__name: name
                     }
                   }
-                }
-                ... on Foo {
-                  __typename__rename__fooDetails: __typename
-                }
-                ... on Foo {
-                  batch_hydration__bar__barId: barId
-                }
-                ... on Foo {
-                  __typename__batch_hydration__bar: __typename
                 }
               }
             }
@@ -334,19 +313,11 @@ serviceCalls:
             ... on Query {
               barsById(id: ["bar1"]) {
                 ... on Bar {
-                  rename__barName__name: name
-                }
-                ... on Bar {
                   __typename__rename__barName: __typename
-                }
-                ... on Bar {
-                  batch_hydration__nestedBar__nestedBarId: nestedBarId
-                }
-                ... on Bar {
                   __typename__batch_hydration__nestedBar: __typename
-                }
-                ... on Bar {
                   batch_hydration__bar__barId: barId
+                  rename__barName__name: name
+                  batch_hydration__nestedBar__nestedBarId: nestedBarId
                 }
               }
             }
@@ -376,19 +347,11 @@ serviceCalls:
             ... on Query {
               barsById(id: ["nestedBar1"]) {
                 ... on Bar {
-                  rename__barName__name: name
-                }
-                ... on Bar {
                   __typename__rename__barName: __typename
-                }
-                ... on Bar {
-                  batch_hydration__nestedBar__nestedBarId: nestedBarId
-                }
-                ... on Bar {
                   __typename__batch_hydration__nestedBar: __typename
-                }
-                ... on Bar {
                   batch_hydration__nestedBar__barId: barId
+                  rename__barName__name: name
+                  batch_hydration__nestedBar__nestedBarId: nestedBarId
                 }
               }
             }
@@ -418,45 +381,25 @@ serviceCalls:
             ... on Query {
               barsById(id: ["nestedBarId456"]) {
                 ... on Bar {
-                  rename__barName__name: name
-                }
-                ... on Bar {
                   __typename__rename__barName: __typename
-                }
-                ... on Bar {
+                  __typename__rename__barDetails: __typename
+                  batch_hydration__nestedBar__barId: barId
                   rename__barDetails__details: details {
                     ... on Details {
-                      rename__barAge__age: age
-                    }
-                    ... on Details {
                       __typename__rename__barAge: __typename
-                    }
-                    ... on Details {
+                      __typename__rename__barContact: __typename
+                      rename__barAge__age: age
                       rename__barContact__contact: contact {
                         ... on ContactDetails {
-                          rename__barEmail__email: email
-                        }
-                        ... on ContactDetails {
                           __typename__rename__barEmail: __typename
-                        }
-                        ... on ContactDetails {
-                          rename__barPhone__phone: phone
-                        }
-                        ... on ContactDetails {
                           __typename__rename__barPhone: __typename
+                          rename__barEmail__email: email
+                          rename__barPhone__phone: phone
                         }
                       }
                     }
-                    ... on Details {
-                      __typename__rename__barContact: __typename
-                    }
                   }
-                }
-                ... on Bar {
-                  __typename__rename__barDetails: __typename
-                }
-                ... on Bar {
-                  batch_hydration__nestedBar__barId: barId
+                  rename__barName__name: name
                 }
               }
             }

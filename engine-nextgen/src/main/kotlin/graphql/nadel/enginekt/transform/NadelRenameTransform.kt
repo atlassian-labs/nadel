@@ -140,7 +140,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 schema = service.underlyingSchema,
                 parentType = underlyingObjectType,
                 queryPathToField = NadelQueryPath(rename.underlyingName),
-                fieldArguments = emptyMap(),
+                fieldArguments = field.normalizedArguments,
                 fieldChildren = transformer.transform(field.children),
             )
         )

@@ -1,25 +1,25 @@
-name: rename with first path element returning null
+name: deep rename with argument works
 enabled:
-  current: true
+  current: false
   nextgen: true
 overallSchema:
-  Issues: |
-    service Issues {
+  IssueService: |
+    service IssueService {
       type Query {
         issue: Issue
       }
       type Issue {
-        name: String => renamed from details.name
+        name(userId: ID!): String => renamed from detail.detailName
       }
     }
 underlyingSchema:
-  Issues: |
+  IssueService: |
     type Issue {
-      details: IssueDetails
+      detail: IssueDetails
     }
 
     type IssueDetails {
-      name: String
+      detailName(userId: ID!): String
     }
 
     type Query {
@@ -28,36 +28,38 @@ underlyingSchema:
 query: |
   query {
     issue {
-      name
+      name(userId: "USER-01")
     }
   }
 variables: {}
 serviceCalls:
   current:
-    - serviceName: Issues
+    - serviceName: IssueService
       request:
         query: |
-          query nadel_2_Issues {
+          query nadel_2_IssueService {
             issue {
-              details {
-                name
+              detail {
+                detailName(userId: "USER-01")
               }
             }
           }
         variables: {}
-        operationName: nadel_2_Issues
+        operationName: nadel_2_IssueService
       # language=JSON
       response: |-
         {
           "data": {
             "issue": {
-              "details": null
+              "detail": {
+                "detailName": "My Issue"
+              }
             }
           },
           "extensions": {}
         }
   nextgen:
-    - serviceName: Issues
+    - serviceName: IssueService
       request:
         query: |
           query {
@@ -65,9 +67,9 @@ serviceCalls:
               issue {
                 ... on Issue {
                   __typename__deep_rename__name: __typename
-                  deep_rename__name__details: details {
+                  deep_rename__name__detail: detail {
                     ... on IssueDetails {
-                      name
+                      detailName(userId: "USER-01")
                     }
                   }
                 }
@@ -81,7 +83,9 @@ serviceCalls:
         {
           "data": {
             "issue": {
-              "deep_rename__name__details": null,
+              "deep_rename__name__detail": {
+                "detailName": "My Issue"
+              },
               "__typename__deep_rename__name": "Issue"
             }
           },
@@ -92,7 +96,7 @@ response: |-
   {
     "data": {
       "issue": {
-        "name": null
+        "name": "My Issue"
       }
     },
     "extensions": {}

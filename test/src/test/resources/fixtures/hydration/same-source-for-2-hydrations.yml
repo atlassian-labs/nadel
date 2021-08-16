@@ -69,6 +69,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -88,6 +89,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -107,6 +109,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -124,16 +127,10 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
-                  hydration__issue__fooId: fooId
-                }
-                ... on Foo {
                   __typename__hydration__issue: __typename
-                }
-                ... on Foo {
-                  hydration__detail__fooId: fooId
-                }
-                ... on Foo {
                   __typename__hydration__detail: __typename
+                  hydration__issue__fooId: fooId
+                  hydration__detail__fooId: fooId
                 }
               }
             }

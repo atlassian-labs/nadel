@@ -90,6 +90,13 @@ serviceCalls:
           "errors": [
             {
               "message": "Some error occurred"
+            },
+            {
+              "message": "Some error with extension occurred",
+              "path": ["barById", "name"],
+              "extensions": {
+                "classification": "SomeCustomError"
+              }
             }
           ],
           "extensions": {}
@@ -102,10 +109,8 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
-                  hydration__bar__barId: barId
-                }
-                ... on Foo {
                   __typename__hydration__bar: __typename
+                  hydration__bar__barId: barId
                 }
               }
             }
@@ -143,6 +148,13 @@ serviceCalls:
           "errors": [
             {
               "message": "Some error occurred"
+            },
+            {
+              "message": "Some error with extension occurred",
+              "path": ["barById", "name"],
+              "extensions": {
+                "classification": "SomeCustomError"
+              }
             }
           ],
           "extensions": {}
@@ -156,6 +168,13 @@ response: |-
         "locations": [],
         "extensions": {
           "classification": "DataFetchingException"
+        }
+      }, {
+        "message": "Some error with extension occurred",
+        "path": ["barById", "name"],
+        "locations": [],
+        "extensions": {
+          "classification": "SomeCustomError"
         }
       }
     ],

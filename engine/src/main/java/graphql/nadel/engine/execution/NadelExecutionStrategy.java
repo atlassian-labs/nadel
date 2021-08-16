@@ -14,6 +14,7 @@ import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.InlineFragment;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.ObjectTypeExtensionDefinition;
 import graphql.language.SelectionSet;
 import graphql.language.TypeName;
 import graphql.nadel.OperationKind;
@@ -227,15 +228,41 @@ public class NadelExecutionStrategy {
             Service service = entry.getKey();
             Set<GraphQLFieldDefinition> secondLevelFieldDefinitionsForService = entry.getValue();
 
-            Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(mergedField, namespacedObjectType, executionCtx,
-                    field -> secondLevelFieldDefinitionsForService.stream()
-                            .anyMatch(graphQLFieldDefinition -> graphQLFieldDefinition.getName().equals(field.getName()) || field.getName().equals(Introspection.TypeNameMetaFieldDef.getName())));
+            Optional<MergedField> maybeNewMergedField = MergedFieldUtil.includeSubSelection(
+                    mergedField,
+                    namespacedObjectType,
+                    executionCtx,
+                    field -> secondLevelFieldDefinitionsForService
+                            .stream()
+                            .anyMatch(graphQLFieldDefinition ->
+                                    fieldMatchesDefinition(graphQLFieldDefinition, field) ||
+                                            (isTypename(field) && serviceOwnsNamespacedField(namespacedObjectType, service))
+                            )
+            );
+
             maybeNewMergedField.ifPresent(newMergedField -> {
                 ExecutionStepInfo newFieldExecutionStepInfo = executionStepInfoFactory.newExecutionStepInfoForSubField(executionCtx, newMergedField, rootExecutionStepInfo);
                 serviceExecutions.add(getOneServiceExecution(executionCtx, newFieldExecutionStepInfo, service));
             });
         }
         return serviceExecutions;
+    }
+
+
+    private static boolean isTypename(MergedField field) {
+        return field.getName().equals(Introspection.TypeNameMetaFieldDef.getName());
+    }
+
+    private static boolean fieldMatchesDefinition(GraphQLFieldDefinition graphQLFieldDefinition, MergedField field) {
+        return graphQLFieldDefinition.getName().equals(field.getName());
+    }
+
+    private static boolean serviceOwnsNamespacedField(GraphQLObjectType namespacedObjectType, Service service) {
+        final boolean serviceExtendsNamespaceType = service.getDefinitionRegistry().getDefinitions(ObjectTypeExtensionDefinition.class)
+                .stream()
+                .anyMatch(objectTypeDef -> objectTypeDef.getName().equals(namespacedObjectType.getName()));
+
+        return !serviceExtendsNamespaceType;
     }
 
     private CompletableFuture<OneServiceExecution> getOneServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo fieldExecutionStepInfo, Service service) {
@@ -487,4 +514,5 @@ public class NadelExecutionStrategy {
                 !transformedQuery.getRemovedFieldMap().hasRemovedFields() &&
                 transformations.getHintTypenames().isEmpty();
     }
+
 }

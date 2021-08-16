@@ -117,34 +117,24 @@ serviceCalls:
                 ... on BoardScope {
                   board {
                     ... on Board {
+                      __typename__rename__cardChildren: __typename
                       rename__cardChildren__issueChildren: issueChildren {
                         ... on Card {
+                          __typename__deep_rename__key: __typename
+                          __typename__deep_rename__summary: __typename
                           id
-                        }
-                        ... on Card {
                           deep_rename__key__issue: issue {
                             ... on Issue {
                               key
                             }
                           }
-                        }
-                        ... on Card {
-                          __typename__deep_rename__key: __typename
-                        }
-                        ... on Card {
                           deep_rename__summary__issue: issue {
                             ... on Issue {
                               summary
                             }
                           }
                         }
-                        ... on Card {
-                          __typename__deep_rename__summary: __typename
-                        }
                       }
-                    }
-                    ... on Board {
-                      __typename__rename__cardChildren: __typename
                     }
                   }
                 }

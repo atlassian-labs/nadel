@@ -256,14 +256,10 @@ serviceCalls:
               pets(isLoyal: true) {
                 ... on Cat {
                   name
-                }
-                ... on Cat {
                   wearsBell
                 }
                 ... on Dog {
                   name
-                }
-                ... on Dog {
                   wearsCollar
                 }
               }
