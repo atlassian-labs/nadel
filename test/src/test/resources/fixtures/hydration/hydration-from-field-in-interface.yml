@@ -103,7 +103,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: nadel_2_service2
+        operationName: nadel_2_users
       # language=JSON
       response: |-
         {
