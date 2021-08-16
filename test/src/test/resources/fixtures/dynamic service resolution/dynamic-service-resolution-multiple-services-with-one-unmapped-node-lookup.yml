@@ -2,8 +2,6 @@ name: dynamic service resolution multiple services with one unmapped node lookup
 enabled:
   current: true
   nextgen: true
-ignored:
-  nextgen: true # TODO: implement on nextgen
 overallSchema:
   Common: |
     directive @dynamicServiceResolution on FIELD_DEFINITION

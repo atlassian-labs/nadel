@@ -1,9 +1,7 @@
 name: dynamic service resolution with no fragments
 enabled:
-  current: true
+  current: false
   nextgen: true
-ignored:
-  nextgen: true # TODO: implement on nextgen
 overallSchema:
   Common: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
@@ -89,6 +87,28 @@ serviceCalls:
             "node": {
               "id": "pull-request:id-123",
               "type_hint_typename__UUID": "PullRequest"
+            }
+          }
+        }
+  nextgen:
+    - serviceName: RepoService
+      request:
+        query: |
+          query {
+            node(id: "pull-request:id-123") {
+              ... on PullRequest {
+                id
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "node": {
+              "id": "pull-request:id-123",
             }
           }
         }

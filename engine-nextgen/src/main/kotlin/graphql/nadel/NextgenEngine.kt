@@ -1,6 +1,9 @@
 package graphql.nadel
 
+import graphql.Assert
 import graphql.ErrorType
+import graphql.nadel.schema.NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION
+import graphql.nadel.schema.NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
@@ -36,6 +39,9 @@ import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
+import graphql.schema.FieldCoordinates
+import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLTypeUtil
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -110,7 +116,20 @@ class NextgenEngine @JvmOverloads constructor(
                         .map { (field, service) ->
                             async {
                                 try {
-                                    executeTopLevelField(field, service, executionContext)
+
+                                    if (usesDynamicServiceResolution(topLevelField = field)) {
+                                        val serviceOrError =
+                                            serviceExecutionHooks.resolveServiceForField(services.values, field)
+
+                                        if (serviceOrError.error != null) {
+                                            newExecutionResult(error = serviceOrError.error)
+                                        } else {
+                                            executeTopLevelField(field, serviceOrError.service, executionContext)
+                                        }
+                                    } else {
+                                        executeTopLevelField(field, service, executionContext)
+                                    }
+
                                 } catch (e: Throwable) {
                                     when (e) {
                                         is GraphQLError -> newExecutionResult(error = e)
@@ -271,6 +290,29 @@ class NextgenEngine @JvmOverloads constructor(
                     ?: mutableMapOf(transformedQuery.resultKey to null)
             },
         )
+    }
+
+    fun usesDynamicServiceResolution(
+        topLevelField: ExecutableNormalizedField
+    ): Boolean {
+
+        val coordinates =
+            FieldCoordinates.coordinates(topLevelField.getOneObjectType(overallSchema), topLevelField.fieldName)
+
+        val fieldDefinition = overallSchema.getFieldDefinition(coordinates)
+
+        return if (fieldDefinition.getDirective("dynamicServiceResolution") != null) {
+            Assert.assertTrue(GraphQLTypeUtil.unwrapNonNull(fieldDefinition.type) is GraphQLInterfaceType) {
+                String.format(
+                    "field annotated with %s directive is expected to be of GraphQLInterfaceType",
+                    DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.getName()
+                )
+            }
+
+            true
+        } else {
+            false
+        }
     }
 
     companion object {

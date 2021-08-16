@@ -3,6 +3,7 @@ package graphql.nadel.tests.hooks
 import graphql.ErrorType
 import graphql.GraphqlErrorBuilder
 import graphql.execution.ExecutionStepInfo
+import graphql.execution.ResultPath
 import graphql.nadel.Nadel
 import graphql.nadel.Service
 import graphql.nadel.hooks.ServiceExecutionHooks
@@ -10,14 +11,11 @@ import graphql.nadel.hooks.ServiceOrError
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.KeepHook
 import graphql.nadel.tests.NadelEngineType
+import graphql.normalized.ExecutableNormalizedField
 
 class Hooks : ServiceExecutionHooks {
-    override fun resolveServiceForField(
-        services: List<Service>,
-        executionStepInfo: ExecutionStepInfo,
-    ): ServiceOrError {
-        val idArgument = executionStepInfo.arguments.get("id")
 
+    private fun resolveServiceGeneric(services: Collection<Service>, idArgument: Any, fieldName: String): ServiceOrError {
         if (idArgument.toString().contains("pull-request")) {
             return ServiceOrError(
                 services.stream().filter { service -> (service.name == "RepoService") }.findFirst().get(),
@@ -35,11 +33,30 @@ class Hooks : ServiceExecutionHooks {
         return ServiceOrError(
             null,
             GraphqlErrorBuilder.newError()
-                .message("Could not resolve service for field: %s", executionStepInfo.path)
+                .message("Could not resolve service for field: %s", fieldName)
                 .errorType(ErrorType.ExecutionAborted)
-                .path(executionStepInfo.getPath())
+                .path(ResultPath.parse(fieldName))
                 .build()
         )
+
+    }
+
+    override fun resolveServiceForField(
+        services: Collection<Service>,
+        executableNormalizedField: ExecutableNormalizedField
+    ): ServiceOrError {
+        return resolveServiceGeneric(services, executableNormalizedField.getNormalizedArgument("id").value, executableNormalizedField.fieldName)
+    }
+
+
+    override fun resolveServiceForField(
+        services: List<Service>,
+        executionStepInfo: ExecutionStepInfo,
+    ): ServiceOrError {
+        val idArgument = executionStepInfo.arguments.get("id")
+
+        return resolveServiceGeneric(services, idArgument!!, executionStepInfo.field.name)
+
     }
 }
 
