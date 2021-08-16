@@ -12,7 +12,7 @@ overallSchema:
       type Issue {
         id: ID
         title: String
-        author: User => hydrated from users.user(id: $source.author.userId)
+        issueAuthor: User => hydrated from users.user(id: $source.author.userId)
       }
     }
   users: |
@@ -58,7 +58,7 @@ query: |
   query {
     issue(id: "1") {
       title
-      author {
+      issueAuthor {
         name
       }
     }
@@ -183,7 +183,7 @@ response: |-
     "data": {
       "issue": {
         "title": "Issue 1",
-        "author": {
+        "issueAuthor": {
           "name": "McUser Face"
         }
       }
