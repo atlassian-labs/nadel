@@ -220,6 +220,7 @@ class NextgenEngine @JvmOverloads constructor(
         if (deferLabel != null) {
             val call = ServiceDeferredCall(
                 // TODO: This won't be correct if hydration is on list item NadelQueryPath don't know items indexes
+                // TODO: need to use the field name of the original query, not the hydration query
                 path = ResultPath.fromList(hydratedField.queryPath.dropLast(1).segments),
                 label = deferLabel,
                 call = {
