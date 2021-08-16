@@ -57,11 +57,9 @@ import graphql.schema.GraphQLUnmodifiedType;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 import graphql.util.TreeTransformerUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import static graphql.Assert.assertShouldNeverHappen;
@@ -236,16 +234,7 @@ public class Transformer extends NodeVisitorStub {
             // major side effect alert - we are relying on transformation to call TreeTransformerUtil.changeNode
             // inside itself here
             //
-
-            // TODO: is this correct? Getting the type in the underlying schema using the type in the overall schema?
-            // what about renames?
-            // TODO: Feature flag this
-            final Optional<GraphQLType> underlyingType = Optional.ofNullable(overallTypeInfo.getFieldDefinition().getType())
-                    .filter(type -> type instanceof GraphQLNamedOutputType)
-                    .map(GraphQLNamedOutputType.class::cast)
-                    .map(namedType -> underlyingSchema.getType(namedType.getName()));
-
-            ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, overallTypeInfo, normalizedFields, executionContext.getFragmentsByName(), underlyingType.orElse(null));
+            ApplyEnvironment applyEnvironment = createApplyEnvironment(field, context, overallTypeInfo, normalizedFields, executionContext.getFragmentsByName());
             ApplyResult applyResult = transformation.apply(applyEnvironment);
             Field changedField = (Field) applyEnvironment.getTraverserContext().thisNode();
 
@@ -296,8 +285,8 @@ public class Transformer extends NodeVisitorStub {
                                             TraverserContext<Node> context,
                                             OverallTypeInfo overallTypeInfo,
                                             List<NormalizedQueryField> normalizedQueryFields,
-                                            Map<String, FragmentDefinition> fragmentDefinitionMap,
-                                            @Nullable GraphQLType underlyingSchemaType) {
+                                            Map<String, FragmentDefinition> fragmentDefinitionMap
+    ) {
         return new ApplyEnvironment(field,
                 overallTypeInfo.getFieldDefinition(),
                 overallTypeInfo.getFieldsContainer(),
@@ -305,8 +294,9 @@ public class Transformer extends NodeVisitorStub {
                 normalizedQueryFields,
                 this.transformationMetadata.getMetadataByFieldId(),
                 fragmentDefinitionMap,
-                underlyingSchemaType,
-                nadelContext);
+                underlyingSchema,
+                nadelContext
+        );
     }
 
 

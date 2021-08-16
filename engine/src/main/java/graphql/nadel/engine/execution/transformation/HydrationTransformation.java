@@ -6,6 +6,7 @@ import graphql.language.AbstractNode;
 import graphql.language.Field;
 import graphql.language.Node;
 import graphql.language.SelectionSet;
+import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
@@ -19,7 +20,11 @@ import graphql.nadel.engine.result.LeafExecutionResultNode;
 import graphql.nadel.engine.result.ListExecutionResultNode;
 import graphql.nadel.engine.result.ObjectExecutionResultNode;
 import graphql.nadel.normalized.NormalizedQueryField;
-import graphql.schema.GraphQLOutputType;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLFieldsContainer;
+import graphql.schema.GraphQLInterfaceType;
+import graphql.schema.GraphQLTypeUtil;
+import graphql.schema.GraphQLUnmodifiedType;
 import graphql.util.TraversalControl;
 import graphql.util.TraverserContext;
 
@@ -27,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.Assert.assertTrue;
 import static graphql.nadel.util.FpKit.filter;
@@ -63,10 +69,24 @@ public class HydrationTransformation extends FieldTransformation {
         String transformationId = getTransformationId();
         Field newField = FieldUtils.pathToFields(hydrationSourceName, environment.getField(), transformationId, Collections.emptyList(), true, environment.getMetadataByFieldId());
 
-        if(environment.getUnderlyingSchemaType() != null) {
-            // TODO: feature flag this
-            newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(environment.getNadelContext(), newField, (GraphQLOutputType) environment.getUnderlyingSchemaType());
+        if (hydrationSourceName.size() > 1) {
+            Node definition = environment.getFieldsContainerOverall().getDefinition();
+            String underlyingTypeName = environment.getFieldsContainerOverall().getName();
+            if (definition instanceof ObjectTypeDefinitionWithTransformation) {
+                underlyingTypeName = ((ObjectTypeDefinitionWithTransformation) definition).getTypeMappingDefinition().getUnderlyingName();
+            }
+            String fieldToHydrateFrom = hydrationSourceName.get(0);
+            String finalUnderlyingTypeName = underlyingTypeName;
+            GraphQLFieldsContainer underlyingParentType = (GraphQLFieldsContainer) assertNotNull(environment.getUnderlyingSchema().getType(underlyingTypeName),
+                    () -> String.format("No underlying type found for %s", finalUnderlyingTypeName));
+            GraphQLFieldDefinition fieldDefinition = assertNotNull(underlyingParentType.getFieldDefinition(fieldToHydrateFrom),
+                    () -> String.format("No field named %s found for type %s", fieldToHydrateFrom, underlyingParentType.getName()));
+            GraphQLUnmodifiedType underlyingType = GraphQLTypeUtil.unwrapAll(fieldDefinition.getType());
+            if (underlyingType instanceof GraphQLInterfaceType) {
+                newField = ArtificialFieldUtils.maybeAddUnderscoreTypeName(environment.getNadelContext(), newField, (GraphQLInterfaceType) underlyingType);
+            }
         }
+
 
         List<RemoteArgumentDefinition> argumentValues = filter(arguments, argument -> argument.getRemoteArgumentSource().getSourceType() == RemoteArgumentSource.SourceType.FIELD_ARGUMENT);
         assertTrue(sourceValues.size() + argumentValues.size() == arguments.size(), () -> "only $source and $argument values for arguments are supported");
