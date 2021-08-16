@@ -92,7 +92,7 @@ type User {
 - Type rename: renaming a type from the underlying schema to a new name in the overall schema
 - Batching: Hydration calls are automatically batched with a configurable max batch size per call
 
-# Build setup
+# Dev setup
 
 In order to run the tests from `EngineTests` in IntelliJ you need to have the KoTest plugin installed.
 
