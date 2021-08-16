@@ -85,13 +85,15 @@ type User {
 
 ## Features
 
-- Explicit overall schema design: every field for the overall schema needs to be declared in the Nadel DSL. If it is not declared it will not be exposed
+- Explicit overall schema design: every field for the overall schema needs to be declared in the Nadel DSL. If it is not
+  declared it will not be exposed
 - Hydration: resolving referencing to other objects by calling another service
 - Field rename: renaming field from the underlying schema to a new name in the overall schema
 - Type rename: renaming a type from the underlying schema to a new name in the overall schema
-- Batching: Hydration calls are automatically batched with a configurable max batch size per call  
+- Batching: Hydration calls are automatically batched with a configurable max batch size per call
 
+# Build setup
 
-## Getting started
+In order to run the tests from `EngineTests` in IntelliJ you need to have the KoTest plugin installed.
 
 
