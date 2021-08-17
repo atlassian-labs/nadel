@@ -2,8 +2,6 @@ name: dynamic service resolution multiple services with one unmapped node lookup
 enabled:
   current: true
   nextgen: true
-ignored:
-  nextgen: true # TODO: implement on nextgen
 overallSchema:
   Common: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
@@ -102,6 +100,32 @@ serviceCalls:
               "id": "issue/id-123",
               "issueKey": "ISSUE-1",
               "type_hint_typename__UUID": "Issue"
+            }
+          }
+        }
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue: node(id: "issue/id-123") {
+                ... on Issue {
+                  id
+                  issueKey
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "issue/id-123",
+              "issueKey": "ISSUE-1"
             }
           }
         }

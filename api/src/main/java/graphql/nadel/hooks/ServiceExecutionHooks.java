@@ -5,7 +5,9 @@ import graphql.PublicSpi;
 import graphql.execution.ExecutionStepInfo;
 import graphql.nadel.Service;
 import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.normalized.ExecutableNormalizedField;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +60,10 @@ public interface ServiceExecutionHooks {
      * @return the Service that should be used to fetch data for that field or an error that was raised when trying to resolve the service.
      */
     default ServiceOrError resolveServiceForField(List<Service> services, ExecutionStepInfo executionStepInfo) {
+        return null;
+    }
+
+    default ServiceOrError resolveServiceForField(Collection<Service> services, ExecutableNormalizedField executableNormalizedField) {
         return null;
     }
 }

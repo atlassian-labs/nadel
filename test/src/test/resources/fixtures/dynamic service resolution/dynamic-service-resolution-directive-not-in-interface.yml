@@ -2,8 +2,6 @@ name: dynamic service resolution directive not in interface
 enabled:
   current: true
   nextgen: true
-ignored:
-  nextgen: true # TODO: implement on nextgen
 overallSchema:
   RepoService: |
     service RepoService {
@@ -43,9 +41,14 @@ serviceCalls:
         query: |
         variables: {}
         operationName:
-      # language=JSON
       response: |-
-      # language=JSON
+  nextgen:
+    - serviceName: RepoService
+      request:
+        query: |
+        variables: {}
+        operationName:
+      response: |-
 response: null
 exception:
   message: field annotated with dynamicServiceResolution directive is expected to be of GraphQLInterfaceType

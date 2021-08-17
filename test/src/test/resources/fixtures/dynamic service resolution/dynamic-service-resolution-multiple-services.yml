@@ -2,8 +2,6 @@ name: dynamic service resolution multiple services
 enabled:
   current: true
   nextgen: true
-ignored:
-  nextgen: true # TODO: implement on nextgen
 overallSchema:
   Common: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
@@ -65,7 +63,7 @@ query: |
     pr: node(id: "pull-request:id-123") {
       ... on PullRequest {
         id
-          description
+        description
       }
     }
     issue: node(id: "issue/id-123") {
@@ -129,6 +127,57 @@ serviceCalls:
               "id": "issue/id-123",
               "issueKey": "ISSUE-1",
               "type_hint_typename__UUID": "Issue"
+            }
+          }
+        }
+  nextgen:
+    - serviceName: RepoService
+      request:
+        query: |
+          query {
+            ... on Query {
+              pr: node(id: "pull-request:id-123") {
+                ... on PullRequest {
+                  description
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pr": {
+              "id": "pull-request:id-123",
+              "description": "this is a pull request"
+            }
+          }
+        }
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue: node(id: "issue/id-123") {
+                ... on Issue {
+                  id
+                  issueKey
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "issue/id-123",
+              "issueKey": "ISSUE-1"
             }
           }
         }
