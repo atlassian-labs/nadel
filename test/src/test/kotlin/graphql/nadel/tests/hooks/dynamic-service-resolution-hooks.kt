@@ -15,7 +15,11 @@ import graphql.normalized.ExecutableNormalizedField
 
 class Hooks : ServiceExecutionHooks {
 
-    private fun resolveServiceGeneric(services: Collection<Service>, idArgument: Any, fieldName: String): ServiceOrError {
+    private fun resolveServiceGeneric(
+        services: Collection<Service>,
+        idArgument: Any,
+        resultPath: ResultPath
+    ): ServiceOrError {
         if (idArgument.toString().contains("pull-request")) {
             return ServiceOrError(
                 services.stream().filter { service -> (service.name == "RepoService") }.findFirst().get(),
@@ -33,9 +37,9 @@ class Hooks : ServiceExecutionHooks {
         return ServiceOrError(
             null,
             GraphqlErrorBuilder.newError()
-                .message("Could not resolve service for field: %s", fieldName)
+                .message("Could not resolve service for field: %s", resultPath)
                 .errorType(ErrorType.ExecutionAborted)
-                .path(ResultPath.parse(fieldName))
+                .path(resultPath)
                 .build()
         )
 
@@ -45,7 +49,11 @@ class Hooks : ServiceExecutionHooks {
         services: Collection<Service>,
         executableNormalizedField: ExecutableNormalizedField
     ): ServiceOrError {
-        return resolveServiceGeneric(services, executableNormalizedField.getNormalizedArgument("id").value, executableNormalizedField.fieldName)
+        return resolveServiceGeneric(
+            services,
+            executableNormalizedField.getNormalizedArgument("id").value,
+            ResultPath.fromList(listOf(executableNormalizedField.resultKey))
+        )
     }
 
 
@@ -55,7 +63,7 @@ class Hooks : ServiceExecutionHooks {
     ): ServiceOrError {
         val idArgument = executionStepInfo.arguments.get("id")
 
-        return resolveServiceGeneric(services, idArgument!!, executionStepInfo.field.name)
+        return resolveServiceGeneric(services, idArgument!!, executionStepInfo.path)
 
     }
 }

@@ -9,9 +9,9 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.ExecutableNormalizedField
 
-internal class NadelBlahBlahTransform : NadelTransform<NadelBlahBlahTransform.State> {
-    data class State (
-        val typesNotOwnedByService: List<String>
+internal class NadelFilterOwnedTypesTransform : NadelTransform<NadelFilterOwnedTypesTransform.State> {
+    data class State(
+        val typesNotOwnedByService: Set<String>
     )
 
     override suspend fun isApplicable(
@@ -21,12 +21,22 @@ internal class NadelBlahBlahTransform : NadelTransform<NadelBlahBlahTransform.St
         service: Service,
         overallField: ExecutableNormalizedField
     ): State? {
+        if (overallField.parent == null) {
+            return null;
+        }
 
-        service.definitionRegistry
-            .getDefinitions(ObjectTypeDefinition::class.java)
+        val objectTypesOwnedByService = service.definitionRegistry
+            .definitions
+            .filterIsInstance<ObjectTypeDefinition>()
+            .map { it.name }
 
+        val typesNotOwnedByService = overallField.objectTypeNames - objectTypesOwnedByService
 
+        if (typesNotOwnedByService.isEmpty()) {
+            return null
+        }
 
+        return State(typesNotOwnedByService)
     }
 
     override suspend fun transformField(
@@ -38,13 +48,18 @@ internal class NadelBlahBlahTransform : NadelTransform<NadelBlahBlahTransform.St
         state: State
     ): NadelTransformFieldResult {
 
-
         val newTypeNames = field.objectTypeNames.filter {
-            it != "Issue"
+            !state.typesNotOwnedByService.contains(it)
         }
 
-        NadelTransformFieldResult(
-            newField = field.transform { builder -> builder.objectTypeNames(newTypeNames) }
+        val transformedChildren = transformer.transform(field.children)
+
+        return NadelTransformFieldResult(
+            newField = field.transform {
+                it.clearObjectTypesNames()
+                    .objectTypeNames(newTypeNames)
+                    .children(transformedChildren)
+            }
         )
     }
 

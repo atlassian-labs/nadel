@@ -262,8 +262,10 @@ fun newServiceExecutionResult(
 
 fun newExecutionResult(
     error: GraphQLError,
+    data: Any? = null
 ): ExecutionResultImpl {
     return newExecutionResult()
+        .data(data)
         .addError(error)
         .build()
 }

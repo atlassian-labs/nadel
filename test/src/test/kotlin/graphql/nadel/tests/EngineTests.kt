@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture
  * Test name e.g. hydration inside a renamed field
  * Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = "dynamic-service-resolution-with-no-fragments.yml"
+private val singleTestToRun = ""
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")

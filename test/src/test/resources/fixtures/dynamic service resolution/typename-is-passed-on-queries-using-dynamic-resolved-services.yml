@@ -82,6 +82,34 @@ serviceCalls:
             }
           }
         }
+  nextgen:
+    - serviceName: RepoService
+      request:
+        query: |
+          query {
+            ... on Query {
+              node(id: "pull-request:id-123") {
+                ... on PullRequest {
+                  __typename
+                  description
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "node": {
+              "id": "pull-request:id-123",
+              "description": "this is a pull request",
+              "__typename": "PullRequest"
+            }
+          }
+        }
 # language=JSON
 response: |-
   {

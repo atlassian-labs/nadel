@@ -103,6 +103,32 @@ serviceCalls:
             }
           }
         }
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue: node(id: "issue/id-123") {
+                ... on Issue {
+                  id
+                  issueKey
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "id": "issue/id-123",
+              "issueKey": "ISSUE-1"
+            }
+          }
+        }
 # language=JSON
 response: |-
   {

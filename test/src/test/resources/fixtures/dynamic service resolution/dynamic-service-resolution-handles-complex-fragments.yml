@@ -137,6 +137,42 @@ serviceCalls:
             }
           }
         }
+  nextgen:
+    - serviceName: RepoService
+      request:
+        query: |
+          query {
+            ... on Query {
+              node(id: "pull-request:id-123") {
+                ... on PullRequest {
+                  author {
+                    ... on User {
+                      avatarUrl
+                      name
+                    }
+                  }
+                  description
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "node": {
+              "id": "pull-request:id-123",
+              "description": "this is a pull request",
+              "author": {
+                "name": "I'm an User",
+                "avatarUrl": "https://avatar.acme.com/user-123"
+              }
+            }
+          }
+        }
 # language=JSON
 response: |-
   {

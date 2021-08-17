@@ -117,12 +117,13 @@ class NextgenEngine @JvmOverloads constructor(
                             async {
                                 try {
 
+                                    // TODO: refactor this
                                     if (usesDynamicServiceResolution(topLevelField = field)) {
                                         val serviceOrError =
                                             serviceExecutionHooks.resolveServiceForField(services.values, field)
 
                                         if (serviceOrError.error != null) {
-                                            newExecutionResult(error = serviceOrError.error)
+                                            newExecutionResult(error = serviceOrError.error, data = mapOf(field.resultKey to null))
                                         } else {
                                             executeTopLevelField(field, serviceOrError.service, executionContext)
                                         }
@@ -292,7 +293,7 @@ class NextgenEngine @JvmOverloads constructor(
         )
     }
 
-    fun usesDynamicServiceResolution(
+    private fun usesDynamicServiceResolution(
         topLevelField: ExecutableNormalizedField
     ): Boolean {
 
