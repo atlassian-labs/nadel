@@ -27,6 +27,7 @@ internal class NadelBatchHydrationTransform(
     private val hydrator = NadelBatchHydrator(engine)
 
     data class State(
+        val executionBlueprint: NadelOverallExecutionBlueprint,
         val instructions: Map<FieldCoordinates, NadelBatchHydrationFieldInstruction>,
         val executionContext: NadelExecutionContext,
         val hydratedField: ExecutableNormalizedField,
@@ -46,6 +47,7 @@ internal class NadelBatchHydrationTransform(
 
         return if (instructions.isNotEmpty()) {
             return State(
+                executionBlueprint = executionBlueprint,
                 instructions = instructions,
                 executionContext = executionContext,
                 hydratedField = overallField,

@@ -26,10 +26,12 @@ import graphql.normalized.ExecutableNormalizedOperation
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
+import graphql.schema.GraphQLUnionType
 import kotlinx.coroutines.future.asDeferred
 
 typealias AnyAstDefinition = Definition<*>
@@ -301,7 +303,7 @@ private fun buildInstrumentationExecutionParameters(
     queryDocument: Document,
     executionInput: ExecutionInput,
     graphQLSchema: GraphQLSchema,
-    instrumentationState: InstrumentationState?
+    instrumentationState: InstrumentationState?,
 ): NadelInstrumentationExecuteOperationParameters {
     return NadelInstrumentationExecuteOperationParameters(
         query,
@@ -312,4 +314,23 @@ private fun buildInstrumentationExecutionParameters(
         instrumentationState,
         executionInput.context
     )
+}
+
+/**
+ * Turns GraphQL types to object types when possible e.g. finds concrete implementations
+ * for interfaces, gets object types inside unions, and returns objects as is.
+ */
+fun resolveObjectTypes(
+    schema: GraphQLSchema,
+    type: GraphQLType,
+    onNotObjectType: (GraphQLType) -> Nothing,
+): List<GraphQLObjectType> {
+    return when (type) {
+        is GraphQLObjectType -> listOf(type)
+        is GraphQLUnionType -> type.types.flatMap {
+            resolveObjectTypes(schema, type = it, onNotObjectType)
+        }
+        is GraphQLInterfaceType -> schema.getImplementations(type)
+        else -> onNotObjectType(type)
+    }
 }

@@ -60,7 +60,7 @@ class NextgenEngine @JvmOverloads constructor(
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
         engine = this,
-        transforms = transforms
+        transforms = transforms,
     )
     private val queryTransformer = NadelQueryTransformer.create(
         executionBlueprint = overallExecutionBlueprint,
@@ -132,7 +132,7 @@ class NextgenEngine @JvmOverloads constructor(
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
         service: Service,
-        executionContext: NadelExecutionContext
+        executionContext: NadelExecutionContext,
     ): ExecutionResult {
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
         val queryTransform = queryTransformer.transformQuery(

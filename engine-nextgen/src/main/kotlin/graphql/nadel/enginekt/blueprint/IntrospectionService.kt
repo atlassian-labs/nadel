@@ -13,9 +13,8 @@ import java.util.concurrent.CompletableFuture
 
 internal class IntrospectionService constructor(
     schema: GraphQLSchema,
-    introspectionRunnerFactory: NadelIntrospectionRunnerFactory
+    introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
 ) : Service(name, schema, introspectionRunnerFactory.make(schema), null, null) {
-
     companion object {
         const val name = "__introspection"
     }
@@ -28,10 +27,18 @@ fun interface NadelIntrospectionRunnerFactory {
 open class NadelDefaultIntrospectionRunner(schema: GraphQLSchema) : ServiceExecution {
     private val graphQL = GraphQL.newGraphQL(schema).build()
 
-    override fun execute(params: ServiceExecutionParameters): CompletableFuture<ServiceExecutionResult> =
-        graphQL.executeAsync(
-            ExecutionInput.newExecutionInput()
-                .query(AstPrinter.printAstCompact(params.query))
-        )
-            .thenApply { ServiceExecutionResult(it.getData(), it.errors.map(::toSpecification)) }
+    override fun execute(params: ServiceExecutionParameters): CompletableFuture<ServiceExecutionResult> {
+        return graphQL
+            .executeAsync(
+                ExecutionInput.newExecutionInput()
+                    .query(AstPrinter.printAstCompact(params.query))
+                    .build()
+            )
+            .thenApply {
+                ServiceExecutionResult(
+                    it.getData(),
+                    it.errors.map(::toSpecification),
+                )
+            }
+    }
 }
