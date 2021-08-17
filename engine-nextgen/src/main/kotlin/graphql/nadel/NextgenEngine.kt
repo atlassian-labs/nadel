@@ -2,8 +2,6 @@ package graphql.nadel
 
 import graphql.Assert
 import graphql.ErrorType
-import graphql.nadel.schema.NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION
-import graphql.nadel.schema.NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
@@ -35,6 +33,7 @@ import graphql.nadel.enginekt.util.provide
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.schema.NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory
@@ -116,21 +115,7 @@ class NextgenEngine @JvmOverloads constructor(
                         .map { (field, service) ->
                             async {
                                 try {
-
-                                    // TODO: refactor this
-                                    if (usesDynamicServiceResolution(topLevelField = field)) {
-                                        val serviceOrError =
-                                            serviceExecutionHooks.resolveServiceForField(services.values, field)
-
-                                        if (serviceOrError.error != null) {
-                                            newExecutionResult(error = serviceOrError.error, data = mapOf(field.resultKey to null))
-                                        } else {
-                                            executeTopLevelField(field, serviceOrError.service, executionContext)
-                                        }
-                                    } else {
-                                        executeTopLevelField(field, service, executionContext)
-                                    }
-
+                                    resolveServiceAndExecuteTopLevelField(field, executionContext, service)
                                 } catch (e: Throwable) {
                                     when (e) {
                                         is GraphQLError -> newExecutionResult(error = e)
@@ -147,6 +132,22 @@ class NextgenEngine @JvmOverloads constructor(
         }
         instrumentationContext.onCompleted(result, null)
         return result
+    }
+
+    private suspend fun resolveServiceAndExecuteTopLevelField(
+        field: ExecutableNormalizedField,
+        executionContext: NadelExecutionContext,
+        service: Service
+    ): ExecutionResult = if (usesDynamicServiceResolution(topLevelField = field)) {
+        val serviceOrError = serviceExecutionHooks.resolveServiceForField(services.values, field)
+
+        if (serviceOrError.error != null) {
+            newExecutionResult(error = serviceOrError.error, data = mapOf(field.resultKey to null))
+        } else {
+            executeTopLevelField(field, serviceOrError.service, executionContext)
+        }
+    } else {
+        executeTopLevelField(field, service, executionContext)
     }
 
     private suspend fun executeTopLevelField(
