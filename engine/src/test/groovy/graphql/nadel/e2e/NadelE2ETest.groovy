@@ -1,11 +1,11 @@
 package graphql.nadel.e2e
 
-
 import graphql.AssertException
 import graphql.ErrorType
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl
 import graphql.GraphQLError
+import graphql.GraphqlErrorException
 import graphql.execution.AbortExecutionException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
@@ -19,11 +19,11 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.engine.result.ResultNodesUtil
 import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.engine.testutils.TestUtil
 import graphql.nadel.instrumentation.ChainedNadelInstrumentation
-import graphql.nadel.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
@@ -1033,8 +1033,9 @@ class NadelE2ETest extends Specification {
                 .executionIdProvider(idProvider)
                 .instrumentation(new NadelEngineInstrumentation() {
                     @Override
-                    void instrumentRootExecutionResult(Object rootExecutionResult, NadelInstrumentRootExecutionResultParameters parameters) {
-                        rootResultNode = rootExecutionResult
+                    RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
+                        rootResultNode = rootExecutionResultNode
+                        return rootExecutionResultNode
                     }
                 })
                 .build()
@@ -1067,7 +1068,7 @@ class NadelE2ETest extends Specification {
             println printAstCompact(sep.query)
             printAstCompact(sep.query) == expectedQuery2
         }) >> {
-            def cf = new CompletableFuture()
+            def cf = new CompletableFuture();
             new Thread({
                 Thread.sleep(251)
                 cf.complete(response2)
@@ -1111,9 +1112,12 @@ class NadelE2ETest extends Specification {
                     }
 
                     @Override
-                    void instrumentRootExecutionResult(Object rootExecutionResult, NadelInstrumentRootExecutionResultParameters parameters) {
-                        originalExecutionResult = rootExecutionResult
+                    RootExecutionResultNode instrumentRootExecutionResult(RootExecutionResultNode rootExecutionResultNode, NadelInstrumentRootExecutionResultParameters parameters) {
+                        originalExecutionResult = rootExecutionResultNode
                         instrumentationParams = parameters
+                        return rootExecutionResultNode.withNewErrors([
+                                GraphqlErrorException.newErrorException().message("instrumented-error").build()
+                        ])
                     }
                 })
                 .build()
@@ -1137,6 +1141,7 @@ class NadelE2ETest extends Specification {
         }
 
         then:
+        result.errors[0].message == "instrumented-error"
         instrumentationParams != null
         instrumentationParams.instrumentationState.hashCode() == "test-instrumentation-state".hashCode()
         instrumentationParams.executionContext.operationDefinition.name == "OpName"

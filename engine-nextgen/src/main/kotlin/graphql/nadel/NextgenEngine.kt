@@ -36,11 +36,8 @@ import graphql.nadel.enginekt.util.recursivelyRemoveKey
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.instrumentation.NadelEngineInstrumentation
-import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
-import graphql.normalized.ExecutableNormalizedOperation
 import graphql.normalized.ExecutableNormalizedOperationFactory
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import kotlinx.coroutines.GlobalScope
@@ -141,16 +138,6 @@ class NextgenEngine @JvmOverloads constructor(
         } catch (e: Throwable) {
             instrumentationContext.onCompleted(null, e)
             throw e
-        }
-        if (instrumentation is NadelEngineInstrumentation) {
-            runEngineInstrumentation(
-                instrumentation,
-                query,
-                result,
-                queryDocument,
-                executionInput,
-                instrumentationState
-            )
         }
         instrumentationContext.onCompleted(result, null)
         recursivelyRemoveKey(result.getData<MutableJsonMap>(), typenameHintAlias)
@@ -299,27 +286,6 @@ class NextgenEngine @JvmOverloads constructor(
                 data?.takeIf { transformedQuery.resultKey in data }
                     ?: mutableMapOf(transformedQuery.resultKey to null)
             },
-        )
-    }
-
-    private fun runEngineInstrumentation(
-        instrumentation: NadelEngineInstrumentation,
-        query: ExecutableNormalizedOperation,
-        result: ExecutionResult,
-        queryDocument: Document,
-        executionInput: ExecutionInput,
-        instrumentationState: InstrumentationState?,
-    ) {
-        val executionData = executionHelper.createExecutionData(
-            queryDocument,
-            overallSchema,
-            executionIdProvider.provide(executionInput),
-            executionInput,
-            instrumentationState
-        )
-        instrumentation.instrumentRootExecutionResult(
-            result,
-            NadelInstrumentRootExecutionResultParameters(executionData.executionContext, instrumentationState, query)
         )
     }
 

@@ -2,6 +2,8 @@ name: can instrument root execution result
 enabled:
   current: true
   nextgen: true
+ignored:
+  nextgen: true # TODO: implement on nextgen
 overallSchema:
   MyService: |
     service MyService {
@@ -45,7 +47,7 @@ query: |
       name
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
   current:
     - serviceName: MyService
@@ -56,7 +58,7 @@ serviceCalls:
               name
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_MyService_OpName
       # language=JSON
       response: |-
@@ -79,7 +81,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: null
       # language=JSON
       response: |-
@@ -95,6 +97,13 @@ response: |-
     "data": {
       "hello": null
     },
-    "errors": [],
+    "errors": [
+      {
+        "message": "instrumented-error",
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
     "extensions": {}
   }

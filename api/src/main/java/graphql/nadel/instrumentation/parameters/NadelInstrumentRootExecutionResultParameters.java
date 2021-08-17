@@ -3,8 +3,7 @@ package graphql.nadel.instrumentation.parameters;
 import graphql.PublicApi;
 import graphql.execution.ExecutionContext;
 import graphql.execution.instrumentation.InstrumentationState;
-import graphql.normalized.ExecutableNormalizedOperation;
-import org.jetbrains.annotations.Nullable;
+import graphql.nadel.normalized.NormalizedQueryFromAst;
 
 /**
  * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
@@ -14,19 +13,12 @@ public class NadelInstrumentRootExecutionResultParameters {
 
     private final ExecutionContext executionContext;
     private final InstrumentationState instrumentationState;
-    @Nullable
-    private final ExecutableNormalizedOperation query;
+    private final NormalizedQueryFromAst normalizedQueryFromAst;
 
-    public NadelInstrumentRootExecutionResultParameters(
-            ExecutionContext executionContext, InstrumentationState instrumentationState, ExecutableNormalizedOperation query
-    ) {
+    public NadelInstrumentRootExecutionResultParameters(ExecutionContext executionContext, NormalizedQueryFromAst normalizedQueryFromAst, InstrumentationState instrumentationState) {
         this.executionContext = executionContext;
         this.instrumentationState = instrumentationState;
-        this.query = query;
-    }
-
-    public NadelInstrumentRootExecutionResultParameters(ExecutionContext executionContext, InstrumentationState instrumentationState) {
-        this(executionContext, instrumentationState, null);
+        this.normalizedQueryFromAst = normalizedQueryFromAst;
     }
 
     /**
@@ -36,16 +28,11 @@ public class NadelInstrumentRootExecutionResultParameters {
      * @return a new parameters object with the new state
      */
     public NadelInstrumentRootExecutionResultParameters withNewState(InstrumentationState instrumentationState) {
-        return new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState, query);
+        return new NadelInstrumentRootExecutionResultParameters(executionContext, normalizedQueryFromAst, instrumentationState);
     }
 
     public ExecutionContext getExecutionContext() {
         return executionContext;
-    }
-
-    @Nullable
-    public ExecutableNormalizedOperation getQuery() {
-        return query;
     }
 
     public <T extends InstrumentationState> T getInstrumentationState() {

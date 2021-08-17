@@ -17,11 +17,11 @@ import graphql.nadel.Service;
 import graphql.nadel.engine.BenchmarkContext;
 import graphql.nadel.engine.FieldInfos;
 import graphql.nadel.engine.NadelContext;
+import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation;
 import graphql.nadel.engine.result.ResultComplexityAggregator;
 import graphql.nadel.engine.result.ResultNodesUtil;
 import graphql.nadel.engine.result.RootExecutionResultNode;
 import graphql.nadel.hooks.ServiceExecutionHooks;
-import graphql.nadel.instrumentation.NadelEngineInstrumentation;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
@@ -125,7 +125,7 @@ public class Execution {
                         ((BenchmarkContext) nadelContext.getUserSuppliedContext()).overallResult = rootResultNode;
                     }
                     if (instrumentation instanceof NadelEngineInstrumentation) {
-                        ((NadelEngineInstrumentation) instrumentation).instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, instrumentationState));
+                        rootResultNode = ((NadelEngineInstrumentation) instrumentation).instrumentRootExecutionResult(rootResultNode, new NadelInstrumentRootExecutionResultParameters(executionContext, normalizedQueryFromAst, instrumentationState));
                     }
                     return withNodeComplexity(ResultNodesUtil.toExecutionResult(rootResultNode), resultComplexityAggregator);
                 });
