@@ -93,12 +93,8 @@ serviceCalls:
               issues {
                 ... on Issue {
                   __typename
-                }
-                ... on Issue {
-                  id
-                }
-                ... on Issue {
                   authorIds
+                  id
                 }
               }
             }

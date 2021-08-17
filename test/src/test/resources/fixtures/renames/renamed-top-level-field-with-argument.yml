@@ -1,4 +1,4 @@
-name: execution id is transferred from provider if missing in input
+name: renamed top level field with argument
 enabled:
   current: true
   nextgen: true
@@ -6,69 +6,47 @@ overallSchema:
   MyService: |
     service MyService {
       type Query {
-        hello: World
+        renameObject(id: ID!): ObjectOverall @renamed(from: "renameObjectUnderlying")
       }
-      type World {
-        id: ID
+      type ObjectOverall @renamed(from: "ObjectUnderlying") {
         name: String
-      }
-      type Mutation {
-        hello: String
-      }
-      type Subscription {
-        onWorldUpdate: World
-        onAnotherUpdate: World
       }
     }
 underlyingSchema:
   MyService: |
-    type Mutation {
-      hello: String
+    type ObjectUnderlying {
+      name: String
     }
 
     type Query {
-      hello: World
-    }
-
-    type Subscription {
-      onAnotherUpdate: World
-      onWorldUpdate: World
-    }
-
-    type World {
-      id: ID
-      name: String
+      renameObjectUnderlying(id: ID!): ObjectUnderlying
     }
 query: |
   query {
-    hello {
+    renameObject(id: "OBJECT-001") {
       name
     }
-    hello {
-      id
-    }
   }
-variables: {}
+variables: { }
 serviceCalls:
   current:
     - serviceName: MyService
       request:
         query: |
           query nadel_2_MyService {
-            hello {
+            renameObjectUnderlying(id: "OBJECT-001") {
               name
             }
-            hello {
-              id
-            }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_MyService
       # language=JSON
       response: |-
         {
           "data": {
-            "hello": null
+            "renameObjectUnderlying": {
+              "name": "Object 001"
+            }
           },
           "extensions": {}
         }
@@ -78,21 +56,22 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              hello {
-                ... on World {
-                  id
+              rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
+                ... on ObjectUnderlying {
                   name
                 }
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
         {
           "data": {
-            "hello": null
+            "rename__renameObject__renameObjectUnderlying": {
+              "name": "Object 001"
+            }
           },
           "extensions": {}
         }
@@ -100,7 +79,9 @@ serviceCalls:
 response: |-
   {
     "data": {
-      "hello": null
+      "renameObject": {
+        "name": "Object 001"
+      }
     },
-    "extensions": {}
+    "extensions": { }
   }

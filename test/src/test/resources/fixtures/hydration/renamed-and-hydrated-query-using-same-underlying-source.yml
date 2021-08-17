@@ -10,7 +10,7 @@ overallSchema:
       }
       type Foo {
         renamedField: String => renamed from issue.field
-        details: [Detail] => hydrated from Foo.detail(detailIds: $source.issue.fooId)
+        details: [Detail] => hydrated from Foo.detail(detailId: $source.issue.fooId)
       }
       type Detail {
         detailId: ID!
@@ -36,7 +36,7 @@ underlyingSchema:
     }
 
     type Query {
-      detail(detailIds: [ID]): Detail
+      detail(detailId: ID): Detail
       foo: Foo
     }
 query: |
@@ -66,6 +66,7 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -82,12 +83,13 @@ serviceCalls:
       request:
         query: |
           query nadel_2_Foo {
-            detail(detailIds: "ID") {
+            detail(detailId: "ID") {
               name
             }
           }
         variables: {}
         operationName: nadel_2_Foo
+      # language=JSON
       response: |-
         {
           "data": {
@@ -105,24 +107,18 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
+                  __typename__deep_rename__renamedField: __typename
+                  __typename__hydration__details: __typename
                   deep_rename__renamedField__issue: issue {
                     ... on Issue {
                       field
                     }
                   }
-                }
-                ... on Foo {
-                  __typename__deep_rename__renamedField: __typename
-                }
-                ... on Foo {
                   hydration__details__issue: issue {
                     ... on Issue {
                       fooId
                     }
                   }
-                }
-                ... on Foo {
-                  __typename__hydration__details: __typename
                 }
               }
             }
@@ -151,7 +147,7 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              detail(detailIds: "ID") {
+              detail(detailId: "ID") {
                 ... on Detail {
                   name
                 }

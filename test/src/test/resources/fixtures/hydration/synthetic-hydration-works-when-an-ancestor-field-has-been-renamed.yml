@@ -114,17 +114,13 @@ serviceCalls:
             ... on Query {
               rename__devOpsRelationships__relationships: relationships {
                 ... on RelationshipConnection {
+                  __typename__rename__devOpsNodes: __typename
                   rename__devOpsNodes__nodes: nodes {
                     ... on Relationship {
+                      __typename__hydration__devOpsIssue: __typename
                       hydration__devOpsIssue__issueId: issueId
                     }
-                    ... on Relationship {
-                      __typename__hydration__devOpsIssue: __typename
-                    }
                   }
-                }
-                ... on RelationshipConnection {
-                  __typename__rename__devOpsNodes: __typename
                 }
               }
             }

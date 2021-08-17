@@ -104,31 +104,23 @@ serviceCalls:
             ... on Query {
               boardScope {
                 ... on BoardScope {
+                  __typename__rename__cardParents: __typename
                   rename__cardParents__issueParents: issueParents {
                     ... on IssueParent {
+                      __typename__rename__cardType: __typename
                       rename__cardType__issueType: issueType {
                         ... on IssueType {
+                          __typename__rename__inlineCardCreate: __typename
                           id
-                        }
-                        ... on IssueType {
                           rename__inlineCardCreate__inlineIssueCreate: inlineIssueCreate {
                             ... on InlineIssueCreateConfig {
                               enabled
                             }
                           }
                         }
-                        ... on IssueType {
-                          __typename__rename__inlineCardCreate: __typename
-                        }
                       }
                     }
-                    ... on IssueParent {
-                      __typename__rename__cardType: __typename
-                    }
                   }
-                }
-                ... on BoardScope {
-                  __typename__rename__cardParents: __typename
                 }
               }
             }

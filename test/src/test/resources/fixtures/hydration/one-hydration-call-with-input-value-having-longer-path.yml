@@ -112,14 +112,12 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
+                  __typename__hydration__barLongerInput: __typename
                   hydration__barLongerInput__fooDetails: fooDetails {
                     ... on FooDetails {
                       externalBarId
                     }
                   }
-                }
-                ... on Foo {
-                  __typename__hydration__barLongerInput: __typename
                 }
               }
             }

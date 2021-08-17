@@ -101,10 +101,8 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
-                  batch_hydration__bar__barId: barId
-                }
-                ... on Foo {
                   __typename__batch_hydration__bar: __typename
+                  batch_hydration__bar__barId: barId
                 }
               }
             }
@@ -133,10 +131,8 @@ serviceCalls:
             ... on Query {
               barsById(id: ["barId1", "barId2", "barId3"]) {
                 ... on Bar {
-                  name
-                }
-                ... on Bar {
                   batch_hydration__bar__id: id
+                  name
                 }
               }
             }

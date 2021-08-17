@@ -200,16 +200,10 @@ serviceCalls:
                     ... on Testing {
                       movies {
                         ... on Movie {
-                          id
-                        }
-                        ... on Movie {
-                          name
-                        }
-                        ... on Movie {
-                          batch_hydration__characters__characterIds: characterIds
-                        }
-                        ... on Movie {
                           __typename__batch_hydration__characters: __typename
+                          batch_hydration__characters__characterIds: characterIds
+                          id
+                          name
                         }
                       }
                     }
@@ -262,12 +256,8 @@ serviceCalls:
                   characters(ids: ["C2", "C3"]) {
                     ... on Character {
                       id
-                    }
-                    ... on Character {
-                      name
-                    }
-                    ... on Character {
                       batch_hydration__characters__id: id
+                      name
                     }
                   }
                 }
@@ -307,12 +297,8 @@ serviceCalls:
                   characters(ids: ["C1", "C2", "C1"]) {
                     ... on Character {
                       id
-                    }
-                    ... on Character {
-                      name
-                    }
-                    ... on Character {
                       batch_hydration__characters__id: id
+                      name
                     }
                   }
                 }

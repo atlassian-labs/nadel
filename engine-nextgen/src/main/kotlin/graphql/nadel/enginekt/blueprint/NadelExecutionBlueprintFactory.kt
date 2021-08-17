@@ -272,8 +272,8 @@ private class Factory(
                     val pathToField = remoteArgDef.remoteArgumentSource.path
                     NadelHydrationActorInputDef.ValueSource.FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
-                        fieldDefinition = getUnderlyingType(hydratedFieldParentType)?.getFieldAt(
-                            pathToField)
+                        fieldDefinition = getUnderlyingType(hydratedFieldParentType)
+                            ?.getFieldAt(pathToField)
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
                 }

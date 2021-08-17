@@ -202,22 +202,14 @@ serviceCalls:
             ... on Query {
               pets(isLoyal: true) {
                 ... on Cat {
-                  name
-                }
-                ... on Cat {
-                  wearsBell
-                }
-                ... on Cat {
                   aliasedCatTypeName: __typename
-                }
-                ... on Dog {
                   name
-                }
-                ... on Dog {
-                  wearsCollar
+                  wearsBell
                 }
                 ... on Dog {
                   aliasedDogTypeName: __typename
+                  name
+                  wearsCollar
                 }
               }
             }

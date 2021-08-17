@@ -10,7 +10,9 @@ import graphql.execution.nextgen.ExecutionHelper
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
+import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
+import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelTransform
@@ -50,6 +52,7 @@ import java.util.concurrent.CompletableFuture
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
     transforms: List<NadelTransform<out Any>> = emptyList(),
+    introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) : NadelExecutionEngine {
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallSchema = nadel.overallSchema
@@ -68,7 +71,7 @@ class NextgenEngine @JvmOverloads constructor(
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val fieldToService = NadelFieldToService(overallExecutionBlueprint)
+    private val fieldToService = NadelFieldToService(overallExecutionBlueprint, introspectionRunnerFactory)
     private val executionIdProvider = nadel.executionIdProvider
     private val executionHelper = ExecutionHelper()
 
@@ -161,15 +164,18 @@ class NextgenEngine @JvmOverloads constructor(
             executionPlan,
         )
         val transformedQuery = queryTransform.result.single()
-        val result = executeService(service, transformedQuery, executionContext)
-        val transformedResult = resultTransformer.transform(
-            executionContext = executionContext,
-            executionPlan = executionPlan,
-            artificialFields = queryTransform.artificialFields,
-            overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
-            service = service,
-            result = result,
-        )
+        val result: ServiceExecutionResult = executeService(service, transformedQuery, executionContext)
+        val transformedResult: ServiceExecutionResult = when {
+            topLevelField.name.startsWith("__") -> result
+            else -> resultTransformer.transform(
+                executionContext = executionContext,
+                executionPlan = executionPlan,
+                artificialFields = queryTransform.artificialFields,
+                overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
+                service = service,
+                result = result,
+            )
+        }
 
         @Suppress("UNCHECKED_CAST")
         return newExecutionResult()

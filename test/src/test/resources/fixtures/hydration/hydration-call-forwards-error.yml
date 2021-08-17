@@ -50,7 +50,7 @@ query: |
       }
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
   current:
     - serviceName: service1
@@ -61,7 +61,7 @@ serviceCalls:
               barId
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_service1
       # language=JSON
       response: |-
@@ -81,7 +81,7 @@ serviceCalls:
               name
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_service2
       # language=JSON
       response: |-
@@ -109,15 +109,13 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
-                  hydration__bar__barId: barId
-                }
-                ... on Foo {
                   __typename__hydration__bar: __typename
+                  hydration__bar__barId: barId
                 }
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: null
       # language=JSON
       response: |-
@@ -142,7 +140,7 @@ serviceCalls:
               }
             }
           }
-        variables: { }
+        variables: {}
         operationName: null
       # language=JSON
       response: |-

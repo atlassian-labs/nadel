@@ -131,10 +131,8 @@ serviceCalls:
             ... on Query {
               bar {
                 ... on Bar {
-                  rename__name__title: title
-                }
-                ... on Bar {
                   __typename__rename__name: __typename
+                  rename__name__title: title
                 }
               }
             }

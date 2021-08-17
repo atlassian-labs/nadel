@@ -126,8 +126,6 @@ serviceCalls:
               user {
                 ... on User {
                   id
-                }
-                ... on User {
                   name
                 }
               }
