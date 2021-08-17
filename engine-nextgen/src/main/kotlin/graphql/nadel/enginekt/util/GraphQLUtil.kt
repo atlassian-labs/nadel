@@ -11,6 +11,7 @@ import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.introspection.Introspection
 import graphql.language.Definition
 import graphql.language.Document
 import graphql.language.ObjectTypeDefinition
@@ -26,10 +27,12 @@ import graphql.normalized.ExecutableNormalizedOperation
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
+import graphql.schema.GraphQLUnionType
 import kotlinx.coroutines.future.asDeferred
 
 typealias AnyAstDefinition = Definition<*>
@@ -312,4 +315,38 @@ private fun buildInstrumentationExecutionParameters(
         instrumentationState,
         executionInput.context
     )
+}
+
+fun addTypenameToInterfacesAndUnions(field: ExecutableNormalizedField, alias: String, graphQLSchema: GraphQLSchema) {
+    val alreadyHasTypenameField = field.children.any { it.name == Introspection.TypeNameMetaFieldDef.name }
+    if (alreadyHasTypenameField) {
+        return
+    }
+
+    val graphQLOutputType = GraphQLTypeUtil.unwrapAll(field.getType(graphQLSchema))
+    val isInterfaceOrUnion = graphQLOutputType is GraphQLInterfaceType || graphQLOutputType is GraphQLUnionType
+    if (isInterfaceOrUnion) {
+        val typeNameField = ExecutableNormalizedField
+            .newNormalizedField()
+            .alias(alias)
+            .objectTypeNames(
+                graphQLOutputType.let {
+                    when (it) {
+                        is GraphQLInterfaceType -> {
+                            graphQLSchema.getImplementations(it)
+                                .map { type -> type.name }
+                        }
+                        is GraphQLUnionType -> it.types.map { type -> type.name }
+                        else -> emptyList()
+                    }
+                }
+            )
+            .fieldName(Introspection.TypeNameMetaFieldDef.name)
+            .build()
+        field.addChild(typeNameField)
+    }
+
+    field.children.forEach {
+        addTypenameToInterfacesAndUnions(it, alias, graphQLSchema)
+    }
 }

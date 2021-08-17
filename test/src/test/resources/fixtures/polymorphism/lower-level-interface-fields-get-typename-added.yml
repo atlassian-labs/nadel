@@ -193,22 +193,28 @@ serviceCalls:
             ... on Query {
               pets(isLoyal: true) {
                 ... on Cat {
+                  type_hint_typename: __typename
                   collar {
                     ... on CatCollar {
+                      type_hint_typename: __typename
                       color
                     }
                     ... on DogCollar {
+                      type_hint_typename: __typename
                       color
                     }
                   }
                   name
                 }
                 ... on Dog {
+                  type_hint_typename: __typename
                   collar {
                     ... on CatCollar {
+                      type_hint_typename: __typename
                       color
                     }
                     ... on DogCollar {
+                      type_hint_typename: __typename
                       color
                     }
                   }
@@ -217,7 +223,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
@@ -226,14 +232,18 @@ serviceCalls:
             "pets": [
               {
                 "name": "Sparky",
+                "type_hint_typename": "Dog",
                 "collar": {
-                  "color": "blue"
+                  "color": "blue",
+                  "type_hint_typename": "DogCollar"
                 }
               },
               {
                 "name": "Whiskers",
+                "type_hint_typename": "Cat",
                 "collar": {
-                  "color": "red"
+                  "color": "red",
+                  "type_hint_typename": "CatCollar"
                 }
               }
             ]

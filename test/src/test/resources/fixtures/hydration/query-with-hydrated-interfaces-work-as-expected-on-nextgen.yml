@@ -201,7 +201,7 @@ serviceCalls:
               type_hint_typename__UUID: __typename
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_OwnerService_petQ
       # language=JSON
       response: |-
@@ -230,7 +230,7 @@ serviceCalls:
               type_hint_typename__UUID: __typename
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_OwnerService_petQ
       # language=JSON
       response: |-
@@ -253,11 +253,13 @@ serviceCalls:
               pets(isLoyal: true) {
                 ... on Cat {
                   __typename__hydration__owners: __typename
+                  type_hint_typename: __typename
                   name
                   hydration__owners__ownerIds: ownerIds
                 }
                 ... on Dog {
                   __typename__hydration__owners: __typename
+                  type_hint_typename: __typename
                   name
                   hydration__owners__ownerIds: ownerIds
                 }
@@ -277,6 +279,7 @@ serviceCalls:
                 "hydration__owners__ownerIds": [
                   "dearly"
                 ],
+                "type_hint_typename": "Dog",
                 "__typename__hydration__owners": "Dog"
               },
               {
@@ -284,6 +287,7 @@ serviceCalls:
                 "hydration__owners__ownerIds": [
                   "cruella"
                 ],
+                "type_hint_typename": "Cat",
                 "__typename__hydration__owners": "Cat"
               }
             ]
@@ -297,17 +301,19 @@ serviceCalls:
             ... on Query {
               ownerById(id: "dearly") {
                 ... on CaringOwner {
+                  type_hint_typename: __typename
                   givesPats
                   name
                 }
                 ... on CruelOwner {
+                  type_hint_typename: __typename
                   givesSmacks
                   name
                 }
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
@@ -315,7 +321,8 @@ serviceCalls:
           "data": {
             "ownerById": {
               "name": "Mr Dearly",
-              "givesPats": true
+              "givesPats": true,
+              "type_hint_typename": "CaringOwner"
             }
           },
           "extensions": {}
@@ -327,17 +334,19 @@ serviceCalls:
             ... on Query {
               ownerById(id: "cruella") {
                 ... on CaringOwner {
+                  type_hint_typename: __typename
                   givesPats
                   name
                 }
                 ... on CruelOwner {
+                  type_hint_typename: __typename
                   givesSmacks
                   name
                 }
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
@@ -345,7 +354,8 @@ serviceCalls:
           "data": {
             "ownerById": {
               "name": "Cruella De Vil",
-              "givesSmacks": true
+              "givesSmacks": true,
+              "type_hint_typename": "CruelOwner"
             }
           },
           "extensions": {}

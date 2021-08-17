@@ -126,6 +126,7 @@ class NadelE2ETest extends Specification {
           }
         }
         __typename__deep_rename__name: __typename
+        type_hint_typename:__typename 
       }
       ... on Cat {
         deep_rename__name__detail: detail {
@@ -134,13 +135,14 @@ class NadelE2ETest extends Specification {
           }
         }
         __typename__deep_rename__name: __typename
+        type_hint_typename:__typename 
       }
     }
   }
 }"""
         def serviceResponse = [pets: [
-                [__typename__deep_rename__name: "Cat", deep_rename__name__detail: [petName: "Tiger"]],
-                [__typename__deep_rename__name: "Dog", deep_rename__name__detail: [petName: "Luna"]],
+                [__typename__deep_rename__name: "Cat", type_hint_typename: "Cat", deep_rename__name__detail: [petName: "Tiger"]],
+                [__typename__deep_rename__name: "Dog", type_hint_typename: "Dog", deep_rename__name__detail: [petName: "Luna"]],
         ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]
@@ -691,6 +693,7 @@ class NadelE2ETest extends Specification {
           }
         }
         __typename__deep_rename__name: __typename
+        type_hint_typename:__typename
       }
       ... on Cat {
         deep_rename__name__microchip: microchip {
@@ -699,13 +702,14 @@ class NadelE2ETest extends Specification {
           }
         }
         __typename__deep_rename__name: __typename
+        type_hint_typename:__typename
       }
     }
   }
 }"""
         def serviceResponse = [pets: [
-                [__typename__deep_rename__name: "Cat", deep_rename__name__microchip: [petName: "Tiger"]],
-                [__typename__deep_rename__name: "Dog", deep_rename__name__collar: [petName: "Luna"]],
+                [__typename__deep_rename__name: "Cat", type_hint_typename: "Cat", deep_rename__name__microchip: [petName: "Tiger"]],
+                [__typename__deep_rename__name: "Dog", type_hint_typename: "Dog", deep_rename__name__collar: [petName: "Luna"]],
         ]]
 
         def overallResponse = [pets: [[name: "Tiger"], [name: "Luna"]]]

@@ -107,7 +107,7 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
   current:
     - serviceName: MyService
@@ -119,7 +119,7 @@ serviceCalls:
               type_hint_typename__UUID: __typename
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_MyService
       # language=JSON
       response: |-
@@ -140,19 +140,21 @@ serviceCalls:
             ... on Query {
               rename__renameInterface__renameInterfaceUnderlying: renameInterfaceUnderlying {
                 ... on ObjectUnderlying {
+                  type_hint_typename: __typename
                   name
                 }
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
         {
           "data": {
             "rename__renameInterface__renameInterfaceUnderlying": {
-              "name": "val"
+              "name": "val",
+              "type_hint_typename": "ObjectUnderlying"
             }
           },
           "extensions": {}

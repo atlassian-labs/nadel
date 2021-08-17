@@ -194,11 +194,14 @@ serviceCalls:
               pets(isLoyal: true) {
                 ... on Cat {
                   __typename__rename__collarToRenamed: __typename
+                  type_hint_typename: __typename
                   rename__collarToRenamed__collar: collar {
                     ... on CatCollar {
+                      type_hint_typename: __typename
                       color
                     }
                     ... on DogCollar {
+                      type_hint_typename: __typename
                       color
                     }
                   }
@@ -206,11 +209,14 @@ serviceCalls:
                 }
                 ... on Dog {
                   __typename__rename__collarToRenamed: __typename
+                  type_hint_typename: __typename
                   rename__collarToRenamed__collar: collar {
                     ... on CatCollar {
+                      type_hint_typename: __typename
                       color
                     }
                     ... on DogCollar {
+                      type_hint_typename: __typename
                       color
                     }
                   }
@@ -219,7 +225,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
@@ -229,15 +235,19 @@ serviceCalls:
               {
                 "name": "Sparky",
                 "rename__collarToRenamed__collar": {
-                  "color": "blue"
+                  "color": "blue",
+                  "type_hint_typename": "DogCollar"
                 },
+                "type_hint_typename": "Dog",
                 "__typename__rename__collarToRenamed": "Dog"
               },
               {
                 "name": "Whiskers",
                 "rename__collarToRenamed__collar": {
-                  "color": "red"
+                  "color": "red",
+                  "type_hint_typename": "CatCollar"
                 },
+                "type_hint_typename": "Cat",
                 "__typename__rename__collarToRenamed": "Cat"
               }
             ]

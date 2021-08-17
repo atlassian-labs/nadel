@@ -228,9 +228,11 @@ serviceCalls:
             ... on Query {
               raining(isLoyal: true) {
                 ... on Cat {
+                  type_hint_typename: __typename
                   wearsBell
                 }
                 ... on Dog {
+                  type_hint_typename: __typename
                   wearsCollar
                 }
               }
@@ -255,10 +257,12 @@ serviceCalls:
             ... on Query {
               pets(isLoyal: true) {
                 ... on Cat {
+                  type_hint_typename: __typename
                   name
                   wearsBell
                 }
                 ... on Dog {
+                  type_hint_typename: __typename
                   name
                   wearsCollar
                 }

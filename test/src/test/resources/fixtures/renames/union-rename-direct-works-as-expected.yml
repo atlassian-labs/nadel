@@ -109,7 +109,7 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
   current:
     - serviceName: MyService
@@ -123,7 +123,7 @@ serviceCalls:
               type_hint_typename__UUID: __typename
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_MyService
       # language=JSON
       response: |-
@@ -144,19 +144,24 @@ serviceCalls:
             ... on Query {
               rename__renameUnion__renameUnionUnderlying: renameUnionUnderlying {
                 ... on XUnderlying {
+                  type_hint_typename: __typename
                   x
+                }
+                ... on YUnderlying {
+                  type_hint_typename: __typename
                 }
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
         {
           "data": {
             "rename__renameUnion__renameUnionUnderlying": {
-              "x": 1
+              "x": 1,
+              "type_hint_typename": "XUnderlying"
             }
           },
           "extensions": {}

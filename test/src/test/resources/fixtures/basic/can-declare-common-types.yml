@@ -41,7 +41,7 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
   current:
     - serviceName: IssueService
@@ -55,7 +55,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_IssueService
       # language=JSON
       response: |-
@@ -76,19 +76,22 @@ serviceCalls:
             ... on Query {
               node {
                 ... on Issue {
+                  type_hint_typename: __typename
                   name
                 }
               }
             }
           }
-        variables: {}
+
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
         {
           "data": {
             "node": {
-              "name": "My Issue"
+              "name": "My Issue",
+              "type_hint_typename": "Issue"
             }
           },
           "extensions": {}

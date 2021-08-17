@@ -20,6 +20,8 @@ import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
+import graphql.nadel.enginekt.util.MutableJsonMap
+import graphql.nadel.enginekt.util.addTypenameToInterfacesAndUnions
 import graphql.nadel.enginekt.util.copy
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
@@ -30,6 +32,7 @@ import graphql.nadel.enginekt.util.newExecutionResult
 import graphql.nadel.enginekt.util.newGraphQLError
 import graphql.nadel.enginekt.util.newServiceExecutionResult
 import graphql.nadel.enginekt.util.provide
+import graphql.nadel.enginekt.util.recursivelyRemoveKey
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
@@ -85,6 +88,8 @@ class NextgenEngine @JvmOverloads constructor(
             executeCoroutine(executionInput, queryDocument, instrumentationState)
         }.asCompletableFuture()
     }
+
+    private val typenameHintAlias = "type_hint_typename"
 
     private suspend fun executeCoroutine(
         executionInput: ExecutionInput,
@@ -148,6 +153,7 @@ class NextgenEngine @JvmOverloads constructor(
             )
         }
         instrumentationContext.onCompleted(result, null)
+        recursivelyRemoveKey(result.getData<MutableJsonMap>(), typenameHintAlias)
         return result
     }
 
@@ -156,6 +162,7 @@ class NextgenEngine @JvmOverloads constructor(
         service: Service,
         executionContext: NadelExecutionContext
     ): ExecutionResult {
+        addTypenameToInterfacesAndUnions(topLevelField, typenameHintAlias, overallSchema)
         val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
         val queryTransform = queryTransformer.transformQuery(
             executionContext,
