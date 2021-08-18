@@ -124,13 +124,13 @@ serviceCalls:
     - serviceName: MyService
       request:
         query: |
-          query {
+          query X {
             ... on Query {
               renameInput(arg1: {inputVal : "x"})
             }
           }
         variables: {}
-        operationName: null
+        operationName: X
       # language=JSON
       response: |-
         {
