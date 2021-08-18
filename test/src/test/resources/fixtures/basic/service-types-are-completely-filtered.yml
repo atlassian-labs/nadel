@@ -1,4 +1,4 @@
-name: service types are filtered 2
+name: service types are completely filtered
 enabled:
   current: true
   nextgen: true
