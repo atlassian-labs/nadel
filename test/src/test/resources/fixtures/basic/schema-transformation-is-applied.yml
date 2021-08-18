@@ -68,7 +68,7 @@ serviceCalls:
     - serviceName: MyService
       request:
         query: |
-          query {
+          query OpName {
             ... on Query {
               hello {
                 ... on World {
@@ -78,7 +78,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: null
+        operationName: OpName
       # language=JSON
       response: |-
         {

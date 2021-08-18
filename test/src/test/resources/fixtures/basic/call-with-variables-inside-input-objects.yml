@@ -50,13 +50,13 @@ serviceCalls:
     - serviceName: MyService
       request:
         query: |
-          query {
+          query myQuery {
             ... on Query {
               hello(arg: {})
             }
           }
         variables: {}
-        operationName: null
+        operationName: myQuery
       # language=JSON
       response: |-
         {
