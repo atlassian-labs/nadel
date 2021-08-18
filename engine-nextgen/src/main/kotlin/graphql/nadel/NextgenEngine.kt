@@ -22,10 +22,10 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.MutableJsonMap
 import graphql.nadel.enginekt.util.addTypenameToInterfacesAndUnions
+import graphql.nadel.enginekt.util.beginExecute
 import graphql.nadel.enginekt.util.copy
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
-import graphql.nadel.enginekt.util.getInstrumentationContext
 import graphql.nadel.enginekt.util.getOperationKind
 import graphql.nadel.enginekt.util.mergeResults
 import graphql.nadel.enginekt.util.newExecutionResult
@@ -108,12 +108,11 @@ class NextgenEngine @JvmOverloads constructor(
         }
 
         val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
-        val instrumentationContext = getInstrumentationContext(
+        val instrumentationContext = instrumentation.beginExecute(
             query,
             queryDocument,
             executionInput,
             overallSchema,
-            instrumentation,
             instrumentationState
         )
 
