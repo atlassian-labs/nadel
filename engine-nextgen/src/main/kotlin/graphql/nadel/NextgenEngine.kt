@@ -6,6 +6,7 @@ import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
+import graphql.GraphqlErrorBuilder
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
@@ -137,16 +138,23 @@ class NextgenEngine @JvmOverloads constructor(
         field: ExecutableNormalizedField,
         executionContext: NadelExecutionContext,
         service: Service
-    ): ExecutionResult = if (usesDynamicServiceResolution(topLevelField = field)) {
-        val serviceOrError = serviceExecutionHooks.resolveServiceForField(services.values, field)
+    ): ExecutionResult {
+        return if (usesDynamicServiceResolution(topLevelField = field)) {
+            val serviceOrError = serviceExecutionHooks.resolveServiceForField(services.values, field)
+                ?: return newExecutionResult(
+                    error = GraphqlErrorBuilder.newError()
+                        .message("Could not resolve service for field '${field.name}'").build(),
+                    data = mapOf(field.resultKey to null)
+                )
 
-        if (serviceOrError.error != null) {
-            newExecutionResult(error = serviceOrError.error, data = mapOf(field.resultKey to null))
+            if (serviceOrError.error != null) {
+                newExecutionResult(error = serviceOrError.error, data = mapOf(field.resultKey to null))
+            } else {
+                executeTopLevelField(field, serviceOrError.service, executionContext)
+            }
         } else {
-            executeTopLevelField(field, serviceOrError.service, executionContext)
+            executeTopLevelField(field, service, executionContext)
         }
-    } else {
-        executeTopLevelField(field, service, executionContext)
     }
 
     private suspend fun executeTopLevelField(

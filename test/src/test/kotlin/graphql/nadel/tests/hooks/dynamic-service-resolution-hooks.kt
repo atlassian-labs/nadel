@@ -58,7 +58,7 @@ class Hooks : ServiceExecutionHooks {
 
 
     override fun resolveServiceForField(
-        services: List<Service>,
+        services: Collection<Service>,
         executionStepInfo: ExecutionStepInfo,
     ): ServiceOrError {
         val idArgument = executionStepInfo.arguments.get("id")

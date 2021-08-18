@@ -6,6 +6,7 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.nadel.Service;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.normalized.ExecutableNormalizedField;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -29,6 +30,7 @@ public interface ServiceExecutionHooks {
         return CompletableFuture.completedFuture(null);
     }
 
+    @Nullable
     default NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
         return null;
     }
@@ -65,6 +67,7 @@ public interface ServiceExecutionHooks {
      * @return the Service that should be used to fetch data for that field or an error that was raised when trying to resolve the service.
      * @see ServiceExecutionHooks#resolveServiceForField(Collection, ExecutableNormalizedField) for the Next Gen implementation
      */
+    @Nullable
     default ServiceOrError resolveServiceForField(Collection<Service> services, ExecutionStepInfo executionStepInfo) {
         return null;
     }
@@ -82,6 +85,7 @@ public interface ServiceExecutionHooks {
      * @return the Service that should be used to fetch data for that field or an error that was raised when trying to resolve the service.
      * @see ServiceExecutionHooks#resolveServiceForField(Collection, ExecutionStepInfo) for the Current Gen implementation.
      */
+    @Nullable
     default ServiceOrError resolveServiceForField(Collection<Service> services, ExecutableNormalizedField executableNormalizedField) {
         return null;
     }
