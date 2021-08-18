@@ -74,7 +74,8 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             it.run(context = transformContext)
         }
 
-        transformContext.emptyPaths.forEach(result.data::cleanup)
+        // TODO: investigate whether this code is actually needed. So far no tests fail after disabling it…
+        // transformContext.emptyPaths.forEach(result.data::cleanup)
     }
 
     private fun prepareSet(

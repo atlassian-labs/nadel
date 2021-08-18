@@ -1,21 +1,31 @@
 package graphql.nadel.enginekt.transform
 
-import graphql.language.ObjectTypeDefinition
+import graphql.introspection.Introspection
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.IntrospectionService
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.NadelServiceTypeFilterTransform.State
+import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
+import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
+import graphql.nadel.enginekt.util.AnyMap
+import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.queryPath
+import graphql.nadel.enginekt.util.resolveObjectTypes
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 
 class NadelServiceTypeFilterTransform : NadelTransform<State> {
     data class State(
-        val typesOwnedByService: List<String>,
+        val aliasHelper: NadelAliasHelper,
+        val typeNamesOwnedByService: Set<String>,
+        val fieldObjectTypesOwnedByService: List<String>,
+        val overallField: ExecutableNormalizedField,
     )
 
     override suspend fun isApplicable(
@@ -27,28 +37,31 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
     ): State? {
         when {
             // Ignore top level fields, they won't belong to multiple services
+            // Do not randomly remove this, we rely on this later on too.
+            // This transform never runs for top level fields
             overallField.parent == null -> return null
             // Introspection - do nothing. INTROSPECTION REALLY SHOULDN'T BE EXECUTING THIS CODE PATH
             service.name == IntrospectionService.name -> return null
         }
 
-        // All types are owned by service
-        val objectTypesOwnedByService = service.definitionRegistry
-            .definitions
-            .asSequence()
-            .filterIsInstance<ObjectTypeDefinition>()
-            .map { it.name }
-            .toSet()
-
+        val typeNamesOwnedByService = getOwnedTypeNames(executionBlueprint, service)
         val typesOwnedByService = overallField.objectTypeNames
-            .filter { it in objectTypesOwnedByService }
+            .filter { it in typeNamesOwnedByService }
 
         // All types are owned by service
         if (typesOwnedByService.size == overallField.objectTypeNames.size) {
             return null
         }
 
-        return State(typesOwnedByService)
+        return State(
+            aliasHelper = NadelAliasHelper.forField(
+                tag = "type_filter",
+                field = overallField,
+            ),
+            typeNamesOwnedByService = typeNamesOwnedByService,
+            fieldObjectTypesOwnedByService = typesOwnedByService,
+            overallField = overallField,
+        )
     }
 
     override suspend fun transformField(
@@ -59,11 +72,45 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
+        // Nothing to query if there are no fields, we need to add selection
+        if (state.fieldObjectTypesOwnedByService.isEmpty()) {
+            val objectTypeNames = state.overallField.parent.getFieldDefinitions(executionBlueprint.schema)
+                .asSequence()
+                .flatMap { fieldDef ->
+                    resolveObjectTypes(
+                        executionBlueprint.schema,
+                        type = fieldDef.type,
+                        onNotObjectType = { type ->
+                            error("Unable to resolve to object type: $type")
+                        }
+                    )
+                }
+                .map {
+                    it.name
+                }
+                .filter {
+                    it in state.typeNamesOwnedByService
+                }
+                .toSet()
+                .toList()
+
+            return NadelTransformFieldResult(
+                newField = null,
+                artificialFields = listOf(
+                    newNormalizedField()
+                        .objectTypeNames(objectTypeNames)
+                        .alias(state.aliasHelper.typeNameResultKey)
+                        .fieldName(Introspection.TypeNameMetaFieldDef.name)
+                        .build(),
+                ),
+            )
+        }
+
         return NadelTransformFieldResult(
             newField = field
                 .toBuilder()
                 .clearObjectTypesNames()
-                .objectTypeNames(state.typesOwnedByService)
+                .objectTypeNames(state.fieldObjectTypesOwnedByService)
                 .children(transformer.transform(field.children))
                 .build(),
         )
@@ -79,5 +126,19 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         state: State,
     ): List<NadelResultInstruction> {
         return emptyList()
+    }
+
+    private fun getOwnedTypeNames(
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
+    ): Set<String> {
+        return service.underlyingSchema
+            .typeMap
+            .values
+            .asSequence()
+            .map {
+                executionBlueprint.getOverallTypeName(service, it.name)
+            }
+            .toSet()
     }
 }
