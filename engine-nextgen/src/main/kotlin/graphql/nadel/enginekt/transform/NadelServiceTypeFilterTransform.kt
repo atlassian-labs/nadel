@@ -8,13 +8,8 @@ import graphql.nadel.enginekt.blueprint.IntrospectionService
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.NadelServiceTypeFilterTransform.State
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
-import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
-import graphql.nadel.enginekt.util.AnyMap
-import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.resolveObjectTypes
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
@@ -24,7 +19,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
     data class State(
         val aliasHelper: NadelAliasHelper,
         val typeNamesOwnedByService: Set<String>,
-        val fieldObjectTypesOwnedByService: List<String>,
+        val fieldObjectTypeNamesOwnedByService: List<String>,
         val overallField: ExecutableNormalizedField,
     )
 
@@ -44,12 +39,12 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             service.name == IntrospectionService.name -> return null
         }
 
-        val typeNamesOwnedByService = getOwnedTypeNames(executionBlueprint, service)
-        val typesOwnedByService = overallField.objectTypeNames
+        val typeNamesOwnedByService = getTypeNamesServiceOwns(executionBlueprint, service)
+        val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames
             .filter { it in typeNamesOwnedByService }
 
         // All types are owned by service
-        if (typesOwnedByService.size == overallField.objectTypeNames.size) {
+        if (fieldObjectTypeNamesOwnedByService.size == overallField.objectTypeNames.size) {
             return null
         }
 
@@ -59,7 +54,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
                 field = overallField,
             ),
             typeNamesOwnedByService = typeNamesOwnedByService,
-            fieldObjectTypesOwnedByService = typesOwnedByService,
+            fieldObjectTypeNamesOwnedByService = fieldObjectTypeNamesOwnedByService,
             overallField = overallField,
         )
     }
@@ -73,7 +68,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         state: State,
     ): NadelTransformFieldResult {
         // Nothing to query if there are no fields, we need to add selection
-        if (state.fieldObjectTypesOwnedByService.isEmpty()) {
+        if (state.fieldObjectTypeNamesOwnedByService.isEmpty()) {
             val objectTypeNames = state.overallField.parent.getFieldDefinitions(executionBlueprint.schema)
                 .asSequence()
                 .flatMap { fieldDef ->
@@ -110,7 +105,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             newField = field
                 .toBuilder()
                 .clearObjectTypesNames()
-                .objectTypeNames(state.fieldObjectTypesOwnedByService)
+                .objectTypeNames(state.fieldObjectTypeNamesOwnedByService)
                 .children(transformer.transform(field.children))
                 .build(),
         )
@@ -128,7 +123,16 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         return emptyList()
     }
 
-    private fun getOwnedTypeNames(
+    /**
+     * Gets the type names a service owns. These are the overall type names.
+     *
+     * __WARNING:__
+     *
+     * These also include types that are not exposed, so use this list carefully.
+     *
+     * Only use this to create subsets of OTHER lists. Never use this list directly.
+     */
+    private fun getTypeNamesServiceOwns(
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
     ): Set<String> {

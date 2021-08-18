@@ -1,9 +1,7 @@
 name: service types are filtered
 enabled:
-  current: true
+  current: false # Bug we're not fixing
   nextgen: true
-ignored:
-  current: true # Bug we're not fixing
 overallSchema:
   test: |-
     type Query {
@@ -112,23 +110,6 @@ query: |
   }
 variables: {}
 serviceCalls:
-  current:
-    - serviceName: test
-      request:
-        query: |
-          query nadel_2_service {
-            foo
-          }
-        variables: {}
-        operationName: nadel_2_service
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": null
-          },
-          "extensions": {}
-        }
   nextgen:
     - serviceName: test
       request:
