@@ -1,0 +1,134 @@
+name: deep rename with interfaces with nested transforms
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |-
+    type Query {
+      nodes: [Node]
+    }
+    interface Node {
+      object: Object
+    }
+    type NodeWithDeepRename implements Node {
+      object: Object @renamed(from: "nested.object")
+    }
+    type PlainNode implements Node {
+      object: Object
+    }
+    interface Object {
+      id: ID
+    }
+    type PlainObject implements Object {
+      id: ID
+    }
+    type ObjectWithRename implements Object {
+      id: ID @renamed(from: "otherId")
+    }
+underlyingSchema:
+  Issues: |-
+    type Query {
+      nodes: [Node]
+    }
+    interface Node {
+      object: Object
+    }
+    type NodeWithDeepRename {
+      nested: NestedObject
+    }
+    type PlainNode implements Node {
+      object: Object
+    }
+    type NestedObject {
+      object: Object
+    }
+    interface Object {
+      id: ID
+    }
+    type PlainObject implements Object {
+      id: ID
+    }
+    type ObjectWithRename {
+      otherId: ID
+    }
+query: |
+  query {
+    nodes {
+      object {
+        id
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              nodes {
+                ... on NodeWithDeepRename {
+                  __typename__deep_rename__object: __typename
+                  deep_rename__object__nested: nested {
+                    ... on NestedObject {
+                      object {
+                        ... on ObjectWithRename {
+                          __typename__rename__id: __typename
+                          rename__id__otherId: otherId
+                        }
+                        ... on PlainObject {
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+                ... on PlainNode {
+                  object {
+                    ... on ObjectWithRename {
+                      __typename__rename__id: __typename
+                      rename__id__otherId: otherId
+                    }
+                    ... on PlainObject {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "nodes": [
+              {
+                "__typename__deep_rename__object": "NodeWithDeepRename",
+                "deep_rename__object__nested": {
+                  "object": {
+                    "__typename__rename__id": "ObjectWithRename",
+                    "rename__id__otherId": "deep-object-with-rename"
+                  }
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "nodes": [
+        {
+          "object": {
+            "id": "deep-object-with-rename"
+          }
+        }
+      ]
+    },
+    "extensions": {}
+  }
