@@ -15,6 +15,50 @@ import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 
+/**
+ * Nadel ends up building a complex schema from multiple different services. This class
+ * ensures that a query going to a specific service doesn't get types from another service.
+ * You may think this never happens but with shared types this becomes a possibility.
+ *
+ * e.g. given an overall schema
+ *
+ * ```graphql
+ * service shared {
+ *   interface Error { id: ID }
+ * }
+ * service A {
+ *   type Query {
+ *      aErrors: [Error]
+ *   }
+ *   type AError implements Error { id: ID }
+ * }
+ * service B {
+ *   type BError implements Error {
+ *     id: ID
+ *     b: String
+ *   }
+ * }
+ * ```
+ *
+ * A given query is completely valid:
+ *
+ * ```graphql
+ * query {
+ *   aErrors {
+ *     ... on BError {
+ *       id
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * But `aErrors` goes to the `A` service where the type `BError` doesn't exist.
+ *
+ * See the tests for more examples.
+ *
+ * - service-types-are-filtered.yml
+ * - service-types-are-completely-filtered.yml
+ */
 class NadelServiceTypeFilterTransform : NadelTransform<State> {
     data class State(
         val aliasHelper: NadelAliasHelper,
@@ -44,6 +88,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             .filter { it in typeNamesOwnedByService }
 
         // All types are owned by service
+        // Note: one list is a subset of the other, so if size is same, contents are too
         if (fieldObjectTypeNamesOwnedByService.size == overallField.objectTypeNames.size) {
             return null
         }
