@@ -40,7 +40,7 @@ internal class NadelBatchHydrator(
     ): List<NadelResultInstruction> {
         val parentNodesByInstruction: Map<NadelBatchHydrationFieldInstruction, List<JsonNode>> = parentNodes
             .mapNotNull { parentNode ->
-                val instruction = state.instructions.getInstructionForNode(
+                val instruction = state.instructionsByObjectTypeNames.getInstructionForNode(
                     executionBlueprint = executionBlueprint,
                     service = state.hydratedFieldService,
                     aliasHelper = state.aliasHelper,

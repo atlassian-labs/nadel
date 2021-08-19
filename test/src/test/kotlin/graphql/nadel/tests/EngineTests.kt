@@ -26,9 +26,9 @@ import java.util.concurrent.CompletableFuture
  * Enter in the name of the test here, leave blank to run all tests.
  *
  * Name can be any of:
- * The test file name e.g. hydration-inside-a-renamed-field.yml
- * Test name e.g. hydration inside a renamed field
- * Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
+ * 1. The test file name e.g. hydration-inside-a-renamed-field.yml
+ * 2. Test name e.g. hydration inside a renamed field
+ * 3. Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
 private val singleTestToRun = ""
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")

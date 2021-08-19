@@ -61,7 +61,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
          * }
          * ```
          */
-        val instructions: Map<GraphQLObjectTypeName, NadelDeepRenameFieldInstruction>,
+        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelDeepRenameFieldInstruction>,
         /**
          * See [NadelAliasHelper]
          */
@@ -155,7 +155,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
-        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructions }
+        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructionsByObjectTypeNames }
 
         return NadelTransformFieldResult(
             newField = objectTypesNoRenames
@@ -164,9 +164,10 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                     field.toBuilder()
                         .clearObjectTypesNames()
                         .objectTypeNames(it)
+                        .children(transformer.transform(field.children))
                         .build()
                 },
-            artificialFields = state.instructions.map { (objectTypeWithRename, instruction) ->
+            artificialFields = state.instructionsByObjectTypeNames.map { (objectTypeWithRename, instruction) ->
                 makeDeepField(
                     state,
                     transformer,
@@ -181,7 +182,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     }
 
     /**
-     * Read [State.instructions]
+     * Read [State.instructionsByObjectTypeNames]
      *
      * In the case that there are multiple [FieldCoordinates] for a single [ExecutableNormalizedField]
      * we need to know which type we are dealing with, so we use this to add a `__typename`
@@ -194,7 +195,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     ): ExecutableNormalizedField {
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = state.instructions.keys.toList(),
+            objectTypeNames = state.instructionsByObjectTypeNames.keys.toList(),
         )
     }
 
@@ -282,7 +283,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         )
 
         return parentNodes.mapNotNull instruction@{ parentNode ->
-            val instruction = state.instructions.getInstructionForNode(
+            val instruction = state.instructionsByObjectTypeNames.getInstructionForNode(
                 executionBlueprint = executionBlueprint,
                 service = service,
                 aliasHelper = state.aliasHelper,

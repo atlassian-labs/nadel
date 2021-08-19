@@ -7,6 +7,7 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy.MatchObjectIdentifier
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationInputBuilder
 import graphql.nadel.enginekt.transform.query.NFUtil
@@ -74,10 +75,10 @@ internal object NadelHydrationFieldsBuilder {
         service: Service,
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
-        fieldCoordinates: FieldCoordinates,
+        objectTypeName: GraphQLObjectTypeName,
         instruction: NadelGenericHydrationInstruction,
     ): List<ExecutableNormalizedField> {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(overallTypeName = fieldCoordinates.typeName)
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(overallTypeName = objectTypeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
