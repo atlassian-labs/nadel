@@ -13,7 +13,8 @@ import graphql.normalized.ExecutableNormalizedOperation
 
 internal class NadelFieldToService(
     private val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
-    introspectionRunnerFactory: NadelIntrospectionRunnerFactory
+    introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
+    private val dynamicServiceResolution: DynamicServiceResolution,
 ) {
     private val introspectionService =
         IntrospectionService(overallExecutionBlueprint.schema, introspectionRunnerFactory)
@@ -25,6 +26,21 @@ internal class NadelFieldToService(
             } else {
                 listOf(getServicePairFor(field = topLevelField))
             }
+        }
+    }
+
+    /**
+     * Returns the dynamically resolved service for the field, if it is annotated with @dynamicServiceResolution,
+     * otherwise returns the originalService.
+     */
+    fun resolveDynamicService(
+        field: ExecutableNormalizedField,
+        originalService: Service
+    ): Service {
+        return if (dynamicServiceResolution.needsDynamicServiceResolution(field)) {
+            dynamicServiceResolution.resolveServiceForField(field)
+        } else {
+            originalService
         }
     }
 
@@ -64,9 +80,11 @@ internal class NadelFieldToService(
     private fun isNamespacedField(field: ExecutableNormalizedField): Boolean {
         return isNamespacedField(field, overallExecutionBlueprint.schema)
     }
+
 }
 
 data class NadelFieldAndService(
     val field: ExecutableNormalizedField,
     val service: Service,
 )
+

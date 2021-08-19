@@ -1,12 +1,10 @@
 package graphql.nadel
 
-import graphql.Assert
 import graphql.ErrorType
 import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
-import graphql.GraphqlErrorBuilder
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
@@ -17,6 +15,7 @@ import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelTransform
+import graphql.nadel.enginekt.transform.query.DynamicServiceResolution
 import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
@@ -34,13 +33,10 @@ import graphql.nadel.enginekt.util.provide
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.util.ErrorUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
-import graphql.schema.GraphQLInterfaceType
-import graphql.schema.GraphQLTypeUtil
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -72,7 +68,16 @@ class NextgenEngine @JvmOverloads constructor(
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val fieldToService = NadelFieldToService(overallExecutionBlueprint, introspectionRunnerFactory)
+    private val dynamicServiceResolution = DynamicServiceResolution(
+        overallSchema = overallSchema,
+        serviceExecutionHooks = serviceExecutionHooks,
+        services = services.values
+    )
+    private val fieldToService = NadelFieldToService(
+        overallExecutionBlueprint = overallExecutionBlueprint,
+        introspectionRunnerFactory = introspectionRunnerFactory,
+        dynamicServiceResolution = dynamicServiceResolution,
+    )
     private val executionIdProvider = nadel.executionIdProvider
 
     override fun execute(
@@ -115,10 +120,15 @@ class NextgenEngine @JvmOverloads constructor(
                         .map { (field, service) ->
                             async {
                                 try {
-                                    resolveServiceAndExecuteTopLevelField(field, executionContext, service)
+                                    val resolvedService = fieldToService.resolveDynamicService(field, service)
+
+                                    executeTopLevelField(field, resolvedService, executionContext)
                                 } catch (e: Throwable) {
                                     when (e) {
-                                        is GraphQLError -> newExecutionResult(error = e)
+                                        is GraphQLError -> newExecutionResult(
+                                            error = e,
+                                            data = mutableMapOf(field.resultKey to null)
+                                        )
                                         else -> throw e
                                     }
                                 }
@@ -134,28 +144,6 @@ class NextgenEngine @JvmOverloads constructor(
         return result
     }
 
-    private suspend fun resolveServiceAndExecuteTopLevelField(
-        field: ExecutableNormalizedField,
-        executionContext: NadelExecutionContext,
-        service: Service
-    ): ExecutionResult {
-        return if (usesDynamicServiceResolution(topLevelField = field)) {
-            val serviceOrError = serviceExecutionHooks.resolveServiceForField(services.values, field)
-                ?: return newExecutionResult(
-                    error = GraphqlErrorBuilder.newError()
-                        .message("Could not resolve service for field '${field.name}'").build(),
-                    data = mapOf(field.resultKey to null)
-                )
-
-            if (serviceOrError.error != null) {
-                newExecutionResult(error = serviceOrError.error, data = mapOf(field.resultKey to null))
-            } else {
-                executeTopLevelField(field, serviceOrError.service, executionContext)
-            }
-        } else {
-            executeTopLevelField(field, service, executionContext)
-        }
-    }
 
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
@@ -300,24 +288,6 @@ class NextgenEngine @JvmOverloads constructor(
             },
         )
     }
-
-    private fun usesDynamicServiceResolution(
-        topLevelField: ExecutableNormalizedField
-    ): Boolean =
-        topLevelField.getFieldDefinitions(overallSchema)
-            .asSequence()
-            .filter {
-                it.getDirective(NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.name) != null
-            }
-            .onEach {
-                Assert.assertTrue(GraphQLTypeUtil.unwrapNonNull(it.type) is GraphQLInterfaceType) {
-                    String.format(
-                        "field annotated with %s directive is expected to be of GraphQLInterfaceType",
-                        NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.name
-                    )
-                }
-            }
-            .firstOrNull() != null
 
     companion object {
         @JvmStatic
