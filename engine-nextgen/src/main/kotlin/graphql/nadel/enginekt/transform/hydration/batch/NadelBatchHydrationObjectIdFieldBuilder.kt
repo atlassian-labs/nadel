@@ -109,7 +109,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
             onNotObjectType = {
                 errorForUnsupportedObjectIdParentType()
             },
-        ).map { it.name }.toList()
+        ).map { it.name }
     }
 
     /**
