@@ -248,7 +248,7 @@ serviceCalls:
     - serviceName: PetService
       request:
         query: |
-          query {
+          query petQ {
             ... on Query {
               pets(isLoyal: true) {
                 ... on Cat {
@@ -268,7 +268,7 @@ serviceCalls:
           }
         variables:
           isLoyal: true
-        operationName: null
+        operationName: petQ
       # language=JSON
       response: |-
         {
@@ -297,7 +297,7 @@ serviceCalls:
     - serviceName: OwnerService
       request:
         query: |
-          query {
+          query petQ {
             ... on Query {
               ownerById(id: "dearly") {
                 ... on CaringOwner {
@@ -314,7 +314,7 @@ serviceCalls:
             }
           }
         variables: { }
-        operationName: null
+        operationName: petQ
       # language=JSON
       response: |-
         {
@@ -330,7 +330,7 @@ serviceCalls:
     - serviceName: OwnerService
       request:
         query: |
-          query {
+          query petQ {
             ... on Query {
               ownerById(id: "cruella") {
                 ... on CaringOwner {
@@ -347,7 +347,7 @@ serviceCalls:
             }
           }
         variables: { }
-        operationName: null
+        operationName: petQ
       # language=JSON
       response: |-
         {

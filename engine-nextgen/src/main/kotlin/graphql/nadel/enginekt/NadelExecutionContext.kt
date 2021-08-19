@@ -5,12 +5,14 @@ import graphql.PublicApi
 import graphql.nadel.Service
 import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.normalized.ExecutableNormalizedOperation
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 @PublicApi
 data class NadelExecutionContext(
     val executionInput: ExecutionInput,
+    val query: ExecutableNormalizedOperation,
     val hooks: ServiceExecutionHooks,
 ) {
     private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()

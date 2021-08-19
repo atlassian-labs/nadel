@@ -109,7 +109,7 @@ serviceCalls:
     - serviceName: Issue
       request:
         query: |
-          query {
+          query MyQuery {
             ... on Query {
               issue {
                 ... on Issue {
@@ -120,7 +120,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: null
+        operationName: MyQuery
       # language=JSON
       response: |-
         {
@@ -135,7 +135,7 @@ serviceCalls:
     - serviceName: Association
       request:
         query: |
-          query {
+          query MyQuery {
             ... on Query {
               association(filter: {name : "value"}, id: "ISSUE-1") {
                 ... on Association {
@@ -145,7 +145,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: null
+        operationName: MyQuery
       # language=JSON
       response: |-
         {

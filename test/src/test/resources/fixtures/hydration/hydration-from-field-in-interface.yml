@@ -1,8 +1,7 @@
 name: hydration from field in interface
 enabled:
   current: true
-  # will implement nextgen next
-  nextgen: false
+  nextgen: true
 overallSchema:
   issues: |
     service issues {
@@ -123,16 +122,12 @@ serviceCalls:
               issue(id: "1") {
                 ... on Issue {
                   title
-                }
-                ... on Issue {
-                  hydration__author__author: author {
+                  hydration__issueAuthor__author: author {
                     ... on ProductUser {
                       userId
                     }
                   }
-                }
-                ... on Issue {
-                  __typename__hydration__author: __typename
+                  __typename__hydration__issueAuthor: __typename
                 }
               }
             }
@@ -145,10 +140,10 @@ serviceCalls:
           "data": {
             "issue": {
               "title": "Issue 1",
-              "hydration__author__author" : {
-                "userId": "1001",
-                "__typename__hydration__author": "ProductUser"
-              }
+              "hydration__issueAuthor__author" : {
+                "userId": "1001"
+              },
+              "__typename__hydration__issueAuthor": "Issue"
             }
           },
           "extensions": {}
