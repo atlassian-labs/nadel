@@ -5,20 +5,16 @@ import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy.MatchObjectIdentifier
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationInputBuilder
+import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationObjectIdFieldBuilder.makeObjectIdField
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.deepClone
-import graphql.nadel.enginekt.util.unwrap
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLInterfaceType
-import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLUnionType
 
 internal object NadelHydrationFieldsBuilder {
     fun makeActorQueries(
@@ -42,6 +38,7 @@ internal object NadelHydrationFieldsBuilder {
     }
 
     fun makeBatchActorQueries(
+        executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
@@ -55,7 +52,7 @@ internal object NadelHydrationFieldsBuilder {
         )
 
         val fieldChildren = deepClone(fields = hydratedField.children).let { children ->
-            when (val objectIdField = makeObjectIdField(aliasHelper, instruction)) {
+            when (val objectIdField = makeObjectIdField(executionBlueprint, aliasHelper, instruction)) {
                 null -> children
                 else -> children + objectIdField
             }
@@ -111,30 +108,5 @@ internal object NadelHydrationFieldsBuilder {
             fieldArguments = fieldArguments,
             fieldChildren = fieldChildren,
         )
-    }
-
-    private fun makeObjectIdField(
-        aliasHelper: NadelAliasHelper,
-        batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
-    ): ExecutableNormalizedField? {
-        return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
-            is MatchObjectIdentifier -> {
-                val actorFieldDef = batchHydrationInstruction.actorFieldDef
-                val underlyingSchema = batchHydrationInstruction.actorService.underlyingSchema
-                val objectTypes: List<GraphQLObjectType> = when (val type = actorFieldDef.type.unwrap(all = true)) {
-                    is GraphQLObjectType -> listOf(type)
-                    is GraphQLUnionType -> type.types.map { it as GraphQLObjectType }
-                    is GraphQLInterfaceType -> underlyingSchema.getImplementations(type)
-                    else -> error("When matching by object identifier, output type of actor field must be an object")
-                }
-
-                ExecutableNormalizedField.newNormalizedField()
-                    .objectTypeNames(objectTypes.map { it.name })
-                    .fieldName(matchStrategy.objectId)
-                    .alias(aliasHelper.getResultKey(matchStrategy.objectId))
-                    .build()
-            }
-            else -> null
-        }
     }
 }
