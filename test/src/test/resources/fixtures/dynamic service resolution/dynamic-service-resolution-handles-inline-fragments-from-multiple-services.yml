@@ -111,6 +111,7 @@ serviceCalls:
             ... on Query {
               node(id: "pull-request:id-123") {
                 ... on PullRequest {
+                  __typename__type_filter__issueKey: __typename
                   description
                   id
                 }
@@ -124,6 +125,7 @@ serviceCalls:
         {
           "data": {
             "node": {
+              "__typename__type_filter__issueKey": "PullRequest",
               "id": "pull-request:id-123",
               "description": "this is a pull request"
             }
