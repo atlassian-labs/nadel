@@ -1,0 +1,155 @@
+name: service types are filtered
+enabled:
+  current: false # Bug we're not fixing
+  nextgen: true
+overallSchema:
+  test: |-
+    type Query {
+      test: TestResult
+    }
+    type Test {
+      id: ID
+    }
+    union TestResult = Test | QueryError
+  lab: |-
+    type LabQueryErrorExtension implements QueryErrorExtension {
+      statusCode: Int
+      errorType: String
+    }
+  shared: |-
+    interface QueryErrorExtension {
+      """A numerical code (such as a HTTP status code) representing the error category"""
+      statusCode: Int
+      """Application specific error type"""
+      errorType: String
+    }
+    type GenericQueryErrorExtension implements QueryErrorExtension {
+      statusCode: Int
+      errorType: String
+    }
+    type QueryError {
+      """The ID of the object that would have otherwise been returned if not for the query error"""
+      identifier: ID
+      "A message describing the error"
+      message: String
+      "Use this to put extra data on the error if required"
+      extensions: [QueryErrorExtension!]
+    }
+underlyingSchema:
+  test: |-
+    type Query {
+      test: TestResult
+    }
+    type Test {
+      id: ID
+    }
+    union TestResult = Test | QueryError
+    interface QueryErrorExtension {
+      """A numerical code (such as a HTTP status code) representing the error category"""
+      statusCode: Int
+      """Application specific error type"""
+      errorType: String
+    }
+    type GenericQueryErrorExtension implements QueryErrorExtension {
+      statusCode: Int
+      errorType: String
+    }
+    type QueryError {
+      """The ID of the object that would have otherwise been returned if not for the query error"""
+      identifier: ID
+      "A message describing the error"
+      message: String
+      "Use this to put extra data on the error if required"
+      extensions: [QueryErrorExtension!]
+    }
+  lab: |-
+    type Query {
+      echo: String
+    }
+    interface QueryErrorExtension {
+      """A numerical code (such as a HTTP status code) representing the error category"""
+      statusCode: Int
+      """Application specific error type"""
+      errorType: String
+    }
+    type LabQueryErrorExtension implements QueryErrorExtension {
+      statusCode: Int
+      errorType: String
+    }
+    type QueryError {
+      """The ID of the object that would have otherwise been returned if not for the query error"""
+      identifier: ID
+      "A message describing the error"
+      message: String
+      "Use this to put extra data on the error if required"
+      extensions: [QueryErrorExtension!]
+    }
+  shared: |-
+    type Query {
+      echo: String
+    }
+query: |
+  query {
+    test {
+      ... on Test {
+        id
+      }
+      ... on QueryError {
+        extensions {
+          ...GenericQueryErrorExtensions
+        }
+      }
+    }
+  }
+
+  fragment GenericQueryErrorExtensions on QueryErrorExtension {
+    errorType
+    ... on LabQueryErrorExtension {
+      statusCode
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: test
+      request:
+        query: |
+          query {
+            ... on Query {
+              test {
+                ... on QueryError {
+                  extensions {
+                    ... on GenericQueryErrorExtension {
+                      __typename__type_filter__statusCode: __typename
+                      errorType
+                    }
+                  }
+                }
+                ... on Test {
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "test": {
+              "id": "Test-1"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "test": {
+        "id": "Test-1"
+      }
+    },
+    "extensions": {}
+  }

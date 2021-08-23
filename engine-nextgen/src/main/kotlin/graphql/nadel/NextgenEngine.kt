@@ -110,7 +110,7 @@ class NextgenEngine @JvmOverloads constructor(
             }
         }
 
-        val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
+        val executionContext = NadelExecutionContext(executionInput, query, serviceExecutionHooks)
         val instrumentationContext = getInstrumentationContext(query, queryDocument, executionInput, overallSchema, instrumentation, instrumentationState)
 
         val result: ExecutionResult = try {
@@ -247,6 +247,7 @@ class NextgenEngine @JvmOverloads constructor(
         val executionInput = executionContext.executionInput
         val document: Document = compileToDocument(
             transformedQuery.getOperationKind(overallSchema),
+            executionContext.query.operationName,
             listOf(transformedQuery),
         )
 

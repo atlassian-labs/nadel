@@ -1,0 +1,187 @@
+name: hydration from field in interface
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  issues: |
+    service issues {
+      type Query {
+        issue(id: ID): Issue
+      }
+      type Issue {
+        id: ID
+        title: String
+        issueAuthor: User => hydrated from users.user(id: $source.author.userId)
+      }
+    }
+  users: |
+    service users {
+      type Query {
+        user(id: ID!): User
+      }
+      type User {
+        id: ID!
+        name: String
+      }
+    }
+underlyingSchema:
+  issues: |
+    type Issue {
+      id: ID!
+      title: String
+      author: User
+    }
+
+    interface User {
+      userId: ID!
+    }
+
+    type ProductUser implements User {
+      userId: ID!
+      email: String
+    }
+
+    type Query {
+      issue(id: ID): Issue
+    }
+  users: |
+    type User {
+      id: ID!
+      name: String
+    }
+
+    type Query {
+      user(id: ID!): User
+    }
+query: |
+  query {
+    issue(id: "1") {
+      title
+      issueAuthor {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: issues
+      request:
+        query: |
+          query nadel_2_issues {
+            issue(id: "1") {
+              title
+              author {
+                type_hint_typename__UUID: __typename
+                userId
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "title": "Issue 1",
+              "author":{
+                "type_hint_typename__UUID": "ProductUser",
+                "userId": "1001"
+              }
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: users
+      request:
+        query: |
+          query nadel_2_users {
+            user(id: "1001") {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_users
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "user": {
+              "name": "McUser Face"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue(id: "1") {
+                ... on Issue {
+                  title
+                  hydration__issueAuthor__author: author {
+                    ... on ProductUser {
+                      userId
+                    }
+                  }
+                  __typename__hydration__issueAuthor: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "title": "Issue 1",
+              "hydration__issueAuthor__author" : {
+                "userId": "1001"
+              },
+              "__typename__hydration__issueAuthor": "Issue"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: users
+      request:
+        query: |
+          query {
+            ... on Query {
+              user(id: "1001") {
+                ... on User {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "user": {
+              "name": "McUser Face"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "title": "Issue 1",
+        "issueAuthor": {
+          "name": "McUser Face"
+        }
+      }
+    },
+    "extensions": {}
+  }

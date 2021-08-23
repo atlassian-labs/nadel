@@ -75,9 +75,6 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
     ): ExecutableNormalizedField {
-        // These are overall type names, wow imagine needing to know that information
-        // Wait where is that written down? Uh, it's just the rules man don't u know
-        // Damn if only there was a solution for that
         val objectTypeNames = getObjectTypeNamesForIdField(
             executionBlueprint = executionBlueprint,
             actorService = batchHydrationInstruction.actorService,
@@ -112,7 +109,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
             onNotObjectType = {
                 errorForUnsupportedObjectIdParentType()
             },
-        ).map { it.name }.toList()
+        ).map { it.name }
     }
 
     /**

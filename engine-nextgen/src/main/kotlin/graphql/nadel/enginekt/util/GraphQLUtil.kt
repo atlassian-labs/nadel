@@ -328,13 +328,13 @@ fun resolveObjectTypes(
     type: GraphQLType,
     onNotObjectType: (GraphQLType) -> Nothing,
 ): List<GraphQLObjectType> {
-    return when (type) {
-        is GraphQLObjectType -> listOf(type)
-        is GraphQLUnionType -> type.types.flatMap {
+    return when (val unwrappedType = type.unwrap(all = true)) {
+        is GraphQLObjectType -> listOf(unwrappedType)
+        is GraphQLUnionType -> unwrappedType.types.flatMap {
             resolveObjectTypes(schema, type = it, onNotObjectType)
         }
-        is GraphQLInterfaceType -> schema.getImplementations(type)
-        else -> onNotObjectType(type)
+        is GraphQLInterfaceType -> schema.getImplementations(unwrappedType)
+        else -> onNotObjectType(unwrappedType)
     }
 }
 
