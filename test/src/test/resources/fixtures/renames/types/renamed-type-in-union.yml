@@ -20,23 +20,15 @@ overallSchema:
     }
 underlyingSchema:
   IssueService: |
-    union Node = Issue
+    union Node = Issue | User | Monkey
     type Query {
       all: [Node]
     }
     type Issue {
       id: ID
     }
-  UserService: |
-    type Query {
-      me: User
-    }
     type User {
       id: ID
-    }
-  AnimalService: |
-    type Query {
-      monkey: Monkey
     }
     type Monkey {
       id: ID

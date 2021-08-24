@@ -1,0 +1,85 @@
+name: if there are a mix of system fields and normal fields it works on nextgen
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  MyService: |
+    service MyService {
+      type Query {
+        hello: World
+      }
+      type World {
+        id: ID
+        name: String
+      }
+      type Mutation {
+        hello: String
+      }
+    }
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query {
+    __schema {
+      queryType {
+        name
+      }
+    }
+    __typename
+    hello {
+      name
+    }
+  }
+variables: { }
+serviceCalls:
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query {
+            ... on Query {
+              hello {
+                ... on World {
+                  name
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": {
+                "name": "World"
+              }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data":{
+      "__schema": {
+        "queryType": {
+          "name": "Query"
+        }
+      },
+      "__typename": "Query",
+      "hello": {"name": "World"}
+    },
+    "errors": []
+  }

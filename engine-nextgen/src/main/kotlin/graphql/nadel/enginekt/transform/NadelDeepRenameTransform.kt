@@ -234,7 +234,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                 schema = service.underlyingSchema,
                 parentType = underlyingObjectType,
                 queryPathToField = deepRename.queryPathToField,
-                fieldArguments = emptyMap(),
+                fieldArguments = field.normalizedArguments,
                 fieldChildren = transformer.transform(field.children),
             ),
         )

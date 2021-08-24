@@ -28,6 +28,7 @@ internal class NadelBatchHydrationTransform(
     private val hydrator = NadelBatchHydrator(engine)
 
     data class State(
+        val executionBlueprint: NadelOverallExecutionBlueprint,
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelBatchHydrationFieldInstruction>,
         val executionContext: NadelExecutionContext,
         val hydratedField: ExecutableNormalizedField,
@@ -47,6 +48,7 @@ internal class NadelBatchHydrationTransform(
 
         return if (instructionsByObjectTypeName.isNotEmpty()) {
             return State(
+                executionBlueprint = executionBlueprint,
                 instructionsByObjectTypeNames = instructionsByObjectTypeName,
                 executionContext = executionContext,
                 hydratedField = overallField,

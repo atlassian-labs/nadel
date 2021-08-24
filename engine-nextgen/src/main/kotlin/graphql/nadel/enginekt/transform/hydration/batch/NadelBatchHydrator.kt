@@ -247,6 +247,7 @@ internal class NadelBatchHydrator(
         parentNodes: List<JsonNode>,
     ): List<ServiceExecutionResult> {
         val actorQueries = NadelHydrationFieldsBuilder.makeBatchActorQueries(
+            executionBlueprint = state.executionBlueprint,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
             hydratedField = state.hydratedField,

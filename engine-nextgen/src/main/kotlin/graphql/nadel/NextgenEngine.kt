@@ -9,7 +9,9 @@ import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
+import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
+import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
@@ -52,6 +54,7 @@ import java.util.function.Consumer
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
     transforms: List<NadelTransform<out Any>> = emptyList(),
+    introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) : NadelExecutionEngine {
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallSchema = nadel.overallSchema
@@ -63,14 +66,14 @@ class NextgenEngine @JvmOverloads constructor(
     private val executionPlanner = NadelExecutionPlanFactory.create(
         executionBlueprint = overallExecutionBlueprint,
         engine = this,
-        transforms = transforms
+        transforms = transforms,
     )
     private val queryTransformer = NadelQueryTransformer.create(
         executionBlueprint = overallExecutionBlueprint,
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val fieldToService = NadelFieldToService(overallExecutionBlueprint)
+    private val fieldToService = NadelFieldToService(overallExecutionBlueprint, introspectionRunnerFactory)
     private val executionIdProvider = nadel.executionIdProvider
 
     override fun execute(
@@ -103,15 +106,8 @@ class NextgenEngine @JvmOverloads constructor(
             }
         }
 
-        val executionContext = NadelExecutionContext(executionInput, serviceExecutionHooks)
-        val instrumentationContext = getInstrumentationContext(
-            query,
-            queryDocument,
-            executionInput,
-            overallSchema,
-            instrumentation,
-            instrumentationState,
-        )
+        val executionContext = NadelExecutionContext(executionInput, query, serviceExecutionHooks)
+        val instrumentationContext = getInstrumentationContext(query, queryDocument, executionInput, overallSchema, instrumentation, instrumentationState)
 
         val result: ExecutionResult = try {
             mergeResults(
@@ -189,15 +185,18 @@ class NextgenEngine @JvmOverloads constructor(
             executionPlan,
         )
         val transformedQuery = queryTransform.result.single()
-        val result = executeService(service, transformedQuery, executionContext)
-        val transformedResult = resultTransformer.transform(
-            executionContext = executionContext,
-            executionPlan = executionPlan,
-            artificialFields = queryTransform.artificialFields,
-            overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
-            service = service,
-            result = result,
-        )
+        val result: ServiceExecutionResult = executeService(service, transformedQuery, executionContext)
+        val transformedResult: ServiceExecutionResult = when {
+            topLevelField.name.startsWith("__") -> result
+            else -> resultTransformer.transform(
+                executionContext = executionContext,
+                executionPlan = executionPlan,
+                artificialFields = queryTransform.artificialFields,
+                overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
+                service = service,
+                result = result,
+            )
+        }
 
         @Suppress("UNCHECKED_CAST")
         return newExecutionResult()
@@ -275,6 +274,7 @@ class NextgenEngine @JvmOverloads constructor(
         val executionInput = executionContext.executionInput
         val document: Document = compileToDocument(
             transformedQuery.getOperationKind(overallSchema),
+            executionContext.query.operationName,
             listOf(transformedQuery),
         )
 

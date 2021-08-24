@@ -285,14 +285,18 @@ public class Transformer extends NodeVisitorStub {
                                             TraverserContext<Node> context,
                                             OverallTypeInfo overallTypeInfo,
                                             List<NormalizedQueryField> normalizedQueryFields,
-                                            Map<String, FragmentDefinition> fragmentDefinitionMap) {
+                                            Map<String, FragmentDefinition> fragmentDefinitionMap
+    ) {
         return new ApplyEnvironment(field,
                 overallTypeInfo.getFieldDefinition(),
                 overallTypeInfo.getFieldsContainer(),
                 context,
                 normalizedQueryFields,
                 this.transformationMetadata.getMetadataByFieldId(),
-                fragmentDefinitionMap);
+                fragmentDefinitionMap,
+                underlyingSchema,
+                nadelContext
+        );
     }
 
 

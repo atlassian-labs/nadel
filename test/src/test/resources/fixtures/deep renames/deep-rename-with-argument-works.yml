@@ -1,0 +1,103 @@
+name: deep rename with argument works
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  IssueService: |
+    service IssueService {
+      type Query {
+        issue: Issue
+      }
+      type Issue {
+        name(userId: ID!): String => renamed from detail.detailName
+      }
+    }
+underlyingSchema:
+  IssueService: |
+    type Issue {
+      detail: IssueDetails
+    }
+
+    type IssueDetails {
+      detailName(userId: ID!): String
+    }
+
+    type Query {
+      issue: Issue
+    }
+query: |
+  query {
+    issue {
+      name(userId: "USER-01")
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: IssueService
+      request:
+        query: |
+          query nadel_2_IssueService {
+            issue {
+              detail {
+                detailName(userId: "USER-01")
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueService
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "detail": {
+                "detailName": "My Issue"
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on Issue {
+                  __typename__deep_rename__name: __typename
+                  deep_rename__name__detail: detail {
+                    ... on IssueDetails {
+                      detailName(userId: "USER-01")
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "deep_rename__name__detail": {
+                "detailName": "My Issue"
+              },
+              "__typename__deep_rename__name": "Issue"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "name": "My Issue"
+      }
+    },
+    "extensions": {}
+  }

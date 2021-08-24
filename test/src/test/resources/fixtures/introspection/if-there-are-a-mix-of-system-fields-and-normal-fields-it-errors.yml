@@ -3,7 +3,7 @@ enabled:
   current: true
   nextgen: true
 ignored:
-  nextgen: true # TODO: implement on nextgen
+  nextgen: true
 overallSchema:
   MyService: |
     service MyService {
@@ -44,9 +44,9 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
+  current: [ ]
 # language=JSON
 response: |-
   {

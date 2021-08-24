@@ -70,7 +70,7 @@ serviceCalls:
     - serviceName: MyService
       request:
         query: |
-          subscription {
+          subscription M {
             ... on Subscription {
               onWorldUpdate {
                 ... on World {
@@ -80,7 +80,7 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: null
+        operationName: M
       # language=JSON
       response: |-
         {
