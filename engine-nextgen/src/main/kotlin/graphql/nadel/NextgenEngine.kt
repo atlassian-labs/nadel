@@ -6,7 +6,6 @@ import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
-import graphql.execution.nextgen.ExecutionHelper
 import graphql.language.Document
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
@@ -73,7 +72,7 @@ class NextgenEngine @JvmOverloads constructor(
     private val instrumentation = nadel.instrumentation
     private val fieldToService = NadelFieldToService(overallExecutionBlueprint, introspectionRunnerFactory)
     private val executionIdProvider = nadel.executionIdProvider
-    private val executionHelper = ExecutionHelper()
+    private val typenameHintAlias = "type_hint_typename"
 
     override fun execute(
         executionInput: ExecutionInput,
@@ -85,8 +84,6 @@ class NextgenEngine @JvmOverloads constructor(
             executeCoroutine(executionInput, queryDocument, instrumentationState)
         }.asCompletableFuture()
     }
-
-    private val typenameHintAlias = "type_hint_typename"
 
     private suspend fun executeCoroutine(
         executionInput: ExecutionInput,

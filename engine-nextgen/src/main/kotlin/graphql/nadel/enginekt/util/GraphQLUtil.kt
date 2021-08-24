@@ -366,6 +366,7 @@ fun addTypenameToInterfacesAndUnions(field: ExecutableNormalizedField, alias: St
                 }
             )
             .fieldName(Introspection.TypeNameMetaFieldDef.name)
+            .parent(field)
             .build()
         field.addChild(typeNameField)
     }

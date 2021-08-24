@@ -103,7 +103,7 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
   nextgen:
     - serviceName: test
@@ -113,19 +113,22 @@ serviceCalls:
             ... on Query {
               test {
                 ... on QueryError {
+                  type_hint_typename: __typename
                   extensions {
                     ... on GenericQueryErrorExtension {
                       __typename__type_filter__statusCode: __typename
+                      type_hint_typename: __typename
                     }
                   }
                 }
                 ... on Test {
+                  type_hint_typename: __typename
                   id
                 }
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
