@@ -134,6 +134,10 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
                 .toSet()
                 .toList()
 
+            if (objectTypeNames.isEmpty()) {
+                error("Service does not own return type. Unable to insert __typename as schema is not configured properly.")
+            }
+
             return NadelTransformFieldResult(
                 newField = null,
                 artificialFields = listOf(
