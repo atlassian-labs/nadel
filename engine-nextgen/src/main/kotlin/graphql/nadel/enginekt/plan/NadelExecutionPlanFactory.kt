@@ -4,6 +4,7 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.enginekt.transform.NadelAddTypeNameTransform
 import graphql.nadel.enginekt.transform.NadelDeepRenameTransform
 import graphql.nadel.enginekt.transform.NadelRenameTransform
 import graphql.nadel.enginekt.transform.NadelServiceTypeFilterTransform
@@ -77,6 +78,7 @@ internal class NadelExecutionPlanFactory(
                 transforms = listOfTransforms(
                     NadelServiceTypeFilterTransform(),
                     *transforms.toTypedArray(),
+                    NadelAddTypeNameTransform(),
                     NadelDeepRenameTransform(),
                     NadelTypeRenameResultTransform(),
                     NadelHydrationTransform(engine),
