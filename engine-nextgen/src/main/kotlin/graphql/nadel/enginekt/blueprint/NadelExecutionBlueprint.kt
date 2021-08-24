@@ -60,28 +60,7 @@ data class NadelUnderlyingExecutionBlueprint(
     override val typeInstructions: Map<String, NadelTypeRenameInstruction>,
 ) : NadelExecutionBlueprint
 
-fun <T> Map<FieldCoordinates, T>.getForField(
-    field: ExecutableNormalizedField,
-): Map<FieldCoordinates, T> {
-    return mapFrom(
-        field.objectTypeNames.asSequence()
-            .map {
-                makeFieldCoordinates(it, field.fieldName)
-            }
-            .mapNotNull {
-                it to (this[it] ?: return@mapNotNull null)
-            }
-            .toList(),
-    )
-}
-
 inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, NadelFieldInstruction>.getInstructionsOfTypeForField(
-    field: ExecutableNormalizedField,
-): Map<FieldCoordinates, T> {
-    return getForField(field).filterValuesOfType()
-}
-
-inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, NadelFieldInstruction>.getInstructionsForField(
     field: ExecutableNormalizedField,
 ): Map<GraphQLObjectTypeName, T> {
     return mapFrom(
