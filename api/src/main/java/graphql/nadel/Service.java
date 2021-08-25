@@ -30,6 +30,11 @@ public class Service {
         return name;
     }
 
+    /**
+     * These are the types as they are defined in the underlying service's schema.
+     * <p>
+     * There are no renames, hydrations etc.
+     */
     public GraphQLSchema getUnderlyingSchema() {
         return underlyingSchema;
     }
@@ -42,6 +47,9 @@ public class Service {
         return serviceDefinition;
     }
 
+    /**
+     * These are the GraphQL definitions that a service contributes to the OVERALL schema.
+     */
     public DefinitionRegistry getDefinitionRegistry() {
         return definitionRegistry;
     }

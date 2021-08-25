@@ -73,7 +73,7 @@ internal class NadelFieldToService(
 
         val operationTypeName = overallField.objectTypeNames.single()
         val fieldCoordinates = makeFieldCoordinates(operationTypeName, overallField.name)
-        return overallExecutionBlueprint.getService(fieldCoordinates)
+        return overallExecutionBlueprint.getServiceOwning(fieldCoordinates)
             ?: error("Unable to find service for field at: $fieldCoordinates")
     }
 

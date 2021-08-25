@@ -6,11 +6,9 @@ import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.util.resolveObjectTypes
-import graphql.nadel.enginekt.util.unwrap
+import graphql.nadel.enginekt.util.unwrapAll
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLType
 
@@ -121,7 +119,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         service: Service,
         underlyingType: GraphQLType,
     ): GraphQLType? {
-        val underlyingTypeName = (underlyingType.unwrap(all = true) as GraphQLNamedType).name
+        val underlyingTypeName = underlyingType.unwrapAll().name
         val overallTypeName = executionBlueprint.getOverallTypeName(service, underlyingTypeName)
         return executionBlueprint.schema.getType(overallTypeName)
     }

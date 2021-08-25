@@ -75,7 +75,7 @@ internal object NadelHydrationFieldsBuilder {
         objectTypeName: GraphQLObjectTypeName,
         instruction: NadelGenericHydrationInstruction,
     ): List<ExecutableNormalizedField> {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(overallTypeName = objectTypeName)
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = objectTypeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
