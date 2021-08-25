@@ -1,0 +1,145 @@
+name: renamed type is shared even deeper
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Nextgen: |-
+    type Query {
+      elements: ElementConnection
+    }
+  Service: |-
+    type ElementConnection {
+      nodes: [Element]
+    }
+    type Element implements Node {
+      id: ID
+      other: RenamedOther
+    }
+    type RenamedOther @renamed(from: "Other") {
+      id: ID!
+    }
+  Shared: |-
+    interface Node {
+      id: ID
+    }
+underlyingSchema:
+  Nextgen: |-
+    type Query {
+      elements: ElementConnection
+    }
+    type ElementConnection {
+      nodes: [Element]
+    }
+    type Element implements Node {
+      id: ID
+      other: Other
+    }
+    type Other {
+      id: ID!
+    }
+    interface Node {
+      id: ID
+    }
+  Service: |-
+    type Query {
+      echo: String
+    }
+    type ElementConnection {
+      nodes: [Element]
+    }
+    type Element implements Node {
+      id: ID
+      other: Other
+    }
+    type Other {
+      id: ID!
+    }
+    interface Node {
+      id: ID
+    }
+  Shared: |-
+    type Query {
+      node(id: ID): Node
+    }
+    interface Node {
+      id: ID
+    }
+query: |
+  query {
+    elements {
+      __typename
+      nodes {
+        __typename
+        other {
+          __typename
+          id
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Nextgen
+      request:
+        query: |-
+          query {
+            ... on Query {
+              elements {
+                ... on ElementConnection {
+                  __typename
+                  nodes {
+                    ... on Element {
+                      __typename
+                      other {
+                        ... on Other {
+                          __typename
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "elements": {
+              "__typename": "ElementConnection",
+              "nodes": [
+                {
+                  "__typename": "Element",
+                  "other": {
+                    "__typename": "Other",
+                    "id": "OTHER-1"
+                  }
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "elements": {
+        "__typename": "ElementConnection",
+        "nodes": [
+          {
+            "__typename": "Element",
+            "other": {
+              "__typename": "RenamedOther",
+              "id": "OTHER-1"
+            }
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }

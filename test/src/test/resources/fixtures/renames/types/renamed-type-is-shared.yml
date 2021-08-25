@@ -1,0 +1,78 @@
+name: renamed type is shared
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  NextgenIssues: |-
+    type Query {
+      fastIssue(id: ID!): JiraIssue
+    }
+  IssueService: |-
+    type Query {
+      issue(id: ID): JiraIssue
+    }
+    type JiraIssue @renamed(from: "Issue") {
+      id: ID
+    }
+underlyingSchema:
+  NextgenIssues: |-
+    type Query {
+      fastIssue(id: ID!): NextgenIssue
+    }
+    type NextgenIssue {
+      id: ID
+    }
+  IssueService: |-
+    type Query {
+      issue(id: ID): Issue
+    }
+    type Issue {
+      id: ID
+    }
+query: |
+  query {
+    fastIssue(id: "ISSUE-1") {
+      __typename
+      id
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: NextgenIssues
+      request:
+        query: |
+          query {
+            ... on Query {
+              fastIssue(id: "ISSUE-1") {
+                ... on NextgenIssue {
+                  __typename
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "fastIssue": {
+              "__typename": "NextgenIssue",
+              "id": "ISSUE-1"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "fastIssue": {
+        "__typename": "JiraIssue",
+        "id": "ISSUE-1"
+      }
+    },
+    "extensions": {}
+  }
