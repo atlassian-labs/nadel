@@ -1,0 +1,81 @@
+name: renamed type inside renamed field
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  IssueService: |
+    type Query {
+      issues: [JiraIssue] @renamed(from: "all")
+    }
+    type JiraIssue @renamed(from: "Issue") {
+      id: ID
+    }
+underlyingSchema:
+  IssueService: |
+    type Query {
+      all: [Issue]
+    }
+    type Issue {
+      id: ID
+    }
+query: |
+  query {
+    issues {
+      __typename
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__issues__all: all {
+                ... on Issue {
+                  __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__issues__all": [
+              {
+                "__typename": "Issue"
+              },
+              null,
+              {
+                "__typename": "Issue"
+              },
+              {
+                "__typename": "Issue"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "__typename": "JiraIssue"
+        },
+        null,
+        {
+          "__typename": "JiraIssue"
+        },
+        {
+          "__typename": "JiraIssue"
+        }
+      ]
+    },
+    "extensions": {}
+  }

@@ -15,7 +15,6 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
-import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
@@ -23,10 +22,10 @@ import graphql.schema.FieldCoordinates
 
 internal class NadelRenameTransform : NadelTransform<State> {
     data class State(
-        val instructions: Map<FieldCoordinates, NadelRenameFieldInstruction>,
+        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelRenameFieldInstruction>,
         val objectTypesWithoutRename: List<String>,
         val aliasHelper: NadelAliasHelper,
-        val field: ExecutableNormalizedField,
+        val overallField: ExecutableNormalizedField,
         val service: Service,
     )
 
@@ -44,7 +43,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         }
 
         val objectsWithoutRename = overallField.objectTypeNames.filterNot {
-            makeFieldCoordinates(it, overallField.name) in renameInstructions
+            it in renameInstructions
         }
 
         return State(
@@ -69,6 +68,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 field.toBuilder()
                     .clearObjectTypesNames()
                     .objectTypeNames(state.objectTypesWithoutRename)
+                    .children(transformer.transform(field.children))
                     .build()
             } else {
                 null
@@ -83,7 +83,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
     }
 
     /**
-     * Read [State.instructions]
+     * Read [State.instructionsByObjectTypeNames]
      *
      * In the case that there are multiple [FieldCoordinates] for a single [ExecutableNormalizedField]
      * we need to know which type we are dealing with, so we use this to add a `__typename`
@@ -95,13 +95,13 @@ internal class NadelRenameTransform : NadelTransform<State> {
         state: State,
     ): ExecutableNormalizedField? {
         // No need for typename on top level field
-        if (state.field.queryPath.size == 1) {
+        if (state.overallField.queryPath.size == 1) {
             return null
         }
 
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = state.instructions.keys.map { it.typeName },
+            objectTypeNames = state.instructionsByObjectTypeNames.keys.toList(),
         )
     }
 
@@ -110,14 +110,14 @@ internal class NadelRenameTransform : NadelTransform<State> {
         transformer: NadelQueryTransformer.Continuation,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
-        return state.instructions.map { (coordinates, instruction) ->
+        return state.instructionsByObjectTypeNames.map { (typeName, instruction) ->
             makeRenamedField(
                 state,
                 transformer,
                 executionBlueprint,
                 state.service,
-                state.field,
-                coordinates,
+                state.overallField,
+                typeName,
                 rename = instruction,
             )
         }
@@ -129,10 +129,10 @@ internal class NadelRenameTransform : NadelTransform<State> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        fieldCoordinates: FieldCoordinates,
+        typeName: GraphQLObjectTypeName,
         rename: NadelRenameFieldInstruction,
     ): ExecutableNormalizedField {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(fieldCoordinates.typeName)
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
         return state.aliasHelper.toArtificial(
@@ -185,11 +185,11 @@ internal class NadelRenameTransform : NadelTransform<State> {
         parentNode: JsonNode,
     ): NadelRenameFieldInstruction? {
         // There can't be multiple instructions for a top level field
-        if (state.field.queryPath.size == 1) {
-            return state.instructions.values.single()
+        if (state.overallField.queryPath.size == 1) {
+            return state.instructionsByObjectTypeNames.values.single()
         }
 
-        return state.instructions.getInstructionForNode(
+        return state.instructionsByObjectTypeNames.getInstructionForNode(
             executionBlueprint = executionBlueprint,
             service = state.service,
             aliasHelper = state.aliasHelper,

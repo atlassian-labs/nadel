@@ -11,8 +11,9 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
+import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform.State
 
-internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameResultTransform.State> {
+internal class NadelTypeRenameResultTransform : NadelTransform<State> {
     data class State(
         val typeRenamePath: NadelQueryPath,
     )
@@ -55,7 +56,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<NadelTypeRenameRe
     ): List<NadelResultInstruction> {
         val typeNameNodes = JsonNodeExtractor.getNodesAt(
             result.data,
-            state.typeRenamePath,
+            (underlyingParentField?.queryPath ?: NadelQueryPath.root) + overallField.resultKey,
             flatten = true,
         )
 

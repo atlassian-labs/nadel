@@ -1,0 +1,106 @@
+name: deep rename with interfaces
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      names: [HasName]
+    }
+    type JiraIssue implements HasName @renamed(from: "Issue") {
+      name: String
+    }
+    interface HasName {
+      name: String
+    }
+    type User implements HasName {
+      name: String @renamed(from: "details.firstName")
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      names: [HasName]
+    }
+    interface HasName {
+      name: String
+    }
+    type Issue implements HasName {
+      name: String
+    }
+    type UserDetails {
+      firstName: String
+    }
+    type User {
+      id: ID
+      details: UserDetails
+    }
+query: |
+  query {
+    names {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              names {
+                ... on Issue {
+                  name
+                }
+                ... on User {
+                  __typename__deep_rename__name: __typename
+                  deep_rename__name__details: details {
+                    ... on UserDetails {
+                      firstName
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "names": [
+              {
+                "name": "GQLGW-001"
+              },
+              {
+                "name": "GQLGW-1102"
+              },
+              {
+                "__typename__deep_rename__name": "User",
+                "deep_rename__name__details": {
+                  "firstName": "Franklin"
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "names": [
+        {
+          "name": "GQLGW-001"
+        },
+        {
+          "name": "GQLGW-1102"
+        },
+        {
+          "name": "Franklin"
+        }
+      ]
+    },
+    "extensions": {}
+  }

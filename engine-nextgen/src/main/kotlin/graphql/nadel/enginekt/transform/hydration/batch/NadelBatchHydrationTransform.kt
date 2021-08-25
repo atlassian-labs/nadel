@@ -7,6 +7,7 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
+import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
@@ -18,8 +19,8 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
+import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
-import graphql.schema.FieldCoordinates
 
 internal class NadelBatchHydrationTransform(
     engine: NextgenEngine,
@@ -28,7 +29,7 @@ internal class NadelBatchHydrationTransform(
 
     data class State(
         val executionBlueprint: NadelOverallExecutionBlueprint,
-        val instructions: Map<FieldCoordinates, NadelBatchHydrationFieldInstruction>,
+        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelBatchHydrationFieldInstruction>,
         val executionContext: NadelExecutionContext,
         val hydratedField: ExecutableNormalizedField,
         val hydratedFieldService: Service,
@@ -42,13 +43,13 @@ internal class NadelBatchHydrationTransform(
         service: Service,
         overallField: ExecutableNormalizedField,
     ): State? {
-        val instructions = executionBlueprint.fieldInstructions
+        val instructionsByObjectTypeName = executionBlueprint.fieldInstructions
             .getInstructionsOfTypeForField<NadelBatchHydrationFieldInstruction>(overallField)
 
-        return if (instructions.isNotEmpty()) {
+        return if (instructionsByObjectTypeName.isNotEmpty()) {
             return State(
                 executionBlueprint = executionBlueprint,
-                instructions = instructions,
+                instructionsByObjectTypeNames = instructionsByObjectTypeName,
                 executionContext = executionContext,
                 hydratedField = overallField,
                 hydratedFieldService = service,
@@ -67,14 +68,24 @@ internal class NadelBatchHydrationTransform(
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
+        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructionsByObjectTypeNames }
+
         return NadelTransformFieldResult(
-            newField = null,
-            artificialFields = state.instructions.flatMap { (fieldCoordinates, instruction) ->
+            newField = objectTypesNoRenames
+                .takeIf(List<GraphQLObjectTypeName>::isNotEmpty)
+                ?.let {
+                    field.toBuilder()
+                        .clearObjectTypesNames()
+                        .objectTypeNames(it)
+                        .children(transformer.transform(field.children))
+                        .build()
+                },
+            artificialFields = state.instructionsByObjectTypeNames.flatMap { (objectTypeName, instruction) ->
                 NadelHydrationFieldsBuilder.makeFieldsUsedAsActorInputValues(
                     service = service,
                     executionBlueprint = executionBlueprint,
                     aliasHelper = state.aliasHelper,
-                    fieldCoordinates = fieldCoordinates,
+                    objectTypeName = objectTypeName,
                     instruction = instruction
                 )
             } + makeTypeNameField(state),
@@ -102,7 +113,7 @@ internal class NadelBatchHydrationTransform(
     private fun makeTypeNameField(state: State): ExecutableNormalizedField {
         return makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = state.instructions.keys.map { it.typeName },
+            objectTypeNames = state.instructionsByObjectTypeNames.keys.toList(),
         )
     }
 }

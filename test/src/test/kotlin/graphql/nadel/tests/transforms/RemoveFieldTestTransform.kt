@@ -14,6 +14,7 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
+import graphql.schema.GraphQLObjectType
 import graphql.validation.ValidationError
 import graphql.validation.ValidationErrorType
 
@@ -25,18 +26,18 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
         service: Service,
         overallField: ExecutableNormalizedField,
     ): GraphQLError? {
-        if (overallField.objectTypeNames
-                .map { executionBlueprint.schema.getType(it) }
-                .any { it == null }
-        ) {
-            return null
-        }
+        val objectType = overallField.objectTypeNames.asSequence()
+            .map {
+                executionBlueprint.schema.getType(it) as GraphQLObjectType?
+            }
+            .filterNotNull()
+            .firstOrNull()
+            ?: return null
 
-        if (overallField.getOneFieldDefinition(executionBlueprint.schema)
-                .getDirective("toBeDeleted") != null
-        ) {
+        if (objectType.getField(overallField.name)?.getDirective("toBeDeleted") != null) {
             return ValidationError(ValidationErrorType.WrongType)
         }
+
         return null
     }
 

@@ -14,8 +14,11 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
+import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
+
+typealias GraphQLObjectTypeName = String
 
 /**
  * A deep rename is a rename in where the field being "renamed" is not on the same level
@@ -58,7 +61,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
          * }
          * ```
          */
-        val instructions: Map<FieldCoordinates, NadelDeepRenameFieldInstruction>,
+        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelDeepRenameFieldInstruction>,
         /**
          * See [NadelAliasHelper]
          */
@@ -152,16 +155,26 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         field: ExecutableNormalizedField,
         state: State,
     ): NadelTransformFieldResult {
+        val objectTypesNoRenames = field.objectTypeNames.filterNot { it in state.instructionsByObjectTypeNames }
+
         return NadelTransformFieldResult(
-            newField = null,
-            artificialFields = state.instructions.map { (coordinates, instruction) ->
+            newField = objectTypesNoRenames
+                .takeIf(List<GraphQLObjectTypeName>::isNotEmpty)
+                ?.let {
+                    field.toBuilder()
+                        .clearObjectTypesNames()
+                        .objectTypeNames(it)
+                        .children(transformer.transform(field.children))
+                        .build()
+                },
+            artificialFields = state.instructionsByObjectTypeNames.map { (objectTypeWithRename, instruction) ->
                 makeDeepField(
                     state,
                     transformer,
                     executionBlueprint,
                     service,
                     field,
-                    coordinates,
+                    objectTypeWithRename,
                     deepRename = instruction,
                 )
             } + makeTypeNameField(state),
@@ -169,7 +182,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     }
 
     /**
-     * Read [State.instructions]
+     * Read [State.instructionsByObjectTypeNames]
      *
      * In the case that there are multiple [FieldCoordinates] for a single [ExecutableNormalizedField]
      * we need to know which type we are dealing with, so we use this to add a `__typename`
@@ -182,7 +195,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
     ): ExecutableNormalizedField {
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = state.instructions.keys.map { it.typeName },
+            objectTypeNames = state.instructionsByObjectTypeNames.keys.toList(),
         )
     }
 
@@ -209,10 +222,10 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        fieldCoordinates: FieldCoordinates,
+        objectTypeName: GraphQLObjectTypeName,
         deepRename: NadelDeepRenameFieldInstruction,
     ): ExecutableNormalizedField {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(fieldCoordinates.typeName)
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(objectTypeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
@@ -270,7 +283,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         )
 
         return parentNodes.mapNotNull instruction@{ parentNode ->
-            val instruction = state.instructions.getInstructionForNode(
+            val instruction = state.instructionsByObjectTypeNames.getInstructionForNode(
                 executionBlueprint = executionBlueprint,
                 service = service,
                 aliasHelper = state.aliasHelper,

@@ -33,7 +33,7 @@ data class TestFixture(
     }
 }
 
-val customTestTransforms = listOf(
+val customTestTransforms: List<RemoveFieldTestTransform> = listOf(
     RemoveFieldTestTransform(),
 )
 

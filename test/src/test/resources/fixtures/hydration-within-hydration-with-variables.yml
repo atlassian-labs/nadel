@@ -12,9 +12,9 @@ overallSchema:
       id: ID
       title: String
       issue: Issue
-      @hydrated(service: "issues" field: "issue" arguments : [
-          { name : "id", value : "$source.issueId"}
-      ])
+        @hydrated(service: "issues" field: "issue" arguments: [
+            {name: "id", value: "$source.issueId"}
+        ])
     }
   issues: |
     type Query {
@@ -25,10 +25,10 @@ overallSchema:
       id: ID!
       cloudId: ID!
 
-      comments(first: Int = 20) : CommentConnection
-        @hydrated(service: "comments" field: "comments" arguments : [
-            { name:"cloudId" value:"$source.cloudId"},
-            { name:"first" value:"$argument.first"},
+      comments(first: Int = 20): CommentConnection
+        @hydrated(service: "comments" field: "comments" arguments: [
+            {name: "cloudId" value: "$source.cloudId"},
+            {name: "first" value: "$argument.first"},
         ])
     }
   comments: |

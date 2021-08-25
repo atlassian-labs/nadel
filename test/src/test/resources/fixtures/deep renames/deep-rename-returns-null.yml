@@ -1,0 +1,83 @@
+name: deep rename returns null
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      troll: Troll
+    }
+    type Troll {
+      name: String @renamed(from: "firstEat.item.name")
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      troll: Troll
+    }
+    type Troll {
+      id: ID
+      firstEat: EatLog
+    }
+    type EatLog {
+      id: ID
+      item: Edible
+    }
+    type Edible {
+      name: String
+    }
+query: |
+  query {
+    troll {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              troll {
+                ... on Troll {
+                  __typename__deep_rename__name: __typename
+                  deep_rename__name__firstEat: firstEat {
+                    ... on EatLog {
+                      item {
+                        ... on Edible {
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "troll": {
+              "__typename__deep_rename__name": "Troll",
+              "deep_rename__name__firstEat": {
+                "item": null
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "troll": {
+        "name": null
+      }
+    },
+    "extensions": {}
+  }

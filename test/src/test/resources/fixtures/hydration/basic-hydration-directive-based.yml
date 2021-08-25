@@ -1,0 +1,175 @@
+name: basic hydration directive based
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  service2: |
+    service service2 {
+      type Query {
+        barById(id: ID): Bar
+      }
+      type Bar {
+        id: ID
+        name: String
+      }
+    }
+  service1: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      bar: Bar @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          {name: "id" value: "$source.barId"}
+        ]
+      )
+      barLongerInput: Bar @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          {name: "id" value: "$source.fooDetails.externalBarId"}
+        ]
+      )
+    }
+underlyingSchema:
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID): Bar
+    }
+  service1: |
+    type Foo {
+      barId: ID
+      fooDetails: FooDetails
+      id: ID
+    }
+
+    type FooDetails {
+      externalBarId: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: service1
+      request:
+        query: |
+          query nadel_2_service1 {
+            foo {
+              barId
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service1
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "barId": "barId"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query nadel_2_service2 {
+            barById(id: "barId") {
+              name
+            }
+          }
+        variables: {}
+        operationName: nadel_2_service2
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "id": "barId",
+              "name": "Bar1"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  __typename__hydration__bar: __typename
+                  hydration__bar__barId: barId
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "hydration__bar__barId": "barId",
+              "__typename__hydration__bar": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "barId") {
+                ... on Bar {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "name": "Bar1"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+          "name": "Bar1"
+        }
+      }
+    },
+    "extensions": {}
+  }

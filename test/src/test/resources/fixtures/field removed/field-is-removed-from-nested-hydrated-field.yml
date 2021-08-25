@@ -40,7 +40,7 @@ overallSchema:
     service CommentService {
       type Query {
         comments(ids: [ID]): [Comment]
-        commentById(id: ID) : Comment
+        commentById(id: ID): Comment
       }
       type Comment {
         id: ID

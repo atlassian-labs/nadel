@@ -1,0 +1,164 @@
+name: renamed type in interface
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  IssueService: |
+    type Query {
+      nodes: [Node] @renamed(from: "all")
+    }
+    type JiraIssue implements Node @renamed(from: "Issue") {
+      id: ID
+      links: [Node]
+    }
+    interface Node {
+      id: ID
+    }
+    type User {
+      id: ID
+    }
+    type Donkey @renamed(from: "Monkey") {
+      id: ID
+    }
+underlyingSchema:
+  IssueService: |
+    type Query {
+      all: [Node]
+    }
+    type Issue implements Node {
+      id: ID
+    }
+    interface Node {
+      id: ID
+    }
+  UserService: |
+    type Query {
+      me: User
+    }
+    type User implements Node {
+      id: ID
+    }
+    interface Node {
+      id: ID
+    }
+  AnimalService: |
+    type Query {
+      monkey: Monkey
+    }
+    type Monkey implements Node {
+      id: ID
+    }
+    interface Node {
+      id: ID
+    }
+query: |
+  query {
+    nodes {
+      __typename
+      id
+      ... on JiraIssue {
+        links {
+          __typename
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__nodes__all: all {
+                ... on Issue {
+                  __typename
+                  id
+                  links {
+                    ... on Issue {
+                      __typename
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__nodes__all": [
+              {
+                "__typename": "Issue",
+                "links": null
+              },
+              null,
+              {
+                "__typename": "Issue",
+                "links": []
+              },
+              {
+                "__typename": "Issue",
+                "links": [
+                  {
+                    "__typename": "User"
+                  },
+                  {
+                    "__typename": "Issue"
+                  },
+                  {
+                    "__typename": "Monkey"
+                  }
+                ]
+              },
+              {
+                "__typename": "Monkey"
+              },
+              {
+                "__typename": "User"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "nodes": [
+        {
+          "__typename": "JiraIssue",
+          "links": null
+        },
+        null,
+        {
+          "__typename": "JiraIssue",
+          "links": []
+        },
+        {
+          "__typename": "JiraIssue",
+          "links": [
+            {
+              "__typename": "User"
+            },
+            {
+              "__typename": "JiraIssue"
+            },
+            {
+              "__typename": "Donkey"
+            }
+          ]
+        },
+        {
+          "__typename": "Donkey"
+        },
+        {
+          "__typename": "User"
+        }
+      ]
+    },
+    "extensions": {}
+  }

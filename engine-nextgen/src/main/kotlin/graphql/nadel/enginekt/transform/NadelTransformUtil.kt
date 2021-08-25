@@ -76,7 +76,8 @@ object NadelTransformUtil {
 /**
  * Gets the instruction for a node. There _must_ be a `__typename` selection in the [parentNode].
  */
-fun <T : NadelFieldInstruction> Map<FieldCoordinates, T>.getInstructionForNode(
+@JvmName("getInstructionsForNodeNew")
+fun <T : NadelFieldInstruction> Map<GraphQLObjectTypeName, T>.getInstructionForNode(
     executionBlueprint: NadelOverallExecutionBlueprint,
     service: Service,
     aliasHelper: NadelAliasHelper,
@@ -89,10 +90,6 @@ fun <T : NadelFieldInstruction> Map<FieldCoordinates, T>.getInstructionForNode(
         node = parentNode,
     ) ?: return null
 
-    // NOTE: the given instructions must have tho same field name, just differing type name
-    // Otherwise this function doesn't make sense
-    val fieldName = instructions.keys.first().fieldName
-
-    instructions[makeFieldCoordinates(overallTypeName, fieldName)]
+    instructions[overallTypeName]
 }
 

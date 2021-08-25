@@ -6,8 +6,8 @@ overallSchema:
   PetService: |
     service PetService {
       type Query {
-        pets(isLoyal: Boolean) : [Pet]
-        raining(isLoyal: Boolean) : CatsAndDogs
+        pets(isLoyal: Boolean): [Pet]
+        raining(isLoyal: Boolean): CatsAndDogs
       }
       interface Pet {
         name: String
@@ -46,7 +46,7 @@ overallSchema:
   OwnerService: |
     service OwnerService {
       type Query {
-        owner(id: String) : Owner
+        owner(id: String): Owner
       }
       interface Owner {
         name: String

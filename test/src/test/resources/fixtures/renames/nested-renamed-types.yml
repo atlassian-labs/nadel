@@ -1,0 +1,115 @@
+name: nested renamed types
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service1: |
+    service service1 {
+      type Query {
+        foo: FooX
+      }
+
+      type FooX @renamed(from: "Foo") {
+        id: ID
+        parent: FooX
+        building: Bar
+      }
+
+      type Bar @renamed(from: "Building") {
+        id: String
+      }
+    }
+underlyingSchema:
+  service1: |
+    type Foo {
+      id: ID!
+      parent: Foo
+      building: Building
+    }
+
+    type Building {
+      id: ID!
+    }
+
+    type Query {
+      foo: Foo
+    }
+query: |
+  query {
+    foo {
+      __typename
+      parent {
+        id
+        __typename
+        building {
+          __typename
+          id
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  __typename
+                  parent {
+                    ... on Foo {
+                      __typename
+                      building {
+                        ... on Building {
+                          __typename
+                          id
+                        }
+                      }
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "__typename": "Foo",
+              "parent": {
+                "__typename": "Foo",
+                "id": "ParentFoo1",
+                "building": {
+                  "__typename": "Building",
+                  "id": "Bar-1"
+                }
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "__typename": "FooX",
+        "parent": {
+          "__typename": "FooX",
+          "id": "ParentFoo1",
+          "building": {
+            "__typename": "Bar",
+            "id": "Bar-1"
+          }
+        }
+      }
+    },
+    "extensions": {}
+  }

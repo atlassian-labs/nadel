@@ -1,4 +1,4 @@
-name: hydration list
+name: hydration list input
 enabled:
   current: true
   nextgen: true
@@ -20,7 +20,7 @@ overallSchema:
       }
       type Foo {
         id: ID
-        bar: [Bar] => hydrated from service2.barById(id: $source.barId)
+        bar: [Bar] => hydrated from service2.barById(id: $source.barIds)
       }
     }
 underlyingSchema:
@@ -35,7 +35,7 @@ underlyingSchema:
     }
   service1: |
     type Foo {
-      barId: [ID]
+      barIds: [ID]
       id: ID
     }
 
@@ -59,7 +59,7 @@ serviceCalls:
         query: |
           query nadel_2_service1 {
             foo {
-              barId
+              barIds
             }
           }
         variables: {}
@@ -69,7 +69,7 @@ serviceCalls:
         {
           "data": {
             "foo": {
-              "barId": [
+              "barIds": [
                 "barId1",
                 "barId2",
                 "barId3"
@@ -152,8 +152,8 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
+                  hydration__bar__barIds: barIds
                   __typename__hydration__bar: __typename
-                  hydration__bar__barId: barId
                 }
               }
             }
@@ -165,7 +165,7 @@ serviceCalls:
         {
           "data": {
             "foo": {
-              "hydration__bar__barId": [
+              "hydration__bar__barIds": [
                 "barId1",
                 "barId2",
                 "barId3"

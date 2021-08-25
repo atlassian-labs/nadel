@@ -1,0 +1,138 @@
+name: renamed type inside hydration
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  IssueService: |
+    type Query {
+      issueById(id: ID!): Issue
+    }
+    type Issue {
+      details: IssueDetails
+    }
+    type IssueDetails @renamed(from: "Details") {
+      name: String
+    }
+  UserService: |
+    type Query {
+      me: User
+    }
+    type User {
+      issueId: ID
+      issue: Issue @hydrated(
+        service: "IssueService"
+        field: "issueById"
+        arguments: [
+          {name: "id" value: "$source.issueId"}
+        ]
+      )
+    }
+underlyingSchema:
+  IssueService: |
+    type Issue {
+      id: ID
+      detail: Details
+    }
+
+    type Details {
+      name: String
+    }
+
+    type Query {
+      issueById(id: ID!): Issue
+    }
+  UserService: |
+    type Query {
+      me: User
+    }
+
+    type User {
+      issueId: ID
+    }
+query: |
+  query {
+    me {
+      issue {
+        details {
+          __typename
+          name
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            ... on Query {
+              me {
+                ... on User {
+                  __typename__hydration__issue: __typename
+                  hydration__issue__issueId: issueId
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "me": {
+              "__typename__hydration__issue": "User",
+              "hydration__issue__issueId": "issue-2"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: IssueService
+      request:
+        query: |
+          query {
+            ... on Query {
+              issueById(id: "issue-2") {
+                ... on Issue {
+                  details {
+                    ... on Details {
+                      __typename
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issueById": {
+              "details": {
+                "__typename": "Details",
+                "name": "Issue two"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "me": {
+        "issue": {
+          "details": {
+            "__typename": "IssueDetails",
+            "name": "Issue two"
+          }
+        }
+      }
+    },
+    "extensions": {}
+  }

@@ -8,7 +8,6 @@ import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.ExecutableNormalizedField
-import graphql.schema.GraphQLSchema
 
 interface NadelTransform<State : Any> {
     /**
