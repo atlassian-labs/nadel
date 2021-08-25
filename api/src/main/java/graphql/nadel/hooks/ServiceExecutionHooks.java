@@ -5,7 +5,10 @@ import graphql.PublicSpi;
 import graphql.execution.ExecutionStepInfo;
 import graphql.nadel.Service;
 import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.normalized.ExecutableNormalizedField;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +30,7 @@ public interface ServiceExecutionHooks {
         return CompletableFuture.completedFuture(null);
     }
 
+    @Nullable
     default NewVariableValue visitArgumentValueInQuery(HooksVisitArgumentValueEnvironment env) {
         return null;
     }
@@ -53,11 +57,36 @@ public interface ServiceExecutionHooks {
     /***
      * Called to resolve the service that should be used to fetch data for a field that uses dynamic service resolution.
      *
-     * @param services a list of all services registered on Nadel
-     * @param executionStepInfo
+     * There are 2 versions of this method. One passing an {@link ExecutionStepInfo}, which is used by the CurrentGen
+     * engine, and another passing {@link ExecutableNormalizedField}, used by the NextGen engine. During the transition
+     * between Current and NextGen, implementations of {@link ServiceExecutionHooks} will have to implement both
+     * versions of this method.
+     *
+     * @param services a collection of all services registered on Nadel
+     * @param executionStepInfo object containing data about the field being executed
      * @return the Service that should be used to fetch data for that field or an error that was raised when trying to resolve the service.
+     * @see ServiceExecutionHooks#resolveServiceForField(Collection, ExecutableNormalizedField) for the Next Gen implementation
      */
-    default ServiceOrError resolveServiceForField(List<Service> services, ExecutionStepInfo executionStepInfo) {
+    @Nullable
+    default ServiceOrError resolveServiceForField(Collection<Service> services, ExecutionStepInfo executionStepInfo) {
+        return null;
+    }
+
+    /**
+     * Called to resolve the service that should be used to fetch data for a field that uses dynamic service resolution.
+     *
+     * There are 2 versions of this method. One passing an {@link ExecutionStepInfo}, which is used by the CurrentGen
+     * engine, and another passing {@link ExecutableNormalizedField}, used by the NextGen engine. During the transition
+     * between Current and NextGen, implementations of {@link ServiceExecutionHooks} will have to implement both
+     * versions of this method.
+     *
+     * @param services a collection of all services registered on Nadel
+     * @param executableNormalizedField object containing data about the field being executed
+     * @return the Service that should be used to fetch data for that field or an error that was raised when trying to resolve the service.
+     * @see ServiceExecutionHooks#resolveServiceForField(Collection, ExecutionStepInfo) for the Current Gen implementation.
+     */
+    @Nullable
+    default ServiceOrError resolveServiceForField(Collection<Service> services, ExecutableNormalizedField executableNormalizedField) {
         return null;
     }
 }

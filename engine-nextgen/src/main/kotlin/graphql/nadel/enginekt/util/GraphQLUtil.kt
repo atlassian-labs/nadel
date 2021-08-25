@@ -7,6 +7,7 @@ import graphql.ExecutionResultImpl
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.GraphqlErrorBuilder.newError
+import graphql.GraphqlErrorException
 import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationContext
@@ -264,8 +265,10 @@ fun newServiceExecutionResult(
 
 fun newExecutionResult(
     error: GraphQLError,
+    data: Any? = null,
 ): ExecutionResultImpl {
     return newExecutionResult()
+        .data(data)
         .addError(error)
         .build()
 }
@@ -333,4 +336,17 @@ fun resolveObjectTypes(
         is GraphQLInterfaceType -> schema.getImplementations(unwrappedType)
         else -> onNotObjectType(unwrappedType)
     }
+}
+
+/**
+ * Creates a GraphQLErrorException based on the data of this GraphQLError
+ */
+fun GraphQLError.toGraphQLErrorException(): GraphqlErrorException {
+    return GraphqlErrorException.newErrorException()
+        .message(this.message)
+        .sourceLocations(this.locations)
+        .errorClassification(this.errorType)
+        .path(this.path)
+        .extensions(this.extensions)
+        .build()
 }

@@ -15,6 +15,7 @@ import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelTransform
+import graphql.nadel.enginekt.transform.query.DynamicServiceResolution
 import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
@@ -67,7 +68,16 @@ class NextgenEngine @JvmOverloads constructor(
     )
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
-    private val fieldToService = NadelFieldToService(overallExecutionBlueprint, introspectionRunnerFactory)
+    private val dynamicServiceResolution = DynamicServiceResolution(
+        overallSchema = overallSchema,
+        serviceExecutionHooks = serviceExecutionHooks,
+        services = services.values
+    )
+    private val fieldToService = NadelFieldToService(
+        overallExecutionBlueprint = overallExecutionBlueprint,
+        introspectionRunnerFactory = introspectionRunnerFactory,
+        dynamicServiceResolution = dynamicServiceResolution,
+    )
     private val executionIdProvider = nadel.executionIdProvider
 
     override fun execute(
@@ -110,10 +120,15 @@ class NextgenEngine @JvmOverloads constructor(
                         .map { (field, service) ->
                             async {
                                 try {
-                                    executeTopLevelField(field, service, executionContext)
+                                    val resolvedService = fieldToService.resolveDynamicService(field, service)
+
+                                    executeTopLevelField(field, resolvedService, executionContext)
                                 } catch (e: Throwable) {
                                     when (e) {
-                                        is GraphQLError -> newExecutionResult(error = e)
+                                        is GraphQLError -> newExecutionResult(
+                                            error = e,
+                                            data = mutableMapOf(field.resultKey to null)
+                                        )
                                         else -> throw e
                                     }
                                 }
@@ -128,6 +143,7 @@ class NextgenEngine @JvmOverloads constructor(
         instrumentationContext.onCompleted(result, null)
         return result
     }
+
 
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,
