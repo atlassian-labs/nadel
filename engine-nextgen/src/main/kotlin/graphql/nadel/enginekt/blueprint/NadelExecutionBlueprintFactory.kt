@@ -61,7 +61,7 @@ private class Factory(
             it.location
         }
         val furtherTypeRenameInstructions = typeRenameInstructions.values +
-            SharedTypesAnalysis(overallSchema, services, fieldInstructions)
+            SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
                 .getTypeRenames()
 
         return NadelOverallExecutionBlueprint(
@@ -424,6 +424,7 @@ private class SharedTypesAnalysis(
     private val overallSchema: GraphQLSchema,
     private val services: List<Service>,
     private val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
+    private val typeRenameInstructions: Map<String, NadelTypeRenameInstruction>,
 ) {
     fun getTypeRenames(): Set<NadelTypeRenameInstruction> {
         return services
@@ -506,12 +507,15 @@ private class SharedTypesAnalysis(
             // If the name is  different than the overall type, then we mark the rename
             when (val underlyingOutputTypeName = underlyingField.type.unwrapAll().name) {
                 overallOutputTypeName -> null
-                "String", "ID", "Int", "Boolean" -> null
-                else -> NadelTypeRenameInstruction(
-                    service,
-                    overallName = overallOutputTypeName,
-                    underlyingName = underlyingOutputTypeName,
-                )
+                "String", "ID", "Int", "Boolean", "Float" -> null
+                else -> when (typeRenameInstructions[overallOutputTypeName]) {
+                    null -> error("Nadel does not allow implicit renames")
+                    else -> NadelTypeRenameInstruction(
+                        service,
+                        overallName = overallOutputTypeName,
+                        underlyingName = underlyingOutputTypeName,
+                    )
+                }
             }
         } else {
             null

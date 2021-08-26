@@ -2,6 +2,8 @@ name: renamed type is shared with random type name
 enabled:
   current: false
   nextgen: true
+ignored:
+  nextgen: true # We do not allow implicit renames, enable this test once we have explicit renames for shared types
 overallSchema:
   Nextgen: |-
     type Query {
