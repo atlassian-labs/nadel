@@ -1,5 +1,10 @@
 package graphql.nadel.enginekt.blueprint
 
+import graphql.Scalars.GraphQLBoolean
+import graphql.Scalars.GraphQLFloat
+import graphql.Scalars.GraphQLID
+import graphql.Scalars.GraphQLInt
+import graphql.Scalars.GraphQLString
 import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
@@ -426,6 +431,14 @@ private class SharedTypesAnalysis(
     private val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
     private val typeRenameInstructions: Map<String, NadelTypeRenameInstruction>,
 ) {
+    companion object {
+        private val scalarTypeNames = sequenceOf(GraphQLInt, GraphQLFloat, GraphQLString, GraphQLBoolean, GraphQLID)
+            .map { it.name }
+            // This is required because of edge cases with central schema ppl turning a Date into a DateTime…
+            .plus(sequenceOf("Date", "DateTime"))
+            .toSet()
+    }
+
     fun getTypeRenames(): Set<NadelTypeRenameInstruction> {
         return services
             .asSequence()
@@ -438,7 +451,7 @@ private class SharedTypesAnalysis(
                     .filterIsInstance<AnyNamedNode>()
                     .filterNot { it.isExtensionDef }
                     .map { it.name }
-                    .toSet()
+                    .toSet() + scalarTypeNames
 
                 service.definitionRegistry.operationMap
                     .asSequence()
@@ -507,7 +520,7 @@ private class SharedTypesAnalysis(
             // If the name is  different than the overall type, then we mark the rename
             when (val underlyingOutputTypeName = underlyingField.type.unwrapAll().name) {
                 overallOutputTypeName -> null
-                "String", "ID", "Int", "Boolean", "Float" -> null
+                in scalarTypeNames -> null
                 else -> when (typeRenameInstructions[overallOutputTypeName]) {
                     null -> error("Nadel does not allow implicit renames")
                     else -> NadelTypeRenameInstruction(
