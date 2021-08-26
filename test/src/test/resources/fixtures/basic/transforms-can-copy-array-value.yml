@@ -1,0 +1,73 @@
+name: transforms can copy array value
+enabled:
+  current: false # This is testing nextgen behaviour
+  nextgen: true
+overallSchema:
+  service: |
+    service service {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        ids: [ID]
+      }
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      ids: [ID]
+    }
+query: |
+  query {
+    foo {
+      ids
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  ids
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "ids": [
+                "FOO-ONE",
+                "FOO-TWO",
+                "FOO-THREE"
+              ]
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "ids": [
+          "FOO-THREE",
+          "FOO-ONE",
+          "FOO-TWO"
+        ]
+      }
+    },
+    "extensions": {}
+  }
