@@ -5,11 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstSorter
 import graphql.language.Document
+import graphql.nadel.Nadel
 import graphql.nadel.NadelEngine
-import graphql.nadel.NadelExecutionEngineFactory
+import graphql.nadel.NadelExecutionEngine
 import graphql.nadel.NextgenEngine
 import graphql.nadel.enginekt.util.JsonMap
-import graphql.nadel.tests.transforms.RemoveFieldTestTransform
 import graphql.parser.Parser
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.memberProperties
@@ -33,30 +33,34 @@ data class TestFixture(
     }
 }
 
-val customTestTransforms: List<RemoveFieldTestTransform> = listOf(
-    RemoveFieldTestTransform(),
-)
-
 data class EngineTypeFactories(
-    override val current: NadelExecutionEngineFactory = NadelExecutionEngineFactory(::NadelEngine),
-    // TODO: test transforms should be set via the engine test hook.
-    override val nextgen: NadelExecutionEngineFactory = NadelExecutionEngineFactory { nadel ->
-        NextgenEngine(nadel, customTestTransforms)
+    override val current: TestEngineFactory = TestEngineFactory { nadel, _ ->
+        NadelEngine(nadel)
     },
-) : NadelEngineTypeValueProvider<NadelExecutionEngineFactory> {
+    override val nextgen: TestEngineFactory = TestEngineFactory { nadel, testHook ->
+        NextgenEngine(
+            nadel = nadel,
+            transforms = testHook.customTransforms,
+        )
+    },
+) : NadelEngineTypeValueProvider<TestEngineFactory> {
     val all = engines(factories = this)
 
     companion object {
-        private fun engines(factories: EngineTypeFactories): List<Pair<NadelEngineType, NadelExecutionEngineFactory>> {
+        private fun engines(factories: EngineTypeFactories): List<Pair<NadelEngineType, TestEngineFactory>> {
             return EngineTypeFactories::class.memberProperties
                 .filter {
-                    it.returnType == NadelExecutionEngineFactory::class.createType()
+                    it.returnType == TestEngineFactory::class.createType()
                 }
                 .map {
-                    NadelEngineType.valueOf(it.name) to it.get(factories) as NadelExecutionEngineFactory
+                    NadelEngineType.valueOf(it.name) to it.get(factories) as TestEngineFactory
                 }
         }
     }
+}
+
+fun interface TestEngineFactory {
+    fun make(nadel: Nadel, testHook: EngineTestHook): NadelExecutionEngine
 }
 
 data class EngineTypeEnabled(
