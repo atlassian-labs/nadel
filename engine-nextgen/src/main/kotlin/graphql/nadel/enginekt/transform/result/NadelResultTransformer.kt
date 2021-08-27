@@ -17,6 +17,7 @@ import graphql.nadel.enginekt.util.AnyMutableList
 import graphql.nadel.enginekt.util.AnyMutableMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.MutableJsonMap
+import graphql.nadel.enginekt.util.asMutableJsonMap
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import kotlin.reflect.KClass
@@ -60,7 +61,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
             return
         }
 
-        val mutations = instructions.map { transformation ->
+        val mutations = instructions.mapNotNull { transformation ->
             when (transformation) {
                 is NadelResultInstruction.Set -> prepareSet(result.data, transformation)
                 is NadelResultInstruction.Remove -> prepareRemove(result.data, transformation)
@@ -81,24 +82,20 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     private fun prepareSet(
         data: JsonMap,
         instruction: NadelResultInstruction.Set,
-    ): DataMutation {
-        val parentPath = instruction.subjectPath.dropLast(1)
-        val parentMap = data.getJsonMapAt(parentPath) ?: return DataMutation {}
-        val subjectKey = instruction.subjectKey
-
-        return DataMutation { context ->
-            modifyMap(context, parentPath, parentMap) {
-                it[subjectKey] = instruction.newValue
-            }
-        }
+    ): DataMutation? {
+        return prepareSet(
+            data,
+            destPath = instruction.subjectPath,
+            newValue = instruction.newValue,
+        )
     }
 
     private fun prepareRemove(
         data: JsonMap,
         instruction: NadelResultInstruction.Remove,
-    ): DataMutation {
+    ): DataMutation? {
         val parentPath = instruction.subjectPath.dropLast(1)
-        val parentMap = data.getJsonMapAt(parentPath) ?: return DataMutation {}
+        val parentMap = data.getJsonMapAt(parentPath) ?: return null
         val subjectKey = instruction.subjectKey
 
         val dataToDelete = parentMap[subjectKey]
@@ -116,18 +113,39 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     private fun prepareCopy(
         data: JsonMap,
         instruction: NadelResultInstruction.Copy,
-    ): DataMutation {
-        val parentMap = data.getParentOf(instruction.subjectPath) ?: return DataMutation {}
-        val dataToCopy = parentMap[instruction.subjectKey]
+    ): DataMutation? {
+        val dataToCopy = data.getAt(instruction.subjectPath)
+        return prepareSet(
+            data,
+            destPath = instruction.destinationPath,
+            newValue = dataToCopy.value,
+        )
+    }
 
-        val destParentPath = instruction.destinationPath.dropLast(1)
-        val destParentMap = data.getJsonMapAt(destParentPath) ?: return DataMutation {}
-        val destKey = instruction.destinationKey
+    private fun prepareSet(
+        data: JsonMap,
+        destPath: JsonNodePath,
+        newValue: Any?,
+    ): DataMutation? {
+        val destParentPath = destPath.dropLast(1)
+        val destParentValue = data.getAt(destParentPath).value
+        val destKey = destPath.segments.last().value
 
-        return DataMutation { context ->
-            modifyMap(context, destParentPath, destParentMap) {
-                it[destKey] = dataToCopy
+        return when (destParentValue) {
+            is AnyMap -> DataMutation {
+                when (destKey) {
+                    is String -> destParentValue.asMutableJsonMap()[destKey] = newValue
+                    else -> error("Set instruction expected string key for JSON object")
+                }
             }
+            is AnyList -> DataMutation {
+                when (destKey) {
+                    is Int -> destParentValue.asMutable()[destKey] = newValue
+                    else -> error("Set instruction expected integer key for JSON array")
+                }
+            }
+            null -> null
+            else -> error("Set instruction had leaf value as parent of destination path")
         }
     }
 

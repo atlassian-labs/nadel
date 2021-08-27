@@ -105,9 +105,9 @@ class EngineTests : FunSpec({
 
 private suspend fun execute(
     fixture: TestFixture,
-    testHooks: EngineTestHook? = getTestHook(fixture),
+    testHooks: EngineTestHook = getTestHook(fixture) ?: EngineTestHook.noOp,
     engineType: NadelEngineType,
-    engineFactory: NadelExecutionEngineFactory,
+    engineFactory: TestEngineFactory,
 ) {
     val printLock = Any()
     fun printSyncLine(message: String): Unit = synchronized(printLock) {
@@ -126,7 +126,9 @@ private suspend fun execute(
 
     try {
         val nadel = Nadel.newNadel()
-            .engineFactory(engineFactory)
+            .engineFactory { nadel ->
+                engineFactory.make(nadel, testHooks)
+            }
             .dsl(fixture.overallSchema)
             .serviceExecutionFactory(object : ServiceExecutionFactory {
                 private val astSorter = AstSorter()

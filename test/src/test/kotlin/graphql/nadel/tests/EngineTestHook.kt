@@ -3,12 +3,27 @@ package graphql.nadel.tests
 import graphql.ExecutionResult
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
+import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.tests.util.join
 import graphql.nadel.tests.util.toSlug
 import org.reflections.Reflections
 import java.io.File
 
 interface EngineTestHook {
+    companion object {
+        /**
+         * Used when there is no test hook for a class.
+         *
+         * We use this to ensure the default behaviour is the same.
+         *
+         * i.e. other classes don't start redefining the default behaviour when the hook is null.
+         */
+        val noOp = object : EngineTestHook {}
+    }
+
+    val customTransforms: List<NadelTransform<out Any>>
+        get() = emptyList()
+
     fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
     }
