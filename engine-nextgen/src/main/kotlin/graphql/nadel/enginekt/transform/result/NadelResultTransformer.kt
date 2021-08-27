@@ -122,18 +122,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         )
     }
 
-    /**
-     * Only an idiot would use this function. Oh wait, that's me. Don't be me.
-     */
-    @Deprecated("Idiot")
-    private fun prepareSet(
-        data: JsonMap,
-        dest: JsonNodePath,
-        newValue: JsonNode, // Idiot
-    ): DataMutation? {
-        error("Idiot")
-    }
-
     private fun prepareSet(
         data: JsonMap,
         destPath: JsonNodePath,
