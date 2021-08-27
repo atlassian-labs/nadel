@@ -535,8 +535,8 @@ private class SharedTypesAnalysis(
         }
 
         val overallOutputType = overallSchema.getType(overallOutputTypeName)
-            // Ensure type exists
-            .let { it ?: error("Unable to find output type: $overallOutputTypeName") }
+            // Ensure type exists, schema transformation can delete types, so let's just ignore it
+            .let { it ?: return emptyList() }
             // Return if not field container
             .let { it as? GraphQLFieldsContainer ?: return emptyList() }
             .let { it.definition as AnyImplementingTypeDefinition }

@@ -1,0 +1,42 @@
+name: can delete fields and types
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo
+      echo: String
+    }
+    type Foo {
+      id: ID
+    }
+    type Bar {
+      id: ID
+      foo: Foo
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: Foo
+      echo: String
+    }
+    type Foo {
+      id: ID
+    }
+    type Bar {
+      id: ID
+      foo: Foo
+    }
+query: |
+  query GetTypes {
+    __schema {
+      types {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls: {}
+# language=JSON
+response: null
