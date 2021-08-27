@@ -126,6 +126,7 @@ private suspend fun execute(
 
     try {
         val nadel = Nadel.newNadel()
+            .schemaTransformationHook(testHooks.schemaTransformationHook)
             .engineFactory { nadel ->
                 engineFactory.make(nadel, testHooks)
             }

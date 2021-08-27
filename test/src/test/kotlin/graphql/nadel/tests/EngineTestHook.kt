@@ -4,6 +4,7 @@ import graphql.ExecutionResult
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.enginekt.transform.NadelTransform
+import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.tests.util.join
 import graphql.nadel.tests.util.toSlug
 import org.reflections.Reflections
@@ -23,6 +24,9 @@ interface EngineTestHook {
 
     val customTransforms: List<NadelTransform<out Any>>
         get() = emptyList()
+
+    val schemaTransformationHook: SchemaTransformationHook
+        get() = SchemaTransformationHook.IDENTITY
 
     fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
