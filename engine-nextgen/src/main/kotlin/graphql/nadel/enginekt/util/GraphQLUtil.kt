@@ -14,8 +14,21 @@ import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Definition
 import graphql.language.Document
+import graphql.language.EnumTypeExtensionDefinition
+import graphql.language.ImplementingTypeDefinition
+import graphql.language.InputObjectTypeExtensionDefinition
+import graphql.language.InterfaceTypeExtensionDefinition
+import graphql.language.NamedNode
+import graphql.language.Node
 import graphql.language.ObjectTypeDefinition
+import graphql.language.ObjectTypeExtensionDefinition
 import graphql.language.OperationDefinition
+import graphql.language.SDLDefinition
+import graphql.language.ScalarTypeExtensionDefinition
+import graphql.language.SchemaExtensionDefinition
+import graphql.language.Type
+import graphql.language.TypeName
+import graphql.language.UnionTypeExtensionDefinition
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.ServiceExecutionResult
@@ -33,9 +46,16 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
 import graphql.schema.GraphQLUnionType
+import graphql.schema.GraphQLUnmodifiedType
+import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
 
-typealias AnyAstDefinition = Definition<*>
+internal typealias AnyAstNode = Node<*>
+internal typealias AnyAstDefinition = Definition<*>
+internal typealias AnyImplementingTypeDefinition = ImplementingTypeDefinition<*>
+internal typealias AnyNamedNode = NamedNode<*>
+internal typealias AnySDLDefinition = SDLDefinition<*>
+internal typealias AnyAstType = Type<*>
 
 fun newGraphQLError(
     message: String,
@@ -98,7 +118,7 @@ fun GraphQLFieldsContainer.getFieldsAlong(
     return pathToField.mapIndexed { index, fieldName ->
         val field = parent.getField(fieldName)
         if (index != pathToField.lastIndex) {
-            parent = field.type.unwrap(all = true) as GraphQLFieldsContainer
+            parent = field.type.unwrapAll() as GraphQLFieldsContainer
         }
         field
     }
@@ -113,7 +133,7 @@ private fun GraphQLFieldsContainer.getFieldAt(
     return if (pathIndex == pathToField.lastIndex) {
         field
     } else {
-        val fieldOutputType = field.type.unwrap(all = true) as GraphQLFieldsContainer
+        val fieldOutputType = field.type.unwrapAll() as GraphQLFieldsContainer
         fieldOutputType.getFieldAt(pathToField, pathIndex + 1)
     }
 }
@@ -163,13 +183,12 @@ fun deepClone(fields: List<ExecutableNormalizedField>): List<ExecutableNormalize
     }
 }
 
-fun GraphQLType.unwrap(
-    all: Boolean = false,
-): GraphQLType {
-    return when (all) {
-        true -> GraphQLTypeUtil.unwrapAll(this)
-        else -> GraphQLTypeUtil.unwrapOne(this)
-    }
+fun GraphQLType.unwrapOne(): GraphQLType {
+    return GraphQLTypeUtil.unwrapOne(this)
+}
+
+fun GraphQLType.unwrapAll(): GraphQLUnmodifiedType {
+    return GraphQLTypeUtil.unwrapAll(this)
 }
 
 fun GraphQLType.unwrapNonNull(): GraphQLType {
@@ -180,6 +199,23 @@ val GraphQLType.isList: Boolean get() = GraphQLTypeUtil.isList(this)
 val GraphQLType.isNonNull: Boolean get() = GraphQLTypeUtil.isNonNull(this)
 val GraphQLType.isWrapped: Boolean get() = GraphQLTypeUtil.isWrapped(this)
 val GraphQLType.isNotWrapped: Boolean get() = GraphQLTypeUtil.isNotWrapped(this)
+
+fun AnyAstType.unwrapOne(): AnyAstType {
+    return TypeUtil.unwrapOne(this)
+}
+
+fun AnyAstType.unwrapAll(): TypeName {
+    return TypeUtil.unwrapAll(this)
+}
+
+fun AnyAstType.unwrapNonNull(): AnyAstType {
+    return if (isNonNull) unwrapOne() else this
+}
+
+val AnyAstType.isList: Boolean get() = TypeUtil.isList(this)
+val AnyAstType.isNonNull: Boolean get() = TypeUtil.isNonNull(this)
+val AnyAstType.isWrapped: Boolean get() = TypeUtil.isWrapped(this)
+val AnyAstType.isNotWrapped: Boolean get() = !isWrapped
 
 internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
     val data: MutableJsonMap = mutableMapOf()
@@ -328,7 +364,7 @@ fun resolveObjectTypes(
     type: GraphQLType,
     onNotObjectType: (GraphQLType) -> Nothing,
 ): List<GraphQLObjectType> {
-    return when (val unwrappedType = type.unwrap(all = true)) {
+    return when (val unwrappedType = type.unwrapAll()) {
         is GraphQLObjectType -> listOf(unwrappedType)
         is GraphQLUnionType -> unwrappedType.types.flatMap {
             resolveObjectTypes(schema, type = it, onNotObjectType)
@@ -350,3 +386,14 @@ fun GraphQLError.toGraphQLErrorException(): GraphqlErrorException {
         .extensions(this.extensions)
         .build()
 }
+
+val AnyAstNode.isExtensionDef: Boolean
+    get() {
+        return this is ObjectTypeExtensionDefinition
+            || this is InterfaceTypeExtensionDefinition
+            || this is EnumTypeExtensionDefinition
+            || this is ScalarTypeExtensionDefinition
+            || this is InputObjectTypeExtensionDefinition
+            || this is SchemaExtensionDefinition
+            || this is UnionTypeExtensionDefinition
+    }

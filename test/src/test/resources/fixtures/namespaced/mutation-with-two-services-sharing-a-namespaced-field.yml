@@ -23,10 +23,6 @@ overallSchema:
       text: String
     }
   IssueSearch: |
-    type Query {
-      echoes: String
-    }
-
     extend type IssueQuery {
       search: SearchResult
     }

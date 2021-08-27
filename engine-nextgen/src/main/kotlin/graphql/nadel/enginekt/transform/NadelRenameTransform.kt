@@ -132,7 +132,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         typeName: GraphQLObjectTypeName,
         rename: NadelRenameFieldInstruction,
     ): ExecutableNormalizedField {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(typeName)
+        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = typeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
         return state.aliasHelper.toArtificial(

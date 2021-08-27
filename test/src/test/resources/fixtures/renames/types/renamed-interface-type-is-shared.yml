@@ -1,0 +1,70 @@
+name: renamed interface type is shared
+enabled:
+  current: false
+  nextgen: true
+ignored:
+  nextgen: true # This is a bug that we cannot fix, we need better syntax to declare the specific services
+overallSchema:
+  NextgenIssues: |-
+    type Query {
+      node(id: ID!): Node
+    }
+  IssueService: |-
+    type Query {
+      hello: String
+    }
+    type JiraIssue implements Node @renamed(from: "Issue") {
+      id: ID
+    }
+  Shared: |-
+    interface Node {
+      id: ID
+    }
+underlyingSchema:
+  NextgenIssues: |-
+    type Query {
+      node(id: ID!): Node
+    }
+    type NextgenIssue implements Node {
+      id: ID
+    }
+  IssueService: |-
+    type Query {
+      issue(id: ID): Issue
+    }
+    type Issue {
+      id: ID
+    }
+  Shared: |-
+    type Query {
+      me: String
+    }
+query: |
+  query {
+    node(id: "ISSUE-1") {
+      ... on JiraIssue {
+        id
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: NextgenIssues
+      request:
+        query: |-
+          query {
+            node(id: "ISSUE-1") {
+              ... on NextgenIssue {
+                id
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {}
+# language=JSON
+response: |-
+  {}

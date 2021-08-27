@@ -1,0 +1,216 @@
+name: renamed type is shared with random type name
+enabled:
+  current: false
+  nextgen: true
+ignored:
+  nextgen: true # We do not allow implicit renames, enable this test once we have explicit renames for shared types
+overallSchema:
+  Nextgen: |-
+    type Query {
+      elements: ElementConnection
+    }
+  Service: |-
+    type Query {
+      old: ElementConnection
+    }
+    type ElementConnection {
+      nodes: [Element]
+    }
+    type Element implements Node {
+      id: ID
+      other: RenamedOther
+    }
+    type RenamedOther @renamed(from: "Other") {
+      id: ID!
+    }
+  Shared: |-
+    interface Node {
+      id: ID
+    }
+underlyingSchema:
+  Nextgen: |-
+    type Query {
+      elements: NextgenElementConnection
+    }
+    type NextgenElementConnection {
+      nodes: [NextgenElement]
+    }
+    type NextgenElement implements Node {
+      id: ID
+      other: NextgenOther
+    }
+    type NextgenOther {
+      id: ID!
+    }
+    interface Node {
+      id: ID
+    }
+  Service: |-
+    type Query {
+      old: ElementConnection
+    }
+    type ElementConnection {
+      nodes: [Element]
+    }
+    type Element implements Node {
+      id: ID
+      other: Other
+    }
+    type Other {
+      id: ID!
+    }
+    interface Node {
+      id: ID
+    }
+  Shared: |-
+    type Query {
+      node(id: ID): Node
+    }
+    interface Node {
+      id: ID
+    }
+query: |
+  query {
+    elements {
+      __typename
+      nodes {
+        __typename
+        other {
+          __typename
+          id
+        }
+      }
+    }
+    old {
+      __typename
+      nodes {
+        __typename
+        other {
+          __typename
+          id
+        }
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Nextgen
+      request:
+        query: |-
+          query {
+            ... on Query {
+              elements {
+                ... on NextgenElementConnection {
+                  __typename
+                  nodes {
+                    ... on NextgenElement {
+                      __typename
+                      other {
+                        ... on NextgenOther {
+                          __typename
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "elements": {
+              "__typename": "NextgenElementConnection",
+              "nodes": [
+                {
+                  "__typename": "NextgenElement",
+                  "other": {
+                    "__typename": "NextgenOther",
+                    "id": "OTHER-1"
+                  }
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: Service
+      request:
+        query: |-
+          query {
+            ... on Query {
+              old {
+                ... on ElementConnection {
+                  __typename
+                  nodes {
+                    ... on Element {
+                      __typename
+                      other {
+                        ... on Other {
+                          __typename
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "old": {
+              "__typename": "ElementConnection",
+              "nodes": [
+                {
+                  "__typename": "Element",
+                  "other": {
+                    "__typename": "Other",
+                    "id": "OTHER-2"
+                  }
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "elements": {
+        "__typename": "ElementConnection",
+        "nodes": [
+          {
+            "__typename": "Element",
+            "other": {
+              "__typename": "RenamedOther",
+              "id": "OTHER-1"
+            }
+          }
+        ]
+      },
+      "old": {
+        "__typename": "ElementConnection",
+        "nodes": [
+          {
+            "__typename": "Element",
+            "other": {
+              "__typename": "RenamedOther",
+              "id": "OTHER-2"
+            }
+          }
+        ]
+      }
+    },
+    "extensions": {}
+  }
