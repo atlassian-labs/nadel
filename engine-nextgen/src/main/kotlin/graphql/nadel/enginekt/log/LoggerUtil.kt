@@ -6,11 +6,11 @@ import graphql.nadel.util.LogKit
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-inline fun <reified T> getLogger(): Logger {
+internal inline fun <reified T> getLogger(): Logger {
     return LoggerFactory.getLogger(T::class.java)
 }
 
-inline fun <reified T> getNotPrivacySafeLogger(): Logger {
+internal inline fun <reified T> getNotPrivacySafeLogger(): Logger {
     return LogKit.getNotPrivacySafeLogger(T::class.java)
 }
 
@@ -48,6 +48,6 @@ var kvImpl: (String, Any?) -> Any? = { key, value ->
     key to value
 }
 
-fun Logger.kv(key: String, value: Any?): Any? {
+internal fun Logger.kv(key: String, value: Any?): Any? {
     return kvImpl(key, value)
 }
