@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 
 @KeepHook
-class `execution-is-aborted-when-begin-execute-completes-exceptionally` : EngineTestHook {
+class `execution-is-aborted-when-begin-execute-completes-exceptionally-inside-cf` : EngineTestHook {
     var instrumentationParams: NadelInstrumentationExecuteOperationParameters? = null
     var resultBeforeFinalInstrumentation: ExecutionResult? = null
 
@@ -47,7 +47,9 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally` : Engine
                     parameters: NadelInstrumentationExecuteOperationParameters,
                 ): CompletableFuture<InstrumentationContext<ExecutionResult?>> {
                     instrumentationParams = parameters
-                    throw AbortExecutionException("instrumented-error")
+                    return CompletableFuture.supplyAsync {
+                        throw AbortExecutionException("instrumented-error")
+                    }
                 }
 
                 override fun instrumentExecutionResult(

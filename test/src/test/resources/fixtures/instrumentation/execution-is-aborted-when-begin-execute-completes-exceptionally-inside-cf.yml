@@ -1,4 +1,4 @@
-name: execution is aborted when beginExecute completes exceptionally
+name: execution is aborted when beginExecute completes exceptionally inside cf
 enabled:
   current: true
   nextgen: true
