@@ -76,7 +76,7 @@ class NadelAliasHelper private constructor(private val alias: String) {
     companion object {
         fun forField(tag: String, field: ExecutableNormalizedField): NadelAliasHelper {
             // TODO: detect when not in test environment and provide UUID or similar
-            return NadelAliasHelper("${tag}__${field.name}")
+            return NadelAliasHelper("${tag}__${field.resultKey}")
         }
     }
 }
