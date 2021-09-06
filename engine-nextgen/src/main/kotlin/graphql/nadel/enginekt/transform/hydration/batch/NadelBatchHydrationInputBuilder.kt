@@ -81,11 +81,11 @@ internal object NadelBatchHydrationInputBuilder {
      * ```graphql
      * type User {
      *   friendId: [ID]
-     *   friend: User @hydrated(
+     *   friend(acquaintances: Boolean! = false): User @hydrated(
      *     from: "usersByIds",
      *     arguments: [
      *       {name: "userIds", valueFromField: "friendId"}
-     *       {name: "", valueFromField: "friendId"}
+     *       {name: "acquaintances", valueFromArgument: "acquaintances"}
      *     ],
      *   )
      * }

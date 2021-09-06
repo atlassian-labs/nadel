@@ -12,6 +12,7 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
+import graphql.nadel.enginekt.log.getLogger
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelTransform
@@ -45,6 +46,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
 import java.util.concurrent.CompletableFuture
+import java.util.logging.Logger
 
 class NextgenEngine @JvmOverloads constructor(
     nadel: Nadel,
@@ -143,7 +145,6 @@ class NextgenEngine @JvmOverloads constructor(
         instrumentationContext.onCompleted(result, null)
         return result
     }
-
 
     private suspend fun executeTopLevelField(
         topLevelField: ExecutableNormalizedField,

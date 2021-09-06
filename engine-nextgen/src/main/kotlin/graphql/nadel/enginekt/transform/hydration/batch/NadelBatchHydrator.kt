@@ -6,6 +6,9 @@ import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.enginekt.log.getNotPrivacySafeLogger
+import graphql.nadel.enginekt.log.ifDebugEnabled
+import graphql.nadel.enginekt.log.kv
 import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationFieldsBuilder
@@ -33,6 +36,8 @@ import kotlinx.coroutines.coroutineScope
 internal class NadelBatchHydrator(
     private val engine: NextgenEngine,
 ) {
+    private val logNotSafe = getNotPrivacySafeLogger<NadelBatchHydrator>()
+
     suspend fun hydrate(
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
@@ -145,9 +150,30 @@ internal class NadelBatchHydrator(
                 )
             }
             .toList()
-            .also {
+            .also { resultInstructions ->
                 if (resultIndex != resultValues.size) {
                     raiseErrorDueToCountMismatch()
+                }
+
+                logNotSafe.ifDebugEnabled {
+                    val hydratedFieldQueryPathToString = state.hydratedField.queryPath.segments.joinToString("/")
+                    val parentNodesToPrint = parentNodes.map { parentNode ->
+                        mapOf(
+                            "path" to parentNode.resultPath.segments.joinToString(separator = "/") {
+                                it.value.toString()
+                            },
+                            "value" to parentNode.value,
+                        )
+                    }
+
+                    debug(
+                        "Index based batch hydration for $hydratedFieldQueryPathToString",
+                        kv("resultValueCount", resultValues.size),
+                        kv("resultValues", resultValues),
+                        kv("parentNodeCount", parentNodes.size),
+                        kv("parentNodes", parentNodesToPrint),
+                        kv("resultInstructionCount", resultInstructions.size),
+                    )
                 }
             }
     }
