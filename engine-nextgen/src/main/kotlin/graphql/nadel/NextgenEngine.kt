@@ -21,10 +21,10 @@ import graphql.nadel.enginekt.transform.query.NadelFieldToService
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
+import graphql.nadel.enginekt.util.beginExecute
 import graphql.nadel.enginekt.util.copy
 import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
-import graphql.nadel.enginekt.util.getInstrumentationContext
 import graphql.nadel.enginekt.util.getOperationKind
 import graphql.nadel.enginekt.util.mergeResults
 import graphql.nadel.enginekt.util.newExecutionResult
@@ -35,8 +35,9 @@ import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
+import graphql.nadel.util.LogKit
 import graphql.normalized.ExecutableNormalizedField
-import graphql.normalized.ExecutableNormalizedOperationFactory
+import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
@@ -45,6 +46,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
+import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 import java.util.logging.Logger
 
@@ -53,6 +55,9 @@ class NextgenEngine @JvmOverloads constructor(
     transforms: List<NadelTransform<out Any>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) : NadelExecutionEngine {
+    private val logNotSafe = LogKit.getNotPrivacySafeLogger(NextgenEngine::class.java)
+    private val log = LoggerFactory.getLogger(NextgenEngine::class.java)
+
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallSchema = nadel.overallSchema
     private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
@@ -98,52 +103,58 @@ class NextgenEngine @JvmOverloads constructor(
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
     ): ExecutionResult {
-        val query = try {
-            ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables(
+        try {
+            val query = createExecutableNormalizedOperationWithRawVariables(
                 overallExecutionBlueprint.schema,
                 queryDocument,
                 executionInput.operationName,
                 executionInput.variables,
             )
+
+            val executionContext = NadelExecutionContext(executionInput, query, serviceExecutionHooks)
+            val beginExecuteContext = instrumentation.beginExecute(
+                query,
+                queryDocument,
+                executionInput,
+                overallSchema,
+                instrumentationState,
+            )
+
+            val result: ExecutionResult = try {
+                mergeResults(
+                    coroutineScope {
+                        fieldToService.getServicesForTopLevelFields(query)
+                            .map { (field, service) ->
+                                async {
+                                    try {
+                                        val resolvedService = fieldToService.resolveDynamicService(field, service)
+                                        executeTopLevelField(field, resolvedService, executionContext)
+                                    } catch (e: Throwable) {
+                                        when (e) {
+                                            is GraphQLError -> newExecutionResult(
+                                                error = e,
+                                                data = mutableMapOf(field.resultKey to null)
+                                            )
+                                            else -> throw e
+                                        }
+                                    }
+                                }
+                            }
+                    }.awaitAll()
+                )
+            } catch (e: Throwable) {
+                beginExecuteContext.onCompleted(null, e)
+                throw e
+            }
+
+            beginExecuteContext.onCompleted(result, null)
+            return result
         } catch (e: Throwable) {
             when (e) {
                 is GraphQLError -> return newExecutionResult(error = e)
                 else -> throw e
             }
         }
-
-        val executionContext = NadelExecutionContext(executionInput, query, serviceExecutionHooks)
-        val instrumentationContext = getInstrumentationContext(query, queryDocument, executionInput, overallSchema, instrumentation, instrumentationState)
-
-        val result: ExecutionResult = try {
-            mergeResults(
-                coroutineScope {
-                    fieldToService.getServicesForTopLevelFields(query)
-                        .map { (field, service) ->
-                            async {
-                                try {
-                                    val resolvedService = fieldToService.resolveDynamicService(field, service)
-
-                                    executeTopLevelField(field, resolvedService, executionContext)
-                                } catch (e: Throwable) {
-                                    when (e) {
-                                        is GraphQLError -> newExecutionResult(
-                                            error = e,
-                                            data = mutableMapOf(field.resultKey to null)
-                                        )
-                                        else -> throw e
-                                    }
-                                }
-                            }
-                        }
-                }.awaitAll()
-            )
-        } catch (e: Throwable) {
-            instrumentationContext.onCompleted(null, e)
-            throw e
-        }
-        instrumentationContext.onCompleted(result, null)
-        return result
     }
 
     private suspend fun executeTopLevelField(
@@ -270,13 +281,19 @@ class NextgenEngine @JvmOverloads constructor(
                 .asDeferred()
                 .await()
         } catch (e: Exception) {
+            val errorMessage = "An exception occurred invoking the service '${service.name}'"
+            val errorMessageNotSafe = "$errorMessage: ${e.message}"
+            val executionId = serviceExecParams.executionId.toString()
+            logNotSafe.error("$errorMessageNotSafe. Execution ID '$executionId'", e)
+            log.error("$errorMessage. Execution ID '$executionId'", e)
+
             newServiceExecutionResult(
                 errors = mutableListOf(
                     newGraphQLError(
-                        message = "An exception occurred invoking the service '${service.name}': ${e.message}",
+                        message = errorMessageNotSafe, // End user can receive not safe message
                         errorType = ErrorType.DataFetchingException,
                         extensions = mutableMapOf(
-                            "executionId" to serviceExecParams.executionId.toString(),
+                            "executionId" to executionId,
                         ),
                     ).toSpecification(),
                 ),

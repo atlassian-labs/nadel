@@ -102,7 +102,7 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              rename__foo__fooOriginal: fooOriginal {
+              rename__otherFoo__fooOriginal: fooOriginal {
                 ... on Foo {
                   name
                 }
@@ -115,7 +115,7 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "rename__foo__fooOriginal": {
+            "rename__otherFoo__fooOriginal": {
               "name": "Foo"
             }
           },

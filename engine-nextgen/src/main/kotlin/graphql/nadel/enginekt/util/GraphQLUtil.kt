@@ -322,29 +322,14 @@ fun ExecutableNormalizedField.getOperationKind(
     }
 }
 
-internal suspend fun getInstrumentationContext(
+internal suspend fun NadelInstrumentation.beginExecute(
     query: ExecutableNormalizedOperation,
     queryDocument: Document,
     executionInput: ExecutionInput,
     graphQLSchema: GraphQLSchema,
-    instrumentation: NadelInstrumentation,
     instrumentationState: InstrumentationState?,
 ): InstrumentationContext<ExecutionResult> {
-    val nadelInstrumentationExecuteOperationParameters = buildInstrumentationExecutionParameters(query, queryDocument, executionInput, graphQLSchema, instrumentationState)
-
-    return instrumentation.beginExecute(nadelInstrumentationExecuteOperationParameters)
-        .asDeferred()
-        .await()
-}
-
-private fun buildInstrumentationExecutionParameters(
-    query: ExecutableNormalizedOperation,
-    queryDocument: Document,
-    executionInput: ExecutionInput,
-    graphQLSchema: GraphQLSchema,
-    instrumentationState: InstrumentationState?,
-): NadelInstrumentationExecuteOperationParameters {
-    return NadelInstrumentationExecuteOperationParameters(
+    val nadelInstrumentationExecuteOperationParameters = NadelInstrumentationExecuteOperationParameters(
         query,
         queryDocument,
         graphQLSchema,
@@ -353,6 +338,10 @@ private fun buildInstrumentationExecutionParameters(
         instrumentationState,
         executionInput.context
     )
+
+    return beginExecute(nadelInstrumentationExecuteOperationParameters)
+        .asDeferred()
+        .await()
 }
 
 /**

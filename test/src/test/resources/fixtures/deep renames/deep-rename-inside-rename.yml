@@ -71,7 +71,7 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              rename__issue__first: first {
+              rename__first__first: first {
                 ... on Issue {
                   __typename
                   __typename__deep_rename__name: __typename
@@ -90,7 +90,7 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "rename__issue__first": {
+            "rename__first__first": {
               "__typename": "Issue",
               "deep_rename__name__details": {
                 "name": "name-from-details"
