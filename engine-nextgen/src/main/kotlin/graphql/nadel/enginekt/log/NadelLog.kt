@@ -1,5 +1,3 @@
-@file:JvmName("LogKt")
-
 package graphql.nadel.enginekt.log
 
 import graphql.nadel.util.LogKit

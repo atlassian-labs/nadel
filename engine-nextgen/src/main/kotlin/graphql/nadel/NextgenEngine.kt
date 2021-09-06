@@ -1,7 +1,7 @@
 package graphql.nadel
 
+import graphql.ErrorType
 import graphql.ExecutionInput
-
 import graphql.ExecutionResult
 import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
