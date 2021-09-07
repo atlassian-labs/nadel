@@ -1,4 +1,4 @@
-name: hydration matching using index returning null
+name: hydration matching using index returning null elements
 enabled:
   current: true
   nextgen: true
@@ -28,6 +28,7 @@ underlyingSchema:
     type Query {
       usersByIds(ids: [ID]): [User]
     }
+
     type User {
       id: ID
       name: String
@@ -37,6 +38,7 @@ underlyingSchema:
       authorIds: [ID]
       id: ID
     }
+
     type Query {
       issues: [Issue]
     }
@@ -99,7 +101,17 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "usersByIds": null
+            "usersByIds": [
+              {
+                "id": "USER-1",
+                "name": "Name"
+              },
+              null,
+              {
+                "id": "USER-2",
+                "name": "Name 2"
+              }
+            ]
           },
           "extensions": {}
         }
@@ -162,7 +174,15 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "usersByIds": null
+            "usersByIds": [
+              {
+                "name": "Name"
+              },
+              null,
+              {
+                "name": "Name 2"
+              }
+            ]
           },
           "extensions": {}
         }
@@ -173,11 +193,20 @@ response: |-
       "issues": [
         {
           "id": "ISSUE-1",
-          "authors": [null]
+          "authors": [
+            {
+              "name": "Name"
+            }
+          ]
         },
         {
           "id": "ISSUE-2",
-          "authors": [null, null]
+          "authors": [
+            null,
+            {
+              "name": "Name 2"
+            }
+          ]
         }
       ]
     },
