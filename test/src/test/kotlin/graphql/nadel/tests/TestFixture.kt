@@ -22,6 +22,7 @@ data class TestFixture(
     val underlyingSchema: Map<String, String>,
     val query: String,
     val variables: Map<String, Any?>,
+    val operationName: String? = null,
     val serviceCalls: ServiceCalls,
     @JsonProperty("response")
     val responseJsonString: String?,

@@ -15,7 +15,6 @@ import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.deepClone
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
-import graphql.schema.FieldCoordinates
 
 internal object NadelHydrationFieldsBuilder {
     fun makeActorQueries(

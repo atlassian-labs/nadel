@@ -1,0 +1,35 @@
+name: rejects multiple operation defs without explicit op name
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service: |
+    service service {
+      type Query {
+        foo: String
+      }
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: String
+    }
+query: |
+  query Foo {
+    foo
+  }
+  query Test {
+    test: foo
+  }
+  query Dog {
+    dog: foo
+  }
+  query Meow {
+    cat: foo
+  }
+operationName: null
+variables: {}
+serviceCalls:
+  nextgen: []
+# Assertion done in test hook
+response: null

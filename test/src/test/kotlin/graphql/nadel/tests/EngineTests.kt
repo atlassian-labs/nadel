@@ -4,7 +4,6 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionEngineFactory
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
@@ -179,7 +178,7 @@ private suspend fun execute(
                 }
             })
             .let {
-                testHooks?.makeNadel(engineType, it) ?: it
+                testHooks.makeNadel(engineType, it)
             }
             .build()
 
@@ -187,9 +186,10 @@ private suspend fun execute(
             newNadelExecutionInput()
                 .query(fixture.query)
                 .variables(fixture.variables)
+                .operationName(fixture.operationName)
                 .artificialFieldsUUID("UUID")
                 .let { builder ->
-                    testHooks?.makeExecutionInput(engineType, builder) ?: builder
+                    testHooks.makeExecutionInput(engineType, builder)
                 }
                 .build(),
         ).await()
@@ -227,12 +227,12 @@ private suspend fun execute(
             )
         }
 
-        testHooks?.assertResult(engineType, response)
+        testHooks.assertResult(engineType, response)
     } catch (e: Throwable) {
         if (fixture.exception?.message?.matches(e.message ?: "") == true) {
             return
         }
-        if (testHooks?.assertFailure(engineType, e) == true) {
+        if (testHooks.assertFailure(engineType, e)) {
             return
         }
         fail("Unexpected error during engine execution", e)
