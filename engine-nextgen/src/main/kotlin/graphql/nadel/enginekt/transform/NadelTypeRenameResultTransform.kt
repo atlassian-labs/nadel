@@ -5,13 +5,13 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
-import graphql.nadel.enginekt.transform.NadelTypeRenameResultTransform.State
 
 internal class NadelTypeRenameResultTransform : NadelTransform<State> {
     data class State(

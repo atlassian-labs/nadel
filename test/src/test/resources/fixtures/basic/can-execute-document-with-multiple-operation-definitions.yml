@@ -1,0 +1,59 @@
+name: can execute document with multiple operation definitions
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service: |
+    service service {
+      type Query {
+        foo: String
+      }
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: String
+    }
+query: |
+  query Foo {
+    foo
+  }
+  query Test {
+    test: foo
+  }
+  query Dog {
+    dog: foo
+  }
+  query Meow {
+    cat: foo
+  }
+operationName: Test
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query Test {
+            ... on Query {
+              test: foo
+            }
+          }
+        variables: {}
+        operationName: Test
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "test": "Test Working"
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "test": "Test Working"
+    },
+    "extensions": {}
+  }

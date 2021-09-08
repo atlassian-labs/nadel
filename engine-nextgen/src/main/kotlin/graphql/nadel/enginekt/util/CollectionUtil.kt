@@ -16,7 +16,7 @@ inline fun <reified T> Collection<*>.singleOfTypeOrNull(predicate: (T) -> Boolea
  * Like [singleOrNull] but the single item must be of type [T].
  */
 inline fun <reified T> Collection<*>.singleOfType(predicate: (T) -> Boolean = { true }): T {
-    return singleOfTypeOrNull(predicate) as T
+    return singleOfTypeOrNull(predicate)!!
 }
 
 inline fun <K, E> Iterable<E>.strictAssociateBy(crossinline keyExtractor: (E) -> K): Map<K, E> {

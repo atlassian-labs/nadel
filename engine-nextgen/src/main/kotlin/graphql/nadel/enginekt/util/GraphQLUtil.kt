@@ -322,6 +322,21 @@ fun ExecutableNormalizedField.getOperationKind(
     }
 }
 
+/**
+ * Standard [Document.getOperationDefinition] does not suit needs as it doesn't handle null
+ * operation names, and returns a yucky [java.util.Optional].
+ *
+ * Don't use [graphql.language.NodeUtil.getOperation] because that does weird things and stores
+ * operation and fragment definitions in [Map]s.
+ */
+internal fun Document.getOperationDefinitionOrNull(operationName: String?): OperationDefinition? {
+    operationName ?: return definitions.singleOfTypeOrNull()
+
+    return definitions.singleOfTypeOrNull<OperationDefinition> { def ->
+        def.name == operationName
+    }
+}
+
 internal suspend fun NadelInstrumentation.beginExecute(
     query: ExecutableNormalizedOperation,
     queryDocument: Document,
@@ -334,9 +349,10 @@ internal suspend fun NadelInstrumentation.beginExecute(
         queryDocument,
         graphQLSchema,
         executionInput.variables,
-        queryDocument.definitions.singleOfType(),
+        queryDocument.getOperationDefinitionOrNull(executionInput.operationName)
+            ?: error("Unable to find operation. This should not happen. Query document should be valid by now."),
         instrumentationState,
-        executionInput.context
+        executionInput.context,
     )
 
     return beginExecute(nadelInstrumentationExecuteOperationParameters)
