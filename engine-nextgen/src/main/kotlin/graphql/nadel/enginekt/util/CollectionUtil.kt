@@ -192,3 +192,19 @@ fun <T, R> Iterable<T>.foldWhileNotNull(initial: R, operation: (acc: R, T) -> R)
     }
     return accumulator
 }
+
+fun <T> listOfNulls(size: Int): List<T?> {
+    return ArrayList<T?>(size).also {
+        for (i in 1..size) {
+            it.add(null)
+        }
+    }
+}
+
+fun <T> sequenceOfNulls(size: Int): Sequence<T?> {
+    return sequence {
+        for (i in 1..size) {
+            yield(null)
+        }
+    }
+}

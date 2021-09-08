@@ -74,6 +74,8 @@ internal object NadelBatchHydrationInputBuilder {
     }
 
     /**
+     * TODO: this should really be baked into the [instruction] and also be mandatory…
+     *
      * Get the input def that is collated together to form the batch input.
      *
      * e.g. for a schema
@@ -81,11 +83,11 @@ internal object NadelBatchHydrationInputBuilder {
      * ```graphql
      * type User {
      *   friendId: [ID]
-     *   friend: User @hydrated(
+     *   friend(acquaintances: Boolean! = false): User @hydrated(
      *     from: "usersByIds",
      *     arguments: [
      *       {name: "userIds", valueFromField: "friendId"}
-     *       {name: "", valueFromField: "friendId"}
+     *       {name: "acquaintances", valueFromArgument: "acquaintances"}
      *     ],
      *   )
      * }
@@ -132,7 +134,8 @@ internal object NadelBatchHydrationInputBuilder {
             flatten = true,
         )
 
-        return nodes.asSequence()
+        return nodes
+            .asSequence()
             .map { it.value }
             .flatten(recursively = true)
             .filterNotNull()

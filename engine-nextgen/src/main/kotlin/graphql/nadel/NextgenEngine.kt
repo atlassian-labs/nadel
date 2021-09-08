@@ -12,6 +12,8 @@ import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
+import graphql.nadel.enginekt.log.getLogger
+import graphql.nadel.enginekt.log.getNotPrivacySafeLogger
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelTransform
@@ -34,7 +36,6 @@ import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
-import graphql.nadel.util.LogKit
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
@@ -45,7 +46,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
-import org.slf4j.LoggerFactory
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(
@@ -53,8 +53,8 @@ class NextgenEngine @JvmOverloads constructor(
     transforms: List<NadelTransform<out Any>> = emptyList(),
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory = NadelIntrospectionRunnerFactory(::NadelDefaultIntrospectionRunner),
 ) : NadelExecutionEngine {
-    private val logNotSafe = LogKit.getNotPrivacySafeLogger(NextgenEngine::class.java)
-    private val log = LoggerFactory.getLogger(NextgenEngine::class.java)
+    private val logNotSafe = getNotPrivacySafeLogger<NextgenEngine>()
+    private val log = getLogger<NextgenEngine>()
 
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallSchema = nadel.overallSchema

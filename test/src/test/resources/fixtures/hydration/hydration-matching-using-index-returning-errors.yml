@@ -1,4 +1,4 @@
-name: hydration matching using index returning null
+name: hydration matching using index returning errors
 enabled:
   current: true
   nextgen: true
@@ -173,11 +173,16 @@ response: |-
       "issues": [
         {
           "id": "ISSUE-1",
-          "authors": [null]
+          "authors": [
+            null
+          ]
         },
         {
           "id": "ISSUE-2",
-          "authors": [null, null]
+          "authors": [
+            null,
+            null
+          ]
         }
       ]
     },
