@@ -1,0 +1,43 @@
+name: sets dynamic alias
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo @renamed(from: "bar")
+    }
+    type Foo @renamed(from: "Bar") {
+      phoneNumber: String @renamed(from: "landline.number")
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      bar: Bar
+    }
+    type Bar {
+      landline: Landline
+    }
+    type Landline {
+      number: String
+    }
+query: |
+  query {
+    foo {
+      phoneNumber
+    }
+  }
+variables: {}
+serviceCalls:
+  # Handled by service hook
+  nextgen: []
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "phoneNumber": "aoeu"
+      }
+    },
+    "extensions": {}
+  }

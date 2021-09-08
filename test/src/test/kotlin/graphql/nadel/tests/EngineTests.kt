@@ -8,6 +8,7 @@ import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.transform.artificial.AliasGenerator
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
@@ -29,7 +30,7 @@ import java.util.concurrent.CompletableFuture
  * 2. Test name e.g. hydration inside a renamed field
  * 3. Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = ""
+private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")
@@ -108,6 +109,9 @@ private suspend fun execute(
     engineType: NadelEngineType,
     engineFactory: TestEngineFactory,
 ) {
+    // Tests need static aliases for mocked responses
+    AliasGenerator.isStatic = true
+
     val printLock = Any()
     fun printSyncLine(message: String): Unit = synchronized(printLock) {
         println(message)
