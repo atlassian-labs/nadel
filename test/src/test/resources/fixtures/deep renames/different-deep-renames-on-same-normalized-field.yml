@@ -1,0 +1,111 @@
+name: different deep renames on same normalized field
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Pets: |
+    type Query {
+      pets: [Pet]
+    }
+    interface Pet {
+      name: String
+    }
+    type Dog implements Pet {
+      name: String => renamed from collar.petName
+    }
+    type Cat implements Pet {
+      name: String => renamed from microchip.petName
+    }
+underlyingSchema:
+  Pets: |
+    type Query {
+      pets: [Pet]
+    }
+    interface Pet {
+      id: ID
+    }
+    type Dog implements Pet {
+      id: ID
+      collar: Collar
+    }
+    type Cat implements Pet {
+      id: ID
+      microchip: Microchip
+    }
+    type Microchip {
+      petName: String
+    }
+    type Collar {
+      petName: String
+    }
+query: |
+  query {
+    pets {
+      name
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Pets
+      request:
+        query: |-
+          query {
+            ... on Query {
+              pets {
+                ... on Dog {
+                  deep_rename__name__collar: collar {
+                    ... on Collar {
+                      petName
+                    }
+                  }
+                  __typename__deep_rename__name: __typename
+                }
+                ... on Cat {
+                  deep_rename__name__microchip: microchip {
+                    ... on Microchip {
+                      petName
+                    }
+                  }
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName:
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "pets": [
+              {
+                "__typename__deep_rename__name": "Cat",
+                "deep_rename__name__microchip": {
+                  "petName": "Tiger"
+                }
+              },
+              {
+                "__typename__deep_rename__name": "Dog",
+                "deep_rename__name__collar": {
+                  "petName": "Luna"
+                }
+              }
+            ]
+          }
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "pets": [
+        {
+          "name": "Tiger"
+        },
+        {
+          "name": "Luna"
+        }
+      ]
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,124 @@
+name: hydration with deep rename
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  IssueService: |-
+    type Query {
+      issue: Issue
+    }
+    type Issue {
+      author: User => hydrated from UserService.userById(userId: $source.authorId)
+    }
+  UserService: |-
+    type Query {
+      userById(userId: ID!): User
+    }
+    type User {
+      id: ID!
+      name: String => renamed from details.name
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      userById(userId: ID!): User
+    }
+    type User {
+      id: ID!
+      details: UserDetails
+    }
+    type UserDetails {
+      name: String
+    }
+  IssueService: |
+    type Query {
+        issue: Issue
+    }
+    type Issue {
+        authorId: ID!
+    }
+query: |
+  {
+    issue {
+      author {
+        id
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: IssueService
+      request:
+        query: |-
+          {
+            ... on Query {
+              issue {
+                ... on Issue {
+                  hydration__author__authorId: authorId
+                  __typename__hydration__author: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "__typename__hydration__author": "Issue",
+              "hydration__author__authorId"  : "user-1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            ... on Query {
+              userById(userId: "user-1") {
+                ... on User {
+                  id
+                  deep_rename__name__details: details {
+                    ... on UserDetails {
+                      name
+                    }
+                  }
+                  __typename__deep_rename__name: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "userById": {
+              "__typename__deep_rename__name": "User",
+              "id": "user-1",
+              "deep_rename__name__details": {
+                "name": "Atlassian"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "author": {
+          "id": "user-1",
+          "name": "Atlassian"
+        }
+      }
+    },
+    "extensions": {}
+  }
