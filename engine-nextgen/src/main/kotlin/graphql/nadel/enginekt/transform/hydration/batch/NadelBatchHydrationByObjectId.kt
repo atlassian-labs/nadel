@@ -84,7 +84,7 @@ internal object NadelBatchHydrationByObjectId {
 
         val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
             // Set to null if there were no identifier nodes
-            if (parentNodeIdentifierNodes.all { it.value == null }) {
+            if (parentNodeIdentifierNodes.isNotEmpty() && parentNodeIdentifierNodes.all { it.value == null }) {
                 null
             } else {
                 parentNodeIdentifierNodes
