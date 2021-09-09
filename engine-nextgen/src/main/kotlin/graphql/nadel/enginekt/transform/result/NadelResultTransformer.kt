@@ -20,6 +20,9 @@ import graphql.nadel.enginekt.util.MutableJsonMap
 import graphql.nadel.enginekt.util.asMutableJsonMap
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlin.reflect.KClass
 
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
@@ -31,24 +34,29 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
-        val instructions = executionPlan.transformationSteps.flatMap { (field, steps) ->
-            steps.flatMap step@{ step ->
-                // This can be null if we did not end up sending the field e.g. for hydration
-                val underlyingFields = overallToUnderlyingFields[field]
-                    ?.takeIf(List<ExecutableNormalizedField>::isNotEmpty)
-                    ?: return@step emptyList()
+        val instructions = coroutineScope {
+            executionPlan.transformationSteps.flatMap { (field, steps) ->
+                steps.map { step ->
+                    async {
+                        // This can be null if we did not end up sending the field e.g. for hydration
+                        val underlyingFields = overallToUnderlyingFields[field]
+                        if (underlyingFields == null || underlyingFields.isEmpty()) {
+                            return@async emptyList()
+                        }
 
-                step.transform.getResultInstructions(
-                    executionContext,
-                    executionBlueprint,
-                    service,
-                    field,
-                    underlyingFields.first().parent,
-                    result,
-                    step.state,
-                )
-            }
-        } + getRemoveArtificialFieldInstructions(result, artificialFields)
+                        step.transform.getResultInstructions(
+                            executionContext,
+                            executionBlueprint,
+                            service,
+                            field,
+                            underlyingFields.first().parent,
+                            result,
+                            step.state,
+                        )
+                    }
+                }
+            }.awaitAll().flatten() + getRemoveArtificialFieldInstructions(result, artificialFields)
+        }
 
         mutate(result, instructions)
 
