@@ -1,0 +1,48 @@
+name: can execute single named operation when operation name is empty
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: String
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: String
+    }
+query: |
+  query Test {
+    test: foo
+  }
+operationName: ""
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query Test {
+            ... on Query {
+              test: foo
+            }
+          }
+        variables: {}
+        operationName: Test
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "test": "Test Working"
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "test": "Test Working"
+    },
+    "extensions": {}
+  }

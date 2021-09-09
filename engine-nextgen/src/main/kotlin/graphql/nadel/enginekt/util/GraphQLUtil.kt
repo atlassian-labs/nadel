@@ -330,7 +330,9 @@ fun ExecutableNormalizedField.getOperationKind(
  * operation and fragment definitions in [Map]s.
  */
 internal fun Document.getOperationDefinitionOrNull(operationName: String?): OperationDefinition? {
-    operationName ?: return definitions.singleOfTypeOrNull()
+    if (operationName == null || operationName.isEmpty()) {
+        return definitions.singleOfTypeOrNull()
+    }
 
     return definitions.singleOfTypeOrNull<OperationDefinition> { def ->
         def.name == operationName
