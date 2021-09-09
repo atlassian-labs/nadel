@@ -88,13 +88,10 @@ internal object NadelBatchHydrationByObjectId {
                 null
             } else {
                 parentNodeIdentifierNodes
-                    .flatMap { parentNodeIdentifierNode ->
-                        when (val id = parentNodeIdentifierNode.value) {
-                            null -> emptySequence()
-                            is AnyList -> id.asSequence().flatten(recursively = true)
-                            else -> sequenceOf(id)
-                        }
-                    }
+                    .asSequence()
+                    .map { it.value }
+                    .flatten(recursively = true)
+                    .filterNotNull()
                     .map { id ->
                         resultNodesByObjectId[id]
                     }
