@@ -130,8 +130,8 @@ class NextgenEngine @JvmOverloads constructor(
                                     } catch (e: Throwable) {
                                         when (e) {
                                             is GraphQLError -> newExecutionResult(
+                                                data = mutableMapOf(field.resultKey to null),
                                                 error = e,
-                                                data = mutableMapOf(field.resultKey to null)
                                             )
                                             else -> throw e
                                         }
@@ -141,11 +141,11 @@ class NextgenEngine @JvmOverloads constructor(
                     }.awaitAll()
                 )
             } catch (e: Throwable) {
-                beginExecuteContext.onCompleted(null, e)
+                beginExecuteContext?.onCompleted(null, e)
                 throw e
             }
 
-            beginExecuteContext.onCompleted(result, null)
+            beginExecuteContext?.onCompleted(result, null)
             return result
         } catch (e: Throwable) {
             when (e) {

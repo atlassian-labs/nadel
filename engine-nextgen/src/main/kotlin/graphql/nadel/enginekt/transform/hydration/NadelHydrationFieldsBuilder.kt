@@ -20,19 +20,19 @@ internal object NadelHydrationFieldsBuilder {
     fun makeActorQueries(
         instruction: NadelHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
-        hydratedField: ExecutableNormalizedField,
+        fieldToHydrate: ExecutableNormalizedField,
         parentNode: JsonNode,
     ): List<ExecutableNormalizedField> {
         return NadelHydrationInputBuilder.getInputValues(
             instruction = instruction,
             aliasHelper = aliasHelper,
-            hydratedField = hydratedField,
+            fieldToHydrate = fieldToHydrate,
             parentNode = parentNode,
         ).map { args ->
             makeActorQueries(
                 instruction = instruction,
                 fieldArguments = args,
-                fieldChildren = deepClone(fields = hydratedField.children),
+                fieldChildren = deepClone(fields = fieldToHydrate.children),
             )
         }
     }

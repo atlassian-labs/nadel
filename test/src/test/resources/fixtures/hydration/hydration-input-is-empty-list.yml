@@ -1,49 +1,50 @@
-name: batch hydration input is absent
+name: hydration input is empty list
 enabled:
   current: true
   nextgen: true
 overallSchema:
   UserService: |
-    type Query {
-      usersByIds(ids: [ID]): [User]
-    }
-    type User {
-      id: ID
-      name: String
+    service UserService {
+      type Query {
+        userById(id: ID!): User
+      }
+      type User {
+        id: ID
+        name: String
+      }
     }
   Issues: |
-    type Query {
-      issues: [Issue]
-    }
-    type Issue {
-      id: ID
-      authors: [User] @hydrated(
-        service: "UserService"
-        field: "usersByIds"
-        arguments: [
-          {name: "ids" value: "$source.authors.id"}
-        ]
-        identifiedBy: "id"
-        batchSize: 2
-      )
+    service Issues {
+      type Query {
+        issues: [Issue]
+      }
+      type Issue {
+        id: ID
+        author: [User] @hydrated(
+          service: "UserService"
+          field: "userById"
+          arguments: [
+            {name: "id" value: "$source.authorIds"}
+          ]
+        )
+      }
     }
 underlyingSchema:
   UserService: |
     type Query {
-      usersByIds(ids: [ID]): [User]
+      userById(id: ID!): User
     }
+
     type User {
       id: ID
       name: String
     }
   Issues: |
     type Issue {
-      authors: [UserRef]
-      id: ID
-    }
-    type UserRef {
       id: ID!
+      authorIds: [ID]
     }
+
     type Query {
       issues: [Issue]
     }
@@ -51,7 +52,7 @@ query: |
   query {
     issues {
       id
-      authors {
+      author {
         name
       }
     }
@@ -64,9 +65,7 @@ serviceCalls:
         query: |
           query nadel_2_Issues {
             issues {
-              authors {
-                id
-              }
+              authorIds
               id
             }
           }
@@ -79,8 +78,7 @@ serviceCalls:
             "issues": [
               {
                 "id": "ISSUE-1",
-                "authors": [
-                ]
+                "authorIds": []
               }
             ]
           },
@@ -94,12 +92,8 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  __typename__batch_hydration__authors: __typename
-                  batch_hydration__authors__authors: authors {
-                    ... on UserRef {
-                      id
-                    }
-                  }
+                  __typename__hydration__author: __typename
+                  hydration__author__authorIds: authorIds
                   id
                 }
               }
@@ -113,9 +107,9 @@ serviceCalls:
           "data": {
             "issues": [
               {
-                "__typename__batch_hydration__authors": "Issue",
-                "batch_hydration__authors__authors": [],
-                "id": "ISSUE-1"
+                "__typename__hydration__author": "Issue",
+                "id": "ISSUE-1",
+                "hydration__author__authorIds": null
               }
             ]
           },
@@ -128,7 +122,7 @@ response: |-
       "issues": [
         {
           "id": "ISSUE-1",
-          "authors": []
+          "author": []
         }
       ]
     },

@@ -4,11 +4,11 @@ import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
-import graphql.nadel.enginekt.transform.hydration.NadelHydrationInputBuilder.valueToAstValue
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
+import graphql.nadel.enginekt.util.javaValueToAstValue
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
@@ -68,7 +68,7 @@ internal object NadelBatchHydrationInputBuilder {
             .map { chunk ->
                 batchInputDef to NormalizedInputValue(
                     GraphQLTypeUtil.simplePrint(actorBatchArgDef.type),
-                    valueToAstValue(chunk),
+                    javaValueToAstValue(chunk),
                 )
             }
     }
@@ -109,7 +109,7 @@ internal object NadelBatchHydrationInputBuilder {
             .emptyOrSingle()
     }
 
-    internal fun getFieldResultValues(
+    private fun getFieldResultValues(
         valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
         parentNodes: List<JsonNode>,
         aliasHelper: NadelAliasHelper,

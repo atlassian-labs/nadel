@@ -59,6 +59,35 @@ fun <K, V> mapFrom(entries: Collection<Pair<K, V>>): Map<K, V> {
  * Like [mapOf] but takes in a [Collection] instead of vararg. Useful if your input
  * into the [Map] is [List.map]ped from another [Collection].
  */
+@JvmName("mapFromPairs")
+fun <K, V> mapFrom(entries: Sequence<Pair<K, V>>): Map<K, V> {
+    val map = HashMap<K, V>()
+    var count = 0
+    entries.forEach {
+        map[it.first] = it.second
+        count++
+    }
+    require(map.size == count) {
+        @Suppress("SimpleRedundantLet") // For debugging purposes if you want to visit the values
+        "Duplicate keys: " + entries.groupBy { it.first }.filterValues { it.size > 1 }.let {
+            it.keys
+        }
+    }
+    return map
+}
+
+fun <K, V> Sequence<Pair<K, V>>.toMapStrictly(): Map<K, V> {
+    return mapFrom(entries = this)
+}
+
+fun <K, V> Collection<Pair<K, V>>.toMapStrictly(): Map<K, V> {
+    return mapFrom(entries = this)
+}
+
+/**
+ * Like [mapOf] but takes in a [Collection] instead of vararg. Useful if your input
+ * into the [Map] is [List.map]ped from another [Collection].
+ */
 @JvmName("mapFromEntries")
 fun <K, V> mapFrom(entries: Collection<Map.Entry<K, V>>): Map<K, V> {
     val map = HashMap<K, V>(entries.size)
