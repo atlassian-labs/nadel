@@ -222,10 +222,27 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
     val extensions: MutableJsonMap = mutableMapOf()
     val errors: MutableList<GraphQLError> = mutableListOf()
 
+    fun putAndMergeTopLevelData(oneData: JsonMap) {
+        for ((topLevelFieldName: String, newTopLevelFieldValue: Any?) in oneData) {
+            if (topLevelFieldName in data) {
+                val existingValue = data[topLevelFieldName]
+                if (existingValue == null) {
+                    data[topLevelFieldName] = newTopLevelFieldValue
+                } else if (existingValue is AnyMap && newTopLevelFieldValue is AnyMap) {
+                    existingValue.asMutableJsonMap().putAll(
+                        newTopLevelFieldValue.asJsonMap(),
+                    )
+                }
+            } else {
+                data[topLevelFieldName] = newTopLevelFieldValue
+            }
+        }
+    }
+
     for (result in results) {
         val resultData = result.getData<JsonMap?>()
         if (resultData != null) {
-            updateOverallResultAndMergeSameNameTopLevelFields(data, resultData)
+            putAndMergeTopLevelData(resultData)
         }
         errors.addAll(result.errors)
         result.extensions?.asJsonMap()?.let(extensions::putAll)
@@ -243,22 +260,6 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
         })
         .errors(errors)
         .build()
-}
-
-internal fun updateOverallResultAndMergeSameNameTopLevelFields(
-    overallResultMap: MutableJsonMap,
-    oneResultMap: JsonMap,
-) {
-    for ((topLevelFieldName, newTopLevelFieldChildren) in oneResultMap) {
-        if (overallResultMap.containsKey(topLevelFieldName)) {
-            val existingTopLevelFieldMap = overallResultMap[topLevelFieldName]
-            if (newTopLevelFieldChildren is AnyMap && existingTopLevelFieldMap is AnyMutableMap) {
-                existingTopLevelFieldMap.asMutableJsonMap().putAll(newTopLevelFieldChildren.asJsonMap())
-            }
-        } else {
-            overallResultMap[topLevelFieldName] = newTopLevelFieldChildren
-        }
-    }
 }
 
 fun makeFieldCoordinates(typeName: String, fieldName: String): FieldCoordinates {

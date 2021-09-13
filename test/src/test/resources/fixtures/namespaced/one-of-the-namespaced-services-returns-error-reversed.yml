@@ -1,0 +1,202 @@
+name: one of the namespaced services returns error reversed
+enabled:
+  nextgen: true
+  current: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    extend type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+query: |
+  {
+    issue {
+      getIssue {
+        text
+      }
+      search {
+        count
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issue {
+              getIssue {
+                text
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": null
+          },
+          "errors": [
+            {
+              "message": "Error on IssueSearch"
+            }
+          ],
+          "extensions": {}
+        }
+    - serviceName: IssueSearch
+      request:
+        query: |
+          query nadel_2_IssueSearch {
+            issue {
+              search {
+                count
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_IssueSearch
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "search": {
+                "count": 1
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  getIssue {
+                    ... on Issue {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": null
+          },
+          "errors": [
+            {
+              "message": "Error on IssueSearch"
+            }
+          ],
+          "extensions": {}
+        }
+    - serviceName: IssueSearch
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  search {
+                    ... on SearchResult {
+                      count
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "search": {
+                "count": 1
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "search": {
+          "count": 1
+        }
+      }
+    },
+    "errors": [
+      {
+        "message": "Error on IssueSearch",
+        "locations": [],
+        "extensions": {
+          "classification": "DataFetchingException"
+        }
+      }
+    ],
+    "extensions": {}
+  }
