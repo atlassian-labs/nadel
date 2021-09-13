@@ -556,7 +556,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
     ServiceExecutionHooks createServiceExecutionHooksWithFieldRemoval(List<String> fieldsToRemove) {
         return new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map<String, Object> variables, GraphQLSchema graphQLSchema, Object userSuppliedContext) {
                 if (fieldsToRemove.contains(normalizedField.getName())) {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
@@ -630,7 +630,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map<String, Object> variables, GraphQLSchema graphQLSchema, Object userSuppliedContext) {
                 if (normalizedField.getName() == "restricted" && normalizedField.getParent().getName() == "issue") {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
@@ -808,7 +808,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
 
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map<String, Object> variables, GraphQLSchema graphQLSchema, Object userSuppliedContext) {
                 if (normalizedField.getName() == "restricted" && normalizedField.getParent().getParent().getName() == "issue") {
                     //temporary GraphQLError ->  need to implement a field permissions denied error
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
@@ -898,7 +898,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
         given:
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map<String, Object> variables, GraphQLSchema graphQLSchema, Object userSuppliedContext) {
                 if (normalizedField.getName() != "restricted") {
                     return CompletableFuture.completedFuture(Optional.empty())
                 }
@@ -989,7 +989,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
         given:
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map<String, Object> variables, GraphQLSchema graphQLSchema, Object userSuppliedContext) {
                 hydrationArgumentsFromAllCallsToIsFieldForbidden.add(hydrationArguments)
                 return CompletableFuture.completedFuture(Optional.empty())
             }
@@ -1084,7 +1084,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
         given:
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map<String, Object> variables, GraphQLSchema graphQLSchema, Object userSuppliedContext) {
                 if (normalizedField.getName() != "restricted") {
                     return CompletableFuture.completedFuture(Optional.empty())
                 }
@@ -1173,7 +1173,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
         given:
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map<String, Object> variables, GraphQLSchema graphQLSchema, Object userSuppliedContext) {
                 if (normalizedField.getName() == "restricted" && variables.get("productId") == "restrictedProduct") {
                     return CompletableFuture.completedFuture(Optional.of(new AbortExecutionException("removed field")))
                 }
@@ -1263,7 +1263,7 @@ class RemovedFieldsTest extends StrategyTestHelper {
         def _hideSecret = hideSecret
         def hooks = new ServiceExecutionHooks() {
             @Override
-            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map variables, Object userSuppliedContext) {
+            CompletableFuture<Optional<GraphQLError>> isFieldForbidden(NormalizedQueryField normalizedField, HydrationArguments hydrationArguments, Map<String, Object> variables, GraphQLSchema graphQLSchema, Object userSuppliedContext) {
                 if (!_hideSecret) {
                     return CompletableFuture.completedFuture(Optional.empty())
                 }

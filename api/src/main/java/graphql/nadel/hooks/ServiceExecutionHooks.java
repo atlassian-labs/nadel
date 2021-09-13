@@ -6,10 +6,10 @@ import graphql.execution.ExecutionStepInfo;
 import graphql.nadel.Service;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.normalized.ExecutableNormalizedField;
+import graphql.schema.GraphQLSchema;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +42,7 @@ public interface ServiceExecutionHooks {
      * @param normalizedField     the field in question
      * @param hydrationArguments  arguments supplied to the top level field of the hydration
      * @param variables           query variables
+     * @param graphQLSchema       overall graphQL schema
      * @param userSuppliedContext the context supplied to Nadel in {@link graphql.nadel.NadelExecutionInput}
      * @return an error if the field should be omitted, empty optional otherwise
      */
@@ -49,6 +50,7 @@ public interface ServiceExecutionHooks {
             NormalizedQueryField normalizedField,
             HydrationArguments hydrationArguments,
             Map<String, Object> variables,
+            GraphQLSchema graphQLSchema,
             Object userSuppliedContext
     ) {
         return CompletableFuture.completedFuture(Optional.empty());

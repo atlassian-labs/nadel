@@ -9,6 +9,7 @@ import graphql.nadel.normalized.NormalizedQueryField
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.KeepHook
 import graphql.nadel.tests.NadelEngineType
+import graphql.schema.GraphQLSchema
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
@@ -20,6 +21,7 @@ class `top-level-field-error-does-not-redact-other-top-level-fields` : EngineTes
                 normalizedField: NormalizedQueryField,
                 hydrationArguments: HydrationArguments?,
                 variables: Map<String, Any>?,
+                graphQLSchema: GraphQLSchema,
                 userSuppliedContext: Any?,
             ): CompletableFuture<Optional<GraphQLError>> {
                 val expectedError = GraphqlErrorBuilder.newError()

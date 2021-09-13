@@ -7,6 +7,7 @@ import graphql.nadel.engine.NadelContext;
 import graphql.nadel.hooks.HydrationArguments;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.schema.GraphQLSchema;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -28,6 +29,8 @@ public class AsyncIsFieldForbidden {
     @NotNull
     private final NadelContext nadelContext;
     @NotNull
+    private final GraphQLSchema graphQLSchema;
+    @NotNull
     private final HydrationArguments hydrationArguments;
     @NotNull
     private final Map<String, Object> variables;
@@ -35,11 +38,13 @@ public class AsyncIsFieldForbidden {
     public AsyncIsFieldForbidden(
             @NotNull ServiceExecutionHooks serviceExecutionHooks,
             @NotNull NadelContext nadelContext,
+            @NotNull GraphQLSchema graphQLSchema,
             @NotNull HydrationArguments hydrationArguments,
             @NotNull Map<String, Object> variables
     ) {
         this.serviceExecutionHooks = serviceExecutionHooks;
         this.nadelContext = nadelContext;
+        this.graphQLSchema = graphQLSchema;
         this.hydrationArguments = hydrationArguments;
         this.variables = variables;
     }
@@ -64,7 +69,7 @@ public class AsyncIsFieldForbidden {
         if (field.getName().equals(TypeNameMetaFieldDef.getName())) {
             return CompletableFuture.completedFuture(null);
         }
-        return serviceExecutionHooks.isFieldForbidden(field, hydrationArguments, variables, nadelContext.getUserSuppliedContext())
+        return serviceExecutionHooks.isFieldForbidden(field, hydrationArguments, variables, graphQLSchema, nadelContext.getUserSuppliedContext())
                 .thenCompose(graphQLError -> {
                     if (graphQLError.isPresent()) {
                         fieldsToErrors.put(field, graphQLError.get());
