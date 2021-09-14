@@ -1,14 +1,6 @@
 package graphql.nadel.enginekt.transform.hydration
 
-import graphql.language.ArrayValue
-import graphql.language.BooleanValue
-import graphql.language.FloatValue
-import graphql.language.IntValue
 import graphql.language.NullValue
-import graphql.language.ObjectField
-import graphql.language.ObjectValue
-import graphql.language.StringValue
-import graphql.language.Value
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef.ValueSource
@@ -16,157 +8,152 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
-import graphql.nadel.enginekt.util.AnyList
-import graphql.nadel.enginekt.util.AnyMap
-import graphql.nadel.enginekt.util.asJsonMap
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
-import graphql.nadel.enginekt.util.mapFrom
+import graphql.nadel.enginekt.util.makeNormalizedInputValue
+import graphql.nadel.enginekt.util.toMapStrictly
+import graphql.nadel.enginekt.util.javaValueToAstValue
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
-import graphql.schema.GraphQLArgument
-import graphql.schema.GraphQLTypeUtil
 
-internal typealias AnyAstValue = Value<*>
+internal class NadelHydrationInputBuilder private constructor(
+    private val instruction: NadelHydrationFieldInstruction,
+    private val aliasHelper: NadelAliasHelper,
+    private val fieldToHydrate: ExecutableNormalizedField,
+    private val parentNode: JsonNode,
+) {
+    companion object {
+        fun getInputValues(
+            instruction: NadelHydrationFieldInstruction,
+            aliasHelper: NadelAliasHelper,
+            fieldToHydrate: ExecutableNormalizedField,
+            parentNode: JsonNode,
+        ): List<Map<String, NormalizedInputValue>> {
+            return NadelHydrationInputBuilder(instruction, aliasHelper, fieldToHydrate, parentNode)
+                .build()
+        }
+    }
 
-internal object NadelHydrationInputBuilder {
-    fun getInputValues(
-        instruction: NadelHydrationFieldInstruction,
-        aliasHelper: NadelAliasHelper,
-        hydratedField: ExecutableNormalizedField,
-        parentNode: JsonNode,
-    ): List<Map<String, NormalizedInputValue>> {
-        val inputDefsForAllCalls = instruction.actorInputValueDefs.asSequence()
-            .let { defs ->
-                when (val hydrationStrategy = instruction.hydrationStrategy) {
-                    is NadelHydrationStrategy.OneToOne -> defs
-                    is NadelHydrationStrategy.ManyToOne -> defs.filter { def -> def != hydrationStrategy.inputDefToSplit }
-                }
-            }
-
-        val argsForAllCalls = mapFrom(
-            inputDefsForAllCalls
-                .mapNotNull { actorInputDef ->
-                    val argumentDef = instruction.actorFieldDef.getArgument(actorInputDef.name)
-                    val inputValue = makeInputValue(
-                        actorInputDef = actorInputDef,
-                        argumentDef = argumentDef,
-                        parentNode = parentNode,
-                        hydrationField = hydratedField,
-                        aliasHelper = aliasHelper,
-                    ) ?: return@mapNotNull null
-                    actorInputDef.name to inputValue
-                }
-                .toList()
-        )
-
+    private fun build(): List<Map<String, NormalizedInputValue>> {
         return when (val hydrationStrategy = instruction.hydrationStrategy) {
-            is NadelHydrationStrategy.OneToOne -> listOf(argsForAllCalls)
-            is NadelHydrationStrategy.ManyToOne -> {
-                val inputDefToSplit = hydrationStrategy.inputDefToSplit
-                val valuesToSplit = when (val valueSource = inputDefToSplit.valueSource) {
-                    is ValueSource.FieldResultValue -> getResultValues(valueSource, parentNode, aliasHelper)
-                    else -> error("Can only split field result value into multiple hydration calls")
-                }
-                valuesToSplit
-                    .asSequence()
-                    .flatten(recursively = true) // Honestly: I think we need to revisit this, we kind of make big assumptions on the schema
-                    .map { value ->
-                        val inputValuePerCall = inputDefToSplit.name to makeNormalizedInputValue(
-                            inputDefToSplit.actorArgumentDef,
-                            value = valueToAstValue(value),
-                        )
-                        argsForAllCalls + inputValuePerCall
+            is NadelHydrationStrategy.OneToOne -> makeOneToOneArgs()
+            is NadelHydrationStrategy.ManyToOne -> makeManyToOneArgs(hydrationStrategy)
+        }
+    }
+
+    private fun makeOneToOneArgs(): List<Map<String, NormalizedInputValue>> {
+        return listOfNotNull(
+            makeInputMap().takeIf(::isInputMapValid),
+        )
+    }
+
+    private fun makeManyToOneArgs(
+        hydrationStrategy: NadelHydrationStrategy.ManyToOne,
+    ): List<Map<String, NormalizedInputValue>> {
+        val inputDefToSplit = hydrationStrategy.inputDefToSplit
+        val valueSourceToSplit = inputDefToSplit.valueSource as ValueSource.FieldResultValue
+        val sharedArgs = makeInputMap(inputDefToSplit)
+
+        return getResultNodes(valueSourceToSplit)
+            .asSequence()
+            .flatMap { node ->
+                // This code belongs together for cohesiveness, do NOT merge it back into the outer sequence
+                sequenceOf(node.value)
+                    .flatten(recursively = true)
+                    .map {
+                        makeInputValue(inputDef = inputDefToSplit, value = it)
                     }
-                    .toList()
             }
+            .map {
+                // Make the pair to go along with every input map
+                inputDefToSplit.name to it
+            }
+            .map {
+                sharedArgs + it
+            }
+            .filter {
+                isInputMapValid(it)
+            }
+            .toList()
+    }
+
+    private fun makeInputMap(
+        excluding: NadelHydrationActorInputDef? = null,
+    ): Map<String, NormalizedInputValue> {
+        return instruction.actorInputValueDefs
+            .asSequence()
+            .filter {
+                it != excluding
+            }
+            .mapNotNull { inputDef ->
+                makeInputValuePair(inputDef)
+            }
+            .toMapStrictly()
+    }
+
+    /**
+     * Valid in the sense that we should actually query for data.
+     *
+     * If all field values are null, then it doesn't makes sense to actually send the query.
+     */
+    private fun isInputMapValid(inputMap: Map<String, NormalizedInputValue>): Boolean {
+        val fieldInputsNames = instruction.actorInputValueDefs
+            .asSequence()
+            .filter {
+                it.valueSource is ValueSource.FieldResultValue
+            }
+            .map { it.name }
+            .toList()
+
+        // My brain hurts, checking if it's invalid makes a lot more sense to me. So we invert it at the end
+        return !(fieldInputsNames.isNotEmpty() && fieldInputsNames.all { inputName ->
+            inputMap[inputName]?.value is NullValue?
+        })
+    }
+
+    private fun makeInputValuePair(
+        inputDef: NadelHydrationActorInputDef,
+    ): Pair<String, NormalizedInputValue>? {
+        val inputValue = makeInputValue(inputDef) ?: return null
+        return inputDef.name to inputValue
+    }
+
+    private fun makeInputValue(
+        inputDef: NadelHydrationActorInputDef,
+    ): NormalizedInputValue? {
+        return when (val valueSource = inputDef.valueSource) {
+            is ValueSource.ArgumentValue -> fieldToHydrate.getNormalizedArgument(valueSource.argumentName)
+            is ValueSource.FieldResultValue -> makeInputValue(
+                inputDef,
+                value = getResultValue(valueSource),
+            )
         }
     }
 
     private fun makeInputValue(
-        actorInputDef: NadelHydrationActorInputDef,
-        argumentDef: GraphQLArgument,
-        parentNode: JsonNode,
-        hydrationField: ExecutableNormalizedField,
-        aliasHelper: NadelAliasHelper,
-    ): NormalizedInputValue? {
-        return when (val valueSource = actorInputDef.valueSource) {
-            is ValueSource.ArgumentValue -> hydrationField.getNormalizedArgument(valueSource.argumentName)
-            is ValueSource.FieldResultValue -> makeNormalizedInputValue(
-                argumentDef,
-                value = valueToAstValue(
-                    getResultValue(valueSource, parentNode, aliasHelper),
-                ),
-            )
-        }
+        inputDef: NadelHydrationActorInputDef,
+        value: Any?,
+    ): NormalizedInputValue {
+        return makeNormalizedInputValue(
+            type = inputDef.actorArgumentDef.type,
+            value = javaValueToAstValue(value),
+        )
     }
 
     private fun getResultValue(
         valueSource: ValueSource.FieldResultValue,
-        parentNode: JsonNode,
-        aliasHelper: NadelAliasHelper,
     ): Any? {
-        return JsonNodeExtractor.getNodesAt(
-            rootNode = parentNode,
-            queryPath = aliasHelper.getQueryPath(valueSource.queryPathToField),
-        ).emptyOrSingle()?.value
+        return getResultNodes(valueSource)
+            .emptyOrSingle()
+            ?.value
     }
 
-    private fun getResultValues(
+    private fun getResultNodes(
         valueSource: ValueSource.FieldResultValue,
-        parentNode: JsonNode,
-        aliasHelper: NadelAliasHelper,
-    ): List<Any?> {
+    ): List<JsonNode> {
         return JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
             queryPath = aliasHelper.getQueryPath(valueSource.queryPathToField),
-        ).map {
-            it.value
-        }
-    }
-
-    private fun makeNormalizedInputValue(
-        argumentDef: GraphQLArgument,
-        value: AnyAstValue,
-    ): NormalizedInputValue {
-        return NormalizedInputValue(
-            GraphQLTypeUtil.simplePrint(argumentDef.type), // type name
-            value, // value
         )
-    }
-
-    internal fun valueToAstValue(value: Any?): AnyAstValue {
-        return when (value) {
-            is AnyList -> ArrayValue(
-                value.map(this::valueToAstValue),
-            )
-            is AnyMap -> ObjectValue
-                .newObjectValue()
-                .objectFields(
-                    value.asJsonMap().map {
-                        ObjectField(it.key, valueToAstValue(it.value))
-                    },
-                )
-                .build()
-            null -> NullValue
-                .newNullValue()
-                .build()
-            is Double -> FloatValue.newFloatValue()
-                .value(value.toBigDecimal())
-                .build()
-            is Float -> FloatValue.newFloatValue()
-                .value(value.toBigDecimal())
-                .build()
-            is Number -> IntValue.newIntValue()
-                .value(value.toLong().toBigInteger())
-                .build()
-            is String -> StringValue.newStringValue()
-                .value(value)
-                .build()
-            is Boolean -> BooleanValue.newBooleanValue()
-                .value(value)
-                .build()
-            else -> error("Unknown value type '${value.javaClass.name}'")
-        }
     }
 }

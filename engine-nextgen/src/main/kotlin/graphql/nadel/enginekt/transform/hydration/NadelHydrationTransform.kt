@@ -134,7 +134,7 @@ internal class NadelHydrationTransform(
                 parentNode = it,
                 state = state,
                 executionBlueprint = executionBlueprint,
-                hydrationField = overallField,
+                fieldToHydrate = overallField,
                 executionContext = executionContext,
             )
         }
@@ -144,7 +144,7 @@ internal class NadelHydrationTransform(
         parentNode: JsonNode,
         state: State,
         executionBlueprint: NadelOverallExecutionBlueprint,
-        hydrationField: ExecutableNormalizedField, // Field asking for hydration from the overall query
+        fieldToHydrate: ExecutableNormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
     ): List<NadelResultInstruction> {
         val instruction = state.instructionsByObjectTypeNames.getInstructionForNode(
@@ -161,7 +161,7 @@ internal class NadelHydrationTransform(
             NadelHydrationFieldsBuilder.makeActorQueries(
                 instruction = instruction,
                 aliasHelper = state.aliasHelper,
-                hydratedField = hydrationField,
+                fieldToHydrate = fieldToHydrate,
                 parentNode = parentNode,
             ).map { actorQuery ->
                 async {
@@ -191,7 +191,7 @@ internal class NadelHydrationTransform(
 
                 return listOf(
                     NadelResultInstruction.Set(
-                        subjectPath = parentNode.resultPath + hydrationField.resultKey,
+                        subjectPath = parentNode.resultPath + fieldToHydrate.resultKey,
                         newValue = data?.value,
                     ),
                 ) + errors
@@ -208,7 +208,7 @@ internal class NadelHydrationTransform(
 
                 return listOf(
                     NadelResultInstruction.Set(
-                        subjectPath = parentNode.resultPath + hydrationField.resultKey,
+                        subjectPath = parentNode.resultPath + fieldToHydrate.resultKey,
                         newValue = data,
                     ),
                 ) + addErrors

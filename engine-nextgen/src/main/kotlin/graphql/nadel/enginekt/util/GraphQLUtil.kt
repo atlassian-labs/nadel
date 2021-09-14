@@ -12,23 +12,32 @@ import graphql.execution.ExecutionId
 import graphql.execution.ExecutionIdProvider
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
+import graphql.language.ArrayValue
+import graphql.language.BooleanValue
 import graphql.language.Definition
 import graphql.language.Document
 import graphql.language.EnumTypeExtensionDefinition
+import graphql.language.FloatValue
 import graphql.language.ImplementingTypeDefinition
 import graphql.language.InputObjectTypeExtensionDefinition
+import graphql.language.IntValue
 import graphql.language.InterfaceTypeExtensionDefinition
 import graphql.language.NamedNode
 import graphql.language.Node
+import graphql.language.NullValue
+import graphql.language.ObjectField
 import graphql.language.ObjectTypeDefinition
 import graphql.language.ObjectTypeExtensionDefinition
+import graphql.language.ObjectValue
 import graphql.language.OperationDefinition
 import graphql.language.SDLDefinition
 import graphql.language.ScalarTypeExtensionDefinition
 import graphql.language.SchemaExtensionDefinition
+import graphql.language.StringValue
 import graphql.language.Type
 import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
+import graphql.language.Value
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.ServiceExecutionResult
@@ -37,9 +46,11 @@ import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
+import graphql.normalized.NormalizedInputValue
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLInputType
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
@@ -50,6 +61,7 @@ import graphql.schema.GraphQLUnmodifiedType
 import graphql.schema.idl.TypeUtil
 import kotlinx.coroutines.future.asDeferred
 
+internal typealias AnyAstValue = Value<*>
 internal typealias AnyAstNode = Node<*>
 internal typealias AnyAstDefinition = Definition<*>
 internal typealias AnyImplementingTypeDefinition = ImplementingTypeDefinition<*>
@@ -346,7 +358,7 @@ internal suspend fun NadelInstrumentation.beginExecute(
     executionInput: ExecutionInput,
     graphQLSchema: GraphQLSchema,
     instrumentationState: InstrumentationState?,
-): InstrumentationContext<ExecutionResult> {
+): InstrumentationContext<ExecutionResult>? {
     val nadelInstrumentationExecuteOperationParameters = NadelInstrumentationExecuteOperationParameters(
         query,
         queryDocument,
@@ -405,3 +417,48 @@ val AnyAstNode.isExtensionDef: Boolean
             || this is SchemaExtensionDefinition
             || this is UnionTypeExtensionDefinition
     }
+
+fun makeNormalizedInputValue(
+    type: GraphQLInputType,
+    value: AnyAstValue,
+): NormalizedInputValue {
+    return NormalizedInputValue(
+        GraphQLTypeUtil.simplePrint(type), // type name
+        value, // value
+    )
+}
+
+internal fun javaValueToAstValue(value: Any?): AnyAstValue {
+    return when (value) {
+        is AnyList -> ArrayValue(
+            value.map(::javaValueToAstValue),
+        )
+        is AnyMap -> ObjectValue
+            .newObjectValue()
+            .objectFields(
+                value.asJsonMap().map {
+                    ObjectField(it.key, javaValueToAstValue(it.value))
+                },
+            )
+            .build()
+        null -> NullValue
+            .newNullValue()
+            .build()
+        is Double -> FloatValue.newFloatValue()
+            .value(value.toBigDecimal())
+            .build()
+        is Float -> FloatValue.newFloatValue()
+            .value(value.toBigDecimal())
+            .build()
+        is Number -> IntValue.newIntValue()
+            .value(value.toLong().toBigInteger())
+            .build()
+        is String -> StringValue.newStringValue()
+            .value(value)
+            .build()
+        is Boolean -> BooleanValue.newBooleanValue()
+            .value(value)
+            .build()
+        else -> error("Unknown value type '${value.javaClass.name}'")
+    }
+}

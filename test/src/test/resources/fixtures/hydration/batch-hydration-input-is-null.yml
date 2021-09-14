@@ -1,4 +1,4 @@
-name: hydration input is null
+name: batch hydration input is null
 enabled:
   current: true
   nextgen: true

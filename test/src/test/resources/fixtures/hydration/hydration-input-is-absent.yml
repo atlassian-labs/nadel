@@ -1,4 +1,4 @@
-name: hydration input is empty list
+name: hydration input is absent
 enabled:
   current: true
   nextgen: true
@@ -6,7 +6,7 @@ overallSchema:
   UserService: |
     service UserService {
       type Query {
-        usersByIds(ids: [ID]): [User]
+        userById(id: ID!): User
       }
       type User {
         id: ID
@@ -20,13 +20,19 @@ overallSchema:
       }
       type Issue {
         id: ID
-        authors: [User] => hydrated from UserService.usersByIds(ids: $source.authorIds) object identified by id, batch size 2
+        authors: [User] @hydrated(
+          service: "UserService"
+          field: "userById"
+          arguments: [
+            {name: "id" value: "$source.authors.id"}
+          ]
+        )
       }
     }
 underlyingSchema:
   UserService: |
     type Query {
-      usersByIds(ids: [ID]): [User]
+      userById(id: ID!): User
     }
 
     type User {
@@ -35,10 +41,12 @@ underlyingSchema:
     }
   Issues: |
     type Issue {
-      authorIds: [ID]
+      id: ID!
+      authors: [AuthorRef]
+    }
+    type AuthorRef {
       id: ID
     }
-
     type Query {
       issues: [Issue]
     }
@@ -59,8 +67,10 @@ serviceCalls:
         query: |
           query nadel_2_Issues {
             issues {
+              authors {
+                id
+              }
               id
-              authorIds
             }
           }
         variables: {}
@@ -72,7 +82,7 @@ serviceCalls:
             "issues": [
               {
                 "id": "ISSUE-1",
-                "authorIds": []
+                "authors": []
               }
             ]
           },
@@ -86,8 +96,12 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  __typename__batch_hydration__authors: __typename
-                  batch_hydration__authors__authorIds: authorIds
+                  __typename__hydration__authors: __typename
+                  hydration__authors__authors: authors {
+                    ... on AuthorRef {
+                      id
+                    }
+                  }
                   id
                 }
               }
@@ -101,9 +115,9 @@ serviceCalls:
           "data": {
             "issues": [
               {
-                "__typename__batch_hydration__authors": "Issue",
-                "batch_hydration__authors__authorIds": [],
-                "id": "ISSUE-1"
+                "__typename__hydration__authors": "Issue",
+                "id": "ISSUE-1",
+                "hydration__authors__authors": []
               }
             ]
           },
