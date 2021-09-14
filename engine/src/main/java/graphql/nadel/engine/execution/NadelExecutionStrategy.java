@@ -258,11 +258,11 @@ public class NadelExecutionStrategy {
     }
 
     private static boolean serviceOwnsNamespacedField(GraphQLObjectType namespacedObjectType, Service service) {
-        final boolean serviceExtendsNamespaceType = service.getDefinitionRegistry().getDefinitions(ObjectTypeExtensionDefinition.class)
+        return service.getDefinitionRegistry().getDefinitions(ObjectTypeDefinition.class)
                 .stream()
+                // the type can't be an extension in the owning service
+                .filter(objectTypeDef -> !(objectTypeDef instanceof ObjectTypeExtensionDefinition))
                 .anyMatch(objectTypeDef -> objectTypeDef.getName().equals(namespacedObjectType.getName()));
-
-        return !serviceExtendsNamespaceType;
     }
 
     private CompletableFuture<OneServiceExecution> getOneServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo fieldExecutionStepInfo, Service service) {
