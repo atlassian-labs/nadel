@@ -118,7 +118,8 @@ internal object NadelBatchHydrationInputBuilder {
             getFieldResultValues(
                 valueSource = valueSource,
                 parentNode = parentNode,
-                aliasHelper = aliasHelper
+                aliasHelper = aliasHelper,
+                filterNull = true,
             )
         }
     }
@@ -127,6 +128,7 @@ internal object NadelBatchHydrationInputBuilder {
         valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
         parentNode: JsonNode,
         aliasHelper: NadelAliasHelper,
+        filterNull: Boolean,
     ): List<Any?> {
         val nodes = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
@@ -138,7 +140,13 @@ internal object NadelBatchHydrationInputBuilder {
             .asSequence()
             .map { it.value }
             .flatten(recursively = true)
-            .filterNotNull()
+            .let {
+                if (filterNull) {
+                    it.filterNotNull()
+                } else {
+                    it
+                }
+            }
             .toList()
     }
 }

@@ -35,7 +35,7 @@ internal class NadelFieldToService(
      */
     fun resolveDynamicService(
         field: ExecutableNormalizedField,
-        originalService: Service
+        originalService: Service,
     ): Service {
         return if (dynamicServiceResolution.needsDynamicServiceResolution(field)) {
             dynamicServiceResolution.resolveServiceForField(field)
@@ -80,7 +80,6 @@ internal class NadelFieldToService(
     private fun isNamespacedField(field: ExecutableNormalizedField): Boolean {
         return isNamespacedField(field, overallExecutionBlueprint.schema)
     }
-
 }
 
 data class NadelFieldAndService(
