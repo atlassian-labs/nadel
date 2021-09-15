@@ -1,0 +1,160 @@
+name: typename is sent owning service even when namespaced field and type are defined in different services
+enabled:
+  nextgen: true
+  current: true
+overallSchema:
+  Issues: |
+    directive @namespaced on FIELD_DEFINITION
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    extend type IssueQuery {
+      getIssues: [Issue]
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery @namespaced
+    }
+
+    extend type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  IssueComments: |
+    extend type IssueQuery {
+      commentsCount: Int
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      getIssue: Issue
+    }
+
+    extend type IssueQuery {
+      getIssues: [Issue]
+    }
+
+    type Issue {
+      id: ID
+      text: String
+    }
+  IssueSearch: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      search: SearchResult
+    }
+
+    type SearchResult {
+      id: ID
+      count: Int
+    }
+  IssueComments: |
+    type Query {
+      issue: IssueQuery
+    }
+
+    type IssueQuery {
+      commentsCount: Int
+    }
+query: |
+  {
+    issue {
+      __typename
+      getIssue {
+        text
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: Issues
+      request:
+        query: |
+          query nadel_2_Issues {
+            issue {
+              __typename
+              getIssue {
+                text
+              }
+            }
+          }
+        variables: {}
+        operationName: nadel_2_Issues
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "__typename": "IssueQuery",
+              "getIssue": {
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue {
+                ... on IssueQuery {
+                  __typename
+                  getIssue {
+                    ... on Issue {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "__typename": "IssueQuery",
+              "getIssue": {
+                "text": "Foo"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "__typename": "IssueQuery",
+        "getIssue": {
+          "text": "Foo"
+        }
+      }
+    },
+    "extensions": {}
+  }
