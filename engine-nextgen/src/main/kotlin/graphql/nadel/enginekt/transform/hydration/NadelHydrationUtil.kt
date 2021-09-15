@@ -61,19 +61,4 @@ internal object NadelHydrationUtil {
             queryPath = instruction.queryPathToActorField,
         ).emptyOrSingle()
     }
-
-    fun getNumberOfInputNodes(
-        aliasHelper: NadelAliasHelper,
-        instruction: NadelBatchHydrationFieldInstruction,
-        parentNode: JsonNode,
-    ): Int {
-        val (_, batchInputValueSource) = NadelBatchHydrationInputBuilder.getBatchInputDef(instruction)
-            ?: error("Batch hydration is missing batch input arg") // TODO: we should bake this into the instruction
-
-        return NadelBatchHydrationInputBuilder.getFieldResultValues(
-            valueSource = batchInputValueSource,
-            parentNode = parentNode,
-            aliasHelper = aliasHelper,
-        ).size
-    }
 }
