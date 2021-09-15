@@ -14,7 +14,6 @@ import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.InlineFragment;
 import graphql.language.ObjectTypeDefinition;
-import graphql.language.ObjectTypeExtensionDefinition;
 import graphql.language.SelectionSet;
 import graphql.language.TypeName;
 import graphql.nadel.OperationKind;
@@ -61,6 +60,7 @@ import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.language.TypeName.newTypeName;
 import static graphql.nadel.schema.NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION;
 import static graphql.nadel.schema.NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION;
+import static graphql.nadel.util.NamespacedUtil.serviceOwnsNamespacedField;
 import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
@@ -257,14 +257,6 @@ public class NadelExecutionStrategy {
         return graphQLFieldDefinition.getName().equals(field.getName());
     }
 
-    private static boolean serviceOwnsNamespacedField(GraphQLObjectType namespacedObjectType, Service service) {
-        return service.getDefinitionRegistry().getDefinitions(ObjectTypeDefinition.class)
-                .stream()
-                // the type can't be an extension in the owning service
-                .filter(objectTypeDef -> !(objectTypeDef instanceof ObjectTypeExtensionDefinition))
-                .anyMatch(objectTypeDef -> objectTypeDef.getName().equals(namespacedObjectType.getName()));
-    }
-
     private CompletableFuture<OneServiceExecution> getOneServiceExecution(ExecutionContext executionCtx, ExecutionStepInfo fieldExecutionStepInfo, Service service) {
         CreateServiceContextParams parameters = CreateServiceContextParams.newParameters()
                 .from(executionCtx)
@@ -286,7 +278,7 @@ public class NadelExecutionStrategy {
 
         List<CompletableFuture<RootExecutionResultNode>> resultNodes = new ArrayList<>();
         for (OneServiceExecution oneServiceExecution : oneServiceExecutions) {
-            if(oneServiceExecution.earlyFailure) {
+            if (oneServiceExecution.earlyFailure) {
                 LeafExecutionResultNode leafExecutionResultNode = new LeafExecutionResultNode
                         .Builder()
                         .addError(oneServiceExecution.error)

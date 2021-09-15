@@ -82,6 +82,7 @@ class NextgenEngine @JvmOverloads constructor(
         overallExecutionBlueprint = overallExecutionBlueprint,
         introspectionRunnerFactory = introspectionRunnerFactory,
         dynamicServiceResolution = dynamicServiceResolution,
+        services,
     )
     private val executionIdProvider = nadel.executionIdProvider
 
