@@ -1,0 +1,63 @@
+name: handles include directive on field with renamed parent
+enabled:
+  current: false # Not fixing
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo @renamed(from: "bar")
+    }
+    type Foo {
+      id: String
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      bar: Foo
+    }
+    type Foo {
+      id: String
+    }
+query: |
+  query ($test: Boolean!) {
+    foo {
+      id @include(if: $test)
+    }
+  }
+variables:
+  test: false
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__foo__bar: bar {
+                ... on Foo {
+                  __typename__skip_include____skip: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__foo__bar": {
+              "__typename__skip_include____skip": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+      }
+    },
+    "extensions": {}
+  }

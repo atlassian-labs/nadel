@@ -1,0 +1,83 @@
+name: handles skip directive on batch hydrated field
+enabled:
+  current: false # Not fixing
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foos: [Foo]
+    }
+    type Foo {
+      test: Test @hydrated(
+        service: "service"
+        field: "tests"
+        arguments: [
+          {name: "ids" value: "$source.id"}
+        ]
+        identifiedBy: "id"
+      )
+    }
+    type Test {
+      id: ID
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foos: [Foo]
+      tests(ids: [ID]): [Test]
+    }
+    type Foo {
+      id: String
+    }
+    type Test {
+      id: ID
+    }
+query: |
+  query ($test: Boolean!) {
+    foos {
+      test @include(if: $test) {
+        id
+      }
+    }
+  }
+variables:
+  test: false
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foos {
+                ... on Foo {
+                  __typename__skip_include____skip: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foos": [
+              {
+                "__typename__skip_include____skip": "Foo"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foos": [
+        {
+        }
+      ]
+    },
+    "extensions": {}
+  }

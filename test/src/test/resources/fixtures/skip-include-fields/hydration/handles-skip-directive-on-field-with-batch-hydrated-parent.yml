@@ -1,0 +1,125 @@
+name: handles skip directive on field with batch hydrated parent
+enabled:
+  current: false # Not fixing
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foos: [Foo]
+    }
+    type Foo {
+      test: Test @hydrated(
+        service: "service"
+        field: "tests"
+        arguments: [
+          {name: "ids" value: "$source.id"}
+        ]
+        identifiedBy: "id"
+      )
+    }
+    type Test {
+      id: ID
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foos: [Foo]
+      tests(ids: [ID]): [Test]
+    }
+    type Foo {
+      id: String
+    }
+    type Test {
+      id: ID
+    }
+query: |
+  query ($test: Boolean!) {
+    foos {
+      test {
+        id @include(if: $test)
+      }
+    }
+  }
+variables:
+  test: false
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foos {
+                ... on Foo {
+                  __typename__batch_hydration__test: __typename
+                  batch_hydration__test__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foos": [
+              {
+                "__typename__batch_hydration__test": "Foo",
+                "batch_hydration__test__id": "Foo-3"
+              },
+              {
+                "__typename__batch_hydration__test": "Foo",
+                "batch_hydration__test__id": "Foo-4"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              tests(ids: ["Foo-3", "Foo-4"]) {
+                ... on Test {
+                  __typename__skip_include____skip: __typename
+                  batch_hydration__test__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "tests": [
+              {
+                "__typename__skip_include____skip": "Foo",
+                "batch_hydration__test__id": "Foo-4"
+              },
+              {
+                "__typename__skip_include____skip": "Foo",
+                "batch_hydration__test__id": "Foo-3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foos": [
+        {
+          "test": {}
+        },
+        {
+          "test": {}
+        }
+      ]
+    },
+    "extensions": {}
+  }

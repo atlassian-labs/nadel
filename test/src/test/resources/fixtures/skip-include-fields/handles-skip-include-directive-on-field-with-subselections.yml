@@ -1,0 +1,80 @@
+name: handles skip include directive on field with subselections
+enabled:
+  current: false # Not fixing
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: String
+      foo: Foo
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      foo: Foo
+      id: String
+    }
+query: |
+  query ($test: Boolean!) {
+    foo {
+      foo @skip(if: $test) {
+        __typename
+        id
+      }
+      bar: foo @include(if: $test) {
+        id
+      }
+    }
+  }
+variables:
+  test: true
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  bar: foo {
+                    ... on Foo {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "bar": {
+                "id": "FOO-1"
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+          "id": "FOO-1"
+        }
+      }
+    },
+    "extensions": {}
+  }

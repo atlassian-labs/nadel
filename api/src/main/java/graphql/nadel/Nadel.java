@@ -70,6 +70,7 @@ public class Nadel {
     final ServiceExecutionFactory serviceExecutionFactory;
     final List<Service> services;
     final GraphQLSchema overallSchema;
+    @NotNull
     final NadelInstrumentation instrumentation;
     final ServiceExecutionHooks serviceExecutionHooks;
     final PreparsedDocumentProvider preparsedDocumentProvider;
