@@ -19,6 +19,18 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedField.newNormalizedField
 import graphql.schema.GraphQLSchema
 
+/**
+ * So the way `@skip` and `@include` work is that in the [graphql.normalized.ExecutableNormalizedOperationFactory]
+ * is that they get automatically removed by the factory. Because of that, we never actually
+ * get the fields. This causes bad outcomes for Nadel because we don't execute the query here.
+ * We forward the query and we are _not_ allowed generate invalid queries with empty
+ * selection sets.
+ *
+ * So here, we add back in a `__typename` field to ensure we don't have an empty selection.
+ *
+ * This should probably be a more generic "if no subselections add an empty one for removed fields".
+ * But we'll deal with that separately.
+ */
 internal class SkipIncludeTransform : NadelTransform<State> {
     companion object {
         private const val skipFieldName = "__skip"
