@@ -208,6 +208,7 @@ fun GraphQLType.unwrapNonNull(): GraphQLType {
 }
 
 val GraphQLType.isList: Boolean get() = GraphQLTypeUtil.isList(this)
+val GraphQLType.isNotList: Boolean get() = !isList
 val GraphQLType.isNonNull: Boolean get() = GraphQLTypeUtil.isNonNull(this)
 val GraphQLType.isWrapped: Boolean get() = GraphQLTypeUtil.isWrapped(this)
 val GraphQLType.isNotWrapped: Boolean get() = GraphQLTypeUtil.isNotWrapped(this)
@@ -225,6 +226,7 @@ fun AnyAstType.unwrapNonNull(): AnyAstType {
 }
 
 val AnyAstType.isList: Boolean get() = TypeUtil.isList(this)
+val AnyAstType.isNotList: Boolean get() = !isList
 val AnyAstType.isNonNull: Boolean get() = TypeUtil.isNonNull(this)
 val AnyAstType.isWrapped: Boolean get() = TypeUtil.isWrapped(this)
 val AnyAstType.isNotWrapped: Boolean get() = !isWrapped
@@ -418,6 +420,9 @@ val AnyAstNode.isExtensionDef: Boolean
             || this is UnionTypeExtensionDefinition
     }
 
+val AnyAstNode.isNotExtensionDef: Boolean
+    get() = !isExtensionDef
+
 fun makeNormalizedInputValue(
     type: GraphQLInputType,
     value: AnyAstValue,
@@ -462,3 +467,14 @@ internal fun javaValueToAstValue(value: Any?): AnyAstValue {
         else -> error("Unknown value type '${value.javaClass.name}'")
     }
 }
+
+val GraphQLType.isAbstract: Boolean
+    /**
+     * > GraphQL supports two abstract types: interfaces and unions.
+     *
+     * [Source](https://spec.graphql.org/draft/#sec-Types)
+     */
+    get() = this is GraphQLUnionType || this is GraphQLInterfaceType
+
+val GraphQLType.isConcrete: Boolean
+    get() = !isAbstract

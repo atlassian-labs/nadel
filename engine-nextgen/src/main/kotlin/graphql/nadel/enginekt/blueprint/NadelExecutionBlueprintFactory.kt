@@ -29,11 +29,14 @@ import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.getFieldsAlong
 import graphql.nadel.enginekt.util.getOperationType
+import graphql.nadel.enginekt.util.isConcrete
 import graphql.nadel.enginekt.util.isExtensionDef
 import graphql.nadel.enginekt.util.isList
+import graphql.nadel.enginekt.util.isNotExtensionDef
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.enginekt.util.toMapStrictly
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.enginekt.util.unwrapNonNull
 import graphql.nadel.schema.NadelDirectives
@@ -41,9 +44,15 @@ import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
+import graphql.schema.GraphQLUnionType
+import graphql.schema.GraphQLUnmodifiedType
+
+const val sharedServiceName = "shared"
 
 internal object NadelExecutionBlueprintFactory {
     fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelOverallExecutionBlueprint {
@@ -57,16 +66,20 @@ private class Factory(
 ) {
     private val definitionNamesToService: Map<String, Service> = makeDefinitionNamesToService()
     private val coordinatesToService: Map<FieldCoordinates, Service> = makeCoordinatesToService()
+    private val typeRenameInstructions = makeTypeRenameInstructions()
+    private val typesToServices: Map<String, Set<Service>> =
+        TypeOwnership(overallSchema, services, typeRenameInstructions)
+            .getTypesToServicesThatDefineThem()
 
     fun make(): NadelOverallExecutionBlueprint {
-        val typeRenameInstructions = makeTypeRenameInstructions().strictAssociateBy {
+        val typeRenameInstructionsByOverallName = typeRenameInstructions.strictAssociateBy {
             it.overallName
         }
         val fieldInstructions = makeFieldInstructions().strictAssociateBy {
             it.location
         }
-        val furtherTypeRenameInstructions = typeRenameInstructions.values +
-            SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
+        val furtherTypeRenameInstructions = typeRenameInstructions +
+            SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructionsByOverallName)
                 .getTypeRenames()
 
         return NadelOverallExecutionBlueprint(
@@ -171,9 +184,11 @@ private class Factory(
                     return@mapNotNull null
                 }
 
-                val underlyingParentType = getUnderlyingType(hydratedFieldParentType)
-                    ?: error("No underlying type for: ${hydratedFieldParentType.name}")
-                val fieldDefs = underlyingParentType.getFieldsAlong(inputValueDef.valueSource.queryPathToField.segments)
+                val fieldDefs = mapFirstNotNullFromUnderlyingType(hydratedFieldParentType) { underlyingParentType ->
+                    // Makes sure that we get one of the underlying types with the info we need to extract out of it defined
+                    underlyingParentType.getFieldsAlong(inputValueDef.valueSource.queryPathToField.segments)
+                } ?: error("No underlying type for: ${hydratedFieldParentType.name}")
+
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
@@ -229,11 +244,12 @@ private class Factory(
         )
     }
 
-    private fun makeTypeRenameInstructions(): Sequence<NadelTypeRenameInstruction> {
+    private fun makeTypeRenameInstructions(): List<NadelTypeRenameInstruction> {
         return overallSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLDirectiveContainer>()
             .mapNotNull(this::makeTypeRenameInstruction)
+            .toList()
     }
 
     private fun makeTypeRenameInstruction(type: GraphQLDirectiveContainer): NadelTypeRenameInstruction? {
@@ -280,8 +296,9 @@ private class Factory(
                     val pathToField = remoteArgDef.remoteArgumentSource.path
                     NadelHydrationActorInputDef.ValueSource.FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
-                        fieldDefinition = getUnderlyingType(hydratedFieldParentType)
-                            ?.getFieldAt(pathToField)
+                        fieldDefinition = mapFirstNotNullFromUnderlyingType(hydratedFieldParentType) { underlyingParentType ->
+                            underlyingParentType.getFieldAt(pathToField)
+                        }
                             ?: error("No field defined at: ${hydratedFieldParentType.name}.${pathToField.joinToString(".")}"),
                     )
                 }
@@ -296,12 +313,27 @@ private class Factory(
         }
     }
 
-    private fun <T : GraphQLType> getUnderlyingType(overallType: T): T? {
-        val renameInstruction = makeTypeRenameInstruction(overallType as? GraphQLDirectiveContainer ?: return null)
-        val service = definitionNamesToService[overallType.name]
-            ?: error("Unknown service for type: ${overallType.name}")
-        val underlyingName = renameInstruction?.underlyingName ?: overallType.name
-        return service.underlyingSchema.getTypeAs(underlyingName)
+    /**
+     * Ok this looks at all the possible underlying types. Feeds the underlying type
+     * into [mapFunc] and then if the [mapFunc] return something not null, the function
+     * will return that.
+     */
+    private fun <T : GraphQLType, R> mapFirstNotNullFromUnderlyingType(
+        overallType: T,
+        mapFunc: (T) -> R?,
+    ): R? {
+        val unwrappedType: GraphQLUnmodifiedType = overallType.unwrapAll()
+        // I tried reusing this value and the Kotlin compiler complained
+        val directivesContainer = overallType.unwrapAll() as GraphQLDirectiveContainer
+        val renameInstruction = makeTypeRenameInstruction(directivesContainer)
+
+        return typesToServices[unwrappedType.name]
+            ?.mapNotNull { service ->
+                val underlyingName = renameInstruction?.underlyingName ?: unwrappedType.name
+                service.underlyingSchema.getTypeAs<T>(underlyingName)
+            }
+            ?.map(mapFunc)
+            ?.firstOrNull()
     }
 
     private fun getFieldMappingDefinition(field: GraphQLFieldDefinition): FieldMappingDefinition? {
@@ -564,6 +596,141 @@ private class SharedTypesAnalysis(
             is NadelRenameFieldInstruction -> underlyingParentType.getField(instruction.underlyingName)
             is NadelDeepRenameFieldInstruction -> underlyingParentType.getFieldAt(instruction.queryPathToField.segments)
             else -> null
+        }
+    }
+}
+
+private class TypeOwnership(
+    private val overallSchema: GraphQLSchema,
+    private val services: List<Service>,
+    private val typeRenames: List<NadelTypeRenameInstruction>,
+) {
+    fun getTypesToServicesThatDefineThem(): Map<String, Set<Service>> {
+        return getTypesThatServiceDefines()
+            .entries
+            .asSequence()
+            .flatMap { (service, typesDefined) ->
+                typesDefined
+                    .asSequence()
+                    .map {
+                        it to service
+                    }
+            }
+            .groupBy {
+                it.first
+            }
+            .mapValues { it: Map.Entry<String, List<Pair<String, Service>>> ->
+                it.value // Get the List<Pair<…>> out
+                    .asSequence()
+                    .map {
+                        it.second // Get the Service out of the Pair<String, Service>
+                    }
+                    .toSet()
+            }
+    }
+
+    fun getTypesThatServiceDefines(): Map<Service, Set<String>> {
+        return services
+            .map { service ->
+                service to getTypeThatServiceDefined(service)
+            }
+            .toMapStrictly()
+    }
+
+    private fun getTypeThatServiceDefined(service: Service): Set<String> {
+        val typesDefined = service.definitionRegistry.definitions
+            .asSequence()
+            .filterIsInstance<AnyNamedNode>()
+            .filterNot { it.isExtensionDef }
+            .map { it.name }
+            .toHashSet()
+
+        val rawTypesUsedAsOutputTypes = service.definitionRegistry.definitions
+            .asSequence()
+            .filterIsInstance<AnyNamedNode>()
+            .filter {
+                // If the definition is an extension, only consider it if it is extending a type the service owns
+                it.isNotExtensionDef || it.name in typesDefined
+            }
+            .filterIsInstance<AnyImplementingTypeDefinition>()
+            .flatMap {
+                it.fieldDefinitions
+            }
+            .filterNot {
+                isHydrationField(it)
+            }
+            .map {
+                it.type.unwrapAll().name
+            }
+            .toHashSet()
+
+        // Resolve the types to reachable types i.e. interfaces to their implementations, unions etc.
+        val outputTypesResolved = rawTypesUsedAsOutputTypes
+            .asSequence()
+            .flatMap { rawTypeName ->
+                resolveType(rawTypeName) { missingTypeName ->
+                    error("Service tried to reference type '$missingTypeName' that does not exist")
+                }
+            }
+            // Determine ownership of these types
+            .filter { typeName ->
+                if (typeName in typesDefined || typeName in rawTypesUsedAsOutputTypes) {
+                    true
+                } else {
+                    val underlyingTypeNameOrNull = typeRenames
+                        .asSequence()
+                        .filter { it.service.name == service.name && it.overallName == typeName }
+                        .map { it.underlyingName }
+                        .emptyOrSingle()
+
+                    if (underlyingTypeNameOrNull != null) {
+                        service.underlyingSchema.getType(underlyingTypeNameOrNull) != null
+                    } else {
+                        // In this case, we need to find the type and it cannot have been exposed
+                        // Note that this is a dumb heuristic and we need better solutions in the future
+                        service.underlyingSchema.getType(typeName) != null && typeRenames.none { typeRename ->
+                            typeRename.service.name == service.name && typeRename.underlyingName == typeName
+                        }
+                    }
+                }
+            }
+            .toList()
+
+        return sequenceOf(typesDefined, rawTypesUsedAsOutputTypes, outputTypesResolved)
+            .flatten()
+            .toHashSet()
+    }
+
+    private fun isHydrationField(def: FieldDefinition): Boolean {
+        return when (def) {
+            is ExtendedFieldDefinition -> def.fieldTransformation.underlyingServiceHydration != null
+            else -> def.directivesByName.any {
+                it.key == NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.name
+            }
+        }
+    }
+
+    private fun resolveType(
+        typeName: String,
+        onTypeNotFound: (String) -> Nothing,
+    ): List<String> {
+        val type = overallSchema.getType(typeName) as GraphQLNamedType?
+            ?: onTypeNotFound(typeName)
+
+        return if (type.isConcrete) {
+            listOf(type.name)
+        } else {
+            when (type) {
+                is GraphQLUnionType -> type.types.flatMap {
+                    // Could be an interface in a union
+                    resolveType(it.name, onTypeNotFound)
+                }
+                is GraphQLInterfaceType -> overallSchema.getImplementations(type).map {
+                    // These are object types, nothing further to resolve
+                    it.name
+                }
+                else -> error("There are only two abstract types in GraphQL")
+            }
         }
     }
 }
