@@ -21,13 +21,13 @@ underlyingSchema:
       id: String
     }
 query: |
-  query ($test: Boolean!) {
+  query ($test: Boolean!, $invertTest: Boolean! = false, $other: Boolean! = true) {
     foo {
       foo @skip(if: $test) {
-        __typename
-        id
+        __typename @skip(if: $invertTest)
+        id @include(if: $test)
       }
-      bar: foo @include(if: $test) {
+      bar: foo @include(if: $other) {
         id
       }
     }
