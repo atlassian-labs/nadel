@@ -702,11 +702,12 @@ private class TypeOwnership(
     }
 
     private fun isHydrationField(def: FieldDefinition): Boolean {
-        return when (def) {
-            is ExtendedFieldDefinition -> def.fieldTransformation.underlyingServiceHydration != null
-            else -> def.directivesByName.any {
-                it.key == NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.name
-            }
+        val asExtended = def as? ExtendedFieldDefinition
+        if (asExtended?.fieldTransformation?.underlyingServiceHydration != null) {
+            return true
+        }
+        return def.directivesByName.any {
+            it.key == NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.name
         }
     }
 
