@@ -1,4 +1,4 @@
-name: handles skip directive on hydrated field
+name: handles include directive on hydrated field
 enabled:
   current: false # Not fixing
   nextgen: true
