@@ -1,0 +1,101 @@
+name: handles include directive field with hydrated parent
+enabled:
+  current: false # Not fixing
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo @renamed(from: "bar")
+    }
+    type Foo {
+      id: String
+      water: Foo @hydrated(
+        service: "service"
+        field: "fooById"
+        arguments: [
+          {name: "id" value: "$source.id"}
+        ]
+      )
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      bar: Foo
+      fooById(id: ID): Foo
+    }
+    type Foo {
+      id: String
+    }
+query: |
+  query ($test: Boolean!) {
+    foo {
+      water {
+        id @include(if: $test)
+      }
+    }
+  }
+variables:
+  test: false
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              rename__foo__bar: bar {
+                ... on Foo {
+                  __typename__hydration__water: __typename
+                  hydration__water__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__foo__bar": {
+              "__typename__hydration__water": "Foo",
+              "hydration__water__id": "Foo-1"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              fooById(id: "Foo-1") {
+                ... on Foo {
+                  __typename__skip_include____skip: __typename
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "fooById": {
+              "__typename__skip_include____skip": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "water": {
+        }
+      }
+    },
+    "extensions": {}
+  }

@@ -1,0 +1,51 @@
+name: handles skip directive on top level field
+enabled:
+  current: false # Not fixing
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: String
+      bar: String
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: String
+      bar: String
+    }
+query: |
+  query ($test: Boolean!) {
+    foo @skip(if: $test)
+    bar @include(if: $test)
+  }
+variables:
+  test: true
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              bar
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "bar": "Bar"
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "bar": "Bar"
+    },
+    "extensions": {}
+  }

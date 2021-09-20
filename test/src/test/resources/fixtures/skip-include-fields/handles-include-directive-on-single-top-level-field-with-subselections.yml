@@ -1,0 +1,37 @@
+name: handles include directive on single top level field with subselections
+enabled:
+  current: false # Not fixing
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: String
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: String
+    }
+query: |
+  query ($test: Boolean!) {
+    foo @include(if: $test) {
+      id
+    }
+  }
+variables:
+  test: false
+serviceCalls:
+  nextgen: []
+# language=JSON
+response: |-
+  {
+    "data": {
+    },
+    "extensions": {}
+  }

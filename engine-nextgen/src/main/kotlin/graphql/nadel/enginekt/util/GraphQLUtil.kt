@@ -261,9 +261,7 @@ internal fun mergeResults(results: List<ExecutionResult>): ExecutionResult {
     }
 
     return newExecutionResult()
-        .data(data.takeIf {
-            it.isNotEmpty()
-        })
+        .data(data)
         .extensions(extensions.let {
             @Suppress("UNCHECKED_CAST") // .extensions should take in a Map<*, *> instead of strictly Map<Any?, Any?>
             it as Map<Any?, Any?>

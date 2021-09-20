@@ -1,0 +1,90 @@
+name: handles include directive on field with deep renamed parent
+enabled:
+  current: false # Not fixing
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      bar: Bar @renamed(from: "details.bar")
+    }
+    type Bar {
+      id: ID
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      bar: Foo
+    }
+    type Foo {
+      details: FooDetails
+    }
+    type FooDetails {
+      bar: Bar
+    }
+    type Bar {
+      id: ID
+    }
+query: |
+  query ($test: Boolean!) {
+    foo {
+      bar {
+        id @include(if: $test)
+      }
+    }
+  }
+variables:
+  test: false
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  __typename__deep_rename__bar: __typename
+                  deep_rename__bar__details: details {
+                    ... on FooDetails {
+                      bar {
+                        ... on Bar {
+                          __typename__skip_include____skip: __typename
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "__typename__deep_rename__bar": "Foo",
+              "deep_rename__bar__details": {
+                "bar": {
+                  "__typename__skip_include____skip": "Bar"
+                }
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+        }
+      }
+    },
+    "extensions": {}
+  }
