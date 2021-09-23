@@ -362,6 +362,7 @@ public class ServiceResultToResultNodes {
                 throw new CoercingSerializeException("Unexpected value '" + toAnalyze + "'. String expected");
             }
         }
+        // NOTE: Current gen code that coerces value to the type defined in the overall schema
         return scalarType.getCoercing().serialize(toAnalyze);
     }
 
