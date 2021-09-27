@@ -1,4 +1,4 @@
-name: coerce values to overall types
+name: coerce values basic case
 enabled:
   current: true
   nextgen: true

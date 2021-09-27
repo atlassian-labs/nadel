@@ -1,0 +1,63 @@
+name: coerce values non null
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      aField: Int!
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      aField: String!
+    }
+query: |
+  query {
+    aField
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              aField
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "aField": "1000"
+          },
+          "extensions": {}
+        }
+  current:
+    - serviceName: service
+      request:
+        query: |
+          query nadel_2_service {
+            aField
+          }
+        variables: {}
+        operationName: nadel_2_service
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "aField": "1000"
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "aField": 1000
+    }
+  }

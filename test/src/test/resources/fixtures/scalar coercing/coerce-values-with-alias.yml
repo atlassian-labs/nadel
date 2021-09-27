@@ -1,0 +1,63 @@
+name: coerce values with alias
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      aField: Int!
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      aField: String!
+    }
+query: |
+  query {
+    aFieldAliased: aField
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              aFieldAliased: aField
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "aFieldAliased": "1000"
+          },
+          "extensions": {}
+        }
+  current:
+    - serviceName: service
+      request:
+        query: |
+          query nadel_2_service {
+            aFieldAliased: aField
+          }
+        variables: {}
+        operationName: nadel_2_service
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "aFieldAliased": "1000"
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "aFieldAliased": 1000
+    }
+  }

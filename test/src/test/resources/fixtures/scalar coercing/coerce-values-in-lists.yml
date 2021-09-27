@@ -1,0 +1,63 @@
+name: coerce values in lists
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      listField: [Int!]!
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      listField: [String!]!
+    }
+query: |
+  query {
+    listField
+  }
+variables: { }
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              listField
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "listField": ["1", "2", "3"]
+          },
+          "extensions": {}
+        }
+  current:
+    - serviceName: service
+      request:
+        query: |
+          query nadel_2_service {
+            listField
+          }
+        variables: { }
+        operationName: nadel_2_service
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "listField": ["1", "2", "3"]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "listField": [1, 2, 3]
+    }
+  }
