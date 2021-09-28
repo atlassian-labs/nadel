@@ -5,18 +5,61 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.NadelCoerceTransform.State
-import graphql.nadel.enginekt.transform.query.NadelQueryPath.Companion.root
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.json.JsonNode
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor.getNodesAt
-import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLTypeUtil
 
+/**
+ * This transform ensures that scalar values are coerced according to the scalar type used in the overall schema.
+ *
+ * In all ordinary cases this coercion is not necessary, because the value returned by the underlying service
+ * will already have been coerced to the type used in the overall schema.
+ *
+ * There is however, one edge case, which is when there's a conflict between the scalar type used in the overall schema
+ * and the scalar value returned by the underlying service.
+ *
+ * Example:
+ * ```
+ * # overall schema
+ * type Dog {
+ *   age: Int
+ * }
+ * ```
+ *
+ * ```
+ * # original service schema
+ * type Dog {
+ *   age: String
+ * }
+ * ```
+ * In this case the underlying service would return `age` as a String:
+ *
+ * ```
+ * {
+ *   "data": {
+ *     "dog": {
+ *       "age": "10"
+ *     }
+ *   }
+ * }
+ * ```
+ * This transform ensures that the value of `age` is coerced according to the `Int` scalar, which is the type used in
+ * the overall schema. The result data would look like this:
+ * ```
+ * {
+ *   "data": {
+ *     "dog": {
+ *       "age": 10
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * This transformer replicates the exact same behaviour as the current gen.
+ */
 internal class NadelCoerceTransform : NadelTransform<State> {
     data class State(
         val fieldType: GraphQLScalarType,
@@ -31,7 +74,7 @@ internal class NadelCoerceTransform : NadelTransform<State> {
     ): State? {
         val schema = executionBlueprint.schema
 
-        val types = overallField.objectTypeNames
+        val unwrappedTypes = overallField.objectTypeNames
             .asSequence()
             .mapNotNull {
                 schema.getFieldDefinition(
@@ -45,14 +88,16 @@ internal class NadelCoerceTransform : NadelTransform<State> {
             .map { GraphQLTypeUtil.unwrapAll(it) }
             .toList()
 
-        val distinctTypes = types.distinct().count()
+        val distinctTypes = unwrappedTypes.distinct().count()
 
+        // In the case of scalars, there should only be 1 unwrapped type.
+        // Object types could result in more than 1 distinct type, in the case of different interface implementations
+        // having different concrete types, but this transform only cares about scalar types.
         if (distinctTypes != 1) {
-            // field type on all definitions should be the same
             return null
         }
 
-        val type = types.first()
+        val type = unwrappedTypes.first()
 
         if (GraphQLTypeUtil.isScalar(type)) {
             return State(type as GraphQLScalarType)
@@ -81,21 +126,12 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         result: ServiceExecutionResult,
         state: State
     ): List<NadelResultInstruction> {
-        val parentQueryPath = underlyingParentField?.queryPath ?: root
-
-        val valueNodes: List<JsonNode> = getNodesAt(
-            data = result.data,
-            queryPath = parentQueryPath.plus(overallField.resultKey),
-            flatten = true
-        )
-
-        return valueNodes
-            .mapNotNull { valueNode ->
-                JsonNodeExtractor.getNodeAt(result.data, valueNode.resultPath)?.let { jsonNode ->
-                    NadelResultInstruction.Set(
-                        valueNode.resultPath,
-                        jsonNode.value?.let { value -> state.fieldType.coercing.parseValue(value) })
-                }
-            }
+        return NadelTransformUtil.createSetInstructions(
+            underlyingParentField,
+            result,
+            overallField
+        ) { value ->
+            state.fieldType.coercing.parseValue(value)
+        }
     }
 }
