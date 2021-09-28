@@ -42,14 +42,17 @@ internal class NadelCoerceTransform : NadelTransform<State> {
                 )
             }
             .map { it.type }
+            .map { GraphQLTypeUtil.unwrapAll(it) }
             .toList()
 
-        if (types.distinct().size != 1) {
+        val distinctTypes = types.distinct().count()
+
+        if (distinctTypes != 1) {
             // field type on all definitions should be the same
             return null
         }
 
-        val type = GraphQLTypeUtil.unwrapAll(types.first())
+        val type = types.first()
 
         if (GraphQLTypeUtil.isScalar(type)) {
             return State(type as GraphQLScalarType)

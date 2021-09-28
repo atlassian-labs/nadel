@@ -11,7 +11,7 @@ overallSchema:
       id: Int
     }
     type AccountUser implements User {
-      id: Int
+      id: Int!
     }
     type AdminUser implements User {
       id: Int
@@ -25,7 +25,7 @@ underlyingSchema:
       id: Int
     }
     type AccountUser implements User {
-      id: Int
+      id: Int!
     }
     type AdminUser implements User {
       id: Int
