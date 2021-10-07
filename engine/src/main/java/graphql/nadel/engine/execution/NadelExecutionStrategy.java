@@ -37,6 +37,7 @@ import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.normalized.NormalizedQueryFromAst;
 import graphql.nadel.util.MergedFieldUtil;
+import graphql.nadel.util.OperationNameUtil;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLInterfaceType;
 import graphql.schema.GraphQLObjectType;
@@ -486,13 +487,9 @@ public class NadelExecutionStrategy {
     }
 
     private String buildOperationName(Service service, ExecutionContext executionContext) {
-        // to help with downstream debugging we put our name and their name in the operation
         NadelContext nadelContext = executionContext.getContext();
-        if (nadelContext.getOriginalOperationName() != null) {
-            return format("nadel_2_%s_%s", service.getName(), nadelContext.getOriginalOperationName());
-        } else {
-            return format("nadel_2_%s", service.getName());
-        }
+        String originalOperationName = nadelContext.getOriginalOperationName();
+        return OperationNameUtil.buildOperationName(service.getName(), originalOperationName);
     }
 
     private NadelContext getNadelContext(ExecutionContext executionContext) {

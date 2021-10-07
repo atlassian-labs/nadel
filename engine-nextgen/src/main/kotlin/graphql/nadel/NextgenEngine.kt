@@ -36,6 +36,7 @@ import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
+import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
@@ -93,7 +94,12 @@ class NextgenEngine @JvmOverloads constructor(
         nadelExecutionParams: NadelExecutionParams,
     ): CompletableFuture<ExecutionResult> {
         return GlobalScope.async {
-            executeCoroutine(executionInput, queryDocument, instrumentationState)
+            executeCoroutine(
+                executionInput,
+                queryDocument,
+                instrumentationState,
+                nadelExecutionParams.nadelExecutionHints,
+            )
         }.asCompletableFuture()
     }
 
@@ -101,6 +107,7 @@ class NextgenEngine @JvmOverloads constructor(
         executionInput: ExecutionInput,
         queryDocument: Document,
         instrumentationState: InstrumentationState?,
+        executionHints: NadelExecutionHints,
     ): ExecutionResult {
         try {
             val query = createExecutableNormalizedOperationWithRawVariables(
@@ -110,7 +117,7 @@ class NextgenEngine @JvmOverloads constructor(
                 executionInput.variables,
             )
 
-            val executionContext = NadelExecutionContext(executionInput, query, serviceExecutionHooks)
+            val executionContext = NadelExecutionContext(executionInput, query, serviceExecutionHooks, executionHints)
             val beginExecuteContext = instrumentation.beginExecute(
                 query,
                 queryDocument,
@@ -258,7 +265,7 @@ class NextgenEngine @JvmOverloads constructor(
         val executionInput = executionContext.executionInput
         val document: Document = compileToDocument(
             transformedQuery.getOperationKind(overallSchema),
-            executionContext.query.operationName,
+            getOperationName(service, executionContext),
             listOf(transformedQuery),
         )
 
@@ -305,6 +312,15 @@ class NextgenEngine @JvmOverloads constructor(
                     ?: mutableMapOf(transformedQuery.resultKey to null)
             },
         )
+    }
+
+    private fun getOperationName(service: Service, executionContext: NadelExecutionContext): String? {
+        val originalOperationName = executionContext.query.operationName
+        return if (executionContext.hints.legacyOperationNames) {
+            return OperationNameUtil.buildOperationName(service.name, originalOperationName)
+        } else {
+            originalOperationName
+        }
     }
 
     companion object {
