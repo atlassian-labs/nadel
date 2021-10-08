@@ -169,16 +169,18 @@ fun ExecutableNormalizedField.copyWithChildren(children: List<ExecutableNormaliz
         fixParents(old = old.parent, new = newParent)
     }
 
+    // TODO: "children" are being assigned to the old parent
     children.forEach {
         it.replaceParent(this)
     }
 
-    return toBuilder()
+    val new = toBuilder()
         .children(children)
         .build()
-        .also {
-            fixParents(old = this, new = it)
-        }
+
+    fixParents(old = this, new = new)
+
+    return new
 }
 
 val ExecutableNormalizedField.queryPath: NadelQueryPath get() = NadelQueryPath(listOfResultKeys)
