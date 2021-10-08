@@ -317,7 +317,7 @@ class NextgenEngine @JvmOverloads constructor(
     private fun getOperationName(service: Service, executionContext: NadelExecutionContext): String? {
         val originalOperationName = executionContext.query.operationName
         return if (executionContext.hints.legacyOperationNames) {
-            return OperationNameUtil.buildOperationName(service.name, originalOperationName)
+            return OperationNameUtil.getLegacyOperationName(service.name, originalOperationName)
         } else {
             originalOperationName
         }

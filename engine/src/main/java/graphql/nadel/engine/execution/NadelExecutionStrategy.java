@@ -489,7 +489,7 @@ public class NadelExecutionStrategy {
     private String buildOperationName(Service service, ExecutionContext executionContext) {
         NadelContext nadelContext = executionContext.getContext();
         String originalOperationName = nadelContext.getOriginalOperationName();
-        return OperationNameUtil.buildOperationName(service.getName(), originalOperationName);
+        return OperationNameUtil.getLegacyOperationName(service.getName(), originalOperationName);
     }
 
     private NadelContext getNadelContext(ExecutionContext executionContext) {
