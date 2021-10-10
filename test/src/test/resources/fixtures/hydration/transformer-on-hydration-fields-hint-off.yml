@@ -1,6 +1,7 @@
-name: transformer on hydration fields
+name: transformer on hydration fields hint off
 enabled:
-  current: true
+  # purposefully not implemented in current gen
+  current: false
   nextgen: true
 overallSchema:
   service1: |
@@ -52,48 +53,6 @@ query: |
   }
 variables: {}
 serviceCalls:
-  current:
-    - serviceName: service1
-      request:
-        query: |
-          query nadel_2_service1 {
-            foo {
-              barId
-            }
-          }
-        variables: {}
-        operationName: nadel_2_service1
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "barId": "barId"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: service2
-      request:
-        query: |
-          query nadel_2_service2 {
-            barById(id: "barId") {
-              name
-            }
-          }
-        variables: {}
-        operationName: nadel_2_service2
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barById": {
-              "id": "barId",
-              "name": "Bar1"
-            }
-          },
-          "extensions": {}
-        }
   nextgen:
     - serviceName: service1
       request:
@@ -126,7 +85,7 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              barById(id: "transformed-id") {
+              barById(id: "barId") {
                 ... on Bar {
                   name
                 }

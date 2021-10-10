@@ -82,20 +82,28 @@ private object Util {
             .map { it.nameWithoutExtension }
             .toHashSet()
 
-        hookImpls.forEach { hookImpl ->
-            val fixtureName = hookImpl.simpleName
-            if (fixtureName !in allFixtureFileNames) {
-                error("Unable to find matching test for hook: $fixtureName")
+        hookImpls
+            .filter { it.isAnnotationPresent(KeepHook::class.java) }
+            .forEach { hookImpl ->
+                val fixtureName = hookImpl.simpleName
+                if (fixtureName !in allFixtureFileNames) {
+                    error("Unable to find matching test for hook: $fixtureName")
+                }
             }
-        }
 
         return true
     }
 }
 
 /**
- * The only reason this exists is so that you can use the "Suppress unused warning
- * if annotated by EngineTestHook" feature. Gets IntelliJ to stop complaining that
- * your hook class is unused.
+ * Indicates that the class is a test hook.
+ *
+ * Allows developers to create subclasses of EngineTestHook that do not map to a specific test. This is useful
+ * when you have a set of tests that share common hook code, so you can place this common hook in a class that
+ * extends EngineTestHook and don't use the KeepHook annotation in it.
+ *
+ * Dev Hint: You can use the "Suppress unused warning if annotated by EngineTestHook" feature. Gets IntelliJ
+ * to stop complaining that your hook class is unused.
  */
+@Target(AnnotationTarget.CLASS)
 annotation class KeepHook

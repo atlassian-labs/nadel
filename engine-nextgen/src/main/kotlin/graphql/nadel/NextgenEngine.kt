@@ -201,9 +201,10 @@ class NextgenEngine @JvmOverloads constructor(
             it.children.single()
         }
 
-        val transformActorResult = transformActorFieldNew(executionContext, service, actorField)
-        val transformResult = transformActorResult.first
-        val executionPlan = transformActorResult.second
+        val (transformResult, executionPlan) = when (executionContext.hints.transformsOnHydrationFields) {
+            true -> transformActorFieldNew(executionContext, service, actorField)
+            else -> transformActorField(executionContext, service, actorField)
+        }
 
         // Get to the top level field again using .parent N times on the new actor field
         val transformedQuery: ExecutableNormalizedField = fold(
@@ -278,16 +279,14 @@ class NextgenEngine @JvmOverloads constructor(
 
         val queryTransform = queryTransformer.transformQuery(executionContext, service, actorField, executionPlan)
 
-        // Fix parent of the
+        // Fix parent of the actor field
         if (actorField.parent != null) {
             val fixedParent = actorField.parent.toBuilder().children(queryTransform.result).build()
             val queryTransformResult = queryTransform.result.single()
             queryTransformResult.replaceParent(fixedParent)
         }
 
-        return Pair(
-            queryTransform, executionPlan
-        )
+        return Pair(queryTransform, executionPlan)
     }
 
     private suspend fun executeService(

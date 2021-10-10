@@ -1,6 +1,8 @@
 package graphql.nadel.tests.hooks
 
 import graphql.language.StringValue
+import graphql.nadel.NadelExecutionHints
+import graphql.nadel.NadelExecutionInput
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
@@ -9,16 +11,30 @@ import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
-import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.NadelEngineType
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
-@KeepHook
-class `transformer-on-hydration-fields` : EngineTestHook {
+abstract class TransformerOnHydrationFieldsHook : EngineTestHook {
+
+    abstract fun isHintOn(): Boolean
+
+    override fun makeExecutionInput(
+        engineType: NadelEngineType,
+        builder: NadelExecutionInput.Builder,
+    ): NadelExecutionInput.Builder {
+        val isHintOn = this.isHintOn()
+
+        return builder.nadelExecutionHints(
+            NadelExecutionHints.newHints()
+                .transformsOnHydrationFields(isHintOn)
+                .build()
+        )
+    }
+
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
             object : NadelTransform<Any> {
@@ -67,4 +83,14 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                 }
             }
         )
+}
+
+@KeepHook
+class `transformer-on-hydration-fields-hint-on` : TransformerOnHydrationFieldsHook() {
+    override fun isHintOn() = true
+}
+
+@KeepHook
+class `transformer-on-hydration-fields-hint-off` : TransformerOnHydrationFieldsHook() {
+    override fun isHintOn() = false
 }
