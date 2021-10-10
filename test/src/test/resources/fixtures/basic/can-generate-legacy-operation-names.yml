@@ -1,0 +1,47 @@
+name: can generate legacy operation names
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  test: |
+    type Query {
+      foo: String
+    }
+underlyingSchema:
+  test: |
+    type Query {
+      foo: String
+    }
+query: |
+  query {
+    foo
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: test
+      request:
+        query: |
+          query nadel_2_test {
+            ... on Query {
+              foo
+            }
+          }
+        variables: {}
+        operationName: nadel_2_test
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": null
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": null
+    },
+    "extensions": {}
+  }

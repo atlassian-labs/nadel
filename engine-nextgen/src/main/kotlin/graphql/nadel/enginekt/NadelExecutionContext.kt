@@ -2,6 +2,7 @@ package graphql.nadel.enginekt
 
 import graphql.ExecutionInput
 import graphql.PublicApi
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.Service
 import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.ServiceExecutionHooks
@@ -14,6 +15,7 @@ data class NadelExecutionContext(
     val executionInput: ExecutionInput,
     val query: ExecutableNormalizedOperation,
     val hooks: ServiceExecutionHooks,
+    val hints: NadelExecutionHints,
 ) {
     private val serviceContexts = ConcurrentHashMap<String, CompletableFuture<Any?>>()
 
