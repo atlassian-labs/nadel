@@ -34,6 +34,12 @@ abstract class `transformer-on-hydration-fields` : EngineTestHook {
 
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
+            /**
+             * This transform will modify the arguments of the "barById" field.
+             *
+             * It will force a new value for the "id" argument, so we can assert that the transform was
+             * executed in the test fixture.
+             */
             object : NadelTransform<Any> {
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
