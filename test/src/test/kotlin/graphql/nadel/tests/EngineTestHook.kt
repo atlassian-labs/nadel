@@ -64,6 +64,7 @@ internal fun getTestHook(fixture: TestFixture): EngineTestHook? {
         println("No hook class found: ${e.message}")
         return null
     }
+
     return hookClass.newInstance() as EngineTestHook
 }
 
