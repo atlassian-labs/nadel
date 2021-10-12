@@ -211,7 +211,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
     ): Set<String> {
         return overallTypeNames
             .asSequence()
-            .mapNotNull {
+            .map {
                 executionBlueprint.getUnderlyingTypeName(service, it)
             }
             .toSet()
