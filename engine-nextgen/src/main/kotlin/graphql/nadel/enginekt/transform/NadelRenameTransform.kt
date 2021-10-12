@@ -47,7 +47,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
         }
 
         return State(
-            renameInstructions,
+            renameInstructions.mapValues { it.value[0] },
             objectsWithoutRename,
             NadelAliasHelper.forField(tag = "rename", overallField),
             overallField,

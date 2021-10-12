@@ -1,0 +1,174 @@
+name: basic polymorphic hydration
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service3: |
+    type Query {
+      buzById(id: ID): Buz
+    }
+
+    type Buz {
+      id: ID
+      name: String
+    }
+  service2: |
+    type Query {
+      barById(id: ID): Bar
+    }
+
+    type Bar {
+      id: ID
+      name: String
+    }
+  service1: |
+    type Query {
+      foo: Foo
+    }
+
+    type Foo {
+      id: ID
+      dataId: ID
+      data: Data
+      @hydrated(
+        service: "service3"
+        field: "buzById"
+        arguments: [
+          {name: "id" value: "$source.dataId"}
+        ]
+      )
+      @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          {name: "id" value: "$source.dataId"}
+        ]
+      )
+    }
+
+    union Data = Bar | Buz
+underlyingSchema:
+  service3: |
+    type Buz {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      buzById(id: ID): Buz
+    }
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID): Bar
+    }
+  service1: |
+    type Query {
+      foo: Foo
+    }
+
+    type Foo {
+      id: ID
+      dataId: ID
+    }
+
+query: |
+  query {
+    foo {
+      id
+      dataId
+      data {
+        ... on Bar {
+          id
+          name
+        }
+        ... on Buz {
+          id
+          name
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  __typename__hydration__data: __typename
+                  dataId
+                  hydration__data__dataId: dataId
+                  hydration__data__dataId: dataId
+                  id
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "__typename__hydration__data": "Foo",
+              "dataId": "BAR-0",
+              "hydration__data__dataId": "BAR-0",
+              "id": "FOO-0"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "BAR-0") {
+                ... on Bar {
+                  __typename__type_filter__id: __typename
+                  __typename__type_filter__name: __typename
+                  id
+                  name
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "__typename__type_filter__id": "Bar",
+              "__typename__type_filter__name": "Bar",
+              "id": "BAR-0",
+              "name": "Bar Bar Bar"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "id": "FOO-0",
+        "dataId": "BAR-0",
+        "data": {
+          "id": "BAR-0",
+          "name": "Bar Bar Bar"
+        }
+      }
+    },
+    "extensions": {}
+  }

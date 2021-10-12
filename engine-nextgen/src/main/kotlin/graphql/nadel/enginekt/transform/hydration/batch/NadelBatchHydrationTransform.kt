@@ -29,7 +29,7 @@ internal class NadelBatchHydrationTransform(
 
     data class State(
         val executionBlueprint: NadelOverallExecutionBlueprint,
-        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelBatchHydrationFieldInstruction>,
+        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
         val executionContext: NadelExecutionContext,
         val hydratedField: ExecutableNormalizedField,
         val hydratedFieldService: Service,

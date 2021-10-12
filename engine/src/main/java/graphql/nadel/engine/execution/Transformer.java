@@ -429,9 +429,9 @@ public class Transformer extends NodeVisitorStub {
 
     private FieldTransformation createTransformation(GraphQLFieldDefinition fieldDefinitionOverallSchema) {
 
-        UnderlyingServiceHydration hydration = NadelDirectives.createUnderlyingServiceHydration(fieldDefinitionOverallSchema);
-        if (hydration != null) {
-            return new HydrationTransformation(hydration);
+        List<UnderlyingServiceHydration> hydrations = NadelDirectives.createUnderlyingServiceHydration(fieldDefinitionOverallSchema);
+        if (hydrations != null && !hydrations.isEmpty()) {
+            return new HydrationTransformation(hydrations.get(0));
         }
 
         FieldMappingDefinition mappingDefinition = NadelDirectives.createFieldMapping(fieldDefinitionOverallSchema);

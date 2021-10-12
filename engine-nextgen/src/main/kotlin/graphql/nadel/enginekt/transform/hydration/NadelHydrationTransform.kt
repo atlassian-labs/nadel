@@ -8,12 +8,9 @@ import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
-import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
-import graphql.nadel.enginekt.transform.NadelTransform
-import graphql.nadel.enginekt.transform.NadelTransformFieldResult
+import graphql.nadel.enginekt.transform.*
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
-import graphql.nadel.enginekt.transform.getInstructionForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
@@ -41,7 +38,7 @@ internal class NadelHydrationTransform(
          * The [Map.Entry.key] of [FieldCoordinates] denotes a specific object type and
          * its associated instruction.
          */
-        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelHydrationFieldInstruction>,
+        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelHydrationFieldInstruction>>,
         val hydratedFieldService: Service,
         /**
          * The field in question for the transform, stored for quick access when
@@ -147,7 +144,7 @@ internal class NadelHydrationTransform(
         fieldToHydrate: ExecutableNormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
     ): List<NadelResultInstruction> {
-        val instruction = state.instructionsByObjectTypeNames.getInstructionForNode(
+        val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
             executionBlueprint = executionBlueprint,
             service = state.hydratedFieldService,
             aliasHelper = state.aliasHelper,
@@ -155,7 +152,15 @@ internal class NadelHydrationTransform(
         )
 
         // Do nothing if there is no hydration instruction associated with this result
-        instruction ?: return emptyList()
+        if (instructions.isEmpty()) {
+            return emptyList()
+        }
+
+        val instruction = if (instructions.size == 1) {
+            instructions.single()
+        } else {
+            instructions.single { it.actorService.name.contains("service2") }
+        }
 
         val actorQueryResults = coroutineScope {
             NadelHydrationFieldsBuilder.makeActorQueries(

@@ -130,3 +130,40 @@ fun <T : NadelFieldInstruction> Map<GraphQLObjectTypeName, T>.getInstructionForN
     instructions[overallTypeName]
 }
 
+/**
+ * Gets the instruction for a node. There _must_ be a `__typename` selection in the [parentNode].
+ */
+@JvmName("getInstructionsForNodeNewForList")
+fun <T : NadelFieldInstruction> Map<GraphQLObjectTypeName, List<T>>.getInstructionForNode(
+    executionBlueprint: NadelOverallExecutionBlueprint,
+    service: Service,
+    aliasHelper: NadelAliasHelper,
+    parentNode: JsonNode,
+): T? = let { instructions ->
+    val overallTypeName = NadelTransformUtil.getOverallTypeNameOfNode(
+        executionBlueprint = executionBlueprint,
+        service = service,
+        aliasHelper = aliasHelper,
+        node = parentNode,
+    ) ?: return null
+
+    val list = instructions[overallTypeName] ?: emptyList()
+    list[0]
+}
+
+fun <T : NadelFieldInstruction> Map<GraphQLObjectTypeName, List<T>>.getInstructionsForNode(
+    executionBlueprint: NadelOverallExecutionBlueprint,
+    service: Service,
+    aliasHelper: NadelAliasHelper,
+    parentNode: JsonNode,
+): List<T> = let { instructions ->
+    val overallTypeName = NadelTransformUtil.getOverallTypeNameOfNode(
+        executionBlueprint = executionBlueprint,
+        service = service,
+        aliasHelper = aliasHelper,
+        node = parentNode,
+    ) ?: return emptyList()
+
+    instructions[overallTypeName] ?: emptyList()
+}
+

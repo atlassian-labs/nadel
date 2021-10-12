@@ -29,7 +29,7 @@ import java.util.concurrent.CompletableFuture
  * 2. Test name e.g. hydration inside a renamed field
  * 3. Copy paste output from selecting a test in the IntelliJ e.g. java:test://graphql.nadel.tests.EngineTests.current hydration inside a renamed field
  */
-private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
+private val singleTestToRun = (System.getenv("TEST_NAME") ?: "basic polymorphic hydration")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.current")
     .removePrefix("java:test://graphql.nadel.tests.EngineTests.nextgen")
     .removeSuffix(".yml")
@@ -78,7 +78,7 @@ class EngineTests : FunSpec({
                         true
                     } else {
                         fixture.name.equals(singleTestToRun, ignoreCase = true)
-                            || fixture.name.toSlug().equals(singleTestToRun, ignoreCase = true)
+                                || fixture.name.toSlug().equals(singleTestToRun, ignoreCase = true)
                     }
                 }
                 .filter { (engineType) ->
@@ -147,8 +147,8 @@ private suspend fun execute(
                                 val indexOfCall = serviceCalls
                                     .indexOfFirst {
                                         it.serviceName == serviceName
-                                            && AstPrinter.printAst(it.request.document) == incomingQueryPrinted
-                                            && it.request.operationName == params.operationDefinition.name
+                                                && AstPrinter.printAst(it.request.document) == incomingQueryPrinted
+                                                && it.request.operationName == params.operationDefinition.name
                                     }
                                     .takeIf { it != -1 }
 

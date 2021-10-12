@@ -1,49 +1,20 @@
 package graphql.nadel.enginekt.blueprint
 
-import graphql.Scalars.GraphQLBoolean
-import graphql.Scalars.GraphQLFloat
-import graphql.Scalars.GraphQLID
-import graphql.Scalars.GraphQLInt
-import graphql.Scalars.GraphQLString
+import graphql.Scalars.*
 import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.Service
-import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
-import graphql.nadel.dsl.ExtendedFieldDefinition
-import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.dsl.InputObjectTypeDefinitionWithTransformation
-import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation
-import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation
+import graphql.nadel.dsl.*
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD
-import graphql.nadel.dsl.TypeMappingDefinition
-import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
-import graphql.nadel.enginekt.util.AnyImplementingTypeDefinition
-import graphql.nadel.enginekt.util.AnyNamedNode
-import graphql.nadel.enginekt.util.emptyOrSingle
-import graphql.nadel.enginekt.util.getFieldAt
-import graphql.nadel.enginekt.util.getFieldsAlong
-import graphql.nadel.enginekt.util.getOperationType
-import graphql.nadel.enginekt.util.isExtensionDef
-import graphql.nadel.enginekt.util.isList
-import graphql.nadel.enginekt.util.makeFieldCoordinates
-import graphql.nadel.enginekt.util.mapFrom
-import graphql.nadel.enginekt.util.strictAssociateBy
-import graphql.nadel.enginekt.util.unwrapAll
-import graphql.nadel.enginekt.util.unwrapNonNull
+import graphql.nadel.enginekt.util.*
 import graphql.nadel.schema.NadelDirectives
-import graphql.schema.FieldCoordinates
-import graphql.schema.GraphQLDirectiveContainer
-import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLFieldsContainer
-import graphql.schema.GraphQLObjectType
-import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLType
+import graphql.schema.*
 
 internal object NadelExecutionBlueprintFactory {
     fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelOverallExecutionBlueprint {
@@ -62,12 +33,12 @@ private class Factory(
         val typeRenameInstructions = makeTypeRenameInstructions().strictAssociateBy {
             it.overallName
         }
-        val fieldInstructions = makeFieldInstructions().strictAssociateBy {
+        val fieldInstructions = makeFieldInstructions().groupBy {
             it.location
         }
         val furtherTypeRenameInstructions = typeRenameInstructions.values +
-            SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
-                .getTypeRenames()
+                SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
+                    .getTypeRenames()
 
         return NadelOverallExecutionBlueprint(
             schema = overallSchema,
@@ -85,15 +56,21 @@ private class Factory(
                 type.fields
                     .asSequence()
                     // Get the field mapping def
-                    .mapNotNull { field ->
+                    .flatMap { field ->
                         when (val mappingDefinition = getFieldMappingDefinition(field)) {
-                            null -> when (val hydration = getUnderlyingServiceHydration(field)) {
-                                null -> null
-                                else -> makeHydrationFieldInstruction(type, field, hydration)
+                            null -> {
+                                getUnderlyingServiceHydration(field)
+                                    .map { hydration ->
+                                        makeHydrationFieldInstruction(
+                                            type,
+                                            field,
+                                            hydration
+                                        )
+                                    }
                             }
                             else -> when (mappingDefinition.inputPath.size) {
-                                1 -> makeRenameInstruction(type, field, mappingDefinition)
-                                else -> makeDeepRenameFieldInstruction(type, field, mappingDefinition)
+                                1 -> listOf(makeRenameInstruction(type, field, mappingDefinition))
+                                else -> listOf(makeDeepRenameFieldInstruction(type, field, mappingDefinition))
                             }
                         }
                     }
@@ -177,7 +154,7 @@ private class Factory(
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
-                            && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
+                                && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
                     }
                 }
             }
@@ -310,10 +287,21 @@ private class Factory(
             ?: NadelDirectives.createFieldMapping(field)
     }
 
-    private fun getUnderlyingServiceHydration(field: GraphQLFieldDefinition): UnderlyingServiceHydration? {
+    private fun getUnderlyingServiceHydration(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
         val extendedDef = field.definition as? ExtendedFieldDefinition
-        return extendedDef?.fieldTransformation?.underlyingServiceHydration
-            ?: NadelDirectives.createUnderlyingServiceHydration(field)
+        val underlyingServiceHydration = extendedDef?.fieldTransformation?.underlyingServiceHydration
+        return when {
+            underlyingServiceHydration != null -> {
+                listOf(underlyingServiceHydration)
+            }
+            else -> {
+                val createUnderlyingServiceHydration = NadelDirectives.createUnderlyingServiceHydration(field)
+                if (createUnderlyingServiceHydration?.isNotEmpty() == true) {
+                    return createUnderlyingServiceHydration
+                }
+                return emptyList()
+            }
+        }
     }
 
     private fun deriveUnderlyingBlueprints(
@@ -428,7 +416,7 @@ private class Factory(
 private class SharedTypesAnalysis(
     private val overallSchema: GraphQLSchema,
     private val services: List<Service>,
-    private val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
+    private val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
     private val typeRenameInstructions: Map<String, NadelTypeRenameInstruction>,
 ) {
     companion object {
@@ -559,11 +547,17 @@ private class SharedTypesAnalysis(
         val overallCoordinates = makeFieldCoordinates(overallParentType.name, overallField.name)
 
         // Honestly, it would be nice stricter validation here, but it's so cooked that we can't
-        return when (val instruction = fieldInstructions[overallCoordinates]) {
-            null -> underlyingParentType.getField(overallField.name)
-            is NadelRenameFieldInstruction -> underlyingParentType.getField(instruction.underlyingName)
-            is NadelDeepRenameFieldInstruction -> underlyingParentType.getFieldAt(instruction.queryPathToField.segments)
-            else -> null
+
+        val list: List<NadelFieldInstruction>? = fieldInstructions[overallCoordinates]
+        if (list != null) {
+            for (instruction in list) {
+                if (instruction is NadelRenameFieldInstruction) {
+                    return underlyingParentType.getField(instruction.underlyingName)
+                } else if (instruction is NadelDeepRenameFieldInstruction) {
+                    return underlyingParentType.getFieldAt(instruction.queryPathToField.segments)
+                }
+            }
         }
+        return underlyingParentType.getField(overallField.name)
     }
 }
