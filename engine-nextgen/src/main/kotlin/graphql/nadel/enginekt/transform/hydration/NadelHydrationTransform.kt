@@ -3,14 +3,18 @@ package graphql.nadel.enginekt.transform.hydration
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.NadelEngineExecutionHooks
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
+import graphql.nadel.enginekt.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
-import graphql.nadel.enginekt.transform.*
+import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
+import graphql.nadel.enginekt.transform.NadelTransform
+import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
+import graphql.nadel.enginekt.transform.getInstructionsForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
@@ -21,6 +25,7 @@ import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toBuilder
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.async
@@ -56,7 +61,7 @@ internal class NadelHydrationTransform(
         overallField: ExecutableNormalizedField,
     ): State? {
         val hydrationInstructionsByTypeNames = executionBlueprint.fieldInstructions
-            .getInstructionsOfTypeForField<NadelHydrationFieldInstruction>(overallField)
+            .getTypeNameToInstructionsMap<NadelHydrationFieldInstruction>(overallField)
 
         return if (hydrationInstructionsByTypeNames.isEmpty()) {
             null
@@ -96,7 +101,7 @@ internal class NadelHydrationTransform(
                     executionBlueprint = executionBlueprint,
                     aliasHelper = state.aliasHelper,
                     objectTypeName = typeName,
-                    instruction = instruction,
+                    instructions = instruction,
                 )
             } + makeTypeNameField(state),
         )
@@ -156,11 +161,7 @@ internal class NadelHydrationTransform(
             return emptyList()
         }
 
-        val instruction = if (instructions.size == 1) {
-            instructions.single()
-        } else {
-            instructions.single { it.actorService.name.contains("service2") }
-        }
+        val instruction = getHydrationFieldInstruction(instructions, executionContext.hooks, parentNode)
 
         val actorQueryResults = coroutineScope {
             NadelHydrationFieldsBuilder.makeActorQueries(
@@ -217,6 +218,26 @@ internal class NadelHydrationTransform(
                         newValue = data,
                     ),
                 ) + addErrors
+            }
+        }
+    }
+
+    private fun getHydrationFieldInstruction(
+        instructions: List<NadelHydrationFieldInstruction>,
+        hooks: ServiceExecutionHooks,
+        parentNode: JsonNode
+    ): NadelHydrationFieldInstruction {
+        return when (instructions.size) {
+            1 -> instructions.single()
+            else -> {
+                if (hooks is NadelEngineExecutionHooks) {
+                    hooks.resolvePolymorphicHydrationInstruction(instructions, parentNode)
+                } else {
+                    error(
+                        "Cannot decide which hydration instruction should be use. Provided ServiceExecutionHooks has " +
+                            "to be of type NadelEngineExecutionHooks"
+                    )
+                }
             }
         }
     }

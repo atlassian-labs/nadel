@@ -5,7 +5,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
+import graphql.nadel.enginekt.blueprint.getTypeNameToInstructionMap
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
@@ -85,13 +85,13 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         overallField: ExecutableNormalizedField,
     ): State? {
         val deepRenameInstructions = executionBlueprint.fieldInstructions
-            .getInstructionsOfTypeForField<NadelDeepRenameFieldInstruction>(overallField)
+            .getTypeNameToInstructionMap<NadelDeepRenameFieldInstruction>(overallField)
         if (deepRenameInstructions.isEmpty()) {
             return null
         }
 
         return State(
-            deepRenameInstructions.mapValues { it.value[0] },
+            deepRenameInstructions,
             NadelAliasHelper.forField(tag = "deep_rename", overallField),
             overallField,
         )

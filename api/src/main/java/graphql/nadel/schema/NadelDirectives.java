@@ -16,6 +16,7 @@ import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLDirectiveContainer;
@@ -26,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
@@ -168,19 +168,15 @@ public class NadelDirectives {
     }
 
     public static List<UnderlyingServiceHydration> createUnderlyingServiceHydration(GraphQLFieldDefinition fieldDefinition) {
-        List<GraphQLDirective> directives = fieldDefinition.getDirectives(HYDRATED_DIRECTIVE_DEFINITION.getName());
-        if (directives == null || directives.isEmpty()) {
-            return emptyList();
-        }
-
-        return directives.stream()
-                .map(directive -> {
+        List<GraphQLDirective> hydrationDirectives = fieldDefinition.getDirectives(HYDRATED_DIRECTIVE_DEFINITION.getName());
+        return FpKit.map(hydrationDirectives,
+                directive -> {
                     String service = getDirectiveValue(directive, "service", String.class);
                     String field = getDirectiveValue(directive, "field", String.class);
                     String objectIdentifier = getDirectiveValue(directive, "identifiedBy", String.class);
                     Boolean objectIndexed = getDirectiveValue(directive, "indexed", Boolean.class, false);
                     // Note: this is not properly implemented yet, so the value does not matter
-                    Boolean batched = false; // getDirectiveValue(directive, "batched", Boolean.class, false);
+                    boolean batched = false; // getDirectiveValue(directive, "batched", Boolean.class, false);
                     if (objectIndexed) {
                         objectIdentifier = null; // we cant have both but it has a default
                     }
@@ -210,7 +206,7 @@ public class NadelDirectives {
                             batchSize,
                             emptyMap()
                     );
-                }).collect(Collectors.toList());
+                });
     }
 
     @SuppressWarnings("unchecked")

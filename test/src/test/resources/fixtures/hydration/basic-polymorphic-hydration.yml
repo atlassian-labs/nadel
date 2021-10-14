@@ -23,7 +23,7 @@ overallSchema:
     }
   service1: |
     type Query {
-      foo: Foo
+      foo: [Foo]
     }
 
     type Foo {
@@ -68,7 +68,7 @@ underlyingSchema:
     }
   service1: |
     type Query {
-      foo: Foo
+      foo: [Foo]
     }
 
     type Foo {
@@ -80,7 +80,6 @@ query: |
   query {
     foo {
       id
-      dataId
       data {
         ... on Bar {
           id
@@ -104,7 +103,6 @@ serviceCalls:
               foo {
                 ... on Foo {
                   __typename__hydration__data: __typename
-                  dataId
                   hydration__data__dataId: dataId
                   hydration__data__dataId: dataId
                   id
@@ -118,12 +116,15 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "foo": {
+            "foo": [{
               "__typename__hydration__data": "Foo",
-              "dataId": "BAR-0",
               "hydration__data__dataId": "BAR-0",
               "id": "FOO-0"
-            }
+            },{
+              "__typename__hydration__data": "Foo",
+              "hydration__data__dataId": "BUZ-0",
+              "id": "FOO-1"
+            }]
           },
           "extensions": {}
         }
@@ -157,18 +158,54 @@ serviceCalls:
           },
           "extensions": {}
         }
+    - serviceName: service3
+      request:
+        query: |
+          query {
+            ... on Query {
+              buzById(id: "BUZ-0") {
+                ... on Buz {
+                  __typename__type_filter__id: __typename
+                  __typename__type_filter__name: __typename
+                  id
+                  name
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "buzById": {
+              "__typename__type_filter__id": "Buz",
+              "__typename__type_filter__name": "Buz",
+              "id": "BUZ-0",
+              "name": "Buz Buz Buz"
+            }
+          },
+          "extensions": {}
+        }
 # language=JSON
 response: |-
   {
     "data": {
-      "foo": {
+      "foo": [{
         "id": "FOO-0",
-        "dataId": "BAR-0",
         "data": {
           "id": "BAR-0",
           "name": "Bar Bar Bar"
         }
-      }
+      },
+      {
+        "id": "FOO-1",
+        "data": {
+          "id": "BUZ-0",
+          "name": "Buz Buz Buz"
+        }
+      }]
     },
     "extensions": {}
   }

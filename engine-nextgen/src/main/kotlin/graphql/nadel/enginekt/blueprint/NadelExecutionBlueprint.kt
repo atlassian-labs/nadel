@@ -98,7 +98,22 @@ data class NadelTypeRenameInstructions internal constructor(
     }
 }
 
-inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelFieldInstruction>>.getInstructionsOfTypeForField(
+inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelFieldInstruction>>.getTypeNameToInstructionMap(
+    field: ExecutableNormalizedField,
+): Map<GraphQLObjectTypeName, T> {
+    return mapFrom(
+        field.objectTypeNames
+            .mapNotNull { objectTypeName ->
+                val coordinates = makeFieldCoordinates(objectTypeName, field.name)
+                val instruction = this[coordinates]
+                    ?.filterIsInstance<T>()
+                    ?.singleOrNull() ?: return@mapNotNull null
+                objectTypeName to instruction
+            },
+    )
+}
+
+inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelFieldInstruction>>.getTypeNameToInstructionsMap(
     field: ExecutableNormalizedField,
 ): Map<GraphQLObjectTypeName, List<T>> {
     return mapFrom(

@@ -430,7 +430,7 @@ public class Transformer extends NodeVisitorStub {
     private FieldTransformation createTransformation(GraphQLFieldDefinition fieldDefinitionOverallSchema) {
 
         List<UnderlyingServiceHydration> hydrations = NadelDirectives.createUnderlyingServiceHydration(fieldDefinitionOverallSchema);
-        if (hydrations != null && !hydrations.isEmpty()) {
+        if (!hydrations.isEmpty()) {
             return new HydrationTransformation(hydrations.get(0));
         }
 
