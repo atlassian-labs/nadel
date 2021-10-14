@@ -2,8 +2,6 @@ package graphql.nadel;
 
 import graphql.PublicApi;
 
-import java.util.function.Consumer;
-
 @PublicApi
 public class NadelExecutionHints {
     private NadelExecutionHints(Builder builder) {
@@ -42,21 +40,19 @@ public class NadelExecutionHints {
     }
 
     /**
-     * Utility method to transform this object.
+     * Returns a builder with the same field values as this object.
+     *
+     * This is useful for transforming the object.
      */
-    public NadelExecutionHints transform(Consumer<NadelExecutionHints.Builder> builderConsumer) {
-        NadelExecutionHints.Builder builder = new NadelExecutionHints.Builder(this);
-        builderConsumer.accept(builder);
-        return builder.build();
+    public NadelExecutionHints.Builder toBuilder() {
+        return new NadelExecutionHints.Builder(this);
     }
 
     /**
      * Create a shallow copy of this object.
      */
     public NadelExecutionHints copy() {
-        return this.transform(builder -> {
-            // noop
-        });
+        return this.toBuilder().build();
     }
 
     public static Builder newHints() {

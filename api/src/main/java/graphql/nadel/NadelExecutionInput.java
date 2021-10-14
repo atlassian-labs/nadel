@@ -139,7 +139,12 @@ public class NadelExecutionInput {
         }
 
         public Builder transformExecutionHints(Consumer<NadelExecutionHints.Builder> builderConsumer) {
-            this.nadelExecutionHints = this.nadelExecutionHints.transform(builderConsumer);
+            final NadelExecutionHints.Builder hintsBuilder = this.nadelExecutionHints.toBuilder();
+
+            builderConsumer.accept(hintsBuilder);
+
+            this.nadelExecutionHints = hintsBuilder.build();
+
             return this;
         }
 

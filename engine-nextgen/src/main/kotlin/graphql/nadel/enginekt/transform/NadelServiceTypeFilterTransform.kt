@@ -90,10 +90,10 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         val underlyingTypeNamesOwnedByService =
             getUnderlyingTypeNamesServiceOwns(executionBlueprint, service, typeNamesOwnedByService)
 
-        val allTypeNames = typeNamesOwnedByService + underlyingTypeNamesOwnedByService
+        val allTypeNamesOwnedByService = typeNamesOwnedByService + underlyingTypeNamesOwnedByService
 
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames
-            .filter { it in allTypeNames }
+            .filter { it in allTypeNamesOwnedByService }
 
         // All types are owned by service
         // Note: one list is a subset of the other, so if size is same, contents are too
