@@ -10,8 +10,8 @@ overallSchema:
       }
       type Foo {
         renamedField: String => renamed from issue.field
-        issue: Issue => hydrated from Foo.issue(issueId: $source.issue.fooId)
-        detail: Detail => hydrated from Foo.detail(detailId: $source.issue.fooId)
+        issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.issue.fooId"}])
+        detail: Detail @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.issue.fooId"}])
       }
       type Detail {
         detailId: ID!

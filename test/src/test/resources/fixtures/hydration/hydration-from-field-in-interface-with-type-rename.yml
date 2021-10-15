@@ -11,7 +11,7 @@ overallSchema:
       type RenamedIssue => renamed from Issue {
         id: ID
         title: String
-        issueAuthor: RenamedUser => hydrated from users.user(id: $source.author.userId)
+        issueAuthor: RenamedUser @hydrated(service: "users" field: "user" arguments: [{name: "id" value: "$source.author.userId"}])
       }
     }
   users: |

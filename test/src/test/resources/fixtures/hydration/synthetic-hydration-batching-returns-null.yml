@@ -23,7 +23,7 @@ overallSchema:
       }
       type Foo {
         id: ID
-        bar: [Bar] => hydrated from service2.barsQuery.barsById(id: $source.barId)
+        bar: [Bar] @hydrated(service: "service2" field: "barsQuery.barsById" arguments: [{name: "id" value: "$source.barId"}])
       }
     }
 underlyingSchema:

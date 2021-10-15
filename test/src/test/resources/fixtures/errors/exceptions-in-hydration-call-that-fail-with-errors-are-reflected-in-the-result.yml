@@ -10,7 +10,7 @@ overallSchema:
       }
       type Bar {
         name: String
-        nestedBar: Bar => hydrated from Bar.barById(id: $source.nestedBarId)
+        nestedBar: Bar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.nestedBarId"}])
       }
     }
   Foo: |
@@ -20,7 +20,7 @@ overallSchema:
       }
       type Foo {
         name: String
-        bar: Bar => hydrated from Bar.barById(id: $source.barId)
+        bar: Bar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
       }
     }
 underlyingSchema:

@@ -25,7 +25,7 @@ overallSchema:
         id: ID
         commentText: String => renamed from text
         created: String
-        author: User => hydrated from UserService.userById(id: $source.authorId)
+        author: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.authorId"}])
       }
     }
 underlyingSchema:

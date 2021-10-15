@@ -9,8 +9,8 @@ overallSchema:
         foo: Foo
       }
       type Foo {
-        issue: Issue => hydrated from Foo.issue(issueId: $source.fooId)
-        detail: Detail => hydrated from Foo.detail(detailId: $source.fooId)
+        issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.fooId"}])
+        detail: Detail @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.fooId"}])
       }
       type Detail {
         detailId: ID!

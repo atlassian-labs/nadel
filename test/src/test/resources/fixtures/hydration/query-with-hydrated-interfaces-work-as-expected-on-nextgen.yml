@@ -18,14 +18,14 @@ overallSchema:
       type Cat implements Pet {
         name: String
         wearsBell: Boolean
-        owners: [Owner] => hydrated from OwnerService.ownerById(id: $source.ownerIds)
+        owners: [Owner] @hydrated(service: "OwnerService" field: "ownerById" arguments: [{name: "id" value: "$source.ownerIds"}])
         collar: Collar
         collarToRenamed: Collar => renamed from collar
       }
       type Dog implements Pet {
         name: String
         wearsCollar: Boolean
-        owners: [Owner] => hydrated from OwnerService.ownerById(id: $source.ownerIds)
+        owners: [Owner] @hydrated(service: "OwnerService" field: "ownerById" arguments: [{name: "id" value: "$source.ownerIds"}])
         collar: Collar
         collarToRenamed: Collar => renamed from collar
       }

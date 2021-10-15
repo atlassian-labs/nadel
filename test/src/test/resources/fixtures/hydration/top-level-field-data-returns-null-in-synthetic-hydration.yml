@@ -23,7 +23,7 @@ overallSchema:
       }
       type Issue {
         id: ID
-        project: Project => hydrated from service2.projects.project(id: $source.projectId)
+        project: Project @hydrated(service: "service2" field: "projects.project" arguments: [{name: "id" value: "$source.projectId"}])
       }
     }
 underlyingSchema:
