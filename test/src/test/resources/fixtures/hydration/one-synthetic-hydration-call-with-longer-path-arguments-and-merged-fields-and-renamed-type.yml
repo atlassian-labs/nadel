@@ -24,7 +24,7 @@ overallSchema:
       }
       type Issue {
         id: ID
-        authors: [RenamedUser] => hydrated from UserService.usersQuery.usersByIds(id: $source.authors.authorId) object identified by id, batch size 2
+        authors: [RenamedUser] @hydrated(service: "UserService" field: "usersQuery.usersByIds" arguments: [{name: "id" value: "$source.authors.authorId"}] identifiedBy: "id" batchSize: 2)
       }
     }
 underlyingSchema:

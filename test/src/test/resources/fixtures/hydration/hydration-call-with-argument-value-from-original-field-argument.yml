@@ -14,14 +14,21 @@ overallSchema:
       }
     }
   Issues: |
-    service Issues {
-      type Query {
-        issues: [Issue]
-      }
-      type Issue {
-        id: ID
-        author(extraArg: String): User => hydrated from UserService.usersByIds(extraArg: $argument.extraArg,id: $source.authorId) object identified by id, batch size 2
-      }
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      author(extraArg: String): User @hydrated(
+        service: "UserService"
+        field: "usersByIds"
+        arguments: [
+          {name: "extraArg" value: "$argument.extraArg"}
+          {name: "id" value: "$source.authorId"}
+        ]
+        identifiedBy: "id"
+        batchSize: 2
+      )
     }
 underlyingSchema:
   UserService: |

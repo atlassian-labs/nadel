@@ -11,7 +11,7 @@ overallSchema:
       type Bar {
         barId: ID
         name: String
-        nestedBar: Bar => hydrated from Bar.barsById(id: $source.nestedBarId) object identified by barId
+        nestedBar: Bar @hydrated(service: "Bar" field: "barsById" arguments: [{name: "id" value: "$source.nestedBarId"}] identifiedBy: "barId")
       }
     }
   Foo: |
@@ -21,7 +21,7 @@ overallSchema:
       }
       type Foo {
         name: String
-        bar: Bar => hydrated from Bar.barsById(id: $source.barId) object identified by barId, batch size 2
+        bar: Bar @hydrated(service: "Bar" field: "barsById" arguments: [{name: "id" value: "$source.barId"}] identifiedBy: "barId" batchSize: 2)
       }
     }
 underlyingSchema:

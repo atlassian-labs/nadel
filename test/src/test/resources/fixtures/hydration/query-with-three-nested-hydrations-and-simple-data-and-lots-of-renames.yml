@@ -11,7 +11,7 @@ overallSchema:
       type Bar {
         barId: ID
         barName: String @renamed(from: "name")
-        nestedBar: Bar => hydrated from Bar.barsById(id: $source.nestedBarId) object identified by barId
+        nestedBar: Bar @hydrated(service: "Bar" field: "barsById" arguments: [{name: "id" value: "$source.nestedBarId"}] identifiedBy: "barId")
         barDetails: BarDetails @renamed(from: "details")
       }
       type BarDetails @renamed(from: "Details") {
@@ -30,7 +30,7 @@ overallSchema:
       }
       type Fooz @renamed(from: "Foo") {
         fooDetails: FooDetails @renamed(from: "details")
-        bar: Bar => hydrated from Bar.barsById(id: $source.barId) object identified by barId, batch size 2
+        bar: Bar @hydrated(service: "Bar" field: "barsById" arguments: [{name: "id" value: "$source.barId"}] identifiedBy: "barId" batchSize: 2)
       }
       type FooDetails @renamed(from: "Details") {
         fooName: String @renamed(from: "name")

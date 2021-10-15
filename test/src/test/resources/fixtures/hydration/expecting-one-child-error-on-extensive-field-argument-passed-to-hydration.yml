@@ -14,7 +14,7 @@ overallSchema:
       }
       type SoftwareCard @renamed(from: "Card") {
         id: ID
-        assignee: User => hydrated from Users.users(accountIds: $source.issue.assignee.accountId) object identified by accountId, batch size 3
+        assignee: User @hydrated(service: "Users" field: "users" arguments: [{name: "accountIds" value: "$source.issue.assignee.accountId"}] identifiedBy: "accountId" batchSize: 3)
       }
     }
   Users: |

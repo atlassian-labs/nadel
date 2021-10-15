@@ -21,7 +21,7 @@ overallSchema:
       type Issue {
         id: ID
         relatedIssue: Issue
-        author: User => hydrated from UserService.usersById(id: $source.authorId) object identified by id
+        author: User @hydrated(service: "UserService" field: "usersById" arguments: [{name: "id" value: "$source.authorId"}] identifiedBy: "id")
       }
     }
 underlyingSchema:

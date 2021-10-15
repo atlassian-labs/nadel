@@ -21,7 +21,7 @@ overallSchema:
       type Movie {
         id: ID!
         name: String
-        character: TestingCharacter => hydrated from testing.tests.character(id: $source.characterId) object identified by id, batch size 3
+        character: TestingCharacter @hydrated(service: "testing" field: "tests.character" arguments: [{name: "id" value: "$source.characterId"}] identifiedBy: "id" batchSize: 3)
       }
     }
 underlyingSchema:

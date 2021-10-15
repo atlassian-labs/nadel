@@ -18,7 +18,7 @@ overallSchema:
       type TestingMovie @renamed(from: "Movie") {
         id: ID!
         name: String
-        characters: [TestingCharacter] => hydrated from testing.characters(ids: $source.characterIds) object identified by id, batch size 3
+        characters: [TestingCharacter] @hydrated(service: "testing" field: "characters" arguments: [{name: "ids" value: "$source.characterIds"}] identifiedBy: "id" batchSize: 3)
       }
     }
 underlyingSchema:

@@ -35,7 +35,7 @@ overallSchema:
         id: ID
       }
       extend type Issue {
-        association(filter: Filter): AssociationConnection => hydrated from Association.association(id: $source.id, filter: $argument.filter)
+        association(filter: Filter): AssociationConnection @hydrated(service: "Association" field: "association" arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}])
       }
     }
 underlyingSchema:

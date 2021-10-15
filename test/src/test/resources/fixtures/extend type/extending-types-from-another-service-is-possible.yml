@@ -6,7 +6,7 @@ overallSchema:
   Service2: |
     service Service2 {
       extend type Root {
-        extension: Extension => hydrated from Service2.lookup(id: $source.id) object identified by id
+        extension: Extension @hydrated(service: "Service2" field: "lookup" arguments: [{name: "id" value: "$source.id"}] identifiedBy: "id")
       }
       type Extension {
         id: ID

@@ -68,9 +68,9 @@ serviceCalls:
         {
           "data": {
             "foo": {
-                "id": "FOO-1",
-                "uuid_typename": "Foo"
-              }
+              "id": "FOO-1",
+              "uuid_typename": "Foo"
+            }
           },
           "extensions": {}
         }
@@ -79,16 +79,18 @@ response: |-
   {
     "data": {
       "foo": {
-          "id": "FOO-1",
-          "epicEntity":null
-        }
-    },
-    "errors": [{
-    "message": "Validation error of type WrongType: null",
-      "locations":[],
-      "extensions":{
-        "classification": "ValidationError"
+        "id": "FOO-1",
+        "epicEntity": null
       }
-    }],
+    },
+    "errors": [
+      {
+        "message": "Validation error of type WrongType: null",
+        "locations": [],
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ],
     "extensions": {}
   }
