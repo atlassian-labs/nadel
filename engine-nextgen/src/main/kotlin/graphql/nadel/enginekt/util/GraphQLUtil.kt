@@ -41,6 +41,7 @@ import graphql.language.Value
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
@@ -460,3 +461,6 @@ internal fun javaValueToAstValue(value: Any?): AnyAstValue {
         else -> error("Unknown value type '${value.javaClass.name}'")
     }
 }
+
+val UnderlyingServiceHydration.pathToActorField
+    get() = listOfNotNull(syntheticField, topLevelField)
