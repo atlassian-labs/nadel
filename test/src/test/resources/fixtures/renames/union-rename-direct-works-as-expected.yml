@@ -7,11 +7,11 @@ overallSchema:
     service MyService {
       type Query {
         hello: World
-        renameObject: ObjectOverall => renamed from renameObjectUnderlying # the field is renamed
-        renameInterface: InterfaceOverall => renamed from renameInterfaceUnderlying
-        renameUnion: UnionOverall => renamed from renameUnionUnderlying
+        renameObject: ObjectOverall @renamed(from: "renameObjectUnderlying") # the field is renamed
+        renameInterface: InterfaceOverall @renamed(from: "renameInterfaceUnderlying")
+        renameUnion: UnionOverall @renamed(from: "renameUnionUnderlying")
         renameInput(arg1: InputOverall!, arg2: URL, arg3: EnumOverall): String
-        renameString: String => renamed from renameStringUnderlying
+        renameString: String @renamed(from: "renameStringUnderlying")
         typenameTest: TypenameTest
       }
 
@@ -20,31 +20,31 @@ overallSchema:
         name: String
       }
 
-      type ObjectOverall implements InterfaceOverall => renamed from ObjectUnderlying {
+      type ObjectOverall implements InterfaceOverall @renamed(from: "ObjectUnderlying") {
         name: String
       }
 
-      interface InterfaceOverall => renamed from InterfaceUnderlying {
+      interface InterfaceOverall @renamed(from: "InterfaceUnderlying") {
         name: String
       }
 
-      union UnionOverall => renamed from UnionUnderlying = X | Y
+      union UnionOverall @renamed(from: "UnionUnderlying") = X | Y
 
-      type X => renamed from XUnderlying {
+      type X @renamed(from: "XUnderlying") {
         x: Int
       }
 
-      type Y => renamed from YUnderlying {
+      type Y @renamed(from: "YUnderlying") {
         y: Int
       }
 
-      input InputOverall => renamed from InputUnderlying {
+      input InputOverall @renamed(from: "InputUnderlying") {
         inputVal: String
       }
 
-      scalar URL => renamed from String
+      scalar URL @renamed(from: "String")
 
-      enum EnumOverall => renamed from EnumUnderlying {
+      enum EnumOverall @renamed(from: "EnumUnderlying") {
         X, Y
       }
 

@@ -9,7 +9,7 @@ overallSchema:
         issue: Issue
       }
       type Issue {
-        name: String => renamed from details.name
+        name: String @renamed(from: "details.name")
       }
     }
 underlyingSchema:

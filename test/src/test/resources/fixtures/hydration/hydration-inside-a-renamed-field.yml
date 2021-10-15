@@ -8,14 +8,14 @@ overallSchema:
       type Query {
         barById(id: ID!): RenamedBar
       }
-      type RenamedBar => renamed from Bar {
+      type RenamedBar @renamed(from: "Bar") {
         id: ID!
       }
     }
   Foo: |
     service Foo {
       type Query {
-        foo: Foo => renamed from fooOriginal
+        foo: Foo @renamed(from: "fooOriginal")
       }
       type Foo {
         id: ID!

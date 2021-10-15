@@ -10,8 +10,8 @@ overallSchema:
       }
       type Issue {
         id: ID
-        authorId: ID => renamed from authorDetails.authorId
-        authorName: ID => renamed from authorDetails.name
+        authorId: ID @renamed(from: "authorDetails.authorId")
+        authorName: ID @renamed(from: "authorDetails.name")
       }
     }
 underlyingSchema:

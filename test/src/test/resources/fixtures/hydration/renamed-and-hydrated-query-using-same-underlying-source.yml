@@ -9,7 +9,7 @@ overallSchema:
         foo: Foo
       }
       type Foo {
-        renamedField: String => renamed from issue.field
+        renamedField: String @renamed(from: "issue.field")
         details: [Detail] @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.issue.fooId"}])
       }
       type Detail {

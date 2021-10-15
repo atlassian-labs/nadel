@@ -10,10 +10,10 @@ overallSchema:
       }
       type Issue {
         id: ID
-        authorName: Name => renamed from authorDetails.name
+        authorName: Name @renamed(from: "authorDetails.name")
       }
-      type Name => renamed from OriginalName {
-        firstName: String => renamed from originalFirstName
+      type Name @renamed(from: "OriginalName") {
+        firstName: String @renamed(from: "originalFirstName")
         lastName: String
       }
     }

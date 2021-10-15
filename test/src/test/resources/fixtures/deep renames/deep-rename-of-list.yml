@@ -9,7 +9,7 @@ overallSchema:
         details: [IssueDetail]
       }
       type IssueDetail {
-        labels: [String] => renamed from issue.labels
+        labels: [String] @renamed(from: "issue.labels")
       }
     }
 underlyingSchema:

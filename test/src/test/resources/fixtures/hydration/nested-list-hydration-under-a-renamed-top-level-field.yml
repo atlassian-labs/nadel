@@ -6,9 +6,9 @@ overallSchema:
   Foo: |
     service Foo {
       type Query {
-        fooService: FooService => renamed from service
+        fooService: FooService @renamed(from: "service")
       }
-      type FooService => renamed from Service {
+      type FooService @renamed(from: "Service") {
         otherServices: Connection @hydrated(service: "Foo" field: "connection" arguments: [{name: "id" value: "$source.id"}])
       }
       type Connection {

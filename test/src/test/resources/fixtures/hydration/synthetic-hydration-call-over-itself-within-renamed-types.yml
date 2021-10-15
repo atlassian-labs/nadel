@@ -14,11 +14,11 @@ overallSchema:
       type Testing {
         movies: [TestingMovie]
       }
-      type TestingCharacter => renamed from Character {
+      type TestingCharacter @renamed(from: "Character") {
         id: ID!
         name: String
       }
-      type TestingMovie => renamed from Movie {
+      type TestingMovie @renamed(from: "Movie") {
         id: ID!
         name: String
         characters: [TestingCharacter] => hydrated from testing.tests.characters(ids: $source.characterIds) object identified by id, batch size 3

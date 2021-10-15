@@ -9,7 +9,7 @@ overallSchema:
         foo: Foo
       }
       type Foo {
-        renamedField: String => renamed from issue.field
+        renamedField: String @renamed(from: "issue.field")
         issue: Issue
       }
       type Issue {

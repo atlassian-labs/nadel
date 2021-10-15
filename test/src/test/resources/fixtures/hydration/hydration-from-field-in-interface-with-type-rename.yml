@@ -8,7 +8,7 @@ overallSchema:
       type Query {
         issue(id: ID): RenamedIssue
       }
-      type RenamedIssue => renamed from Issue {
+      type RenamedIssue @renamed(from: "Issue") {
         id: ID
         title: String
         issueAuthor: RenamedUser @hydrated(service: "users" field: "user" arguments: [{name: "id" value: "$source.author.userId"}])
@@ -19,7 +19,7 @@ overallSchema:
       type Query {
         user(id: ID!): RenamedUser
       }
-      type RenamedUser  => renamed from User {
+      type RenamedUser  @renamed(from: "User") {
         id: ID!
         name: String
       }

@@ -11,7 +11,7 @@ overallSchema:
       }
       type Comment {
         id: ID
-        commentText: String => renamed from text
+        commentText: String @renamed(from: "text")
         created: String
       }
     }

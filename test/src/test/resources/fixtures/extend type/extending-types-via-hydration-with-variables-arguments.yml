@@ -20,7 +20,7 @@ overallSchema:
       input Filter {
         name: String
       }
-      type RenamedAssociation => renamed from Association {
+      type RenamedAssociation @renamed(from: "Association") {
         id: ID
         nameOfAssociation: String
       }

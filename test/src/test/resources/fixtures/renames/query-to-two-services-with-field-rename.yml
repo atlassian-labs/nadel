@@ -9,13 +9,13 @@ overallSchema:
         bar: Bar
       }
       type Bar {
-        name: String => renamed from title
+        name: String @renamed(from: "title")
       }
     }
   Foo: |
     service Foo {
       type Query {
-        foo: Foo => renamed from fooOriginal
+        foo: Foo @renamed(from: "fooOriginal")
       }
       type Foo {
         name: String

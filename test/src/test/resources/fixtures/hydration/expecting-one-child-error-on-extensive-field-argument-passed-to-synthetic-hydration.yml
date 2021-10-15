@@ -8,11 +8,11 @@ overallSchema:
       type Query {
         board(id: ID): SoftwareBoard
       }
-      type SoftwareBoard => renamed from Board {
+      type SoftwareBoard @renamed(from: "Board") {
         id: ID
-        cardChildren: [SoftwareCard] => renamed from issueChildren
+        cardChildren: [SoftwareCard] @renamed(from: "issueChildren")
       }
-      type SoftwareCard => renamed from Card {
+      type SoftwareCard @renamed(from: "Card") {
         id: ID
         assignee: User => hydrated from Users.usersQuery.users(accountIds: $source.issue.assignee.accountId) object identified by accountId, batch size 3
       }

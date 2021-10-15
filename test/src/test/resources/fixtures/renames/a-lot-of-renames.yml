@@ -9,16 +9,16 @@ overallSchema:
         boardScope: BoardScope
       }
       type BoardScope {
-        cardParents: [CardParent]! => renamed from issueParents
+        cardParents: [CardParent]! @renamed(from: "issueParents")
       }
-      type CardParent => renamed from IssueParent {
-        cardType: CardType! => renamed from issueType
+      type CardParent @renamed(from: "IssueParent") {
+        cardType: CardType! @renamed(from: "issueType")
       }
-      type CardType => renamed from IssueType {
+      type CardType @renamed(from: "IssueType") {
         id: ID
-        inlineCardCreate: InlineCardCreateConfig => renamed from inlineIssueCreate
+        inlineCardCreate: InlineCardCreateConfig @renamed(from: "inlineIssueCreate")
       }
-      type InlineCardCreateConfig => renamed from InlineIssueCreateConfig {
+      type InlineCardCreateConfig @renamed(from: "InlineIssueCreateConfig") {
         enabled: Boolean!
       }
     }

@@ -5,20 +5,20 @@ enabled:
 overallSchema:
   IssueService: |
     service IssueService {
-      type DevOpsIssue => renamed from Issue {
+      type DevOpsIssue @renamed(from: "Issue") {
         id: ID
       }
-      type DevOpsRelationship => renamed from Relationship {
+      type DevOpsRelationship @renamed(from: "Relationship") {
         devOpsIssue: DevOpsIssue @hydrated(service: "IssueService" field: "syntheticIssue.issue" arguments: [{name: "id" value: "$source.issueId"}])
       }
-      type DevOpsRelationshipConnection => renamed from RelationshipConnection {
-        devOpsNodes: [DevOpsRelationship] => renamed from nodes
+      type DevOpsRelationshipConnection @renamed(from: "RelationshipConnection") {
+        devOpsNodes: [DevOpsRelationship] @renamed(from: "nodes")
       }
       type SyntheticIssue {
-        devOpsIssue(id: ID): DevOpsIssue => renamed from issue
+        devOpsIssue(id: ID): DevOpsIssue @renamed(from: "issue")
       }
       type Query {
-        devOpsRelationships: DevOpsRelationshipConnection => renamed from relationships
+        devOpsRelationships: DevOpsRelationshipConnection @renamed(from: "relationships")
       }
     }
 underlyingSchema:
