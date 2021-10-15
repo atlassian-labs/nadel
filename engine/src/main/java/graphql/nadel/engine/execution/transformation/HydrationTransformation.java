@@ -20,6 +20,8 @@ import graphql.nadel.engine.result.LeafExecutionResultNode;
 import graphql.nadel.engine.result.ListExecutionResultNode;
 import graphql.nadel.engine.result.ObjectExecutionResultNode;
 import graphql.nadel.normalized.NormalizedQueryField;
+import graphql.nadel.schema.NadelDirectives;
+import graphql.schema.GraphQLDirectiveContainer;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLInterfaceType;
@@ -212,10 +214,16 @@ public class HydrationTransformation extends FieldTransformation {
             return Optional.empty();
         }
 
-        Node definition = environment.getFieldsContainerOverall().getDefinition();
-        String underlyingTypeName = environment.getFieldsContainerOverall().getName();
+        GraphQLFieldsContainer fieldsContainerOverall = environment.getFieldsContainerOverall();
+        Node definition = fieldsContainerOverall.getDefinition();
+        String underlyingTypeName = fieldsContainerOverall.getName();
         if (definition instanceof ObjectTypeDefinitionWithTransformation) {
             underlyingTypeName = ((ObjectTypeDefinitionWithTransformation) definition).getTypeMappingDefinition().getUnderlyingName();
+        } else if (fieldsContainerOverall instanceof GraphQLDirectiveContainer) {
+            var typeMapping = NadelDirectives.createTypeMapping((GraphQLDirectiveContainer) fieldsContainerOverall);
+            if (typeMapping != null) {
+                underlyingTypeName = typeMapping.getUnderlyingName();
+            }
         }
         String fieldToHydrateFrom = hydrationSourceName.get(0);
         String finalUnderlyingTypeName = underlyingTypeName;
