@@ -4,23 +4,19 @@ enabled:
   nextgen: true
 overallSchema:
   Bar: |
-    service Bar {
-      type Query {
-        barById(id: ID!): RenamedBar
-      }
-      type RenamedBar @renamed(from: "Bar") {
-        id: ID!
-      }
+    type Query {
+      barById(id: ID!): RenamedBar
+    }
+    type RenamedBar @renamed(from: "Bar") {
+      id: ID!
     }
   Foo: |
-    service Foo {
-      type Query {
-        foo: Foo @renamed(from: "fooOriginal")
-      }
-      type Foo {
-        id: ID!
-        fooBar: RenamedBar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.fooBarId"}])
-      }
+    type Query {
+      foo: Foo @renamed(from: "fooOriginal")
+    }
+    type Foo {
+      id: ID!
+      fooBar: RenamedBar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.fooBarId"}])
     }
 underlyingSchema:
   Bar: |

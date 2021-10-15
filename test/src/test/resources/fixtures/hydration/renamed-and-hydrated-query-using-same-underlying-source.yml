@@ -4,18 +4,16 @@ enabled:
   nextgen: true
 overallSchema:
   Foo: |
-    service Foo {
-      type Query {
-        foo: Foo
-      }
-      type Foo {
-        renamedField: String @renamed(from: "issue.field")
-        details: [Detail] @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.issue.fooId"}])
-      }
-      type Detail {
-        detailId: ID!
-        name: String
-      }
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      renamedField: String @renamed(from: "issue.field")
+      details: [Detail] @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.issue.fooId"}])
+    }
+    type Detail {
+      detailId: ID!
+      name: String
     }
 underlyingSchema:
   Foo: |

@@ -4,22 +4,20 @@ enabled:
   nextgen: true
 overallSchema:
   Foo: |
-    service Foo {
-      type Query {
-        foo: Foo
-      }
-      type Foo {
-        issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.fooId"}])
-        detail: Detail @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.fooId"}])
-      }
-      type Detail {
-        detailId: ID!
-        name: String
-      }
-      type Issue {
-        fooId: ID
-        field: String
-      }
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.fooId"}])
+      detail: Detail @hydrated(service: "Foo" field: "detail" arguments: [{name: "detailId" value: "$source.fooId"}])
+    }
+    type Detail {
+      detailId: ID!
+      name: String
+    }
+    type Issue {
+      fooId: ID
+      field: String
     }
 underlyingSchema:
   Foo: |

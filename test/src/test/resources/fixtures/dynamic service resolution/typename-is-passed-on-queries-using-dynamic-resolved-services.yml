@@ -14,11 +14,9 @@ overallSchema:
       id: ID!
     }
   RepoService: |
-    service RepoService {
-      type PullRequest implements Node {
-        id: ID!
-        description: String
-      }
+    type PullRequest implements Node {
+      id: ID!
+      description: String
     }
 underlyingSchema:
   Common: |

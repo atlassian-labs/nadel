@@ -4,25 +4,23 @@ enabled:
   nextgen: true
 overallSchema:
   testing: |
-    service testing {
-      type Query {
-        tests: TestQuery
-      }
-      type TestQuery {
-        testing: Testing
-      }
-      type Testing {
-        movie: Movie
-      }
-      type TestingCharacter @renamed(from: "Character") {
-        id: ID!
-        name: String
-      }
-      type Movie {
-        id: ID!
-        name: String
-        character: TestingCharacter @hydrated(service: "testing" field: "tests.character" arguments: [{name: "id" value: "$source.characterId"}] identifiedBy: "id" batchSize: 3)
-      }
+    type Query {
+      tests: TestQuery
+    }
+    type TestQuery {
+      testing: Testing
+    }
+    type Testing {
+      movie: Movie
+    }
+    type TestingCharacter @renamed(from: "Character") {
+      id: ID!
+      name: String
+    }
+    type Movie {
+      id: ID!
+      name: String
+      character: TestingCharacter @hydrated(service: "testing" field: "tests.character" arguments: [{name: "id" value: "$source.characterId"}] identifiedBy: "id" batchSize: 3)
     }
 underlyingSchema:
   testing: |

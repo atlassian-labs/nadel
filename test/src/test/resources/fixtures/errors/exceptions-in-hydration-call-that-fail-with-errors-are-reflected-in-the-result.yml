@@ -4,24 +4,20 @@ enabled:
   nextgen: true
 overallSchema:
   Bar: |
-    service Bar {
-      type Query {
-        bar: Bar
-      }
-      type Bar {
-        name: String
-        nestedBar: Bar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.nestedBarId"}])
-      }
+    type Query {
+      bar: Bar
+    }
+    type Bar {
+      name: String
+      nestedBar: Bar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.nestedBarId"}])
     }
   Foo: |
-    service Foo {
-      type Query {
-        foo: Foo
-      }
-      type Foo {
-        name: String
-        bar: Bar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
-      }
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      name: String
+      bar: Bar @hydrated(service: "Bar" field: "barById" arguments: [{name: "id" value: "$source.barId"}])
     }
 underlyingSchema:
   Bar: |

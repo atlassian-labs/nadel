@@ -4,29 +4,25 @@ enabled:
   nextgen: true
 overallSchema:
   Service2: |
-    service Service2 {
-      extend type Root {
-        extension: Extension @hydrated(service: "Service2" field: "lookUpQuery.lookup" arguments: [{name: "id" value: "$source.id"}] identifiedBy: "id")
-      }
-      type Extension {
-        id: ID
-        name: String
-      }
+    extend type Root {
+      extension: Extension @hydrated(service: "Service2" field: "lookUpQuery.lookup" arguments: [{name: "id" value: "$source.id"}] identifiedBy: "id")
+    }
+    type Extension {
+      id: ID
+      name: String
     }
   Service1: |
-    service Service1 {
-      extend type Query {
-        root: Root
-      }
-      extend type Query {
-        anotherRoot: String
-      }
-      type Root {
-        id: ID
-      }
-      extend type Root {
-        name: String
-      }
+    extend type Query {
+      root: Root
+    }
+    extend type Query {
+      anotherRoot: String
+    }
+    type Root {
+      id: ID
+    }
+    extend type Root {
+      name: String
     }
 underlyingSchema:
   Service2: |

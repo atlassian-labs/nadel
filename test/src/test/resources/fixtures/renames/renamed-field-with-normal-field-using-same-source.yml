@@ -4,21 +4,19 @@ enabled:
   nextgen: true
 overallSchema:
   Foo: |
-    service Foo {
-      type Query {
-        foo: Foo
-      }
-      type Foo {
-        renamedField: String @renamed(from: "issue.field")
-        issue: Issue
-      }
-      type Issue {
-        fooDetail: Detail
-      }
-      type Detail {
-        detailId: ID!
-        name: String
-      }
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      renamedField: String @renamed(from: "issue.field")
+      issue: Issue
+    }
+    type Issue {
+      fooDetail: Detail
+    }
+    type Detail {
+      detailId: ID!
+      name: String
     }
 underlyingSchema:
   Foo: |

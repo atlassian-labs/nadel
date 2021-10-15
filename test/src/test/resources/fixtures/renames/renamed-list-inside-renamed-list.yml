@@ -4,20 +4,18 @@ enabled:
   nextgen: true
 overallSchema:
   IssuesService: |
-    service IssuesService {
-      type Query {
-        renamedIssue: [RenamedIssue] @renamed(from: "issue")
-      }
-      type RenamedIssue @renamed(from: "Issue") {
-        renamedTicket: RenamedTicket @renamed(from: "ticket")
-      }
-      type RenamedTicket @renamed(from: "Ticket") {
-        renamedTicketTypes: [RenamedTicketType] @renamed(from: "ticketTypes")
-      }
-      type RenamedTicketType @renamed(from: "TicketType") {
-        renamedId: String @renamed(from: "id")
-        renamedDate: String @renamed(from: "date")
-      }
+    type Query {
+      renamedIssue: [RenamedIssue] @renamed(from: "issue")
+    }
+    type RenamedIssue @renamed(from: "Issue") {
+      renamedTicket: RenamedTicket @renamed(from: "ticket")
+    }
+    type RenamedTicket @renamed(from: "Ticket") {
+      renamedTicketTypes: [RenamedTicketType] @renamed(from: "ticketTypes")
+    }
+    type RenamedTicketType @renamed(from: "TicketType") {
+      renamedId: String @renamed(from: "id")
+      renamedDate: String @renamed(from: "date")
     }
 underlyingSchema:
   IssuesService: |

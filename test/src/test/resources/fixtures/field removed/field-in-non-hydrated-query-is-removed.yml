@@ -4,16 +4,14 @@ enabled:
   nextgen: false
 overallSchema:
   CommentService: |
-    service CommentService {
-      type Query {
-        comments(ids: [ID]): [Comment]
-        commentById(id: ID): Comment
-      }
-      type Comment {
-        id: ID
-        commentText: String @renamed(from: "text")
-        created: String
-      }
+    type Query {
+      comments(ids: [ID]): [Comment]
+      commentById(id: ID): Comment
+    }
+    type Comment {
+      id: ID
+      commentText: String @renamed(from: "text")
+      created: String
     }
 underlyingSchema:
   CommentService: |

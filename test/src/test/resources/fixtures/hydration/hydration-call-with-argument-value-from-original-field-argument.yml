@@ -4,14 +4,12 @@ enabled:
   nextgen: true
 overallSchema:
   UserService: |
-    service UserService {
-      type Query {
-        usersByIds(extraArg: String, id: [ID]): [User]
-      }
-      type User {
-        id: ID
-        name: String
-      }
+    type Query {
+      usersByIds(extraArg: String, id: [ID]): [User]
+    }
+    type User {
+      id: ID
+      name: String
     }
   Issues: |
     type Query {

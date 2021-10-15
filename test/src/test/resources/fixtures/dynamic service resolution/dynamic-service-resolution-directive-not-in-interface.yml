@@ -4,17 +4,13 @@ enabled:
   nextgen: true
 overallSchema:
   RepoService: |
-    service RepoService {
-      directive @dynamicServiceResolution on FIELD_DEFINITION
-
-      type Query {
-        pullRequest(id: ID!): PullRequest @dynamicServiceResolution
-      }
-
-      type PullRequest {
-        id: ID!
-        description: String
-      }
+    directive @dynamicServiceResolution on FIELD_DEFINITION
+    type Query {
+      pullRequest(id: ID!): PullRequest @dynamicServiceResolution
+    }
+    type PullRequest {
+      id: ID!
+      description: String
     }
 underlyingSchema:
   RepoService: |-

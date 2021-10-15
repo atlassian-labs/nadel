@@ -4,31 +4,27 @@ enabled:
   nextgen: true
 overallSchema:
   UserService: |
-    service UserService {
-      type Query {
-        userQuery: UserQuery
-      }
-      type UserQuery {
-        usersByIds(id: [ID]): [User] default batch size 2
-      }
-      type User {
-        id: ID
-        name: String
-      }
+    type Query {
+      userQuery: UserQuery
+    }
+    type UserQuery {
+      usersByIds(id: [ID]): [User] default batch size 2
+    }
+    type User {
+      id: ID
+      name: String
     }
   Issues: |
-    service Issues {
-      type Query {
-        issues: [Issue]
-      }
-      type Issue {
-        id: ID
-        authorDetails: [AuthorDetail]
-        authors: [User] @hydrated(service: "UserService" field: "userQuery.usersByIds" arguments: [{name: "id" value: "$source.authorDetails.authorId"}] identifiedBy: "id")
-      }
-      type AuthorDetail {
-        name: String
-      }
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authorDetails: [AuthorDetail]
+      authors: [User] @hydrated(service: "UserService" field: "userQuery.usersByIds" arguments: [{name: "id" value: "$source.authorDetails.authorId"}] identifiedBy: "id")
+    }
+    type AuthorDetail {
+      name: String
     }
 underlyingSchema:
   UserService: |

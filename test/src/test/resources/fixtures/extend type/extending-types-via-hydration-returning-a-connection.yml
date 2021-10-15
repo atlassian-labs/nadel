@@ -4,39 +4,35 @@ enabled:
   nextgen: true
 overallSchema:
   Issue: |
-    service Issue {
-      type Query {
-        synth: Synth
-      }
-      type Synth {
-        issue: Issue
-      }
-      type Issue {
-        id: ID
-      }
+    type Query {
+      synth: Synth
+    }
+    type Synth {
+      issue: Issue
+    }
+    type Issue {
+      id: ID
     }
   Association: |
-    service Association {
-      type Query {
-        association(id: ID, filter: Filter): AssociationConnection
-      }
-      type AssociationConnection {
-        nodes: [Association]
-      }
-      input Filter {
-        name: String
-      }
-      type Association {
-        id: ID
-        nameOfAssociation: String
-        page: Page @hydrated(service: "Association" field: "pages.page" arguments: [{name: "id" value: "$source.pageId"}])
-      }
-      type Page {
-        id: ID
-      }
-      extend type Issue {
-        association(filter: Filter): AssociationConnection @hydrated(service: "Association" field: "association" arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}])
-      }
+    type Query {
+      association(id: ID, filter: Filter): AssociationConnection
+    }
+    type AssociationConnection {
+      nodes: [Association]
+    }
+    input Filter {
+      name: String
+    }
+    type Association {
+      id: ID
+      nameOfAssociation: String
+      page: Page @hydrated(service: "Association" field: "pages.page" arguments: [{name: "id" value: "$source.pageId"}])
+    }
+    type Page {
+      id: ID
+    }
+    extend type Issue {
+      association(filter: Filter): AssociationConnection @hydrated(service: "Association" field: "association" arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}])
     }
 underlyingSchema:
   Issue: |

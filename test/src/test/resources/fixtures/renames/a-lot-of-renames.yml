@@ -4,23 +4,21 @@ enabled:
   nextgen: true
 overallSchema:
   Boards: |
-    service Boards {
-      type Query {
-        boardScope: BoardScope
-      }
-      type BoardScope {
-        cardParents: [CardParent]! @renamed(from: "issueParents")
-      }
-      type CardParent @renamed(from: "IssueParent") {
-        cardType: CardType! @renamed(from: "issueType")
-      }
-      type CardType @renamed(from: "IssueType") {
-        id: ID
-        inlineCardCreate: InlineCardCreateConfig @renamed(from: "inlineIssueCreate")
-      }
-      type InlineCardCreateConfig @renamed(from: "InlineIssueCreateConfig") {
-        enabled: Boolean!
-      }
+    type Query {
+      boardScope: BoardScope
+    }
+    type BoardScope {
+      cardParents: [CardParent]! @renamed(from: "issueParents")
+    }
+    type CardParent @renamed(from: "IssueParent") {
+      cardType: CardType! @renamed(from: "issueType")
+    }
+    type CardType @renamed(from: "IssueType") {
+      id: ID
+      inlineCardCreate: InlineCardCreateConfig @renamed(from: "inlineIssueCreate")
+    }
+    type InlineCardCreateConfig @renamed(from: "InlineIssueCreateConfig") {
+      enabled: Boolean!
     }
 underlyingSchema:
   Boards: |

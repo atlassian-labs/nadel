@@ -4,61 +4,57 @@ enabled:
   nextgen: false
 overallSchema:
   PetService: |
-    service PetService {
-      type Query {
-        pets(isLoyal: Boolean): [Pet]
-        raining(isLoyal: Boolean): CatsAndDogs
-      }
-      interface Pet {
-        name: String
-        owners: [Owner] @hydrated(service: "OwnerService" field: "ownerById" arguments: [{name: "id" value: "$source.ownerIds"}])
-        collar: Collar
-        collarToRenamed: Collar @renamed(from: "collar")
-      }
-      type Cat implements Pet {
-        name: String
-        wearsBell: Boolean
-        owners: [Owner]
-        collar: Collar
-        collarToRenamed: Collar @renamed(from: "collar")
-      }
-      type Dog implements Pet {
-        name: String
-        wearsCollar: Boolean
-        owners: [Owner]
-        collar: Collar
-        collarToRenamed: Collar @renamed(from: "collar")
-      }
-      union CatsAndDogs = Cat | Dog
-      interface Collar {
-        color: String
-        size: String
-      }
-      type DogCollar implements Collar {
-        color: String
-        size: String
-      }
-      type CatCollar implements Collar {
-        color: String
-        size: String
-      }
+    type Query {
+      pets(isLoyal: Boolean): [Pet]
+      raining(isLoyal: Boolean): CatsAndDogs
+    }
+    interface Pet {
+      name: String
+      owners: [Owner] @hydrated(service: "OwnerService" field: "ownerById" arguments: [{name: "id" value: "$source.ownerIds"}])
+      collar: Collar
+      collarToRenamed: Collar @renamed(from: "collar")
+    }
+    type Cat implements Pet {
+      name: String
+      wearsBell: Boolean
+      owners: [Owner]
+      collar: Collar
+      collarToRenamed: Collar @renamed(from: "collar")
+    }
+    type Dog implements Pet {
+      name: String
+      wearsCollar: Boolean
+      owners: [Owner]
+      collar: Collar
+      collarToRenamed: Collar @renamed(from: "collar")
+    }
+    union CatsAndDogs = Cat | Dog
+    interface Collar {
+      color: String
+      size: String
+    }
+    type DogCollar implements Collar {
+      color: String
+      size: String
+    }
+    type CatCollar implements Collar {
+      color: String
+      size: String
     }
   OwnerService: |
-    service OwnerService {
-      type Query {
-        owner(id: String): Owner
-      }
-      interface Owner {
-        name: String
-      }
-      type CaringOwner implements Owner {
-        name: String
-        givesPats: Boolean
-      }
-      type CruelOwner implements Owner {
-        name: String
-        givesSmacks: Boolean
-      }
+    type Query {
+      owner(id: String): Owner
+    }
+    interface Owner {
+      name: String
+    }
+    type CaringOwner implements Owner {
+      name: String
+      givesPats: Boolean
+    }
+    type CruelOwner implements Owner {
+      name: String
+      givesSmacks: Boolean
     }
 underlyingSchema:
   PetService: |

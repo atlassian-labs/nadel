@@ -5,27 +5,23 @@ enabled:
   nextgen: true
 overallSchema:
   UserService: |
-    service UserService {
-      type Query {
-        usersQuery: RenamedUserQuery
-      }
-      type RenamedUserQuery @renamed(from: "UserQuery") {
-        usersByIds(id: [ID]): [RenamedUser]
-      }
-      type RenamedUser @renamed(from: "User") {
-        id: ID
-        name: String
-      }
+    type Query {
+      usersQuery: RenamedUserQuery
+    }
+    type RenamedUserQuery @renamed(from: "UserQuery") {
+      usersByIds(id: [ID]): [RenamedUser]
+    }
+    type RenamedUser @renamed(from: "User") {
+      id: ID
+      name: String
     }
   Issues: |
-    service Issues {
-      type Query {
-        issues: [Issue]
-      }
-      type Issue {
-        id: ID
-        authors: [RenamedUser] @hydrated(service: "UserService" field: "usersQuery.usersByIds" arguments: [{name: "id" value: "$source.authors.authorId"}] identifiedBy: "id" batchSize: 2)
-      }
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authors: [RenamedUser] @hydrated(service: "UserService" field: "usersQuery.usersByIds" arguments: [{name: "id" value: "$source.authors.authorId"}] identifiedBy: "id" batchSize: 2)
     }
 underlyingSchema:
   UserService: |

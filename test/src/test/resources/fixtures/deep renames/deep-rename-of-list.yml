@@ -4,13 +4,11 @@ enabled:
   nextgen: true
 overallSchema:
   Issues: |
-    service Issues {
-      type Query {
-        details: [IssueDetail]
-      }
-      type IssueDetail {
-        labels: [String] @renamed(from: "issue.labels")
-      }
+    type Query {
+      details: [IssueDetail]
+    }
+    type IssueDetail {
+      labels: [String] @renamed(from: "issue.labels")
     }
 underlyingSchema:
   Issues: |

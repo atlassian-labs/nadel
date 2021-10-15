@@ -4,15 +4,13 @@ enabled:
   nextgen: false
 overallSchema:
   Issues: |
-    service Issues {
-      type Query {
-        issues: [Issue]
-      }
-      type Issue {
-        id: ID
-        relatedIssue: Issue
-        restricted: String
-      }
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      relatedIssue: Issue
+      restricted: String
     }
 underlyingSchema:
   Issues: |

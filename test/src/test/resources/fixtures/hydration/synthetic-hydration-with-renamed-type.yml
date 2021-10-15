@@ -4,26 +4,22 @@ enabled:
   nextgen: true
 overallSchema:
   Bar: |
-    service Bar {
-      type Query {
-        bars: BarQuery
-      }
-      type BarQuery {
-        barById(id: ID!): Bar
-      }
-      type Bar {
-        id: ID!
-      }
+    type Query {
+      bars: BarQuery
+    }
+    type BarQuery {
+      barById(id: ID!): Bar
+    }
+    type Bar {
+      id: ID!
     }
   Foo: |
-    service Foo {
-      type Query {
-        foo: Foo @renamed(from: "fooOriginal")
-      }
-      type Foo {
-        id: ID!
-        fooBar: Bar @hydrated(service: "Bar" field: "bars.barById" arguments: [{name: "id" value: "$source.fooBarId"}])
-      }
+    type Query {
+      foo: Foo @renamed(from: "fooOriginal")
+    }
+    type Foo {
+      id: ID!
+      fooBar: Bar @hydrated(service: "Bar" field: "bars.barById" arguments: [{name: "id" value: "$source.fooBarId"}])
     }
 underlyingSchema:
   Bar: |

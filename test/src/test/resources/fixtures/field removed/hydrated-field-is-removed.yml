@@ -4,29 +4,25 @@ enabled:
   nextgen: false
 overallSchema:
   UserService: |
-    service UserService {
-      type Query {
-        users(ids: [ID]): [User]
-        userById(id: ID): User
-      }
-      type User {
-        userId: ID
-        displayName: String
-        avatarUrl: String
-      }
+    type Query {
+      users(ids: [ID]): [User]
+      userById(id: ID): User
+    }
+    type User {
+      userId: ID
+      displayName: String
+      avatarUrl: String
     }
   CommentService: |
-    service CommentService {
-      type Query {
-        comments(ids: [ID]): [Comment]
-        commentById(id: ID): Comment
-      }
-      type Comment {
-        id: ID
-        commentText: String @renamed(from: "text")
-        created: String
-        author: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.authorId"}])
-      }
+    type Query {
+      comments(ids: [ID]): [Comment]
+      commentById(id: ID): Comment
+    }
+    type Comment {
+      id: ID
+      commentText: String @renamed(from: "text")
+      created: String
+      author: User @hydrated(service: "UserService" field: "userById" arguments: [{name: "id" value: "$source.authorId"}])
     }
 underlyingSchema:
   UserService: |

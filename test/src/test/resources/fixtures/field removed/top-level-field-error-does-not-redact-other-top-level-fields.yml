@@ -6,10 +6,8 @@ ignored:
   nextgen: true # TBD how hooks behave in nextgen
 overallSchema:
   service: |
-    service service {
-      type Query {
-        foo: String
-      }
+    type Query {
+      foo: String
     }
 underlyingSchema:
   service: |
