@@ -6,14 +6,14 @@ import graphql.nadel.Nadel
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isTrue
 import java.util.concurrent.CompletableFuture
 
-@KeepHook
+@UseHook
 class `can-execute-document-with-multiple-operation-definitions` : EngineTestHook {
     var hasCalledBeginExecute = false
 

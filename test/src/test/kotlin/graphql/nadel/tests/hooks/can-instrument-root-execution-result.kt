@@ -9,7 +9,7 @@ import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.getHashCode
 import strikt.api.expectThat
@@ -18,7 +18,7 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import graphql.GraphqlErrorException as GraphQLErrorException
 
-@KeepHook
+@UseHook
 class `can-instrument-root-execution-result` : EngineTestHook {
     var originalExecutionResult: RootExecutionResultNode? = null
     var instrumentationParams: NadelInstrumentRootExecutionResultParameters? = null

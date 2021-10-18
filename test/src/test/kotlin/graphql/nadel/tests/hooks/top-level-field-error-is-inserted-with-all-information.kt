@@ -9,13 +9,13 @@ import graphql.nadel.hooks.HydrationArguments
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.normalized.NormalizedQueryField
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.schema.GraphQLSchema
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 
-@KeepHook
+@UseHook
 class `top-level-field-error-is-inserted-with-all-information` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder.serviceExecutionHooks(object : ServiceExecutionHooks {

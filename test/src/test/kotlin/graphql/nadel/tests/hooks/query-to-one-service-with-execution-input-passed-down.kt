@@ -5,13 +5,13 @@ import graphql.nadel.NadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.serviceExecutionFactory
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 
-@KeepHook
+@UseHook
 class `query-to-one-service-with-execution-input-passed-down` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         val serviceExecutionFactory = builder.serviceExecutionFactory

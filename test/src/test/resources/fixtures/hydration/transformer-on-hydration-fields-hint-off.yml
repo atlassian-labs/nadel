@@ -1,0 +1,118 @@
+name: transformer on hydration fields hint off
+enabled:
+  # purposefully not implemented in current gen
+  current: false
+  nextgen: true
+overallSchema:
+  service1: |
+    service service1 {
+      type Query {
+        foo: Foo
+      }
+      type Foo {
+        id: ID
+        bar: Bar => hydrated from service2.barById(id: $source.barId)
+      }
+    }
+  service2: |
+    service service2 {
+      type Query {
+        barById(id: ID): Bar
+      }
+      type Bar {
+        id: ID
+        name: String
+      }
+    }
+underlyingSchema:
+  service1: |
+    type Foo {
+      barId: ID
+      id: ID
+    }
+
+    type Query {
+      foo: Foo
+    }
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(id: ID): Bar
+    }
+query: |
+  query {
+    foo {
+      bar {
+        name
+      }
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  __typename__hydration__bar: __typename
+                  hydration__bar__barId: barId
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": {
+              "hydration__bar__barId": "barId",
+              "__typename__hydration__bar": "Foo"
+            }
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(id: "barId") {
+                ... on Bar {
+                  name
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": {
+              "name": "Bar1"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "bar": {
+          "name": "Bar1"
+        }
+      }
+    },
+    "extensions": {}
+  }

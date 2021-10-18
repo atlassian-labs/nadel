@@ -1,7 +1,5 @@
 package graphql.nadel.tests.hooks
 
-import graphql.nadel.NadelExecutionHints
-import graphql.nadel.NadelExecutionHints.newHints
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
@@ -12,75 +10,36 @@ import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.normalized.ExecutableNormalizedField
 
-@KeepHook
-class `can-generate-legacy-operation-names` : EngineTestHook {
+abstract class `legacy-operation-names` : EngineTestHook {
     override fun makeExecutionInput(
         engineType: NadelEngineType,
         builder: NadelExecutionInput.Builder,
     ): NadelExecutionInput.Builder {
-        return builder.nadelExecutionHints(
-            newHints()
-                .build()
-                .also {
-                    it.legacyOperationNames = true
-                },
-        )
+        return builder.transformExecutionHints { it.legacyOperationNames(true) }
     }
 }
 
-@KeepHook
-class `can-generate-legacy-operation-names-forwarding-original-name` : EngineTestHook {
-    override fun makeExecutionInput(
-        engineType: NadelEngineType,
-        builder: NadelExecutionInput.Builder,
-    ): NadelExecutionInput.Builder {
-        return builder.nadelExecutionHints(
-            newHints()
-                .build()
-                .also {
-                    it.legacyOperationNames = true
-                },
-        )
-    }
+@UseHook
+class `can-generate-legacy-operation-names` : `legacy-operation-names`() {
 }
 
-@KeepHook
-class `can-generate-legacy-operation-name-on-hydration` : EngineTestHook {
-    override fun makeExecutionInput(
-        engineType: NadelEngineType,
-        builder: NadelExecutionInput.Builder,
-    ): NadelExecutionInput.Builder {
-        return builder.nadelExecutionHints(
-            newHints()
-                .build()
-                .also {
-                    it.legacyOperationNames = true
-                },
-        )
-    }
+@UseHook
+class `can-generate-legacy-operation-names-forwarding-original-name` : `legacy-operation-names`() {
 }
 
-@KeepHook
-class `can-generate-legacy-operation-name-on-batch-hydration` : EngineTestHook {
-    override fun makeExecutionInput(
-        engineType: NadelEngineType,
-        builder: NadelExecutionInput.Builder,
-    ): NadelExecutionInput.Builder {
-        return builder.nadelExecutionHints(
-            newHints()
-                .build()
-                .also {
-                    it.legacyOperationNames = true
-                },
-        )
-    }
+@UseHook
+class `can-generate-legacy-operation-name-on-hydration` : `legacy-operation-names`() {
 }
 
-@KeepHook
+@UseHook
+class `can-generate-legacy-operation-name-on-batch-hydration` : `legacy-operation-names`() {
+}
+
+@UseHook
 class `can-generate-legacy-operation-name-on-batch-hydration-for-specific-service` : EngineTestHook {
     override val customTransforms: List<NadelTransform<out Any>> = listOf(
         object : NadelTransform<Any> {

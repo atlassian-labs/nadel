@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.Nadel
+import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
@@ -35,6 +36,16 @@ private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
     .removeSuffix(".yml")
     .removeSuffix(".yaml")
     .trim()
+
+/**
+ * Define a default state for the hints, so all tests will execute using that state.
+ *
+ * If you need to override some of the hints here (or define new ones), use the
+ * NadelExecutionInput.Builder#transformExecutionHints method in your test hook class.
+ */
+private val defaultHints = NadelExecutionHints.newHints()
+    .transformsOnHydrationFields(true)
+    .build()
 
 class EngineTests : FunSpec({
     val engineFactories = EngineTypeFactories()
@@ -189,7 +200,7 @@ private suspend fun execute(
                 .operationName(fixture.operationName)
                 .artificialFieldsUUID("UUID")
                 .let { builder ->
-                    testHooks.makeExecutionInput(engineType, builder)
+                    testHooks.makeExecutionInput(engineType, builder.nadelExecutionHints(defaultHints.copy()))
                 }
                 .build(),
         ).await()
