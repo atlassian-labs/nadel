@@ -11,6 +11,7 @@ import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.pathToActorField
+import graphql.nadel.validation.NadelSchemaValidationErrorType.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationErrorType.IllegalExtensionField
 import graphql.nadel.validation.NadelSchemaValidationErrorType.IncompatibleTypes
 import graphql.nadel.validation.NadelSchemaValidationErrorType.MissingArgument
@@ -121,6 +122,18 @@ data class NadelSchemaValidationError(
             )
         }
 
+        fun hydrationFieldMustBeNullable(
+            parent: NadelServiceSchemaElement,
+            overallField: GraphQLFieldDefinition,
+        ): NadelSchemaValidationError {
+            val of = makeFieldCoordinates(parent.overall.name, overallField.name)
+
+            return NadelSchemaValidationError(
+                message = "Field $of declares a hydration so its output type MUST be nullable",
+                errorType = HydrationFieldMustBeNullable,
+            )
+        }
+
         fun missingHydrationFieldValueSource(
             service: Service,
             parent: NadelServiceSchemaElement,
@@ -228,6 +241,7 @@ enum class NadelSchemaValidationErrorType : ErrorClassification {
     MissingArgument,
     MissingHydrationArgumentValueSource,
     IncompatibleTypes,
+    HydrationFieldMustBeNullable,
     IllegalExtensionField,
 }
 

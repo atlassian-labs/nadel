@@ -6,9 +6,11 @@ import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.util.getFieldAt
+import graphql.nadel.enginekt.util.isNonNull
 import graphql.nadel.enginekt.util.pathToActorField
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaUtil.getHydration
+import graphql.nadel.validation.NadelSchemaValidationError.Companion.hydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.Companion.missingHydrationActorField
 import graphql.nadel.validation.NadelSchemaValidationError.Companion.missingHydrationActorFieldArgument
 import graphql.nadel.validation.NadelSchemaValidationError.Companion.missingHydrationActorService
@@ -42,8 +44,19 @@ class NadelHydrationValidation(
             )
 
         val argumentIssues = getArgumentIssues(parent, overallField, hydration, actorServiceQueryType, actorField)
+        val outputTypeIssues = getOutputTypeIssues(parent, overallField, actorService, actorField)
 
-        val outputTypeIssues = typeValidation.getIssues(
+        return argumentIssues + outputTypeIssues
+    }
+
+    private fun getOutputTypeIssues(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        actorService: Service,
+        actorField: GraphQLFieldDefinition,
+    ): List<NadelSchemaValidationError> {
+        // Ensures that the underlying type of the actor field matches with the expected overall output type
+        val typeValidation = typeValidation.getIssues(
             NadelServiceSchemaElement(
                 overall = overallField.type.unwrapAll(),
                 underlying = actorField.type.unwrapAll(),
@@ -51,7 +64,16 @@ class NadelHydrationValidation(
             )
         )
 
-        return argumentIssues + outputTypeIssues
+        // Hydrations can error out so they MUST always be nullable
+        val outputTypeMustBeNullable = if (overallField.type.isNonNull) {
+            listOf(
+                hydrationFieldMustBeNullable(parent, overallField)
+            )
+        } else {
+            emptyList()
+        }
+
+        return typeValidation + outputTypeMustBeNullable
     }
 
     private fun getArgumentIssues(
