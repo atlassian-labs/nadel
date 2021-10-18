@@ -12,7 +12,7 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
@@ -88,12 +88,12 @@ abstract class `transformer-on-hydration-fields` : EngineTestHook {
         )
 }
 
-@KeepHook
+@UseHook
 class `transformer-on-hydration-fields-hint-on` : `transformer-on-hydration-fields`() {
     override fun isHintOn() = true
 }
 
-@KeepHook
+@UseHook
 class `transformer-on-hydration-fields-hint-off` : `transformer-on-hydration-fields`() {
     override fun isHintOn() = false
 }

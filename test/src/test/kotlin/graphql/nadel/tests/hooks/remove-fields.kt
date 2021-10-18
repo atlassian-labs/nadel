@@ -7,7 +7,7 @@ import graphql.nadel.hooks.HydrationArguments
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.normalized.NormalizedQueryField
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.schema.GraphQLSchema
 import java.util.Optional
@@ -51,7 +51,7 @@ private class RejectField(private val fieldNames: List<String>) : ServiceExecuti
     }
 }
 
-@KeepHook
+@UseHook
 class `hydrated-field-is-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -59,7 +59,7 @@ class `hydrated-field-is-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `nested-hydrated-field-is-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -67,7 +67,7 @@ class `nested-hydrated-field-is-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `field-is-removed-from-nested-hydrated-field` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -75,7 +75,7 @@ class `field-is-removed-from-nested-hydrated-field` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `all-fields-in-a-selection-set-are-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -83,7 +83,7 @@ class `all-fields-in-a-selection-set-are-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `field-in-a-selection-set-is-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -91,7 +91,7 @@ class `field-in-a-selection-set-is-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `one-of-top-level-fields-is-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -99,7 +99,7 @@ class `one-of-top-level-fields-is-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `top-level-field-is-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -107,7 +107,7 @@ class `top-level-field-is-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `top-level-field-in-batched-query-is-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -115,7 +115,7 @@ class `top-level-field-in-batched-query-is-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `all-fields-are-removed-from-hydrated-field` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -123,7 +123,7 @@ class `all-fields-are-removed-from-hydrated-field` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `field-is-removed-from-hydrated-field` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -131,7 +131,7 @@ class `field-is-removed-from-hydrated-field` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `all-non-hydrated-fields-in-query-are-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -139,7 +139,7 @@ class `all-non-hydrated-fields-in-query-are-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `field-with-selections-is-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -147,7 +147,7 @@ class `field-with-selections-is-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `the-only-field-in-a-selection-set-is-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -155,7 +155,7 @@ class `the-only-field-in-a-selection-set-is-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `field-in-non-hydrated-query-is-removed` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -163,7 +163,7 @@ class `field-in-non-hydrated-query-is-removed` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `restricted-field-inside-hydration-via-fragments-used-twice` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -171,7 +171,7 @@ class `restricted-field-inside-hydration-via-fragments-used-twice` : EngineTestH
     }
 }
 
-@KeepHook
+@UseHook
 class `restricted-field-via-fragments-used-twice` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -179,7 +179,7 @@ class `restricted-field-via-fragments-used-twice` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `inserts-one-error-for-a-forbidden-field-in-a-list` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -187,7 +187,7 @@ class `inserts-one-error-for-a-forbidden-field-in-a-list` : EngineTestHook {
     }
 }
 
-@KeepHook
+@UseHook
 class `restricted-single-field-inside-hydration-via-fragments-used-twice` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -213,7 +213,7 @@ class `restricted-single-field-inside-hydration-via-fragments-used-twice` : Engi
     }
 }
 
-@KeepHook
+@UseHook
 class `restricted-single-field-via-fragments-used-twice` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder

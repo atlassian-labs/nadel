@@ -11,10 +11,10 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
 
-@KeepHook
+@UseHook
 class `transforms-can-copy-array-value` : EngineTestHook {
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(

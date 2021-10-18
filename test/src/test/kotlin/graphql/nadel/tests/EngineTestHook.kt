@@ -84,7 +84,7 @@ private object Util {
             .toHashSet()
 
         hookImpls
-            .filter { it.isAnnotationPresent(KeepHook::class.java) }
+            .filter { it.isAnnotationPresent(UseHook::class.java) }
             .forEach { hookImpl ->
                 val fixtureName = hookImpl.simpleName
                 if (fixtureName !in allFixtureFileNames) {
@@ -107,4 +107,4 @@ private object Util {
  * to stop complaining that your hook class is unused.
  */
 @Target(AnnotationTarget.CLASS)
-annotation class KeepHook
+annotation class UseHook

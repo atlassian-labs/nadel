@@ -10,13 +10,13 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOpera
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.validation.ValidationError
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 
-@KeepHook
+@UseHook
 class `abort-begin-execute-within-instrumentation-still-calls-enhancing-instrumentation` :
     EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
@@ -44,7 +44,7 @@ class `abort-begin-execute-within-instrumentation-still-calls-enhancing-instrume
     }
 }
 
-@KeepHook
+@UseHook
 class `abort-begin-execute-in-cf-within-instrumentation-still-calls-enhancing-instrumentation` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder
@@ -74,7 +74,7 @@ class `abort-begin-execute-in-cf-within-instrumentation-still-calls-enhancing-in
     }
 }
 
-@KeepHook
+@UseHook
 class `abort-begin-query-execution-within-instrumentation-still-calls-enhancing-instrumentation` :
     EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
@@ -102,7 +102,7 @@ class `abort-begin-query-execution-within-instrumentation-still-calls-enhancing-
     }
 }
 
-@KeepHook
+@UseHook
 class `abort-begin-validation-within-instrumentation-still-calls-enhancing-instrumentation` :
     EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {

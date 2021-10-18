@@ -4,18 +4,16 @@ import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.hooks.CreateServiceContextParams
-import graphql.nadel.hooks.HooksVisitArgumentValueEnvironment
-import graphql.nadel.hooks.NewVariableValue
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.serviceExecutionFactory
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import java.util.concurrent.CompletableFuture
 
-@KeepHook
+@UseHook
 class `service-context-is-being-set` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         val serviceExecutionFactory = builder.serviceExecutionFactory
