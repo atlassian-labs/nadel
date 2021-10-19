@@ -4,27 +4,33 @@ enabled:
   nextgen: true
 overallSchema:
   UserService: |
-    service UserService {
-      type Query {
-        usersQuery: UsersQuery
-      }
-      type UsersQuery {
-        usersByIds(extraArg1: String, extraArg2: Int, id: [ID]): [User]
-      }
-      type User {
-        id: ID
-        name: String
-      }
+    type Query {
+      usersQuery: UsersQuery
+    }
+    type UsersQuery {
+      usersByIds(extraArg1: String, extraArg2: Int, id: [ID]): [User]
+    }
+    type User {
+      id: ID
+      name: String
     }
   Issues: |
-    service Issues {
-      type Query {
-        issues: [Issue]
-      }
-      type Issue {
-        id: ID
-        author(extraArg1: String, extraArg2: Int): User => hydrated from UserService.usersQuery.usersByIds(extraArg1: $argument.extraArg1, extraArg2: $argument.extraArg2, id: $source.authorId) object identified by id, batch size 2
-      }
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      author(extraArg1: String, extraArg2: Int): User @hydrated(
+        service: "UserService"
+        field: "usersQuery.usersByIds"
+        arguments: [
+          {name: "extraArg1" value: "$argument.extraArg1"}
+          {name: "extraArg2" value: "$argument.extraArg2"}
+          {name: "id" value: "$source.authorId"}
+        ]
+        identifiedBy: "id"
+        batchSize: 2
+      )
     }
 underlyingSchema:
   UserService: |

@@ -4,13 +4,11 @@ enabled:
   nextgen: true
 overallSchema:
   MyService: |
-    service MyService {
-      type Query {
-        hello(arg: Arg, otherArg: String): String
-      }
-      input Arg {
-        ids: [ID]
-      }
+    type Query {
+      hello(arg: Arg, otherArg: String): String
+    }
+    input Arg {
+      ids: [ID]
     }
 underlyingSchema:
   MyService: |-

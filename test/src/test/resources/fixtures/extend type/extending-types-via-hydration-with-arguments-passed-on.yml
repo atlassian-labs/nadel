@@ -4,29 +4,25 @@ enabled:
   nextgen: true
 overallSchema:
   Issue: |
-    service Issue {
-      type Query {
-        issue: Issue
-      }
-      type Issue {
-        id: ID
-      }
+    type Query {
+      issue: Issue
+    }
+    type Issue {
+      id: ID
     }
   Association: |
-    service Association {
-      type Query {
-        association(id: ID, filter: Filter): Association
-      }
-      input Filter {
-        name: String
-      }
-      type Association {
-        id: ID
-        nameOfAssociation: String
-      }
-      extend type Issue {
-        association(filter: Filter): Association => hydrated from Association.association(id: $source.id, filter: $argument.filter)
-      }
+    type Query {
+      association(id: ID, filter: Filter): Association
+    }
+    input Filter {
+      name: String
+    }
+    type Association {
+      id: ID
+      nameOfAssociation: String
+    }
+    extend type Issue {
+      association(filter: Filter): Association @hydrated(service: "Association" field: "association" arguments: [{name: "id" value: "$source.id"} {name: "filter" value: "$argument.filter"}])
     }
 underlyingSchema:
   Issue: |

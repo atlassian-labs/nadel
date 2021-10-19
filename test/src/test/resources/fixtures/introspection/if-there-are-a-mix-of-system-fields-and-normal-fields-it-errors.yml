@@ -6,17 +6,15 @@ ignored:
   nextgen: true
 overallSchema:
   MyService: |
-    service MyService {
-      type Query {
-        hello: World
-      }
-      type World {
-        id: ID
-        name: String
-      }
-      type Mutation {
-        hello: String
-      }
+    type Query {
+      hello: World
+    }
+    type World {
+      id: ID
+      name: String
+    }
+    type Mutation {
+      hello: String
     }
 underlyingSchema:
   MyService: |

@@ -4,13 +4,11 @@ enabled:
   nextgen: true
 overallSchema:
   IssueService: |
-    service IssueService {
-      type Query {
-        issue: Issue
-      }
-      type Issue {
-        name(userId: ID!): String => renamed from detail.detailName
-      }
+    type Query {
+      issue: Issue
+    }
+    type Issue {
+      name(userId: ID!): String @renamed(from: "detail.detailName")
     }
 underlyingSchema:
   IssueService: |

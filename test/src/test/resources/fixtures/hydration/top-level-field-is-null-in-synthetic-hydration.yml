@@ -4,27 +4,23 @@ enabled:
   nextgen: true
 overallSchema:
   service2: |
-    service service2 {
-      type Query {
-        projects: ProjectsQuery
-      }
-      type ProjectsQuery {
-        project(id: ID): Project
-      }
-      type Project {
-        id: ID
-        name: String
-      }
+    type Query {
+      projects: ProjectsQuery
+    }
+    type ProjectsQuery {
+      project(id: ID): Project
+    }
+    type Project {
+      id: ID
+      name: String
     }
   service1: |
-    service service1 {
-      type Query {
-        issue(id: ID): Issue
-      }
-      type Issue {
-        id: ID
-        project: Project => hydrated from service2.projects.project(id: $source.projectId)
-      }
+    type Query {
+      issue(id: ID): Issue
+    }
+    type Issue {
+      id: ID
+      project: Project @hydrated(service: "service2" field: "projects.project" arguments: [{name: "id" value: "$source.projectId"}])
     }
 underlyingSchema:
   service2: |

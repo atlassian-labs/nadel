@@ -5,13 +5,11 @@ enabled:
   nextgen: false
 overallSchema:
   Issues: |
-    service Issues {
-      type Query {
-        issues: [[[Issue!]!]]
-      }
-      type Issue {
-        id: ID!
-      }
+    type Query {
+      issues: [[[Issue!]!]]
+    }
+    type Issue {
+      id: ID!
     }
 underlyingSchema:
   Issues: |

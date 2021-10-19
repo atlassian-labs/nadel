@@ -4,23 +4,21 @@ enabled:
   nextgen: false
 overallSchema:
   IssueService: |
-    service IssueService {
-      type Query {
-        issues(jql: String): [Issue]
-        issueById(id: String): Issue
-      }
-      type Issue {
-        id: ID
-        key: String
-        summary: String
-        description: String
-        epic: Epic
-      }
-      type Epic {
-        id: ID
-        title: String
-        description: String
-      }
+    type Query {
+      issues(jql: String): [Issue]
+      issueById(id: String): Issue
+    }
+    type Issue {
+      id: ID
+      key: String
+      summary: String
+      description: String
+      epic: Epic
+    }
+    type Epic {
+      id: ID
+      title: String
+      description: String
     }
 underlyingSchema:
   IssueService: |

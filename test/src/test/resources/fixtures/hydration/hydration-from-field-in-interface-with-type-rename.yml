@@ -4,25 +4,21 @@ enabled:
   nextgen: true
 overallSchema:
   issues: |
-    service issues {
-      type Query {
-        issue(id: ID): RenamedIssue
-      }
-      type RenamedIssue => renamed from Issue {
-        id: ID
-        title: String
-        issueAuthor: RenamedUser => hydrated from users.user(id: $source.author.userId)
-      }
+    type Query {
+      issue(id: ID): RenamedIssue
+    }
+    type RenamedIssue @renamed(from: "Issue") {
+      id: ID
+      title: String
+      issueAuthor: RenamedUser @hydrated(service: "users" field: "user" arguments: [{name: "id" value: "$source.author.userId"}])
     }
   users: |
-    service users {
-      type Query {
-        user(id: ID!): RenamedUser
-      }
-      type RenamedUser  => renamed from User {
-        id: ID!
-        name: String
-      }
+    type Query {
+      user(id: ID!): RenamedUser
+    }
+    type RenamedUser  @renamed(from: "User") {
+      id: ID!
+      name: String
     }
 underlyingSchema:
   issues: |

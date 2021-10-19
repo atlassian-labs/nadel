@@ -4,24 +4,20 @@ enabled:
   nextgen: true
 overallSchema:
   service2: |
-    service service2 {
-      type Query {
-        barsById(id: [ID]): [Bar]
-      }
-      type Bar {
-        id: ID
-        name: String
-      }
+    type Query {
+      barsById(id: [ID]): [Bar]
+    }
+    type Bar {
+      id: ID
+      name: String
     }
   service1: |
-    service service1 {
-      type Query {
-        foo: Foo
-      }
-      type Foo {
-        id: ID
-        bar: [Bar] => hydrated from service2.barsById(id: $source.barId)
-      }
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      id: ID
+      bar: [Bar] @hydrated(service: "service2" field: "barsById" arguments: [{name: "id" value: "$source.barId"}])
     }
 underlyingSchema:
   service2: |

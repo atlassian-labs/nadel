@@ -4,21 +4,19 @@ enabled:
   nextgen: true
 overallSchema:
   Issues: |
-    service Issues {
-      type Query {
-        boardScope: BoardScope
-      }
-      type BoardScope {
-        board: SoftwareBoard
-      }
-      type SoftwareBoard => renamed from Board {
-        cardChildren: [SoftwareCard] => renamed from issueChildren
-      }
-      type SoftwareCard => renamed from Card {
-        id: ID
-        key: String => renamed from issue.key
-        summary: String => renamed from issue.summary
-      }
+    type Query {
+      boardScope: BoardScope
+    }
+    type BoardScope {
+      board: SoftwareBoard
+    }
+    type SoftwareBoard @renamed(from: "Board") {
+      cardChildren: [SoftwareCard] @renamed(from: "issueChildren")
+    }
+    type SoftwareCard @renamed(from: "Card") {
+      id: ID
+      key: String @renamed(from: "issue.key")
+      summary: String @renamed(from: "issue.summary")
     }
 underlyingSchema:
   Issues: |

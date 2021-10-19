@@ -4,16 +4,13 @@ enabled:
   nextgen: true
 overallSchema:
   service1: |
-    service service1 {
-      type Query {
-        foo: FooX
-      }
-
-      type FooX @renamed(from: "Foo") {
-        id: ID
-        title: ID @renamed(from: "barId")
-        parent: FooX
-      }
+    type Query {
+      foo: FooX
+    }
+    type FooX @renamed(from: "Foo") {
+      id: ID
+      title: ID @renamed(from: "barId")
+      parent: FooX
     }
 underlyingSchema:
   service1: |

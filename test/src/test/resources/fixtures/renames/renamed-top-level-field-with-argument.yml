@@ -4,13 +4,11 @@ enabled:
   nextgen: true
 overallSchema:
   MyService: |
-    service MyService {
-      type Query {
-        renameObject(id: ID!): ObjectOverall @renamed(from: "renameObjectUnderlying")
-      }
-      type ObjectOverall @renamed(from: "ObjectUnderlying") {
-        name: String
-      }
+    type Query {
+      renameObject(id: ID!): ObjectOverall @renamed(from: "renameObjectUnderlying")
+    }
+    type ObjectOverall @renamed(from: "ObjectUnderlying") {
+      name: String
     }
 underlyingSchema:
   MyService: |
