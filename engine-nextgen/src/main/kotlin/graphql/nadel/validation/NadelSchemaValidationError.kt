@@ -167,11 +167,11 @@ sealed interface NadelSchemaValidationError {
     data class MissingRename(
         val service: Service,
         val parentType: NadelServiceSchemaElement,
-        val field: GraphQLFieldDefinition,
+        val overallField: GraphQLFieldDefinition,
         val rename: FieldMappingDefinition,
     ) : NadelSchemaValidationError {
         override val message: String = run {
-            val of = makeFieldCoordinates(parentType.overall.name, field.name)
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val uf = "${parentType.underlying.name}.${rename.inputPath.joinToString(separator = ".")}"
             val s = service.name
             "Overall field $of defines rename but underlying field $uf on service $s doesn't exist"

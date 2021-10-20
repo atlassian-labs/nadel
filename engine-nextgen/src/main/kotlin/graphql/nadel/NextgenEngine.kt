@@ -37,8 +37,6 @@ import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.OperationNameUtil
-import graphql.nadel.validation.NadelSchemaValidation
-import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
@@ -60,16 +58,6 @@ class NextgenEngine @JvmOverloads constructor(
     private val log = getLogger<NextgenEngine>()
 
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
-
-    init {
-        NadelSchemaValidation(nadel.overallSchema, services)
-            .validate()
-            .map(NadelSchemaValidationError::toGraphQLError)
-            .sortedBy {
-                it.errorType.toSpecification(null).toString()
-            }
-            .forEach(::println)
-    }
 
     private val overallSchema = nadel.overallSchema
     private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
