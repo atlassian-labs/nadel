@@ -2,21 +2,21 @@ package graphql.nadel.validation
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.strictAssociateBy
-import graphql.nadel.validation.NadelSchemaValidationError.Companion.missingUnderlyingInputField
+import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
 import graphql.schema.GraphQLInputObjectField
 import graphql.schema.GraphQLInputObjectType
 import graphql.schema.GraphQLSchema
 
-class NadelInputValidation(
+internal class NadelInputValidation(
     private val overallSchema: GraphQLSchema,
     services: Map<String, Service>,
     private val service: Service,
 ) {
-    fun getIssues(
+    fun validate(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationError> {
         return if (schemaElement.overall is GraphQLInputObjectType && schemaElement.underlying is GraphQLInputObjectType) {
-            getIssues(
+            validate(
                 parent = schemaElement,
                 overallFields = schemaElement.overall.fields,
                 underlyingFields = schemaElement.underlying.fields,
@@ -26,7 +26,7 @@ class NadelInputValidation(
         }
     }
 
-    private fun getIssues(
+    private fun validate(
         parent: NadelServiceSchemaElement,
         overallFields: List<GraphQLInputObjectField>,
         underlyingFields: List<GraphQLInputObjectField>,
@@ -37,7 +37,7 @@ class NadelInputValidation(
             val underlyingField = underlyingFieldsByName[overallField.name]
 
             if (underlyingField == null) {
-                missingUnderlyingInputField(service, parent, overallField)
+                MissingUnderlyingInputField(service, parent, overallField)
             } else {
                 // TODO: type check here
                 null

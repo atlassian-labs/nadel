@@ -5,19 +5,24 @@ import graphql.nadel.enginekt.util.AnyImplementingTypeDefinition
 import graphql.nadel.enginekt.util.AnyNamedNode
 import graphql.nadel.enginekt.util.isExtensionDef
 import graphql.nadel.enginekt.util.unwrapAll
+import graphql.nadel.validation.NadelSchemaUtil.getUnderlyingName
 import graphql.nadel.validation.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.NadelSchemaUtil.hasHydration
 import graphql.nadel.validation.NadelSchemaUtil.hasRename
-import graphql.nadel.validation.NadelSchemaValidationError.Companion.missingUnderlyingType
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleTypeName
+import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
+import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLSchema
+import graphql.schema.GraphQLType
 
-class NadelTypeValidation(
+internal class NadelTypeValidation(
     private val context: NadelValidationContext,
     private val overallSchema: GraphQLSchema,
     private val services: Map<String, Service>,
 ) {
-    fun getIssues(
+    fun validate(
         service: Service,
     ): List<NadelSchemaValidationError> {
         val fieldValidation = NadelFieldValidation(overallSchema, services, service, this)
@@ -33,12 +38,12 @@ class NadelTypeValidation(
                 // i.e. there's no GraphQLExtendedFieldDefinition to screw it up
                 if (serviceType.overall.javaClass != serviceType.underlying.javaClass) {
                     listOf(
-                        NadelSchemaValidationError.incompatibleType(serviceType),
+                        IncompatibleType(serviceType),
                     )
                 } else {
-                    fieldValidation.getIssues(serviceType) +
-                        inputValidation.getIssues(serviceType) +
-                        enumValidation.getIssues(serviceType)
+                    fieldValidation.validate(serviceType) +
+                        inputValidation.validate(serviceType) +
+                        enumValidation.validate(serviceType)
                 }
             }
             .toList()
@@ -46,7 +51,7 @@ class NadelTypeValidation(
         return serviceTypeErrors + fieldIssues
     }
 
-    fun getIssues(
+    fun validate(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationError> {
         if (!visitElement(schemaElement)) {
@@ -55,12 +60,23 @@ class NadelTypeValidation(
 
         if (schemaElement.overall.javaClass != schemaElement.underlying.javaClass) {
             return listOf(
-                NadelSchemaValidationError.incompatibleType(schemaElement),
+                IncompatibleType(schemaElement),
             )
         }
 
+        if (schemaElement.overall is GraphQLFieldsContainer) {
+            val underlyingTypeName = getUnderlyingName(schemaElement.overall as GraphQLType)
+                ?: schemaElement.overall.name
+            // This mismatch happens when field output types are validated
+            if (underlyingTypeName != schemaElement.underlying.name) {
+                return listOf(
+                    IncompatibleTypeName(schemaElement),
+                )
+            }
+        }
+
         val fieldValidation = NadelFieldValidation(overallSchema, services, schemaElement.service, this)
-        return fieldValidation.getIssues(schemaElement)
+        return fieldValidation.validate(schemaElement)
     }
 
     private fun getServiceTypes(
@@ -70,7 +86,7 @@ class NadelTypeValidation(
         val nameNamesUsed = getTypeNamesUsed(service)
 
         fun addMissingUnderlyingTypeError(overallType: GraphQLNamedType) {
-            errors.add(missingUnderlyingType(service, overallType.name))
+            errors.add(MissingUnderlyingType(service, overallType))
         }
 
         return overallSchema
@@ -95,8 +111,9 @@ class NadelTypeValidation(
     }
 
     private fun getTypeNamesUsed(service: Service): Set<String> {
-        // Types here do not belong to any service, so there is no validation to be had
-        // When the shared types get referenced, they will be validated against that service
+        // There is no shared service to validate.
+        // These shared types are USED in other services. When they are used, the validation
+        // will validate that the service has a compatible underlying type.
         if (service.name == "shared") {
             return emptySet()
         }

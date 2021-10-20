@@ -3,15 +3,15 @@ package graphql.nadel.validation
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.validation.NadelSchemaUtil.getRename
-import graphql.nadel.validation.NadelSchemaValidationError.Companion.missingRename
+import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 
-class NadelRenameValidation(
+internal class NadelRenameValidation(
     private val service: Service,
     private val fieldValidation: NadelFieldValidation,
 ) {
-    fun getIssues(
+    fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
     ): List<NadelSchemaValidationError> {
@@ -24,10 +24,10 @@ class NadelRenameValidation(
             val underlyingField = underlyingFieldContainer.getFieldAt(rename.inputPath)
             if (underlyingField == null) {
                 listOf(
-                    missingRename(service, parent, overallField, rename),
+                    MissingRename(service, parent, overallField, rename),
                 )
             } else {
-                fieldValidation.getIssues(parent, overallField, underlyingField)
+                fieldValidation.validate(parent, overallField, underlyingField)
             }
         }
     }

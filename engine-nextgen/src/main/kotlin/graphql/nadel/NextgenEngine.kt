@@ -38,6 +38,7 @@ import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.OperationNameUtil
 import graphql.nadel.validation.NadelSchemaValidation
+import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
@@ -62,8 +63,11 @@ class NextgenEngine @JvmOverloads constructor(
 
     init {
         NadelSchemaValidation(nadel.overallSchema, services)
-            .getIssues()
-            .sortedBy { it.errorType }
+            .validate()
+            .map(NadelSchemaValidationError::toGraphQLError)
+            .sortedBy {
+                it.errorType.toSpecification(null).toString()
+            }
             .forEach(::println)
     }
 

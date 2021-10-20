@@ -5,6 +5,7 @@ import graphql.nadel.Service
 import graphql.nadel.dsl.ExtendedFieldDefinition
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.util.Util
 import graphql.schema.GraphQLFieldDefinition
@@ -59,6 +60,6 @@ object NadelSchemaUtil {
     }
 
     fun getUnderlyingName(type: GraphQLType): String? {
-        return Util.getTypeMappingDefinitionFor(type)?.underlyingName
+        return Util.getTypeMappingDefinitionFor(type.unwrapAll())?.underlyingName
     }
 }

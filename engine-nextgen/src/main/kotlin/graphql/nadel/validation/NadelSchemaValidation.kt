@@ -8,11 +8,11 @@ class NadelSchemaValidation(
     private val overallSchema: GraphQLSchema,
     private val services: Map<String, Service>,
 ) {
-    fun getIssues(): List<NadelSchemaValidationError> {
+    fun validate(): List<NadelSchemaValidationError> {
         val context = NadelValidationContext()
         val typeValidation = NadelTypeValidation(context, overallSchema, services)
         return services.flatMap { (_, service) ->
-            typeValidation.getIssues(service)
+            typeValidation.validate(service)
         }
     }
 }
@@ -22,10 +22,10 @@ data class NadelServiceSchemaElement(
     val overall: GraphQLNamedSchemaElement,
     val underlying: GraphQLNamedSchemaElement,
 ) {
-    fun toRef() = NadelServiceSchemaElementRef(service, overall, underlying)
+    internal fun toRef() = NadelServiceSchemaElementRef(service, overall, underlying)
 }
 
-data class NadelServiceSchemaElementRef(
+internal data class NadelServiceSchemaElementRef(
     val service: String,
     val overall: String,
     val underlying: String,

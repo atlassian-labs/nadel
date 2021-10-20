@@ -7,14 +7,14 @@ import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.validation.NadelSchemaUtil.hasHydration
 import graphql.nadel.validation.NadelSchemaUtil.hasRename
-import graphql.nadel.validation.NadelSchemaValidationError.Companion.missingArgumentOnUnderlying
-import graphql.nadel.validation.NadelSchemaValidationError.Companion.missingUnderlyingField
+import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
+import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLSchema
 
-class NadelFieldValidation(
+internal class NadelFieldValidation(
     private val overallSchema: GraphQLSchema,
     services: Map<String, Service>,
     private val service: Service,
@@ -23,11 +23,11 @@ class NadelFieldValidation(
     private val renameValidation = NadelRenameValidation(service, this)
     private val hydrationValidation = NadelHydrationValidation(services, service, typeValidation)
 
-    fun getIssues(
+    fun validate(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationError> {
         return if (schemaElement.overall is GraphQLFieldsContainer && schemaElement.underlying is GraphQLFieldsContainer) {
-            getIssues(
+            validate(
                 schemaElement,
                 overallFields = schemaElement.overall.fields,
                 underlyingFields = schemaElement.underlying.fields,
@@ -37,7 +37,7 @@ class NadelFieldValidation(
         }
     }
 
-    fun getIssues(
+    fun validate(
         parent: NadelServiceSchemaElement,
         overallFields: List<GraphQLFieldDefinition>,
         underlyingFields: List<GraphQLFieldDefinition>,
@@ -56,28 +56,28 @@ class NadelFieldValidation(
                 }
             }
             .flatMap { overallField ->
-                getIssues(parent, overallField, underlyingFieldsByName)
+                validate(parent, overallField, underlyingFieldsByName)
             }
             .toList()
     }
 
-    fun getIssues(
+    fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         underlyingFieldsByName: Map<String, GraphQLFieldDefinition>,
     ): List<NadelSchemaValidationError> {
         return if (hasRename(overallField)) {
-            renameValidation.getIssues(parent, overallField)
+            renameValidation.validate(parent, overallField)
         } else if (hasHydration(overallField)) {
-            hydrationValidation.getIssues(parent, overallField)
+            hydrationValidation.validate(parent, overallField)
         } else {
             val underlyingField = underlyingFieldsByName[overallField.name]
             if (underlyingField == null) {
                 listOf(
-                    missingUnderlyingField(service, parent, overallField = overallField),
+                    MissingUnderlyingField(service, parent, overallField = overallField),
                 )
             } else {
-                getIssues(
+                validate(
                     parent,
                     overallField = overallField,
                     underlyingField = underlyingField,
@@ -86,7 +86,7 @@ class NadelFieldValidation(
         }
     }
 
-    fun getIssues(
+    fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         underlyingField: GraphQLFieldDefinition,
@@ -95,11 +95,11 @@ class NadelFieldValidation(
             val underlyingArg = underlyingField.getArgument(overallArg.name)
             if (underlyingArg == null) {
                 listOf(
-                    missingArgumentOnUnderlying(service, parent, overallField, underlyingField, overallArg),
+                    MissingArgumentOnUnderlying(service, parent, overallField, underlyingField, overallArg),
                 )
             } else {
                 // TODO check the type wrappings are equal
-                typeValidation.getIssues(
+                typeValidation.validate(
                     NadelServiceSchemaElement(
                         service = service,
                         overall = overallArg.type.unwrapAll(),
@@ -109,7 +109,8 @@ class NadelFieldValidation(
             }
         }
 
-        val outputTypeIssues = typeValidation.getIssues(
+        // TODO check the type wrappings are equal
+        val outputTypeIssues = typeValidation.validate(
             NadelServiceSchemaElement(
                 service = service,
                 overall = overallField.type.unwrapAll(),
