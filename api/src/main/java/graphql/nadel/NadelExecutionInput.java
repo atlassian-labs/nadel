@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.GraphQLContext.newContext;
@@ -134,6 +135,16 @@ public class NadelExecutionInput {
 
         public Builder nadelExecutionHints(NadelExecutionHints nadelExecutionHints) {
             this.nadelExecutionHints = assertNotNull(nadelExecutionHints);
+            return this;
+        }
+
+        public Builder transformExecutionHints(Consumer<NadelExecutionHints.Builder> builderConsumer) {
+            final NadelExecutionHints.Builder hintsBuilder = this.nadelExecutionHints.toBuilder();
+
+            builderConsumer.accept(hintsBuilder);
+
+            this.nadelExecutionHints = hintsBuilder.build();
+
             return this;
         }
 

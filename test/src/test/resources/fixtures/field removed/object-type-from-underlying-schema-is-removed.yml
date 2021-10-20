@@ -4,18 +4,16 @@ enabled:
   nextgen: false
 overallSchema:
   MyService: |
-    service MyService {
-      type Query {
-        hello: World
-      }
-      interface World {
-        id: ID
-        name: String
-      }
-      type Mars implements World {
-        id: ID
-        name: String
-      }
+    type Query {
+      hello: World
+    }
+    interface World {
+      id: ID
+      name: String
+    }
+    type Mars implements World {
+      id: ID
+      name: String
     }
 underlyingSchema:
   MyService: |

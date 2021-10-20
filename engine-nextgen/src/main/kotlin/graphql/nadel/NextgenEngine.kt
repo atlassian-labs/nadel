@@ -34,6 +34,7 @@ import graphql.nadel.enginekt.util.newServiceExecutionResult
 import graphql.nadel.enginekt.util.provide
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.OperationNameUtil
@@ -207,6 +208,41 @@ class NextgenEngine @JvmOverloads constructor(
             it.children.single()
         }
 
+        val (transformResult, executionPlan) = when (executionContext.hints.transformsOnHydrationFields) {
+            true -> transformActorFieldNew(executionContext, service, actorField)
+            else -> transformActorField(executionContext, service, actorField)
+        }
+
+        // Get to the top level field again using .parent N times on the new actor field
+        val transformedQuery: ExecutableNormalizedField = fold(
+            initial = transformResult.result.single(),
+            count = pathToActorField.segments.size - 1,
+        ) {
+            it.parent ?: error("No parent")
+        }
+
+        val result = executeService(
+            service,
+            transformedQuery,
+            executionContext,
+            isHydration = true,
+        )
+        return resultTransformer.transform(
+            executionContext = executionContext,
+            executionPlan = executionPlan,
+            artificialFields = transformResult.artificialFields,
+            overallToUnderlyingFields = transformResult.overallToUnderlyingFields,
+            service = service,
+            result = result,
+        )
+    }
+
+    private suspend fun transformActorField(
+        executionContext: NadelExecutionContext,
+        service: Service,
+        actorField: ExecutableNormalizedField
+    ): Pair<NadelQueryTransformer.TransformResult, NadelExecutionPlan> {
+
         // Creates N plans for the children then merges them together into one big plan
         val executionPlan = actorField.children.map {
             executionPlanner.create(executionContext, services, service, rootField = it)
@@ -232,28 +268,32 @@ class NextgenEngine @JvmOverloads constructor(
             },
         )
 
-        // Get to the top level field again using .parent N times on the new actor field
-        val transformedQuery: ExecutableNormalizedField = fold(
-            initial = actorFieldWithTransformedChildren,
-            count = pathToActorField.segments.size - 1,
-        ) {
-            it.parent ?: error("No parent")
+        return Pair(
+            NadelQueryTransformer.TransformResult(
+                result = listOf(actorFieldWithTransformedChildren),
+                artificialFields,
+                overallToUnderlyingFields
+            ), executionPlan
+        )
+    }
+
+    private suspend fun transformActorFieldNew(
+        executionContext: NadelExecutionContext,
+        service: Service,
+        actorField: ExecutableNormalizedField
+    ): Pair<NadelQueryTransformer.TransformResult, NadelExecutionPlan> {
+        val executionPlan = executionPlanner.create(executionContext, services, service, rootField = actorField)
+
+        val queryTransform = queryTransformer.transformQuery(executionContext, service, actorField, executionPlan)
+
+        // Fix parent of the actor field
+        if (actorField.parent != null) {
+            val fixedParent = actorField.parent.toBuilder().children(queryTransform.result).build()
+            val queryTransformResult = queryTransform.result.single()
+            queryTransformResult.replaceParent(fixedParent)
         }
 
-        val result = executeService(
-            service,
-            transformedQuery,
-            executionContext,
-            isHydration = true,
-        )
-        return resultTransformer.transform(
-            executionContext = executionContext,
-            executionPlan = executionPlan,
-            artificialFields = artificialFields,
-            overallToUnderlyingFields = overallToUnderlyingFields,
-            service = service,
-            result = result,
-        )
+        return Pair(queryTransform, executionPlan)
     }
 
     private suspend fun executeService(

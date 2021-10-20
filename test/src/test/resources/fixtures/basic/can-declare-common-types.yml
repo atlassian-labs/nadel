@@ -4,14 +4,12 @@ enabled:
   nextgen: true
 overallSchema:
   IssueService: |
-    service IssueService {
-      type Query {
-        node: Node
-      }
-      type Issue implements Node {
-        id: ID!
-        name: String
-      }
+    type Query {
+      node: Node
+    }
+    type Issue implements Node {
+      id: ID!
+      name: String
     }
   common: |
     common {

@@ -9,7 +9,7 @@ import graphql.nadel.engine.instrumentation.NadelEngineInstrumentation
 import graphql.nadel.engine.result.RootExecutionResultNode
 import graphql.nadel.instrumentation.parameters.NadelInstrumentRootExecutionResultParameters
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.serviceExecutionFactory
 import strikt.api.expectThat
@@ -20,7 +20,7 @@ import strikt.assertions.single
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 
-@KeepHook
+@UseHook
 class `makes-timing-metrics-available` : EngineTestHook {
     var rootResultNode: RootExecutionResultNode? = null
 

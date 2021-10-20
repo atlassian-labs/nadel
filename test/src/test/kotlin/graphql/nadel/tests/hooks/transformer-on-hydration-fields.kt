@@ -1,5 +1,7 @@
 package graphql.nadel.tests.hooks
 
+import graphql.language.StringValue
+import graphql.nadel.NadelExecutionInput
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
@@ -8,16 +10,36 @@ import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
-import graphql.nadel.enginekt.util.queryPath
+import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
+import graphql.nadel.tests.NadelEngineType
 import graphql.normalized.ExecutableNormalizedField
+import graphql.normalized.NormalizedInputValue
 
-@UseHook
-class `transforms-can-copy-array-value` : EngineTestHook {
+abstract class `transformer-on-hydration-fields` : EngineTestHook {
+
+    abstract fun isHintOn(): Boolean
+
+    override fun makeExecutionInput(
+        engineType: NadelEngineType,
+        builder: NadelExecutionInput.Builder,
+    ): NadelExecutionInput.Builder {
+        val isHintOn = this.isHintOn()
+
+        return builder.transformExecutionHints { hintsBuilder ->
+            hintsBuilder.transformsOnHydrationFields(isHintOn)
+        }
+    }
+
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
+            /**
+             * This transform will modify the arguments of the "barById" field.
+             *
+             * It will force a new value for the "id" argument, so we can assert that the transform was
+             * executed in the test fixture.
+             */
             object : NadelTransform<Any> {
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
@@ -26,7 +48,7 @@ class `transforms-can-copy-array-value` : EngineTestHook {
                     service: Service,
                     overallField: ExecutableNormalizedField,
                 ): Any? {
-                    return overallField.name.takeIf { it == "ids" }
+                    return overallField.name.takeIf { it == "barById" }
                 }
 
                 override suspend fun transformField(
@@ -37,7 +59,18 @@ class `transforms-can-copy-array-value` : EngineTestHook {
                     field: ExecutableNormalizedField,
                     state: Any,
                 ): NadelTransformFieldResult {
-                    return NadelTransformFieldResult.unmodified(field)
+                    val transformedArgs = mapOf("id" to NormalizedInputValue("String", StringValue("transformed-id")))
+                    return transformer.transform(field.children)
+                        .let {
+                            field.toBuilder()
+                                .normalizedArguments(transformedArgs)
+                                .build()
+                        }.let {
+                            NadelTransformFieldResult(
+                                it,
+                                emptyList()
+                            )
+                        }
                 }
 
                 override suspend fun getResultInstructions(
@@ -49,29 +82,18 @@ class `transforms-can-copy-array-value` : EngineTestHook {
                     result: ServiceExecutionResult,
                     state: Any,
                 ): List<NadelResultInstruction> {
-                    val nodes = JsonNodeExtractor.getNodesAt(
-                        data = result.data,
-                        queryPath = underlyingParentField!!.queryPath + overallField.resultKey,
-                        flatten = true,
-                    )
-
-                    return nodes
-                        .mapIndexed { index, node ->
-                            val copyFromIndex = (index - 1)
-                                .takeIf { it >= 0 }
-                                ?: nodes.lastIndex
-
-                            NadelResultInstruction.Copy(
-                                subjectPath = node.resultPath.dropLast(1) + copyFromIndex,
-                                destinationPath = node.resultPath
-                            )
-                        }
-                        .onEach {
-                            // Ensure we are operating an array elements
-                            require(it.subjectPath.segments.last().value is Int)
-                            require(it.destinationPath.segments.last().value is Int)
-                        }
+                    return emptyList()
                 }
             }
         )
+}
+
+@UseHook
+class `transformer-on-hydration-fields-hint-on` : `transformer-on-hydration-fields`() {
+    override fun isHintOn() = true
+}
+
+@UseHook
+class `transformer-on-hydration-fields-hint-off` : `transformer-on-hydration-fields`() {
+    override fun isHintOn() = false
 }

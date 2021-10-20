@@ -13,7 +13,7 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOpera
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.parser.Parser
 import graphql.validation.ValidationError
@@ -25,7 +25,7 @@ import strikt.assertions.isEqualTo
 import strikt.assertions.isNull
 import java.util.concurrent.CompletableFuture
 
-@KeepHook
+@UseHook
 class `chained-instrumentation-works-as-expected` : EngineTestHook {
     class TestState : InstrumentationState
 

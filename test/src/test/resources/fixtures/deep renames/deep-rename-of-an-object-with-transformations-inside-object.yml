@@ -4,18 +4,16 @@ enabled:
   nextgen: true
 overallSchema:
   Issues: |
-    service Issues {
-      type Query {
-        issues: [Issue]
-      }
-      type Issue {
-        id: ID
-        authorName: Name => renamed from authorDetails.name
-      }
-      type Name => renamed from OriginalName {
-        firstName: String => renamed from originalFirstName
-        lastName: String
-      }
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authorName: Name @renamed(from: "authorDetails.name")
+    }
+    type Name @renamed(from: "OriginalName") {
+      firstName: String @renamed(from: "originalFirstName")
+      lastName: String
     }
 underlyingSchema:
   Issues: |

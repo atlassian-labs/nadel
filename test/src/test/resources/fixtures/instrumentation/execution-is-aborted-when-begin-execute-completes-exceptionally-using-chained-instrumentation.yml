@@ -4,14 +4,12 @@ enabled:
   nextgen: true
 overallSchema:
   MyService: |
-    service MyService {
-      type Query {
-        hello: World
-      }
-      type World {
-        id: ID
-        name: String
-      }
+    type Query {
+      hello: World
+    }
+    type World {
+      id: ID
+      name: String
     }
 underlyingSchema:
   MyService: |

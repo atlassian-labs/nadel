@@ -4,23 +4,19 @@ enabled:
   nextgen: true
 overallSchema:
   UserService: |
-    service UserService {
-      type Query {
-        user: User
-      }
-      type User {
-        id: ID
-        name: String
-      }
+    type Query {
+      user: User
+    }
+    type User {
+      id: ID
+      name: String
     }
   Issues: |
-    service Issues {
-      type Query {
-        issues: [Issue]
-      }
-      type Issue {
-        id: ID
-      }
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
     }
 underlyingSchema:
   UserService: |

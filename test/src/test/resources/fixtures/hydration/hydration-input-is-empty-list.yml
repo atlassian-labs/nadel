@@ -4,30 +4,26 @@ enabled:
   nextgen: true
 overallSchema:
   UserService: |
-    service UserService {
-      type Query {
-        userById(id: ID!): User
-      }
-      type User {
-        id: ID
-        name: String
-      }
+    type Query {
+      userById(id: ID!): User
+    }
+    type User {
+      id: ID
+      name: String
     }
   Issues: |
-    service Issues {
-      type Query {
-        issues: [Issue]
-      }
-      type Issue {
-        id: ID
-        author: [User] @hydrated(
-          service: "UserService"
-          field: "userById"
-          arguments: [
-            {name: "id" value: "$source.authorIds"}
-          ]
-        )
-      }
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      author: [User] @hydrated(
+        service: "UserService"
+        field: "userById"
+        arguments: [
+          {name: "id" value: "$source.authorIds"}
+        ]
+      )
     }
 underlyingSchema:
   UserService: |

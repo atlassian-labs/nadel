@@ -5,9 +5,14 @@ import graphql.PublicApi;
 @PublicApi
 public class NadelExecutionHints {
     private NadelExecutionHints(Builder builder) {
+        this.transformsOnHydrationFields = builder.transformsOnHydrationFields;
+        this.legacyOperationNames = builder.legacyOperationNames;
     }
 
+    // we need to be able to change the value of "legacyOperationNames" inside transforms
+    // so the field needs to be mutable.
     private boolean legacyOperationNames;
+    private final boolean transformsOnHydrationFields;
 
     /**
      * Flag to determine whether nextgen will generate the traditional nadel_2_service_opName
@@ -24,12 +29,56 @@ public class NadelExecutionHints {
         this.legacyOperationNames = legacyOperationNames;
     }
 
+    /**
+     * Flag to activate nextgen transforms for hydration fields.
+     * <p>
+     * This flag is temporary. Ultimately the code will be changed to the
+     * "enabled" state of this flag.
+     */
+    public boolean getTransformsOnHydrationFields() {
+        return transformsOnHydrationFields;
+    }
+
+    /**
+     * Returns a builder with the same field values as this object.
+     *
+     * This is useful for transforming the object.
+     */
+    public NadelExecutionHints.Builder toBuilder() {
+        return new NadelExecutionHints.Builder(this);
+    }
+
+    /**
+     * Create a shallow copy of this object.
+     */
+    public NadelExecutionHints copy() {
+        return this.toBuilder().build();
+    }
+
     public static Builder newHints() {
         return new Builder();
     }
 
     public static class Builder {
+        private boolean transformsOnHydrationFields;
+        private boolean legacyOperationNames;
+
         private Builder() {
+        }
+
+        private Builder(NadelExecutionHints nadelExecutionHints) {
+            this.transformsOnHydrationFields = nadelExecutionHints.transformsOnHydrationFields;
+            this.legacyOperationNames = nadelExecutionHints.legacyOperationNames;
+        }
+
+        public Builder transformsOnHydrationFields(boolean flag) {
+            this.transformsOnHydrationFields = flag;
+            return this;
+        }
+
+        public Builder legacyOperationNames(boolean flag) {
+            this.legacyOperationNames = flag;
+            return this;
         }
 
         public NadelExecutionHints build() {

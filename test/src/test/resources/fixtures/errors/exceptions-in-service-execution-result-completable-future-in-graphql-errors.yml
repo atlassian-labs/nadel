@@ -4,18 +4,16 @@ enabled:
   nextgen: true
 overallSchema:
   MyService: |
-    service MyService {
-      type Query {
-        hello: World
-        helloWithArgs(arg1: String! arg2: String): World
-      }
-      type World {
-        id: ID
-        name: String
-      }
-      type Mutation {
-        hello: String
-      }
+    type Query {
+      hello: World
+      helloWithArgs(arg1: String! arg2: String): World
+    }
+    type World {
+      id: ID
+      name: String
+    }
+    type Mutation {
+      hello: String
     }
 underlyingSchema:
   MyService: |

@@ -4,13 +4,11 @@ enabled:
   nextgen: true
 overallSchema:
   service: |
-    service service {
-      type Query {
-        foo: Foo
-      }
-      type Foo {
-        ids: [ID]
-      }
+    type Query {
+      foo: Foo
+    }
+    type Foo {
+      ids: [ID]
     }
 underlyingSchema:
   service: |

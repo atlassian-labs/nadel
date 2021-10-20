@@ -4,7 +4,7 @@ import graphql.ExecutionResult
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.assertJsonKeys
 import graphql.nadel.tests.util.data
@@ -23,7 +23,7 @@ import strikt.assertions.isNotNull
 import strikt.assertions.none
 import strikt.assertions.one
 
-@KeepHook
+@UseHook
 class `can-delete-fields-and-types` : EngineTestHook {
     override val schemaTransformationHook = SchemaTransformationHook { originalSchema, _ ->
         transformSchema(originalSchema, object : GraphQLTypeVisitorStub() {

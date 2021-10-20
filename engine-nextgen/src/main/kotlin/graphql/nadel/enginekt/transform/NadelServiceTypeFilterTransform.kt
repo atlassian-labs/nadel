@@ -84,14 +84,23 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         }
 
         val typeNamesOwnedByService = getTypeNamesServiceOwns(executionBlueprint, service)
+        // Add underlying type names as well to handle combination of hydration and renames.
+        // Transforms are applied to hydration fields as well, and those fields always reference
+        // elements from the underlying schema
+        val underlyingTypeNamesOwnedByService =
+            getUnderlyingTypeNamesServiceOwns(executionBlueprint, service, typeNamesOwnedByService)
+
+        val allTypeNamesOwnedByService = typeNamesOwnedByService + underlyingTypeNamesOwnedByService
+
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames
-            .filter { it in typeNamesOwnedByService }
+            .filter { it in allTypeNamesOwnedByService }
 
         // All types are owned by service
         // Note: one list is a subset of the other, so if size is same, contents are too
         if (fieldObjectTypeNamesOwnedByService.size == overallField.objectTypeNames.size) {
             return null
         }
+
 
         return State(
             aliasHelper = NadelAliasHelper.forField(
@@ -191,6 +200,19 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             .asSequence()
             .map {
                 executionBlueprint.getOverallTypeName(service, it.name)
+            }
+            .toSet()
+    }
+
+    private fun getUnderlyingTypeNamesServiceOwns(
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        service: Service,
+        overallTypeNames: Set<String>
+    ): Set<String> {
+        return overallTypeNames
+            .asSequence()
+            .map {
+                executionBlueprint.getUnderlyingTypeName(service, it)
             }
             .toSet()
     }

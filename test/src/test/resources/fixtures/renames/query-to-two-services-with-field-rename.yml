@@ -4,22 +4,18 @@ enabled:
   nextgen: true
 overallSchema:
   Bar: |
-    service Bar {
-      type Query {
-        bar: Bar
-      }
-      type Bar {
-        name: String => renamed from title
-      }
+    type Query {
+      bar: Bar
+    }
+    type Bar {
+      name: String @renamed(from: "title")
     }
   Foo: |
-    service Foo {
-      type Query {
-        foo: Foo => renamed from fooOriginal
-      }
-      type Foo {
-        name: String
-      }
+    type Query {
+      foo: Foo @renamed(from: "fooOriginal")
+    }
+    type Foo {
+      name: String
     }
 underlyingSchema:
   Bar: |

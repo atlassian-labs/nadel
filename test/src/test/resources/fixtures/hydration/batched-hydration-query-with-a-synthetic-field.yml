@@ -4,28 +4,24 @@ enabled:
   nextgen: false # Why is this disabled?
 overallSchema:
   service2: |
-    service service2 {
-      type Query {
-        users: UsersQuery
-      }
-      type UsersQuery {
-        foo: String
-        usersByIds(id: [ID]): [User]
-      }
-      type User {
-        id: ID
-        lastName: String
-      }
+    type Query {
+      users: UsersQuery
+    }
+    type UsersQuery {
+      foo: String
+      usersByIds(id: [ID]): [User]
+    }
+    type User {
+      id: ID
+      lastName: String
     }
   service1: |
-    service service1 {
-      type Query {
-        issues: [Issue]
-      }
-      type Issue {
-        id: ID
-        authors: [User] => hydrated from service2.users.usersByIds(id: $source.authorIds) object identified by id, batch size 3
-      }
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authors: [User] @hydrated(service: "service2" field: "users.usersByIds" arguments: [{name: "id" value: "$source.authorIds"}] identifiedBy: "id" batchSize: 3)
     }
 underlyingSchema:
   service2: |

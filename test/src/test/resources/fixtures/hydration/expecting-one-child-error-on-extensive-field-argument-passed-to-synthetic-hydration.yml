@@ -4,30 +4,26 @@ enabled:
   nextgen: true
 overallSchema:
   TestBoard: |
-    service TestBoard {
-      type Query {
-        board(id: ID): SoftwareBoard
-      }
-      type SoftwareBoard => renamed from Board {
-        id: ID
-        cardChildren: [SoftwareCard] => renamed from issueChildren
-      }
-      type SoftwareCard => renamed from Card {
-        id: ID
-        assignee: User => hydrated from Users.usersQuery.users(accountIds: $source.issue.assignee.accountId) object identified by accountId, batch size 3
-      }
+    type Query {
+      board(id: ID): SoftwareBoard
+    }
+    type SoftwareBoard @renamed(from: "Board") {
+      id: ID
+      cardChildren: [SoftwareCard] @renamed(from: "issueChildren")
+    }
+    type SoftwareCard @renamed(from: "Card") {
+      id: ID
+      assignee: User @hydrated(service: "Users" field: "usersQuery.users" arguments: [{name: "accountIds" value: "$source.issue.assignee.accountId"}] identifiedBy: "accountId" batchSize: 3)
     }
   Users: |
-    service Users {
-      type Query {
-        usersQuery: UserQuery
-      }
-      type UserQuery {
-        users(accountIds: [ID]): [User]
-      }
-      type User {
-        accountId: ID
-      }
+    type Query {
+      usersQuery: UserQuery
+    }
+    type UserQuery {
+      users(accountIds: [ID]): [User]
+    }
+    type User {
+      accountId: ID
     }
 underlyingSchema:
   TestBoard: |

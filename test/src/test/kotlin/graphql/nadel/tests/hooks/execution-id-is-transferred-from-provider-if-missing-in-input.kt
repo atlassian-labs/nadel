@@ -6,14 +6,14 @@ import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.serviceExecutionFactory
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isGreaterThan
 
-@KeepHook
+@UseHook
 class `execution-id-is-transferred-from-provider-if-missing-in-input` : EngineTestHook {
     private var calls = 0
 

@@ -4,24 +4,20 @@ enabled:
   nextgen: true
 overallSchema:
   Bar: |
-    service Bar {
-      type Query {
-        bar: Bar
-      }
-      type Bar {
-        barId: ID
-        name: String
-      }
+    type Query {
+      bar: Bar
+    }
+    type Bar {
+      barId: ID
+      name: String
     }
   Foo: |
-    service Foo {
-      type Query {
-        foos: [Foo]
-      }
-      type Foo {
-        name: String
-        bar: Bar => hydrated from Bar.doesNotExist(id: $source.barId) object identified by barId, batch size 2
-      }
+    type Query {
+      foos: [Foo]
+    }
+    type Foo {
+      name: String
+      bar: Bar @hydrated(service: "Bar" field: "doesNotExist" arguments: [{name: "id" value: "$source.barId"}] identifiedBy: "barId" batchSize: 2)
     }
 underlyingSchema:
   Bar: |

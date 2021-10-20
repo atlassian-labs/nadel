@@ -10,7 +10,7 @@ import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
+import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
@@ -22,7 +22,7 @@ import strikt.assertions.single
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 
-@KeepHook
+@UseHook
 class `execution-is-aborted-when-begin-execute-completes-exceptionally-using-chained-instrumentation` : EngineTestHook {
     var firstBeginExecuteCalled = 0
     var secondBeginExecuteCalled = 0
