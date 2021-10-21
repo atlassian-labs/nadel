@@ -145,7 +145,7 @@ sealed interface NadelSchemaValidationError {
         override val message: String = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val a = remoteArgSource.name
-            "Field $of tried to hydrate using value of non-existent argument $a as an argument"
+            "Field $of tried to hydrate using value of non-existent field $a as an argument"
         }
     }
 

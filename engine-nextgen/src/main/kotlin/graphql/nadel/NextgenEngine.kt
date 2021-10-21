@@ -58,7 +58,6 @@ class NextgenEngine @JvmOverloads constructor(
     private val log = getLogger<NextgenEngine>()
 
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
-
     private val overallSchema = nadel.overallSchema
     private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
