@@ -79,13 +79,16 @@ underlyingSchema:
 query: |
   query {
     foo {
+      __typename
       id
       data {
         ... on Bar {
+          __typename
           id
           name
         }
         ... on Buz {
+          __typename
           id
           name
         }
@@ -102,6 +105,7 @@ serviceCalls:
             ... on Query {
               foo {
                 ... on Foo {
+                  __typename
                   __typename__hydration__data: __typename
                   hydration__data__dataId: dataId
                   hydration__data__dataId: dataId
@@ -117,10 +121,12 @@ serviceCalls:
         {
           "data": {
             "foo": [{
+              "__typename": "Foo",
               "__typename__hydration__data": "Foo",
               "hydration__data__dataId": "BAR-0",
               "id": "FOO-0"
             },{
+              "__typename": "Foo",
               "__typename__hydration__data": "Foo",
               "hydration__data__dataId": "BUZ-0",
               "id": "FOO-1"
@@ -135,6 +141,8 @@ serviceCalls:
             ... on Query {
               barById(id: "BAR-0") {
                 ... on Bar {
+                  __typename
+                  __typename__type_filter____typename: __typename
                   __typename__type_filter__id: __typename
                   __typename__type_filter__name: __typename
                   id
@@ -150,6 +158,7 @@ serviceCalls:
         {
           "data": {
             "barById": {
+              "__typename": "Bar",
               "__typename__type_filter__id": "Bar",
               "__typename__type_filter__name": "Bar",
               "id": "BAR-0",
@@ -165,6 +174,8 @@ serviceCalls:
             ... on Query {
               buzById(id: "BUZ-0") {
                 ... on Buz {
+                  __typename__type_filter____typename: __typename
+                  __typename
                   __typename__type_filter__id: __typename
                   __typename__type_filter__name: __typename
                   id
@@ -180,6 +191,7 @@ serviceCalls:
         {
           "data": {
             "buzById": {
+              "__typename": "Buz",
               "__typename__type_filter__id": "Buz",
               "__typename__type_filter__name": "Buz",
               "id": "BUZ-0",
@@ -193,15 +205,19 @@ response: |-
   {
     "data": {
       "foo": [{
+        "__typename": "Foo",
         "id": "FOO-0",
         "data": {
+          "__typename": "Bar",
           "id": "BAR-0",
           "name": "Bar Bar Bar"
         }
       },
       {
+        "__typename": "Foo",
         "id": "FOO-1",
         "data": {
+          "__typename": "Buz",
           "id": "BUZ-0",
           "name": "Buz Buz Buz"
         }

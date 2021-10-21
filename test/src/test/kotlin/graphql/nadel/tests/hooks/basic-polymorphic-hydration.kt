@@ -7,10 +7,10 @@ import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.transform.result.json.JsonNodePath
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.KeepHook
 import graphql.nadel.tests.NadelEngineType
+import graphql.nadel.tests.UseHook
 
-@KeepHook
+@UseHook
 class `basic-polymorphic-hydration` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder.serviceExecutionHooks(TestNadelEngineExecutionHooks())
