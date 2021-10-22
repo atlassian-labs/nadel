@@ -8,12 +8,15 @@ class NadelSchemaValidation(
     private val overallSchema: GraphQLSchema,
     private val services: Map<String, Service>,
 ) {
-    fun validate(): List<NadelSchemaValidationError> {
+    fun validate(): Set<NadelSchemaValidationError> {
         val context = NadelValidationContext()
         val typeValidation = NadelTypeValidation(context, overallSchema, services)
-        return services.flatMap { (_, service) ->
-            typeValidation.validate(service)
-        }
+        return services
+            .asSequence()
+            .flatMap { (_, service) ->
+                typeValidation.validate(service)
+            }
+            .toSet()
     }
 }
 
