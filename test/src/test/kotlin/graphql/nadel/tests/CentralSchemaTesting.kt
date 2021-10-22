@@ -47,10 +47,9 @@ suspend fun main() {
         }
     }
 
-    // require(overallSchemas.keys == underlyingSchemas.keys)
+    require(overallSchemas.keys == underlyingSchemas.keys)
     // println(overallSchemas.keys)
 
-    var ioTime: Long? = null
     val nadel = Nadel.newNadel()
         .engineFactory { nadel ->
             NextgenEngine(nadel)
@@ -61,15 +60,11 @@ suspend fun main() {
             override fun getServiceExecution(serviceName: String): ServiceExecution {
                 return ServiceExecution {
                     AstPrinter.printAst(it.query).also(::println)
-                    val response: JsonMap
-                    ioTime = measureTimeMillis {
-                        // println(AstPrinter.printAst(it.query))
 
-                        response = ObjectMapper().readValue(
-                            File("/Users/fwang/Library/Application Support/JetBrains/IntelliJIdea2021.1/scratches/buffer2.kts")
-                                .readText(),
-                        )
-                    }
+                    val response: JsonMap = ObjectMapper().readValue(
+                        File("/Users/fwang/Library/Application Support/JetBrains/IntelliJIdea2021.1/scratches/buffer2.kts")
+                            .readText(),
+                    )
 
                     CompletableFuture.completedFuture(
                         ServiceExecutionResult(
@@ -90,35 +85,18 @@ suspend fun main() {
         return
     }
 
-    var totalTime = 0L
-    var totalCount = 0
-
-    for (i in 1..1) {
-        val executionTime = measureTimeMillis {
-            nadel
-                .execute(
-                    newNadelExecutionInput()
-                        .artificialFieldsUUID("UUID")
-                        .query(query)
-                        .build(),
-                )
-                .asDeferred()
-                .await()
-                .also {
-                    println(it)
-                }
+    nadel
+        .execute(
+            newNadelExecutionInput()
+                .artificialFieldsUUID("UUID")
+                .query(query)
+                .build(),
+        )
+        .asDeferred()
+        .await()
+        .also {
+            println(it)
         }
-
-        if (i > 200) {
-            val thisTime = executionTime - ioTime!!
-            totalTime += thisTime
-            totalCount += 1
-            // println(thisTime)
-            ioTime = null
-        }
-    }
-
-    // println("Avg time " + totalTime / totalCount)
 }
 
 class GatewaySchemaWiringFactory : NeverWiringFactory()
