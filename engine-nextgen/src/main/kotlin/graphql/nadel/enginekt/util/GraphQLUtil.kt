@@ -464,3 +464,6 @@ internal fun javaValueToAstValue(value: Any?): AnyAstValue {
 
 val UnderlyingServiceHydration.pathToActorField
     get() = listOfNotNull(syntheticField, topLevelField)
+
+val GraphQLSchema.operationTypes
+    get() = listOfNotNull(queryType, mutationType, subscriptionType)

@@ -10,7 +10,6 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 
 internal class NadelRenameValidation(
-    private val service: Service,
     private val fieldValidation: NadelFieldValidation,
 ) {
     fun validate(
@@ -32,7 +31,7 @@ internal class NadelRenameValidation(
             val underlyingField = underlyingFieldContainer.getFieldAt(rename.inputPath)
             if (underlyingField == null) {
                 listOf(
-                    MissingRename(service, parent, overallField, rename),
+                    MissingRename(parent, overallField, rename),
                 )
             } else {
                 fieldValidation.validate(parent, overallField, underlyingField)

@@ -1,17 +1,11 @@
 package graphql.nadel.validation
 
-import graphql.nadel.Service
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
 import graphql.schema.GraphQLInputObjectField
 import graphql.schema.GraphQLInputObjectType
-import graphql.schema.GraphQLSchema
 
-internal class NadelInputValidation(
-    private val overallSchema: GraphQLSchema,
-    services: Map<String, Service>,
-    private val service: Service,
-) {
+internal class NadelInputValidation {
     fun validate(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationError> {
@@ -37,7 +31,7 @@ internal class NadelInputValidation(
             val underlyingField = underlyingFieldsByName[overallField.name]
 
             if (underlyingField == null) {
-                MissingUnderlyingInputField(service, parent, overallField)
+                MissingUnderlyingInputField(parent, overallField)
             } else {
                 // TODO: type check here
                 null

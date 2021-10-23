@@ -25,7 +25,6 @@ import graphql.schema.GraphQLObjectType
 
 internal class NadelHydrationValidation(
     private val services: Map<String, Service>,
-    private val service: Service,
     private val typeValidation: NadelTypeValidation,
 ) {
     fun validate(
@@ -129,7 +128,7 @@ internal class NadelHydrationValidation(
             OBJECT_FIELD -> {
                 val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.path)
                 if (field == null) {
-                    MissingHydrationFieldValueSource(service, parent, overallField, remoteArgSource)
+                    MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
                     // TODO: check argument type is correct
                     null

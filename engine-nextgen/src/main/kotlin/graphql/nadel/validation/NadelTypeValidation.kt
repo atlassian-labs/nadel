@@ -8,10 +8,11 @@ import graphql.nadel.enginekt.util.isList
 import graphql.nadel.enginekt.util.isNonNull
 import graphql.nadel.enginekt.util.isNotWrapped
 import graphql.nadel.enginekt.util.isWrapped
+import graphql.nadel.enginekt.util.operationTypes
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.enginekt.util.unwrapNonNull
 import graphql.nadel.enginekt.util.unwrapOne
-import graphql.nadel.validation.NadelSchemaUtil.getRenamedFrom
+import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.validation.NadelSchemaUtil.getUnderlyingName
 import graphql.nadel.validation.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.NadelSchemaUtil.hasHydration
@@ -33,15 +34,15 @@ import graphql.schema.GraphQLUnmodifiedType
 internal class NadelTypeValidation(
     private val context: NadelValidationContext,
     private val overallSchema: GraphQLSchema,
-    private val services: Map<String, Service>,
+    services: Map<String, Service>,
 ) {
+    private val fieldValidation = NadelFieldValidation(overallSchema, services, this)
+    private val inputValidation = NadelInputValidation()
+    private val enumValidation = NadelEnumValidation()
+
     fun validate(
         service: Service,
     ): List<NadelSchemaValidationError> {
-        val fieldValidation = NadelFieldValidation(overallSchema, services, service, this)
-        val inputValidation = NadelInputValidation(overallSchema, services, service)
-        val enumValidation = NadelEnumValidation(overallSchema, services, service)
-
         val (serviceTypes, serviceTypeErrors) = getServiceTypes(service)
 
         val fieldIssues = serviceTypes.asSequence()
@@ -77,7 +78,6 @@ internal class NadelTypeValidation(
             )
         }
 
-        val fieldValidation = NadelFieldValidation(overallSchema, services, schemaElement.service, this)
         return fieldValidation.validate(schemaElement)
     }
 
@@ -188,13 +188,14 @@ internal class NadelTypeValidation(
             }
             .toList()
             .also { types ->
+                // Add error for duplicated types
                 errors.addAll(
                     types
                         .groupBy { it.underlying.name }
                         .filterValues { it.size > 1 }
                         .values
                         .map { duplicatedTypes ->
-                            DuplicatedUnderlyingType(service, duplicatedTypes)
+                            DuplicatedUnderlyingType(duplicatedTypes)
                         },
                 )
             } to errors
@@ -209,9 +210,21 @@ internal class NadelTypeValidation(
         }
 
         val definitionNames = service.definitionRegistry.definitions.asSequence()
-            .filterNot { it.isExtensionDef }
+            .map { it as AnyNamedNode }
+            .filter { def ->
+                if (def.isExtensionDef) {
+                    // Include extensions if it's a namespaced type
+                    overallSchema.operationTypes.any { operationType ->
+                        operationType.fields.any { field ->
+                            field.hasDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name) &&
+                                field.type.unwrapAll().name == def.name
+                        }
+                    }
+                } else {
+                    true
+                }
+            }
             .map {
-                it as AnyNamedNode
                 it.name
             }
         val definitionsNamesReferencedAsOutputTypes = service.definitionRegistry.definitions

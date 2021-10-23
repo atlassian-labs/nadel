@@ -17,11 +17,10 @@ import graphql.schema.GraphQLSchema
 internal class NadelFieldValidation(
     private val overallSchema: GraphQLSchema,
     services: Map<String, Service>,
-    private val service: Service,
     private val typeValidation: NadelTypeValidation,
 ) {
-    private val renameValidation = NadelRenameValidation(service, this)
-    private val hydrationValidation = NadelHydrationValidation(services, service, typeValidation)
+    private val renameValidation = NadelRenameValidation(this)
+    private val hydrationValidation = NadelHydrationValidation(services, typeValidation)
 
     fun validate(
         schemaElement: NadelServiceSchemaElement,
@@ -49,7 +48,7 @@ internal class NadelFieldValidation(
             .let { fieldSequence ->
                 // Apply filter if necessary
                 if (isCombinedType(parent.overall)) {
-                    val fieldsThatServiceContributed = getFieldsThatServiceContributed(parent.overall)
+                    val fieldsThatServiceContributed = getFieldsThatServiceContributed(parent)
                     fieldSequence.filter { it.name in fieldsThatServiceContributed }
                 } else {
                     fieldSequence
@@ -74,7 +73,7 @@ internal class NadelFieldValidation(
             val underlyingField = underlyingFieldsByName[overallField.name]
             if (underlyingField == null) {
                 listOf(
-                    MissingUnderlyingField(service, parent, overallField = overallField),
+                    MissingUnderlyingField(parent, overallField = overallField),
                 )
             } else {
                 validate(
@@ -95,13 +94,13 @@ internal class NadelFieldValidation(
             val underlyingArg = underlyingField.getArgument(overallArg.name)
             if (underlyingArg == null) {
                 listOf(
-                    MissingArgumentOnUnderlying(service, parent, overallField, underlyingField, overallArg),
+                    MissingArgumentOnUnderlying(parent, overallField, underlyingField, overallArg),
                 )
             } else {
                 // TODO check the type wrappings are equal
                 typeValidation.validate(
                     NadelServiceSchemaElement(
-                        service = service,
+                        service = parent.service,
                         overall = overallArg.type.unwrapAll(),
                         underlying = underlyingArg.type.unwrapAll(),
                     )
@@ -114,7 +113,10 @@ internal class NadelFieldValidation(
         return argumentIssues + outputTypeIssues
     }
 
-    private fun getFieldsThatServiceContributed(overallType: GraphQLNamedSchemaElement): Set<String> {
+    private fun getFieldsThatServiceContributed(schemaElement: NadelServiceSchemaElement): Set<String> {
+        val service = schemaElement.service
+        val overallType = schemaElement.overall
+
         return service.definitionRegistry.definitions
             .asSequence()
             .filterIsInstance<AnyImplementingTypeDefinition>()
@@ -145,6 +147,7 @@ internal class NadelFieldValidation(
                 && field.type.unwrapAll().name == type.name
         }
 
+        // IF YOU CHANGE THIS then check NadelTypeValidation.getTypeNamesUsed to ensure they type is actually visited
         return type.name == overallSchema.queryType.name
             || type.name == overallSchema.mutationType?.name
             || type.name == overallSchema.subscriptionType?.name

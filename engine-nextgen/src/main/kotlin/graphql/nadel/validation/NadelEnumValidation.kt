@@ -1,17 +1,11 @@
 package graphql.nadel.validation
 
-import graphql.nadel.Service
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingEnumValue
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLEnumValueDefinition
-import graphql.schema.GraphQLSchema
 
-internal class NadelEnumValidation(
-    overallSchema: GraphQLSchema,
-    services: Map<String, Service>,
-    private val service: Service,
-) {
+internal class NadelEnumValidation {
     fun validate(
         schemaElement: NadelServiceSchemaElement,
     ): List<NadelSchemaValidationError> {
@@ -37,7 +31,7 @@ internal class NadelEnumValidation(
             val underlyingValue = underlyingValuesByName[overallValue.name]
 
             if (underlyingValue == null) {
-                MissingUnderlyingEnumValue(service, parent, overallValue)
+                MissingUnderlyingEnumValue(parent, overallValue)
             } else {
                 null
             }

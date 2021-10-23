@@ -74,9 +74,10 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class DuplicatedUnderlyingType(
-        val service: Service,
         val duplicates: List<NadelServiceSchemaElement>,
     ) : NadelSchemaValidationError {
+        val service: Service get() = duplicates.first().service
+
         override val message = run {
             val ot = duplicates.map { it.overall.name }
             val ut = duplicates.first().underlying.name
@@ -92,6 +93,8 @@ sealed interface NadelSchemaValidationError {
         val overallField: GraphQLFieldDefinition,
         val underlyingField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val s = parentType.service.name
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
@@ -109,8 +112,10 @@ sealed interface NadelSchemaValidationError {
         val overallField: GraphQLFieldDefinition,
         val underlyingField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
-            val s = parentType.service.name
+            val s = service.name
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val uf = makeFieldCoordinates(parentType.underlying.name, underlyingField.name)
             val ot = GraphQLTypeUtil.simplePrint(overallField.type)
@@ -122,10 +127,11 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class MissingUnderlyingField(
-        val service: Service,
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = service.name
@@ -137,10 +143,11 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class MissingUnderlyingInputField(
-        val service: Service,
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLInputObjectField,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = service.name
@@ -152,10 +159,11 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class MissingUnderlyingEnumValue(
-        val service: Service,
         val parentType: NadelServiceSchemaElement,
         val overallValue: GraphQLEnumValueDefinition,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallValue.name)
             val s = service.name
@@ -171,6 +179,8 @@ sealed interface NadelSchemaValidationError {
         val overallField: GraphQLFieldDefinition,
         val hydration: UnderlyingServiceHydration,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = hydration.serviceName
@@ -186,6 +196,8 @@ sealed interface NadelSchemaValidationError {
         val hydration: UnderlyingServiceHydration,
         val actorServiceQueryType: GraphQLObjectType,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = hydration.serviceName
@@ -200,6 +212,8 @@ sealed interface NadelSchemaValidationError {
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             "Field $of declares a hydration so its output type MUST be nullable"
@@ -209,11 +223,12 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class MissingHydrationFieldValueSource(
-        val service: Service,
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val remoteArgSource: RemoteArgumentSource,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val uf = "${parentType.underlying.name}.${remoteArgSource.path.joinToString(separator = ".")}"
@@ -229,6 +244,8 @@ sealed interface NadelSchemaValidationError {
         val overallField: GraphQLFieldDefinition,
         val remoteArgSource: RemoteArgumentSource,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val a = remoteArgSource.name
@@ -245,6 +262,8 @@ sealed interface NadelSchemaValidationError {
         val actorServiceQueryType: GraphQLObjectType,
         val argument: String,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = hydration.serviceName
@@ -256,11 +275,12 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class MissingRename(
-        val service: Service,
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val rename: FieldMappingDefinition,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val uf = "${parentType.underlying.name}.${rename.inputPath.joinToString(separator = ".")}"
@@ -275,6 +295,8 @@ sealed interface NadelSchemaValidationError {
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             "Overall field $of tried to rename a hydrated field"
@@ -284,12 +306,13 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class MissingArgumentOnUnderlying(
-        val service: Service,
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val underlyingField: GraphQLFieldDefinition,
         val argument: GraphQLArgument,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val a = argument.name
@@ -304,6 +327,8 @@ sealed interface NadelSchemaValidationError {
     data class IncompatibleType(
         val schemaElement: NadelServiceSchemaElement,
     ) : NadelSchemaValidationError {
+        val service: Service get() = schemaElement.service
+
         override val message = run {
             val s = schemaElement.service.name
             val o = toString(schemaElement.overall)
@@ -317,6 +342,8 @@ sealed interface NadelSchemaValidationError {
     data class IncompatibleTypeName(
         val schemaElement: NadelServiceSchemaElement,
     ) : NadelSchemaValidationError {
+        val service: Service get() = schemaElement.service
+
         override val message = run {
             val s = schemaElement.service.name
             val o = toString(schemaElement.overall)
@@ -356,6 +383,8 @@ sealed interface NadelSchemaValidationError {
         val overallField: GraphQLFieldDefinition,
         val duplicates: List<RemoteArgumentDefinition>,
     ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
         override val message = run {
             val an = duplicates.map { it.name }.toSet().single()
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
