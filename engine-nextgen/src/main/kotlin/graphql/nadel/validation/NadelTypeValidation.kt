@@ -4,18 +4,31 @@ import graphql.nadel.Service
 import graphql.nadel.enginekt.util.AnyImplementingTypeDefinition
 import graphql.nadel.enginekt.util.AnyNamedNode
 import graphql.nadel.enginekt.util.isExtensionDef
+import graphql.nadel.enginekt.util.isList
+import graphql.nadel.enginekt.util.isNonNull
+import graphql.nadel.enginekt.util.isNotWrapped
+import graphql.nadel.enginekt.util.isWrapped
 import graphql.nadel.enginekt.util.unwrapAll
+import graphql.nadel.enginekt.util.unwrapNonNull
+import graphql.nadel.enginekt.util.unwrapOne
+import graphql.nadel.validation.NadelSchemaUtil.getRenamedFrom
 import graphql.nadel.validation.NadelSchemaUtil.getUnderlyingName
 import graphql.nadel.validation.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.NadelSchemaUtil.hasHydration
 import graphql.nadel.validation.NadelSchemaUtil.hasRename
+import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputTypeName
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
-import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleTypeName
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
-import graphql.schema.GraphQLFieldsContainer
+import graphql.schema.GraphQLEnumType
+import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedType
+import graphql.schema.GraphQLOutputType
+import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
+import graphql.schema.GraphQLUnmodifiedType
 
 internal class NadelTypeValidation(
     private val context: NadelValidationContext,
@@ -64,19 +77,85 @@ internal class NadelTypeValidation(
             )
         }
 
-        if (schemaElement.overall is GraphQLFieldsContainer) {
-            val underlyingTypeName = getUnderlyingName(schemaElement.overall as GraphQLType)
-                ?: schemaElement.overall.name
-            // This mismatch happens when field output types are validated
-            if (underlyingTypeName != schemaElement.underlying.name) {
+        val fieldValidation = NadelFieldValidation(overallSchema, services, schemaElement.service, this)
+        return fieldValidation.validate(schemaElement)
+    }
+
+    fun validateOutputType(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        underlyingField: GraphQLFieldDefinition,
+    ): List<NadelSchemaValidationError> {
+        val overallType = overallField.type.unwrapAll()
+        val underlyingType = underlyingField.type.unwrapAll()
+
+        val typeServiceSchemaElement = NadelServiceSchemaElement(
+            service = parent.service,
+            overall = overallType,
+            underlying = underlyingType,
+        )
+
+        val underlyingTypeName = getUnderlyingName(overallType)
+        // This mismatch happens when field output types are validated
+        if (underlyingTypeName != underlyingType.name) {
+            if (overallType is GraphQLScalarType && underlyingType is GraphQLScalarType) {
+            } else if (overallType is GraphQLEnumType && underlyingType is GraphQLScalarType) {
+            } else if (overallType is GraphQLScalarType && underlyingType is GraphQLEnumType) {
+            } else {
                 return listOf(
-                    IncompatibleTypeName(schemaElement),
+                    IncompatibleFieldOutputTypeName(parent, overallField, underlyingField),
                 )
             }
         }
 
-        val fieldValidation = NadelFieldValidation(overallSchema, services, schemaElement.service, this)
-        return fieldValidation.validate(schemaElement)
+        val outputTypeWrappingErrors = listOfNotNull(
+            validateOutputTypeWrapping(parent, overallField, underlyingField),
+        )
+
+        return validate(typeServiceSchemaElement) + outputTypeWrappingErrors
+    }
+
+    private fun validateOutputTypeWrapping(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        underlyingField: GraphQLFieldDefinition,
+    ): NadelSchemaValidationError? {
+        return if (isOutputTypeValid(overallType = overallField.type, underlyingType = underlyingField.type)) {
+            null
+        } else {
+            IncompatibleFieldOutputType(parent, overallField, underlyingField)
+        }
+    }
+
+    private fun isOutputTypeValid(
+        overallType: GraphQLOutputType,
+        underlyingType: GraphQLOutputType,
+    ): Boolean {
+        var overall: GraphQLType = overallType
+        var underlying: GraphQLType = underlyingType
+
+        while (overall.isWrapped && underlying.isWrapped) {
+            if (underlying.isNonNull && !overall.isNonNull) {
+                // Overall type is allowed to have looser restrictions
+                underlying = underlying.unwrapOne()
+            } else if ((overall.isList && underlying.isList) || (overall.isNonNull && underlying.isNonNull)) {
+                overall = overall.unwrapOne()
+                underlying = underlying.unwrapOne()
+            } else {
+                return false
+            }
+        }
+
+        if (overall.isNotWrapped && underlying.isNotWrapped) {
+            return getUnderlyingName(overall as GraphQLUnmodifiedType) == (underlying as GraphQLUnmodifiedType).name
+        } else if (overall.isNotWrapped && underlying.isWrapped) {
+            if (underlying.isNonNull && underlying.unwrapNonNull().isNotWrapped) {
+                return getUnderlyingName(overall as GraphQLUnmodifiedType) == (underlying.unwrapNonNull() as GraphQLUnmodifiedType).name
+            }
+            return false
+        } else {
+            return false
+        }
     }
 
     private fun getServiceTypes(
@@ -107,7 +186,18 @@ internal class NadelTypeValidation(
                     )
                 }
             }
-            .toList() to errors
+            .toList()
+            .also { types ->
+                errors.addAll(
+                    types
+                        .groupBy { it.underlying.name }
+                        .filterValues { it.size > 1 }
+                        .values
+                        .map { duplicatedTypes ->
+                            DuplicatedUnderlyingType(service, duplicatedTypes)
+                        },
+                )
+            } to errors
     }
 
     private fun getTypeNamesUsed(service: Service): Set<String> {

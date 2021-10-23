@@ -2,6 +2,7 @@ package graphql.nadel.tests
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import graphql.GraphQLError
 import graphql.language.AstPrinter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
@@ -10,13 +11,15 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.schema.NeverWiringFactory
+import graphql.nadel.validation.NadelSchemaValidation
+import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
-import kotlin.system.measureTimeMillis
 
 /**
  * Run this and replace the path to central schema to load it up in Nadel.
@@ -79,6 +82,17 @@ suspend fun main() {
             }
         })
         .build()
+
+    NadelSchemaValidation(
+        overallSchema = nadel.overallSchema,
+        services = nadel.services.strictAssociateBy { it.name }
+    )
+        .validate()
+        .sortedBy { it.javaClass.name }
+        .asSequence()
+        .map(NadelSchemaValidationError::toGraphQLError)
+        .map(GraphQLError::toSpecification)
+        .forEach(::println)
 
     @Suppress("ConstantConditionIf")
     if (true) {

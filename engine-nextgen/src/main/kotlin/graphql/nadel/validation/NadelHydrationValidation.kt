@@ -10,6 +10,9 @@ import graphql.nadel.enginekt.util.isNonNull
 import graphql.nadel.enginekt.util.pathToActorField
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaUtil.getHydration
+import graphql.nadel.validation.NadelSchemaUtil.hasRename
+import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
+import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorFieldArgument
@@ -29,6 +32,12 @@ internal class NadelHydrationValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
     ): List<NadelSchemaValidationError> {
+        if (hasRename(overallField)) {
+            return listOf(
+                CannotRenameHydratedField(parent, overallField),
+            )
+        }
+
         val hydration = getHydration(overallField)
             ?: error("Don't invoke hydration validation if there is no hydration silly")
 
@@ -43,7 +52,7 @@ internal class NadelHydrationValidation(
                 MissingHydrationActorField(parent, overallField, hydration, actorServiceQueryType)
             )
 
-        val argumentIssues = getArgumentIssues(parent, overallField, hydration, actorServiceQueryType, actorField)
+        val argumentIssues = getArgumentErrors(parent, overallField, hydration, actorServiceQueryType, actorField)
         val outputTypeIssues = getOutputTypeIssues(parent, overallField, actorService, actorField)
 
         return argumentIssues + outputTypeIssues
@@ -76,14 +85,23 @@ internal class NadelHydrationValidation(
         return typeValidation + outputTypeMustBeNullable
     }
 
-    private fun getArgumentIssues(
+    private fun getArgumentErrors(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
         actorServiceQueryType: GraphQLObjectType,
         actorField: GraphQLFieldDefinition,
     ): List<NadelSchemaValidationError> {
-        return hydration.arguments.mapNotNull { remoteArg ->
+        // Can only provide one value for an argument
+        val duplicatedArgumentsErrors = hydration.arguments
+            .groupBy { it.name }
+            .filterValues { it.size > 1 }
+            .values
+            .map {
+                DuplicatedHydrationArgument(parent, overallField, it)
+            }
+
+        val remoteArgErrors = hydration.arguments.mapNotNull { remoteArg ->
             val actorFieldArgument = actorField.getArgument(remoteArg.name)
             if (actorFieldArgument == null) {
                 MissingHydrationActorFieldArgument(
@@ -95,12 +113,14 @@ internal class NadelHydrationValidation(
                 )
             } else {
                 val remoteArgSource = remoteArg.remoteArgumentSource
-                getArgumentIssues(parent, overallField, remoteArgSource)
+                getRemoteArgErrors(parent, overallField, remoteArgSource)
             }
         }
+
+        return duplicatedArgumentsErrors + remoteArgErrors
     }
 
-    private fun getArgumentIssues(
+    private fun getRemoteArgErrors(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         remoteArgSource: RemoteArgumentSource,

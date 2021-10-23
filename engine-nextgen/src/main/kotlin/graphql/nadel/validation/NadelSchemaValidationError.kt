@@ -6,10 +6,12 @@ import graphql.GraphqlErrorBuilder
 import graphql.language.InputValueDefinition
 import graphql.nadel.Service
 import graphql.nadel.dsl.FieldMappingDefinition
+import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.pathToActorField
+import graphql.nadel.enginekt.util.unwrapAll
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLEnumValueDefinition
@@ -19,6 +21,7 @@ import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLType
+import graphql.schema.GraphQLTypeUtil
 
 private class NadelSchemaValidationErrorClassification(
     private val type: NadelSchemaValidationError,
@@ -64,10 +67,58 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val t = overallType.name
             val s = service.name
-            "Could not find underlying type for overall type $t in $s"
+            "Could not find underlying type for overall type $t in service $s"
         }
 
         override val subject = overallType
+    }
+
+    data class DuplicatedUnderlyingType(
+        val service: Service,
+        val duplicates: List<NadelServiceSchemaElement>,
+    ) : NadelSchemaValidationError {
+        override val message = run {
+            val ot = duplicates.map { it.overall.name }
+            val ut = duplicates.first().underlying.name
+            val s = service.name
+            "Underlying type $ut was duplicated by types $ot in the service $s"
+        }
+
+        override val subject = duplicates.first().overall
+    }
+
+    data class IncompatibleFieldOutputTypeName(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val underlyingField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        override val message = run {
+            val s = parentType.service.name
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val uf = makeFieldCoordinates(parentType.underlying.name, underlyingField.name)
+            val ot = overallField.type.unwrapAll().name
+            val ut = underlyingField.type.unwrapAll().name
+            "Overall field $of has output type name $ot but underlying field $uf in service $s has output type name $ut"
+        }
+
+        override val subject = overallField
+    }
+
+    data class IncompatibleFieldOutputType(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val underlyingField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        override val message = run {
+            val s = parentType.service.name
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val uf = makeFieldCoordinates(parentType.underlying.name, underlyingField.name)
+            val ot = GraphQLTypeUtil.simplePrint(overallField.type)
+            val ut = GraphQLTypeUtil.simplePrint(underlyingField.type)
+            "Overall field $of has output type $ot but underlying field $uf in service $s has output type $ut"
+        }
+
+        override val subject = overallField
     }
 
     data class MissingUnderlyingField(
@@ -100,7 +151,7 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
-    data class MissingUnderlyingEnum(
+    data class MissingUnderlyingEnumValue(
         val service: Service,
         val parentType: NadelServiceSchemaElement,
         val overallValue: GraphQLEnumValueDefinition,
@@ -220,6 +271,18 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class CannotRenameHydratedField(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Overall field $of tried to rename a hydrated field"
+        }
+
+        override val subject = overallField
+    }
+
     data class MissingArgumentOnUnderlying(
         val service: Service,
         val parentType: NadelServiceSchemaElement,
@@ -286,6 +349,20 @@ sealed interface NadelSchemaValidationError {
         }
 
         override val subject = location
+    }
+
+    data class DuplicatedHydrationArgument(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val duplicates: List<RemoteArgumentDefinition>,
+    ) : NadelSchemaValidationError {
+        override val message = run {
+            val an = duplicates.map { it.name }.toSet().single()
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Hydration at $of provides multiple possible values for argument $an"
+        }
+
+        override val subject = overallField
     }
 }
 

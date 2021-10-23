@@ -109,14 +109,7 @@ internal class NadelFieldValidation(
             }
         }
 
-        // TODO check the type wrappings are equal
-        val outputTypeIssues = typeValidation.validate(
-            NadelServiceSchemaElement(
-                service = service,
-                overall = overallField.type.unwrapAll(),
-                underlying = underlyingField.type.unwrapAll(),
-            )
-        )
+        val outputTypeIssues = typeValidation.validateOutputType(parent, overallField, underlyingField)
 
         return argumentIssues + outputTypeIssues
     }

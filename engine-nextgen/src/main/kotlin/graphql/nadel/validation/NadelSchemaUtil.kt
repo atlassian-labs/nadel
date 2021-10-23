@@ -14,7 +14,7 @@ import graphql.schema.GraphQLType
 
 object NadelSchemaUtil {
     fun getUnderlyingType(overallType: GraphQLNamedType, service: Service): GraphQLType? {
-        return service.underlyingSchema.getType(getUnderlyingName(overallType) ?: overallType.name)
+        return service.underlyingSchema.getType(getRenamedFrom(overallType) ?: overallType.name)
     }
 
     fun getHydration(field: GraphQLFieldDefinition): UnderlyingServiceHydration? {
@@ -59,7 +59,11 @@ object NadelSchemaUtil {
         return def.hasDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.name)
     }
 
-    fun getUnderlyingName(type: GraphQLType): String? {
+    fun getUnderlyingName(type: GraphQLNamedType): String {
+        return getRenamedFrom(type) ?: type.name
+    }
+
+    fun getRenamedFrom(type: GraphQLNamedType): String? {
         return Util.getTypeMappingDefinitionFor(type.unwrapAll())?.underlyingName
     }
 }

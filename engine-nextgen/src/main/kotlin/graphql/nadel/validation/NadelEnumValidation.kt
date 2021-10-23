@@ -2,7 +2,7 @@ package graphql.nadel.validation
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.strictAssociateBy
-import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingEnum
+import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingEnumValue
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLEnumValueDefinition
 import graphql.schema.GraphQLSchema
@@ -37,7 +37,7 @@ internal class NadelEnumValidation(
             val underlyingValue = underlyingValuesByName[overallValue.name]
 
             if (underlyingValue == null) {
-                MissingUnderlyingEnum(service, parent, overallValue)
+                MissingUnderlyingEnumValue(service, parent, overallValue)
             } else {
                 null
             }
