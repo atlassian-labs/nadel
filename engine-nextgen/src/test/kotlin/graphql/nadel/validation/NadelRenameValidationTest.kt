@@ -50,42 +50,8 @@ class NadelRenameValidationTest : DescribeSpec({
                         type Query {
                             echo: String
                         }
- 
                         type User @renamed(from: "Account") {
                             id: ID!
-                        }
-                    """.trimIndent(),
-                ),
-                underlyingSchema = mapOf(
-                    "test" to """
-                        type Query {
-                            echo: String
-                        }
-                        type Account {
-                            id: ID!
-                        }
-                    """.trimIndent(),
-                ),
-            )
-
-            val errors = validate(fixture)
-            assert(errors.isEmpty())
-        }
-
-        it("passes if field is renamed is renamed multiple times") {
-            val fixture = NadelValidationTestFixture(
-                overallSchema = mapOf(
-                    "test" to """
-                        $renameDirectiveDef
- 
-                        type Query {
-                            echo: String
-                        }
- 
-                        type User @renamed(from: "Account") {
-                            id: ID!
-                            userId: ID! @renamed(from: "id")
-                            profileId: ID! @renamed(from: "id")
                         }
                     """.trimIndent(),
                 ),
@@ -145,6 +111,53 @@ class NadelRenameValidationTest : DescribeSpec({
             assert(error.duplicates.map { it.underlying.name }.toSet().singleOrNull() == "Account")
         }
 
+        it("allows fields to be duplicated") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: String
+                            greet: String @renamed(from: "echo")
+                        }
+                    """.trimIndent(),
+                    "issues" to """
+                        type Query {
+                            issue(id: ID!): Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            key: ID! @renamed(from: "id")
+                            link: URL!
+                        }
+                        scalar URL
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                    "issues" to """
+                        type Query {
+                            issue(id: ID!): Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            link: URL!
+                        }
+                        scalar URL
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+        // When we say implicitly renamed, we refer to the fact that the output type of the field
+        // is not the same as the underlying type and that the type is shared
+        // i.e. the service does not explicitly define a rename
         it("raises error if type is implicitly renamed") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(

@@ -9,6 +9,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActor
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
+import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import io.kotest.core.spec.style.DescribeSpec
 
 private const val source = "$" + "source"
@@ -39,7 +40,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -59,7 +60,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -91,7 +92,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -111,7 +112,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -149,7 +150,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                                 ]
                             )
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -169,7 +170,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -202,7 +203,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                                 ]
                             )
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -222,7 +223,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -259,7 +260,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -278,7 +279,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -313,7 +314,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -332,7 +333,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -369,7 +370,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -388,7 +389,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -429,7 +430,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                                 ]
                             )
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -449,7 +450,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -490,7 +491,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                                 ]
                             )
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -510,7 +511,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -551,7 +552,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                                 ]
                             )
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
                     "issues" to """
@@ -571,7 +572,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                             name: String!
                         }
-                    """.trimIndent()
+                    """.trimIndent(),
                 ),
             )
 
@@ -583,6 +584,77 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
             assert(error.duplicates.map { it.name }.toSet() == setOf("id"))
+        }
+
+        it("checks the output type of the actor field against the output type of the hydrated field") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type Issue {
+                            creator(someArg: ID!, other: Boolean): User @hydrated(
+                                service: "accounts"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$source.creator"}
+                                    {name: "id", value: "$argument.someArg"}
+                                    {name: "other", value: "$argument.other"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                    "accounts" to """
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!, other: Boolean): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                    "accounts" to """
+                        type Query {
+                            user(id: ID!, other: Boolean): Account 
+                        }
+                        type Account {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.singleOfType<MissingUnderlyingField>()
+            assert(error.parentType.overall.name == "User")
+            assert(error.parentType.underlying.name == "Account")
+            assert(error.overallField.name == "name")
+            assert(error.subject == error.overallField)
         }
     }
 })

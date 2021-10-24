@@ -46,20 +46,7 @@ internal class NadelTypeValidation(
         val (serviceTypes, serviceTypeErrors) = getServiceTypes(service)
 
         val fieldIssues = serviceTypes.asSequence()
-            .filter(::visitElement)
-            .flatMap { serviceType ->
-                // Since these are GraphQL executable types, they should be the same
-                // i.e. there's no GraphQLExtendedFieldDefinition to screw it up
-                if (serviceType.overall.javaClass != serviceType.underlying.javaClass) {
-                    listOf(
-                        IncompatibleType(serviceType),
-                    )
-                } else {
-                    fieldValidation.validate(serviceType) +
-                        inputValidation.validate(serviceType) +
-                        enumValidation.validate(serviceType)
-                }
-            }
+            .flatMap(::validate)
             .toList()
 
         return serviceTypeErrors + fieldIssues
@@ -78,7 +65,9 @@ internal class NadelTypeValidation(
             )
         }
 
-        return fieldValidation.validate(schemaElement)
+        return fieldValidation.validate(schemaElement) +
+            inputValidation.validate(schemaElement) +
+            enumValidation.validate(schemaElement)
     }
 
     fun validateOutputType(
