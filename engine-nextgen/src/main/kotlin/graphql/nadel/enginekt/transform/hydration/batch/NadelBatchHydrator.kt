@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.transform.hydration.batch
 
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.NadelEngineExecutionHooks
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
@@ -34,8 +35,26 @@ internal class NadelBatchHydrator(
                     parentNode = parentNode,
                 )
                 when {
-                    instructions.isEmpty() -> null
-                    else -> parentNode to instructions.single() // Becomes Pair<JsonNode, Instruction>
+                    instructions.isEmpty() -> {
+                        null // Becomes Pair<JsonNode, Instruction>
+                    }
+                    instructions.size == 1 -> // Becomes Pair<JsonNode, Instruction>
+                        parentNode to instructions.single()
+                    else -> {
+                        if (state.executionContext.hooks !is NadelEngineExecutionHooks) {
+                            error(
+                                "Cannot decide which hydration instruction should be used. " +
+                                    "Provided ServiceExecutionHooks has to be of type NadelEngineExecutionHooks"
+                            )
+                        }
+                        val hydrationInstructionForNode: NadelBatchHydrationFieldInstruction =
+                            state.executionContext.hooks.resolvePolymorphicHydrationInstruction(
+                                instructions,
+                                parentNode
+                            )
+                        // Becomes Pair<JsonNode, Instruction>
+                        parentNode to hydrationInstructionForNode
+                    }
                 }
             }
             // Becomes Map<Instruction, List<Pair<JsonNode, Instruction>>>

@@ -1,0 +1,278 @@
+name: batch polymorphic hydration
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service3: |
+    type Query {
+      buzById(ids: [ID]): [Buz]
+    }
+
+    type Buz {
+      id: ID
+      name: String
+    }
+  service2: |
+    type Query {
+      barById(ids: [ID]): [Bar]
+    }
+
+    type Bar {
+      id: ID
+      name: String
+    }
+  service1: |
+    type Query {
+      foo: [Foo]
+    }
+
+    type Foo {
+      id: ID
+      dataId: ID
+      data: Data
+      @hydrated(
+        service: "service3"
+        field: "buzById"
+        arguments: [
+          {name: "ids" value: "$source.dataId"}
+        ]
+        identifiedBy: "id"
+      )
+      @hydrated(
+        service: "service2"
+        field: "barById"
+        arguments: [
+          {name: "ids" value: "$source.dataId"}
+        ]
+        identifiedBy: "id"
+      )
+    }
+
+    union Data = Bar | Buz
+underlyingSchema:
+  service3: |
+    type Buz {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      buzById(ids: [ID]): [Buz]
+    }
+  service2: |
+    type Bar {
+      id: ID
+      name: String
+    }
+
+    type Query {
+      barById(ids: [ID]): [Bar]
+    }
+  service1: |
+    type Query {
+      foo: [Foo]
+    }
+
+    type Foo {
+      id: ID
+      dataId: ID
+    }
+
+query: |
+  query {
+    foo {
+      __typename
+      id
+      data {
+        ... on Buz {
+          __typename
+          id
+          name
+        }
+        ... on Bar {
+          __typename
+          id
+          name
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo {
+                ... on Foo {
+                  __typename
+                  __typename__batch_hydration__data: __typename
+                  batch_hydration__data__dataId: dataId
+                  batch_hydration__data__dataId: dataId
+                  id
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": [{
+              "__typename": "Foo",
+              "__typename__batch_hydration__data": "Foo",
+              "batch_hydration__data__dataId": "BUZ-0",
+              "id": "FOO-0"
+            }, {
+              "__typename": "Foo",
+              "__typename__batch_hydration__data": "Foo",
+              "batch_hydration__data__dataId": "BUZ-1",
+              "id": "FOO-1"
+            }, {
+              "__typename": "Foo",
+              "__typename__batch_hydration__data": "Foo",
+              "batch_hydration__data__dataId": "BAR-0",
+              "id": "FOO-2"
+            }, {
+              "__typename": "Foo",
+              "__typename__batch_hydration__data": "Foo",
+              "batch_hydration__data__dataId": "BAR-1",
+              "id": "FOO-3"
+            } ]
+          },
+          "extensions": {}
+        }
+    - serviceName: service3
+      request:
+        query: |
+          query {
+            ... on Query {
+              buzById(ids: ["BUZ-0", "BUZ-1"]) {
+                ... on Buz {
+                  __typename
+                  __typename__type_filter____typename: __typename
+                  __typename__type_filter__id: __typename
+                  __typename__type_filter__name: __typename
+                  id
+                  batch_hydration__data__id: id
+                  name
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "buzById": [{
+              "__typename": "Buz",
+              "__typename__type_filter____typename": "Buz",
+              "id": "BUZ-0",
+              "__typename__type_filter__id": "BUZ-0",
+              "batch_hydration__data__id": "BUZ-0",
+              "__typename__type_filter__name": "Buz Buz Buz",
+              "name": "Buz Buz Buz"
+            },
+            {
+              "__typename": "Buz",
+              "__typename__type_filter____typename": "Buz",
+              "id": "BUZ-1",
+              "__typename__type_filter__id": "BUZ-1",
+              "batch_hydration__data__id": "BUZ-1",
+              "__typename__type_filter__name": "Buz1 Buz1 Buz1",
+              "name": "Buz1 Buz1 Buz1"
+            }]
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            ... on Query {
+              barById(ids: ["BAR-0", "BAR-1"]) {
+                ... on Bar {
+                  __typename__type_filter____typename: __typename
+                  __typename
+                  __typename__type_filter__id: __typename
+                  __typename__type_filter__name: __typename
+                  id
+                  batch_hydration__data__id: id
+                  name
+                }
+              }
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "barById": [{
+              "__typename__type_filter____typename": "Bar",
+              "__typename": "Bar",
+              "__typename__type_filter__id": "BAR-0",
+              "__typename__type_filter__name": "Bar Bar Bar",
+              "id": "BAR-0",
+              "batch_hydration__data__id": "BAR-0",
+              "name": "Bar Bar Bar"
+            },
+            {
+              "__typename__type_filter____typename": "Bar",
+              "__typename": "Bar",
+              "__typename__type_filter__id": "BAR-1",
+              "__typename__type_filter__name": "Bar1 Bar1 Bar1",
+              "id": "BAR-1",
+              "batch_hydration__data__id": "BAR-1",
+              "name": "Bar1 Bar1 Bar1"
+            }]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": [{
+        "__typename": "Foo",
+        "id": "FOO-0",
+        "data": {
+          "__typename": "Buz",
+          "id": "BUZ-0",
+          "name": "Buz Buz Buz"
+        }
+      }, {
+        "__typename": "Foo",
+        "id": "FOO-1",
+        "data": {
+          "__typename": "Buz",
+          "id": "BUZ-1",
+          "name": "Buz1 Buz1 Buz1"
+        }
+      }, {
+        "__typename": "Foo",
+        "id": "FOO-2",
+        "data": {
+          "__typename": "Bar",
+          "id": "BAR-0",
+          "name": "Bar Bar Bar"
+        }
+      }, {
+        "__typename": "Foo",
+        "id": "FOO-3",
+        "data": {
+          "__typename": "Bar",
+          "id": "BAR-1",
+          "name": "Bar1 Bar1 Bar1"
+        }
+      }]
+    },
+    "extensions": {}
+  }

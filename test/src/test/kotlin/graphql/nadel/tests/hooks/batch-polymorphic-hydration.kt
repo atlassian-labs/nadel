@@ -11,7 +11,7 @@ import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.UseHook
 
 @UseHook
-class `basic-polymorphic-hydration` : EngineTestHook {
+class `batch-polymorphic-hydration` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder.serviceExecutionHooks(TestNadelEngineExecutionHooks())
     }
@@ -23,7 +23,7 @@ private class TestNadelEngineExecutionHooks : NadelEngineExecutionHooks {
         parentNode: JsonNode
     ): T {
 
-        val dataIdValue = JsonNodeExtractor.getNodeAt(parentNode, JsonNodePath.root + "hydration__data__dataId")!!
+        val dataIdValue = JsonNodeExtractor.getNodeAt(parentNode, JsonNodePath.root + "batch_hydration__data__dataId")!!
             .value as String
         val actorFieldName = when {
             dataIdValue.startsWith("bar", ignoreCase = true) -> "barById"
