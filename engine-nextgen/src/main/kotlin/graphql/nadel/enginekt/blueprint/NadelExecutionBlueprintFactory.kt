@@ -42,6 +42,7 @@ import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 
@@ -242,11 +243,26 @@ private class Factory(
             is InterfaceTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
             is InputObjectTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
             is EnumTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
-            else -> when (val typeMappingDef = NadelDirectives.createTypeMapping(type)) {
+            // These don't really mean anything anyway as these cannot be used as fragment type conditions
+            // And we don't have variables in normalized queries so they can't be var types
+            // is ScalarTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
+            // is UnionTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
+            else -> when (val typeMappingDef = createTypeMapping(type)) {
                 null -> null
                 else -> makeTypeRenameInstruction(typeMappingDef)
             }
         }
+    }
+
+    private fun createTypeMapping(type: GraphQLDirectiveContainer): TypeMappingDefinition? {
+        // Fixes bug with jsw schema
+        // These don't really mean anything anyway as these cannot be used as fragment type conditions
+        // And we don't have variables in normalized queries so they can't be var types
+        if (type is GraphQLScalarType) {
+            return null
+        }
+
+        return NadelDirectives.createTypeMapping(type)
     }
 
     private fun makeTypeRenameInstruction(typeMappingDefinition: TypeMappingDefinition): NadelTypeRenameInstruction {

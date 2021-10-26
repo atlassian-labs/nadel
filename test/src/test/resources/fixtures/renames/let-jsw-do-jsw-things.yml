@@ -1,0 +1,75 @@
+# We need to permit JSW to do weird things with their schema for the time being
+name: let jsw do jsw things
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service: |
+    type Query {
+      foo: A
+    }
+
+    scalar A @renamed(from: "X")
+    scalar B @renamed(from: "X")
+
+    scalar C @renamed(from: "Y")
+    scalar D @renamed(from: "Y")
+underlyingSchema:
+  service: |
+    type Query {
+      foo: X
+    }
+    scalar X
+    enum Y {
+      P
+    }
+query: |
+  query {
+    foo
+  }
+variables: {}
+serviceCalls:
+  current:
+    - serviceName: service
+      request:
+        query: |
+          query nadel_2_service {
+            foo
+          }
+        variables: {}
+        operationName: nadel_2_service
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": null
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              foo
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": null
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": null
+    },
+    "extensions": {}
+  }
