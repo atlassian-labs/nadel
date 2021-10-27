@@ -231,7 +231,7 @@ internal class NadelHydrationTransform(
             1 -> instructions.single()
             else -> {
                 if (hooks is NadelEngineExecutionHooks) {
-                    hooks.resolvePolymorphicHydrationInstruction(instructions, parentNode)
+                    hooks.getHydrationInstruction(instructions, parentNode)
                 } else {
                     error(
                         "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +

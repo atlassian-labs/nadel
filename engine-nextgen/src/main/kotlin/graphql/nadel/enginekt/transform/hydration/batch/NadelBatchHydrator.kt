@@ -35,26 +35,10 @@ internal class NadelBatchHydrator(
                     parentNode = parentNode,
                 )
                 when {
-                    instructions.isEmpty() -> {
-                        null // Becomes Pair<JsonNode, Instruction>
-                    }
-                    instructions.size == 1 -> // Becomes Pair<JsonNode, Instruction>
-                        parentNode to instructions.single()
-                    else -> {
-                        if (state.executionContext.hooks !is NadelEngineExecutionHooks) {
-                            error(
-                                "Cannot decide which hydration instruction should be used. " +
-                                    "Provided ServiceExecutionHooks has to be of type NadelEngineExecutionHooks"
-                            )
-                        }
-                        val hydrationInstructionForNode: NadelBatchHydrationFieldInstruction =
-                            state.executionContext.hooks.resolvePolymorphicHydrationInstruction(
-                                instructions,
-                                parentNode
-                            )
-                        // Becomes Pair<JsonNode, Instruction>
-                        parentNode to hydrationInstructionForNode
-                    }
+                    instructions.isEmpty() -> null
+                    instructions.size == 1 -> parentNode to instructions.single()
+                    // Becomes Pair<JsonNode, Instruction>
+                    else -> parentNode to getHydrationInstruction(state, instructions, parentNode)
                 }
             }
             // Becomes Map<Instruction, List<Pair<JsonNode, Instruction>>>
@@ -128,5 +112,20 @@ internal class NadelBatchHydrator(
                 }
                 .awaitAll()
         }
+    }
+
+    private fun getHydrationInstruction(
+        state: State, instructions: List<NadelBatchHydrationFieldInstruction>, parentNode: JsonNode
+    ): NadelBatchHydrationFieldInstruction {
+        if (state.executionContext.hooks !is NadelEngineExecutionHooks) {
+            error(
+                "Cannot decide which hydration instruction should be used. " +
+                    "Provided ServiceExecutionHooks has to be of type NadelEngineExecutionHooks"
+            )
+        }
+        return state.executionContext.hooks.getHydrationInstruction(
+            instructions,
+            parentNode
+        )
     }
 }

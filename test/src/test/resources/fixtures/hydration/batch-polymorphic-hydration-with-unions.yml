@@ -1,4 +1,4 @@
-name: batch polymorphic hydration
+name: batch polymorphic hydration with unions
 enabled:
   current: false
   nextgen: true
@@ -8,10 +8,17 @@ overallSchema:
       petById(ids: [ID]): [Pet]
     }
 
-    type Pet {
+    type Fish {
+      id: ID
+      fins: Int
+    }
+
+    type Dog {
       id: ID
       breed: String
     }
+
+    union Pet = Fish | Dog
   people: |
     type Query {
       humanById(ids: [ID]): [Human]
@@ -29,13 +36,14 @@ overallSchema:
     type Foo {
       id: ID
       dataId: ID
-      data: Data
+      data: LivingThing
       @hydrated(
         service: "pets"
         field: "petById"
         arguments: [
           {name: "ids" value: "$source.dataId"}
         ]
+        identifiedBy: "id"
       )
       @hydrated(
         service: "people"
@@ -43,20 +51,28 @@ overallSchema:
         arguments: [
           {name: "ids" value: "$source.dataId"}
         ]
+        identifiedBy: "id"
       )
     }
 
-    union Data = Pet | Human
+    union LivingThing = Human | Fish | Dog
 underlyingSchema:
   pets: |
     type Query {
       petById(ids: [ID]): [Pet]
     }
 
-    type Pet {
+    type Fish {
+      id: ID
+      fins: Int
+    }
+
+    type Dog {
       id: ID
       breed: String
     }
+
+    union Pet = Fish | Dog
   people: |
     type Query {
       humanById(ids: [ID]): [Human]
@@ -82,10 +98,15 @@ query: |
       __typename
       id
       data {
-        ... on Pet {
+        ... on Dog {
           __typename
           id
           breed
+        }
+        ... on Fish {
+          __typename
+          id
+          fins
         }
         ... on Human {
           __typename
@@ -123,27 +144,28 @@ serviceCalls:
             "foo": [{
               "__typename": "Foo",
               "__typename__batch_hydration__data": "Foo",
-              "batch_hydration__data__dataId": "PET-0",
-              "batch_hydration__data__dataId": "PET-0",
+              "batch_hydration__data__dataId": "DOG-0",
               "id": "FOO-0"
             }, {
               "__typename": "Foo",
               "__typename__batch_hydration__data": "Foo",
-              "batch_hydration__data__dataId": "HUMAN-0",
-              "batch_hydration__data__dataId": "HUMAN-0",
+              "batch_hydration__data__dataId": "FISH-0",
               "id": "FOO-1"
             }, {
               "__typename": "Foo",
               "__typename__batch_hydration__data": "Foo",
-              "batch_hydration__data__dataId": "PET-1",
-              "batch_hydration__data__dataId": "PET-1",
+              "batch_hydration__data__dataId": "DOG-1",
               "id": "FOO-2"
             }, {
               "__typename": "Foo",
               "__typename__batch_hydration__data": "Foo",
-              "batch_hydration__data__dataId": "HUMAN-1",
-              "batch_hydration__data__dataId": "HUMAN-1",
+              "batch_hydration__data__dataId": "FISH-1",
               "id": "FOO-3"
+            }, {
+              "__typename": "Foo",
+              "__typename__batch_hydration__data": "Foo",
+              "batch_hydration__data__dataId": "HUMAN-0",
+              "id": "FOO-4"
             } ]
           },
           "extensions": {}
@@ -153,13 +175,22 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              petById(ids: ["PET-0", "PET-1"]) {
-                ... on Pet {
+              petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
+                ... on Dog {
                   __typename
                   __typename__type_filter____typename: __typename
                   __typename__type_filter__id: __typename
                   __typename__type_filter__name: __typename
                   breed
+                  id
+                  batch_hydration__data__id: id
+                }
+                ... on Fish {
+                  __typename
+                  __typename__type_filter____typename: __typename
+                  __typename__type_filter__id: __typename
+                  __typename__type_filter__name: __typename
+                  fins
                   id
                   batch_hydration__data__id: id
                 }
@@ -173,22 +204,37 @@ serviceCalls:
         {
           "data": {
             "petById": [{
-              "__typename": "Pet",
-              "__typename__type_filter____typename": "Pet",
-              "__typename__type_filter__id": "Pet",
-              "__typename__type_filter__name": "Pet",
+              "__typename": "Dog",
+              "__typename__type_filter____typename": "Dog",
+              "__typename__type_filter__id": "Dog",
+              "__typename__type_filter__name": "Dog",
               "breed": "Akita",
-              "id": "PET-0",
-              "batch_hydration__data__id": "PET-0"
-            },
-            {
-              "__typename": "Pet",
-              "__typename__type_filter____typename": "Pet",
-              "__typename__type_filter__id": "Pet",
-              "__typename__type_filter__name": "Pet",
+              "id": "DOG-0",
+              "batch_hydration__data__id": "DOG-0"
+            }, {
+              "__typename": "Fish",
+              "__typename__type_filter____typename": "Fish",
+              "__typename__type_filter__id": "Fish",
+              "__typename__type_filter__name": "Fish",
+              "fins": 4,
+              "id": "FISH-0",
+              "batch_hydration__data__id": "FISH-0"
+            }, {
+              "__typename": "Dog",
+              "__typename__type_filter____typename": "Dog",
+              "__typename__type_filter__id": "Dog",
+              "__typename__type_filter__name": "Dog",
               "breed": "Labrador",
-              "id": "PET-1",
-              "batch_hydration__data__id": "PET-1"
+              "id": "DOG-1",
+              "batch_hydration__data__id": "DOG-1"
+            }, {
+              "__typename": "Fish",
+              "__typename__type_filter____typename": "Fish",
+              "__typename__type_filter__id": "Fish",
+              "__typename__type_filter__name": "Fish",
+              "fins": 8,
+              "id": "FISH-1",
+              "batch_hydration__data__id": "FISH-1"
             }]
           },
           "extensions": {}
@@ -198,12 +244,15 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
+              humanById(ids: ["HUMAN-0"]) {
                 ... on Human {
+                  __typename__type_filter____typename: __typename
                   __typename__type_filter____typename: __typename
                   __typename
                   __typename__type_filter__id: __typename
+                  __typename__type_filter__id: __typename
                   __typename__type_filter__breed: __typename
+                  __typename__type_filter__fins: __typename
                   id
                   batch_hydration__data__id: id
                   name
@@ -219,21 +268,15 @@ serviceCalls:
           "data": {
             "humanById": [{
               "__typename__type_filter____typename": "Human",
-              "__typename": "Human",
-              "__typename__type_filter__id": "Human",
-              "__typename__type_filter__breed": "Human",
-              "id": "HUMAN-0",
-              "batch_hydration__data__id": "HUMAN-0",
-              "name": "Fanny Longbottom"
-            },
-            {
               "__typename__type_filter____typename": "Human",
               "__typename": "Human",
               "__typename__type_filter__id": "Human",
+              "__typename__type_filter__id": "Human",
               "__typename__type_filter__breed": "Human",
-              "id": "HUMAN-1",
-              "batch_hydration__data__id": "HUMAN-1",
-              "name": "John Doe"
+              "__typename__type_filter__fins": "Human",
+              "id": "HUMAN-0",
+              "batch_hydration__data__id": "HUMAN-0",
+              "name": "Fanny Longbottom"
             }]
           },
           "extensions": {}
@@ -246,33 +289,41 @@ response: |-
         "__typename": "Foo",
         "id": "FOO-0",
         "data": {
-          "__typename": "Pet",
-          "id": "PET-0",
+          "__typename": "Dog",
+          "id": "DOG-0",
           "breed": "Akita"
         }
       }, {
         "__typename": "Foo",
         "id": "FOO-1",
         "data": {
-          "__typename": "Human",
-          "id": "HUMAN-0",
-          "name": "Fanny Longbottom"
+          "__typename": "Fish",
+          "id": "FISH-0",
+          "fins": 4
         }
       }, {
         "__typename": "Foo",
         "id": "FOO-2",
         "data": {
-          "__typename": "Pet",
-          "id": "PET-1",
+          "__typename": "Dog",
+          "id": "DOG-1",
           "breed": "Labrador"
         }
       }, {
         "__typename": "Foo",
         "id": "FOO-3",
         "data": {
+          "__typename": "Fish",
+          "id": "FISH-1",
+          "fins": 8
+        }
+      }, {
+        "__typename": "Foo",
+        "id": "FOO-4",
+        "data": {
           "__typename": "Human",
-          "id": "HUMAN-1",
-          "name": "John Doe"
+          "id": "HUMAN-0",
+          "name": "Fanny Longbottom"
         }
       }]
     },

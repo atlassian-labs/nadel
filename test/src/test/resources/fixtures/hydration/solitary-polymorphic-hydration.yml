@@ -3,25 +3,25 @@ enabled:
   current: false
   nextgen: true
 overallSchema:
-  service3: |
+  pets: |
     type Query {
-      buzById(id: ID): Buz
+      petById(id: ID): Pet
     }
 
-    type Buz {
+    type Pet {
+      id: ID
+      breed: String
+    }
+  people: |
+    type Query {
+      humanById(id: ID): Human
+    }
+
+    type Human {
       id: ID
       name: String
     }
-  service2: |
-    type Query {
-      barById(id: ID): Bar
-    }
-
-    type Bar {
-      id: ID
-      name: String
-    }
-  service1: |
+  foo: |
     type Query {
       foo: [Foo]
     }
@@ -31,42 +31,42 @@ overallSchema:
       dataId: ID
       data: Data
       @hydrated(
-        service: "service3"
-        field: "buzById"
+        service: "pets"
+        field: "petById"
         arguments: [
           {name: "id" value: "$source.dataId"}
         ]
       )
       @hydrated(
-        service: "service2"
-        field: "barById"
+        service: "people"
+        field: "humanById"
         arguments: [
           {name: "id" value: "$source.dataId"}
         ]
       )
     }
 
-    union Data = Bar | Buz
+    union Data = Pet | Human
 underlyingSchema:
-  service3: |
-    type Buz {
+  pets: |
+    type Query {
+      petById(id: ID): Pet
+    }
+
+    type Pet {
+      id: ID
+      breed: String
+    }
+  people: |
+    type Query {
+      humanById(id: ID): Human
+    }
+
+    type Human {
       id: ID
       name: String
     }
-
-    type Query {
-      buzById(id: ID): Buz
-    }
-  service2: |
-    type Bar {
-      id: ID
-      name: String
-    }
-
-    type Query {
-      barById(id: ID): Bar
-    }
-  service1: |
+  foo: |
     type Query {
       foo: [Foo]
     }
@@ -82,12 +82,12 @@ query: |
       __typename
       id
       data {
-        ... on Bar {
+        ... on Pet {
           __typename
           id
-          name
+          breed
         }
-        ... on Buz {
+        ... on Human {
           __typename
           id
           name
@@ -98,7 +98,7 @@ query: |
 variables: { }
 serviceCalls:
   nextgen:
-    - serviceName: service1
+    - serviceName: foo
       request:
         query: |
           query {
@@ -123,30 +123,30 @@ serviceCalls:
             "foo": [{
               "__typename": "Foo",
               "__typename__hydration__data": "Foo",
-              "hydration__data__dataId": "BAR-0",
+              "hydration__data__dataId": "PET-0",
               "id": "FOO-0"
             },{
               "__typename": "Foo",
               "__typename__hydration__data": "Foo",
-              "hydration__data__dataId": "BUZ-0",
+              "hydration__data__dataId": "HUMAN-0",
               "id": "FOO-1"
             }]
           },
           "extensions": {}
         }
-    - serviceName: service2
+    - serviceName: pets
       request:
         query: |
           query {
             ... on Query {
-              barById(id: "BAR-0") {
-                ... on Bar {
+              petById(id: "PET-0") {
+                ... on Pet {
                   __typename
                   __typename__type_filter____typename: __typename
                   __typename__type_filter__id: __typename
                   __typename__type_filter__name: __typename
+                  breed
                   id
-                  name
                 }
               }
             }
@@ -157,27 +157,27 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "barById": {
-              "__typename": "Bar",
-              "__typename__type_filter__id": "Bar",
-              "__typename__type_filter__name": "Bar",
-              "id": "BAR-0",
-              "name": "Bar Bar Bar"
+            "petById": {
+              "__typename": "Pet",
+              "__typename__type_filter__id": "Pet",
+              "__typename__type_filter__name": "Pet",
+              "id": "PET-0",
+              "breed": "Akita"
             }
           },
           "extensions": {}
         }
-    - serviceName: service3
+    - serviceName: people
       request:
         query: |
           query {
             ... on Query {
-              buzById(id: "BUZ-0") {
-                ... on Buz {
+              humanById(id: "HUMAN-0") {
+                ... on Human {
                   __typename__type_filter____typename: __typename
                   __typename
                   __typename__type_filter__id: __typename
-                  __typename__type_filter__name: __typename
+                  __typename__type_filter__breed: __typename
                   id
                   name
                 }
@@ -190,12 +190,13 @@ serviceCalls:
       response: |-
         {
           "data": {
-            "buzById": {
-              "__typename": "Buz",
-              "__typename__type_filter__id": "Buz",
-              "__typename__type_filter__name": "Buz",
-              "id": "BUZ-0",
-              "name": "Buz Buz Buz"
+            "humanById": {
+              "__typename__type_filter____typename": "Human",
+              "__typename": "Human",
+              "__typename__type_filter__id": "Human",
+              "__typename__type_filter__breed": "Human",
+              "id": "HUMAN-0",
+              "name": "Fanny Longbottom"
             }
           },
           "extensions": {}
@@ -208,18 +209,18 @@ response: |-
         "__typename": "Foo",
         "id": "FOO-0",
         "data": {
-          "__typename": "Bar",
-          "id": "BAR-0",
-          "name": "Bar Bar Bar"
+          "__typename": "Pet",
+          "id": "PET-0",
+          "breed": "Akita"
         }
       },
       {
         "__typename": "Foo",
         "id": "FOO-1",
         "data": {
-          "__typename": "Buz",
-          "id": "BUZ-0",
-          "name": "Buz Buz Buz"
+          "__typename": "Human",
+          "id": "HUMAN-0",
+          "name": "Fanny Longbottom"
         }
       }]
     },

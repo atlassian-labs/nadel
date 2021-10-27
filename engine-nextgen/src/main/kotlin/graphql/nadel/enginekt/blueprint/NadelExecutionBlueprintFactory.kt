@@ -328,18 +328,9 @@ private class Factory(
 
     private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
         val extendedDef = field.definition as? ExtendedFieldDefinition
-        val underlyingServiceHydration = extendedDef?.fieldTransformation?.underlyingServiceHydration
-        return when {
-            underlyingServiceHydration != null -> {
-                listOf(underlyingServiceHydration)
-            }
-            else -> {
-                val createUnderlyingServiceHydration = NadelDirectives.createUnderlyingServiceHydration(field)
-                if (createUnderlyingServiceHydration?.isNotEmpty() == true) {
-                    return createUnderlyingServiceHydration
-                }
-                return emptyList()
-            }
+        return when (val underlyingServiceHydration = extendedDef?.fieldTransformation?.underlyingServiceHydration) {
+            null -> NadelDirectives.createUnderlyingServiceHydration(field) ?: emptyList()
+            else -> listOf(underlyingServiceHydration)
         }
     }
 

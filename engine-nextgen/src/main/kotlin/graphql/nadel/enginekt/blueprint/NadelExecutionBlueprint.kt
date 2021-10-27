@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.blueprint
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
+import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.nadel.enginekt.util.strictAssociateBy
@@ -107,7 +108,7 @@ inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelF
                 val coordinates = makeFieldCoordinates(objectTypeName, field.name)
                 val instruction = this[coordinates]
                     ?.filterIsInstance<T>()
-                    ?.singleOrNull() ?: return@mapNotNull null
+                    ?.emptyOrSingle() ?: return@mapNotNull null
                 objectTypeName to instruction
             },
     )

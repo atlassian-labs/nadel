@@ -5,7 +5,7 @@ import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.hooks.ServiceExecutionHooks
 
 interface NadelEngineExecutionHooks : ServiceExecutionHooks {
-    fun <T : NadelGenericHydrationInstruction> resolvePolymorphicHydrationInstruction(
+    fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode
     ): T
