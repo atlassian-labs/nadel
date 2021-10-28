@@ -65,3 +65,10 @@ class `batch-polymorphic-hydration-with-rename` : EngineTestHook {
         return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
     }
 }
+
+@UseHook
+class `batch-polymorphic-hydration-where-only-one-type-is-queried` : EngineTestHook {
+    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
+    }
+}
