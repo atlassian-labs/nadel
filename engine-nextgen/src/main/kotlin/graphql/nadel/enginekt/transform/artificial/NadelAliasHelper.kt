@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform.artificial
 
 import graphql.introspection.Introspection.TypeNameMetaFieldDef
+import graphql.nadel.enginekt.transform.artificial.AliasGenerator.getAlias
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
@@ -75,8 +76,9 @@ class NadelAliasHelper private constructor(private val alias: String) {
 
     companion object {
         fun forField(tag: String, field: ExecutableNormalizedField): NadelAliasHelper {
-            // TODO: detect when not in test environment and provide UUID or similar
-            return NadelAliasHelper("${tag}__${field.resultKey}")
+            return NadelAliasHelper(
+                alias = getAlias(tag, field),
+            )
         }
     }
 }

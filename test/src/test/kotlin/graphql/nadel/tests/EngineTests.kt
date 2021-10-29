@@ -9,6 +9,7 @@ import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.transform.artificial.AliasGenerator
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
@@ -119,6 +120,9 @@ private suspend fun execute(
     engineType: NadelEngineType,
     engineFactory: TestEngineFactory,
 ) {
+    // Tests need static aliases for mocked responses
+    AliasGenerator.isStatic = true
+
     val printLock = Any()
     fun printSyncLine(message: String): Unit = synchronized(printLock) {
         println(message)
