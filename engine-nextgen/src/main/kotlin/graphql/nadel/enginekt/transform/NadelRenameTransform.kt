@@ -73,7 +73,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
             } else {
                 null
             },
-            artificialFields = makeRenamedFields(state, transformer, executionBlueprint).let {
+            artificialFields = makeRenamedFields(state, transformer, field, executionBlueprint).let {
                 when (val typeNameField = makeTypeNameField(state)) {
                     null -> it
                     else -> it + typeNameField
@@ -108,6 +108,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
     private suspend fun makeRenamedFields(
         state: State,
         transformer: NadelQueryTransformer.Continuation,
+        field: ExecutableNormalizedField,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
         return state.instructionsByObjectTypeNames.map { (typeName, instruction) ->
@@ -116,7 +117,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 transformer,
                 executionBlueprint,
                 state.service,
-                state.overallField,
+                field,
                 typeName,
                 rename = instruction,
             )
