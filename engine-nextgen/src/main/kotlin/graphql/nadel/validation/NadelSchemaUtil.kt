@@ -17,10 +17,11 @@ object NadelSchemaUtil {
         return service.underlyingSchema.getType(getRenamedFrom(overallType) ?: overallType.name)
     }
 
-    fun getHydration(field: GraphQLFieldDefinition): UnderlyingServiceHydration? {
+    fun getHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
         val def = field.definition
         if (def is ExtendedFieldDefinition) {
-            return def.fieldTransformation?.underlyingServiceHydration
+            val underlyingServiceHydration = def.fieldTransformation?.underlyingServiceHydration ?: return emptyList()
+            return listOf(underlyingServiceHydration)
         }
 
         return NadelDirectives.createUnderlyingServiceHydration(field)
