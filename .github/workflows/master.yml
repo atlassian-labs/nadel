@@ -20,4 +20,4 @@ jobs:
         with:
           java-version: '11.0.9'
       - name: build test and publish
-        run: ./gradlew assemble && ./gradlew check --info && ./gradlew artifactoryPublish -x check --info
+        run: ./gradlew assemble && ./gradlew check --info && ./gradlew artifactoryPublish -x check --debug
