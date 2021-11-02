@@ -1,7 +1,7 @@
 name: batched hydration query with a synthetic field
 enabled:
   current: true
-  nextgen: false # Why is this disabled?
+  nextgen: true
 overallSchema:
   service2: |
     type Query {
@@ -179,13 +179,9 @@ serviceCalls:
             ... on Query {
               issues {
                 ... on Issue {
-                  id
-                }
-                ... on Issue {
-                  batch_hydration__authors__authorIds: authorIds
-                }
-                ... on Issue {
                   __typename__batch_hydration__authors: __typename
+                  batch_hydration__authors__authorIds: authorIds
+                  id
                 }
               }
             }
@@ -235,8 +231,6 @@ serviceCalls:
                   usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
                     ... on User {
                       id
-                    }
-                    ... on User {
                       batch_hydration__authors__id: id
                     }
                   }
@@ -279,8 +273,6 @@ serviceCalls:
                   usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
                     ... on User {
                       id
-                    }
-                    ... on User {
                       batch_hydration__authors__id: id
                     }
                   }
