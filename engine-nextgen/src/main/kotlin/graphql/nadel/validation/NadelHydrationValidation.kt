@@ -9,7 +9,7 @@ import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.isNonNull
 import graphql.nadel.enginekt.util.pathToActorField
 import graphql.nadel.enginekt.util.unwrapAll
-import graphql.nadel.validation.NadelSchemaUtil.getHydration
+import graphql.nadel.validation.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.NadelSchemaUtil.hasRename
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
@@ -37,24 +37,33 @@ internal class NadelHydrationValidation(
             )
         }
 
-        val hydration = getHydration(overallField)
-            ?: error("Don't invoke hydration validation if there is no hydration silly")
+        val hydrations = getHydrations(overallField)
+        if (hydrations.isEmpty()) {
+            error("Don't invoke hydration validation if there is no hydration silly")
+        }
 
-        val actorService = services[hydration.serviceName]
-            ?: return listOf(
-                MissingHydrationActorService(parent, overallField, hydration),
-            )
+        val errors = mutableListOf<NadelSchemaValidationError>()
+        for (hydration in hydrations) {
+            val actorService = services[hydration.serviceName]
+            if (actorService == null) {
+                errors.add(MissingHydrationActorService(parent, overallField, hydration))
+                continue
+            }
 
-        val actorServiceQueryType = actorService.underlyingSchema.queryType
-        val actorField = actorServiceQueryType.getFieldAt(hydration.pathToActorField)
-            ?: return listOf(
-                MissingHydrationActorField(parent, overallField, hydration, actorServiceQueryType)
-            )
+            val actorServiceQueryType = actorService.underlyingSchema.queryType
+            val actorField = actorServiceQueryType.getFieldAt(hydration.pathToActorField)
+            if (actorField == null) {
+                errors.add(MissingHydrationActorField(parent, overallField, hydration, actorServiceQueryType))
+                continue
+            }
 
-        val argumentIssues = getArgumentErrors(parent, overallField, hydration, actorServiceQueryType, actorField)
-        val outputTypeIssues = getOutputTypeIssues(parent, overallField, actorService, actorField)
+            val argumentIssues = getArgumentErrors(parent, overallField, hydration, actorServiceQueryType, actorField)
+            val outputTypeIssues = getOutputTypeIssues(parent, overallField, actorService, actorField)
+            errors.addAll(argumentIssues)
+            errors.addAll(outputTypeIssues)
+        }
 
-        return argumentIssues + outputTypeIssues
+        return errors
     }
 
     private fun getOutputTypeIssues(

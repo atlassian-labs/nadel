@@ -3,17 +3,18 @@ package graphql.nadel.enginekt.transform.hydration
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.NadelEngineExecutionHooks
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
+import graphql.nadel.enginekt.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
-import graphql.nadel.enginekt.transform.getInstructionForNode
+import graphql.nadel.enginekt.transform.getInstructionsForNode
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationTransform.State
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getInstructionsToAddErrors
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
@@ -24,6 +25,7 @@ import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toBuilder
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.async
@@ -41,7 +43,7 @@ internal class NadelHydrationTransform(
          * The [Map.Entry.key] of [FieldCoordinates] denotes a specific object type and
          * its associated instruction.
          */
-        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelHydrationFieldInstruction>,
+        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelHydrationFieldInstruction>>,
         val hydratedFieldService: Service,
         /**
          * The field in question for the transform, stored for quick access when
@@ -59,7 +61,7 @@ internal class NadelHydrationTransform(
         overallField: ExecutableNormalizedField,
     ): State? {
         val hydrationInstructionsByTypeNames = executionBlueprint.fieldInstructions
-            .getInstructionsOfTypeForField<NadelHydrationFieldInstruction>(overallField)
+            .getTypeNameToInstructionsMap<NadelHydrationFieldInstruction>(overallField)
 
         return if (hydrationInstructionsByTypeNames.isEmpty()) {
             null
@@ -99,7 +101,7 @@ internal class NadelHydrationTransform(
                     executionBlueprint = executionBlueprint,
                     aliasHelper = state.aliasHelper,
                     objectTypeName = typeName,
-                    instruction = instruction,
+                    instructions = instruction,
                 )
             } + makeTypeNameField(state),
         )
@@ -147,7 +149,7 @@ internal class NadelHydrationTransform(
         fieldToHydrate: ExecutableNormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
     ): List<NadelResultInstruction> {
-        val instruction = state.instructionsByObjectTypeNames.getInstructionForNode(
+        val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
             executionBlueprint = executionBlueprint,
             service = state.hydratedFieldService,
             aliasHelper = state.aliasHelper,
@@ -155,7 +157,11 @@ internal class NadelHydrationTransform(
         )
 
         // Do nothing if there is no hydration instruction associated with this result
-        instruction ?: return emptyList()
+        if (instructions.isEmpty()) {
+            return emptyList()
+        }
+
+        val instruction = getHydrationFieldInstruction(instructions, executionContext.hooks, parentNode)
 
         val actorQueryResults = coroutineScope {
             NadelHydrationFieldsBuilder.makeActorQueries(
@@ -212,6 +218,26 @@ internal class NadelHydrationTransform(
                         newValue = data,
                     ),
                 ) + addErrors
+            }
+        }
+    }
+
+    private fun getHydrationFieldInstruction(
+        instructions: List<NadelHydrationFieldInstruction>,
+        hooks: ServiceExecutionHooks,
+        parentNode: JsonNode
+    ): NadelHydrationFieldInstruction {
+        return when (instructions.size) {
+            1 -> instructions.single()
+            else -> {
+                if (hooks is NadelEngineExecutionHooks) {
+                    hooks.getHydrationInstruction(instructions, parentNode)
+                } else {
+                    error(
+                        "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +
+                            "to be of type NadelEngineExecutionHooks"
+                    )
+                }
             }
         }
     }

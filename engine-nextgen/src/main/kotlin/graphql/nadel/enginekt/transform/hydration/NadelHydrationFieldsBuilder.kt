@@ -72,14 +72,14 @@ internal object NadelHydrationFieldsBuilder {
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         objectTypeName: GraphQLObjectTypeName,
-        instruction: NadelGenericHydrationInstruction,
+        instructions: List<NadelGenericHydrationInstruction>,
     ): List<ExecutableNormalizedField> {
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = objectTypeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
-        return instruction.actorInputValueDefs
-            .asSequence()
+        return instructions.asSequence()
+            .flatMap { it.actorInputValueDefs }
             .map { it.valueSource }
             .filterIsInstance<NadelHydrationActorInputDef.ValueSource.FieldResultValue>()
             .map { valueSource ->

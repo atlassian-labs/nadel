@@ -6,7 +6,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.blueprint.getInstructionsOfTypeForField
+import graphql.nadel.enginekt.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
@@ -29,7 +29,7 @@ internal class NadelBatchHydrationTransform(
 
     data class State(
         val executionBlueprint: NadelOverallExecutionBlueprint,
-        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelBatchHydrationFieldInstruction>,
+        val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, List<NadelBatchHydrationFieldInstruction>>,
         val executionContext: NadelExecutionContext,
         val hydratedField: ExecutableNormalizedField,
         val hydratedFieldService: Service,
@@ -44,7 +44,7 @@ internal class NadelBatchHydrationTransform(
         overallField: ExecutableNormalizedField,
     ): State? {
         val instructionsByObjectTypeName = executionBlueprint.fieldInstructions
-            .getInstructionsOfTypeForField<NadelBatchHydrationFieldInstruction>(overallField)
+            .getTypeNameToInstructionsMap<NadelBatchHydrationFieldInstruction>(overallField)
 
         return if (instructionsByObjectTypeName.isNotEmpty()) {
             return State(
@@ -80,13 +80,13 @@ internal class NadelBatchHydrationTransform(
                         .children(transformer.transform(field.children))
                         .build()
                 },
-            artificialFields = state.instructionsByObjectTypeNames.flatMap { (objectTypeName, instruction) ->
+            artificialFields = state.instructionsByObjectTypeNames.flatMap { (objectTypeName, instructions) ->
                 NadelHydrationFieldsBuilder.makeFieldsUsedAsActorInputValues(
                     service = service,
                     executionBlueprint = executionBlueprint,
                     aliasHelper = state.aliasHelper,
                     objectTypeName = objectTypeName,
-                    instruction = instruction
+                    instructions = instructions
                 )
             } + makeTypeNameField(state),
         )

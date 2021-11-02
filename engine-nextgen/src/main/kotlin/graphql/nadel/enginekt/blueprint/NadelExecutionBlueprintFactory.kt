@@ -63,7 +63,7 @@ private class Factory(
         val typeRenameInstructions = makeTypeRenameInstructions().strictAssociateBy {
             it.overallName
         }
-        val fieldInstructions = makeFieldInstructions().strictAssociateBy {
+        val fieldInstructions = makeFieldInstructions().groupBy {
             it.location
         }
         val furtherTypeRenameInstructions = typeRenameInstructions.values +
@@ -86,15 +86,15 @@ private class Factory(
                 type.fields
                     .asSequence()
                     // Get the field mapping def
-                    .mapNotNull { field ->
+                    .flatMap { field ->
                         when (val mappingDefinition = getFieldMappingDefinition(field)) {
-                            null -> when (val hydration = getUnderlyingServiceHydration(field)) {
-                                null -> null
-                                else -> makeHydrationFieldInstruction(type, field, hydration)
+                            null -> {
+                                getUnderlyingServiceHydrations(field)
+                                    .map { makeHydrationFieldInstruction(type, field, it) }
                             }
                             else -> when (mappingDefinition.inputPath.size) {
-                                1 -> makeRenameInstruction(type, field, mappingDefinition)
-                                else -> makeDeepRenameFieldInstruction(type, field, mappingDefinition)
+                                1 -> listOf(makeRenameInstruction(type, field, mappingDefinition))
+                                else -> listOf(makeDeepRenameFieldInstruction(type, field, mappingDefinition))
                             }
                         }
                     }
@@ -326,10 +326,12 @@ private class Factory(
             ?: NadelDirectives.createFieldMapping(field)
     }
 
-    private fun getUnderlyingServiceHydration(field: GraphQLFieldDefinition): UnderlyingServiceHydration? {
+    private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
         val extendedDef = field.definition as? ExtendedFieldDefinition
-        return extendedDef?.fieldTransformation?.underlyingServiceHydration
-            ?: NadelDirectives.createUnderlyingServiceHydration(field)
+        return when (val underlyingServiceHydration = extendedDef?.fieldTransformation?.underlyingServiceHydration) {
+            null -> NadelDirectives.createUnderlyingServiceHydration(field) ?: emptyList()
+            else -> listOf(underlyingServiceHydration)
+        }
     }
 
     private fun deriveUnderlyingBlueprints(
@@ -444,7 +446,7 @@ private class Factory(
 private class SharedTypesAnalysis(
     private val overallSchema: GraphQLSchema,
     private val services: List<Service>,
-    private val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
+    private val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
     private val typeRenameInstructions: Map<String, NadelTypeRenameInstruction>,
 ) {
     companion object {
@@ -575,11 +577,15 @@ private class SharedTypesAnalysis(
         val overallCoordinates = makeFieldCoordinates(overallParentType.name, overallField.name)
 
         // Honestly, it would be nice stricter validation here, but it's so cooked that we can't
-        return when (val instruction = fieldInstructions[overallCoordinates]) {
-            null -> underlyingParentType.getField(overallField.name)
-            is NadelRenameFieldInstruction -> underlyingParentType.getField(instruction.underlyingName)
-            is NadelDeepRenameFieldInstruction -> underlyingParentType.getFieldAt(instruction.queryPathToField.segments)
-            else -> null
+        val fieldInstructions: List<NadelFieldInstruction> =
+            fieldInstructions[overallCoordinates] ?: return underlyingParentType.getField(overallField.name)
+        for (instruction in fieldInstructions) {
+            if (instruction is NadelRenameFieldInstruction) {
+                return underlyingParentType.getField(instruction.underlyingName)
+            } else if (instruction is NadelDeepRenameFieldInstruction) {
+                return underlyingParentType.getFieldAt(instruction.queryPathToField.segments)
+            }
         }
+        return null
     }
 }

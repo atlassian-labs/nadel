@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.blueprint
 
 import graphql.nadel.Service
 import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
+import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.mapFrom
 import graphql.nadel.enginekt.util.strictAssociateBy
@@ -14,7 +15,7 @@ import graphql.schema.GraphQLSchema
  */
 data class NadelOverallExecutionBlueprint(
     val schema: GraphQLSchema,
-    val fieldInstructions: Map<FieldCoordinates, NadelFieldInstruction>,
+    val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
     private val underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
     private val coordinatesToService: Map<FieldCoordinates, Service>,
 ) {
@@ -98,15 +99,34 @@ data class NadelTypeRenameInstructions internal constructor(
     }
 }
 
-inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, NadelFieldInstruction>.getInstructionsOfTypeForField(
+inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelFieldInstruction>>.getTypeNameToInstructionMap(
     field: ExecutableNormalizedField,
 ): Map<GraphQLObjectTypeName, T> {
     return mapFrom(
         field.objectTypeNames
             .mapNotNull { objectTypeName ->
                 val coordinates = makeFieldCoordinates(objectTypeName, field.name)
-                val instruction = this[coordinates] as? T ?: return@mapNotNull null
+                val instruction = this[coordinates]
+                    ?.filterIsInstance<T>()
+                    ?.emptyOrSingle() ?: return@mapNotNull null
                 objectTypeName to instruction
+            },
+    )
+}
+
+inline fun <reified T : NadelFieldInstruction> Map<FieldCoordinates, List<NadelFieldInstruction>>.getTypeNameToInstructionsMap(
+    field: ExecutableNormalizedField,
+): Map<GraphQLObjectTypeName, List<T>> {
+    return mapFrom(
+        field.objectTypeNames
+            .mapNotNull { objectTypeName ->
+                val coordinates = makeFieldCoordinates(objectTypeName, field.name)
+                val instructions = (this[coordinates] ?: return@mapNotNull null)
+                    .filterIsInstance<T>()
+                when {
+                    instructions.isEmpty() -> return@mapNotNull null
+                    else -> objectTypeName to instructions
+                }
             },
     )
 }

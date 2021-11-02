@@ -16,6 +16,7 @@ import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
+import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLDirectiveContainer;
@@ -104,6 +105,7 @@ public class NadelDirectives {
                 .name("hydrated")
                 .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
                 .description(createDescription("This allows you to hydrate new values into fields"))
+                .repeatable(true)
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("service")
@@ -165,54 +167,52 @@ public class NadelDirectives {
         return new Description(s, null, false);
     }
 
-    public static UnderlyingServiceHydration createUnderlyingServiceHydration(GraphQLFieldDefinition fieldDefinition) {
-        GraphQLDirective directive = fieldDefinition.getDirective(HYDRATED_DIRECTIVE_DEFINITION.getName());
-        if (directive == null) {
-            return null;
-        }
+    public static List<UnderlyingServiceHydration> createUnderlyingServiceHydration(GraphQLFieldDefinition fieldDefinition) {
+        List<GraphQLDirective> hydrationDirectives = fieldDefinition.getDirectives(HYDRATED_DIRECTIVE_DEFINITION.getName());
+        return FpKit.map(hydrationDirectives,
+                directive -> {
+                    String service = getDirectiveValue(directive, "service", String.class);
+                    String field = getDirectiveValue(directive, "field", String.class);
+                    String objectIdentifier = getDirectiveValue(directive, "identifiedBy", String.class);
+                    Boolean objectIndexed = getDirectiveValue(directive, "indexed", Boolean.class, false);
+                    // Note: this is not properly implemented yet, so the value does not matter
+                    boolean batched = false; // getDirectiveValue(directive, "batched", Boolean.class, false);
+                    if (objectIndexed) {
+                        objectIdentifier = null; // we cant have both but it has a default
+                    }
+                    int batchSize = getDirectiveValue(directive, "batchSize", Integer.class, 200);
+                    GraphQLArgument graphQLArgument = directive.getArgument("arguments");
+                    List<RemoteArgumentDefinition> arguments = createArgs((List<Object>) ValuesResolver.valueToInternalValue(graphQLArgument.getArgumentValue(), graphQLArgument.getType()));
 
-        String service = getDirectiveValue(directive, "service", String.class);
-        String field = getDirectiveValue(directive, "field", String.class);
-        String objectIdentifier = getDirectiveValue(directive, "identifiedBy", String.class);
-        Boolean objectIndexed = getDirectiveValue(directive, "indexed", Boolean.class, false);
-        // Note: this is not properly implemented yet, so the value does not matter
-        Boolean batched = false; // getDirectiveValue(directive, "batched", Boolean.class, false);
-        if (objectIndexed) {
-            objectIdentifier = null; // we cant have both but it has a default
-        }
-        int batchSize = getDirectiveValue(directive, "batchSize", Integer.class, 200);
-        GraphQLArgument graphQLArgument = directive.getArgument("arguments");
-        List<RemoteArgumentDefinition> arguments = createArgs((List<Object>) ValuesResolver.valueToInternalValue(graphQLArgument.getArgumentValue(), graphQLArgument.getType()));
+                    List<String> fieldNames = dottedString(field);
+                    assertTrue(fieldNames.size() >= 1);
+                    String topLevelFieldName = fieldNames.get(0);
+                    String syntheticField = null;
+                    if (fieldNames.size() > 1) {
+                        syntheticField = fieldNames.get(0);
+                        topLevelFieldName = fieldNames.get(1);
+                    }
 
-        List<String> fieldNames = dottedString(field);
-        assertTrue(fieldNames.size() >= 1);
-        String topLevelFieldName = fieldNames.get(0);
-        String syntheticField = null;
-        if (fieldNames.size() > 1) {
-            syntheticField = fieldNames.get(0);
-            topLevelFieldName = fieldNames.get(1);
-        }
-
-        return new UnderlyingServiceHydration(
-                emptySrc(),
-                emptyList(),
-                service,
-                topLevelFieldName,
-                syntheticField,
-                arguments,
-                objectIdentifier,
-                objectIndexed,
-                batched,
-                batchSize,
-                emptyMap()
-        );
+                    return new UnderlyingServiceHydration(
+                            emptySrc(),
+                            emptyList(),
+                            service,
+                            topLevelFieldName,
+                            syntheticField,
+                            arguments,
+                            objectIdentifier,
+                            objectIndexed,
+                            batched,
+                            batchSize,
+                            emptyMap()
+                    );
+                });
     }
 
     @SuppressWarnings("unchecked")
     private static List<RemoteArgumentDefinition> createArgs(List<Object> arguments) {
         List<RemoteArgumentDefinition> remoteArgumentDefinitions = new ArrayList<>();
-        List<Object> args = (List<Object>) arguments;
-        for (Object arg : args) {
+        for (Object arg : arguments) {
             Map<String, String> argMap = (Map<String, String>) arg;
 
             String remoteArgName = argMap.get("name");
