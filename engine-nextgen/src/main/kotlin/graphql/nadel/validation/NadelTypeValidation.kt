@@ -19,7 +19,6 @@ import graphql.nadel.validation.NadelSchemaUtil.hasHydration
 import graphql.nadel.validation.NadelSchemaUtil.hasRename
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
-import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputTypeName
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.schema.GraphQLEnumType
@@ -84,38 +83,21 @@ internal class NadelTypeValidation(
             underlying = underlyingType,
         )
 
-        val underlyingTypeName = getUnderlyingName(overallType)
-        // This mismatch happens when field output types are validated
-        if (underlyingTypeName != underlyingType.name) {
-            if (overallType is GraphQLScalarType && underlyingType is GraphQLScalarType) {
-            } else if (overallType is GraphQLEnumType && underlyingType is GraphQLScalarType) {
-            } else if (overallType is GraphQLScalarType && underlyingType is GraphQLEnumType) {
-            } else {
-                return listOf(
-                    IncompatibleFieldOutputTypeName(parent, overallField, underlyingField),
-                )
-            }
+        // This checks whether the type is actually valid content wise
+        val typeErrors = validate(typeServiceSchemaElement)
+
+        // This checks whether the output type e.g. name or List or NonNull wrappings are valid
+        val outputTypeError = when {
+            isOutputTypeValid(overallType = overallField.type, underlyingType = underlyingField.type) -> null
+            else -> IncompatibleFieldOutputType(parent, overallField, underlyingField)
         }
 
-        val outputTypeWrappingErrors = listOfNotNull(
-            validateOutputTypeWrapping(parent, overallField, underlyingField),
-        )
-
-        return validate(typeServiceSchemaElement) + outputTypeWrappingErrors
+        return typeErrors + listOfNotNull(outputTypeError)
     }
 
-    private fun validateOutputTypeWrapping(
-        parent: NadelServiceSchemaElement,
-        overallField: GraphQLFieldDefinition,
-        underlyingField: GraphQLFieldDefinition,
-    ): NadelSchemaValidationError? {
-        return if (isOutputTypeValid(overallType = overallField.type, underlyingType = underlyingField.type)) {
-            null
-        } else {
-            IncompatibleFieldOutputType(parent, overallField, underlyingField)
-        }
-    }
-
+    /**
+     * It checks whether the type name and type wrappings e.g. [graphql.schema.GraphQLNonNull] make sense.
+     */
     private fun isOutputTypeValid(
         overallType: GraphQLOutputType,
         underlyingType: GraphQLOutputType,
@@ -136,15 +118,37 @@ internal class NadelTypeValidation(
         }
 
         if (overall.isNotWrapped && underlying.isNotWrapped) {
-            return getUnderlyingName(overall as GraphQLUnmodifiedType) == (underlying as GraphQLUnmodifiedType).name
+            return isOutputTypeNameValid(
+                overallType = overall as GraphQLUnmodifiedType,
+                underlyingType = underlying as GraphQLUnmodifiedType,
+            )
         } else if (overall.isNotWrapped && underlying.isWrapped) {
             if (underlying.isNonNull && underlying.unwrapNonNull().isNotWrapped) {
-                return getUnderlyingName(overall as GraphQLUnmodifiedType) == (underlying.unwrapNonNull() as GraphQLUnmodifiedType).name
+                return isOutputTypeNameValid(
+                    overallType = overall as GraphQLUnmodifiedType,
+                    underlyingType = underlying.unwrapNonNull() as GraphQLUnmodifiedType,
+                )
             }
             return false
         } else {
             return false
         }
+    }
+
+    private fun isOutputTypeNameValid(
+        overallType: GraphQLUnmodifiedType,
+        underlyingType: GraphQLUnmodifiedType,
+    ): Boolean {
+        if (getUnderlyingName(overallType) == underlyingType.name) {
+            return true
+        }
+
+        // Ignore what the name is for scalars
+        if (overallType is GraphQLScalarType && underlyingType is GraphQLScalarType) {
+            return true
+        }
+
+        return false
     }
 
     private fun getServiceTypes(

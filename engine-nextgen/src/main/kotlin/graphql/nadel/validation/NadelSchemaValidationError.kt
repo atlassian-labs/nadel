@@ -88,25 +88,6 @@ sealed interface NadelSchemaValidationError {
         override val subject = duplicates.first().overall
     }
 
-    data class IncompatibleFieldOutputTypeName(
-        val parentType: NadelServiceSchemaElement,
-        val overallField: GraphQLFieldDefinition,
-        val underlyingField: GraphQLFieldDefinition,
-    ) : NadelSchemaValidationError {
-        val service: Service get() = parentType.service
-
-        override val message = run {
-            val s = parentType.service.name
-            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val uf = makeFieldCoordinates(parentType.underlying.name, underlyingField.name)
-            val ot = overallField.type.unwrapAll().name
-            val ut = underlyingField.type.unwrapAll().name
-            "Overall field $of has output type name $ot but underlying field $uf in service $s has output type name $ut"
-        }
-
-        override val subject = overallField
-    }
-
     data class IncompatibleFieldOutputType(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
