@@ -1,14 +1,14 @@
 package graphql.nadel.validation
 
 import graphql.nadel.Service
-import graphql.nadel.enginekt.util.AnyImplementingTypeDefinition
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.enginekt.util.unwrapAll
-import graphql.nadel.schema.NadelDirectives
-import graphql.nadel.validation.NadelSchemaUtil.hasHydration
-import graphql.nadel.validation.NadelSchemaUtil.hasRename
+import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
+import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
+import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
+import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedSchemaElement
@@ -47,7 +47,7 @@ internal class NadelFieldValidation(
             .asSequence()
             .let { fieldSequence ->
                 // Apply filter if necessary
-                if (isCombinedType(parent.overall)) {
+                if (isCombinedType(type = parent.overall)) {
                     val fieldsThatServiceContributed = getFieldsThatServiceContributed(parent)
                     fieldSequence.filter { it.name in fieldsThatServiceContributed }
                 } else {
@@ -113,46 +113,7 @@ internal class NadelFieldValidation(
         return argumentIssues + outputTypeIssues
     }
 
-    private fun getFieldsThatServiceContributed(schemaElement: NadelServiceSchemaElement): Set<String> {
-        val service = schemaElement.service
-        val overallType = schemaElement.overall
-
-        return service.definitionRegistry.definitions
-            .asSequence()
-            .filterIsInstance<AnyImplementingTypeDefinition>()
-            .filter { it.name == overallType.name }
-            .flatMap { it.fieldDefinitions }
-            .map { it.name }
-            .toSet()
-    }
-
-    /**
-     * Determines whether a type has fields backed by different services.
-     *
-     * e.g.
-     *
-     * ```graphql
-     * type Query {
-     *   echo: String # Backed by testing service
-     *   user(id: ID): User # Backed by identity service
-     * }
-     * ```
-     *
-     * That is, validation for these types must only occur for the fields on
-     * the type must be done against multiple underlying types.
-     */
     private fun isCombinedType(type: GraphQLNamedSchemaElement): Boolean {
-        val usesTypeAsNamespaced = { field: GraphQLFieldDefinition ->
-            field.hasDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name)
-                && field.type.unwrapAll().name == type.name
-        }
-
-        // IF YOU CHANGE THIS then check NadelTypeValidation.getTypeNamesUsed to ensure they type is actually visited
-        return type.name == overallSchema.queryType.name
-            || type.name == overallSchema.mutationType?.name
-            || type.name == overallSchema.subscriptionType?.name
-            || overallSchema.queryType.fields.any(usesTypeAsNamespaced)
-            || overallSchema.mutationType?.fields?.any(usesTypeAsNamespaced) == true
-            || overallSchema.subscriptionType?.fields?.any(usesTypeAsNamespaced) == true
+        return isCombinedType(overallSchema, type)
     }
 }

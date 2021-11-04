@@ -49,6 +49,10 @@ import static java.util.Collections.emptyMap;
 
 public class NadelDirectives {
 
+    //
+    // If you add to this, please update NadelBuiltInTypes
+    //
+
     public static final DirectiveDefinition RENAMED_DIRECTIVE_DEFINITION;
     public static final DirectiveDefinition HYDRATED_DIRECTIVE_DEFINITION;
     public static final InputObjectTypeDefinition NADEL_HYDRATION_ARGUMENT_DEFINITION;

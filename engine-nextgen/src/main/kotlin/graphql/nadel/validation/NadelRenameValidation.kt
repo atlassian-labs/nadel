@@ -1,8 +1,8 @@
 package graphql.nadel.validation
 
 import graphql.nadel.enginekt.util.getFieldAt
-import graphql.nadel.validation.NadelSchemaUtil.getRename
-import graphql.nadel.validation.NadelSchemaUtil.hasHydration
+import graphql.nadel.validation.util.NadelSchemaUtil.getRename
+import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.schema.GraphQLFieldDefinition

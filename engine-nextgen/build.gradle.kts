@@ -28,3 +28,7 @@ tasks.withType<KotlinCompile>().configureEach {
     sourceCompatibility = JavaVersion.VERSION_11.toString()
     targetCompatibility = JavaVersion.VERSION_11.toString()
 }
+
+configure<com.bnorm.power.PowerAssertGradleExtension> {
+    functions = listOf("kotlin.assert", "graphql.nadel.test.dbg")
+}

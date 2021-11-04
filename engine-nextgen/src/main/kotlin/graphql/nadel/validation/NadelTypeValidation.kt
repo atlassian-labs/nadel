@@ -1,7 +1,6 @@
 package graphql.nadel.validation
 
 import graphql.nadel.Service
-import graphql.nadel.enginekt.util.AnyImplementingTypeDefinition
 import graphql.nadel.enginekt.util.AnyNamedNode
 import graphql.nadel.enginekt.util.isExtensionDef
 import graphql.nadel.enginekt.util.isList
@@ -13,15 +12,14 @@ import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.enginekt.util.unwrapNonNull
 import graphql.nadel.enginekt.util.unwrapOne
 import graphql.nadel.schema.NadelDirectives
-import graphql.nadel.validation.NadelSchemaUtil.getUnderlyingName
-import graphql.nadel.validation.NadelSchemaUtil.getUnderlyingType
-import graphql.nadel.validation.NadelSchemaUtil.hasHydration
-import graphql.nadel.validation.NadelSchemaUtil.hasRename
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
-import graphql.schema.GraphQLEnumType
+import graphql.nadel.validation.util.NadelBuiltInTypes.allNadelBuiltInTypeNames
+import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
+import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
+import graphql.nadel.validation.util.getReachableTypeNames
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLOutputType
@@ -38,6 +36,7 @@ internal class NadelTypeValidation(
     private val fieldValidation = NadelFieldValidation(overallSchema, services, this)
     private val inputValidation = NadelInputValidation()
     private val enumValidation = NadelEnumValidation()
+    private val interfaceValidation = NadelInterfaceValidation()
 
     fun validate(
         service: Service,
@@ -66,6 +65,7 @@ internal class NadelTypeValidation(
 
         return fieldValidation.validate(schemaElement) +
             inputValidation.validate(schemaElement) +
+            interfaceValidation.validate(schemaElement) +
             enumValidation.validate(schemaElement)
     }
 
@@ -167,8 +167,12 @@ internal class NadelTypeValidation(
             .filter { (key) ->
                 key in nameNamesUsed
             }
+            .filterNot { (key) ->
+                key in allNadelBuiltInTypeNames
+            }
             .mapNotNull { (_, overallType) ->
                 val underlyingType = getUnderlyingType(overallType, service) as GraphQLNamedType?
+
                 if (underlyingType == null) {
                     addMissingUnderlyingTypeError(overallType).let { null }
                 } else {
@@ -202,17 +206,12 @@ internal class NadelTypeValidation(
             return emptySet()
         }
 
-        val definitionNames = service.definitionRegistry.definitions.asSequence()
+        val definitionNames = service.definitionRegistry.definitions
+            .asSequence()
             .map { it as AnyNamedNode }
             .filter { def ->
                 if (def.isExtensionDef) {
-                    // Include extensions if it's a namespaced type
-                    overallSchema.operationTypes.any { operationType ->
-                        operationType.fields.any { field ->
-                            field.hasDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name) &&
-                                field.type.unwrapAll().name == def.name
-                        }
-                    }
+                    isNamespacedOperationType(typeName = def.name)
                 } else {
                     true
                 }
@@ -220,21 +219,21 @@ internal class NadelTypeValidation(
             .map {
                 it.name
             }
-        val definitionsNamesReferencedAsOutputTypes = service.definitionRegistry.definitions
-            .asSequence()
-            // i.e. has fields
-            .filterIsInstance<AnyImplementingTypeDefinition>()
-            .flatMap {
-                it.fieldDefinitions
-            }
-            .filterNot {
-                hasHydration(it) || hasRename(it)
-            }
-            .map {
-                it.type.unwrapAll().name
-            }
+            .toSet()
 
-        return (definitionNames + definitionsNamesReferencedAsOutputTypes).toSet()
+        // If it can be reached by using your service, you must own it to return it!
+        val referencedTypes = getReachableTypeNames(overallSchema, service, definitionNames)
+
+        return (definitionNames + referencedTypes).toSet()
+    }
+
+    private fun isNamespacedOperationType(typeName: String): Boolean {
+        return overallSchema.operationTypes.any { operationType ->
+            operationType.fields.any { field ->
+                field.hasDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name) &&
+                    field.type.unwrapAll().name == typeName
+            }
+        }
     }
 
     private fun visitElement(schemaElement: NadelServiceSchemaElement): Boolean {
