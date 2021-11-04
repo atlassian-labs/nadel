@@ -1,0 +1,98 @@
+name: chain rename transform
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  MyService: |
+    type Query {
+      test(arg: String): World @renamed(from: "world")
+    }
+    type World {
+      id: ID
+      cities(continent: Continent): [String] @renamed(from: "places")
+    }
+    enum Continent {
+      Africa
+      Antarctica
+      Asia
+      Oceania
+      Europe
+      NorthAmerica
+      SouthAmerica
+    }
+underlyingSchema:
+  MyService: |
+    type Query {
+      world(arg: String): World
+    }
+    type World {
+      id: ID
+      places(continent: Continent): [String]
+    }
+    enum Continent {
+      Africa
+      Antarctica
+      Asia
+      Oceania
+      Europe
+      NorthAmerica
+      SouthAmerica
+    }
+# So the hook associated with this test will change the arg values
+query: |
+  query {
+    test(arg: "Hello World") {
+      __typename
+      id
+      cities(continent: Oceania)
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: MyService
+      request:
+        # Notice the changed values to "aaarrg" and "Asia"
+        query: |
+          query {
+            ... on Query {
+              rename__test__world: world(arg: "aaarrg") {
+                ... on World {
+                  __typename
+                  __typename__rename__cities: __typename
+                  id
+                  rename__cities__places: places(continent: Asia)
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__test__world": {
+              "__typename": "World",
+              "__typename__rename__cities": "World",
+              "id": "Earth",
+              "rename__cities__places": ["Uhh yea I know cities"]
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "test": {
+        "__typename": "World",
+        "id": "Earth",
+        "cities": [
+          "Uhh yea I know cities"
+        ]
+      }
+    },
+    "errors": []
+  }
+

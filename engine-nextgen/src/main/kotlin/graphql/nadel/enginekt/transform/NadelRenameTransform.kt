@@ -19,11 +19,16 @@ import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.toList
 
 internal class NadelRenameTransform : NadelTransform<State> {
     data class State(
         val instructionsByObjectTypeNames: Map<GraphQLObjectTypeName, NadelRenameFieldInstruction>,
-        val objectTypesWithoutRename: List<String>,
+        val objectTypesWithoutRename: Set<String>,
         val aliasHelper: NadelAliasHelper,
         val overallField: ExecutableNormalizedField,
         val service: Service,
@@ -42,9 +47,10 @@ internal class NadelRenameTransform : NadelTransform<State> {
             return null
         }
 
-        val objectsWithoutRename = overallField.objectTypeNames.filterNot {
-            it in renameInstructions
-        }
+        val objectsWithoutRename = overallField.objectTypeNames
+            .asSequence()
+            .filterNot { it in renameInstructions }
+            .toHashSet()
 
         return State(
             renameInstructions,
@@ -67,14 +73,14 @@ internal class NadelRenameTransform : NadelTransform<State> {
             newField = if (state.objectTypesWithoutRename.isNotEmpty()) {
                 field.toBuilder()
                     .clearObjectTypesNames()
-                    .objectTypeNames(state.objectTypesWithoutRename)
+                    .objectTypeNames(field.objectTypeNames.filter { it in state.objectTypesWithoutRename })
                     .children(transformer.transform(field.children))
                     .build()
             } else {
                 null
             },
-            artificialFields = makeRenamedFields(state, transformer, executionBlueprint).let {
-                when (val typeNameField = makeTypeNameField(state)) {
+            artificialFields = makeRenamedFields(state, transformer, field, executionBlueprint).let {
+                when (val typeNameField = makeTypeNameField(state, field)) {
                     null -> it
                     else -> it + typeNameField
                 }
@@ -93,34 +99,46 @@ internal class NadelRenameTransform : NadelTransform<State> {
      */
     private fun makeTypeNameField(
         state: State,
+        field: ExecutableNormalizedField,
     ): ExecutableNormalizedField? {
         // No need for typename on top level field
         if (state.overallField.queryPath.size == 1) {
             return null
         }
 
+        val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = state.instructionsByObjectTypeNames.keys.toList(),
+            objectTypeNames = field.objectTypeNames.filter { it in typeNamesWithInstructions },
         )
     }
 
     private suspend fun makeRenamedFields(
         state: State,
         transformer: NadelQueryTransformer.Continuation,
+        field: ExecutableNormalizedField,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
-        return state.instructionsByObjectTypeNames.map { (typeName, instruction) ->
-            makeRenamedField(
-                state,
-                transformer,
-                executionBlueprint,
-                state.service,
-                state.overallField,
-                typeName,
-                rename = instruction,
-            )
-        }
+        val setOfFieldObjectTypeNames = field.objectTypeNames.toSet()
+        return state.instructionsByObjectTypeNames
+            .asSequence()
+            .asFlow() // For coroutines
+            .filter { (typeName) ->
+                // Don't insert type renames for fields that were never asked for
+                typeName in setOfFieldObjectTypeNames
+            }
+            .map { (typeName, instruction) ->
+                makeRenamedField(
+                    state,
+                    transformer,
+                    executionBlueprint,
+                    state.service,
+                    field,
+                    typeName,
+                    rename = instruction,
+                )
+            }
+            .toList()
     }
 
     private suspend fun makeRenamedField(

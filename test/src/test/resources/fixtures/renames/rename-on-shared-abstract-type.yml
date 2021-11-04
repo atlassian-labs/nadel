@@ -1,0 +1,86 @@
+name: rename on shared abstract type
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  shared: |
+    interface Node {
+      id: ID!
+    }
+  worlds: |
+    type Query {
+      node(id: ID): [Node]
+    }
+    type World implements Node {
+      id: ID!
+    }
+  planets: |
+    type Planet implements Node {
+      id: ID! @renamed(from: "identifier")
+    }
+underlyingSchema:
+  planets: |
+    type Query {
+      echo: String
+    }
+    type Planet {
+      identifier: String
+    }
+  worlds: |
+    type Query {
+      worlds: [World]
+    }
+    type World {
+      id: ID!
+    }
+  shared: |
+    type Query {
+      echo: String
+    }
+# Bug is that normally the rename transform will transform based on the
+# possible instructions. This field will go to the worlds service but the
+# rename transform may insert ... on Planet { rename_id: identifier } as it
+# sees it as a possibility if it hasn't worked on the new filtered types
+query: |
+  query {
+    node(id: "world-1") {
+      id
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: worlds
+      request:
+        query: |
+          query {
+            ... on Query {
+              node(id: "world-1") {
+                ... on World {
+                  id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "node": {
+              "id": "Test"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "node": {
+        "id": "Test"
+      }
+    },
+    "extensions": {}
+  }

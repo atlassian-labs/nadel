@@ -69,7 +69,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         /**
          * Stored for easy access in other functions.
          */
-        val field: ExecutableNormalizedField,
+        val overallField: ExecutableNormalizedField,
     )
 
     /**
