@@ -3,7 +3,6 @@ package graphql.nadel.validation
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
-import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputTypeName
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import io.kotest.core.spec.style.DescribeSpec
@@ -421,7 +420,7 @@ class NadelTypeValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<IncompatibleFieldOutputTypeName>()
+            val error = errors.singleOfType<IncompatibleFieldOutputType>()
             assert(error.parentType.overall.name == "Echo")
             assert(error.parentType.underlying.name == "Echo")
             assert(error.overallField.name == "world")

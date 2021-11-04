@@ -1,6 +1,5 @@
 package graphql.nadel.validation
 
-import graphql.nadel.Service
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.validation.NadelSchemaUtil.getRename
 import graphql.nadel.validation.NadelSchemaUtil.hasHydration

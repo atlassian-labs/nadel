@@ -3,7 +3,7 @@ package graphql.nadel.validation
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
-import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputTypeName
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import io.kotest.core.spec.style.DescribeSpec
@@ -208,7 +208,7 @@ class NadelRenameValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val incompatibleTypeName = errors.singleOfType<IncompatibleFieldOutputTypeName>()
+            val incompatibleTypeName = errors.singleOfType<IncompatibleFieldOutputType>()
             assert(incompatibleTypeName.parentType.overall.name == "Query")
             assert(incompatibleTypeName.parentType.underlying.name == "Query")
             assert(incompatibleTypeName.overallField.type.unwrapAll().name == "Test")
