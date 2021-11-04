@@ -1,6 +1,7 @@
 package graphql.nadel.validation
 
 import graphql.nadel.validation.NadelSchemaValidationError.MissingConcreteTypes
+import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 
@@ -48,6 +49,115 @@ class NadelInterfaceValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
             assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("passes if there are valid renamed implementations of the interface") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "shared" to """
+                        $renameDirectiveDef
+                    """.trimIndent(),
+                    "entities" to """
+                        type Query {
+                            entity(id: ID!): Entity
+                        }
+                        scalar Coordinates
+                        interface Entity {
+                            id: ID!
+                            location: Coordinates
+                        }
+                        type Human implements Entity @renamed(from: "Person") {
+                            id: ID!
+                            location: Coordinates
+                            name: String
+                            age: Int
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "shared" to """
+                        type Query {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                    "entities" to """
+                        type Query {
+                            entity(id: ID!): Entity
+                        }
+                        scalar Coordinates
+                        interface Entity {
+                            id: ID!
+                            location: Coordinates
+                        }
+                        type Person implements Entity {
+                            id: ID!
+                            location: Coordinates
+                            name: String
+                            age: Int
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("fails if renamed implementation of interface is missing fields") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "shared" to """
+                        $renameDirectiveDef
+                    """.trimIndent(),
+                    "entities" to """
+                        type Query {
+                            entity(id: ID!): Entity
+                        }
+                        scalar Coordinates
+                        interface Entity {
+                            id: ID!
+                            location: Coordinates
+                        }
+                        type Human implements Entity @renamed(from: "Person") {
+                            id: ID!
+                            location: Coordinates
+                            name: String
+                            age: Int
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "shared" to """
+                        type Query {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                    "entities" to """
+                        type Query {
+                            entity(id: ID!): Entity
+                        }
+                        scalar Coordinates
+                        interface Entity {
+                            id: ID!
+                            location: Coordinates
+                        }
+                        type Person implements Entity {
+                            id: ID!
+                            location: Coordinates
+                            name: String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.assertSingleOfType<MissingUnderlyingField>()
+            assert(error.parentType.overall.name == "Human")
+            assert(error.parentType.underlying.name == "Person")
+            assert(error.overallField.name == "age")
+            assert(error.service.name == "entities")
         }
 
         it("it fails if there are no concrete implementations of interface") {

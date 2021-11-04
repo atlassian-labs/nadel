@@ -378,7 +378,7 @@ class NadelTypeValidationTest : DescribeSpec({
                             children(input: IssueFilter): [Issue]
                         }
                         input IssueFilter {
-                            keyword: Keyword
+                            keyword: String
                         }
                     """.trimIndent(),
                 ),
