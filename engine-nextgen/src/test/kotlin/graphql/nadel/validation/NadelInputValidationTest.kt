@@ -1,7 +1,7 @@
 package graphql.nadel.validation
 
-import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
+import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 
 class NadelInputValidationTest : DescribeSpec({
@@ -159,7 +159,7 @@ class NadelInputValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<MissingUnderlyingInputField>()
+            val error = errors.assertSingleOfType<MissingUnderlyingInputField>()
             assert(error.service.name == "test")
             assert(error.parentType.overall.name == "Role")
             assert(error.parentType.underlying.name == "PayFilter")
@@ -215,7 +215,7 @@ class NadelInputValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<MissingUnderlyingInputField>()
+            val error = errors.assertSingleOfType<MissingUnderlyingInputField>()
             assert(error.service.name == "test")
             assert(error.parentType.overall.name == "Role")
             assert(error.parentType.underlying.name == error.parentType.overall.name)

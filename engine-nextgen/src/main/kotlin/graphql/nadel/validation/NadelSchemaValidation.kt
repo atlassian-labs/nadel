@@ -28,6 +28,10 @@ data class NadelServiceSchemaElement(
     internal fun toRef() = NadelServiceSchemaElementRef(service, overall, underlying)
 }
 
+/**
+ * This is used to create a version of [NadelServiceSchemaElement] that has a proper
+ * [hashCode] definition instead of relying on identity hashCodes.
+ */
 internal data class NadelServiceSchemaElementRef(
     val service: String,
     val overall: String,

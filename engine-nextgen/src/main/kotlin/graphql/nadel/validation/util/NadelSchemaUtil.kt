@@ -1,4 +1,4 @@
-package graphql.nadel.validation
+package graphql.nadel.validation.util
 
 import graphql.language.FieldDefinition
 import graphql.nadel.Service

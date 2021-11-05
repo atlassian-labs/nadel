@@ -11,7 +11,6 @@ import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.pathToActorField
-import graphql.nadel.enginekt.util.unwrapAll
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLEnumValueDefinition
@@ -71,6 +70,18 @@ sealed interface NadelSchemaValidationError {
         }
 
         override val subject = overallType
+    }
+
+    data class MissingConcreteTypes(
+        val interfaceType: NadelServiceSchemaElement,
+    ) : NadelSchemaValidationError {
+        override val message = run {
+            val t = interfaceType.overall.name
+            val s = interfaceType.service.name
+            "Service $s does not define any concrete implementations for interface $t"
+        }
+
+        override val subject = interfaceType.overall
     }
 
     data class DuplicatedUnderlyingType(

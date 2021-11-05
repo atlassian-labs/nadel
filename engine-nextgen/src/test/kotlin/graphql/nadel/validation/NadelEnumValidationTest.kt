@@ -1,7 +1,7 @@
 package graphql.nadel.validation
 
-import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingEnumValue
+import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 
 class NadelEnumValidationTest : DescribeSpec({
@@ -114,7 +114,7 @@ class NadelEnumValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.isNotEmpty())
 
-            val error = errors.singleOfType<MissingUnderlyingEnumValue>()
+            val error = errors.assertSingleOfType<MissingUnderlyingEnumValue>()
             assert(error.service.name == "promos")
             assert(error.overallValue.name == "P2")
         }

@@ -1,8 +1,8 @@
 package graphql.nadel.validation
 
-import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
+import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 
 val namespaceDirectiveDef = """
@@ -54,7 +54,7 @@ class NadelFieldValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<MissingArgumentOnUnderlying>()
+            val error = errors.assertSingleOfType<MissingArgumentOnUnderlying>()
             assert(error.parentType.overall.name == "Query")
             assert(error.parentType.underlying.name == "Query")
             assert(error.overallField.name == "echo")
@@ -99,7 +99,7 @@ class NadelFieldValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<MissingUnderlyingField>()
+            val error = errors.assertSingleOfType<MissingUnderlyingField>()
             assert(error.parentType.overall.name == "Echo")
             assert(error.parentType.underlying.name == "Echo")
             assert(error.overallField.name == "hello")
@@ -229,7 +229,7 @@ class NadelFieldValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<MissingUnderlyingField>()
+            val error = errors.assertSingleOfType<MissingUnderlyingField>()
             assert(error.service.name == "echo")
             assert(error.parentType.overall.name == "TestQuery")
             assert(error.parentType.underlying.name == "TestQuery")
@@ -356,7 +356,7 @@ class NadelFieldValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val queryError = errors.singleOfType<MissingUnderlyingField> { error ->
+            val queryError = errors.assertSingleOfType<MissingUnderlyingField> { error ->
                 error.parentType.overall.name == "TestQuery"
             }
             assert(queryError.service.name == "echo")
@@ -364,7 +364,7 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(queryError.overallField.name == "worlds")
             assert(queryError.subject == queryError.overallField)
 
-            val mutationError = errors.singleOfType<MissingUnderlyingField> { error ->
+            val mutationError = errors.assertSingleOfType<MissingUnderlyingField> { error ->
                 error.parentType.overall.name == "TestMutation"
             }
             assert(mutationError.service.name == "echo")
@@ -372,7 +372,7 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(mutationError.overallField.name == "active")
             assert(mutationError.subject == mutationError.overallField)
 
-            val subscriptionError = errors.singleOfType<MissingUnderlyingField> { error ->
+            val subscriptionError = errors.assertSingleOfType<MissingUnderlyingField> { error ->
                 error.parentType.overall.name == "TestSubscription"
             }
             assert(subscriptionError.service.name == "issues")

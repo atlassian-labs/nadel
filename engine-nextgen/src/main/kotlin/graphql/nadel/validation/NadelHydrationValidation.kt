@@ -9,8 +9,8 @@ import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.isNonNull
 import graphql.nadel.enginekt.util.pathToActorField
 import graphql.nadel.enginekt.util.unwrapAll
-import graphql.nadel.validation.NadelSchemaUtil.getHydrations
-import graphql.nadel.validation.NadelSchemaUtil.hasRename
+import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
+import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable

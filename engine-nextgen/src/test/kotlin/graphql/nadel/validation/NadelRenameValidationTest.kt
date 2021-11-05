@@ -1,11 +1,11 @@
 package graphql.nadel.validation
 
-import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRename
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
+import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 
 val renameDirectiveDef = """
@@ -105,7 +105,7 @@ class NadelRenameValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<DuplicatedUnderlyingType>()
+            val error = errors.assertSingleOfType<DuplicatedUnderlyingType>()
             assert(error.service.name == "test")
             assert(error.duplicates.map { it.overall.name }.toSet() == setOf("User", "Profile"))
             assert(error.duplicates.map { it.underlying.name }.toSet().singleOrNull() == "Account")
@@ -208,7 +208,7 @@ class NadelRenameValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val incompatibleTypeName = errors.singleOfType<IncompatibleFieldOutputType>()
+            val incompatibleTypeName = errors.assertSingleOfType<IncompatibleFieldOutputType>()
             assert(incompatibleTypeName.parentType.overall.name == "Query")
             assert(incompatibleTypeName.parentType.underlying.name == "Query")
             assert(incompatibleTypeName.overallField.type.unwrapAll().name == "Test")
@@ -289,7 +289,7 @@ class NadelRenameValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<MissingRename>()
+            val error = errors.assertSingleOfType<MissingRename>()
             assert(error.service.name == "test")
             assert(error.subject.name == "test")
             assert(error.overallField.name == "test")
@@ -327,7 +327,7 @@ class NadelRenameValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.singleOfType<MissingUnderlyingType>()
+            val error = errors.assertSingleOfType<MissingUnderlyingType>()
             assert(error.subject.name == "User")
             assert(error.overallType.name == "User")
         }
