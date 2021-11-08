@@ -1,7 +1,7 @@
 package graphql.nadel;
 
 import graphql.PublicApi;
-import kotlin.jvm.functions.Function1;
+import graphql.nadel.hints.LegacyOperationNamesHint;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -13,7 +13,7 @@ public class NadelExecutionHints {
         this.legacyOperationNames = builder.legacyOperationNames;
     }
 
-    private final Function1<Service, Boolean> legacyOperationNames;
+    private final LegacyOperationNamesHint legacyOperationNames;
     private final boolean transformsOnHydrationFields;
 
     /**
@@ -21,7 +21,7 @@ public class NadelExecutionHints {
      * operation names.
      */
     @NotNull
-    public Function1<Service, Boolean> getLegacyOperationNames() {
+    public LegacyOperationNamesHint getLegacyOperationNames() {
         return legacyOperationNames;
     }
 
@@ -57,7 +57,7 @@ public class NadelExecutionHints {
 
     public static class Builder {
         private boolean transformsOnHydrationFields;
-        private Function1<Service, Boolean> legacyOperationNames = service -> false;
+        private LegacyOperationNamesHint legacyOperationNames = service -> false;
 
         private Builder() {
         }
@@ -71,7 +71,7 @@ public class NadelExecutionHints {
             return this;
         }
 
-        public Builder legacyOperationNames(@NotNull Function1<Service, Boolean> flag) {
+        public Builder legacyOperationNames(@NotNull LegacyOperationNamesHint flag) {
             Objects.requireNonNull(flag);
             this.legacyOperationNames = flag;
             return this;
