@@ -115,7 +115,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -164,7 +164,6 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
                 .toBuilder()
                 .clearObjectTypesNames()
                 .objectTypeNames(state.fieldObjectTypeNamesOwnedByService)
-                .children(transformer.transform(field.children))
                 .build(),
         )
     }

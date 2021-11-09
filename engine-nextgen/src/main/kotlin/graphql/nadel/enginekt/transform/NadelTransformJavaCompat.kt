@@ -7,9 +7,7 @@ import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.ExecutableNormalizedField
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.future.future
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -32,7 +30,7 @@ interface NadelTransformJavaCompat<State : Any> {
      */
     fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -74,7 +72,7 @@ interface NadelTransformJavaCompat<State : Any> {
 
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
-                    transformer: NadelQueryTransformer.Continuation,
+                    transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
@@ -82,11 +80,7 @@ interface NadelTransformJavaCompat<State : Any> {
                 ): NadelTransformFieldResult {
                     return compat.transformField(
                         executionContext = executionContext,
-                        transformer = object : Continuation {
-                            override fun transform(fields: List<ExecutableNormalizedField>): CompletableFuture<List<ExecutableNormalizedField>> {
-                                return GlobalScope.future {  transformer.transform(fields) }
-                            }
-                        },
+                        transformer = transformer,
                         executionBlueprint = executionBlueprint,
                         service = service,
                         field = field,
@@ -115,13 +109,5 @@ interface NadelTransformJavaCompat<State : Any> {
                 }
             }
         }
-    }
-
-    interface Continuation {
-        fun transform(field: ExecutableNormalizedField): CompletableFuture<List<ExecutableNormalizedField>> {
-            return transform(listOf(field))
-        }
-
-        fun transform(fields: List<ExecutableNormalizedField>): CompletableFuture<List<ExecutableNormalizedField>>
     }
 }

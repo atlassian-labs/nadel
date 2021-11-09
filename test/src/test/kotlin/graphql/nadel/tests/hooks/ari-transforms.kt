@@ -46,7 +46,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -74,7 +74,6 @@ private class AriTestTransform : NadelTransform<Set<String>> {
                         }
                         .toMapStrictly()
                 )
-                .children(transformer.transform(field.children))
                 .build(),
         )
     }

@@ -62,7 +62,7 @@ internal class NadelBatchHydrationTransform(
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -77,7 +77,6 @@ internal class NadelBatchHydrationTransform(
                     field.toBuilder()
                         .clearObjectTypesNames()
                         .objectTypeNames(it)
-                        .children(transformer.transform(field.children))
                         .build()
                 },
             artificialFields = state.instructionsByObjectTypeNames.flatMap { (objectTypeName, instructions) ->

@@ -63,7 +63,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -74,7 +74,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 field.toBuilder()
                     .clearObjectTypesNames()
                     .objectTypeNames(field.objectTypeNames.filter { it in state.objectTypesWithoutRename })
-                    .children(transformer.transform(field.children))
                     .build()
             } else {
                 null
@@ -115,7 +114,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     private suspend fun makeRenamedFields(
         state: State,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
@@ -143,7 +142,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     private suspend fun makeRenamedField(
         state: State,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,

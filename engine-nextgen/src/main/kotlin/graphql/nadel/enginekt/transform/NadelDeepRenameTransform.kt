@@ -149,7 +149,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation, // this has an underlying schema
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -164,7 +164,6 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                     field.toBuilder()
                         .clearObjectTypesNames()
                         .objectTypeNames(it)
-                        .children(transformer.transform(field.children))
                         .build()
                 },
             artificialFields = state.instructionsByObjectTypeNames.map { (objectTypeWithRename, instruction) ->
@@ -218,7 +217,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     private suspend fun makeDeepField(
         state: State,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
