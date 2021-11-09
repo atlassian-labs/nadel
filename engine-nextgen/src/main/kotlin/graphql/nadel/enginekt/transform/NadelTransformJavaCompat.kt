@@ -5,8 +5,11 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
+import graphql.nadel.enginekt.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.ExecutableNormalizedField
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
 
@@ -30,7 +33,7 @@ interface NadelTransformJavaCompat<State : Any> {
      */
     fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer,
+        transformer: NadelQueryTransformerJavaCompat,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -78,9 +81,13 @@ interface NadelTransformJavaCompat<State : Any> {
                     field: ExecutableNormalizedField,
                     state: State,
                 ): NadelTransformFieldResult {
+                    val scope = CoroutineScope(
+                        currentCoroutineContext(),
+                    )
+
                     return compat.transformField(
                         executionContext = executionContext,
-                        transformer = transformer,
+                        transformer = NadelQueryTransformerJavaCompat(transformer, scope),
                         executionBlueprint = executionBlueprint,
                         service = service,
                         field = field,

@@ -17,4 +17,7 @@ public interface NadelExecutionEngine {
             @Nullable InstrumentationState instrumentationState,
             @NotNull NadelExecutionParams nadelExecutionParams
     );
+
+    default void close() {
+    }
 }

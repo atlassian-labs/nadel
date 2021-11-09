@@ -28,8 +28,8 @@ import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
 import graphql.nadel.enginekt.util.getOperationKind
 import graphql.nadel.enginekt.util.mergeResults
-import graphql.nadel.enginekt.util.newExecutionResult
 import graphql.nadel.enginekt.util.newExecutionErrorResult
+import graphql.nadel.enginekt.util.newExecutionResult
 import graphql.nadel.enginekt.util.newGraphQLError
 import graphql.nadel.enginekt.util.newServiceExecutionResult
 import graphql.nadel.enginekt.util.provide
@@ -42,13 +42,18 @@ import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
 import java.util.concurrent.CompletableFuture
 
 class NextgenEngine @JvmOverloads constructor(
@@ -59,6 +64,7 @@ class NextgenEngine @JvmOverloads constructor(
     private val logNotSafe = getNotPrivacySafeLogger<NextgenEngine>()
     private val log = getLogger<NextgenEngine>()
 
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val overallSchema = nadel.overallSchema
     private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
@@ -92,7 +98,7 @@ class NextgenEngine @JvmOverloads constructor(
         instrumentationState: InstrumentationState?,
         nadelExecutionParams: NadelExecutionParams,
     ): CompletableFuture<ExecutionResult> {
-        return GlobalScope.async {
+        return coroutineScope.async {
             executeCoroutine(
                 executionInput,
                 queryDocument,
@@ -100,6 +106,14 @@ class NextgenEngine @JvmOverloads constructor(
                 nadelExecutionParams.nadelExecutionHints,
             )
         }.asCompletableFuture()
+    }
+
+    override fun close() {
+        // Closes the scope after letting in flight requests go through
+        coroutineScope.launch {
+            delay(60_000) // Wait a minute
+            coroutineScope.cancel()
+        }
     }
 
     private suspend fun executeCoroutine(
