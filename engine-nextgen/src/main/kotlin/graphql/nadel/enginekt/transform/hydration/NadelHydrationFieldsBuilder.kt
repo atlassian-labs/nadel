@@ -13,6 +13,7 @@ import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationObjec
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.deepClone
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
@@ -43,12 +44,14 @@ internal object NadelHydrationFieldsBuilder {
         aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
+        hooks: ServiceExecutionHooks,
     ): List<ExecutableNormalizedField> {
         val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
             instruction = instruction,
             aliasHelper = aliasHelper,
             hydrationField = hydratedField,
             parentNodes = parentNodes,
+            hooks = hooks
         )
 
         val fieldChildren = deepClone(fields = hydratedField.children).let { children ->

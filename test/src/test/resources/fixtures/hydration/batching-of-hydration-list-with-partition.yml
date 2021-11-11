@@ -1,4 +1,4 @@
-name: batching of hydration list
+name: batching of hydration list with partition
 enabled:
   current: false
   nextgen: true
@@ -47,112 +47,6 @@ query: |
   }
 variables: {}
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issues {
-              id
-              authorIds
-            }
-          }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "id": "ISSUE-1",
-                "authorIds": [
-                  "USER-1",
-                  "USER-2"
-                ]
-              },
-              {
-                "id": "ISSUE-2",
-                "authorIds": [
-                  "USER-3"
-                ]
-              },
-              {
-                "id": "ISSUE-3",
-                "authorIds": [
-                  "USER-2",
-                  "USER-4",
-                  "USER-5"
-                ]
-              }
-            ]
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
-              id
-              object_identifier__UUID: id
-            }
-          }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "usersByIds": [
-              {
-                "id": "USER-1",
-                "object_identifier__UUID": "USER-1"
-              },
-              {
-                "id": "USER-2",
-                "object_identifier__UUID": "USER-2"
-              },
-              {
-                "id": "USER-3",
-                "object_identifier__UUID": "USER-3"
-              }
-            ]
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
-              id
-              object_identifier__UUID: id
-            }
-          }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "usersByIds": [
-              {
-                "id": "USER-2",
-                "object_identifier__UUID": "USER-2"
-              },
-              {
-                "id": "USER-4",
-                "object_identifier__UUID": "USER-4"
-              },
-              {
-                "id": "USER-5",
-                "object_identifier__UUID": "USER-5"
-              }
-            ]
-          },
-          "extensions": {}
-        }
   nextgen:
     - serviceName: Issues
       request:
@@ -208,7 +102,7 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
+              usersByIds(id: ["USER-1", "USER-3", "USER-5"]) {
                 ... on User {
                   id
                   batch_hydration__authors__id: id
@@ -228,12 +122,12 @@ serviceCalls:
                 "batch_hydration__authors__id": "USER-1"
               },
               {
-                "id": "USER-2",
-                "batch_hydration__authors__id": "USER-2"
-              },
-              {
                 "id": "USER-3",
                 "batch_hydration__authors__id": "USER-3"
+              },
+              {
+                "id": "USER-5",
+                "batch_hydration__authors__id": "USER-5"
               }
             ]
           },
@@ -244,7 +138,7 @@ serviceCalls:
         query: |
           query {
             ... on Query {
-              usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
+              usersByIds(id: ["USER-2", "USER-2", "USER-4"]) {
                 ... on User {
                   id
                   batch_hydration__authors__id: id
@@ -264,12 +158,12 @@ serviceCalls:
                 "batch_hydration__authors__id": "USER-2"
               },
               {
-                "id": "USER-4",
-                "batch_hydration__authors__id": "USER-4"
+                "id": "USER-2",
+                "batch_hydration__authors__id": "USER-2"
               },
               {
-                "id": "USER-5",
-                "batch_hydration__authors__id": "USER-5"
+                "id": "USER-4",
+                "batch_hydration__authors__id": "USER-4"
               }
             ]
           },

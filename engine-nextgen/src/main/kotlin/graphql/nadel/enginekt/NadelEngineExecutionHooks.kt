@@ -9,4 +9,6 @@ interface NadelEngineExecutionHooks : ServiceExecutionHooks {
         instructions: List<T>,
         parentNode: JsonNode
     ): T
+
+    fun <T> partitionArgumentList(args: List<T>): List<List<T>>
 }

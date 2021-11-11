@@ -1,5 +1,6 @@
 package graphql.nadel.enginekt.transform.hydration.batch
 
+import graphql.nadel.enginekt.NadelEngineExecutionHooks
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
@@ -10,6 +11,7 @@ import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
 import graphql.nadel.enginekt.util.javaValueToAstValue
 import graphql.nadel.enginekt.util.mapFrom
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 import graphql.schema.GraphQLTypeUtil
@@ -26,9 +28,10 @@ internal object NadelBatchHydrationInputBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
+        hooks: ServiceExecutionHooks,
     ): List<Map<NadelHydrationActorInputDef, NormalizedInputValue>> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
-        val batchArgs = getBatchInputValues(instruction, parentNodes, aliasHelper)
+        val batchArgs = getBatchInputValues(instruction, parentNodes, aliasHelper, hooks)
 
         return batchArgs.map { nonBatchArgs + it }
     }
@@ -57,14 +60,17 @@ internal object NadelBatchHydrationInputBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
         aliasHelper: NadelAliasHelper,
+        hooks: ServiceExecutionHooks,
     ): List<Pair<NadelHydrationActorInputDef, NormalizedInputValue>> {
         val batchSize = instruction.batchSize
 
         val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction) ?: return emptyList()
         val actorBatchArgDef = instruction.actorFieldDef.getArgument(batchInputDef.name)
 
-        return getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
-            .chunked(size = batchSize)
+        val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
+
+        return (hooks as NadelEngineExecutionHooks).partitionArgumentList(args)
+            .flatMap { it.chunked(size = batchSize) }
             .map { chunk ->
                 batchInputDef to NormalizedInputValue(
                     GraphQLTypeUtil.simplePrint(actorBatchArgDef.type),
