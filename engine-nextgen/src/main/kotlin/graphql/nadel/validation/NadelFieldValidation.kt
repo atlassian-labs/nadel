@@ -3,12 +3,12 @@ package graphql.nadel.validation
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.enginekt.util.unwrapAll
-import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
-import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
+import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
+import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLNamedSchemaElement
@@ -68,7 +68,7 @@ internal class NadelFieldValidation(
         return if (hasRename(overallField)) {
             renameValidation.validate(parent, overallField)
         } else if (hasHydration(overallField)) {
-            hydrationValidation.validate(parent, overallField)
+            hydrationValidation.validate(parent, overallField, overallSchema)
         } else {
             val underlyingField = underlyingFieldsByName[overallField.name]
             if (underlyingField == null) {

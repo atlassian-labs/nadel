@@ -28,6 +28,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
     private final boolean objectIndexed;
     private final boolean batched;
     private final Integer batchSize;
+    private final Integer timeout;
 
     public UnderlyingServiceHydration(SourceLocation sourceLocation,
                                       List<Comment> comments,
@@ -39,6 +40,7 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
                                       boolean objectIndexed,
                                       boolean batched,
                                       Integer batchSize,
+                                      Integer timeout,
                                       Map<String, String> additionalData
     ) {
         super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
@@ -51,11 +53,16 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
         this.objectIndexed = objectIndexed;
         this.batched = batched;
         this.batchSize = batchSize;
+        this.timeout = timeout;
         this.syntheticField = syntheticField;
     }
 
     public Integer getBatchSize() {
         return batchSize;
+    }
+
+    public Integer getTimeout() {
+        return timeout;
     }
 
     public String getObjectIdentifier() {

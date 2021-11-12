@@ -10,6 +10,7 @@ import graphql.nadel.schema.NadelDirectives
 import graphql.nadel.util.Util
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedType
+import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 
 object NadelSchemaUtil {
@@ -17,14 +18,14 @@ object NadelSchemaUtil {
         return service.underlyingSchema.getType(getRenamedFrom(overallType) ?: overallType.name)
     }
 
-    fun getHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
+    fun getHydrations(field: GraphQLFieldDefinition, overallSchema: GraphQLSchema): List<UnderlyingServiceHydration> {
         val def = field.definition
         if (def is ExtendedFieldDefinition) {
             val underlyingServiceHydration = def.fieldTransformation?.underlyingServiceHydration ?: return emptyList()
             return listOf(underlyingServiceHydration)
         }
 
-        return NadelDirectives.createUnderlyingServiceHydration(field)
+        return NadelDirectives.createUnderlyingServiceHydration(field, overallSchema)
     }
 
     fun hasHydration(field: GraphQLFieldDefinition): Boolean {
@@ -36,7 +37,9 @@ object NadelSchemaUtil {
             return def.fieldTransformation?.underlyingServiceHydration != null
         }
 
-        return def.hasDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.name)
+        val hydratedPresent = def.hasDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.name)
+        val hydratedFromPresent = def.hasDirective(NadelDirectives.HYDRATED_FROM_DIRECTIVE_DEFINITION.name)
+        return hydratedPresent || hydratedFromPresent
     }
 
     fun getRename(field: GraphQLFieldDefinition): FieldMappingDefinition? {
