@@ -204,6 +204,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
                 objectIndexed,
                 batched,
                 batchSize,
+                -1, // never used in old AST mechanism
                 additionalIdData()
         );
     }

@@ -62,6 +62,7 @@
                   }
                 ],
                 "batched": false,
+                "timeout": -1,
                 "objectIdentifier": "id",
                 "objectMatchByIndex": false
               }
