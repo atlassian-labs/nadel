@@ -9,6 +9,7 @@ import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
 import graphql.nadel.dsl.ExtendedFieldDefinition
 import graphql.nadel.dsl.FieldMappingDefinition
@@ -67,8 +68,8 @@ private class Factory(
             it.location
         }
         val furtherTypeRenameInstructions = typeRenameInstructions.values +
-            SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
-                .getTypeRenames()
+                SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
+                    .getTypeRenames()
 
         return NadelOverallExecutionBlueprint(
             schema = overallSchema,
@@ -150,6 +151,7 @@ private class Factory(
             queryPathToActorField = NadelQueryPath(queryPathToActorField),
             actorFieldDef = actorFieldDef,
             actorInputValueDefs = actorInputValueDefs,
+            serviceExecutionHydrationDetails = ServiceExecutionHydrationDetails(hydration.timeout, 1),
             hydrationStrategy = getHydrationStrategy(
                 hydratedFieldParentType = hydratedFieldParentType,
                 hydratedFieldDef = hydratedFieldDef,
@@ -178,7 +180,7 @@ private class Factory(
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
-                            && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
+                                && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
                     }
                 }
             }
@@ -203,6 +205,7 @@ private class Factory(
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
 
+        val batchSize = hydration.batchSize ?: 50
         return NadelBatchHydrationFieldInstruction(
             location = location,
             hydratedFieldDef = hydratedFieldDef,
@@ -210,7 +213,8 @@ private class Factory(
             queryPathToActorField = NadelQueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
             actorFieldDef = actorFieldDef,
             actorInputValueDefs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef),
-            batchSize = hydration.batchSize ?: 50,
+            batchSize = batchSize,
+            serviceExecutionHydrationDetails = ServiceExecutionHydrationDetails(hydration.timeout, batchSize),
             batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {
                 NadelBatchHydrationMatchStrategy.MatchIndex
             } else {

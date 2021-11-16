@@ -12,6 +12,7 @@ import graphql.language.FragmentDefinition;
 import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecution;
+import graphql.nadel.ServiceExecutionHydrationDetails;
 import graphql.nadel.ServiceExecutionParameters;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.engine.BenchmarkContext;
@@ -62,14 +63,15 @@ public class ServiceExecutor {
                                                               OperationKind operationKind,
                                                               Object serviceContext,
                                                               GraphQLSchema schema,
-                                                              boolean isHydrationCall) {
+                                                              ServiceExecutionHydrationDetails hydrationDetails
+    ) {
 
         List<MergedField> transformedMergedFields = queryTransformerResult.getTransformedMergedFields();
 
         ServiceExecution serviceExecution = service.getServiceExecution();
         GraphQLSchema underlyingSchema = service.getUnderlyingSchema();
 
-        ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformerResult, serviceContext, isHydrationCall);
+        ServiceExecutionParameters serviceExecutionParameters = buildServiceExecutionParameters(executionContext, queryTransformerResult, serviceContext, hydrationDetails);
         ExecutionContext executionContextForService = buildServiceExecutionContext(executionContext, underlyingSchema, serviceExecutionParameters);
 
         ExecutionStepInfo underlyingRootStepInfo = createRootExecutionStepInfo(underlyingSchema, operationKind);
@@ -144,7 +146,7 @@ public class ServiceExecutor {
         return new ServiceExecutionResult(new LinkedHashMap<>(), singletonList(errorMap), Collections.emptyMap());
     }
 
-    private ServiceExecutionParameters buildServiceExecutionParameters(ExecutionContext executionContext, QueryTransformationResult queryTransformerResult, Object serviceContext, boolean isHydrationCall) {
+    private ServiceExecutionParameters buildServiceExecutionParameters(ExecutionContext executionContext, QueryTransformationResult queryTransformerResult, Object serviceContext, ServiceExecutionHydrationDetails hydrationDetails) {
 
         // only pass down variables that are referenced in the transformed query
         Map<String, Object> variables = buildReferencedVariables(executionContext, queryTransformerResult);
@@ -164,7 +166,7 @@ public class ServiceExecutor {
                 .executionId(executionContext.getExecutionId())
                 .cacheControl(executionContext.getCacheControl())
                 .serviceContext(serviceContext)
-                .hydrationCall(isHydrationCall)
+                .executionHydrationDetails(hydrationDetails)
                 .build();
     }
 

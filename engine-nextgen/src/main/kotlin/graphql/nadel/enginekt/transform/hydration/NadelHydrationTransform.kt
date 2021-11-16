@@ -176,6 +176,7 @@ internal class NadelHydrationTransform(
                         topLevelField = actorQuery,
                         pathToActorField = instruction.queryPathToActorField,
                         executionContext = executionContext,
+                        serviceHydrationDetails = instruction.serviceExecutionHydrationDetails
                     )
                 }
             }.awaitAll()
@@ -235,7 +236,7 @@ internal class NadelHydrationTransform(
                 } else {
                     error(
                         "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +
-                            "to be of type NadelEngineExecutionHooks"
+                                "to be of type NadelEngineExecutionHooks"
                     )
                 }
             }
