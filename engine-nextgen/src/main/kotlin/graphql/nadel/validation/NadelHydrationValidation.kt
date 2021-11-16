@@ -27,11 +27,11 @@ import graphql.schema.GraphQLSchema
 internal class NadelHydrationValidation(
     private val services: Map<String, Service>,
     private val typeValidation: NadelTypeValidation,
+    private val overallSchema: GraphQLSchema
 ) {
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        overallSchema: GraphQLSchema,
     ): List<NadelSchemaValidationError> {
         if (hasRename(overallField)) {
             return listOf(

@@ -20,7 +20,7 @@ internal class NadelFieldValidation(
     private val typeValidation: NadelTypeValidation,
 ) {
     private val renameValidation = NadelRenameValidation(this)
-    private val hydrationValidation = NadelHydrationValidation(services, typeValidation)
+    private val hydrationValidation = NadelHydrationValidation(services, typeValidation, overallSchema)
 
     fun validate(
         schemaElement: NadelServiceSchemaElement,
@@ -68,7 +68,7 @@ internal class NadelFieldValidation(
         return if (hasRename(overallField)) {
             renameValidation.validate(parent, overallField)
         } else if (hasHydration(overallField)) {
-            hydrationValidation.validate(parent, overallField, overallSchema)
+            hydrationValidation.validate(parent, overallField)
         } else {
             val underlyingField = underlyingFieldsByName[overallField.name]
             if (underlyingField == null) {
