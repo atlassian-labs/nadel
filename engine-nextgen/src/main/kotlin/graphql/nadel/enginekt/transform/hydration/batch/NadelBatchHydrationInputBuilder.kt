@@ -69,8 +69,12 @@ internal object NadelBatchHydrationInputBuilder {
 
         val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
 
-        return (hooks as NadelEngineExecutionHooks).partitionArgumentList(args)
-            .flatMap { it.chunked(size = batchSize) }
+        val partitionArgumentList = when (hooks) {
+            is NadelEngineExecutionHooks -> hooks.partitionArgumentList(args, instruction)
+            else -> listOf(args)
+        }
+
+        return partitionArgumentList.flatMap { it.chunked(size = batchSize) }
             .map { chunk ->
                 batchInputDef to NormalizedInputValue(
                     GraphQLTypeUtil.simplePrint(actorBatchArgDef.type),
@@ -119,22 +123,20 @@ internal object NadelBatchHydrationInputBuilder {
         valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
         parentNodes: List<JsonNode>,
         aliasHelper: NadelAliasHelper,
-    ): List<Any?> {
+    ): List<Any> {
         return parentNodes.flatMap { parentNode ->
             getFieldResultValues(
                 valueSource = valueSource,
                 parentNode = parentNode,
-                aliasHelper = aliasHelper,
-                filterNull = true,
-            )
+                aliasHelper = aliasHelper
+            ).filterNotNull()
         }
     }
 
     internal fun getFieldResultValues(
         valueSource: NadelHydrationActorInputDef.ValueSource.FieldResultValue,
         parentNode: JsonNode,
-        aliasHelper: NadelAliasHelper,
-        filterNull: Boolean,
+        aliasHelper: NadelAliasHelper
     ): List<Any?> {
         val nodes = JsonNodeExtractor.getNodesAt(
             rootNode = parentNode,
@@ -146,13 +148,6 @@ internal object NadelBatchHydrationInputBuilder {
             .asSequence()
             .map { it.value }
             .flatten(recursively = true)
-            .let {
-                if (filterNull) {
-                    it.filterNotNull()
-                } else {
-                    it
-                }
-            }
             .toList()
     }
 }

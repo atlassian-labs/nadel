@@ -2,6 +2,7 @@ package graphql.nadel.tests.hooks
 
 import graphql.nadel.Nadel
 import graphql.nadel.enginekt.NadelEngineExecutionHooks
+import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.tests.EngineTestHook
@@ -16,8 +17,11 @@ private class BatchHydrationHooks : NadelEngineExecutionHooks {
         return instructions[0]
     }
 
-    override fun <T> partitionArgumentList(args: List<T>): List<List<T>> {
-        val partition = args.partition { (it as String).endsWith("2") || (it as String).endsWith("4") }
+    override fun <T> partitionArgumentList(
+        args: List<T>,
+        instruction: NadelBatchHydrationFieldInstruction
+    ): List<List<T>> {
+        val partition = args.partition { (it as String).endsWith("2") || it.endsWith("4") }
         return listOf(partition.first, partition.second)
     }
 }

@@ -45,7 +45,7 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
   nextgen:
     - serviceName: Issues
@@ -62,7 +62,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
@@ -110,7 +110,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-
@@ -146,7 +146,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: null
       # language=JSON
       response: |-

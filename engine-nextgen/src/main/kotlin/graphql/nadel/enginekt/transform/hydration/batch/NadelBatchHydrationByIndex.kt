@@ -68,8 +68,7 @@ internal class NadelBatchHydrationByIndex private constructor(
         return NadelBatchHydrationInputBuilder.getFieldResultValues(
             batchInputValueSource,
             parentNode,
-            aliasHelper,
-            filterNull = false, // We want nulls
+            aliasHelper
         )
     }
 

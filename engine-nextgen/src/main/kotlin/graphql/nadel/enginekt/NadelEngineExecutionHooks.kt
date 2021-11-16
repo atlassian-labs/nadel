@@ -1,5 +1,6 @@
 package graphql.nadel.enginekt
 
+import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.hooks.ServiceExecutionHooks
@@ -10,5 +11,7 @@ interface NadelEngineExecutionHooks : ServiceExecutionHooks {
         parentNode: JsonNode
     ): T
 
-    fun <T> partitionArgumentList(args: List<T>): List<List<T>>
+    fun <T> partitionArgumentList(args: List<T>, instruction: NadelBatchHydrationFieldInstruction): List<List<T>> {
+        return listOf(args)
+    }
 }

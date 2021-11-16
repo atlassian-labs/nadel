@@ -29,10 +29,6 @@ private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
         }
         return instructions.single { it.actorFieldDef.name == actorFieldName }
     }
-
-    override fun <T> partitionArgumentList(args: List<T>): List<List<T>> {
-        return listOf(args)
-    }
 }
 
 @UseHook
