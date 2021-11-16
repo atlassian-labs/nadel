@@ -331,11 +331,11 @@ public class NadelExecutionStrategy {
 
                 if (skipTransformationProcessing(transformedQuery)) {
                     convertedResult = serviceExecutor
-                            .execute(newExecutionContext, transformedQuery, service, operationKind, serviceContext, overallSchema, false);
+                            .execute(newExecutionContext, transformedQuery, service, operationKind, serviceContext, overallSchema, null);
                     resultComplexityAggregator.incrementServiceNodeCount(service.getName(), 0);
                 } else {
                     CompletableFuture<RootExecutionResultNode> serviceCallResult = serviceExecutor
-                            .execute(newExecutionContext, transformedQuery, service, operationKind, serviceContext, service.getUnderlyingSchema(), false);
+                            .execute(newExecutionContext, transformedQuery, service, operationKind, serviceContext, service.getUnderlyingSchema(), null);
                     convertedResult = serviceCallResult
                             .thenApply(resultNode -> {
                                 if (nadelContext.getUserSuppliedContext() instanceof BenchmarkContext) {
