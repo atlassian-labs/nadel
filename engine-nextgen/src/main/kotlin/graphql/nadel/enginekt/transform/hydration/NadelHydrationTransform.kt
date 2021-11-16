@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.transform.hydration
 
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelEngineExecutionHooks
 import graphql.nadel.enginekt.NadelExecutionContext
@@ -176,7 +177,7 @@ internal class NadelHydrationTransform(
                         topLevelField = actorQuery,
                         pathToActorField = instruction.queryPathToActorField,
                         executionContext = executionContext,
-                        serviceHydrationDetails = instruction.serviceExecutionHydrationDetails
+                        serviceHydrationDetails = ServiceExecutionHydrationDetails(instruction.timeout,1)
                     )
                 }
             }.awaitAll()

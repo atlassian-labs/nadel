@@ -9,7 +9,6 @@ import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.Service
-import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
 import graphql.nadel.dsl.ExtendedFieldDefinition
 import graphql.nadel.dsl.FieldMappingDefinition
@@ -151,7 +150,7 @@ private class Factory(
             queryPathToActorField = NadelQueryPath(queryPathToActorField),
             actorFieldDef = actorFieldDef,
             actorInputValueDefs = actorInputValueDefs,
-            serviceExecutionHydrationDetails = ServiceExecutionHydrationDetails(hydration.timeout, 1),
+            timeout = hydration.timeout,
             hydrationStrategy = getHydrationStrategy(
                 hydratedFieldParentType = hydratedFieldParentType,
                 hydratedFieldDef = hydratedFieldDef,
@@ -213,8 +212,8 @@ private class Factory(
             queryPathToActorField = NadelQueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
             actorFieldDef = actorFieldDef,
             actorInputValueDefs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef),
+            timeout = hydration.timeout,
             batchSize = batchSize,
-            serviceExecutionHydrationDetails = ServiceExecutionHydrationDetails(hydration.timeout, batchSize),
             batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {
                 NadelBatchHydrationMatchStrategy.MatchIndex
             } else {
