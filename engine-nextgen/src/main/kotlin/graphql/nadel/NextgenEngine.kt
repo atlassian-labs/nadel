@@ -203,6 +203,7 @@ class NextgenEngine @JvmOverloads constructor(
         topLevelField: ExecutableNormalizedField,
         pathToActorField: NadelQueryPath,
         executionContext: NadelExecutionContext,
+        serviceHydrationDetails: ServiceExecutionHydrationDetails
     ): ServiceExecutionResult {
         val actorField = fold(initial = topLevelField, count = pathToActorField.segments.size - 1) {
             it.children.single()
@@ -225,7 +226,7 @@ class NextgenEngine @JvmOverloads constructor(
             service,
             transformedQuery,
             executionContext,
-            isHydration = true,
+            serviceHydrationDetails
         )
         return resultTransformer.transform(
             executionContext = executionContext,
@@ -300,7 +301,7 @@ class NextgenEngine @JvmOverloads constructor(
         service: Service,
         transformedQuery: ExecutableNormalizedField,
         executionContext: NadelExecutionContext,
-        isHydration: Boolean = false,
+        executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val executionInput = executionContext.executionInput
         val document: Document = compileToDocument(
@@ -318,7 +319,7 @@ class NextgenEngine @JvmOverloads constructor(
             .fragments(emptyMap())
             .operationDefinition(document.definitions.singleOfType())
             .serviceContext(executionContext.getContextForService(service).await())
-            .hydrationCall(isHydration)
+            .executionHydrationDetails(executionHydrationDetails)
             .build()
 
         val serviceExecResult = try {

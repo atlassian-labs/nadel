@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform.hydration.batch
 
 import graphql.nadel.NextgenEngine
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelEngineExecutionHooks
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
@@ -107,6 +108,7 @@ internal class NadelBatchHydrator(
                             topLevelField = actorQuery,
                             pathToActorField = instruction.queryPathToActorField,
                             executionContext = state.executionContext,
+                            serviceHydrationDetails = ServiceExecutionHydrationDetails(instruction.timeout,instruction.batchSize)
                         )
                     }
                 }

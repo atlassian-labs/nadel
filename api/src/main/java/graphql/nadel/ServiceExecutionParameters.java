@@ -24,7 +24,7 @@ public class ServiceExecutionParameters {
     private final ExecutionId executionId;
     private final CacheControl cacheControl;
     private final Object serviceContext;
-    private final boolean hydrationCall;
+    private final ServiceExecutionHydrationDetails hydrationDetails;
 
     private ServiceExecutionParameters(Builder builder) {
         this.query = assertNotNull(builder.query);
@@ -35,7 +35,7 @@ public class ServiceExecutionParameters {
         this.executionId = builder.executionId;
         this.cacheControl = builder.cacheControl;
         this.serviceContext = builder.serviceContext;
-        this.hydrationCall = builder.hydrationCall;
+        this.hydrationDetails = builder.hydrationDetails;
     }
 
     public Document getQuery() {
@@ -75,7 +75,14 @@ public class ServiceExecutionParameters {
     }
 
     public boolean isHydrationCall() {
-        return hydrationCall;
+        return hydrationDetails != null;
+    }
+
+    /**
+     * @return details abut this service hydration or null if its not a hydration call
+     */
+    public ServiceExecutionHydrationDetails getHydrationDetails() {
+        return hydrationDetails;
     }
 
     public static Builder newServiceExecutionParameters() {
@@ -91,7 +98,7 @@ public class ServiceExecutionParameters {
         private ExecutionId executionId;
         private CacheControl cacheControl;
         private Object serviceContext;
-        private boolean hydrationCall;
+        private ServiceExecutionHydrationDetails hydrationDetails;
 
         private Builder() {
         }
@@ -136,8 +143,8 @@ public class ServiceExecutionParameters {
             return this;
         }
 
-        public Builder hydrationCall(boolean isHydrationCall) {
-            this.hydrationCall = isHydrationCall;
+        public Builder executionHydrationDetails(ServiceExecutionHydrationDetails hydrationDetails) {
+            this.hydrationDetails = hydrationDetails;
             return this;
         }
 
