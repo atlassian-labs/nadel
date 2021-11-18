@@ -1,0 +1,66 @@
+name: java ari transform
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service: |
+    directive @interpretAri on ARGUMENT_DEFINITION
+    type Query {
+      issue(id: ID @interpretAri): Issue
+    }
+    type Issue {
+      key: ID @renamed(from: "id")
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      issue(id: ID): Issue
+    }
+    type Issue {
+      id: ID
+    }
+query: |
+  query {
+    issue(id: "ari:/i-forget-what-aris-actually-look-like/57") {
+      key
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            ... on Query {
+              issue(id: "57") {
+                ... on Issue {
+                  __typename__rename__key: __typename
+                  rename__key__id: id
+                }
+              }
+            }
+          }
+        variables: {}
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "__typename__rename__key": "Issue",
+              "rename__key__id": "57"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": {
+        "key": "57"
+      }
+    },
+    "extensions": {}
+  }

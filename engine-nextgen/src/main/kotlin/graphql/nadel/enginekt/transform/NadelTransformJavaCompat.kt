@@ -9,6 +9,7 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.future.asDeferred
 import java.util.concurrent.CompletableFuture
@@ -81,18 +82,18 @@ interface NadelTransformJavaCompat<State : Any> {
                     field: ExecutableNormalizedField,
                     state: State,
                 ): NadelTransformFieldResult {
-                    val scope = CoroutineScope(
-                        currentCoroutineContext(),
-                    )
+                    return coroutineScope {
+                        val scope = this@coroutineScope
 
-                    return compat.transformField(
-                        executionContext = executionContext,
-                        transformer = NadelQueryTransformerJavaCompat(transformer, scope),
-                        executionBlueprint = executionBlueprint,
-                        service = service,
-                        field = field,
-                        state = state,
-                    ).asDeferred().await()
+                        compat.transformField(
+                            executionContext = executionContext,
+                            transformer = NadelQueryTransformerJavaCompat(transformer, scope),
+                            executionBlueprint = executionBlueprint,
+                            service = service,
+                            field = field,
+                            state = state,
+                        ).asDeferred().await()
+                    }
                 }
 
                 override suspend fun getResultInstructions(
