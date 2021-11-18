@@ -4,6 +4,7 @@ import graphql.cachecontrol.CacheControl
 import graphql.execution.ExecutionId
 import graphql.language.Document
 import graphql.language.OperationDefinition
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.engine.testutils.TestUtil
 import spock.lang.Specification
@@ -18,6 +19,7 @@ class ServiceExecutionParametersTest extends Specification {
         def variables = [variables: "okPresent"]
         def executionId = ExecutionId.generate()
         def cacheControl = CacheControl.newCacheControl()
+        def hydrationDetails = new ServiceExecutionHydrationDetails(10,50)
 
         when:
         def parameters = ServiceExecutionParameters.newServiceExecutionParameters()
@@ -27,7 +29,7 @@ class ServiceExecutionParametersTest extends Specification {
                 .variables(variables)
                 .executionId(executionId)
                 .cacheControl(cacheControl)
-                .hydrationCall(true)
+                .executionHydrationDetails(hydrationDetails)
                 .build()
 
         then:
@@ -37,5 +39,7 @@ class ServiceExecutionParametersTest extends Specification {
         parameters.executionId == executionId
         parameters.cacheControl == cacheControl
         parameters.hydrationCall
+        parameters.hydrationDetails.getTimeout() == 10
+        parameters.hydrationDetails.getBatchSize() == 50
     }
 }

@@ -9,8 +9,6 @@ import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.isNonNull
 import graphql.nadel.enginekt.util.pathToActorField
 import graphql.nadel.enginekt.util.unwrapAll
-import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
-import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
@@ -19,13 +17,17 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActor
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
+import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
+import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
 import graphql.schema.GraphQLObjectType
+import graphql.schema.GraphQLSchema
 
 internal class NadelHydrationValidation(
     private val services: Map<String, Service>,
     private val typeValidation: NadelTypeValidation,
+    private val overallSchema: GraphQLSchema
 ) {
     fun validate(
         parent: NadelServiceSchemaElement,
@@ -37,7 +39,7 @@ internal class NadelHydrationValidation(
             )
         }
 
-        val hydrations = getHydrations(overallField)
+        val hydrations = getHydrations(overallField, overallSchema)
         if (hydrations.isEmpty()) {
             error("Don't invoke hydration validation if there is no hydration silly")
         }

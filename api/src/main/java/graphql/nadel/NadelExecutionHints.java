@@ -1,6 +1,10 @@
 package graphql.nadel;
 
 import graphql.PublicApi;
+import graphql.nadel.hints.LegacyOperationNamesHint;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 @PublicApi
 public class NadelExecutionHints {
@@ -9,24 +13,16 @@ public class NadelExecutionHints {
         this.legacyOperationNames = builder.legacyOperationNames;
     }
 
-    // we need to be able to change the value of "legacyOperationNames" inside transforms
-    // so the field needs to be mutable.
-    private boolean legacyOperationNames;
+    private final LegacyOperationNamesHint legacyOperationNames;
     private final boolean transformsOnHydrationFields;
 
     /**
      * Flag to determine whether nextgen will generate the traditional nadel_2_service_opName
      * operation names.
      */
-    public boolean getLegacyOperationNames() {
+    @NotNull
+    public LegacyOperationNamesHint getLegacyOperationNames() {
         return legacyOperationNames;
-    }
-
-    /**
-     * See {@link #getLegacyOperationNames()}
-     */
-    public void setLegacyOperationNames(boolean legacyOperationNames) {
-        this.legacyOperationNames = legacyOperationNames;
     }
 
     /**
@@ -41,7 +37,7 @@ public class NadelExecutionHints {
 
     /**
      * Returns a builder with the same field values as this object.
-     *
+     * <p>
      * This is useful for transforming the object.
      */
     public NadelExecutionHints.Builder toBuilder() {
@@ -61,14 +57,13 @@ public class NadelExecutionHints {
 
     public static class Builder {
         private boolean transformsOnHydrationFields;
-        private boolean legacyOperationNames;
+        private LegacyOperationNamesHint legacyOperationNames = service -> false;
 
         private Builder() {
         }
 
         private Builder(NadelExecutionHints nadelExecutionHints) {
             this.transformsOnHydrationFields = nadelExecutionHints.transformsOnHydrationFields;
-            this.legacyOperationNames = nadelExecutionHints.legacyOperationNames;
         }
 
         public Builder transformsOnHydrationFields(boolean flag) {
@@ -76,7 +71,8 @@ public class NadelExecutionHints {
             return this;
         }
 
-        public Builder legacyOperationNames(boolean flag) {
+        public Builder legacyOperationNames(@NotNull LegacyOperationNamesHint flag) {
+            Objects.requireNonNull(flag);
             this.legacyOperationNames = flag;
             return this;
         }

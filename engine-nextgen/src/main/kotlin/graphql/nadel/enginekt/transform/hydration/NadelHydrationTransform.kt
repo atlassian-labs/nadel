@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.transform.hydration
 
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelEngineExecutionHooks
 import graphql.nadel.enginekt.NadelExecutionContext
@@ -175,6 +176,7 @@ internal class NadelHydrationTransform(
                         topLevelField = actorQuery,
                         pathToActorField = instruction.queryPathToActorField,
                         executionContext = executionContext,
+                        serviceHydrationDetails = ServiceExecutionHydrationDetails(instruction.timeout,1)
                     )
                 }
             }.awaitAll()
@@ -234,7 +236,7 @@ internal class NadelHydrationTransform(
                 } else {
                     error(
                         "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +
-                            "to be of type NadelEngineExecutionHooks"
+                                "to be of type NadelEngineExecutionHooks"
                     )
                 }
             }

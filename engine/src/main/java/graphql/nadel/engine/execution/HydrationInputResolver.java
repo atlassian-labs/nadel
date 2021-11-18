@@ -15,6 +15,7 @@ import graphql.language.StringValue;
 import graphql.language.Value;
 import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
+import graphql.nadel.ServiceExecutionHydrationDetails;
 import graphql.nadel.dsl.ExtendedFieldDefinition;
 import graphql.nadel.dsl.NodeId;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
@@ -242,6 +243,8 @@ public class HydrationInputResolver {
 
         Field originalField = hydrationTransformation.getOriginalField();
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
+        ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),underlyingServiceHydration.getBatchSize());
+
         String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
         Service service = getService(underlyingServiceHydration);
 
@@ -273,9 +276,10 @@ public class HydrationInputResolver {
 
         return queryTransformationResultCF.thenCompose(queryTransformationResult -> {
 
+
             CompletableFuture<RootExecutionResultNode> serviceResult = serviceExecutor
                     .execute(executionContext, queryTransformationResult, service, operationKind,
-                            serviceContexts.get(service), service.getUnderlyingSchema(), true);
+                            serviceContexts.get(service), service.getUnderlyingSchema(), hydrationDetails);
 
             return serviceResult
                     .thenApply(resultNode -> convertSingleHydrationResultIntoOverallResult(executionContext.getExecutionId(),
@@ -401,6 +405,8 @@ public class HydrationInputResolver {
         HydrationTransformation hydrationTransformation = hydrationTransformations.get(0);
         Field originalField = hydrationTransformation.getOriginalField();
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
+        ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),underlyingServiceHydration.getBatchSize());
+
         Service service = getService(underlyingServiceHydration);
 
         Field topLevelField = createBatchHydrationTopLevelField(executionContext,
@@ -428,8 +434,9 @@ public class HydrationInputResolver {
 
 
         return queryTransformationResultCF.thenCompose(queryTransformationResult -> {
+
             return serviceExecutor
-                    .execute(executionContext, queryTransformationResult, service, operationKind, serviceContexts.get(service), service.getUnderlyingSchema(), true)
+                    .execute(executionContext, queryTransformationResult, service, operationKind, serviceContexts.get(service), service.getUnderlyingSchema(), hydrationDetails)
                     .thenApply(resultNode -> convertHydrationBatchResultIntoOverallResult(executionContext, hydrationInputs, resultNode, queryTransformationResult, resultComplexityAggregator))
                     .whenComplete(this::possiblyLogException);
         });
