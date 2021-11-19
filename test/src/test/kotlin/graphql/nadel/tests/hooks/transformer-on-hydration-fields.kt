@@ -53,7 +53,7 @@ abstract class `transformer-on-hydration-fields` : EngineTestHook {
 
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
-                    transformer: NadelQueryTransformer.Continuation,
+                    transformer: NadelQueryTransformer,
                     executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,

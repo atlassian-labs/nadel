@@ -83,6 +83,8 @@ class EngineTests : FunSpec({
                 }
         }
         .forEach { fixture ->
+            println(fixture.name)
+
             engineFactories.all
                 .filter {
                     if (singleTestToRun.isBlank()) {
