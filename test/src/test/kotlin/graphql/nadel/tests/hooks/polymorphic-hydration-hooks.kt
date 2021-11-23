@@ -15,7 +15,7 @@ private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
     override fun <T : NadelGenericHydrationInstruction> getHydrationInstruction(
         instructions: List<T>,
         parentNode: JsonNode
-    ): T {
+    ): T? {
 
         val dataIdFieldName = if (instructions.any { it is NadelHydrationFieldInstruction })
             "hydration__data__dataId"
@@ -25,9 +25,10 @@ private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
             .value as String
         val actorFieldName = when {
             dataIdValue.startsWith("human", ignoreCase = true) -> "humanById"
+            dataIdValue.startsWith("null", ignoreCase = true) -> null
             else -> "petById"
         }
-        return instructions.single { it.actorFieldDef.name == actorFieldName }
+        return instructions.singleOrNull { it.actorFieldDef.name == actorFieldName }
     }
 }
 
@@ -68,6 +69,27 @@ class `batch-polymorphic-hydration-with-rename` : EngineTestHook {
 
 @UseHook
 class `batch-polymorphic-hydration-where-only-one-type-is-queried` : EngineTestHook {
+    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
+    }
+}
+
+@UseHook
+class `batch-polymorphic-hydration-when-hook-returns-null` : EngineTestHook {
+    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
+    }
+}
+
+@UseHook
+class `batch-polymorphic-hydration-when-hook-returns-null-1` : EngineTestHook {
+    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
+    }
+}
+
+@UseHook
+class `solitary-polymorphic-hydration-when-hook-returns-null` : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
     }
