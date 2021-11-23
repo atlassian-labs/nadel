@@ -32,65 +32,35 @@ private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
     }
 }
 
-@UseHook
-class `solitary-polymorphic-hydration` : EngineTestHook {
+open class PolymorphicHydrationTestHook : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
     }
 }
 
 @UseHook
-class `batch-polymorphic-hydration` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
-    }
-}
+class `solitary-polymorphic-hydration` : PolymorphicHydrationTestHook() {}
 
 @UseHook
-class `batch-polymorphic-hydration-with-interfaces` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
-    }
-}
+class `batch-polymorphic-hydration` : PolymorphicHydrationTestHook() {}
 
 @UseHook
-class `batch-polymorphic-hydration-with-unions` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
-    }
-}
+class `batch-polymorphic-hydration-with-interfaces` : PolymorphicHydrationTestHook() {}
 
 @UseHook
-class `batch-polymorphic-hydration-with-rename` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
-    }
-}
+class `batch-polymorphic-hydration-with-unions` : PolymorphicHydrationTestHook() {}
 
 @UseHook
-class `batch-polymorphic-hydration-where-only-one-type-is-queried` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
-    }
-}
+class `batch-polymorphic-hydration-with-rename` : PolymorphicHydrationTestHook() {}
 
 @UseHook
-class `batch-polymorphic-hydration-when-hook-returns-null` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
-    }
-}
+class `batch-polymorphic-hydration-where-only-one-type-is-queried` : PolymorphicHydrationTestHook() {}
 
 @UseHook
-class `batch-polymorphic-hydration-when-hook-returns-null-1` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
-    }
-}
+class `batch-polymorphic-hydration-when-hook-returns-null` : PolymorphicHydrationTestHook() {}
 
 @UseHook
-class `solitary-polymorphic-hydration-when-hook-returns-null` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
-        return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
-    }
-}
+class `batch-polymorphic-hydration-when-hook-returns-null-1` : PolymorphicHydrationTestHook() {}
+
+@UseHook
+class `solitary-polymorphic-hydration-when-hook-returns-null` : PolymorphicHydrationTestHook() {}
