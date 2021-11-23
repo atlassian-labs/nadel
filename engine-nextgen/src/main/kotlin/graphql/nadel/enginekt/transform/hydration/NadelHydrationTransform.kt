@@ -162,6 +162,7 @@ internal class NadelHydrationTransform(
         }
 
         val instruction = getHydrationFieldInstruction(instructions, executionContext.hooks, parentNode)
+            ?: return listOf(NadelResultInstruction.Set(parentNode.resultPath + state.hydratedField.fieldName, null))
 
         val actorQueryResults = coroutineScope {
             NadelHydrationFieldsBuilder.makeActorQueries(
@@ -176,7 +177,7 @@ internal class NadelHydrationTransform(
                         topLevelField = actorQuery,
                         pathToActorField = instruction.queryPathToActorField,
                         executionContext = executionContext,
-                        serviceHydrationDetails = ServiceExecutionHydrationDetails(instruction.timeout,1)
+                        serviceHydrationDetails = ServiceExecutionHydrationDetails(instruction.timeout, 1)
                     )
                 }
             }.awaitAll()
@@ -227,7 +228,7 @@ internal class NadelHydrationTransform(
         instructions: List<NadelHydrationFieldInstruction>,
         hooks: ServiceExecutionHooks,
         parentNode: JsonNode
-    ): NadelHydrationFieldInstruction {
+    ): NadelHydrationFieldInstruction? {
         return when (instructions.size) {
             1 -> instructions.single()
             else -> {
@@ -236,7 +237,7 @@ internal class NadelHydrationTransform(
                 } else {
                     error(
                         "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +
-                                "to be of type NadelEngineExecutionHooks"
+                            "to be of type NadelEngineExecutionHooks"
                     )
                 }
             }
