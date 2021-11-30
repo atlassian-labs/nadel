@@ -95,7 +95,7 @@ class EngineTests : FunSpec({
                     }
                 }
                 .filter { (engineType) ->
-                    fixture.enabled.get(engineType = engineType) && engineType == nextgen
+                    fixture.enabled.get(engineType = engineType) // && engineType == nextgen
                 }
                 .forEach { (engineType, engineFactory) ->
                     // Run for tests that don't have nextgen calls
