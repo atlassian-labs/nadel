@@ -44,9 +44,6 @@ open class PolymorphicHydrationTestHook : EngineTestHook {
 class `solitary-polymorphic-hydration` : PolymorphicHydrationTestHook() {}
 
 @UseHook
-class `batch-polymorphic-hydration` : PolymorphicHydrationTestHook() {}
-
-@UseHook
 class `batch-polymorphic-hydration-with-interfaces` : PolymorphicHydrationTestHook() {}
 
 @UseHook
