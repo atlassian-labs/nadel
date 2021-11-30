@@ -161,7 +161,7 @@ internal class NadelHydrationTransform(
             return emptyList()
         }
 
-        val instruction = getHydrationFieldInstruction(instructions, executionContext.hooks, parentNode)
+        val instruction = getHydrationFieldInstruction(state.aliasHelper, instructions, executionContext.hooks, parentNode)
             ?: return listOf(NadelResultInstruction.Set(parentNode.resultPath + state.hydratedField.fieldName, null))
 
         val actorQueryResults = coroutineScope {
@@ -225,6 +225,7 @@ internal class NadelHydrationTransform(
     }
 
     private fun getHydrationFieldInstruction(
+        aliasHelper: NadelAliasHelper,
         instructions: List<NadelHydrationFieldInstruction>,
         hooks: ServiceExecutionHooks,
         parentNode: JsonNode
@@ -233,7 +234,7 @@ internal class NadelHydrationTransform(
             1 -> instructions.single()
             else -> {
                 if (hooks is NadelEngineExecutionHooks) {
-                    hooks.getHydrationInstruction(instructions, parentNode)
+                    hooks.getHydrationInstruction(instructions, parentNode, aliasHelper)
                 } else {
                     error(
                         "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +
