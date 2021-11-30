@@ -136,7 +136,8 @@ internal class NadelBatchHydrator(
         }
         return state.executionContext.hooks.getHydrationInstruction(
             instructions,
-            parentNode
+            parentNode,
+            state.aliasHelper
         )
     }
 }
