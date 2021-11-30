@@ -109,22 +109,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__devOpsRelationships__relationships: relationships {
-                ... on RelationshipConnection {
-                  __typename__rename__devOpsNodes: __typename
-                  rename__devOpsNodes__nodes: nodes {
-                    ... on Relationship {
-                      __typename__hydration__devOpsIssue: __typename
-                      hydration__devOpsIssue__issueId: issueId
-                    }
-                  }
-                }
+            rename__devOpsRelationships__relationships: relationships {
+              __typename__rename__devOpsNodes: __typename
+              rename__devOpsNodes__nodes: nodes {
+                __typename__hydration__devOpsIssue: __typename
+                hydration__devOpsIssue__issueId: issueId
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -145,20 +138,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              syntheticIssue {
-                ... on SyntheticIssue {
-                  issue(id: "1") {
-                    ... on Issue {
-                      id
-                    }
-                  }
-                }
+            syntheticIssue {
+              issue(id: "1") {
+                id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

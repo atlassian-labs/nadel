@@ -95,29 +95,20 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename__deep_rename__authorName: __typename
-                  deep_rename__authorName__authorDetails: authorDetails {
-                    ... on AuthorDetail {
-                      name {
-                        ... on Name {
-                          __typename__rename__firstName: __typename
-                          __typename__rename__lastName: __typename
-                          rename__firstName__fName: fName
-                          rename__lastName__lName: lName
-                        }
-                      }
-                    }
-                  }
-                  id
+            issues {
+              __typename__deep_rename__authorName: __typename
+              deep_rename__authorName__authorDetails: authorDetails {
+                name {
+                  __typename__rename__firstName: __typename
+                  __typename__rename__lastName: __typename
+                  rename__firstName__fName: fName
+                  rename__lastName__lName: lName
                 }
               }
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

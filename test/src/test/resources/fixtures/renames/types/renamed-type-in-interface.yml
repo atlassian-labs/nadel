@@ -27,6 +27,7 @@ underlyingSchema:
     }
     type Issue implements Node {
       id: ID
+      links: [Node]
     }
     interface Node {
       id: ID
@@ -70,22 +71,19 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__nodes__all: all {
-                ... on Issue {
-                  __typename
-                  id
-                  links {
-                    ... on Issue {
-                      __typename
-                    }
+            rename__nodes__all: all {
+              ... on Issue {
+                __typename
+                id
+                links {
+                  ... on Issue {
+                    __typename
                   }
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

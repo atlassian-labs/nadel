@@ -36,15 +36,16 @@ serviceCalls:
       request:
         query: |
         variables: {}
-        operationName: null
+      # language=JSON
       response: |
   nextgen:
     - serviceName: RepoService
       request:
         query: |
         variables: {}
-        operationName: null
+      # language=JSON
       response: |
+# language=JSON
 response: null
 exception:
   message: field annotated with dynamicServiceResolution directive is expected to be of GraphQLInterfaceType

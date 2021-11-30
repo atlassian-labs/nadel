@@ -40,35 +40,25 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: Issues
       request:
         query: |
           query {
-            ... on Query {
-              rename__issue__first: first {
-                ... on Issue {
-                  __typename__deep_rename__extras: __typename
-                  deep_rename__extras__details: details {
-                    ... on IssueDetail {
-                      extras {
-                        ... on IssueExtra {
-                          __typename__deep_rename__ownerName: __typename
-                          deep_rename__ownerName__owner: owner {
-                            ... on User {
-                              name
-                            }
-                          }
-                        }
-                      }
-                    }
+            rename__issue__first: first {
+              __typename__deep_rename__extras: __typename
+              deep_rename__extras__details: details {
+                extras {
+                  __typename__deep_rename__ownerName: __typename
+                  deep_rename__ownerName__owner: owner {
+                    name
                   }
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

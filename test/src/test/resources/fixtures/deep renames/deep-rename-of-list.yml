@@ -66,21 +66,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              details {
-                ... on IssueDetail {
-                  __typename__deep_rename__labels: __typename
-                  deep_rename__labels__issue: issue {
-                    ... on Issue {
-                      labels
-                    }
-                  }
-                }
+            details {
+              __typename__deep_rename__labels: __typename
+              deep_rename__labels__issue: issue {
+                labels
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

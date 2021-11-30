@@ -39,6 +39,7 @@ query: |
 variables: {}
 serviceCalls:
   current: []
+  nextgen: []
 # language=JSON
 response: |-
   {

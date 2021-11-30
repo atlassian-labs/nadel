@@ -89,22 +89,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename__hydration__authors: __typename
-                  hydration__authors__authors: authors {
-                    ... on AuthorRef {
-                      id
-                    }
-                  }
-                  id
-                }
+            issues {
+              __typename__hydration__authors: __typename
+              hydration__authors__authors: authors {
+                id
               }
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

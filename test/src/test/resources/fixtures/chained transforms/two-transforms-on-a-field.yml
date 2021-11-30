@@ -43,22 +43,18 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  uuid_typename: __typename
-                  id
-                }
-              }
+            foo {
+              uuid_typename: __typename
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

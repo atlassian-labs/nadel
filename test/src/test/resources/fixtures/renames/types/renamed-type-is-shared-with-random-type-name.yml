@@ -119,7 +119,6 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -163,7 +162,6 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

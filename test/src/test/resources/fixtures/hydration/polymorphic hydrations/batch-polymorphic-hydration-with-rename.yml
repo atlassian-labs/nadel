@@ -95,27 +95,22 @@ query: |
       }
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
   nextgen:
     - serviceName: foo
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  __typename
-                  __typename__batch_hydration__data: __typename
-                  batch_hydration__data__dataId: dataId
-                  batch_hydration__data__dataId: dataId
-                  id
-                }
-              }
+            foo {
+              __typename
+              __typename__batch_hydration__data: __typename
+              batch_hydration__data__dataId: dataId
+              batch_hydration__data__dataId: dataId
+              id
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {
@@ -152,23 +147,18 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              petById(ids: ["PET-0", "PET-1"]) {
-                ... on Pet {
-                  __typename
-                  __typename__type_filter____typename: __typename
-                  __typename__type_filter__id: __typename
-                  __typename__rename__breed: __typename
-                  __typename__type_filter__name: __typename
-                  id
-                  batch_hydration__data__id: id
-                  rename__breed__kind: kind
-                }
-              }
+            petById(ids: ["PET-0", "PET-1"]) {
+              __typename
+              __typename__type_filter____typename: __typename
+              __typename__type_filter__id: __typename
+              __typename__rename__breed: __typename
+              __typename__type_filter__name: __typename
+              id
+              batch_hydration__data__id: id
+              rename__breed__kind: kind
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {
@@ -200,22 +190,17 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
-                ... on Person {
-                  __typename__type_filter____typename: __typename
-                  __typename
-                  __typename__type_filter__id: __typename
-                  __typename__type_filter__breed: __typename
-                  id
-                  batch_hydration__data__id: id
-                  name
-                }
-              }
+            humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
+              __typename__type_filter____typename: __typename
+              __typename
+              __typename__type_filter__id: __typename
+              __typename__type_filter__breed: __typename
+              id
+              batch_hydration__data__id: id
+              name
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {

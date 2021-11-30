@@ -97,16 +97,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__otherFoo__fooOriginal: fooOriginal {
-                ... on Foo {
-                  name
-                }
-              }
+            rename__otherFoo__fooOriginal: fooOriginal {
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -124,17 +119,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              bar {
-                ... on Bar {
-                  __typename__rename__name: __typename
-                  rename__name__title: title
-                }
-              }
+            bar {
+              __typename__rename__name: __typename
+              rename__name__title: title
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

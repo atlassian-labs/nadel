@@ -310,6 +310,7 @@ class NextgenEngine @JvmOverloads constructor(
     ): ServiceExecutionResult {
         val executionInput = executionContext.executionInput
         val document: Document = compileToDocument(
+            service.underlyingSchema,
             transformedQuery.getOperationKind(overallSchema),
             getOperationName(service, executionContext),
             listOf(transformedQuery),

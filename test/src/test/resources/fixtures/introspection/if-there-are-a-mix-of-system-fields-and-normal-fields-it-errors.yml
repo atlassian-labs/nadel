@@ -42,9 +42,9 @@ query: |
       name
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
-  current: [ ]
+  current: []
 # language=JSON
 response: |-
   {

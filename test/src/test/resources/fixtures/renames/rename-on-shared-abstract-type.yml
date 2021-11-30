@@ -28,9 +28,13 @@ underlyingSchema:
     }
   worlds: |
     type Query {
+      node(id: ID): [Node]
       worlds: [World]
     }
-    type World {
+    type World implements Node {
+      id: ID!
+    }
+    interface Node {
       id: ID!
     }
   shared: |
@@ -54,16 +58,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              node(id: "world-1") {
-                ... on World {
-                  id
-                }
+            node(id: "world-1") {
+              ... on World {
+                id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

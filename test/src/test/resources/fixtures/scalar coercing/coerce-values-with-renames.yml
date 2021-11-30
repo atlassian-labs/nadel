@@ -16,27 +16,8 @@ query: |
   query {
     aFieldRenamed
   }
-variables: { }
+variables: {}
 serviceCalls:
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            ... on Query {
-              rename__aFieldRenamed__aField: aField
-            }
-          }
-        variables: { }
-        operationName: null
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__aFieldRenamed__aField": "1000"
-          },
-          "extensions": {}
-        }
   current:
     - serviceName: service
       request:
@@ -44,13 +25,29 @@ serviceCalls:
           query nadel_2_service {
             aField
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_service
       # language=JSON
       response: |-
         {
           "data": {
             "aField": "1000"
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            rename__aFieldRenamed__aField: aField
+          }
+        variables: {}
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "rename__aFieldRenamed__aField": "1000"
           },
           "extensions": {}
         }

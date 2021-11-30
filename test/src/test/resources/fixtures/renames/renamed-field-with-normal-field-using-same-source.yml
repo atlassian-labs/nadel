@@ -90,30 +90,19 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  __typename__deep_rename__renamedField: __typename
-                  issue {
-                    ... on Issue {
-                      fooDetail {
-                        ... on Detail {
-                          name
-                        }
-                      }
-                    }
-                  }
-                  deep_rename__renamedField__issue: issue {
-                    ... on Issue {
-                      field
-                    }
-                  }
+            foo {
+              __typename__deep_rename__renamedField: __typename
+              issue {
+                fooDetail {
+                  name
                 }
+              }
+              deep_rename__renamedField__issue: issue {
+                field
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

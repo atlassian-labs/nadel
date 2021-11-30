@@ -80,7 +80,6 @@ serviceCalls:
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

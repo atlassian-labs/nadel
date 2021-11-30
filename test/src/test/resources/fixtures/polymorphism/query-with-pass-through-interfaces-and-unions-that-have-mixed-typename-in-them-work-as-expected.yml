@@ -1,4 +1,5 @@
-name: query with pass through interfaces and unions that have MIXED __typename in them work as expected
+name: query with pass through interfaces and unions that have MIXED __typename in
+  them work as expected
 enabled:
   current: true
   nextgen: true
@@ -227,17 +228,15 @@ serviceCalls:
       request:
         query: |
           query petQ {
-            ... on Query {
-              pets(isLoyal: true) {
-                ... on Cat {
-                  name
-                  wearsBell
-                }
-                ... on Dog {
-                  __typename
-                  name
-                  wearsCollar
-                }
+            pets(isLoyal: true) {
+              ... on Cat {
+                name
+                wearsBell
+              }
+              ... on Dog {
+                __typename
+                name
+                wearsCollar
               }
             }
           }
@@ -265,16 +264,14 @@ serviceCalls:
       request:
         query: |
           query petQ {
-            ... on Query {
-              raining(isLoyal: true) {
-                ... on Cat {
-                  __typename
-                  wearsBell
-                }
-                ... on Dog {
-                  __typename
-                  wearsCollar
-                }
+            raining(isLoyal: true) {
+              ... on Cat {
+                __typename
+                wearsBell
+              }
+              ... on Dog {
+                __typename
+                wearsCollar
               }
             }
           }

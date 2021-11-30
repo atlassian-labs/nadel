@@ -26,21 +26,17 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: IssueService
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename
-                }
-              }
+            issues {
+              __typename
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

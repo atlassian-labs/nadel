@@ -104,17 +104,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue: node(id: "issue/id-123") {
-                ... on Issue {
-                  id
-                  issueKey
-                }
+            issue: node(id: "issue/id-123") {
+              ... on Issue {
+                id
+                issueKey
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

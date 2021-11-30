@@ -33,27 +33,21 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: Issues
       request:
         query: |
           query {
-            ... on Query {
-              first {
-                ... on Issue {
-                  __typename
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__details: details {
-                    ... on IssueDetail {
-                      name
-                    }
-                  }
-                }
+            first {
+              __typename
+              __typename__deep_rename__name: __typename
+              deep_rename__name__details: details {
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -72,21 +66,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              second: first {
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__details: details {
-                    ... on IssueDetail {
-                      name
-                    }
-                  }
-                }
+            second: first {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__details: details {
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

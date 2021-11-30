@@ -146,17 +146,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              board {
-                ... on Board {
-                  __typename__hydration__issue: __typename
-                  hydration__issue__issueId: issueId
-                }
-              }
+            board {
+              __typename__hydration__issue: __typename
+              hydration__issue__issueId: issueId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -172,17 +167,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue(id: "ISSUE-1") {
-                ... on Issue {
-                  __typename__hydration__comments: __typename
-                  hydration__comments__cloudId: cloudId
-                }
-              }
+            issue(id: "ISSUE-1") {
+              __typename__hydration__comments: __typename
+              hydration__comments__cloudId: cloudId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -198,16 +188,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              comments(cloudId: "CLOUD_ID-1", first: 10) {
-                ... on CommentConnection {
-                  totalCount
-                }
-              }
+            comments(cloudId: "CLOUD_ID-1", first: 10) {
+              totalCount
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

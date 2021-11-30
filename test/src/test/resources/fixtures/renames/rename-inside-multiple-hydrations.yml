@@ -54,22 +54,18 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service1
       request:
         query: |
           query {
-            ... on Query {
-              foos {
-                ... on Foo {
-                  __typename__hydration__bar: __typename
-                  hydration__bar__barId: barId
-                }
-              }
+            foos {
+              __typename__hydration__bar: __typename
+              hydration__bar__barId: barId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -91,17 +87,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              barById(id: "barId") {
-                ... on Bar {
-                  __typename__rename__title: __typename
-                  rename__title__name: name
-                }
-              }
+            barById(id: "barId") {
+              __typename__rename__title: __typename
+              rename__title__name: name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -117,17 +108,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              barById(id: "barId2") {
-                ... on Bar {
-                  __typename__rename__title: __typename
-                  rename__title__name: name
-                }
-              }
+            barById(id: "barId2") {
+              __typename__rename__title: __typename
+              rename__title__name: name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -75,16 +75,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Bar {
-                  id
-                }
-              }
+            foo {
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
