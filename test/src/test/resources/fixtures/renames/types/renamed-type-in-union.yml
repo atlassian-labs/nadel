@@ -58,36 +58,33 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__nodes__all: all {
-                ... on Issue {
-                  __typename
-                  id
-                  links {
-                    ... on Issue {
-                      __typename
-                    }
-                    ... on Monkey {
-                      __typename
-                    }
-                    ... on User {
-                      __typename
-                    }
+            rename__nodes__all: all {
+              ... on Issue {
+                __typename
+                id
+                links {
+                  ... on Issue {
+                    __typename
+                  }
+                  ... on Monkey {
+                    __typename
+                  }
+                  ... on User {
+                    __typename
                   }
                 }
-                ... on Monkey {
-                  __typename
-                  id
-                }
-                ... on User {
-                  __typename
-                  id
-                }
+              }
+              ... on Monkey {
+                __typename
+                id
+              }
+              ... on User {
+                __typename
+                id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

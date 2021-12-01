@@ -118,17 +118,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              user {
-                ... on User {
-                  id
-                  name
-                }
-              }
+            user {
+              id
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -144,16 +139,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  id
-                }
-              }
+            issues {
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

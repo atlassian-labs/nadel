@@ -22,7 +22,6 @@ import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 
 internal class NadelRenameTransform : NadelTransform<State> {
@@ -106,9 +105,14 @@ internal class NadelRenameTransform : NadelTransform<State> {
         }
 
         val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
+        val objectTypeNames = field.objectTypeNames
+            .filter { it in typeNamesWithInstructions }
+            .takeIf { it.isNotEmpty() }
+            ?: return null
+
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = field.objectTypeNames.filter { it in typeNamesWithInstructions },
+            objectTypeNames = objectTypeNames,
         )
     }
 

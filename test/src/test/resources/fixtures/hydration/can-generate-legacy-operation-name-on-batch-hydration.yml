@@ -48,18 +48,15 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service1
       request:
         query: |
           query nadel_2_service1 {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  __typename__batch_hydration__bar: __typename
-                  batch_hydration__bar__barId: barId
-                }
-              }
+            foo {
+              __typename__batch_hydration__bar: __typename
+              batch_hydration__bar__barId: barId
             }
           }
         variables: {}
@@ -83,13 +80,9 @@ serviceCalls:
       request:
         query: |
           query nadel_2_service2 {
-            ... on Query {
-              barsById(id: ["barId1", "barId2", "barId3"]) {
-                ... on Bar {
-                  batch_hydration__bar__id: id
-                  name
-                }
-              }
+            barsById(id: ["barId1", "barId2", "barId3"]) {
+              batch_hydration__bar__id: id
+              name
             }
           }
         variables: {}

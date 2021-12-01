@@ -1,7 +1,7 @@
 name: typename is sent owning service even when type is extended in it
 enabled:
-  nextgen: true
   current: true
+  nextgen: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -31,7 +31,6 @@ overallSchema:
       id: ID
       count: Int
     }
-
   IssueComments: |
     extend type IssueQuery {
       commentsCount: Int
@@ -118,21 +117,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue {
-                ... on IssueQuery {
-                  __typename
-                  getIssue {
-                    ... on Issue {
-                      text
-                    }
-                  }
-                }
+            issue {
+              __typename
+              getIssue {
+                text
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

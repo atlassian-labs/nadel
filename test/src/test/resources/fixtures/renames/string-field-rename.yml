@@ -117,12 +117,9 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__renameString__renameStringUnderlying: renameStringUnderlying
-            }
+            rename__renameString__renameStringUnderlying: renameStringUnderlying
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

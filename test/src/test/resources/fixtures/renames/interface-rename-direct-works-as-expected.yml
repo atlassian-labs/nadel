@@ -125,16 +125,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__renameInterface__renameInterfaceUnderlying: renameInterfaceUnderlying {
-                ... on ObjectUnderlying {
-                  name
-                }
+            rename__renameInterface__renameInterfaceUnderlying: renameInterfaceUnderlying {
+              ... on ObjectUnderlying {
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

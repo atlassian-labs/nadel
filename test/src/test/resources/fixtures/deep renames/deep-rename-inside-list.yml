@@ -29,26 +29,20 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: Issues
       request:
         query: |
           query {
-            ... on Query {
-              rename__issues__all: all {
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__details: details {
-                    ... on IssueDetail {
-                      key
-                    }
-                  }
-                }
+            rename__issues__all: all {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__details: details {
+                key
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

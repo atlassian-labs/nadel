@@ -25,17 +25,16 @@ query: |
   query Meow {
     cat: foo
   }
-operationName: Test
 variables: {}
+operationName: Test
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service
       request:
         query: |
           query Test {
-            ... on Query {
-              test: foo
-            }
+            test: foo
           }
         variables: {}
         operationName: Test

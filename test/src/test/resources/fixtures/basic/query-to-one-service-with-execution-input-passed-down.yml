@@ -78,13 +78,9 @@ serviceCalls:
       request:
         query: |
           query OpName {
-            ... on Query {
-              hello {
-                ... on World {
-                  id
-                  name
-                }
-              }
+            hello {
+              id
+              name
             }
           }
         variables: {}

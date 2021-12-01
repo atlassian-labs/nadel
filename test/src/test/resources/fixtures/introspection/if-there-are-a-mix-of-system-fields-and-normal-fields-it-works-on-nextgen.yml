@@ -40,23 +40,19 @@ query: |
       name
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: MyService
       request:
         query: |
           query {
-            ... on Query {
-              hello {
-                ... on World {
-                  name
-                }
-              }
+            hello {
+              name
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {

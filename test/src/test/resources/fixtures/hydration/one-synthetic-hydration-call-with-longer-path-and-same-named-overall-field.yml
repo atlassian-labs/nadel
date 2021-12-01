@@ -146,27 +146,18 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename__batch_hydration__authors: __typename
-                  batch_hydration__authors__authorDetails: authorDetails {
-                    ... on AuthorDetail {
-                      authorId
-                    }
-                  }
-                  authorDetails {
-                    ... on AuthorDetail {
-                      name
-                    }
-                  }
-                  id
-                }
+            issues {
+              __typename__batch_hydration__authors: __typename
+              batch_hydration__authors__authorDetails: authorDetails {
+                authorId
               }
+              authorDetails {
+                name
+              }
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -200,21 +191,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              usersQuery {
-                ... on UserQuery {
-                  usersByIds(id: ["USER-1", "USER-2"]) {
-                    ... on User {
-                      id
-                      batch_hydration__authors__id: id
-                    }
-                  }
-                }
+            usersQuery {
+              usersByIds(id: ["USER-1", "USER-2"]) {
+                id
+                batch_hydration__authors__id: id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

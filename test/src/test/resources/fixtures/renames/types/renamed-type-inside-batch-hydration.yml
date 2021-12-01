@@ -32,7 +32,7 @@ underlyingSchema:
   IssueService: |
     type Issue {
       id: ID
-      detail: Details
+      details: Details
     }
 
     type Details {
@@ -68,17 +68,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              users {
-                ... on User {
-                  __typename__batch_hydration__issue: __typename
-                  batch_hydration__issue__issueId: issueId
-                }
-              }
+            users {
+              __typename__batch_hydration__issue: __typename
+              batch_hydration__issue__issueId: issueId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -104,22 +99,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
-                ... on Issue {
-                  details {
-                    ... on Details {
-                      __typename
-                      name
-                    }
-                  }
-                  batch_hydration__issue__id: id
-                }
+            issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
+              details {
+                __typename
+                name
               }
+              batch_hydration__issue__id: id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -166,17 +166,24 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
                         .objectTypeNames(it)
                         .build()
                 },
-            artificialFields = state.instructionsByObjectTypeNames.map { (objectTypeWithRename, instruction) ->
-                makeDeepField(
-                    state,
-                    transformer,
-                    executionBlueprint,
-                    service,
-                    field,
-                    objectTypeWithRename,
-                    deepRename = instruction,
-                )
-            } + makeTypeNameField(state),
+            artificialFields = state.instructionsByObjectTypeNames
+                .map { (objectTypeWithRename, instruction) ->
+                    makeDeepField(
+                        state,
+                        transformer,
+                        executionBlueprint,
+                        service,
+                        field,
+                        objectTypeWithRename,
+                        deepRename = instruction,
+                    )
+                }
+                .let { deepFields ->
+                    when (val typeNameField = makeTypeNameField(state, field)) {
+                        null -> deepFields
+                        else -> deepFields + typeNameField
+                    }
+                },
         )
     }
 
@@ -191,10 +198,17 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
      */
     private fun makeTypeNameField(
         state: State,
-    ): ExecutableNormalizedField {
+        field: ExecutableNormalizedField,
+    ): ExecutableNormalizedField? {
+        val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
+        val objectTypeNames = field.objectTypeNames
+            .filter { it in typeNamesWithInstructions }
+            .takeIf { it.isNotEmpty() }
+            ?: return null
+
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = state.instructionsByObjectTypeNames.keys.toList(),
+            objectTypeNames = objectTypeNames,
         )
     }
 

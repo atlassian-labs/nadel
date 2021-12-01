@@ -125,18 +125,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename__batch_hydration__author: __typename
-                  batch_hydration__author__authorId: authorId
-                  id
-                }
-              }
+            issues {
+              __typename__batch_hydration__author: __typename
+              batch_hydration__author__authorId: authorId
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -155,21 +150,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              usersQuery {
-                ... on UsersQuery {
-                  usersByIds(extraArg1: "extraArg1", extraArg2: 10, id: ["USER-1"]) {
-                    ... on User {
-                      batch_hydration__author__id: id
-                      name
-                    }
-                  }
-                }
+            usersQuery {
+              usersByIds(extraArg1: "extraArg1", extraArg2: 10, id: ["USER-1"]) {
+                batch_hydration__author__id: id
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

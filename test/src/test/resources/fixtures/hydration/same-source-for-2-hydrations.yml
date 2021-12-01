@@ -122,19 +122,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  __typename__hydration__issue: __typename
-                  __typename__hydration__detail: __typename
-                  hydration__issue__fooId: fooId
-                  hydration__detail__fooId: fooId
-                }
-              }
+            foo {
+              __typename__hydration__issue: __typename
+              __typename__hydration__detail: __typename
+              hydration__issue__fooId: fooId
+              hydration__detail__fooId: fooId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -152,16 +147,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue(issueId: "ID") {
-                ... on Issue {
-                  field
-                }
-              }
+            issue(issueId: "ID") {
+              field
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -176,16 +166,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              detail(detailId: "ID") {
-                ... on Detail {
-                  name
-                }
-              }
+            detail(detailId: "ID") {
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

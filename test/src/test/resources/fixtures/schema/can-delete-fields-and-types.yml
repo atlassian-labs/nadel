@@ -37,6 +37,8 @@ query: |
     }
   }
 variables: {}
-serviceCalls: {}
+serviceCalls:
+  current: []
+  nextgen: []
 # language=JSON
 response: null

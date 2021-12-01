@@ -134,33 +134,22 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  __typename__hydration__issue: __typename
-                  __typename__hydration__detail: __typename
-                  __typename__deep_rename__renamedField: __typename
-                  hydration__issue__issue: issue {
-                    ... on Issue {
-                      fooId
-                    }
-                  }
-                  hydration__detail__issue: issue {
-                    ... on Issue {
-                      fooId
-                    }
-                  }
-                  deep_rename__renamedField__issue: issue {
-                    ... on Issue {
-                      field
-                    }
-                  }
-                }
+            foo {
+              __typename__hydration__issue: __typename
+              __typename__hydration__detail: __typename
+              __typename__deep_rename__renamedField: __typename
+              hydration__issue__issue: issue {
+                fooId
+              }
+              hydration__detail__issue: issue {
+                fooId
+              }
+              deep_rename__renamedField__issue: issue {
+                field
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -186,16 +175,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue(issueId: "ID") {
-                ... on Issue {
-                  field
-                }
-              }
+            issue(issueId: "ID") {
+              field
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -210,16 +194,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              detail(detailId: "ID") {
-                ... on Detail {
-                  name
-                }
-              }
+            detail(detailId: "ID") {
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

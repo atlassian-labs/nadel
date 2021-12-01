@@ -116,27 +116,22 @@ query: |
       }
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
   nextgen:
     - serviceName: foo
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  __typename
-                  __typename__batch_hydration__data: __typename
-                  batch_hydration__data__dataId: dataId
-                  batch_hydration__data__dataId: dataId
-                  id
-                }
-              }
+            foo {
+              __typename
+              __typename__batch_hydration__data: __typename
+              batch_hydration__data__dataId: dataId
+              batch_hydration__data__dataId: dataId
+              id
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {
@@ -174,31 +169,28 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
-                ... on Dog {
-                  __typename
-                  __typename__type_filter____typename: __typename
-                  __typename__type_filter__id: __typename
-                  __typename__type_filter__name: __typename
-                  breed
-                  id
-                  batch_hydration__data__id: id
-                }
-                ... on Fish {
-                  __typename
-                  __typename__type_filter____typename: __typename
-                  __typename__type_filter__id: __typename
-                  __typename__type_filter__name: __typename
-                  fins
-                  id
-                  batch_hydration__data__id: id
-                }
+            petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
+              ... on Dog {
+                __typename
+                __typename__type_filter____typename: __typename
+                __typename__type_filter__id: __typename
+                __typename__type_filter__name: __typename
+                breed
+                id
+                batch_hydration__data__id: id
+              }
+              ... on Fish {
+                __typename
+                __typename__type_filter____typename: __typename
+                __typename__type_filter__id: __typename
+                __typename__type_filter__name: __typename
+                fins
+                id
+                batch_hydration__data__id: id
               }
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {
@@ -243,25 +235,20 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              humanById(ids: ["HUMAN-0"]) {
-                ... on Human {
-                  __typename__type_filter____typename: __typename
-                  __typename__type_filter____typename: __typename
-                  __typename
-                  __typename__type_filter__id: __typename
-                  __typename__type_filter__id: __typename
-                  __typename__type_filter__breed: __typename
-                  __typename__type_filter__fins: __typename
-                  id
-                  batch_hydration__data__id: id
-                  name
-                }
-              }
+            humanById(ids: ["HUMAN-0"]) {
+              __typename__type_filter____typename: __typename
+              __typename__type_filter____typename: __typename
+              __typename
+              __typename__type_filter__id: __typename
+              __typename__type_filter__id: __typename
+              __typename__type_filter__breed: __typename
+              __typename__type_filter__fins: __typename
+              id
+              batch_hydration__data__id: id
+              name
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {

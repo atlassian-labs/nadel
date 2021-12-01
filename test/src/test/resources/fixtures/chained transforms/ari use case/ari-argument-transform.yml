@@ -27,22 +27,18 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service
       request:
         query: |
           query {
-            ... on Query {
-              issue(id: "57") {
-                ... on Issue {
-                  __typename__rename__key: __typename
-                  rename__key__id: id
-                }
-              }
+            issue(id: "57") {
+              __typename__rename__key: __typename
+              rename__key__id: id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

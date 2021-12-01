@@ -88,29 +88,20 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__renamedIssue__issue: issue {
-                ... on Issue {
-                  __typename__rename__renamedTicket: __typename
-                  rename__renamedTicket__ticket: ticket {
-                    ... on Ticket {
-                      __typename__rename__renamedTicketTypes: __typename
-                      rename__renamedTicketTypes__ticketTypes: ticketTypes {
-                        ... on TicketType {
-                          __typename__rename__renamedId: __typename
-                          __typename__rename__renamedDate: __typename
-                          rename__renamedDate__date: date
-                          rename__renamedId__id: id
-                        }
-                      }
-                    }
-                  }
+            rename__renamedIssue__issue: issue {
+              __typename__rename__renamedTicket: __typename
+              rename__renamedTicket__ticket: ticket {
+                __typename__rename__renamedTicketTypes: __typename
+                rename__renamedTicketTypes__ticketTypes: ticketTypes {
+                  __typename__rename__renamedId: __typename
+                  __typename__rename__renamedDate: __typename
+                  rename__renamedDate__date: date
+                  rename__renamedId__id: id
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -108,19 +108,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              bar {
-                ... on Bar {
-                  __typename__hydration__nestedBar: __typename
-                  barId
-                  hydration__nestedBar__barId: barId
-                  name
-                }
-              }
+            bar {
+              __typename__hydration__nestedBar: __typename
+              barId
+              hydration__nestedBar__barId: barId
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -138,18 +133,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              barById(id: "1") {
-                ... on Bar {
-                  __typename__hydration__nestedBar: __typename
-                  hydration__nestedBar__barId: barId
-                  barId
-                }
-              }
+            barById(id: "1") {
+              __typename__hydration__nestedBar: __typename
+              hydration__nestedBar__barId: barId
+              barId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -166,16 +156,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              barById(id: "1") {
-                ... on Bar {
-                  barId
-                }
-              }
+            barById(id: "1") {
+              barId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

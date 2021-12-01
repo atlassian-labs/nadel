@@ -27,21 +27,17 @@ query: |
 variables:
   test: false
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service
       request:
         query: |
           query {
-            ... on Query {
-              rename__foo__bar: bar {
-                ... on Foo {
-                  __typename__skip_include____skip: __typename
-                }
-              }
+            rename__foo__bar: bar {
+              __typename__skip_include____skip: __typename
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -145,17 +145,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  hydration__bar__barIds: barIds
-                  __typename__hydration__bar: __typename
-                }
-              }
+            foo {
+              __typename__hydration__bar: __typename
+              hydration__bar__barIds: barIds
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -175,17 +170,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              barById(id: "barId1") {
-                ... on Bar {
-                  id
-                  name
-                }
-              }
+            barById(id: "barId1") {
+              id
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -201,17 +191,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              barById(id: "barId3") {
-                ... on Bar {
-                  id
-                  name
-                }
-              }
+            barById(id: "barId3") {
+              id
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -227,17 +212,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              barById(id: "barId2") {
-                ... on Bar {
-                  id
-                  name
-                }
-              }
+            barById(id: "barId2") {
+              id
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

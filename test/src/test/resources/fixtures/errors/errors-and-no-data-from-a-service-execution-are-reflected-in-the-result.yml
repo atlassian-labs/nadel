@@ -68,16 +68,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              hello {
-                ... on World {
-                  name
-                }
-              }
+            hello {
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

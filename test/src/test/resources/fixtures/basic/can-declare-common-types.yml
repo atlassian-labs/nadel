@@ -71,16 +71,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              node {
-                ... on Issue {
-                  name
-                }
+            node {
+              ... on Issue {
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

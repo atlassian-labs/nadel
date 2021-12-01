@@ -43,22 +43,18 @@ query: |
 variables:
   test: false
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service
       request:
         query: |
           query {
-            ... on Query {
-              foos {
-                ... on Foo {
-                  __typename__batch_hydration__test: __typename
-                  batch_hydration__test__id: id
-                }
-              }
+            foos {
+              __typename__batch_hydration__test: __typename
+              batch_hydration__test__id: id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -80,17 +76,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              tests(ids: ["Foo-3", "Foo-4"]) {
-                ... on Test {
-                  __typename__skip_include____skip: __typename
-                  batch_hydration__test__id: id
-                }
-              }
+            tests(ids: ["Foo-3", "Foo-4"]) {
+              __typename__skip_include____skip: __typename
+              batch_hydration__test__id: id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

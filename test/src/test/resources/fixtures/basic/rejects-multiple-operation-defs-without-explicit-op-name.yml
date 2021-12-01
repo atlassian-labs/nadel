@@ -25,9 +25,10 @@ query: |
   query Meow {
     cat: foo
   }
-operationName: null
 variables: {}
 serviceCalls:
+  current: []
   nextgen: []
 # Assertion done in test hook
+# language=JSON
 response: null

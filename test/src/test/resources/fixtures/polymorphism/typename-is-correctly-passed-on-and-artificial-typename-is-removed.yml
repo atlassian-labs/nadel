@@ -87,18 +87,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename
-                  authorIds
-                  id
-                }
+            issues {
+              ... on Issue {
+                __typename
+                authorIds
+                id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

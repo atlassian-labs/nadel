@@ -35,30 +35,22 @@ query: |
 variables:
   test: true
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service
       request:
         query: |
           query {
-            ... on Query {
+            foo {
               foo {
-                ... on Foo {
-                  foo {
-                    ... on Foo {
-                      __typename
-                    }
-                  }
-                  bar: foo {
-                    ... on Foo {
-                      id
-                    }
-                  }
-                }
+                __typename
+              }
+              bar: foo {
+                id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

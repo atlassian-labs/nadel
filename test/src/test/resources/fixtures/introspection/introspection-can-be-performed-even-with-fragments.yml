@@ -44,9 +44,10 @@ query: |
       }
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
-  current: [ ]
+  current: []
+  nextgen: []
 # language=JSON
 response: |-
   {

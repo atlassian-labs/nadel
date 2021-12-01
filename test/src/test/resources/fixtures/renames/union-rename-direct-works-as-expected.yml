@@ -129,16 +129,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__renameUnion__renameUnionUnderlying: renameUnionUnderlying {
-                ... on XUnderlying {
-                  x
-                }
+            rename__renameUnion__renameUnionUnderlying: renameUnionUnderlying {
+              ... on XUnderlying {
+                x
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

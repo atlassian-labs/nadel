@@ -95,17 +95,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  __typename__hydration__issue: __typename
-                  hydration__issue__issueId: issueId
-                }
-              }
+            foo {
+              __typename__hydration__issue: __typename
+              hydration__issue__issueId: issueId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -121,17 +116,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue(issueId: "ISSUE-1") {
-                ... on Issue {
-                  desc
-                  name
-                }
-              }
+            issue(issueId: "ISSUE-1") {
+              desc
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

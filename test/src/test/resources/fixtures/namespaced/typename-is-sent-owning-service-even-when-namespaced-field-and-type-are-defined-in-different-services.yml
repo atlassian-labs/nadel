@@ -1,7 +1,8 @@
-name: typename is sent owning service even when namespaced field and type are defined in different services
+name: typename is sent owning service even when namespaced field and type are defined
+  in different services
 enabled:
-  nextgen: true
   current: true
+  nextgen: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -117,21 +118,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue {
-                ... on IssueQuery {
-                  __typename
-                  getIssue {
-                    ... on Issue {
-                      text
-                    }
-                  }
-                }
+            issue {
+              __typename
+              getIssue {
+                text
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

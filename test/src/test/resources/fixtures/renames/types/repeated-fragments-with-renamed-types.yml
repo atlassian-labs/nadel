@@ -5,6 +5,7 @@ enabled:
 ignored:
   # This is an edge case which we're not fixing, new engine has it fixed
   current: true
+  nextgen: false
 overallSchema:
   Users: |
     type Query {
@@ -136,278 +137,193 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              service(id: "service-1") {
-                ... on Service {
+            service(id: "service-1") {
+              __typename
+              dependedOn {
+                __typename
+                nodes {
                   __typename
-                  dependedOn {
-                    ... on RelationshipConnection {
+                  endService {
+                    __typename
+                    dependedOn {
                       __typename
                       nodes {
-                        ... on Relationship {
+                        __typename
+                        endService {
                           __typename
-                          endService {
-                            ... on Service {
-                              __typename
-                              dependedOn {
-                                ... on RelationshipConnection {
-                                  __typename
-                                  nodes {
-                                    ... on Relationship {
-                                      __typename
-                                      endService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      id
-                                      startService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      type
-                                    }
-                                  }
-                                }
-                              }
-                              dependsOn {
-                                ... on RelationshipConnection {
-                                  __typename
-                                  nodes {
-                                    ... on Relationship {
-                                      __typename
-                                      endService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      id
-                                      startService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      type
-                                    }
-                                  }
-                                }
-                              }
-                              id
-                              name
-                            }
-                          }
                           id
-                          startService {
-                            ... on Service {
-                              __typename
-                              dependedOn {
-                                ... on RelationshipConnection {
-                                  __typename
-                                  nodes {
-                                    ... on Relationship {
-                                      __typename
-                                      endService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      id
-                                      startService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      type
-                                    }
-                                  }
-                                }
-                              }
-                              dependsOn {
-                                ... on RelationshipConnection {
-                                  __typename
-                                  nodes {
-                                    ... on Relationship {
-                                      __typename
-                                      endService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      id
-                                      startService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      type
-                                    }
-                                  }
-                                }
-                              }
-                              id
-                              name
-                            }
-                          }
-                          type
+                          name
                         }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
                       }
                     }
-                  }
-                  dependsOn {
-                    ... on RelationshipConnection {
+                    dependsOn {
                       __typename
                       nodes {
-                        ... on Relationship {
+                        __typename
+                        endService {
                           __typename
-                          endService {
-                            ... on Service {
-                              __typename
-                              dependedOn {
-                                ... on RelationshipConnection {
-                                  __typename
-                                  nodes {
-                                    ... on Relationship {
-                                      __typename
-                                      endService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      id
-                                      startService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      type
-                                    }
-                                  }
-                                }
-                              }
-                              dependsOn {
-                                ... on RelationshipConnection {
-                                  __typename
-                                  nodes {
-                                    ... on Relationship {
-                                      __typename
-                                      endService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      id
-                                      startService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      type
-                                    }
-                                  }
-                                }
-                              }
-                              id
-                              name
-                            }
-                          }
                           id
-                          startService {
-                            ... on Service {
-                              __typename
-                              dependedOn {
-                                ... on RelationshipConnection {
-                                  __typename
-                                  nodes {
-                                    ... on Relationship {
-                                      __typename
-                                      endService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      id
-                                      startService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      type
-                                    }
-                                  }
-                                }
-                              }
-                              dependsOn {
-                                ... on RelationshipConnection {
-                                  __typename
-                                  nodes {
-                                    ... on Relationship {
-                                      __typename
-                                      endService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      id
-                                      startService {
-                                        ... on Service {
-                                          __typename
-                                          id
-                                          name
-                                        }
-                                      }
-                                      type
-                                    }
-                                  }
-                                }
-                              }
-                              id
-                              name
-                            }
-                          }
-                          type
+                          name
                         }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
                       }
                     }
+                    id
+                    name
                   }
                   id
-                  name
+                  startService {
+                    __typename
+                    dependedOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    dependsOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    id
+                    name
+                  }
+                  type
                 }
               }
+              dependsOn {
+                __typename
+                nodes {
+                  __typename
+                  endService {
+                    __typename
+                    dependedOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    dependsOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    id
+                    name
+                  }
+                  id
+                  startService {
+                    __typename
+                    dependedOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    dependsOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    id
+                    name
+                  }
+                  type
+                }
+              }
+              id
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

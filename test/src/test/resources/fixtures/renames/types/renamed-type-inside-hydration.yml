@@ -31,7 +31,7 @@ underlyingSchema:
   IssueService: |
     type Issue {
       id: ID
-      detail: Details
+      details: Details
     }
 
     type Details {
@@ -67,17 +67,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              me {
-                ... on User {
-                  __typename__hydration__issue: __typename
-                  hydration__issue__issueId: issueId
-                }
-              }
+            me {
+              __typename__hydration__issue: __typename
+              hydration__issue__issueId: issueId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -93,21 +88,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issueById(id: "issue-2") {
-                ... on Issue {
-                  details {
-                    ... on Details {
-                      __typename
-                      name
-                    }
-                  }
-                }
+            issueById(id: "issue-2") {
+              details {
+                __typename
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

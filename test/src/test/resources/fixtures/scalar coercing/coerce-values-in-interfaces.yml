@@ -38,34 +38,6 @@ query: |
   }
 variables: {}
 serviceCalls:
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            ... on Query {
-              user(id: "1000") {
-                ... on AccountUser {
-                  id
-                }
-                ... on AdminUser {
-                  id
-                }
-              }
-            }
-          }
-        variables: {}
-        operationName: null
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "user": {
-              "id": "1000"
-            }
-          },
-          "extensions": {}
-        }
   current:
     - serviceName: service
       request:
@@ -85,6 +57,31 @@ serviceCalls:
             "user": {
               "id": "1000",
               "type_hint_typename__UUID": "AccountUser"
+            }
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            user(id: "1000") {
+              ... on AccountUser {
+                id
+              }
+              ... on AdminUser {
+                id
+              }
+            }
+          }
+        variables: {}
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "user": {
+              "id": "1000"
             }
           },
           "extensions": {}

@@ -1,7 +1,7 @@
 name: mutation with two services sharing a namespaced field
 enabled:
-  nextgen: true
   current: true
+  nextgen: true
 overallSchema:
   Issues: |
     type Query {
@@ -134,20 +134,13 @@ serviceCalls:
       request:
         query: |
           mutation {
-            ... on Mutation {
-              issue {
-                ... on IssueQuery {
-                  getIssue {
-                    ... on Issue {
-                      text
-                    }
-                  }
-                }
+            issue {
+              getIssue {
+                text
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -164,20 +157,13 @@ serviceCalls:
       request:
         query: |
           mutation {
-            ... on Mutation {
-              issue {
-                ... on IssueQuery {
-                  search {
-                    ... on SearchResult {
-                      count
-                    }
-                  }
-                }
+            issue {
+              search {
+                count
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
