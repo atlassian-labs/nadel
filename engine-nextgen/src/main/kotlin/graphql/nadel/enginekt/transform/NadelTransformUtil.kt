@@ -10,6 +10,7 @@ import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.getField
 import graphql.nadel.enginekt.util.makeFieldCoordinates
@@ -86,25 +87,26 @@ object NadelTransformUtil {
      * Note that the transformer will only be called for non-null values.
      */
     fun createSetInstructions(
+        nodes: JsonNodes,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         overallField: ExecutableNormalizedField,
-        transformerFunction: (Any) -> Any
+        transformerFunction: (Any) -> Any,
     ): List<NadelResultInstruction> {
         val parentQueryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root
 
-        val valueNodes: List<JsonNode> = JsonNodeExtractor.getNodesAt(
-            data = result.data,
-            queryPath = parentQueryPath.plus(overallField.resultKey),
+        val valueNodes: List<JsonNode> = nodes.getNodesAt(
+            queryPath = parentQueryPath + overallField.resultKey,
             flatten = true
         )
 
         return valueNodes
             .mapNotNull { valueNode ->
-                JsonNodeExtractor.getNodeAt(result.data, valueNode.resultPath)?.let { jsonNode ->
+                nodes.getNodeAt(valueNode.resultPath)?.let { jsonNode ->
                     NadelResultInstruction.Set(
                         valueNode.resultPath,
-                        jsonNode.value?.let { value -> transformerFunction(value) })
+                        jsonNode.value?.let { value -> transformerFunction(value) },
+                    )
                 }
             }
     }

@@ -12,6 +12,7 @@ import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.transform.skipInclude.SkipIncludeTransform.State
 import graphql.nadel.enginekt.util.resolveObjectTypes
 import graphql.nadel.enginekt.util.toBuilder
@@ -95,6 +96,7 @@ internal class SkipIncludeTransform : NadelTransform<State> {
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
+        nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

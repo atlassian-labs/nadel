@@ -7,7 +7,9 @@ import com.google.common.io.Resources;
 import graphql.Assert;
 import graphql.ExecutionResult;
 import graphql.nadel.Nadel;
+import graphql.nadel.NadelEngine;
 import graphql.nadel.NadelExecutionInput;
+import graphql.nadel.NextgenEngine;
 import graphql.nadel.ServiceExecution;
 import graphql.nadel.ServiceExecutionFactory;
 import graphql.nadel.ServiceExecutionResult;
@@ -30,8 +32,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import static graphql.nadel.NadelEngine.newNadel;
 
 /**
  * See http://hg.openjdk.java.net/code-tools/jmh/file/tip/jmh-samples/src/main/java/org/openjdk/jmh/samples/ for more samples
@@ -56,10 +56,14 @@ public class LargeResponseBenchmark {
             String schemaString = readFromClasspath("large_response_benchmark_schema.graphqls");
             TypeDefinitionRegistry typeDefinitionRegistry = new SchemaParser().parse(schemaString);
 
+            boolean kt = true;
+
             String responseString = readFromClasspath("large_underlying_service_result.json");
             Map responseMap = objectMapper.readValue(responseString, Map.class);
             ServiceExecutionResult serviceExecutionResult = new ServiceExecutionResult((Map<String, Object>) responseMap.get("data"));
-            ServiceExecution serviceExecution = serviceExecutionParameters -> CompletableFuture.completedFuture(serviceExecutionResult);
+            ServiceExecution serviceExecution = serviceExecutionParameters -> {
+                return CompletableFuture.completedFuture(serviceExecutionResult);
+            };
             ServiceExecutionFactory serviceExecutionFactory = new ServiceExecutionFactory() {
                 @Override
                 public ServiceExecution getServiceExecution(String serviceName) {
@@ -72,7 +76,11 @@ public class LargeResponseBenchmark {
                 }
             };
             String nsdl = "service activity{" + schemaString + "}";
-            nadel = newNadel().dsl("activity", nsdl).serviceExecutionFactory(serviceExecutionFactory).build();
+            nadel = Nadel.newNadel()
+                    .engineFactory(kt ? NextgenEngine::new : NadelEngine::new)
+                    .dsl("activity", nsdl)
+                    .serviceExecutionFactory(serviceExecutionFactory)
+                    .build();
             query = readFromClasspath("large_response_benchmark_query.graphql");
         }
 
@@ -86,7 +94,7 @@ public class LargeResponseBenchmark {
     @Benchmark
     @Warmup(iterations = 2)
     @Measurement(iterations = 3, time = 10)
-    @Threads(8)
+    @Threads(1)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public ExecutionResult benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
