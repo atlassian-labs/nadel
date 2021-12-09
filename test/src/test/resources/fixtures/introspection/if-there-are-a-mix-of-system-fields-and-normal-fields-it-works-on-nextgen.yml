@@ -58,8 +58,8 @@ serviceCalls:
         {
           "data": {
             "hello": {
-                "name": "World"
-              }
+              "name": "World"
+            }
           },
           "extensions": {}
         }

@@ -246,14 +246,13 @@ serviceCalls:
         query: |
           query petQ {
             pets(isLoyal: true) {
+              name
               ... on Cat {
                 __typename__hydration__owners: __typename
-                name
                 hydration__owners__ownerIds: ownerIds
               }
               ... on Dog {
                 __typename__hydration__owners: __typename
-                name
                 hydration__owners__ownerIds: ownerIds
               }
             }
@@ -289,13 +288,12 @@ serviceCalls:
         query: |
           query petQ {
             ownerById(id: "dearly") {
+              name
               ... on CaringOwner {
                 givesPats
-                name
               }
               ... on CruelOwner {
                 givesSmacks
-                name
               }
             }
           }
@@ -317,13 +315,12 @@ serviceCalls:
         query: |
           query petQ {
             ownerById(id: "cruella") {
+              name
               ... on CaringOwner {
                 givesPats
-                name
               }
               ... on CruelOwner {
                 givesSmacks
-                name
               }
             }
           }

@@ -126,9 +126,7 @@ serviceCalls:
         query: |
           query {
             rename__renameInterface__renameInterfaceUnderlying: renameInterfaceUnderlying {
-              ... on ObjectUnderlying {
-                name
-              }
+              name
             }
           }
         variables: {}

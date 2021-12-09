@@ -62,6 +62,7 @@ serviceCalls:
   nextgen:
     - serviceName: Issues
       request:
+        # Wait… this query doesn't actually work you can't ask for Troll if it doesn't implement HasName
         query: |
           query {
             names {

@@ -15,13 +15,13 @@ overallSchema:
     }
   RepoService: |
     type PullRequest implements Node {
-         id: ID!
-         description: String
+      id: ID!
+      description: String
     }
   IssueService: |
     type Issue implements Node {
-         id: ID!
-         issueKey: String
+      id: ID!
+      issueKey: String
     }
 underlyingSchema:
   Common: |
@@ -30,44 +30,44 @@ underlyingSchema:
     }
   RepoService: |
     type Query {
-        node(id: ID): Node
+      node(id: ID): Node
     }
 
     interface Node {
-        id: ID!
+      id: ID!
     }
 
     type PullRequest implements Node {
-        id: ID!
-        description: String
+      id: ID!
+      description: String
     }
   IssueService: |
     type Query {
-        node(id: ID): Node
+      node(id: ID): Node
     }
 
     interface Node {
-        id: ID!
+      id: ID!
     }
 
     type Issue implements Node {
-        id: ID!
-        issueKey: String
+      id: ID!
+      issueKey: String
     }
 query: |
   {
-      node(id: "pull-request:id-123") {
-         # this fragment uses a type from the RepoService
-         ... on PullRequest {
-              id
-              description
-         }
-         # and this one uses a type from IssueService
-         ... on Issue {
-              id
-              issueKey
-         }
+    node(id: "pull-request:id-123") {
+      # this fragment uses a type from the RepoService
+      ... on PullRequest {
+        id
+        description
       }
+      # and this one uses a type from IssueService
+      ... on Issue {
+        id
+        issueKey
+      }
+    }
   }
 variables: {}
 serviceCalls:
@@ -105,10 +105,10 @@ serviceCalls:
         query: |
           query {
             node(id: "pull-request:id-123") {
+              id
               ... on PullRequest {
                 __typename__type_filter__issueKey: __typename
                 description
-                id
               }
             }
           }

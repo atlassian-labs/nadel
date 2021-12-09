@@ -1,5 +1,4 @@
-name: query with pass through interfaces and unions that DONT have __typename in them
-  work as expected
+name: query with pass through interfaces and unions that DONT have __typename in them work as expected
 enabled:
   current: true
   nextgen: true
@@ -248,12 +247,11 @@ serviceCalls:
         query: |
           query petQ {
             pets(isLoyal: true) {
+              name
               ... on Cat {
-                name
                 wearsBell
               }
               ... on Dog {
-                name
                 wearsCollar
               }
             }

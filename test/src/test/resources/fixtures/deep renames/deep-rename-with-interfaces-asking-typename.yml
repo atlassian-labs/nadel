@@ -45,7 +45,7 @@ variables: {}
 serviceCalls:
   nextgen:
     - serviceName: Issues
-      request:
+      request: # This also doesn't make sense
         query: |
           query {
             names {
