@@ -90,7 +90,7 @@ class EngineTests : FunSpec({
                     if (singleTestToRun.isBlank()) {
                         true
                     } else {
-                        fixture.name.equals(singleTestToRun, ignoreCase = true)
+                        fixture.name.contains(singleTestToRun, ignoreCase = true)
                             || fixture.name.toSlug().equals(singleTestToRun, ignoreCase = true)
                     }
                 }

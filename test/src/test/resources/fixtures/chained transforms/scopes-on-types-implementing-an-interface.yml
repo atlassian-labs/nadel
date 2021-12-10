@@ -1,0 +1,104 @@
+name: scopes on types implementing an interface
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service: |
+    directive @toBeDeleted on FIELD_DEFINITION | OBJECT
+
+    type Query {
+      issue: Issue
+    }
+
+    interface Issue {
+      id: ID
+      title: String
+    }
+
+    type JiraIssue implements Issue @toBeDeleted {
+      id: ID
+      title: String
+      assignee: ID
+    }
+
+    type ThirdPartyIssue implements Issue {
+      id: ID
+      title: String
+      description: String
+    }
+underlyingSchema:
+  service: |
+    type Query {
+      issue: Issue
+    }
+
+    interface Issue {
+      id: ID
+      title: String
+    }
+
+    type JiraIssue implements Issue {
+      id: ID
+      title: String
+      assignee: ID
+    }
+
+    type ThirdPartyIssue implements Issue {
+      id: ID
+      title: String
+      description: String
+    }
+query: |
+  query {
+    issue {
+      id
+      title
+    }
+  }
+variables: { }
+serviceCalls:
+  current: [ ]
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            issue {
+              ... on JiraIssue {
+                uuid_typename: __typename
+              }
+              ... on ThirdPartyIssue {
+                uuid_typename: __typename
+                id
+                title
+              }
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issue": {
+              "uuid_typename": "JiraIssue"
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issue": null
+    },
+    "errors": [
+      {
+        "message": "Validation error of type null: aint gonna work",
+        "locations": [],
+        "extensions": {
+          "classification": "ValidationError"
+        }
+      }
+    ],
+    "extensions": {}
+  }

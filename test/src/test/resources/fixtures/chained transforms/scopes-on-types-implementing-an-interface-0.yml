@@ -1,4 +1,4 @@
-name: two transforms on a field
+name: scopes on types implementing an interface 0
 enabled:
   current: false
   nextgen: true
@@ -77,7 +77,7 @@ response: |-
     },
     "errors": [
       {
-        "message": "Validation error of type WrongType: null",
+        "message": "Validation error of type null: aint gonna work",
         "locations": [],
         "extensions": {
           "classification": "ValidationError"
