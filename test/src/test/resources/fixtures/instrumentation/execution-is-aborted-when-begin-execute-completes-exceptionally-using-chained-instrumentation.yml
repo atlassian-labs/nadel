@@ -1,4 +1,5 @@
-name: execution is aborted when beginExecute completes exceptionally using chained instrumentation
+name: execution is aborted when beginExecute completes exceptionally using chained
+  instrumentation
 enabled:
   current: true
   nextgen: true
@@ -29,6 +30,7 @@ query: |
 variables: {}
 serviceCalls:
   current: []
+  nextgen: []
 # language=JSON
 response: |-
   {

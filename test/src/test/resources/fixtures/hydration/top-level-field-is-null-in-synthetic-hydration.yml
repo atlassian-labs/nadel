@@ -102,17 +102,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue {
-                ... on Issue {
-                  __typename__hydration__project: __typename
-                  hydration__project__projectId: projectId
-                }
-              }
+            issue {
+              __typename__hydration__project: __typename
+              hydration__project__projectId: projectId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -128,20 +123,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              projects {
-                ... on ProjectsQuery {
-                  project(id: "project1") {
-                    ... on Project {
-                      name
-                    }
-                  }
-                }
+            projects {
+              project(id: "project1") {
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

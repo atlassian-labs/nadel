@@ -1,7 +1,7 @@
 name: query with two services sharing a namespaced field
 enabled:
-  nextgen: true
   current: true
+  nextgen: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -121,20 +121,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue {
-                ... on IssueQuery {
-                  getIssue {
-                    ... on Issue {
-                      text
-                    }
-                  }
-                }
+            issue {
+              getIssue {
+                text
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -151,20 +144,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue {
-                ... on IssueQuery {
-                  search {
-                    ... on SearchResult {
-                      count
-                    }
-                  }
-                }
+            issue {
+              search {
+                count
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

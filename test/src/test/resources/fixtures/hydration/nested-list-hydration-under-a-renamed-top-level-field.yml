@@ -167,17 +167,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__fooService__service: service {
-                ... on Service {
-                  __typename__hydration__otherServices: __typename
-                  hydration__otherServices__id: id
-                }
-              }
+            rename__fooService__service: service {
+              __typename__hydration__otherServices: __typename
+              hydration__otherServices__id: id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -193,21 +188,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              connection(id: "ID") {
-                ... on Connection {
-                  __typename__hydration__nodes: __typename
-                  hydration__nodes__edges: edges {
-                    ... on Edge {
-                      node
-                    }
-                  }
-                }
+            connection(id: "ID") {
+              __typename__hydration__nodes: __typename
+              hydration__nodes__edges: edges {
+                node
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -227,17 +215,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              node(id: "1") {
-                ... on Node {
-                  __typename__hydration__space: __typename
-                  hydration__space__id: id
-                }
-              }
+            node(id: "1") {
+              __typename__hydration__space: __typename
+              hydration__space__id: id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -253,16 +236,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              space(id: "1a") {
-                ... on Space {
-                  id
-                }
-              }
+            space(id: "1a") {
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -131,16 +131,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__renameObject__renameObjectUnderlying: renameObjectUnderlying {
-                ... on ObjectUnderlying {
-                  name
-                }
-              }
+            rename__renameObject__renameObjectUnderlying: renameObjectUnderlying {
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

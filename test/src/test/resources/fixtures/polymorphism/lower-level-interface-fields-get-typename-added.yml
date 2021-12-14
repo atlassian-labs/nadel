@@ -186,30 +186,28 @@ serviceCalls:
       request:
         query: |
           query petQ {
-            ... on Query {
-              pets(isLoyal: true) {
-                ... on Cat {
-                  collar {
-                    ... on CatCollar {
-                      color
-                    }
-                    ... on DogCollar {
-                      color
-                    }
+            pets(isLoyal: true) {
+              ... on Cat {
+                collar {
+                  ... on CatCollar {
+                    color
                   }
-                  name
-                }
-                ... on Dog {
-                  collar {
-                    ... on CatCollar {
-                      color
-                    }
-                    ... on DogCollar {
-                      color
-                    }
+                  ... on DogCollar {
+                    color
                   }
-                  name
                 }
+                name
+              }
+              ... on Dog {
+                collar {
+                  ... on CatCollar {
+                    color
+                  }
+                  ... on DogCollar {
+                    color
+                  }
+                }
+                name
               }
             }
           }

@@ -253,6 +253,10 @@ public class Nadel {
         }
     }
 
+    public void close() {
+        engine.close();
+    }
+
     private CompletableFuture<ExecutionResult> parseValidateAndExecute(ExecutionInput executionInput,
                                                                        GraphQLSchema graphQLSchema,
                                                                        InstrumentationState instrumentationState,

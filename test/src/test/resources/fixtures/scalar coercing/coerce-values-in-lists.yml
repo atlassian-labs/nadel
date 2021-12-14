@@ -16,19 +16,17 @@ query: |
   query {
     listField
   }
-variables: { }
+variables: {}
 serviceCalls:
-  nextgen:
+  current:
     - serviceName: service
       request:
         query: |
-          query {
-            ... on Query {
-              listField
-            }
+          query nadel_2_service {
+            listField
           }
-        variables: { }
-        operationName: null
+        variables: {}
+        operationName: nadel_2_service
       # language=JSON
       response: |-
         {
@@ -37,15 +35,14 @@ serviceCalls:
           },
           "extensions": {}
         }
-  current:
+  nextgen:
     - serviceName: service
       request:
         query: |
-          query nadel_2_service {
+          query {
             listField
           }
-        variables: { }
-        operationName: nadel_2_service
+        variables: {}
       # language=JSON
       response: |-
         {

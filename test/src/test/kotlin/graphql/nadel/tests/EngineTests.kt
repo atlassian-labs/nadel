@@ -83,6 +83,8 @@ class EngineTests : FunSpec({
                 }
         }
         .forEach { fixture ->
+            println(fixture.name)
+
             engineFactories.all
                 .filter {
                     if (singleTestToRun.isBlank()) {
@@ -93,7 +95,7 @@ class EngineTests : FunSpec({
                     }
                 }
                 .filter { (engineType) ->
-                    fixture.enabled.get(engineType = engineType) // && engineType == current
+                    fixture.enabled.get(engineType = engineType) // && engineType == nextgen
                 }
                 .forEach { (engineType, engineFactory) ->
                     // Run for tests that don't have nextgen calls
@@ -135,7 +137,7 @@ private suspend fun execute(
     printSyncLine("Running ${fixture.name}")
 
     try {
-        val nadel = Nadel.newNadel()
+        val nadel: Nadel = Nadel.newNadel()
             .schemaTransformationHook(testHooks.schemaTransformationHook)
             .engineFactory { nadel ->
                 engineFactory.make(nadel, testHooks)

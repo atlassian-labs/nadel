@@ -34,30 +34,22 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: Issues
       request:
         query: |
           query {
-            ... on Query {
-              troll {
-                ... on Troll {
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__firstEat: firstEat {
-                    ... on EatLog {
-                      item {
-                        ... on Edible {
-                          name
-                        }
-                      }
-                    }
-                  }
+            troll {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__firstEat: firstEat {
+                item {
+                  name
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

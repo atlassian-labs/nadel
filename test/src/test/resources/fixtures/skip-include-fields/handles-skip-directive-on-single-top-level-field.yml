@@ -19,6 +19,7 @@ query: |
 variables:
   test: true
 serviceCalls:
+  current: []
   nextgen: []
 # language=JSON
 response: |-

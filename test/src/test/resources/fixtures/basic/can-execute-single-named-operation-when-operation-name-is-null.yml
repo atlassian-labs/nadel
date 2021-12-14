@@ -16,17 +16,15 @@ query: |
   query Test {
     test: foo
   }
-operationName: null
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service
       request:
         query: |
           query Test {
-            ... on Query {
-              test: foo
-            }
+            test: foo
           }
         variables: {}
         operationName: Test

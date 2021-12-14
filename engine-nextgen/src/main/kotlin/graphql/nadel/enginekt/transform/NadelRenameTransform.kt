@@ -22,7 +22,6 @@ import graphql.schema.FieldCoordinates
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 
 internal class NadelRenameTransform : NadelTransform<State> {
@@ -63,7 +62,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -74,7 +73,6 @@ internal class NadelRenameTransform : NadelTransform<State> {
                 field.toBuilder()
                     .clearObjectTypesNames()
                     .objectTypeNames(field.objectTypeNames.filter { it in state.objectTypesWithoutRename })
-                    .children(transformer.transform(field.children))
                     .build()
             } else {
                 null
@@ -107,15 +105,20 @@ internal class NadelRenameTransform : NadelTransform<State> {
         }
 
         val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
+        val objectTypeNames = field.objectTypeNames
+            .filter { it in typeNamesWithInstructions }
+            .takeIf { it.isNotEmpty() }
+            ?: return null
+
         return NadelTransformUtil.makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = field.objectTypeNames.filter { it in typeNamesWithInstructions },
+            objectTypeNames = objectTypeNames,
         )
     }
 
     private suspend fun makeRenamedFields(
         state: State,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         field: ExecutableNormalizedField,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): List<ExecutableNormalizedField> {
@@ -143,7 +146,7 @@ internal class NadelRenameTransform : NadelTransform<State> {
 
     private suspend fun makeRenamedField(
         state: State,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,

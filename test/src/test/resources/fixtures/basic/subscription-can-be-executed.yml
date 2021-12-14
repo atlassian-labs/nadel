@@ -69,12 +69,8 @@ serviceCalls:
       request:
         query: |
           subscription M {
-            ... on Subscription {
-              onWorldUpdate {
-                ... on World {
-                  id
-                }
-              }
+            onWorldUpdate {
+              id
             }
           }
         variables: {}

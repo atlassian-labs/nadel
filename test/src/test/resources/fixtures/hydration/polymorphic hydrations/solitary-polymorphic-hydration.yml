@@ -95,27 +95,22 @@ query: |
       }
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
   nextgen:
     - serviceName: foo
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  __typename
-                  __typename__hydration__data: __typename
-                  hydration__data__dataId: dataId
-                  hydration__data__dataId: dataId
-                  id
-                }
-              }
+            foo {
+              __typename
+              __typename__hydration__data: __typename
+              hydration__data__dataId: dataId
+              hydration__data__dataId: dataId
+              id
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {
@@ -138,21 +133,16 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              petById(id: "PET-0") {
-                ... on Pet {
-                  __typename
-                  __typename__type_filter____typename: __typename
-                  __typename__type_filter__id: __typename
-                  __typename__type_filter__name: __typename
-                  breed
-                  id
-                }
-              }
+            petById(id: "PET-0") {
+              __typename
+              __typename__type_filter____typename: __typename
+              __typename__type_filter__id: __typename
+              __typename__type_filter__name: __typename
+              breed
+              id
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {
@@ -171,21 +161,16 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              humanById(id: "HUMAN-0") {
-                ... on Human {
-                  __typename__type_filter____typename: __typename
-                  __typename
-                  __typename__type_filter__id: __typename
-                  __typename__type_filter__breed: __typename
-                  id
-                  name
-                }
-              }
+            humanById(id: "HUMAN-0") {
+              __typename__type_filter____typename: __typename
+              __typename
+              __typename__type_filter__id: __typename
+              __typename__type_filter__breed: __typename
+              id
+              name
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {

@@ -18,14 +18,13 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: test
       request:
         query: |
           query nadel_2_test_Original {
-            ... on Query {
-              foo
-            }
+            foo
           }
         variables: {}
         operationName: nadel_2_test_Original

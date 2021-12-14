@@ -129,27 +129,18 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              tests {
-                ... on TestQuery {
-                  testing {
-                    ... on Testing {
-                      movie {
-                        ... on Movie {
-                          __typename__hydration__character: __typename
-                          hydration__character__characterId: characterId
-                          id
-                          name
-                        }
-                      }
-                    }
-                  }
+            tests {
+              testing {
+                movie {
+                  __typename__hydration__character: __typename
+                  hydration__character__characterId: characterId
+                  id
+                  name
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -171,21 +162,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              tests {
-                ... on TestQuery {
-                  character(id: "C1") {
-                    ... on Character {
-                      id
-                      name
-                    }
-                  }
-                }
+            tests {
+              character(id: "C1") {
+                id
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

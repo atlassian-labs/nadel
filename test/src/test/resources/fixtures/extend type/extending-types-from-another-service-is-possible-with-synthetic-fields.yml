@@ -139,12 +139,9 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              anotherRoot
-            }
+            anotherRoot
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -157,19 +154,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              root {
-                ... on Root {
-                  __typename__hydration__extension: __typename
-                  id
-                  hydration__extension__id: id
-                  name
-                }
-              }
+            root {
+              __typename__hydration__extension: __typename
+              id
+              hydration__extension__id: id
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -187,21 +179,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              lookUpQuery {
-                ... on LookUpQuery {
-                  lookup(id: "rootId") {
-                    ... on Extension {
-                      id
-                      name
-                    }
-                  }
-                }
+            lookUpQuery {
+              lookup(id: "rootId") {
+                id
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

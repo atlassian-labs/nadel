@@ -95,18 +95,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__foo__fooOriginal: fooOriginal {
-                ... on Foo {
-                  __typename__hydration__fooBar: __typename
-                  hydration__fooBar__fooBarId: fooBarId
-                  id
-                }
-              }
+            rename__foo__fooOriginal: fooOriginal {
+              __typename__hydration__fooBar: __typename
+              hydration__fooBar__fooBarId: fooBarId
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -123,16 +118,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              barById(id: "hydrated-bar") {
-                ... on Bar {
-                  id
-                }
-              }
+            barById(id: "hydrated-bar") {
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

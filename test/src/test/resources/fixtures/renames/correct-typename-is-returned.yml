@@ -146,26 +146,17 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              typenameTest {
-                ... on TypenameTest {
-                  __typename
-                  object {
-                    ... on ObjectUnderlying {
-                      __typename
-                    }
-                  }
-                  objects {
-                    ... on ObjectUnderlying {
-                      __typename
-                    }
-                  }
-                }
+            typenameTest {
+              __typename
+              object {
+                __typename
+              }
+              objects {
+                __typename
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

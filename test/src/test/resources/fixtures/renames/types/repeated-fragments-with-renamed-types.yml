@@ -1,0 +1,394 @@
+name: repeated fragments with renamed types
+enabled:
+  current: true
+  nextgen: true
+ignored:
+  # This is an edge case which we're not fixing, new engine has it fixed
+  current: true
+  nextgen: false
+overallSchema:
+  Users: |
+    type Query {
+      service(id: ID!): MyService
+    }
+
+    type MyService @renamed(from: "Service") {
+      id: ID!
+      name: String
+      dependedOn: ServiceRelationshipConnection
+      dependsOn: ServiceRelationshipConnection
+    }
+
+    type ServiceRelationshipConnection @renamed(from: "RelationshipConnection") {
+      nodes: [ServiceRelationship]
+    }
+
+    type ServiceRelationship implements Node @renamed(from: "Relationship") {
+      id: ID!
+      type: String
+      startService: MyService
+      endService: MyService
+    }
+
+    interface Node {
+      id: ID!
+    }
+underlyingSchema:
+  Users: |
+    type Query {
+      service(id: ID!): Service
+    }
+
+    type Service {
+      id: ID!
+      name: String
+      dependedOn: RelationshipConnection
+      dependsOn: RelationshipConnection
+    }
+
+    type RelationshipConnection {
+      nodes: [Relationship]
+    }
+
+    type Relationship implements Node {
+      id: ID!
+      type: String
+      startService: Service
+      endService: Service
+    }
+
+    interface Node {
+      id: ID!
+    }
+query: |
+  query($var1: ID!) {
+    service(id: $var1) {
+      __typename
+      dependedOn {
+        __typename
+        ...ServiceRelationshipsWithGrandchildren
+      }
+      dependsOn {
+        __typename
+        ...ServiceRelationshipsWithGrandchildren
+      }
+      ...BaseServiceInfo
+    }
+  }
+
+  fragment BaseServiceInfo on MyService {
+    __typename
+    id
+    name
+  }
+
+  fragment BaseServiceRelationships on ServiceRelationshipConnection {
+    __typename
+    nodes {
+      __typename
+      endService {
+        __typename
+        ...BaseServiceInfo
+      }
+      id
+      startService {
+        __typename
+        ...BaseServiceInfo
+      }
+      type
+    }
+  }
+
+  fragment ServiceInfoWithChildren on MyService {
+    __typename
+    dependedOn {
+      __typename
+      ...BaseServiceRelationships
+    }
+    dependsOn {
+      __typename
+      ...BaseServiceRelationships
+    }
+    ...BaseServiceInfo
+  }
+
+  fragment ServiceRelationshipsWithGrandchildren on ServiceRelationshipConnection {
+    __typename
+    nodes {
+      __typename
+      endService {
+        __typename
+        ...ServiceInfoWithChildren
+      }
+      id
+      startService {
+        __typename
+        ...ServiceInfoWithChildren
+      }
+      type
+    }
+  }
+variables:
+  var1: service-1
+serviceCalls:
+  current: []
+  nextgen:
+    - serviceName: Users
+      request:
+        query: |
+          query {
+            service(id: "service-1") {
+              __typename
+              dependedOn {
+                __typename
+                nodes {
+                  __typename
+                  endService {
+                    __typename
+                    dependedOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    dependsOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    id
+                    name
+                  }
+                  id
+                  startService {
+                    __typename
+                    dependedOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    dependsOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    id
+                    name
+                  }
+                  type
+                }
+              }
+              dependsOn {
+                __typename
+                nodes {
+                  __typename
+                  endService {
+                    __typename
+                    dependedOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    dependsOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    id
+                    name
+                  }
+                  id
+                  startService {
+                    __typename
+                    dependedOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    dependsOn {
+                      __typename
+                      nodes {
+                        __typename
+                        endService {
+                          __typename
+                          id
+                          name
+                        }
+                        id
+                        startService {
+                          __typename
+                          id
+                          name
+                        }
+                        type
+                      }
+                    }
+                    id
+                    name
+                  }
+                  type
+                }
+              }
+              id
+              name
+            }
+          }
+        variables: {}
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "service": {
+              "__typename": "Service",
+              "id": "service-0",
+              "name": "API Gateway",
+              "dependedOn": {
+                "__typename": "RelationshipConnection",
+                "nodes": [
+                  {
+                    "__typename": "Relationship",
+                    "id": "relationship-1",
+                    "type": "unsure",
+                    "endService": null,
+                    "startService": {
+                      "__typename": "MyService",
+                      "id": "service-1",
+                      "name": "GraphQL Gateway",
+                      "dependsOn": null,
+                      "dependedOn": null
+                    }
+                  }
+                ]
+              },
+              "dependsOn": {
+                "__typename": "RelationshipConnection",
+                "nodes": []
+              }
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "service": {
+        "__typename": "MyService",
+        "id": "service-0",
+        "name": "API Gateway",
+        "dependedOn": {
+          "__typename": "ServiceRelationshipConnection",
+          "nodes": [
+            {
+              "__typename": "ServiceRelationship",
+              "id": "relationship-1",
+              "type": "unsure",
+              "endService": null,
+              "startService": {
+                "__typename": "MyService",
+                "id": "service-1",
+                "name": "GraphQL Gateway",
+                "dependsOn": null,
+                "dependedOn": null
+              }
+            }
+          ]
+        },
+        "dependsOn": {
+          "__typename": "ServiceRelationshipConnection",
+          "nodes": []
+        }
+      }
+    },
+    "extensions": {}
+  }

@@ -113,18 +113,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename__batch_hydration__authors: __typename
-                  id
-                  batch_hydration__authors__id: id
-                }
-              }
+            issues {
+              __typename__batch_hydration__authors: __typename
+              id
+              batch_hydration__authors__id: id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -148,16 +143,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {
-                ... on User {
-                  name
-                }
-              }
+            usersByIssueIds(issueIds: ["ISSUE-1", "ISSUE-2"]) {
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -106,13 +106,9 @@ serviceCalls:
       request:
         query: |
           query MyQuery {
-            ... on Query {
-              issue {
-                ... on Issue {
-                  __typename__hydration__association: __typename
-                  hydration__association__id: id
-                }
-              }
+            issue {
+              __typename__hydration__association: __typename
+              hydration__association__id: id
             }
           }
         variables: {}
@@ -132,12 +128,8 @@ serviceCalls:
       request:
         query: |
           query MyQuery {
-            ... on Query {
-              association(filter: {name : "value"}, id: "ISSUE-1") {
-                ... on Association {
-                  nameOfAssociation
-                }
-              }
+            association(filter: {name : "value"}, id: "ISSUE-1") {
+              nameOfAssociation
             }
           }
         variables: {}

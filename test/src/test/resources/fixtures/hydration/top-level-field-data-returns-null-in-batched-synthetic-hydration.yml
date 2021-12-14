@@ -150,18 +150,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename__batch_hydration__authors: __typename
-                  batch_hydration__authors__authorIds: authorIds
-                  id
-                }
-              }
+            issues {
+              __typename__batch_hydration__authors: __typename
+              batch_hydration__authors__authorIds: authorIds
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -199,21 +194,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              users {
-                ... on UsersQuery {
-                  usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
-                    ... on User {
-                      id
-                      batch_hydration__authors__id: id
-                    }
-                  }
-                }
+            users {
+              usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
+                id
+                batch_hydration__authors__id: id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -228,21 +216,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              users {
-                ... on UsersQuery {
-                  usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
-                    ... on User {
-                      id
-                      batch_hydration__authors__id: id
-                    }
-                  }
-                }
+            users {
+              usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
+                id
+                batch_hydration__authors__id: id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

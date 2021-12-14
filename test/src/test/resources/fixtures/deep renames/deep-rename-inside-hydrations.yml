@@ -54,22 +54,18 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: UserService
       request:
         query: |
           query {
-            ... on Query {
-              users {
-                ... on User {
-                  __typename__hydration__issue: __typename
-                  hydration__issue__issueId: issueId
-                }
-              }
+            users {
+              __typename__hydration__issue: __typename
+              hydration__issue__issueId: issueId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -95,21 +91,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issueById(id: "issue-1") {
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__detail: detail {
-                    ... on IssueDetails {
-                      detailName
-                    }
-                  }
-                }
+            issueById(id: "issue-1") {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__detail: detail {
+                detailName
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -127,21 +116,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issueById(id: "issue-2") {
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__detail: detail {
-                    ... on IssueDetails {
-                      detailName
-                    }
-                  }
-                }
+            issueById(id: "issue-2") {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__detail: detail {
+                detailName
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -159,21 +141,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issueById(id: "issue-3") {
-                ... on Issue {
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__detail: detail {
-                    ... on IssueDetails {
-                      detailName
-                    }
-                  }
-                }
+            issueById(id: "issue-3") {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__detail: detail {
+                detailName
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

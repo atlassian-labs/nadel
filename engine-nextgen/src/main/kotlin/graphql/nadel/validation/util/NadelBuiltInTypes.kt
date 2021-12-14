@@ -8,7 +8,11 @@ import graphql.Scalars.GraphQLString
 import graphql.nadel.enginekt.util.AnyNamedNode
 import graphql.nadel.schema.NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION
 import graphql.nadel.schema.NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION
+import graphql.nadel.schema.NadelDirectives.HYDRATED_FROM_DIRECTIVE_DEFINITION
+import graphql.nadel.schema.NadelDirectives.HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION
 import graphql.nadel.schema.NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION
+import graphql.nadel.schema.NadelDirectives.NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION
+import graphql.nadel.schema.NadelDirectives.NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION
 import graphql.nadel.schema.NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION
 import graphql.nadel.schema.NadelDirectives.RENAMED_DIRECTIVE_DEFINITION
 
@@ -32,6 +36,12 @@ object NadelBuiltInTypes {
         NADEL_HYDRATION_ARGUMENT_DEFINITION,
         DYNAMIC_SERVICE_DIRECTIVE_DEFINITION,
         NAMESPACED_DIRECTIVE_DEFINITION,
+
+        NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION,
+        NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION,
+        HYDRATED_FROM_DIRECTIVE_DEFINITION,
+        HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION,
+
     ).map {
         it.name
     }.toSet()
