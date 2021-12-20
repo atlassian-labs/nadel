@@ -243,7 +243,10 @@ public class HydrationInputResolver {
 
         Field originalField = hydrationTransformation.getOriginalField();
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
-        ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),underlyingServiceHydration.getBatchSize());
+        ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),
+                underlyingServiceHydration.getBatchSize(),
+                null,
+                null);
 
         String topLevelFieldName = underlyingServiceHydration.getTopLevelField();
         Service service = getService(underlyingServiceHydration);
@@ -405,7 +408,10 @@ public class HydrationInputResolver {
         HydrationTransformation hydrationTransformation = hydrationTransformations.get(0);
         Field originalField = hydrationTransformation.getOriginalField();
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
-        ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),underlyingServiceHydration.getBatchSize());
+        ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),
+                underlyingServiceHydration.getBatchSize(),
+                null,
+                null);
 
         Service service = getService(underlyingServiceHydration);
 
