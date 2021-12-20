@@ -110,29 +110,27 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: test
       request:
         query: |
           query {
-            ... on Query {
-              test {
-                ... on QueryError {
-                  extensions {
-                    ... on GenericQueryErrorExtension {
-                      __typename__type_filter__statusCode: __typename
-                      errorType
-                    }
+            test {
+              ... on QueryError {
+                extensions {
+                  ... on GenericQueryErrorExtension {
+                    __typename__type_filter__statusCode: __typename
+                    errorType
                   }
                 }
-                ... on Test {
-                  id
-                }
+              }
+              ... on Test {
+                id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

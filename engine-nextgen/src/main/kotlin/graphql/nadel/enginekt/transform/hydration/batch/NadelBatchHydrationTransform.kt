@@ -62,7 +62,7 @@ internal class NadelBatchHydrationTransform(
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -77,18 +77,24 @@ internal class NadelBatchHydrationTransform(
                     field.toBuilder()
                         .clearObjectTypesNames()
                         .objectTypeNames(it)
-                        .children(transformer.transform(field.children))
                         .build()
                 },
-            artificialFields = state.instructionsByObjectTypeNames.flatMap { (objectTypeName, instructions) ->
-                NadelHydrationFieldsBuilder.makeFieldsUsedAsActorInputValues(
-                    service = service,
-                    executionBlueprint = executionBlueprint,
-                    aliasHelper = state.aliasHelper,
-                    objectTypeName = objectTypeName,
-                    instructions = instructions
-                )
-            } + makeTypeNameField(state),
+            artificialFields = state.instructionsByObjectTypeNames
+                .flatMap { (objectTypeName, instructions) ->
+                    NadelHydrationFieldsBuilder.makeFieldsUsedAsActorInputValues(
+                        service = service,
+                        executionBlueprint = executionBlueprint,
+                        aliasHelper = state.aliasHelper,
+                        objectTypeName = objectTypeName,
+                        instructions = instructions
+                    )
+                }
+                .let { fields ->
+                    when (val typeNameField = makeTypeNameField(state, field)) {
+                        null -> fields
+                        else -> fields + typeNameField
+                    }
+                },
         )
     }
 
@@ -110,10 +116,19 @@ internal class NadelBatchHydrationTransform(
         return hydrator.hydrate(state, executionBlueprint, parentNodes)
     }
 
-    private fun makeTypeNameField(state: State): ExecutableNormalizedField {
+    private fun makeTypeNameField(
+        state: State,
+        field: ExecutableNormalizedField,
+    ): ExecutableNormalizedField? {
+        val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
+        val objectTypeNames = field.objectTypeNames
+            .filter { it in typeNamesWithInstructions }
+            .takeIf { it.isNotEmpty() }
+            ?: return null
+
         return makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = state.instructionsByObjectTypeNames.keys.toList(),
+            objectTypeNames = objectTypeNames,
         )
     }
 }

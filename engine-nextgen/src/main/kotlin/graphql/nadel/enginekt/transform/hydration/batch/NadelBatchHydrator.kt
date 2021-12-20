@@ -27,7 +27,7 @@ internal class NadelBatchHydrator(
         executionBlueprint: NadelOverallExecutionBlueprint,
         parentNodes: List<JsonNode>,
     ): List<NadelResultInstruction> {
-        val parentNodesByInstruction: Map<NadelBatchHydrationFieldInstruction, List<JsonNode>> = parentNodes
+        val parentNodesByInstruction: Map<NadelBatchHydrationFieldInstruction?, List<JsonNode>> = parentNodes
             .mapNotNull { parentNode ->
                 val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
                     executionBlueprint = executionBlueprint,
@@ -52,7 +52,13 @@ internal class NadelBatchHydrator(
             }
 
         return parentNodesByInstruction.flatMap { (instruction, parentNodes) ->
-            hydrate(executionBlueprint, state, instruction, parentNodes)
+            if (instruction == null) parentNodes.map {
+                NadelResultInstruction.Set(
+                    it.resultPath + state.hydratedField.fieldName,
+                    null
+                )
+            }
+            else hydrate(executionBlueprint, state, instruction, parentNodes)
         }
     }
 
@@ -126,7 +132,7 @@ internal class NadelBatchHydrator(
 
     private fun getHydrationInstruction(
         state: State, instructions: List<NadelBatchHydrationFieldInstruction>, parentNode: JsonNode
-    ): NadelBatchHydrationFieldInstruction {
+    ): NadelBatchHydrationFieldInstruction? {
         if (state.executionContext.hooks !is NadelEngineExecutionHooks) {
             error(
                 "Cannot decide which hydration instruction should be used. " +
@@ -135,7 +141,8 @@ internal class NadelBatchHydrator(
         }
         return state.executionContext.hooks.getHydrationInstruction(
             instructions,
-            parentNode
+            parentNode,
+            state.aliasHelper
         )
     }
 }

@@ -79,32 +79,24 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: Nextgen
       request:
-        query: |-
+        query: |
           query {
-            ... on Query {
-              elements {
-                ... on ElementConnection {
+            elements {
+              __typename
+              nodes {
+                __typename
+                other {
                   __typename
-                  nodes {
-                    ... on Element {
-                      __typename
-                      other {
-                        ... on Other {
-                          __typename
-                          id
-                        }
-                      }
-                    }
-                  }
+                  id
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

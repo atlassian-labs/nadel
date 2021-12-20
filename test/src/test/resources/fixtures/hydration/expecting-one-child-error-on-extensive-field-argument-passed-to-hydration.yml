@@ -160,32 +160,21 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              board(id: 1) {
-                ... on Board {
-                  __typename__rename__cardChildren: __typename
-                  id
-                  rename__cardChildren__issueChildren: issueChildren {
-                    ... on Card {
-                      __typename__batch_hydration__assignee: __typename
-                      id
-                      batch_hydration__assignee__issue: issue {
-                        ... on Issue {
-                          assignee {
-                            ... on TestUser {
-                              accountId
-                            }
-                          }
-                        }
-                      }
-                    }
+            board(id: 1) {
+              __typename__rename__cardChildren: __typename
+              id
+              rename__cardChildren__issueChildren: issueChildren {
+                __typename__batch_hydration__assignee: __typename
+                id
+                batch_hydration__assignee__issue: issue {
+                  assignee {
+                    accountId
                   }
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -230,17 +219,12 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              users(accountIds: ["1", "2", "3"]) {
-                ... on User {
-                  accountId
-                  batch_hydration__assignee__accountId: accountId
-                }
-              }
+            users(accountIds: ["1", "2", "3"]) {
+              accountId
+              batch_hydration__assignee__accountId: accountId
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

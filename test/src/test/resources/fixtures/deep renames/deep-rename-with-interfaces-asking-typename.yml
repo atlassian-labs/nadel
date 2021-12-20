@@ -48,26 +48,21 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              names {
-                ... on Issue {
-                  __typename
-                  name
-                }
-                ... on User {
-                  __typename
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__details: details {
-                    ... on UserDetails {
-                      firstName
-                    }
-                  }
+            names {
+              ... on Issue {
+                __typename
+                name
+              }
+              ... on User {
+                __typename
+                __typename__deep_rename__name: __typename
+                deep_rename__name__details: details {
+                  firstName
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

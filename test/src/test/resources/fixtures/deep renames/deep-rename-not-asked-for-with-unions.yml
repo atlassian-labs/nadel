@@ -60,24 +60,22 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: Issues
       request:
         query: |
           query {
-            ... on Query {
-              names {
-                ... on Edible {
-                  name
-                }
-                ... on Issue {
-                  name
-                }
+            names {
+              ... on Edible {
+                name
+              }
+              ... on Issue {
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

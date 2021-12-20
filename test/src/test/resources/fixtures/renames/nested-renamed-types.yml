@@ -46,33 +46,25 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: service1
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
+            foo {
+              __typename
+              parent {
+                __typename
+                building {
                   __typename
-                  parent {
-                    ... on Foo {
-                      __typename
-                      building {
-                        ... on Building {
-                          __typename
-                          id
-                        }
-                      }
-                      id
-                    }
-                  }
+                  id
                 }
+                id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

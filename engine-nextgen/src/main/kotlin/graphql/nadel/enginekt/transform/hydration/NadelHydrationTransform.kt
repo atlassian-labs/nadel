@@ -78,7 +78,7 @@ internal class NadelHydrationTransform(
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
@@ -93,27 +93,40 @@ internal class NadelHydrationTransform(
                     field.toBuilder()
                         .clearObjectTypesNames()
                         .objectTypeNames(it)
-                        .children(transformer.transform(field.children))
                         .build()
                 },
-            artificialFields = state.instructionsByObjectTypeNames.flatMap { (typeName, instruction) ->
-                NadelHydrationFieldsBuilder.makeFieldsUsedAsActorInputValues(
-                    service = service,
-                    executionBlueprint = executionBlueprint,
-                    aliasHelper = state.aliasHelper,
-                    objectTypeName = typeName,
-                    instructions = instruction,
-                )
-            } + makeTypeNameField(state),
+            artificialFields = state.instructionsByObjectTypeNames
+                .flatMap { (typeName, instruction) ->
+                    NadelHydrationFieldsBuilder.makeFieldsUsedAsActorInputValues(
+                        service = service,
+                        executionBlueprint = executionBlueprint,
+                        aliasHelper = state.aliasHelper,
+                        objectTypeName = typeName,
+                        instructions = instruction,
+                    )
+                }
+                .let { fields ->
+                    when (val typeNameField = makeTypeNameField(state, field)) {
+                        null -> fields
+                        else -> fields + typeNameField
+                    }
+                },
         )
     }
 
     private fun makeTypeNameField(
         state: State,
-    ): ExecutableNormalizedField {
+        field: ExecutableNormalizedField,
+    ): ExecutableNormalizedField? {
+        val typeNamesWithInstructions = state.instructionsByObjectTypeNames.keys
+        val objectTypeNames = field.objectTypeNames
+            .filter { it in typeNamesWithInstructions }
+            .takeIf { it.isNotEmpty() }
+            ?: return null
+
         return makeTypeNameField(
             aliasHelper = state.aliasHelper,
-            objectTypeNames = state.instructionsByObjectTypeNames.keys.toList(),
+            objectTypeNames = objectTypeNames,
         )
     }
 
@@ -162,7 +175,8 @@ internal class NadelHydrationTransform(
             return emptyList()
         }
 
-        val instruction = getHydrationFieldInstruction(instructions, executionContext.hooks, parentNode)
+        val instruction = getHydrationFieldInstruction(state.aliasHelper, instructions, executionContext.hooks, parentNode)
+            ?: return listOf(NadelResultInstruction.Set(parentNode.resultPath + state.hydratedField.fieldName, null))
 
         val actorQueryResults = coroutineScope {
             NadelHydrationFieldsBuilder.makeActorQueries(
@@ -232,19 +246,20 @@ internal class NadelHydrationTransform(
     }
 
     private fun getHydrationFieldInstruction(
+        aliasHelper: NadelAliasHelper,
         instructions: List<NadelHydrationFieldInstruction>,
         hooks: ServiceExecutionHooks,
-        parentNode: JsonNode
-    ): NadelHydrationFieldInstruction {
+        parentNode: JsonNode,
+    ): NadelHydrationFieldInstruction? {
         return when (instructions.size) {
             1 -> instructions.single()
             else -> {
                 if (hooks is NadelEngineExecutionHooks) {
-                    hooks.getHydrationInstruction(instructions, parentNode)
+                    hooks.getHydrationInstruction(instructions, parentNode, aliasHelper)
                 } else {
                     error(
                         "Cannot decide which hydration instruction should be used. Provided ServiceExecutionHooks has " +
-                                "to be of type NadelEngineExecutionHooks"
+                            "to be of type NadelEngineExecutionHooks"
                     )
                 }
             }

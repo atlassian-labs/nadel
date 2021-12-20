@@ -82,28 +82,19 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename__deep_rename__authorId: __typename
-                  __typename__deep_rename__authorName: __typename
-                  deep_rename__authorId__authorDetails: authorDetails {
-                    ... on AuthorDetail {
-                      authorId
-                    }
-                  }
-                  deep_rename__authorName__authorDetails: authorDetails {
-                    ... on AuthorDetail {
-                      name
-                    }
-                  }
-                  id
-                }
+            issues {
+              __typename__deep_rename__authorId: __typename
+              __typename__deep_rename__authorName: __typename
+              deep_rename__authorId__authorDetails: authorDetails {
+                authorId
               }
+              deep_rename__authorName__authorDetails: authorDetails {
+                name
+              }
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

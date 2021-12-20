@@ -7,10 +7,11 @@ import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.NadelCoerceTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.util.makeFieldCoordinates
+import graphql.nadel.enginekt.util.unwrapAll
 import graphql.normalized.ExecutableNormalizedField
-import graphql.schema.FieldCoordinates
 import graphql.schema.GraphQLScalarType
-import graphql.schema.GraphQLTypeUtil
+import graphql.schema.GraphQLType
 
 /**
  * This transform ensures that scalar values are coerced according to the scalar type used in the overall schema.
@@ -70,49 +71,42 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
-        overallField: ExecutableNormalizedField
+        overallField: ExecutableNormalizedField,
     ): State? {
         val schema = executionBlueprint.schema
 
-        val unwrappedTypes = overallField.objectTypeNames
+        val distinctUnwrappedTypes = overallField.objectTypeNames
             .asSequence()
             .mapNotNull {
                 schema.getFieldDefinition(
-                    FieldCoordinates.coordinates(
+                    makeFieldCoordinates(
                         it,
                         overallField.fieldName
-                    )
+                    ),
                 )
             }
             .map { it.type }
-            .map { GraphQLTypeUtil.unwrapAll(it) }
-            .toList()
-
-        val distinctTypes = unwrappedTypes.distinct().count()
+            .map(GraphQLType::unwrapAll)
+            .toSet()
 
         // In the case of scalars, there should only be 1 unwrapped type.
         // Object types could result in more than 1 distinct type, in the case of different interface implementations
         // having different concrete types, but this transform only cares about scalar types.
-        if (distinctTypes != 1) {
-            return null
+        val singleType = distinctUnwrappedTypes.singleOrNull()
+
+        return when (singleType) {
+            is GraphQLScalarType -> State(singleType)
+            else -> null
         }
-
-        val type = unwrappedTypes.first()
-
-        if (GraphQLTypeUtil.isScalar(type)) {
-            return State(type as GraphQLScalarType)
-        }
-
-        return null
     }
 
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
-        transformer: NadelQueryTransformer.Continuation,
+        transformer: NadelQueryTransformer,
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
-        state: State
+        state: State,
     ): NadelTransformFieldResult {
         return NadelTransformFieldResult.unmodified(field)
     }
@@ -124,12 +118,12 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
-        state: State
+        state: State,
     ): List<NadelResultInstruction> {
         return NadelTransformUtil.createSetInstructions(
             underlyingParentField,
             result,
-            overallField
+            overallField,
         ) { value ->
             state.fieldType.coercing.parseValue(value)
         }

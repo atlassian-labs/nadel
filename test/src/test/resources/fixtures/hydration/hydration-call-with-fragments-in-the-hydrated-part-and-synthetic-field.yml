@@ -213,21 +213,14 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              userQuery {
-                ... on UserQuery {
-                  usersByIds(id: ["USER-1"]) {
-                    ... on User {
-                      id
-                      name
-                    }
-                  }
-                }
+            userQuery {
+              usersByIds(id: ["USER-1"]) {
+                id
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -247,22 +240,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename__batch_hydration__authors: __typename
-                  batch_hydration__authors__authorDetails: authorDetails {
-                    ... on AuthorDetail {
-                      authorId
-                    }
-                  }
-                  id
-                }
+            issues {
+              __typename__batch_hydration__authors: __typename
+              batch_hydration__authors__authorDetails: authorDetails {
+                authorId
               }
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -288,22 +274,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              userQuery {
-                ... on UserQuery {
-                  usersByIds(id: ["USER-1", "USER-2"]) {
-                    ... on User {
-                      id
-                      batch_hydration__authors__id: id
-                      name
-                    }
-                  }
-                }
+            userQuery {
+              usersByIds(id: ["USER-1", "USER-2"]) {
+                id
+                batch_hydration__authors__id: id
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -25,7 +25,7 @@ query: |
       name
     }
   }
-variables: { }
+variables: {}
 serviceCalls:
   current:
     - serviceName: MyService
@@ -36,7 +36,7 @@ serviceCalls:
               name
             }
           }
-        variables: { }
+        variables: {}
         operationName: nadel_2_MyService
       # language=JSON
       response: |-
@@ -53,16 +53,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
-                ... on ObjectUnderlying {
-                  name
-                }
-              }
+            rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
+              name
             }
           }
-        variables: { }
-        operationName: null
+        variables: {}
       # language=JSON
       response: |-
         {

@@ -85,18 +85,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              node(id: "pull-request:id-123") {
-                ... on PullRequest {
-                  __typename
-                  description
-                  id
-                }
+            node(id: "pull-request:id-123") {
+              ... on PullRequest {
+                __typename
+                description
+                id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

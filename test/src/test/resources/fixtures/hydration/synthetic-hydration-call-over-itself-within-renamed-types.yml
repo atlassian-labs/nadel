@@ -191,27 +191,18 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              tests {
-                ... on TestQuery {
-                  testing {
-                    ... on Testing {
-                      movies {
-                        ... on Movie {
-                          __typename__batch_hydration__characters: __typename
-                          batch_hydration__characters__characterIds: characterIds
-                          id
-                          name
-                        }
-                      }
-                    }
-                  }
+            tests {
+              testing {
+                movies {
+                  __typename__batch_hydration__characters: __typename
+                  batch_hydration__characters__characterIds: characterIds
+                  id
+                  name
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -248,22 +239,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              tests {
-                ... on TestQuery {
-                  characters(ids: ["C2", "C3"]) {
-                    ... on Character {
-                      id
-                      batch_hydration__characters__id: id
-                      name
-                    }
-                  }
-                }
+            tests {
+              characters(ids: ["C2", "C3"]) {
+                id
+                batch_hydration__characters__id: id
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -289,22 +273,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              tests {
-                ... on TestQuery {
-                  characters(ids: ["C1", "C2", "C1"]) {
-                    ... on Character {
-                      id
-                      batch_hydration__characters__id: id
-                      name
-                    }
-                  }
-                }
+            tests {
+              characters(ids: ["C1", "C2", "C1"]) {
+                id
+                batch_hydration__characters__id: id
+                name
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -245,18 +245,16 @@ serviceCalls:
       request:
         query: |
           query petQ {
-            ... on Query {
-              pets(isLoyal: true) {
-                ... on Cat {
-                  __typename__hydration__owners: __typename
-                  name
-                  hydration__owners__ownerIds: ownerIds
-                }
-                ... on Dog {
-                  __typename__hydration__owners: __typename
-                  name
-                  hydration__owners__ownerIds: ownerIds
-                }
+            pets(isLoyal: true) {
+              ... on Cat {
+                __typename__hydration__owners: __typename
+                name
+                hydration__owners__ownerIds: ownerIds
+              }
+              ... on Dog {
+                __typename__hydration__owners: __typename
+                name
+                hydration__owners__ownerIds: ownerIds
               }
             }
           }
@@ -290,16 +288,14 @@ serviceCalls:
       request:
         query: |
           query petQ {
-            ... on Query {
-              ownerById(id: "dearly") {
-                ... on CaringOwner {
-                  givesPats
-                  name
-                }
-                ... on CruelOwner {
-                  givesSmacks
-                  name
-                }
+            ownerById(id: "dearly") {
+              ... on CaringOwner {
+                givesPats
+                name
+              }
+              ... on CruelOwner {
+                givesSmacks
+                name
               }
             }
           }
@@ -320,16 +316,14 @@ serviceCalls:
       request:
         query: |
           query petQ {
-            ... on Query {
-              ownerById(id: "cruella") {
-                ... on CaringOwner {
-                  givesPats
-                  name
-                }
-                ... on CruelOwner {
-                  givesSmacks
-                  name
-                }
+            ownerById(id: "cruella") {
+              ... on CaringOwner {
+                givesPats
+                name
+              }
+              ... on CruelOwner {
+                givesSmacks
+                name
               }
             }
           }

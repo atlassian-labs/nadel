@@ -205,6 +205,7 @@ public class NadelDirectives {
                 .name("hydratedFrom")
                 .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
                 .description(createDescription("This allows you to hydrate new values into fields"))
+                .repeatable(true)
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("arguments")

@@ -43,12 +43,9 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              foo
-            }
+            foo
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

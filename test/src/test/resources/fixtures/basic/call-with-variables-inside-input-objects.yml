@@ -49,9 +49,7 @@ serviceCalls:
       request:
         query: |
           query myQuery {
-            ... on Query {
-              hello(arg: {})
-            }
+            hello(arg: {})
           }
         variables: {}
         operationName: myQuery

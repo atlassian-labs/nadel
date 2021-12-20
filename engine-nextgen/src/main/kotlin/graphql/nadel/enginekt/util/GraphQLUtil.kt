@@ -312,13 +312,25 @@ fun newServiceExecutionResult(
 }
 
 fun newExecutionResult(
-    error: GraphQLError,
     data: Any? = null,
+    error: GraphQLError,
 ): ExecutionResultImpl {
     return newExecutionResult()
         .data(data)
         .addError(error)
         .build()
+}
+
+fun newExecutionErrorResult(
+    field: ExecutableNormalizedField,
+    error: GraphQLError,
+): ExecutionResultImpl {
+    return newExecutionResult(
+        data = mutableMapOf(
+            field.resultKey to null,
+        ),
+        error = error,
+    )
 }
 
 fun ExecutableNormalizedField.getOperationKind(

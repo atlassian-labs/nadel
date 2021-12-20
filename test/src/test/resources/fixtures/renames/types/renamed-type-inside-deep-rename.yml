@@ -48,36 +48,26 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: IssueService
       request:
         query: |
           query {
-            ... on Query {
-              issueById(id: "issue-1") {
-                ... on Issue {
-                  __typename__deep_rename__assignee: __typename
-                  deep_rename__assignee__details: details {
-                    ... on Details {
-                      assignee {
-                        ... on User {
-                          __typename
-                          friends {
-                            ... on User {
-                              __typename
-                            }
-                          }
-                          name
-                        }
-                      }
-                    }
+            issueById(id: "issue-1") {
+              __typename__deep_rename__assignee: __typename
+              deep_rename__assignee__details: details {
+                assignee {
+                  __typename
+                  friends {
+                    __typename
                   }
+                  name
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -1,7 +1,7 @@
 name: __typename is passed on namespaced fields
 enabled:
-  nextgen: true
   current: true
+  nextgen: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -84,24 +84,17 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue {
-                ... on IssueQuery {
-                  __typename
-                  aliasTypename: __typename
-                  getIssue {
-                    ... on Issue {
-                      __typename
-                      aliasTypename: __typename
-                      text
-                    }
-                  }
-                }
+            issue {
+              __typename
+              aliasTypename: __typename
+              getIssue {
+                __typename
+                aliasTypename: __typename
+                text
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

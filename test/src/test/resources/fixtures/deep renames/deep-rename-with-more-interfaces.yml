@@ -64,39 +64,30 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              names {
-                ... on Edible {
-                  name
-                }
-                ... on Issue {
-                  name
-                }
-                ... on Troll {
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__firstEat: firstEat {
-                    ... on EatLog {
-                      item {
-                        ... on Edible {
-                          name
-                        }
-                      }
-                    }
+            names {
+              ... on Edible {
+                name
+              }
+              ... on Issue {
+                name
+              }
+              ... on Troll {
+                __typename__deep_rename__name: __typename
+                deep_rename__name__firstEat: firstEat {
+                  item {
+                    name
                   }
                 }
-                ... on User {
-                  __typename__deep_rename__name: __typename
-                  deep_rename__name__details: details {
-                    ... on UserDetails {
-                      firstName
-                    }
-                  }
+              }
+              ... on User {
+                __typename__deep_rename__name: __typename
+                deep_rename__name__details: details {
+                  firstName
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

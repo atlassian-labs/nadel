@@ -18,25 +18,6 @@ query: |
   }
 variables: {}
 serviceCalls:
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            ... on Query {
-              aFieldAliased: aField
-            }
-          }
-        variables: {}
-        operationName: null
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "aFieldAliased": "1000"
-          },
-          "extensions": {}
-        }
   current:
     - serviceName: service
       request:
@@ -46,6 +27,22 @@ serviceCalls:
           }
         variables: {}
         operationName: nadel_2_service
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "aFieldAliased": "1000"
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: service
+      request:
+        query: |
+          query {
+            aFieldAliased: aField
+          }
+        variables: {}
       # language=JSON
       response: |-
         {

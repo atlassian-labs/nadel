@@ -114,22 +114,17 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issue(id: "1") {
-                ... on Issue {
-                  title
-                  hydration__issueAuthor__author: author {
-                    ... on ProductUser {
-                      userId
-                    }
-                  }
-                  __typename__hydration__issueAuthor: __typename
+            issue(id: "1") {
+              __typename__hydration__issueAuthor: __typename
+              hydration__issueAuthor__author: author {
+                ... on ProductUser {
+                  userId
                 }
               }
+              title
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -148,16 +143,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              user(id: "1001") {
-                ... on User {
-                  name
-                }
-              }
+            user(id: "1001") {
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

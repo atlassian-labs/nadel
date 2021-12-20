@@ -91,22 +91,15 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              issues {
-                ... on Issue {
-                  __typename__batch_hydration__authors: __typename
-                  batch_hydration__authors__authors: authors {
-                    ... on UserRef {
-                      id
-                    }
-                  }
-                  id
-                }
+            issues {
+              __typename__batch_hydration__authors: __typename
+              batch_hydration__authors__authors: authors {
+                id
               }
+              id
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

@@ -102,27 +102,18 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              foo {
-                ... on Foo {
-                  __typename__deep_rename__renamedField: __typename
-                  __typename__hydration__details: __typename
-                  deep_rename__renamedField__issue: issue {
-                    ... on Issue {
-                      field
-                    }
-                  }
-                  hydration__details__issue: issue {
-                    ... on Issue {
-                      fooId
-                    }
-                  }
-                }
+            foo {
+              __typename__deep_rename__renamedField: __typename
+              __typename__hydration__details: __typename
+              deep_rename__renamedField__issue: issue {
+                field
+              }
+              hydration__details__issue: issue {
+                fooId
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {
@@ -144,16 +135,11 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              detail(detailId: "ID") {
-                ... on Detail {
-                  name
-                }
-              }
+            detail(detailId: "ID") {
+              name
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

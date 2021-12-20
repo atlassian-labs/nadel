@@ -110,37 +110,24 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              boardScope {
-                ... on BoardScope {
-                  board {
-                    ... on Board {
-                      __typename__rename__cardChildren: __typename
-                      rename__cardChildren__issueChildren: issueChildren {
-                        ... on Card {
-                          __typename__deep_rename__key: __typename
-                          __typename__deep_rename__summary: __typename
-                          id
-                          deep_rename__key__issue: issue {
-                            ... on Issue {
-                              key
-                            }
-                          }
-                          deep_rename__summary__issue: issue {
-                            ... on Issue {
-                              summary
-                            }
-                          }
-                        }
-                      }
-                    }
+            boardScope {
+              board {
+                __typename__rename__cardChildren: __typename
+                rename__cardChildren__issueChildren: issueChildren {
+                  __typename__deep_rename__key: __typename
+                  __typename__deep_rename__summary: __typename
+                  id
+                  deep_rename__key__issue: issue {
+                    key
+                  }
+                  deep_rename__summary__issue: issue {
+                    summary
                   }
                 }
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

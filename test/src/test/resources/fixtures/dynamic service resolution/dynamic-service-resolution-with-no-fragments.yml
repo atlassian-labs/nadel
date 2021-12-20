@@ -14,15 +14,15 @@ overallSchema:
       id: ID!
     }
   RepoService: |
-     type PullRequest implements Node {
-          id: ID!
-          description: String
-     }
+    type PullRequest implements Node {
+         id: ID!
+         description: String
+    }
   IssueService: |
-     type Issue implements Node {
-          id: ID!
-          issueKey: String
-     }
+    type Issue implements Node {
+         id: ID!
+         issueKey: String
+    }
 underlyingSchema:
   Common: |
     type Query {
@@ -91,16 +91,13 @@ serviceCalls:
       request:
         query: |
           query {
-            ... on Query {
-              node(id: "pull-request:id-123") {
-                ... on PullRequest {
-                  id
-                }
+            node(id: "pull-request:id-123") {
+              ... on PullRequest {
+                id
               }
             }
           }
         variables: {}
-        operationName: null
       # language=JSON
       response: |-
         {

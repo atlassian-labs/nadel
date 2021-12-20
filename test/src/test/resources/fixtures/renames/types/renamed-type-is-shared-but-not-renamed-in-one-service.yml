@@ -38,18 +38,15 @@ query: |
   }
 variables: {}
 serviceCalls:
+  current: []
   nextgen:
     - serviceName: NextgenIssues
       request:
         query: |
           query TestyMctest {
-            ... on Query {
-              fastIssue(id: "ISSUE-1") {
-                ... on JiraIssue {
-                  type: __typename
-                  id
-                }
-              }
+            fastIssue(id: "ISSUE-1") {
+              type: __typename
+              id
             }
           }
         variables: {}
