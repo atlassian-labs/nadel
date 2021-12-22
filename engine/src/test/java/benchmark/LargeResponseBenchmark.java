@@ -43,8 +43,6 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class LargeResponseBenchmark {
-
-
     @State(Scope.Benchmark)
     public static class NadelInstance {
         Nadel nadel;
@@ -94,7 +92,7 @@ public class LargeResponseBenchmark {
     @Benchmark
     @Warmup(iterations = 2)
     @Measurement(iterations = 3, time = 10)
-    @Threads(1)
+    @Threads(8)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public ExecutionResult benchMarkAvgTime(NadelInstance nadelInstance) throws ExecutionException, InterruptedException {
@@ -103,9 +101,7 @@ public class LargeResponseBenchmark {
                 .build();
         ExecutionResult executionResult = nadelInstance.nadel.execute(nadelExecutionInput).get();
         Assert.assertTrue(executionResult.getErrors().size() == 0);
-//        System.out.println("data:" +executionResult.getData());
+        // System.out.println("data:" +executionResult.getData());
         return executionResult;
     }
-
-
 }
