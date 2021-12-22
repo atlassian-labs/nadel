@@ -12,11 +12,13 @@ public class NadelExecutionHints {
         this.transformsOnHydrationFields = builder.transformsOnHydrationFields;
         this.legacyOperationNames = builder.legacyOperationNames;
         this.newJsonNodeTraversal = builder.newJsonNodeTraversal;
+        this.asyncResultTransform = builder.asyncResultTransform;
     }
 
     private final LegacyOperationNamesHint legacyOperationNames;
     private final boolean transformsOnHydrationFields;
     private final boolean newJsonNodeTraversal;
+    private final boolean asyncResultTransform;
 
     /**
      * Flag to determine whether nextgen will generate the traditional nadel_2_service_opName
@@ -45,6 +47,13 @@ public class NadelExecutionHints {
     }
 
     /**
+     * Flag to use faster async result transform. Flagged due to concerns.
+     */
+    public boolean getAsyncResultTransform() {
+        return asyncResultTransform;
+    }
+
+    /**
      * Returns a builder with the same field values as this object.
      * <p>
      * This is useful for transforming the object.
@@ -67,6 +76,7 @@ public class NadelExecutionHints {
     public static class Builder {
         private boolean transformsOnHydrationFields;
         private boolean newJsonNodeTraversal;
+        private boolean asyncResultTransform;
         private LegacyOperationNamesHint legacyOperationNames = service -> false;
 
         private Builder() {
@@ -86,6 +96,14 @@ public class NadelExecutionHints {
          */
         public Builder newJsonNodeTraversal(boolean flag) {
             this.newJsonNodeTraversal = flag;
+            return this;
+        }
+
+        /**
+         * @see NadelExecutionHints#getAsyncResultTransform()
+         */
+        public Builder asyncResultTransform(boolean flag) {
+            this.asyncResultTransform = flag;
             return this;
         }
 
