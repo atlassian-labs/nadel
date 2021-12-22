@@ -7,6 +7,7 @@ import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformerJavaCompat
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.normalized.ExecutableNormalizedField
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.future.asDeferred
@@ -102,6 +103,7 @@ interface NadelTransformJavaCompat<State : Any> {
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: State,
+                    nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return compat.getResultInstructions(
                         executionContext = executionContext,

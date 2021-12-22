@@ -6,6 +6,7 @@ import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.foldWhileNotNull
 
+@Deprecated("Start moving to JsonNodes for performance reasons")
 object JsonNodeExtractor {
     /**
      * Extracts the nodes at the given query selection path.
@@ -107,7 +108,7 @@ object JsonNodeExtractor {
     }
 }
 
-private class IllegalNodeTypeException private constructor(message: String) : RuntimeException(message) {
+class IllegalNodeTypeException private constructor(message: String) : RuntimeException(message) {
     companion object {
         operator fun invoke(node: JsonNode): IllegalNodeTypeException {
             val nodeType = node.value?.javaClass?.name ?: "null"

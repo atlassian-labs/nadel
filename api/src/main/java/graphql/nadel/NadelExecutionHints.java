@@ -11,10 +11,14 @@ public class NadelExecutionHints {
     private NadelExecutionHints(Builder builder) {
         this.transformsOnHydrationFields = builder.transformsOnHydrationFields;
         this.legacyOperationNames = builder.legacyOperationNames;
+        this.newJsonNodeTraversal = builder.newJsonNodeTraversal;
+        this.asyncResultTransform = builder.asyncResultTransform;
     }
 
     private final LegacyOperationNamesHint legacyOperationNames;
     private final boolean transformsOnHydrationFields;
+    private final boolean newJsonNodeTraversal;
+    private final boolean asyncResultTransform;
 
     /**
      * Flag to determine whether nextgen will generate the traditional nadel_2_service_opName
@@ -33,6 +37,20 @@ public class NadelExecutionHints {
      */
     public boolean getTransformsOnHydrationFields() {
         return transformsOnHydrationFields;
+    }
+
+    /**
+     * Flag to use JsonNodes with traversal caching over the slower but battle-tested JsonNodeExtractor.
+     */
+    public boolean getNewJsonNodeTraversal() {
+        return newJsonNodeTraversal;
+    }
+
+    /**
+     * Flag to use faster async result transform. Flagged due to concerns.
+     */
+    public boolean getAsyncResultTransform() {
+        return asyncResultTransform;
     }
 
     /**
@@ -57,6 +75,8 @@ public class NadelExecutionHints {
 
     public static class Builder {
         private boolean transformsOnHydrationFields;
+        private boolean newJsonNodeTraversal;
+        private boolean asyncResultTransform;
         private LegacyOperationNamesHint legacyOperationNames = service -> false;
 
         private Builder() {
@@ -68,6 +88,22 @@ public class NadelExecutionHints {
 
         public Builder transformsOnHydrationFields(boolean flag) {
             this.transformsOnHydrationFields = flag;
+            return this;
+        }
+
+        /**
+         * @see NadelExecutionHints#getNewJsonNodeTraversal()
+         */
+        public Builder newJsonNodeTraversal(boolean flag) {
+            this.newJsonNodeTraversal = flag;
+            return this;
+        }
+
+        /**
+         * @see NadelExecutionHints#getAsyncResultTransform()
+         */
+        public Builder asyncResultTransform(boolean flag) {
+            this.asyncResultTransform = flag;
             return this;
         }
 

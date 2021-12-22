@@ -10,6 +10,7 @@ import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
@@ -66,6 +67,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: Any,
+        nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

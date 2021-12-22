@@ -10,6 +10,7 @@ import graphql.nadel.enginekt.transform.NadelServiceTypeFilterTransform.State
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.resolveObjectTypes
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
@@ -176,6 +177,7 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
+        nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

@@ -91,7 +91,9 @@ public class LargeRenamedResponseBenchmark {
                             (Map<String, Object>) deepClone(ktResponseMap.get("data"))
                     );
                 } else {
-                    result = new ServiceExecutionResult((Map<String, Object>) responseMap.get("data"));
+                    result = new ServiceExecutionResult(
+                            (Map<String, Object>) deepClone(responseMap.get("data"))
+                    );
                 }
                 return CompletableFuture.completedFuture(result);
             };
@@ -178,7 +180,7 @@ public class LargeRenamedResponseBenchmark {
 
     @Benchmark
     @Warmup(iterations = 2)
-    @Measurement(iterations = 3, time = 10)
+    @Measurement(iterations = 4, time = 10)
     @Threads(8)
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
