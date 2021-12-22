@@ -12,8 +12,8 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
+import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 

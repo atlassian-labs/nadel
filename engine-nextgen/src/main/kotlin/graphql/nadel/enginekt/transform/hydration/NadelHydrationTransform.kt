@@ -13,7 +13,6 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
-import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.getInstructionsForNode
@@ -187,12 +186,19 @@ internal class NadelHydrationTransform(
                 parentNode = parentNode,
             ).map { actorQuery ->
                 async {
+                    val hydrationSourceService =
+                        executionBlueprint.getServiceOwning(instruction.location)
                     engine.executeHydration(
                         service = instruction.actorService,
                         topLevelField = actorQuery,
                         pathToActorField = instruction.queryPathToActorField,
                         executionContext = executionContext,
-                        serviceHydrationDetails = ServiceExecutionHydrationDetails(instruction.timeout, 1)
+                        serviceHydrationDetails = ServiceExecutionHydrationDetails(
+                            instruction.timeout,
+                            1,
+                            hydrationSourceService,
+                            instruction.location
+                        )
                     )
                 }
             }.awaitAll()
