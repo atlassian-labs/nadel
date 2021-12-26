@@ -23,7 +23,7 @@ class ServiceExecutionParametersTest extends Specification {
         def variables = [variables: "okPresent"]
         def executionId = ExecutionId.generate()
         def cacheControl = CacheControl.newCacheControl()
-        def hydrationDetails = new ServiceExecutionHydrationDetails(10,50, sourceService, coords)
+        def hydrationDetails = new ServiceExecutionHydrationDetails(10, 50, 200, 49, sourceService, coords)
 
         when:
         def parameters = ServiceExecutionParameters.newServiceExecutionParameters()
@@ -45,6 +45,8 @@ class ServiceExecutionParametersTest extends Specification {
         parameters.hydrationCall
         parameters.hydrationDetails.getTimeout() == 10
         parameters.hydrationDetails.getBatchSize() == 50
+        parameters.hydrationDetails.getCountOfObjectsToBeHydrated() == 49
+        parameters.hydrationDetails.getTotalObjectsToBeHydrated() == 200
         parameters.hydrationDetails.getHydrationSourceService() == sourceService
         parameters.hydrationDetails.getHydrationSourceField() == coords
     }

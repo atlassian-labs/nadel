@@ -12,6 +12,7 @@ import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationInput
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationObjectIdFieldBuilder.makeObjectIdField
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
+import graphql.nadel.enginekt.util.CountedBox
 import graphql.nadel.enginekt.util.deepClone
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
@@ -22,18 +23,25 @@ internal object NadelHydrationFieldsBuilder {
         aliasHelper: NadelAliasHelper,
         fieldToHydrate: ExecutableNormalizedField,
         parentNode: JsonNode,
-    ): List<ExecutableNormalizedField> {
+    ): List<CountedBox<ExecutableNormalizedField>> {
         return NadelHydrationInputBuilder.getInputValues(
             instruction = instruction,
             aliasHelper = aliasHelper,
             fieldToHydrate = fieldToHydrate,
             parentNode = parentNode,
-        ).map { args ->
-            makeActorQueries(
+        ).map { boxedArgs ->
+            var counter = 0
+            val args = boxedArgs.mapValues {
+                val hydrationBox = it.value
+                counter += hydrationBox.count
+                hydrationBox.boxedObject
+            }
+            val executableField = makeActorQueries(
                 instruction = instruction,
                 fieldArguments = args,
                 fieldChildren = deepClone(fields = fieldToHydrate.children),
             )
+            CountedBox(executableField,counter)
         }
     }
 
@@ -43,8 +51,8 @@ internal object NadelHydrationFieldsBuilder {
         aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
-    ): List<ExecutableNormalizedField> {
-        val argBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
+    ): List<CountedBox<ExecutableNormalizedField>> {
+        val boxedArgBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
             instruction = instruction,
             aliasHelper = aliasHelper,
             hydrationField = hydratedField,
@@ -58,12 +66,19 @@ internal object NadelHydrationFieldsBuilder {
             }
         }
 
-        return argBatches.map { argBatch ->
-            makeActorQueries(
+        return boxedArgBatches.map { boxedArg ->
+            var counter = 0
+            val argBatch = boxedArg.mapValues {
+                counter += it.value.count
+                it.value.boxedObject
+            }
+
+            val executableNormalizedField = makeActorQueries(
                 instruction = instruction,
                 fieldArguments = argBatch.mapKeys { (inputDef: NadelHydrationActorInputDef) -> inputDef.name },
                 fieldChildren = fieldChildren,
             )
+            CountedBox(executableNormalizedField,counter)
         }
     }
 

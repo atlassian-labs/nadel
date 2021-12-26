@@ -180,13 +180,17 @@ internal class NadelHydrationTransform(
             ?: return listOf(NadelResultInstruction.Set(parentNode.resultPath + state.hydratedField.fieldName, null))
 
         val actorQueryResults = coroutineScope {
-            NadelHydrationFieldsBuilder.makeActorQueries(
+            val listOfBoxQueries = NadelHydrationFieldsBuilder.makeActorQueries(
                 instruction = instruction,
                 aliasHelper = state.aliasHelper,
                 fieldToHydrate = fieldToHydrate,
                 parentNode = parentNode,
-            ).map { actorQuery ->
+            )
+            val totalObjectsToBeHydrated = listOfBoxQueries.sumOf { it.count  }
+            listOfBoxQueries.map { boxedActorQuery ->
                 async {
+                    val actorQuery = boxedActorQuery.boxedObject
+                    val countOfObjectsToBeHydrated = boxedActorQuery.count
                     val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)
                     engine.executeHydration(
                         service = instruction.actorService,
@@ -196,6 +200,8 @@ internal class NadelHydrationTransform(
                         serviceHydrationDetails = ServiceExecutionHydrationDetails(
                             instruction.timeout,
                             1,
+                            totalObjectsToBeHydrated,
+                            countOfObjectsToBeHydrated,
                             hydrationSourceService,
                             instruction.location
                         )

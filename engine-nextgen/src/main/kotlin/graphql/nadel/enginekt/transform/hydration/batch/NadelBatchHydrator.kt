@@ -106,10 +106,14 @@ internal class NadelBatchHydrator(
             parentNodes = parentNodes,
         )
 
+        val totalObjectsToBeHydrated = actorQueries.sumOf { it.count  }
+
         return coroutineScope {
             actorQueries
-                .map { actorQuery ->
+                .map { boxedActorQuery ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
+                        val actorQuery = boxedActorQuery.boxedObject
+                        val countOfObjectsToBeHydrated = boxedActorQuery.count
                         val hydrationSourceService =
                             executionBlueprint.getServiceOwning(instruction.location)
                         engine.executeHydration(
@@ -120,6 +124,8 @@ internal class NadelBatchHydrator(
                             serviceHydrationDetails = ServiceExecutionHydrationDetails(
                                 instruction.timeout,
                                 instruction.batchSize,
+                                totalObjectsToBeHydrated,
+                                countOfObjectsToBeHydrated,
                                 hydrationSourceService,
                                 instruction.location
                             )

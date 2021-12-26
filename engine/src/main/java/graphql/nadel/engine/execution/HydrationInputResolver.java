@@ -5,32 +5,15 @@ import graphql.execution.Async;
 import graphql.execution.ExecutionContext;
 import graphql.execution.ExecutionId;
 import graphql.execution.ResultPath;
-import graphql.language.Argument;
-import graphql.language.ArrayValue;
-import graphql.language.Field;
-import graphql.language.FieldDefinition;
-import graphql.language.NullValue;
-import graphql.language.SelectionSet;
-import graphql.language.StringValue;
-import graphql.language.Value;
+import graphql.language.*;
 import graphql.nadel.OperationKind;
 import graphql.nadel.Service;
 import graphql.nadel.ServiceExecutionHydrationDetails;
-import graphql.nadel.dsl.ExtendedFieldDefinition;
-import graphql.nadel.dsl.NodeId;
-import graphql.nadel.dsl.RemoteArgumentDefinition;
-import graphql.nadel.dsl.RemoteArgumentSource;
-import graphql.nadel.dsl.UnderlyingServiceHydration;
+import graphql.nadel.dsl.*;
 import graphql.nadel.engine.NadelContext;
 import graphql.nadel.engine.execution.transformation.FieldTransformation;
 import graphql.nadel.engine.execution.transformation.HydrationTransformation;
-import graphql.nadel.engine.result.ElapsedTime;
-import graphql.nadel.engine.result.ExecutionResultNode;
-import graphql.nadel.engine.result.LeafExecutionResultNode;
-import graphql.nadel.engine.result.ListExecutionResultNode;
-import graphql.nadel.engine.result.ObjectExecutionResultNode;
-import graphql.nadel.engine.result.ResultComplexityAggregator;
-import graphql.nadel.engine.result.RootExecutionResultNode;
+import graphql.nadel.engine.result.*;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.normalized.NormalizedQueryField;
 import graphql.nadel.util.FpKit;
@@ -41,29 +24,17 @@ import graphql.schema.GraphQLSchema;
 import graphql.util.NodeMultiZipper;
 import graphql.util.NodeZipper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
 import static graphql.language.Field.newField;
 import static graphql.language.SelectionSet.newSelectionSet;
-import static graphql.nadel.engine.execution.StrategyUtil.changeFieldIdsInResultNode;
-import static graphql.nadel.engine.execution.StrategyUtil.copyFieldInformation;
-import static graphql.nadel.engine.execution.StrategyUtil.getHydrationInputNodes;
-import static graphql.nadel.engine.execution.StrategyUtil.groupNodesIntoBatchesByField;
+import static graphql.nadel.engine.execution.StrategyUtil.*;
 import static graphql.nadel.engine.result.ResultNodeAdapter.RESULT_NODE_ADAPTER;
-import static graphql.nadel.util.FpKit.filter;
-import static graphql.nadel.util.FpKit.findOneOrNull;
-import static graphql.nadel.util.FpKit.flatList;
-import static graphql.nadel.util.FpKit.map;
-import static graphql.schema.GraphQLTypeUtil.isList;
-import static graphql.schema.GraphQLTypeUtil.unwrapAll;
-import static graphql.schema.GraphQLTypeUtil.unwrapNonNull;
+import static graphql.nadel.util.FpKit.*;
+import static graphql.schema.GraphQLTypeUtil.*;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
@@ -245,6 +216,7 @@ public class HydrationInputResolver {
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
         ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),
                 underlyingServiceHydration.getBatchSize(),
+                -1, -1,
                 null,
                 null);
 
@@ -410,7 +382,7 @@ public class HydrationInputResolver {
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
         ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),
                 underlyingServiceHydration.getBatchSize(),
-                null,
+                -1, -1, null,
                 null);
 
         Service service = getService(underlyingServiceHydration);
