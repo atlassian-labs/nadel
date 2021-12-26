@@ -32,9 +32,8 @@ internal object NadelHydrationFieldsBuilder {
         ).map { boxedArgs ->
             var counter = 0
             val args = boxedArgs.mapValues {
-                val hydrationBox = it.value
-                counter += hydrationBox.count
-                hydrationBox.boxedObject
+                counter += it.value.count
+                it.value.boxedObject
             }
             val executableField = makeActorQueries(
                 instruction = instruction,
