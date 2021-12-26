@@ -245,7 +245,8 @@ public class HydrationInputResolver {
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
         ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),
                 underlyingServiceHydration.getBatchSize(),
-                -1, -1,
+                -1,
+                -1,
                 null,
                 null);
 
@@ -411,7 +412,9 @@ public class HydrationInputResolver {
         UnderlyingServiceHydration underlyingServiceHydration = hydrationTransformation.getUnderlyingServiceHydration();
         ServiceExecutionHydrationDetails hydrationDetails = new ServiceExecutionHydrationDetails(underlyingServiceHydration.getTimeout(),
                 underlyingServiceHydration.getBatchSize(),
-                -1, -1, null,
+                -1,
+                -1,
+                null,
                 null);
 
         Service service = getService(underlyingServiceHydration);
