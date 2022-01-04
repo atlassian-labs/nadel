@@ -13,7 +13,6 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
 import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
-import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.NadelTransformUtil.makeTypeNameField
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.getInstructionsForNode
@@ -24,6 +23,7 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toBuilder
@@ -139,9 +139,9 @@ internal class NadelHydrationTransform(
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
+        nodes: JsonNodes,
     ): List<NadelResultInstruction> {
-        val parentNodes = JsonNodeExtractor.getNodesAt(
-            data = result.data ?: return emptyList(),
+        val parentNodes = nodes.getNodesAt(
             queryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root,
             flatten = true,
         )
@@ -187,12 +187,18 @@ internal class NadelHydrationTransform(
                 parentNode = parentNode,
             ).map { actorQuery ->
                 async {
+                    val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)
                     engine.executeHydration(
                         service = instruction.actorService,
                         topLevelField = actorQuery,
                         pathToActorField = instruction.queryPathToActorField,
                         executionContext = executionContext,
-                        serviceHydrationDetails = ServiceExecutionHydrationDetails(instruction.timeout, 1)
+                        serviceHydrationDetails = ServiceExecutionHydrationDetails(
+                            instruction.timeout,
+                            1,
+                            hydrationSourceService,
+                            instruction.location
+                        )
                     )
                 }
             }.awaitAll()

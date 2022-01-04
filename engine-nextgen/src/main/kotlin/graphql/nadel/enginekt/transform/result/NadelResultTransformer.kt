@@ -8,9 +8,9 @@ import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer.DataMutation
 import graphql.nadel.enginekt.transform.result.json.AnyJsonNodePathSegment
 import graphql.nadel.enginekt.transform.result.json.JsonNode
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.transform.result.json.JsonNodePath
 import graphql.nadel.enginekt.transform.result.json.JsonNodePathSegment
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.AnyMutableList
@@ -20,6 +20,10 @@ import graphql.nadel.enginekt.util.MutableJsonMap
 import graphql.nadel.enginekt.util.asMutableJsonMap
 import graphql.nadel.enginekt.util.queryPath
 import graphql.normalized.ExecutableNormalizedField
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlin.reflect.KClass
 
 internal class NadelResultTransformer(private val executionBlueprint: NadelOverallExecutionBlueprint) {
@@ -31,24 +35,77 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         service: Service,
         result: ServiceExecutionResult,
     ): ServiceExecutionResult {
-        val instructions = executionPlan.transformationSteps.flatMap { (field, steps) ->
-            steps.flatMap step@{ step ->
+        val nodes = JsonNodes(result.data, executionContext.hints)
+
+        suspend fun getAsync(): List<NadelResultInstruction> {
+            val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
+
+            coroutineScope {
+                for ((field, steps) in executionPlan.transformationSteps) {
+                    // This can be null if we did not end up sending the field e.g. for hydration
+                    val underlyingFields = overallToUnderlyingFields[field]
+                    if (underlyingFields == null || underlyingFields.isEmpty()) {
+                        continue
+                    }
+
+                    for (step in steps) {
+                        deferredInstructions.add(
+                            async {
+                                step.transform.getResultInstructions(
+                                    executionContext,
+                                    executionBlueprint,
+                                    service,
+                                    field,
+                                    underlyingFields.first().parent,
+                                    result,
+                                    step.state,
+                                    nodes,
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+
+            return deferredInstructions
+                .awaitAll()
+                .flatten()
+        }
+
+        suspend fun getSync(): List<NadelResultInstruction> {
+            val instructions = ArrayList<NadelResultInstruction>()
+
+            for ((field, steps) in executionPlan.transformationSteps) {
                 // This can be null if we did not end up sending the field e.g. for hydration
                 val underlyingFields = overallToUnderlyingFields[field]
-                    ?.takeIf(List<ExecutableNormalizedField>::isNotEmpty)
-                    ?: return@step emptyList()
+                if (underlyingFields == null || underlyingFields.isEmpty()) {
+                    continue
+                }
 
-                step.transform.getResultInstructions(
-                    executionContext,
-                    executionBlueprint,
-                    service,
-                    field,
-                    underlyingFields.first().parent,
-                    result,
-                    step.state,
-                )
+                for (step in steps) {
+                    instructions.addAll(
+                        step.transform.getResultInstructions(
+                            executionContext,
+                            executionBlueprint,
+                            service,
+                            field,
+                            underlyingFields.first().parent,
+                            result,
+                            step.state,
+                            nodes,
+                        ),
+                    )
+                }
             }
-        } + getRemoveArtificialFieldInstructions(result, artificialFields)
+
+            return instructions
+        }
+
+        val instructions = if (executionContext.hints.asyncResultTransform) {
+            getAsync()
+        } else {
+            getSync()
+        } + getRemoveArtificialFieldInstructions(artificialFields, nodes)
 
         mutate(result, instructions)
 
@@ -56,7 +113,7 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     }
 
     private fun mutate(result: ServiceExecutionResult, instructions: List<NadelResultInstruction>) {
-        // For now we don't have any instructions to modify anything other than data, so return early
+        // For now, we don't have any instructions to modify anything other than data, so return early
         if (result.data == null) {
             return
         }
@@ -184,19 +241,21 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     }
 
     private fun getRemoveArtificialFieldInstructions(
-        result: ServiceExecutionResult,
         artificialFields: List<ExecutableNormalizedField>,
+        nodes: JsonNodes,
     ): List<NadelResultInstruction> {
-        return artificialFields.flatMap { field ->
-            JsonNodeExtractor.getNodesAt(
-                data = result.data,
-                queryPath = field.queryPath,
-            ).map { jsonNode ->
-                NadelResultInstruction.Remove(
-                    subjectPath = jsonNode.resultPath,
-                )
+        return artificialFields
+            .asSequence()
+            .flatMap { field ->
+                nodes.getNodesAt(
+                    queryPath = field.queryPath,
+                ).map { jsonNode ->
+                    NadelResultInstruction.Remove(
+                        subjectPath = jsonNode.resultPath,
+                    )
+                }
             }
-        }
+            .toList()
     }
 
     private data class TransformContext(
@@ -226,7 +285,32 @@ private fun JsonMap.getJsonMapAt(path: JsonNodePath): JsonMap? {
 }
 
 private fun JsonMap.getAt(path: JsonNodePath): JsonNode {
-    return path.segments.fold(JsonNode(JsonNodePath.root, this), JsonNode::get)
+    var cursor: Any = this
+
+    for (segment in path.segments) {
+        cursor = when (segment) {
+            is JsonNodePathSegment.Int -> {
+                if (cursor is AnyList) {
+                    cursor[segment.value]
+                } else {
+                    error("Requires List")
+                }
+            }
+            is JsonNodePathSegment.String -> {
+                if (cursor is AnyMap) {
+                    cursor[segment.value]
+                } else {
+                    error("Requires List")
+                }
+            }
+        } ?: return JsonNode(path, null)
+    }
+
+    return JsonNode(
+        path,
+        cursor,
+    )
+    // return path.segments.fold(JsonNode(JsonNodePath.root, this), JsonNode::get)
 }
 
 /**

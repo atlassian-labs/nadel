@@ -7,6 +7,7 @@ import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.NadelCoerceTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.normalized.ExecutableNormalizedField
@@ -92,9 +93,7 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         // In the case of scalars, there should only be 1 unwrapped type.
         // Object types could result in more than 1 distinct type, in the case of different interface implementations
         // having different concrete types, but this transform only cares about scalar types.
-        val singleType = distinctUnwrappedTypes.singleOrNull()
-
-        return when (singleType) {
+        return when (val singleType = distinctUnwrappedTypes.singleOrNull()) {
             is GraphQLScalarType -> State(singleType)
             else -> null
         }
@@ -119,8 +118,10 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: State,
+        nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return NadelTransformUtil.createSetInstructions(
+            nodes,
             underlyingParentField,
             result,
             overallField,

@@ -9,6 +9,7 @@ import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
@@ -48,6 +49,7 @@ class `transforms-can-set-array-value` : EngineTestHook {
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: Any,
+                    nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     val nodes = JsonNodeExtractor.getNodesAt(
                         data = result.data,

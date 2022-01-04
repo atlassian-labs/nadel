@@ -9,6 +9,7 @@ import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.getField
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.strictAssociateBy
@@ -86,6 +87,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         state: Set<String>,
+        nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()
     }

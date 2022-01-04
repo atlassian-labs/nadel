@@ -10,10 +10,11 @@ import graphql.nadel.enginekt.transform.NadelTransform
 import graphql.nadel.enginekt.transform.NadelTransformFieldResult
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.NadelEngineType
+import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
@@ -81,6 +82,7 @@ abstract class `transformer-on-hydration-fields` : EngineTestHook {
                     underlyingParentField: ExecutableNormalizedField?,
                     result: ServiceExecutionResult,
                     state: Any,
+                    nodes: JsonNodes,
                 ): List<NadelResultInstruction> {
                     return emptyList()
                 }

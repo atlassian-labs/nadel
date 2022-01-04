@@ -22,7 +22,9 @@ data class JsonNodePath(
     }
 
     fun dropLast(n: Int): JsonNodePath {
-        return copy(segments = segments.dropLast(n))
+        return copy(
+            segments = segments.subList(0, segments.size - n),
+        )
     }
 
     companion object {

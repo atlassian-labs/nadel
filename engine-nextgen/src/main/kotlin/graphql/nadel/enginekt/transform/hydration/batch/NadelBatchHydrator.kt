@@ -97,8 +97,9 @@ internal class NadelBatchHydrator(
         instruction: NadelBatchHydrationFieldInstruction,
         parentNodes: List<JsonNode>,
     ): List<ServiceExecutionResult> {
+        val executionBlueprint = state.executionBlueprint
         val actorQueries = NadelHydrationFieldsBuilder.makeBatchActorQueries(
-            executionBlueprint = state.executionBlueprint,
+            executionBlueprint = executionBlueprint,
             instruction = instruction,
             aliasHelper = state.aliasHelper,
             hydratedField = state.hydratedField,
@@ -110,6 +111,8 @@ internal class NadelBatchHydrator(
             actorQueries
                 .map { actorQuery ->
                     async { // This async executes the batches in parallel i.e. executes hydration as Deferred/Future
+                        val hydrationSourceService =
+                            executionBlueprint.getServiceOwning(instruction.location)
                         engine.executeHydration(
                             service = instruction.actorService,
                             topLevelField = actorQuery,
@@ -117,7 +120,9 @@ internal class NadelBatchHydrator(
                             executionContext = state.executionContext,
                             serviceHydrationDetails = ServiceExecutionHydrationDetails(
                                 instruction.timeout,
-                                instruction.batchSize
+                                instruction.batchSize,
+                                hydrationSourceService,
+                                instruction.location
                             )
                         )
                     }
@@ -132,7 +137,7 @@ internal class NadelBatchHydrator(
         if (state.executionContext.hooks !is NadelEngineExecutionHooks) {
             error(
                 "Cannot decide which hydration instruction should be used. " +
-                    "Provided ServiceExecutionHooks has to be of type NadelEngineExecutionHooks"
+                        "Provided ServiceExecutionHooks has to be of type NadelEngineExecutionHooks"
             )
         }
         return state.executionContext.hooks.getHydrationInstruction(
