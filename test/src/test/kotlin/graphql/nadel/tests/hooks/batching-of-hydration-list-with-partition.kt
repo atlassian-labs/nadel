@@ -20,11 +20,12 @@ private class BatchHydrationHooks : NadelEngineExecutionHooks {
     }
 
     override fun <T> partitionArgumentList(
-        args: List<T>,
+        argumentValues: List<T>,
         instruction: NadelBatchHydrationFieldInstruction
     ): List<List<T>> {
-        val partition = args.partition { (it as String).endsWith("2") || it.endsWith("4") }
-        return listOf(partition.first, partition.second)
+        return argumentValues.groupBy { (it as String).substringBefore("/") }
+            .values
+            .toList()
     }
 }
 
