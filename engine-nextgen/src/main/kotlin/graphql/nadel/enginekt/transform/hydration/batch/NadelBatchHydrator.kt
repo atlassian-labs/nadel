@@ -104,6 +104,7 @@ internal class NadelBatchHydrator(
             aliasHelper = state.aliasHelper,
             hydratedField = state.hydratedField,
             parentNodes = parentNodes,
+            hooks = state.executionContext.hooks
         )
 
         return coroutineScope {
