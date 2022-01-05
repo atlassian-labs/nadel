@@ -37,7 +37,7 @@ interface NadelEngineExecutionHooks : ServiceExecutionHooks {
      * @return list of argument values partitioned accordingly. If no partitioning needed, return
      * `listOf(argumentValues)`
      */
-    fun <T> partitionArgumentList(
+    fun <T> partitionBatchHydrationArgumentList(
         argumentValues: List<T>,
         instruction: NadelBatchHydrationFieldInstruction
     ): List<List<T>> {

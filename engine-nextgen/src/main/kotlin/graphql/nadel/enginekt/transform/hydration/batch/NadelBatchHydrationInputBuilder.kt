@@ -70,7 +70,7 @@ internal object NadelBatchHydrationInputBuilder {
         val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
 
         val partitionArgumentList = when (hooks) {
-            is NadelEngineExecutionHooks -> hooks.partitionArgumentList(args, instruction)
+            is NadelEngineExecutionHooks -> hooks.partitionBatchHydrationArgumentList(args, instruction)
             else -> listOf(args)
         }
 

@@ -19,7 +19,7 @@ private class BatchHydrationHooks : NadelEngineExecutionHooks {
         return instructions[0]
     }
 
-    override fun <T> partitionArgumentList(
+    override fun <T> partitionBatchHydrationArgumentList(
         argumentValues: List<T>,
         instruction: NadelBatchHydrationFieldInstruction
     ): List<List<T>> {
