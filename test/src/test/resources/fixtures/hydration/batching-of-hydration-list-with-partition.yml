@@ -16,7 +16,7 @@ overallSchema:
     }
     type Issue {
       id: ID
-      authors: [User] @hydrated(service: "UserService" field: "usersByIds" arguments: [{name: "id" value: "$source.authorIds"}] identifiedBy: "id" batchSize: 3)
+      authors: [User] @hydrated(service: "UserService" field: "usersByIds" arguments: [{name: "id" value: "$source.authorIds"}] identifiedBy: "id" batchSize: 2)
     }
 underlyingSchema:
   UserService: |
@@ -83,7 +83,6 @@ serviceCalls:
               {
                 "__typename__batch_hydration__authors": "Issue",
                 "batch_hydration__authors__authorIds": [
-                  "CLOUD-ID-2/USER-2",
                   "CLOUD-ID-2/USER-4",
                   "CLOUD-ID-1/USER-5"
                 ],
@@ -97,7 +96,7 @@ serviceCalls:
       request:
         query: |
           query {
-            usersByIds(id: ["CLOUD-ID-1/USER-1", "CLOUD-ID-1/USER-3", "CLOUD-ID-1/USER-5"]) {
+            usersByIds(id: ["CLOUD-ID-1/USER-1", "CLOUD-ID-1/USER-3"]) {
               id
               batch_hydration__authors__id: id
             }
@@ -116,10 +115,6 @@ serviceCalls:
               {
                 "id": "CLOUD-ID-1/USER-3",
                 "batch_hydration__authors__id": "CLOUD-ID-1/USER-3"
-              },
-              {
-                "id": "CLOUD-ID-1/USER-5",
-                "batch_hydration__authors__id": "CLOUD-ID-1/USER-5"
               }
             ]
           },
@@ -129,7 +124,7 @@ serviceCalls:
       request:
         query: |
           query {
-            usersByIds(id: ["CLOUD-ID-2/USER-2", "CLOUD-ID-2/USER-2", "CLOUD-ID-2/USER-4"]) {
+            usersByIds(id: ["CLOUD-ID-1/USER-5"]) {
               id
               batch_hydration__authors__id: id
             }
@@ -142,9 +137,29 @@ serviceCalls:
           "data": {
             "usersByIds": [
               {
-                "id": "CLOUD-ID-2/USER-2",
-                "batch_hydration__authors__id": "CLOUD-ID-2/USER-2"
-              },
+                "id": "CLOUD-ID-1/USER-5",
+                "batch_hydration__authors__id": "CLOUD-ID-1/USER-5"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            usersByIds(id: ["CLOUD-ID-2/USER-2", "CLOUD-ID-2/USER-4"]) {
+              id
+              batch_hydration__authors__id: id
+            }
+          }
+        variables: { }
+        operationName: null
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "usersByIds": [
               {
                 "id": "CLOUD-ID-2/USER-2",
                 "batch_hydration__authors__id": "CLOUD-ID-2/USER-2"
@@ -184,9 +199,6 @@ response: |-
         {
           "id": "ISSUE-3",
           "authors": [
-            {
-              "id": "CLOUD-ID-2/USER-2"
-            },
             {
               "id": "CLOUD-ID-2/USER-4"
             },
