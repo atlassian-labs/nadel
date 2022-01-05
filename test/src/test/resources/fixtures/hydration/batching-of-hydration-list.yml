@@ -1,6 +1,6 @@
 name: batching of hydration list
 enabled:
-  current: false
+  current: true
   nextgen: true
 overallSchema:
   UserService: |
