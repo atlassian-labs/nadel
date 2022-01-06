@@ -30,6 +30,7 @@ import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.FieldCoordinates
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -146,15 +147,21 @@ internal class NadelHydrationTransform(
             flatten = true,
         )
 
-        return parentNodes.flatMap {
-            hydrate(
-                parentNode = it,
-                state = state,
-                executionBlueprint = executionBlueprint,
-                fieldToHydrate = overallField,
-                executionContext = executionContext,
-            )
+        val jobs: List<Deferred<List<NadelResultInstruction>>> = coroutineScope {
+            parentNodes.map {
+                async {
+                    hydrate(
+                        parentNode = it,
+                        state = state,
+                        executionBlueprint = executionBlueprint,
+                        fieldToHydrate = overallField,
+                        executionContext = executionContext,
+                    )
+                }
+            }
         }
+
+        return jobs.awaitAll().flatten()
     }
 
     private suspend fun hydrate(

@@ -15,6 +15,7 @@ import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationByObj
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTransform.State
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -35,31 +36,40 @@ internal class NadelBatchHydrator(
                     aliasHelper = state.aliasHelper,
                     parentNode = parentNode,
                 )
+
+                // Becomes Pair<JsonNode, Instruction?>
                 when {
                     instructions.isEmpty() -> null
                     instructions.size == 1 -> parentNode to instructions.single()
-                    // Becomes Pair<JsonNode, Instruction>
                     else -> parentNode to getHydrationInstruction(state, instructions, parentNode)
                 }
             }
-            // Becomes Map<Instruction, List<Pair<JsonNode, Instruction>>>
+            // Becomes Map<Instruction?, List<Pair<JsonNode, Instruction?>>>
             .groupBy { pair ->
                 pair.second
             }
-            // Changes List<Pair<JsonNode, Instruction>> to List<JsonNode>
+            // Changes List<Pair<JsonNode, Instruction?>> to List<JsonNode>
             .mapValues { pairs ->
                 pairs.value.map { pair -> pair.first }
             }
 
-        return parentNodesByInstruction.flatMap { (instruction, parentNodes) ->
-            if (instruction == null) parentNodes.map {
-                NadelResultInstruction.Set(
-                    it.resultPath + state.hydratedField.fieldName,
-                    null
-                )
+        val jobs: List<Deferred<List<NadelResultInstruction>>> = coroutineScope {
+            parentNodesByInstruction.map { (instruction, parentNodes) ->
+                async {
+                    when (instruction) {
+                        null -> parentNodes.map {
+                            NadelResultInstruction.Set(
+                                it.resultPath + state.hydratedField.fieldName,
+                                newValue = null,
+                            )
+                        }
+                        else -> hydrate(executionBlueprint, state, instruction, parentNodes)
+                    }
+                }
             }
-            else hydrate(executionBlueprint, state, instruction, parentNodes)
         }
+
+        return jobs.awaitAll().flatten()
     }
 
     private suspend fun hydrate(
@@ -132,12 +142,14 @@ internal class NadelBatchHydrator(
     }
 
     private fun getHydrationInstruction(
-        state: State, instructions: List<NadelBatchHydrationFieldInstruction>, parentNode: JsonNode
+        state: State,
+        instructions: List<NadelBatchHydrationFieldInstruction>,
+        parentNode: JsonNode,
     ): NadelBatchHydrationFieldInstruction? {
         if (state.executionContext.hooks !is NadelEngineExecutionHooks) {
             error(
                 "Cannot decide which hydration instruction should be used. " +
-                        "Provided ServiceExecutionHooks has to be of type NadelEngineExecutionHooks"
+                    "Provided ServiceExecutionHooks has to be of type NadelEngineExecutionHooks"
             )
         }
         return state.executionContext.hooks.getHydrationInstruction(
