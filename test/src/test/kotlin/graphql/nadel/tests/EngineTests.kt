@@ -44,7 +44,6 @@ private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
  * NadelExecutionInput.Builder#transformExecutionHints method in your test hook class.
  */
 private val defaultHints = NadelExecutionHints.newHints()
-    .transformsOnHydrationFields(true)
     .build()
 
 class EngineTests : FunSpec({

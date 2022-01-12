@@ -37,44 +37,9 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
     ): ServiceExecutionResult {
         val nodes = JsonNodes(result.data, executionContext.hints)
 
-        suspend fun getAsync(): List<NadelResultInstruction> {
-            val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
+        val deferredInstructions = ArrayList<Deferred<List<NadelResultInstruction>>>()
 
-            coroutineScope {
-                for ((field, steps) in executionPlan.transformationSteps) {
-                    // This can be null if we did not end up sending the field e.g. for hydration
-                    val underlyingFields = overallToUnderlyingFields[field]
-                    if (underlyingFields == null || underlyingFields.isEmpty()) {
-                        continue
-                    }
-
-                    for (step in steps) {
-                        deferredInstructions.add(
-                            async {
-                                step.transform.getResultInstructions(
-                                    executionContext,
-                                    executionBlueprint,
-                                    service,
-                                    field,
-                                    underlyingFields.first().parent,
-                                    result,
-                                    step.state,
-                                    nodes,
-                                )
-                            },
-                        )
-                    }
-                }
-            }
-
-            return deferredInstructions
-                .awaitAll()
-                .flatten()
-        }
-
-        suspend fun getSync(): List<NadelResultInstruction> {
-            val instructions = ArrayList<NadelResultInstruction>()
-
+        coroutineScope {
             for ((field, steps) in executionPlan.transformationSteps) {
                 // This can be null if we did not end up sending the field e.g. for hydration
                 val underlyingFields = overallToUnderlyingFields[field]
@@ -83,29 +48,33 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
                 }
 
                 for (step in steps) {
-                    instructions.addAll(
-                        step.transform.getResultInstructions(
-                            executionContext,
-                            executionBlueprint,
-                            service,
-                            field,
-                            underlyingFields.first().parent,
-                            result,
-                            step.state,
-                            nodes,
-                        ),
+                    deferredInstructions.add(
+                        async {
+                            step.transform.getResultInstructions(
+                                executionContext,
+                                executionBlueprint,
+                                service,
+                                field,
+                                underlyingFields.first().parent,
+                                result,
+                                step.state,
+                                nodes,
+                            )
+                        },
                     )
                 }
             }
 
-            return instructions
+            deferredInstructions.add(
+                async {
+                    getRemoveArtificialFieldInstructions(artificialFields, nodes)
+                },
+            )
         }
 
-        val instructions = if (executionContext.hints.asyncResultTransform) {
-            getAsync()
-        } else {
-            getSync()
-        } + getRemoveArtificialFieldInstructions(artificialFields, nodes)
+        val instructions = deferredInstructions
+            .awaitAll()
+            .flatten()
 
         mutate(result, instructions)
 
@@ -131,9 +100,6 @@ internal class NadelResultTransformer(private val executionBlueprint: NadelOvera
         mutations.forEach {
             it.run(context = transformContext)
         }
-
-        // TODO: investigate whether this code is actually needed. So far no tests fail after disabling it…
-        // transformContext.emptyPaths.forEach(result.data::cleanup)
     }
 
     private fun prepareSet(

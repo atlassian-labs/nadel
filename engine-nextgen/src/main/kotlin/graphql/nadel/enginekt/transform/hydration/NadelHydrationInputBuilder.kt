@@ -10,9 +10,9 @@ import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
+import graphql.nadel.enginekt.util.javaValueToAstValue
 import graphql.nadel.enginekt.util.makeNormalizedInputValue
 import graphql.nadel.enginekt.util.toMapStrictly
-import graphql.nadel.enginekt.util.javaValueToAstValue
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 

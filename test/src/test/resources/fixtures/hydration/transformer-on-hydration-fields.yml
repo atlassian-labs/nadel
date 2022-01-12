@@ -1,4 +1,4 @@
-name: transformer on hydration fields hint off
+name: transformer on hydration fields
 enabled:
   # purposefully not implemented in current gen
   current: false
@@ -80,7 +80,7 @@ serviceCalls:
       request:
         query: |
           query {
-            barById(id: "barId") {
+            barById(id: "transformed-id") {
               name
             }
           }

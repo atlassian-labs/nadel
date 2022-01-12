@@ -24,7 +24,6 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.beginExecute
 import graphql.nadel.enginekt.util.copy
-import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
 import graphql.nadel.enginekt.util.getOperationKind
 import graphql.nadel.enginekt.util.mergeResults
@@ -213,10 +212,7 @@ class NextgenEngine @JvmOverloads constructor(
             it.children.single()
         }
 
-        val (transformResult, executionPlan) = when (executionContext.hints.transformsOnHydrationFields) {
-            true -> transformActorFieldNew(service, executionContext, actorField)
-            else -> transformActorField(service, executionContext, actorField)
-        }
+        val (transformResult, executionPlan) = transformHydrationQuery(service, executionContext, actorField)
 
         // Get to the top level field again using .parent N times on the new actor field
         val transformedQuery: ExecutableNormalizedField = fold(
@@ -243,47 +239,7 @@ class NextgenEngine @JvmOverloads constructor(
         )
     }
 
-    private suspend fun transformActorField(
-        service: Service,
-        executionContext: NadelExecutionContext,
-        actorField: ExecutableNormalizedField,
-    ): Pair<NadelQueryTransformer.TransformResult, NadelExecutionPlan> {
-
-        // Creates N plans for the children then merges them together into one big plan
-        val executionPlan = actorField.children.map {
-            executionPlanner.create(executionContext, services, service, rootField = it)
-        }.reduce(NadelExecutionPlan::merge)
-
-        val artificialFields = mutableListOf<ExecutableNormalizedField>()
-        val overallToUnderlyingFields = mutableMapOf<ExecutableNormalizedField, List<ExecutableNormalizedField>>()
-
-        // Transform the children of the actor field
-        // The actor field itself is already transformed
-        val actorFieldWithTransformedChildren = actorField.copyWithChildren(
-            actorField.children.flatMap { childField ->
-                transformQuery(service, executionContext, executionPlan, field = childField)
-                    .let { result ->
-                        artificialFields.addAll(result.artificialFields)
-                        overallToUnderlyingFields.also { map ->
-                            val sizeBefore = map.size
-                            map.putAll(result.overallToUnderlyingFields)
-                            require(map.size == sizeBefore + result.overallToUnderlyingFields.size)
-                        }
-                        result.result
-                    }
-            },
-        )
-
-        return Pair(
-            NadelQueryTransformer.TransformResult(
-                result = listOf(actorFieldWithTransformedChildren),
-                artificialFields,
-                overallToUnderlyingFields
-            ), executionPlan
-        )
-    }
-
-    private suspend fun transformActorFieldNew(
+    private suspend fun transformHydrationQuery(
         service: Service,
         executionContext: NadelExecutionContext,
         actorField: ExecutableNormalizedField,

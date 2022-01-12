@@ -17,7 +17,6 @@ import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationTrans
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toBuilder
