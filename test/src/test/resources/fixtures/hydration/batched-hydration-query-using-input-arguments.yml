@@ -1,0 +1,177 @@
+name: batched hydration query using input arguments
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  service2: |
+    type User {
+      id: ID
+      lastName: String
+    }
+  service1: |
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authors: [User] 
+      @hydrated(
+        service: "service2" 
+        field: "users.usersByIds" 
+        arguments: [{name: "ids" value: "$source.ids"}]
+        indexed: true
+      )
+    }
+underlyingSchema:
+  service2: |
+    type Query {
+      users: UsersQuery
+    }
+
+    type User {
+      id: ID
+      name: String
+    }
+    
+    input Fiter {
+      id: ID
+      status: String
+    }
+
+    type UsersQuery {
+      usersByIds(ids: [Fiter]): [User]
+    }
+  service1: |
+    type Issue {
+      ids: [Fiter]
+      id: ID
+    }
+    
+    type Fiter {
+      id: ID
+      status: String
+    }
+
+    type Query {
+      issues: [Issue]
+    }
+query: |
+  query {
+    issues {
+      id
+      authors {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  nextgen:
+    - serviceName: service1
+      request:
+        query: |
+          query {
+            issues {
+              __typename__batch_hydration__authors: __typename
+              id
+              batch_hydration__authors__ids: ids
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__ids": [{
+                  "id": "id1",
+                  "status": "Active"
+                }],
+                "id": "ISSUE-1"
+              },
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__ids": [{
+                  "id": "id2",
+                  "status": "Active"
+                }],
+                "id": "ISSUE-2"
+              },
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__ids": [{
+                  "id": "id3",
+                  "status": "Active"
+                }],
+                "id": "ISSUE-3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: service2
+      request:
+        query: |
+          query {
+            users {
+              usersByIds(ids: [{id : "id1", status : "Active"}, {id : "id2", status : "Active"}, {id : "id3", status : "Active"}]) {
+                id
+              }
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "users": {
+              "usersByIds": [
+                {
+                  "id": "USER-1"
+                },
+                {
+                  "id": "USER-2"
+                },
+                {
+                  "id": "USER-3"
+                }
+              ]
+            }
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": [
+            {
+              "id": "USER-1"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-2",
+          "authors": [
+            {
+              "id": "USER-2"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-3",
+          "authors": [
+            {
+              "id": "USER-3"
+            }
+          ]
+        }
+      ]
+    },
+    "extensions": {}
+  }
