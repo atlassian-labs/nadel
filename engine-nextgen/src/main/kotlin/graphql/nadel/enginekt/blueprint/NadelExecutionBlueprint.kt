@@ -14,7 +14,8 @@ import graphql.schema.GraphQLSchema
  * Execution blueprint where keys are in terms of the overall schema.
  */
 data class NadelOverallExecutionBlueprint(
-    val schema: GraphQLSchema,
+    val privateSchema: GraphQLSchema,
+    val publicSchema: GraphQLSchema,
     val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
     private val underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
     private val coordinatesToService: Map<FieldCoordinates, Service>,

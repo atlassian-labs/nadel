@@ -1,0 +1,65 @@
+name: introspection does not show hidden fields
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  MyService: |
+    directive @hidden on FIELD_DEFINITION
+    type Query {
+      hello: World
+      hiddenField: String @hidden
+    }
+    type World {
+      id: ID
+      name: String
+    }
+    type Mutation {
+      hello: String
+    }
+
+underlyingSchema:
+  MyService: |
+    type Mutation {
+      hello: String
+    }
+
+    type Query {
+      hello: World
+      hiddenField: String
+    }
+
+    type World {
+      id: ID
+      name: String
+    }
+query: |
+  query introspection_query {
+      __schema {
+          queryType {
+              fields(includeDeprecated: false) {
+                name
+              }
+          }
+      }
+  }
+
+variables: { }
+serviceCalls:
+  current: [ ]
+  nextgen: [ ]
+# language=JSON
+response: |-
+  {
+    "data":{
+      "__schema": {
+        "queryType": {
+          "fields": [
+            {
+              "name": "hello"
+            }
+          ]
+        }
+      }
+    },
+    "errors": []
+  }

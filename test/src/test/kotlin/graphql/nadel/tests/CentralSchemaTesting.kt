@@ -84,7 +84,7 @@ suspend fun main() {
         .build()
 
     NadelSchemaValidation(
-        overallSchema = nadel.overallSchema,
+        overallSchema = nadel.privateOverallSchema,
         services = nadel.services.strictAssociateBy { it.name }
     )
         .validate()

@@ -66,10 +66,11 @@ class NextgenEngine @JvmOverloads constructor(
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
-    private val overallSchema = nadel.overallSchema
+    private val publicOverallSchema = nadel.publicOverallSchema
     private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
-        overallSchema = nadel.overallSchema,
+        privateOverallSchema = nadel.privateOverallSchema,
+        publicOverallSchema = nadel.publicOverallSchema,
         services = nadel.services,
     )
     private val executionPlanner = NadelExecutionPlanFactory.create(
@@ -80,7 +81,7 @@ class NextgenEngine @JvmOverloads constructor(
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
     private val dynamicServiceResolution = DynamicServiceResolution(
-        overallSchema = overallSchema,
+        publicOverallSchema = publicOverallSchema,
         serviceExecutionHooks = serviceExecutionHooks,
         services = services.values
     )
@@ -124,7 +125,7 @@ class NextgenEngine @JvmOverloads constructor(
     ): ExecutionResult {
         try {
             val query = createExecutableNormalizedOperationWithRawVariables(
-                overallExecutionBlueprint.schema,
+                overallExecutionBlueprint.publicSchema,
                 queryDocument,
                 executionInput.operationName,
                 executionInput.variables,
@@ -135,7 +136,7 @@ class NextgenEngine @JvmOverloads constructor(
                 query,
                 queryDocument,
                 executionInput,
-                overallSchema,
+                publicOverallSchema,
                 instrumentationState,
             )
 
@@ -311,7 +312,7 @@ class NextgenEngine @JvmOverloads constructor(
         val executionInput = executionContext.executionInput
         val document: Document = compileToDocument(
             service.underlyingSchema,
-            transformedQuery.getOperationKind(overallSchema),
+            transformedQuery.getOperationKind(publicOverallSchema),
             getOperationName(service, executionContext),
             listOf(transformedQuery),
         )

@@ -30,7 +30,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
     ): Set<String>? {
         // Let's not bother with abstract types in a test
         val fieldCoords = makeFieldCoordinates(overallField.objectTypeNames.single(), overallField.name)
-        val fieldDef = executionBlueprint.schema.getField(fieldCoords)
+        val fieldDef = executionBlueprint.privateSchema.getField(fieldCoords)
             ?: error("Unable to fetch field definition")
         val fieldArgDefs = fieldDef.arguments.strictAssociateBy { it.name }
 

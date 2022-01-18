@@ -27,6 +27,7 @@ import graphql.nadel.introspection.DefaultIntrospectionRunner;
 import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.schema.NeverWiringFactory;
 import graphql.nadel.schema.OverallSchemaGenerator;
+import graphql.nadel.schema.PublicSchemaGenerator;
 import graphql.nadel.schema.SchemaTransformationHook;
 import graphql.nadel.schema.UnderlyingSchemaGenerator;
 import graphql.nadel.util.LogKit;
@@ -69,7 +70,8 @@ public class Nadel {
     final Map<String, StitchingDsl> stitchingDsls;
     final ServiceExecutionFactory serviceExecutionFactory;
     final List<Service> services;
-    final GraphQLSchema overallSchema;
+    final GraphQLSchema privateOverallSchema;
+    final GraphQLSchema publicOverallSchema;
     @NotNull
     final NadelInstrumentation instrumentation;
     final ServiceExecutionHooks serviceExecutionHooks;
@@ -107,8 +109,8 @@ public class Nadel {
         this.stitchingDsls = createDSLs(serviceNDSLs);
         this.services = createServices();
         this.commonTypes = createCommonTypes();
-        this.overallSchema = createOverallSchema();
-
+        this.privateOverallSchema = createOverallSchema();
+        this.publicOverallSchema = PublicSchemaGenerator.generatePublicSchema(this.privateOverallSchema);
         this.engine = null;
     }
 
@@ -126,7 +128,8 @@ public class Nadel {
         this.stitchingDsls = originalNadel.stitchingDsls;
         this.services = originalNadel.services;
         this.commonTypes = originalNadel.commonTypes;
-        this.overallSchema = originalNadel.overallSchema;
+        this.privateOverallSchema = originalNadel.privateOverallSchema;
+        this.publicOverallSchema = originalNadel.publicOverallSchema;
         this.engine = engine;
     }
 
@@ -190,8 +193,8 @@ public class Nadel {
         return services;
     }
 
-    public GraphQLSchema getOverallSchema() {
-        return overallSchema;
+    public GraphQLSchema getPrivateOverallSchema() {
+        return privateOverallSchema;
     }
 
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput.Builder nadelExecutionInput) {
@@ -215,17 +218,17 @@ public class Nadel {
 
         NadelExecutionParams nadelExecutionParams = new NadelExecutionParams(nadelExecutionInput.getArtificialFieldsUUID(), nadelExecutionInput.getNadelExecutionHints());
 
-        InstrumentationState instrumentationState = instrumentation.createState(new NadelInstrumentationCreateStateParameters(overallSchema, executionInput));
-        NadelInstrumentationQueryExecutionParameters instrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, overallSchema, instrumentationState);
+        InstrumentationState instrumentationState = instrumentation.createState(new NadelInstrumentationCreateStateParameters(publicOverallSchema, executionInput));
+        NadelInstrumentationQueryExecutionParameters instrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, publicOverallSchema, instrumentationState);
         try {
             logNotSafe.debug("Executing request. operation name: '{}'. query: '{}'. variables '{}'", executionInput.getOperationName(), executionInput.getQuery(), executionInput.getVariables());
 
-            NadelInstrumentationQueryExecutionParameters inputInstrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, overallSchema, instrumentationState);
+            NadelInstrumentationQueryExecutionParameters inputInstrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, publicOverallSchema, instrumentationState);
             executionInput = instrumentation.instrumentExecutionInput(executionInput, inputInstrumentationParameters);
 
             InstrumentationContext<ExecutionResult> executionInstrumentation = instrumentation.beginQueryExecution(instrumentationParameters);
 
-            return parseValidateAndExecute(executionInput, overallSchema, instrumentationState, nadelExecutionParams)
+            return parseValidateAndExecute(executionInput, publicOverallSchema, instrumentationState, nadelExecutionParams)
                     //
                     // finish up instrumentation
                     .whenComplete(executionInstrumentation::onCompleted)

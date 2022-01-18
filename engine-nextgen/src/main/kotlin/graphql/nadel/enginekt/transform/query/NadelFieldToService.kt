@@ -19,7 +19,7 @@ internal class NadelFieldToService(
     private val services: Map<String, Service>,
 ) {
     private val introspectionService =
-        IntrospectionService(overallExecutionBlueprint.schema, introspectionRunnerFactory)
+        IntrospectionService(overallExecutionBlueprint.publicSchema, introspectionRunnerFactory)
 
     fun getServicesForTopLevelFields(query: ExecutableNormalizedOperation): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
@@ -91,7 +91,7 @@ internal class NadelFieldToService(
     }
 
     private fun isNamespacedField(field: ExecutableNormalizedField): Boolean {
-        return isNamespacedField(field, overallExecutionBlueprint.schema)
+        return isNamespacedField(field, overallExecutionBlueprint.publicSchema)
     }
 }
 

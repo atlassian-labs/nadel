@@ -47,13 +47,18 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 
 internal object NadelExecutionBlueprintFactory {
-    fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelOverallExecutionBlueprint {
-        return Factory(overallSchema, services).make()
+    fun create(
+        privateOverallSchema: GraphQLSchema,
+        publicOverallSchema: GraphQLSchema,
+        services: List<Service>
+    ): NadelOverallExecutionBlueprint {
+        return Factory(privateOverallSchema, publicOverallSchema, services).make()
     }
 }
 
 private class Factory(
-    private val overallSchema: GraphQLSchema,
+    private val privateOverallSchema: GraphQLSchema,
+    private val publicOverallSchema: GraphQLSchema,
     private val services: List<Service>,
 ) {
     private val definitionNamesToService: Map<String, Service> = makeDefinitionNamesToService()
@@ -67,11 +72,12 @@ private class Factory(
             it.location
         }
         val furtherTypeRenameInstructions = typeRenameInstructions.values +
-                SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
-                    .getTypeRenames()
+            SharedTypesAnalysis(privateOverallSchema, services, fieldInstructions, typeRenameInstructions)
+                .getTypeRenames()
 
         return NadelOverallExecutionBlueprint(
-            schema = overallSchema,
+            privateSchema = privateOverallSchema,
+            publicSchema = publicOverallSchema,
             fieldInstructions = fieldInstructions,
             underlyingBlueprints = deriveUnderlyingBlueprints(furtherTypeRenameInstructions),
             coordinatesToService = coordinatesToService,
@@ -79,7 +85,7 @@ private class Factory(
     }
 
     private fun makeFieldInstructions(): List<NadelFieldInstruction> {
-        return overallSchema.typeMap.values
+        return privateOverallSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLObjectType>()
             .flatMap { type ->
@@ -179,7 +185,7 @@ private class Factory(
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
-                                && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
+                            && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
                     }
                 }
             }
@@ -234,7 +240,7 @@ private class Factory(
     }
 
     private fun makeTypeRenameInstructions(): Sequence<NadelTypeRenameInstruction> {
-        return overallSchema.typeMap.values
+        return privateOverallSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLDirectiveContainer>()
             .mapNotNull(this::makeTypeRenameInstruction)
@@ -332,7 +338,7 @@ private class Factory(
     private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
         val extendedDef = field.definition as? ExtendedFieldDefinition
         return when (val underlyingServiceHydration = extendedDef?.fieldTransformation?.underlyingServiceHydration) {
-            null -> NadelDirectives.createUnderlyingServiceHydration(field, overallSchema) ?: emptyList()
+            null -> NadelDirectives.createUnderlyingServiceHydration(field, privateOverallSchema) ?: emptyList()
             else -> listOf(underlyingServiceHydration)
         }
     }
