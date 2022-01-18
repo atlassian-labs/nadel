@@ -53,7 +53,7 @@ internal class SkipIncludeTransform : NadelTransform<State> {
             val mergedField = executionContext.query.getMergedField(overallField)
             if (hasAnyChildren(mergedField)) {
                 // Adds a field so we can transform it
-                overallField.children.add(createSkipField(executionBlueprint.publicSchema, overallField))
+                overallField.children.add(createSkipField(executionBlueprint.engineSchema, overallField))
             }
         }
 

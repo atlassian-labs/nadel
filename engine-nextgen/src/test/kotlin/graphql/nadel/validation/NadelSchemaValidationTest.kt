@@ -32,5 +32,5 @@ class NadelSchemaValidationTest : DescribeSpec({
 fun validate(fixture: NadelValidationTestFixture): Set<NadelSchemaValidationError> {
     val nadel = fixture.toNadel()
     val services = nadel.services.strictAssociateBy { it.name }
-    return NadelSchemaValidation(nadel.privateOverallSchema, services).validate()
+    return NadelSchemaValidation(nadel.engineSchema, services).validate()
 }

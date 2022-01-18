@@ -48,17 +48,15 @@ import graphql.schema.GraphQLType
 
 internal object NadelExecutionBlueprintFactory {
     fun create(
-        privateOverallSchema: GraphQLSchema,
-        publicOverallSchema: GraphQLSchema,
+        engineSchema: GraphQLSchema,
         services: List<Service>
     ): NadelOverallExecutionBlueprint {
-        return Factory(privateOverallSchema, publicOverallSchema, services).make()
+        return Factory(engineSchema, services).make()
     }
 }
 
 private class Factory(
-    private val privateOverallSchema: GraphQLSchema,
-    private val publicOverallSchema: GraphQLSchema,
+    private val engineSchema: GraphQLSchema,
     private val services: List<Service>,
 ) {
     private val definitionNamesToService: Map<String, Service> = makeDefinitionNamesToService()
@@ -72,12 +70,11 @@ private class Factory(
             it.location
         }
         val furtherTypeRenameInstructions = typeRenameInstructions.values +
-            SharedTypesAnalysis(privateOverallSchema, services, fieldInstructions, typeRenameInstructions)
+            SharedTypesAnalysis(engineSchema, services, fieldInstructions, typeRenameInstructions)
                 .getTypeRenames()
 
         return NadelOverallExecutionBlueprint(
-            privateSchema = privateOverallSchema,
-            publicSchema = publicOverallSchema,
+            engineSchema = engineSchema,
             fieldInstructions = fieldInstructions,
             underlyingBlueprints = deriveUnderlyingBlueprints(furtherTypeRenameInstructions),
             coordinatesToService = coordinatesToService,
@@ -85,7 +82,7 @@ private class Factory(
     }
 
     private fun makeFieldInstructions(): List<NadelFieldInstruction> {
-        return privateOverallSchema.typeMap.values
+        return engineSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLObjectType>()
             .flatMap { type ->
@@ -240,7 +237,7 @@ private class Factory(
     }
 
     private fun makeTypeRenameInstructions(): Sequence<NadelTypeRenameInstruction> {
-        return privateOverallSchema.typeMap.values
+        return engineSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLDirectiveContainer>()
             .mapNotNull(this::makeTypeRenameInstruction)
@@ -338,7 +335,7 @@ private class Factory(
     private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
         val extendedDef = field.definition as? ExtendedFieldDefinition
         return when (val underlyingServiceHydration = extendedDef?.fieldTransformation?.underlyingServiceHydration) {
-            null -> NadelDirectives.createUnderlyingServiceHydration(field, privateOverallSchema) ?: emptyList()
+            null -> NadelDirectives.createUnderlyingServiceHydration(field, engineSchema) ?: emptyList()
             else -> listOf(underlyingServiceHydration)
         }
     }
@@ -453,7 +450,7 @@ private class Factory(
  * we can assume that `NewThing` was renamed to `Shared` in the overall schema.
  */
 private class SharedTypesAnalysis(
-    private val overallSchema: GraphQLSchema,
+    private val engineSchema: GraphQLSchema,
     private val services: List<Service>,
     private val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
     private val typeRenameInstructions: Map<String, NadelTypeRenameInstruction>,
@@ -561,7 +558,7 @@ private class SharedTypesAnalysis(
             null
         }
 
-        val overallOutputType = overallSchema.getType(overallOutputTypeName)
+        val overallOutputType = engineSchema.getType(overallOutputTypeName)
             // Ensure type exists, schema transformation can delete types, so let's just ignore it
             .let { it ?: return emptyList() }
             // Return if not field container

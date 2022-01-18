@@ -102,7 +102,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         ) ?: error("Could not find the overall output type for the actor field")
 
         return resolveObjectTypes(
-            schema = executionBlueprint.privateSchema,
+            schema = executionBlueprint.engineSchema,
             type = overallType,
             onNotObjectType = {
                 errorForUnsupportedObjectIdParentType()
@@ -121,7 +121,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
     ): GraphQLType? {
         val underlyingTypeName = underlyingType.unwrapAll().name
         val overallTypeName = executionBlueprint.getOverallTypeName(service, underlyingTypeName)
-        return executionBlueprint.privateSchema.getType(overallTypeName)
+        return executionBlueprint.engineSchema.getType(overallTypeName)
     }
 
     private fun errorForUnsupportedObjectIdParentType(): Nothing {

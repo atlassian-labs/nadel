@@ -10,7 +10,7 @@ import graphql.schema.transform.VisibleFieldPredicate;
 import static graphql.nadel.schema.NadelDirectives.HIDDEN_DIRECTIVE_DEFINITION;
 
 @Internal
-public class PublicSchemaGenerator {
+public class QuerySchemaGenerator {
 
     private static final VisibleFieldPredicate visibleFieldPredicate = environment -> {
         if (environment.getSchemaElement() instanceof GraphQLDirectiveContainer) {
@@ -23,8 +23,8 @@ public class PublicSchemaGenerator {
         return true;
     };
 
-    public static GraphQLSchema generatePublicSchema(GraphQLSchema privateSchema) {
-        return new FieldVisibilitySchemaTransformation(visibleFieldPredicate).apply(privateSchema);
+    public static GraphQLSchema generateQuerySchema(GraphQLSchema engineSchema) {
+        return new FieldVisibilitySchemaTransformation(visibleFieldPredicate).apply(engineSchema);
     }
 
 }

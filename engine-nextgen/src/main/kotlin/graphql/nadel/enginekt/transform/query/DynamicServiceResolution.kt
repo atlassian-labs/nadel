@@ -13,7 +13,7 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
 
 internal class DynamicServiceResolution(
-    private val publicOverallSchema: GraphQLSchema,
+    private val engineSchema: GraphQLSchema,
     private val serviceExecutionHooks: ServiceExecutionHooks,
     private val services: Collection<Service>
 ) {
@@ -24,7 +24,7 @@ internal class DynamicServiceResolution(
     fun needsDynamicServiceResolution(
         topLevelField: ExecutableNormalizedField
     ): Boolean =
-        topLevelField.getFieldDefinitions(publicOverallSchema)
+        topLevelField.getFieldDefinitions(engineSchema)
             .asSequence()
             .filter {
                 it.getDirective(NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.name) != null

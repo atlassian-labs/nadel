@@ -34,7 +34,7 @@ public class NadelEngine implements NadelExecutionEngine {
 
     public NadelEngine(Nadel nadel) {
         this.services = nadel.services;
-        this.overallSchema = nadel.privateOverallSchema;
+        this.overallSchema = nadel.engineSchema;
         this.instrumentation = nadel.instrumentation;
         this.serviceExecutionHooks = nadel.serviceExecutionHooks;
         this.executionIdProvider = nadel.executionIdProvider;

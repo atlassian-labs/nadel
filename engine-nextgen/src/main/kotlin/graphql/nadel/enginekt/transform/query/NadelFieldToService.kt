@@ -11,15 +11,16 @@ import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.util.NamespacedUtil.serviceOwnsNamespacedField
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperation
+import graphql.schema.GraphQLSchema
 
 internal class NadelFieldToService(
+    private val querySchema: GraphQLSchema,
     private val overallExecutionBlueprint: NadelOverallExecutionBlueprint,
     introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
     private val dynamicServiceResolution: DynamicServiceResolution,
     private val services: Map<String, Service>,
 ) {
-    private val introspectionService =
-        IntrospectionService(overallExecutionBlueprint.publicSchema, introspectionRunnerFactory)
+    private val introspectionService = IntrospectionService(querySchema, introspectionRunnerFactory)
 
     fun getServicesForTopLevelFields(query: ExecutableNormalizedOperation): List<NadelFieldAndService> {
         return query.topLevelFields.flatMap { topLevelField ->
@@ -91,7 +92,7 @@ internal class NadelFieldToService(
     }
 
     private fun isNamespacedField(field: ExecutableNormalizedField): Boolean {
-        return isNamespacedField(field, overallExecutionBlueprint.publicSchema)
+        return isNamespacedField(field, querySchema)
     }
 }
 

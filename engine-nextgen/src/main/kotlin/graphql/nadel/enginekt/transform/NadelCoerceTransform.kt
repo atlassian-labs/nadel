@@ -74,7 +74,7 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         service: Service,
         overallField: ExecutableNormalizedField,
     ): State? {
-        val schema = executionBlueprint.privateSchema
+        val schema = executionBlueprint.engineSchema
 
         val distinctUnwrappedTypes = overallField.objectTypeNames
             .asSequence()
