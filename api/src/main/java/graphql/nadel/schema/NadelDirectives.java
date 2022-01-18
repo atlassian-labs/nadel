@@ -276,7 +276,7 @@ public class NadelDirectives {
 
         HIDDEN_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
                 .name("hidden")
-                .description(createDescription("Indicates that the field is not available for queries"))
+                .description(createDescription("Indicates that the field is not available for queries or introspection"))
                 .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
                 .build();
     }
