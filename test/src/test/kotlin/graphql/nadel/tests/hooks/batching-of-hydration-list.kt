@@ -50,7 +50,7 @@ class `batching-of-hydration-list` : EngineTestHook {
 
     override fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
         if (engineType == NadelEngineType.nextgen) {
-            assert(callCount == 2)
+            assert(callCount == 2,{ "The $engineType callCount is $callCount"})
         }
     }
 }

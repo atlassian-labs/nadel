@@ -58,6 +58,7 @@ internal object NadelHydrationFieldsBuilder {
             aliasHelper = aliasHelper,
             hydrationField = hydratedField,
             parentNodes = parentNodes,
+            hooks = hooks
         )
 
         val fieldChildren = deepClone(fields = hydratedField.children).let { children ->
