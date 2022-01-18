@@ -14,6 +14,7 @@ import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.CountedBox
 import graphql.nadel.enginekt.util.deepClone
+import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
@@ -50,6 +51,7 @@ internal object NadelHydrationFieldsBuilder {
         aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
+        hooks: ServiceExecutionHooks,
     ): List<CountedBox<ExecutableNormalizedField>> {
         val boxedArgBatches = NadelBatchHydrationInputBuilder.getInputValueBatches(
             instruction = instruction,
