@@ -3,6 +3,7 @@ package graphql.nadel.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.GraphQLError
+import graphql.Scalars
 import graphql.language.AstPrinter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
@@ -15,14 +16,45 @@ import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
+import graphql.scalars.ExtendedScalars.GraphQLLong
+import graphql.scalars.ExtendedScalars.Json
+import graphql.schema.GraphQLScalarType
+import graphql.schema.idl.ScalarInfo
+import graphql.schema.idl.ScalarWiringEnvironment
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+
+val File.parents: Sequence<File>
+    get() = sequence<File> {
+        var file: File? = parentFile
+        while (file != null) {
+            yield(file)
+            file = file.parentFile
+        }
+    }
 
 /**
- * Run this and replace the path to central schema to load it up in Nadel.
+ * By default, we don't actually run any queries against the Nadel instance.
+ *
+ * Set this to true to run the query. You'll have to modify the [ServiceExecutionFactory] to
+ * actually return something e.g. response from Splunk etc.
+ */
+const val runQuery = false
+
+/**
+ * You can use this script to run central schema locally in Nadel without
+ * booting up the full Gateway.
+ *
+ * This can be used for debugging Nadel instantiation, query execution, and
+ * running the latest validation against central schema.
+ *
+ * Remember that this is NOT the exact same as running the full Gateway.
+ * This is only here for convenience as the full Gateway is a little slower
+ * to debug.
  */
 suspend fun main() {
     val schema = File(
@@ -31,24 +63,37 @@ suspend fun main() {
     val overallSchemas = mutableMapOf<String, String>()
     val underlyingSchemas = mutableMapOf<String, String>()
 
-    schema.walkTopDown().forEach { file ->
-        if (file.extension == "nadel") {
-            if (file.parentFile.name in overallSchemas) {
-                overallSchemas[file.parentFile.name] += file.readText()
-            } else {
-                overallSchemas[file.parentFile.name] = file.readText()
-            }
-        } else if (file.extension == "graphqls") {
-            val text = file.readText()
-            underlyingSchemas.compute(file.parentFile.name) { _, oldValue ->
-                if (oldValue == null) {
-                    text + "\n"
+    schema.walkTopDown()
+        .mapNotNull { file ->
+            val serviceName = file.parents
+                .takeWhile {
+                    it.absolutePath != schema.absolutePath
+                }
+                .firstOrNull { parent ->
+                    parent.listFiles()?.any { it.name == "config.yaml" || it.name == "config.yml" } ?: false
+                }
+                ?.name
+
+            file to (serviceName ?: return@mapNotNull null)
+        }
+        .forEach { (file, serviceName) ->
+            if (file.extension == "nadel") {
+                if (file.parentFile.name in overallSchemas) {
+                    overallSchemas[serviceName] += file.readText()
                 } else {
-                    oldValue + "\n" + text + "\n"
+                    overallSchemas[serviceName] = file.readText()
+                }
+            } else if (file.extension == "graphqls" || file.extension == "graphql") {
+                val text = file.readText()
+                underlyingSchemas.compute(serviceName) { _, oldValue ->
+                    if (oldValue == null) {
+                        text + "\n"
+                    } else {
+                        oldValue + "\n" + text + "\n"
+                    }
                 }
             }
         }
-    }
 
     require(overallSchemas.keys == underlyingSchemas.keys)
     // println(overallSchemas.keys)
@@ -81,6 +126,8 @@ suspend fun main() {
                 return SchemaParser().parse(underlyingSchemas[serviceName] ?: return TypeDefinitionRegistry())
             }
         })
+        .overallWiringFactory(GatewaySchemaWiringFactory())
+        .underlyingWiringFactory(GatewaySchemaWiringFactory())
         .build()
 
     NadelSchemaValidation(
@@ -95,7 +142,7 @@ suspend fun main() {
         .forEach(::println)
 
     @Suppress("ConstantConditionIf")
-    if (true) {
+    if (!runQuery) {
         return
     }
 
@@ -113,6 +160,60 @@ suspend fun main() {
         }
 }
 
-class GatewaySchemaWiringFactory : NeverWiringFactory()
+class GatewaySchemaWiringFactory : NeverWiringFactory() {
+    private val passThruScalars: MutableMap<String, GraphQLScalarType> = ConcurrentHashMap()
+
+    override fun providesScalar(env: ScalarWiringEnvironment): Boolean {
+        val scalarName = env.scalarTypeDefinition.name
+        return if (defaultScalars.containsKey(scalarName)) {
+            true
+        } else !ScalarInfo.isGraphqlSpecifiedScalar(scalarName)
+    }
+
+    override fun getScalar(env: ScalarWiringEnvironment): GraphQLScalarType {
+        val scalarName = env.scalarTypeDefinition.name
+        val scalarType = defaultScalars[scalarName]
+        return scalarType ?: passThruScalars.computeIfAbsent(scalarName) {
+            passThruScalar(env)
+        }
+    }
+
+    private fun passThruScalar(env: ScalarWiringEnvironment): GraphQLScalarType {
+        val scalarTypeDefinition = env.scalarTypeDefinition
+        val scalarName = scalarTypeDefinition.name
+        val scalarDescription = if (scalarTypeDefinition.description == null) {
+            scalarName
+        } else {
+            scalarTypeDefinition.description.content
+        }
+
+        return GraphQLScalarType.newScalar().name(scalarName)
+            .definition(scalarTypeDefinition)
+            .description(scalarDescription)
+            .coercing(Json.coercing)
+            .build()
+    }
+
+    companion object {
+        private val urlScalar = GraphQLScalarType.newScalar()
+            .name("URL")
+            .description("A URL Scalar type")
+            .coercing(Scalars.GraphQLString.coercing)
+            .build()
+
+        private val dateTimeScalar = GraphQLScalarType.newScalar()
+            .name("DateTime")
+            .description("DateTime type")
+            .coercing(Scalars.GraphQLString.coercing)
+            .build()
+
+        private val defaultScalars = mapOf(
+            urlScalar.name to urlScalar,
+            Json.name to Json,
+            GraphQLLong.name to GraphQLLong,
+            dateTimeScalar.name to dateTimeScalar,
+        )
+    }
+}
 
 const val query = ""
