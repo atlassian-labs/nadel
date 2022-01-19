@@ -1,3 +1,4 @@
+import com.bnorm.power.PowerAssertGradleExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -29,6 +30,6 @@ tasks.withType<KotlinCompile>().configureEach {
     targetCompatibility = JavaVersion.VERSION_11.toString()
 }
 
-configure<com.bnorm.power.PowerAssertGradleExtension> {
+configure<PowerAssertGradleExtension> {
     functions = listOf("kotlin.assert", "graphql.nadel.test.dbg")
 }

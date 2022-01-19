@@ -30,7 +30,9 @@ def getDevelopmentVersion() {
 def releaseVersion = System.env.RELEASE_VERSION
 version = releaseVersion ? releaseVersion : getDevelopmentVersion()
 group = "com.atlassian"
-
+allprojects {
+    description = "Nadel is a Java library that combines multiple GrahpQL services together into one API."
+}
 gradle.buildFinished { buildResult ->
     println "*******************************"
     println "*"
@@ -76,7 +78,6 @@ subprojects {
     publishing {
         publications {
             nadel(MavenPublication) {
-                version version
                 from components.java
 
                 artifact sourcesJar {
@@ -101,6 +102,7 @@ subprojects {
                     pomNode.children().last() + {
                         resolveStrategy = Closure.DELEGATE_FIRST
                         name project.name
+                        description project.description
                         url "https://github.com/atlassian-labs/nadel"
                         scm {
                             url "https://github.com/atlassian-labs/nadel"
