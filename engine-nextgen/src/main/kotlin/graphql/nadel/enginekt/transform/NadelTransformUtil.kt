@@ -9,7 +9,6 @@ import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNode
-import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.getField
