@@ -318,154 +318,6 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
 '''
     }
 
-    def "test JSON when input is a variable"() {
-        def sdl = '''
-        type Query {
-            foo: String
-        }
-        type Mutation {
-            foo1(arg: JSON!): String
-        }
-        
-        scalar JSON
-        '''
-        def query = '''mutation hello($var: JSON!) {
-            foo1(arg: $var)
-        }
-        '''
-        GraphQLSchema schema = TestUtil.schema(sdl)
-
-        def vars = [var: ["48x48": "hello"]]
-        def fields = createNormalizedFields(schema, query, vars)
-
-        def pair = compileToDocument(schema, MUTATION, null, fields)
-        when:
-        def document = pair.first
-        def variables = pair.second
-        then:
-        variables.size() == 1
-        variables.values().first() == ["48x48": "hello"]
-        def varName = variables.keySet().first()
-        AstPrinter.printAst(document) == """mutation (\$$varName: JSON!) {
-  foo1(arg: \$$varName)
-}
-"""
-    }
-
-    def "test JSON scalar when input is inlined"() {
-        def sdl = '''
-        type Query {
-            foo: String
-        }
-        type Mutation {
-            foo1(arg: JSON!): String
-        }
-        
-        scalar JSON
-        '''
-        def query = '''mutation {
-            foo1(arg: {one: "two", three: ["four", "five"]})
-        }
-        '''
-        def variables = [var: ["48x48": "hello"]]
-        GraphQLSchema schema = TestUtil.schema(sdl)
-        def fields = createNormalizedFields(schema, query, variables)
-
-        def pair = compileToDocument(schema, MUTATION, null, fields)
-        when:
-        def document = pair.first
-        def vars = pair.second
-        then:
-        vars.size() == 1
-        vars.values().first() == [one: "two", three: ["four", "five"]]
-        def varName = vars.keySet().first()
-        AstPrinter.printAst(document) == """mutation (\$$varName: JSON!) {
-  foo1(arg: \$$varName)
-}
-"""
-    }
-
-    def "test JSON scalar inside an input type"() {
-        def sdl = '''
-        type Query {
-            foo: String
-        }
-        type Mutation {
-            foo1(arg: InputWithJson): String
-        }
-        
-        input InputWithJson {
-          id: ID
-          json: JSON
-        }
-        scalar JSON
-        '''
-        def query = '''mutation {
-            foo1(arg: {id: "ID-00", json: {name: "Zlatan", lastName: "Ibrahimoviç", clubs: ["MU", "Barsa", "Inter", "Milan"]}})
-        }
-        '''
-
-        GraphQLSchema schema = TestUtil.schema(sdl)
-        def fields = createNormalizedFields(schema, query)
-
-        def variablesAndDocument = compileToDocument(schema, MUTATION, null, fields)
-        when:
-        def document = variablesAndDocument.first
-        def vars = variablesAndDocument.second
-        then:
-        vars.size() == 1
-        vars.values().first() == [lastName: "Ibrahimoviç", name: "Zlatan", clubs: ["MU", "Barsa", "Inter", "Milan"]]
-        def variableName = vars.keySet().first()
-        AstPrinter.printAst(document) == """mutation (\$$variableName: JSON) {
-  foo1(arg: {id : "ID-00", json : \$$variableName})
-}
-"""
-    }
-
-    def "test JSON scalar inside an input type, json key is illegal graphql input name"() {
-        def sdl = '''
-        type Query {
-            foo: String
-        }
-        type Mutation {
-            foo1(arg: InputWithJson): String
-        }
-        
-        input InputWithJson {
-          id: ID
-          json: JSON
-        }
-        scalar JSON
-        '''
-        def query = '''mutation test($var: InputWithJson) {
-            foo1(arg: $var)
-        }
-        '''
-        def variables = [var: [
-                id  : "ID-00",
-                json: [name    : "Zlatan",
-                       lastName: "Ibrahimoviç",
-                       clubs   : ["MU", "Barsa", "Inter", "Milan"],
-                       "48x48" : "Zlatan_48x48.jpg"
-                ]
-        ]]
-        GraphQLSchema schema = TestUtil.schema(sdl)
-        def fields = createNormalizedFields(schema, query, variables)
-
-        def variablesAndDocument = compileToDocument(schema, MUTATION, null, fields)
-        when:
-        def document = variablesAndDocument.first
-        def vars = variablesAndDocument.second
-        then:
-        vars.size() == 1
-        vars.values().first() == ["48x48": "Zlatan_48x48.jpg", lastName: "Ibrahimoviç", name: "Zlatan", clubs: ["MU", "Barsa", "Inter", "Milan"]]
-        def variableName = vars.keySet().first()
-        AstPrinter.printAst(document) == """mutation (\$$variableName: JSON) {
-  foo1(arg: {id : "ID-00", json : \$$variableName})
-}
-"""
-    }
-
     def "test subscriptions"() {
         def sdl = '''
         type Query {
@@ -679,6 +531,190 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
 }
 '''
     }
+
+    // --------------------------------------------------------------------------------------
+    // Custom JSON handling
+
+    def "test JSON when input is a variable"() {
+        def sdl = '''
+        type Query {
+            foo: String
+        }
+        type Mutation {
+            foo1(arg: JSON!): String
+        }
+        
+        scalar JSON
+        '''
+        def query = '''mutation hello($var: JSON!) {
+            foo1(arg: $var)
+        }
+        '''
+        GraphQLSchema schema = TestUtil.schema(sdl)
+
+        def vars = [var: ["48x48": "hello"]]
+        def fields = createNormalizedFields(schema, query, vars)
+
+        def pair = compileToDocument(schema, MUTATION, null, fields)
+        when:
+        def document = pair.first
+        def variables = pair.second
+        then:
+        variables == [var_0: ["48x48": "hello"]]
+        AstPrinter.printAst(document) == '''mutation ($var_0: JSON!) {
+  foo1(arg: $var_0)
+}
+'''
+    }
+
+    def "test JSON scalar when input is inlined"() {
+        def sdl = '''
+        type Query {
+            foo: String
+        }
+        type Mutation {
+            foo1(arg: JSON!): String
+        }
+        
+        scalar JSON
+        '''
+        def query = '''mutation {
+            foo1(arg: {one: "two", three: ["four", "five"]})
+        }
+        '''
+        GraphQLSchema schema = TestUtil.schema(sdl)
+        def fields = createNormalizedFields(schema, query)
+
+        def pair = compileToDocument(schema, MUTATION, null, fields)
+        when:
+        def document = pair.first
+        def variables = pair.second
+        then:
+        variables == [var_0: [one: "two", three: ["four", "five"]]]
+        AstPrinter.printAst(document) == '''mutation ($var_0: JSON!) {
+  foo1(arg: $var_0)
+}
+'''
+    }
+
+    def "test JSON scalar when input is inlined, multiple JSON args"() {
+        def sdl = '''
+        type Query {
+            foo: String
+        }
+        type Mutation {
+            foo1(arg1: JSON!, arg2: [JSON!]): String
+        }
+        
+        scalar JSON
+        '''
+        def query = '''mutation {
+            foo1(arg1: {one: "two", three: ["four", "five"]}, arg2: [{one: "two", three: ["four", "five"]}])
+        }
+        '''
+        GraphQLSchema schema = TestUtil.schema(sdl)
+        def fields = createNormalizedFields(schema, query)
+
+        def pair = compileToDocument(schema, MUTATION, null, fields)
+        when:
+        def document = pair.first
+        def vars = pair.second
+        then:
+        vars.size() == 2
+        vars['var_0'] == [one: "two", three: ["four", "five"]]
+        vars['var_1'] == [[one: "two", three: ["four", "five"]]]
+        AstPrinter.printAst(document) == '''mutation ($var_0: JSON!, $var_1: [JSON!]) {
+  foo1(arg1: $var_0, arg2: $var_1)
+}
+'''
+    }
+
+    def "test JSON scalar inside an input type"() {
+        def sdl = '''
+        type Query {
+            foo: String
+        }
+        type Mutation {
+            foo1(arg: InputWithJson): String
+        }
+        
+        input InputWithJson {
+          id: ID
+          json: JSON
+        }
+        scalar JSON
+        '''
+        def query = '''mutation {
+            foo1(arg: {id: "ID-00", json: {name: "Zlatan", lastName: "Ibrahimoviç", clubs: ["MU", "Barsa", "Inter", "Milan"]}})
+        }
+        '''
+
+        GraphQLSchema schema = TestUtil.schema(sdl)
+        def fields = createNormalizedFields(schema, query)
+
+        def variablesAndDocument = compileToDocument(schema, MUTATION, null, fields)
+        when:
+        def document = variablesAndDocument.first
+        def vars = variablesAndDocument.second
+        then:
+        vars.size() == 1
+        vars['var_0'] == [lastName: "Ibrahimoviç", name: "Zlatan", clubs: ["MU", "Barsa", "Inter", "Milan"]]
+        AstPrinter.printAst(document) == '''mutation ($var_0: JSON) {
+  foo1(arg: {id : "ID-00", json : $var_0})
+}
+'''
+    }
+
+    def "test JSON scalar inside an input type, json key is illegal graphql input name"() {
+        def sdl = '''
+        type Query {
+            foo: String
+        }
+        type Mutation {
+            foo1(arg: InputWithJson): String
+        }
+        
+        input InputWithJson {
+          id: ID
+          json: JSON
+        }
+        scalar JSON
+        '''
+        def query = '''mutation test($var: InputWithJson) {
+            foo1(arg: $var)
+        }
+        '''
+        def variables = [var: [
+                id  : "ID-00",
+                json: [name    : "Zlatan",
+                       lastName: "Ibrahimoviç",
+                       clubs   : ["MU", "Barsa", "Inter", "Milan", null],
+                       "48x48" : "Zlatan_48x48.jpg",
+                       "96x96" : null
+                ]
+        ]]
+        GraphQLSchema schema = TestUtil.schema(sdl)
+        def fields = createNormalizedFields(schema, query, variables)
+
+        def variablesAndDocument = compileToDocument(schema, MUTATION, null, fields)
+        when:
+        def document = variablesAndDocument.first
+        def vars = variablesAndDocument.second
+        then:
+        vars.size() == 1
+        vars['var_0'] == [name    : "Zlatan",
+                          lastName: "Ibrahimoviç",
+                          clubs   : ["MU", "Barsa", "Inter", "Milan", null],
+                          "48x48" : "Zlatan_48x48.jpg",
+                          "96x96" : null
+        ]
+        def variableName = vars.keySet().first()
+        AstPrinter.printAst(document) == """mutation (\$$variableName: JSON) {
+  foo1(arg: {id : "ID-00", json : \$$variableName})
+}
+"""
+    }
+
 
     private List<ExecutableNormalizedField> createNormalizedFields(GraphQLSchema schema, String query, Map<String, Object> variables = [:]) {
         assertValidQuery(schema, query, variables)

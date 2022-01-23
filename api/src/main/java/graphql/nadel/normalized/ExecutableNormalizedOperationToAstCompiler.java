@@ -48,8 +48,8 @@ public class ExecutableNormalizedOperationToAstCompiler {
             String operationName,
             List<ExecutableNormalizedField> topLevelFields
     ) {
-        List<VariableValueWithDefinition> variables = new ArrayList<>();
-        List<Selection<?>> selections = selectionsForNormalizedFields(schema, topLevelFields, variables);
+        List<VariableValueWithDefinition> variableAccumulator = new ArrayList<>();
+        List<Selection<?>> selections = selectionsForNormalizedFields(schema, topLevelFields, variableAccumulator);
         SelectionSet selectionSet = new SelectionSet(selections);
 
         OperationDefinition.Builder definitionBuilder = OperationDefinition.newOperationDefinition()
@@ -57,9 +57,9 @@ public class ExecutableNormalizedOperationToAstCompiler {
                 .operation(operationKind)
                 .selectionSet(selectionSet);
 
-        definitionBuilder.variableDefinitions(map(variables, (variableWithDefinition -> variableWithDefinition.definition)));
+        definitionBuilder.variableDefinitions(map(variableAccumulator, (variableWithDefinition -> variableWithDefinition.definition)));
 
-        Map<String, Object> variableValuesByNames = variables.stream()
+        Map<String, Object> variableValuesByNames = variableAccumulator.stream()
                 .collect(Collectors.toMap(
                         variableWithDefinition -> variableWithDefinition.definition.getName(),
                         variableWithDefinition -> variableWithDefinition.value
@@ -76,7 +76,7 @@ public class ExecutableNormalizedOperationToAstCompiler {
     private static List<Selection<?>> selectionsForNormalizedFields(
             GraphQLSchema schema,
             List<ExecutableNormalizedField> executableNormalizedFields,
-            List<VariableValueWithDefinition> variables
+            List<VariableValueWithDefinition> variableAccumulator
     ) {
         ImmutableList.Builder<Selection<?>> selections = ImmutableList.builder();
 
@@ -85,7 +85,7 @@ public class ExecutableNormalizedOperationToAstCompiler {
         Map<String, List<Field>> conditionalFieldsByObjectTypeName = new LinkedHashMap<>();
 
         for (ExecutableNormalizedField nf : executableNormalizedFields) {
-            Map<String, List<Field>> groupFieldsForChild = selectionForNormalizedField(schema, nf, variables);
+            Map<String, List<Field>> groupFieldsForChild = selectionForNormalizedField(schema, nf, variableAccumulator);
             if (nf.isConditional(schema)) {
                 groupFieldsForChild.forEach((objectTypeName, fields) -> {
                     List<Field> fieldList = conditionalFieldsByObjectTypeName.computeIfAbsent(objectTypeName, ignored -> new ArrayList<>());
@@ -140,12 +140,12 @@ public class ExecutableNormalizedOperationToAstCompiler {
         return newSelectionSet().selections(fields).build();
     }
 
-    private static List<Argument> createArguments(ExecutableNormalizedField executableNormalizedField, List<VariableValueWithDefinition> variables) {
+    private static List<Argument> createArguments(ExecutableNormalizedField executableNormalizedField, List<VariableValueWithDefinition> variableAccumulator) {
         ImmutableList.Builder<Argument> result = ImmutableList.builder();
         ImmutableMap<String, NormalizedInputValue> normalizedArguments = executableNormalizedField.getNormalizedArguments();
         for (String argName : normalizedArguments.keySet()) {
             NormalizedInputValue normalizedInputValue = normalizedArguments.get(argName);
-            Value<?> value = argValue(normalizedInputValue, variables);
+            Value<?> value = argValue(normalizedInputValue, variableAccumulator);
             Argument argument = newArgument()
                     .name(argName)
                     .value(value)
@@ -155,17 +155,17 @@ public class ExecutableNormalizedOperationToAstCompiler {
         return result.build();
     }
 
-    private static Value<?> argValue(Object value, List<VariableValueWithDefinition> variables) {
+    private static Value<?> argValue(Object value, List<VariableValueWithDefinition> variableAccumulator) {
         if (value instanceof List) {
             ArrayValue.Builder arrayValue = ArrayValue.newArrayValue();
-            arrayValue.values(map((List<Object>) value, val -> argValue(val, variables)));
+            arrayValue.values(map((List<Object>) value, val -> argValue(val, variableAccumulator)));
             return arrayValue.build();
         }
         if (value instanceof Map) {
             ObjectValue.Builder objectValue = ObjectValue.newObjectValue();
             Map<String, Object> map = (Map<String, Object>) value;
             for (String fieldName : map.keySet()) {
-                Value<?> fieldValue = argValue((NormalizedInputValue) map.get(fieldName), variables);
+                Value<?> fieldValue = argValue((NormalizedInputValue) map.get(fieldName), variableAccumulator);
                 objectValue.objectField(ObjectField.newObjectField().name(fieldName).value(fieldValue).build());
             }
             return objectValue.build();
@@ -177,13 +177,14 @@ public class ExecutableNormalizedOperationToAstCompiler {
     }
 
     @NotNull
-    private static Value<?> argValue(NormalizedInputValue normalizedInputValue, List<VariableValueWithDefinition> variableDefinitionAccumulator) {
+    private static Value<?> argValue(NormalizedInputValue normalizedInputValue, List<VariableValueWithDefinition> variableAccumulator) {
         if (JSON_SCALAR_TYPENAME.equals(normalizedInputValue.getUnwrappedTypeName())) {
-            VariableValueWithDefinition variableWithDefinition = normalizedInputValueToVariable(normalizedInputValue);
-            variableDefinitionAccumulator.add(variableWithDefinition);
+            int numberOfVariablesAlreadyPresent = variableAccumulator.size();
+            VariableValueWithDefinition variableWithDefinition = normalizedInputValueToVariable(normalizedInputValue, numberOfVariablesAlreadyPresent);
+            variableAccumulator.add(variableWithDefinition);
             return variableWithDefinition.variableReference;
         } else {
-            return argValue(normalizedInputValue.getValue(), variableDefinitionAccumulator);
+            return argValue(normalizedInputValue.getValue(), variableAccumulator);
         }
     }
 }
