@@ -676,7 +676,7 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
         
         input InputWithJson {
           id: ID
-          json: JSON
+          json: [JSON!]
         }
         scalar JSON
         '''
@@ -686,12 +686,12 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
         '''
         def variables = [var: [
                 id  : "ID-00",
-                json: [name    : "Zlatan",
-                       lastName: "Ibrahimoviç",
-                       clubs   : ["MU", "Barsa", "Inter", "Milan", null],
-                       "48x48" : "Zlatan_48x48.jpg",
-                       "96x96" : null
-                ]
+                json: [[name    : "Zlatan",
+                        lastName: "Ibrahimoviç",
+                        clubs   : ["MU", "Barsa", "Inter", "Milan", null],
+                        "48x48" : "Zlatan_48x48.jpg",
+                        "96x96" : null
+                       ]]
         ]]
         GraphQLSchema schema = TestUtil.schema(sdl)
         def fields = createNormalizedFields(schema, query, variables)
@@ -702,17 +702,16 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
         def vars = variablesAndDocument.second
         then:
         vars.size() == 1
-        vars['var_0'] == [name    : "Zlatan",
-                          lastName: "Ibrahimoviç",
-                          clubs   : ["MU", "Barsa", "Inter", "Milan", null],
-                          "48x48" : "Zlatan_48x48.jpg",
-                          "96x96" : null
-        ]
-        def variableName = vars.keySet().first()
-        AstPrinter.printAst(document) == """mutation (\$$variableName: JSON) {
-  foo1(arg: {id : "ID-00", json : \$$variableName})
+        vars['var_0'] == [[name    : "Zlatan",
+                           lastName: "Ibrahimoviç",
+                           clubs   : ["MU", "Barsa", "Inter", "Milan", null],
+                           "48x48" : "Zlatan_48x48.jpg",
+                           "96x96" : null
+                          ]]
+        AstPrinter.printAst(document) == '''mutation ($var_0: [JSON!]) {
+  foo1(arg: {id : "ID-00", json : $var_0})
 }
-"""
+'''
     }
 
 
