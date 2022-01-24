@@ -1,0 +1,76 @@
+name: inlined json arguments
+enabled:
+  current: true
+  nextgen: true
+overallSchema:
+  MyService: |
+    type Query {
+      hello(arg: InputWithJson, arg1: JSON!): String
+    }
+    
+    input InputWithJson {
+      payload: JSON 
+    }
+    
+    scalar JSON
+underlyingSchema:
+  MyService: |-
+    type Query {
+      hello(arg: InputWithJson, arg1: JSON!): String
+    }
+    
+    input InputWithJson {
+      payload: JSON 
+    }
+    
+    scalar JSON
+query: |
+  query myQuery {
+    hello(arg: {payload: {name: "Bobert", age: "23"}}, arg1: {interests: ["photography", "basketball"]})
+  }
+variables: { }
+serviceCalls:
+  current:
+    - serviceName: MyService
+      request:
+        query: |
+          query nadel_2_MyService_myQuery {
+              hello(arg: {payload: {name: "Bobert", age: "23"}}, arg1: {interests: ["photography", "basketball"]})
+          }
+        variables: { }
+        operationName: nadel_2_MyService_myQuery
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": "world"
+          },
+          "extensions": {}
+        }
+  nextgen:
+    - serviceName: MyService
+      request:
+        query: |
+          query myQuery($var_0: JSON, $var_1: JSON!) {
+            hello(arg: {payload : $var_0}, arg1: $var_1)
+          }
+        variables:
+          var_0: { "name": "Bobert", age: "23" }
+          var_1: { interests: [ "photography", "basketball" ] }
+        operationName: myQuery
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "hello": "world"
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "hello": "world"
+    },
+    "extensions": {}
+  }

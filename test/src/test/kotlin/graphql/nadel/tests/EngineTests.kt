@@ -142,6 +142,8 @@ private suspend fun execute(
                 engineFactory.make(nadel, testHooks)
             }
             .dsl(fixture.overallSchema)
+            .overallWiringFactory(testHooks.wiringFactory)
+            .underlyingWiringFactory(testHooks.wiringFactory)
             .serviceExecutionFactory(object : ServiceExecutionFactory {
                 private val astSorter = AstSorter()
                 private val serviceCalls = fixture.serviceCalls[engineType].toMutableList()
@@ -161,6 +163,7 @@ private suspend fun execute(
                                         it.serviceName == serviceName
                                             && AstPrinter.printAst(it.request.document) == incomingQueryPrinted
                                             && it.request.operationName == params.operationDefinition.name
+                                            && it.request.variables == params.variables
                                     }
                                     .takeIf { it != -1 }
 

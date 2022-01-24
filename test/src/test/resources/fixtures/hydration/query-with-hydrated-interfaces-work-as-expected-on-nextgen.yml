@@ -145,101 +145,6 @@ query: |
 variables:
   isLoyal: true
 serviceCalls:
-  current:
-    - serviceName: PetService
-      request:
-        query: |
-          query nadel_2_PetService_petQ($isLoyal: Boolean) {
-            pets(isLoyal: $isLoyal) {
-              name
-              ownerIds
-              type_hint_typename__UUID: __typename
-            }
-          }
-        variables:
-          isLoyal: true
-        operationName: nadel_2_PetService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "ownerIds": [
-                  "dearly"
-                ],
-                "type_hint_typename__UUID": "Dog"
-              },
-              {
-                "name": "Whiskers",
-                "ownerIds": [
-                  "cruella"
-                ],
-                "type_hint_typename__UUID": "Cat"
-              }
-            ]
-          },
-          "extensions": {}
-        }
-    - serviceName: OwnerService
-      request:
-        query: |
-          query nadel_2_OwnerService_petQ {
-            ownerById(id: "dearly") {
-              name
-              ... on CaringOwner {
-                givesPats
-              }
-              ... on CruelOwner {
-                givesSmacks
-              }
-              type_hint_typename__UUID: __typename
-            }
-          }
-        variables: {}
-        operationName: nadel_2_OwnerService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "ownerById": {
-              "name": "Mr Dearly",
-              "givesPats": true,
-              "type_hint_typename__UUID": "CaringOwner"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: OwnerService
-      request:
-        query: |
-          query nadel_2_OwnerService_petQ {
-            ownerById(id: "cruella") {
-              name
-              ... on CaringOwner {
-                givesPats
-              }
-              ... on CruelOwner {
-                givesSmacks
-              }
-              type_hint_typename__UUID: __typename
-            }
-          }
-        variables: {}
-        operationName: nadel_2_OwnerService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "ownerById": {
-              "name": "Cruella De Vil",
-              "givesSmacks": true,
-              "type_hint_typename__UUID": "CruelOwner"
-            }
-          },
-          "extensions": {}
-        }
   nextgen:
     - serviceName: PetService
       request:
@@ -258,8 +163,7 @@ serviceCalls:
               }
             }
           }
-        variables:
-          isLoyal: true
+        variables: { }
         operationName: petQ
       # language=JSON
       response: |-
@@ -299,7 +203,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: petQ
       # language=JSON
       response: |-
@@ -327,7 +231,7 @@ serviceCalls:
               }
             }
           }
-        variables: {}
+        variables: { }
         operationName: petQ
       # language=JSON
       response: |-
