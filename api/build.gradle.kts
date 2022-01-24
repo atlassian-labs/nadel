@@ -83,6 +83,7 @@ dependencies {
     testImplementation("org.openjdk.jmh:jmh-core:1.21")
     testImplementation("org.openjdk.jmh:jmh-generator-annprocess:1.21")
     testImplementation("com.google.guava:guava:28.0-jre")
+    testImplementation("com.graphql-java:graphql-java-extended-scalars:2021-06-29T01-19-32-8e19827")
 }
 
 tasks.generateGrammarSource {

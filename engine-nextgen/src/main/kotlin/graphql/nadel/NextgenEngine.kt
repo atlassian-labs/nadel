@@ -7,6 +7,7 @@ import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
+import graphql.nadel.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
@@ -40,7 +41,6 @@ import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
-import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -265,7 +265,7 @@ class NextgenEngine @JvmOverloads constructor(
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val executionInput = executionContext.executionInput
-        val document: Document = compileToDocument(
+        val (document, variables) = compileToDocument(
             service.underlyingSchema,
             transformedQuery.getOperationKind(overallSchema),
             getOperationName(service, executionContext),
@@ -277,7 +277,7 @@ class NextgenEngine @JvmOverloads constructor(
             .context(executionInput.context)
             .executionId(executionInput.executionId ?: executionIdProvider.provide(executionInput))
             .cacheControl(executionInput.cacheControl)
-            .variables(emptyMap())
+            .variables(variables)
             .fragments(emptyMap())
             .operationDefinition(document.definitions.singleOfType())
             .serviceContext(executionContext.getContextForService(service).await())

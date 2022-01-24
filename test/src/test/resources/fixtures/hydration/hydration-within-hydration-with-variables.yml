@@ -89,7 +89,7 @@ serviceCalls:
               issueId
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_boards
       # language=JSON
       response: |-
@@ -109,7 +109,7 @@ serviceCalls:
               cloudId
             }
           }
-        variables: {}
+        variables: { }
         operationName: nadel_2_issues
       # language=JSON
       response: |-
@@ -129,7 +129,7 @@ serviceCalls:
               totalCount
             }
           }
-        variables: {}
+        variables: { first: 10 }
         operationName: nadel_2_comments
       # language=JSON
       response: |-
@@ -151,7 +151,7 @@ serviceCalls:
               hydration__issue__issueId: issueId
             }
           }
-        variables: {}
+        variables: { }
       # language=JSON
       response: |-
         {
@@ -172,7 +172,7 @@ serviceCalls:
               hydration__comments__cloudId: cloudId
             }
           }
-        variables: {}
+        variables: { }
       # language=JSON
       response: |-
         {
@@ -192,7 +192,7 @@ serviceCalls:
               totalCount
             }
           }
-        variables: {}
+        variables: { }
       # language=JSON
       response: |-
         {
@@ -207,14 +207,14 @@ serviceCalls:
 response: |-
   {
     "data":
-      {
-        "board": {
-          "issue": {
-            "comments": {
-              "totalCount":10
-            }
+    {
+      "board": {
+        "issue": {
+          "comments": {
+            "totalCount":10
           }
         }
-      },
-  "extensions": {}
+      }
+    },
+    "extensions": {}
   }

@@ -14,6 +14,7 @@ dependencies {
     testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.6")
     testImplementation("io.kotest:kotest-runner-junit5:4.6.0")
     testImplementation("io.strikt:strikt-jvm:0.31.0")
+    testImplementation("com.graphql-java:graphql-java-extended-scalars:2021-06-29T01-19-32-8e19827")
 }
 
 tasks.withType<Test> {
