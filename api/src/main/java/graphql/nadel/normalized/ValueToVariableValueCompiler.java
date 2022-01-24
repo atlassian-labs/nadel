@@ -26,13 +26,14 @@ import static graphql.nadel.util.FpKit.map;
 public class ValueToVariableValueCompiler {
 
     static VariableValueWithDefinition normalizedInputValueToVariable(NormalizedInputValue normalizedInputValue, int queryVariableCount) {
-        Object variableValue = null;
-        Object normalizedInputValueValue = normalizedInputValue.getValue();
-        if (normalizedInputValueValue instanceof ObjectValue) {
-            variableValue = toVariableValue((ObjectValue) normalizedInputValueValue);
-        }
-        if (normalizedInputValueValue instanceof List) {
-            variableValue = toVariableValues((List) normalizedInputValueValue);
+        Object variableValue;
+        Object inputValue = normalizedInputValue.getValue();
+        if (inputValue instanceof ObjectValue) {
+            variableValue = toVariableValue((ObjectValue) inputValue);
+        } else if (inputValue instanceof List) {
+            variableValue = toVariableValues((List) inputValue);
+        } else {
+            throw new AssertException("Should never happen. Did not expect NormalizedInputValue.getValue() of type: " + inputValue.getClass());
         }
         String varName = getVarName(queryVariableCount);
         return new VariableValueWithDefinition(
@@ -79,7 +80,7 @@ public class ValueToVariableValueCompiler {
         } else if (value instanceof NullValue) {
             return null;
         }
-        throw new AssertException("Should never happen. Cannot handle JSON node of type " + value.getClass());
+        throw new AssertException("Should never happen. Cannot handle JSON node of type: " + value.getClass());
     }
 
     private static String getVarName(int variableOrdinal) {

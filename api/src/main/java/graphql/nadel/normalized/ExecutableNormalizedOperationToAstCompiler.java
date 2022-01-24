@@ -178,7 +178,7 @@ public class ExecutableNormalizedOperationToAstCompiler {
 
     @NotNull
     private static Value<?> argValue(NormalizedInputValue normalizedInputValue, List<VariableValueWithDefinition> variableAccumulator) {
-        if (JSON_SCALAR_TYPENAME.equals(normalizedInputValue.getUnwrappedTypeName())) {
+        if (JSON_SCALAR_TYPENAME.equals(normalizedInputValue.getUnwrappedTypeName()) && normalizedInputValue.getValue() != null) {
             int numberOfVariablesAlreadyPresent = variableAccumulator.size();
             VariableValueWithDefinition variableWithDefinition = normalizedInputValueToVariable(normalizedInputValue, numberOfVariablesAlreadyPresent);
             variableAccumulator.add(variableWithDefinition);
