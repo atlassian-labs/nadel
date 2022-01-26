@@ -23,10 +23,6 @@ class JsonNodes(
      * Extracts the nodes at the given query selection path.
      */
     fun getNodesAt(queryPath: NadelQueryPath, flatten: Boolean = false): List<JsonNode> {
-        if (!executionFlags.newJsonNodeTraversal) {
-            return JsonNodeExtractor.getNodesAt(data, queryPath, flatten)
-        }
-
         val rootNode = JsonNode(JsonNodePath.root, data)
         return getNodesAt(rootNode, queryPath, flatten)
     }
@@ -35,10 +31,6 @@ class JsonNodes(
      * Extract the node at the given json node path.
      */
     fun getNodeAt(path: JsonNodePath): JsonNode? {
-        if (!executionFlags.newJsonNodeTraversal) {
-            return JsonNodeExtractor.getNodeAt(data, path)
-        }
-
         val rootNode = JsonNode(JsonNodePath.root, data)
         return getNodeAt(rootNode, path)
     }

@@ -7,6 +7,7 @@ import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
+import graphql.nadel.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
@@ -24,7 +25,6 @@ import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultTransformer
 import graphql.nadel.enginekt.util.beginExecute
 import graphql.nadel.enginekt.util.copy
-import graphql.nadel.enginekt.util.copyWithChildren
 import graphql.nadel.enginekt.util.fold
 import graphql.nadel.enginekt.util.getOperationKind
 import graphql.nadel.enginekt.util.mergeResults
@@ -41,7 +41,6 @@ import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
-import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -215,10 +214,7 @@ class NextgenEngine @JvmOverloads constructor(
             it.children.single()
         }
 
-        val (transformResult, executionPlan) = when (executionContext.hints.transformsOnHydrationFields) {
-            true -> transformActorFieldNew(service, executionContext, actorField)
-            else -> transformActorField(service, executionContext, actorField)
-        }
+        val (transformResult, executionPlan) = transformHydrationQuery(service, executionContext, actorField)
 
         // Get to the top level field again using .parent N times on the new actor field
         val transformedQuery: ExecutableNormalizedField = fold(
@@ -245,47 +241,7 @@ class NextgenEngine @JvmOverloads constructor(
         )
     }
 
-    private suspend fun transformActorField(
-        service: Service,
-        executionContext: NadelExecutionContext,
-        actorField: ExecutableNormalizedField,
-    ): Pair<NadelQueryTransformer.TransformResult, NadelExecutionPlan> {
-
-        // Creates N plans for the children then merges them together into one big plan
-        val executionPlan = actorField.children.map {
-            executionPlanner.create(executionContext, services, service, rootField = it)
-        }.reduce(NadelExecutionPlan::merge)
-
-        val artificialFields = mutableListOf<ExecutableNormalizedField>()
-        val overallToUnderlyingFields = mutableMapOf<ExecutableNormalizedField, List<ExecutableNormalizedField>>()
-
-        // Transform the children of the actor field
-        // The actor field itself is already transformed
-        val actorFieldWithTransformedChildren = actorField.copyWithChildren(
-            actorField.children.flatMap { childField ->
-                transformQuery(service, executionContext, executionPlan, field = childField)
-                    .let { result ->
-                        artificialFields.addAll(result.artificialFields)
-                        overallToUnderlyingFields.also { map ->
-                            val sizeBefore = map.size
-                            map.putAll(result.overallToUnderlyingFields)
-                            require(map.size == sizeBefore + result.overallToUnderlyingFields.size)
-                        }
-                        result.result
-                    }
-            },
-        )
-
-        return Pair(
-            NadelQueryTransformer.TransformResult(
-                result = listOf(actorFieldWithTransformedChildren),
-                artificialFields,
-                overallToUnderlyingFields
-            ), executionPlan
-        )
-    }
-
-    private suspend fun transformActorFieldNew(
+    private suspend fun transformHydrationQuery(
         service: Service,
         executionContext: NadelExecutionContext,
         actorField: ExecutableNormalizedField,
@@ -311,7 +267,7 @@ class NextgenEngine @JvmOverloads constructor(
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val executionInput = executionContext.executionInput
-        val document: Document = compileToDocument(
+        val (document, variables) = compileToDocument(
             service.underlyingSchema,
             transformedQuery.getOperationKind(engineSchema),
             getOperationName(service, executionContext),
@@ -323,7 +279,7 @@ class NextgenEngine @JvmOverloads constructor(
             .context(executionInput.context)
             .executionId(executionInput.executionId ?: executionIdProvider.provide(executionInput))
             .cacheControl(executionInput.cacheControl)
-            .variables(emptyMap())
+            .variables(variables)
             .fragments(emptyMap())
             .operationDefinition(document.definitions.singleOfType())
             .serviceContext(executionContext.getContextForService(service).await())

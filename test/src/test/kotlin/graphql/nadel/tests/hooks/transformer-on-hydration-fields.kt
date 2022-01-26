@@ -1,7 +1,6 @@
 package graphql.nadel.tests.hooks
 
 import graphql.language.StringValue
-import graphql.nadel.NadelExecutionInput
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
@@ -13,26 +12,12 @@ import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.UseHook
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
 
-abstract class `transformer-on-hydration-fields` : EngineTestHook {
-
-    abstract fun isHintOn(): Boolean
-
-    override fun makeExecutionInput(
-        engineType: NadelEngineType,
-        builder: NadelExecutionInput.Builder,
-    ): NadelExecutionInput.Builder {
-        val isHintOn = this.isHintOn()
-
-        return builder.transformExecutionHints { hintsBuilder ->
-            hintsBuilder.transformsOnHydrationFields(isHintOn)
-        }
-    }
-
+@UseHook
+class `transformer-on-hydration-fields` : EngineTestHook {
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
             /**
@@ -88,14 +73,4 @@ abstract class `transformer-on-hydration-fields` : EngineTestHook {
                 }
             }
         )
-}
-
-@UseHook
-class `transformer-on-hydration-fields-hint-on` : `transformer-on-hydration-fields`() {
-    override fun isHintOn() = true
-}
-
-@UseHook
-class `transformer-on-hydration-fields-hint-off` : `transformer-on-hydration-fields`() {
-    override fun isHintOn() = false
 }
