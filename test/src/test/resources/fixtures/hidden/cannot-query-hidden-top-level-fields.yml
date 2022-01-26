@@ -1,4 +1,4 @@
-name: cannot query hidden fields
+name: cannot query hidden top level fields
 enabled:
   current: false
   nextgen: true
@@ -7,45 +7,27 @@ overallSchema:
     directive @hidden on FIELD_DEFINITION
     type Query {
       hello: World
+      hiddenField: String @hidden
     }
     type World {
       id: ID
       name: String
-      area51: Area @hidden
-    }
-    
-    type Area {
-      name: String
-      coordinates: String
     }
 
 underlyingSchema:
   MyService: |
     type Query {
       hello: World
+      hiddenField: String
     }
 
     type World {
       id: ID
       name: String
-      area51: Area
     }
-    
-    type Area {
-      name: String
-      coordinates: String
-    }
-
 query: |
   query {
-    hello {
-      id
-      name
-      area51 {
-        name
-        coordinates
-      }
-    }
+      hiddenField
   }
 
 variables: { }
@@ -58,10 +40,10 @@ response: |-
     "data": null,
     "errors": [
       {
-        "message": "Validation error of type FieldUndefined: Field 'area51' in type 'World' is undefined @ 'hello/area51'",
+        "message": "Validation error of type FieldUndefined: Field 'hiddenField' in type 'Query' is undefined @ 'hiddenField'",
         "locations":[
           {
-            "line":5,
+            "line":2,
             "column":5
           }
         ],

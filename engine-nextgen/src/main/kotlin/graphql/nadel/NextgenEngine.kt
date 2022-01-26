@@ -67,6 +67,7 @@ class NextgenEngine @JvmOverloads constructor(
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
     private val engineSchema = nadel.engineSchema
+    private val querySchema = nadel.querySchema
     private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
         engineSchema = nadel.engineSchema,
@@ -125,7 +126,7 @@ class NextgenEngine @JvmOverloads constructor(
     ): ExecutionResult {
         try {
             val query = createExecutableNormalizedOperationWithRawVariables(
-                overallExecutionBlueprint.engineSchema,
+                querySchema,
                 queryDocument,
                 executionInput.operationName,
                 executionInput.variables,

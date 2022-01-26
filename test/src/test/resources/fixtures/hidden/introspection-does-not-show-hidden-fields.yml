@@ -12,17 +12,11 @@ overallSchema:
     type World {
       id: ID
       name: String
-    }
-    type Mutation {
-      hello: String
+      area51: String @hidden
     }
 
 underlyingSchema:
   MyService: |
-    type Mutation {
-      hello: String
-    }
-
     type Query {
       hello: World
       hiddenField: String
@@ -31,14 +25,22 @@ underlyingSchema:
     type World {
       id: ID
       name: String
+      area51: String
     }
 query: |
   query introspection_query {
       __schema {
           queryType {
               fields(includeDeprecated: false) {
-                name
+                  name
               }
+          }
+      }
+      
+      __type(name: "World") {
+          name
+          fields {
+              name
           }
       }
   }
@@ -59,6 +61,17 @@ response: |-
             }
           ]
         }
+      },
+      "__type": {
+        "name": "World",
+        "fields": [
+          {
+            "name": "id"
+          },
+          {
+            "name": "name"
+          }
+        ]
       }
     },
     "errors": []

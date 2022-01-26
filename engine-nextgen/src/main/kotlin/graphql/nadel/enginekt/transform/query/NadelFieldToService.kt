@@ -92,7 +92,7 @@ internal class NadelFieldToService(
     }
 
     private fun isNamespacedField(field: ExecutableNormalizedField): Boolean {
-        return isNamespacedField(field, querySchema)
+        return isNamespacedField(field, overallExecutionBlueprint.engineSchema)
     }
 }
 
