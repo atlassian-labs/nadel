@@ -18,6 +18,7 @@ internal class NadelFieldValidation(
     private val overallSchema: GraphQLSchema,
     services: Map<String, Service>,
     private val typeValidation: NadelTypeValidation,
+    private val newHydrationValidation: Boolean,
 ) {
     private val renameValidation = NadelRenameValidation(this)
     private val hydrationValidation = NadelHydrationValidation(services, typeValidation, overallSchema)
@@ -55,7 +56,7 @@ internal class NadelFieldValidation(
                 }
             }
             .flatMap { overallField ->
-                validate(parent, overallField, underlyingFieldsByName)
+                validate(parent, overallField, underlyingFieldsByName, newHydrationValidation)
             }
             .toList()
     }
@@ -64,12 +65,14 @@ internal class NadelFieldValidation(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
         underlyingFieldsByName: Map<String, GraphQLFieldDefinition>,
+        newHydrationValidation: Boolean
     ): List<NadelSchemaValidationError> {
         return if (hasRename(overallField)) {
             renameValidation.validate(parent, overallField)
         } else if (hasHydration(overallField)) {
-            hydrationValidation.validate(parent, overallField)
+            hydrationValidation.validate(parent, overallField, newHydrationValidation)
         } else {
+            //this thing ensures that a field is present in the underlying if it is in the overall
             val underlyingField = underlyingFieldsByName[overallField.name]
             if (underlyingField == null) {
                 listOf(

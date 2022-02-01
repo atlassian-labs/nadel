@@ -32,8 +32,9 @@ internal class NadelTypeValidation(
     private val context: NadelValidationContext,
     private val overallSchema: GraphQLSchema,
     services: Map<String, Service>,
+    newHydrationValidation: Boolean,
 ) {
-    private val fieldValidation = NadelFieldValidation(overallSchema, services, this)
+    private val fieldValidation = NadelFieldValidation(overallSchema, services, this, newHydrationValidation)
     private val inputValidation = NadelInputValidation()
     private val enumValidation = NadelEnumValidation()
     private val interfaceValidation = NadelInterfaceValidation()

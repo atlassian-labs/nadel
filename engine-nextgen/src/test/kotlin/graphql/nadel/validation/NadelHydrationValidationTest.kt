@@ -15,6 +15,9 @@ import io.kotest.core.spec.style.DescribeSpec
 private const val source = "$" + "source"
 private const val argument = "$" + "argument"
 
+//1. are we getting rid of the @hydrated argument 'service' now or in the separate PR?
+//2. is it worth releasing it behind a feature flag/hint?
+
 class NadelHydrationValidationTest : DescribeSpec({
     describe("validate") {
         it("passes if hydration is valid") {
@@ -22,9 +25,63 @@ class NadelHydrationValidationTest : DescribeSpec({
                 overallSchema = mapOf(
                     "issues" to """
                         type Query {
-                            issue: JiraIssue
+                            issue: Issue
                         }
-                        type JiraIssue @renamed(from: "Issue") {
+                        type Issue {
+                            id: ID!
+                            creator: User @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$source.creator"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("fails if hydration actor field exists only in the underlying and not in the overall") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
                             id: ID!
                             creator: User @hydrated(
                                 service: "users"
@@ -63,9 +120,8 @@ class NadelHydrationValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
-
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isEmpty())
+            assert(errors.map { it.message }.isNotEmpty())
         }
 
         it("fails if hydrated field has rename") {
