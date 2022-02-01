@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.plan
 
 import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.transform.NadelCoerceTransform
@@ -28,6 +29,7 @@ internal class NadelExecutionPlanFactory(
         services: Map<String, Service>,
         service: Service,
         rootField: ExecutableNormalizedField,
+        serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): NadelExecutionPlan {
         val executionSteps = mutableListOf<AnyNadelExecutionPlanStep>()
 
@@ -39,6 +41,7 @@ internal class NadelExecutionPlanFactory(
                     services,
                     service,
                     field,
+                    serviceHydrationDetails,
                 )
                 if (state != null) {
                     executionSteps.add(

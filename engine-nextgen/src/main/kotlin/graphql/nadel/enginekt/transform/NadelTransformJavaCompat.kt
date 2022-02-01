@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform
 
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
@@ -26,6 +27,7 @@ interface NadelTransformJavaCompat<State : Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails?,
     ): CompletableFuture<State?>
 
     /**
@@ -63,13 +65,15 @@ interface NadelTransformJavaCompat<State : Any> {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): State? {
                     return compat.isApplicable(
                         executionContext = executionContext,
                         executionBlueprint = executionBlueprint,
                         services = services,
                         service = service,
-                        overallField = overallField
+                        overallField = overallField,
+                        hydrationDetails = hydrationDetails,
                     ).asDeferred().await()
                 }
 

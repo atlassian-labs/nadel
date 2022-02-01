@@ -3,6 +3,7 @@ package graphql.nadel.tests.hooks
 import graphql.language.EnumValue
 import graphql.language.StringValue
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
@@ -24,6 +25,7 @@ private class ChainRenameTransform : NadelTransform<Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Any? {
         return overallField.takeIf { it.name == "test" || it.name == "cities" }
     }
