@@ -2,6 +2,7 @@ package graphql.nadel.tests.hooks
 
 import graphql.language.StringValue
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
@@ -27,6 +28,7 @@ private class AriTestTransform : NadelTransform<Set<String>> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails?,
     ): Set<String>? {
         // Let's not bother with abstract types in a test
         val fieldCoords = makeFieldCoordinates(overallField.objectTypeNames.single(), overallField.name)

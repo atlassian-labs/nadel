@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.transform
 
 import graphql.introspection.Introspection
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
@@ -24,6 +25,7 @@ internal class NadelTypeRenameResultTransform : NadelTransform<State> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         return if (overallField.fieldName == Introspection.TypeNameMetaFieldDef.name) {
             State(
