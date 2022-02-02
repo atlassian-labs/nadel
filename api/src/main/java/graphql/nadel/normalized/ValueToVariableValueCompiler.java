@@ -28,8 +28,8 @@ public class ValueToVariableValueCompiler {
     static VariableValueWithDefinition normalizedInputValueToVariable(NormalizedInputValue normalizedInputValue, int queryVariableCount) {
         Object variableValue;
         Object inputValue = normalizedInputValue.getValue();
-        if (inputValue instanceof ObjectValue) {
-            variableValue = toVariableValue((ObjectValue) inputValue);
+        if (inputValue instanceof Value) {
+            variableValue = toVariableValue((Value) inputValue);
         } else if (inputValue instanceof List) {
             variableValue = toVariableValues((List) inputValue);
         } else {
@@ -66,8 +66,7 @@ public class ValueToVariableValueCompiler {
     private static Object toVariableValue(Value<?> value) {
         if (value instanceof ObjectValue) {
             return toVariableValue((ObjectValue) value);
-        }
-        if (value instanceof ArrayValue) {
+        } else if (value instanceof ArrayValue) {
             return toVariableValues(((ArrayValue) value).getValues());
         } else if (value instanceof StringValue) {
             return ((StringValue) value).getValue();
