@@ -567,6 +567,70 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
 '''
     }
 
+    def "test JSON when input is a string variable"() {
+        def sdl = '''
+        type Query {
+            foo: String
+        }
+        type Mutation {
+            foo1(arg: JSON!): String
+        }
+        
+        scalar JSON
+        '''
+        def query = '''mutation hello($var: JSON!) {
+            foo1(arg: $var)
+        }
+        '''
+        GraphQLSchema schema = TestUtil.schema(sdl)
+
+        def vars = [var: "hello there"]
+        def fields = createNormalizedFields(schema, query, vars)
+
+        def pair = compileToDocument(schema, MUTATION, null, fields)
+        when:
+        def document = pair.first
+        def variables = pair.second
+        then:
+        variables == [var_0: "hello there"]
+        AstPrinter.printAst(document) == '''mutation ($var_0: JSON!) {
+  foo1(arg: $var_0)
+}
+'''
+    }
+
+    def "test JSON when input is an int variable"() {
+        def sdl = '''
+        type Query {
+            foo: String
+        }
+        type Mutation {
+            foo1(arg: JSON!): String
+        }
+        
+        scalar JSON
+        '''
+        def query = '''mutation hello($var: JSON!) {
+            foo1(arg: $var)
+        }
+        '''
+        GraphQLSchema schema = TestUtil.schema(sdl)
+
+        def vars = [var: 1]
+        def fields = createNormalizedFields(schema, query, vars)
+
+        def pair = compileToDocument(schema, MUTATION, null, fields)
+        when:
+        def document = pair.first
+        def variables = pair.second
+        then:
+        variables == [var_0: 1]
+        AstPrinter.printAst(document) == '''mutation ($var_0: JSON!) {
+  foo1(arg: $var_0)
+}
+'''
+    }
+
     def "test JSON scalar when JSON arg is null"() {
         def sdl = '''
         type Query {

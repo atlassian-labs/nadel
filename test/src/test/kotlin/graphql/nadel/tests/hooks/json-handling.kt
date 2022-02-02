@@ -31,3 +31,13 @@ class `inlined-json-arguments` : EngineTestHook {
 class `input-object-with-json-field` : EngineTestHook {
     override val wiringFactory = NeverWiringFactoryWithExtendedJsonScalar()
 }
+
+@UseHook
+class `primitive-json-arguments` : EngineTestHook {
+    override val wiringFactory = NeverWiringFactoryWithExtendedJsonScalar()
+}
+
+@UseHook
+class `primitive-json-arguments-variables` : EngineTestHook {
+    override val wiringFactory = NeverWiringFactoryWithExtendedJsonScalar()
+}
