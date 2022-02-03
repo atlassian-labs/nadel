@@ -47,7 +47,6 @@ import static graphql.language.DirectiveLocation.newDirectiveLocation;
 import static graphql.language.InputValueDefinition.newInputValueDefinition;
 import static graphql.language.ListType.newListType;
 import static graphql.language.TypeName.newTypeName;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.CONTEXT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
 import static java.util.Collections.emptyList;
@@ -406,9 +405,6 @@ public class NadelDirectives {
             path = values.subList(1, values.size());
         } else if ("$argument".equals(type)) {
             argumentType = FIELD_ARGUMENT;
-            argumentName = values.get(1);
-        } else if ("$context".equals(type)) {
-            argumentType = CONTEXT;
             argumentName = values.get(1);
         } else {
             Assert.assertShouldNeverHappen("The hydration arguments are invalid : %s", value);

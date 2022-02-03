@@ -69,7 +69,7 @@ batched: 'using batching';
 
 batchSize: 'batch size ' intValue;
 
-remoteArgumentSource :  sourceObjectReference | fieldArgumentReference | contextArgumentReference;
+remoteArgumentSource :  sourceObjectReference | fieldArgumentReference;
 
 remoteCallDefinition : '(' remoteArgumentPair+ ')' ;
 
@@ -78,8 +78,6 @@ remoteArgumentPair : name ':' remoteArgumentSource ;
 sourceObjectReference : '$source' '.' name ('.'name)*;
 
 fieldArgumentReference : '$argument' '.' name ;
-
-contextArgumentReference : '$context' '.' name ;
 
 intValue: IntValue;
 

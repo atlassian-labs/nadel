@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 
 import static graphql.Assert.assertShouldNeverHappen;
 import static graphql.nadel.dsl.ExtendedFieldDefinition.newExtendedFieldDefinition;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.CONTEXT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
 import static graphql.nadel.util.FpKit.map;
@@ -317,9 +316,6 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
         if (ctx.fieldArgumentReference() != null) {
             argumentName = ctx.fieldArgumentReference().name().getText();
             argumentType = FIELD_ARGUMENT;
-        } else if (ctx.contextArgumentReference() != null) {
-            argumentName = ctx.contextArgumentReference().name().getText();
-            argumentType = CONTEXT;
         } else if (ctx.sourceObjectReference() != null) {
             path = map(ctx.sourceObjectReference().name(), RuleContext::getText);
             argumentType = OBJECT_FIELD;

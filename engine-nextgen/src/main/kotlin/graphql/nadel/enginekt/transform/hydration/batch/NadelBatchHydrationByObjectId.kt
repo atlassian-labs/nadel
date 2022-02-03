@@ -4,10 +4,8 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
-import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.transform.NadelTransformUtil
 import graphql.nadel.enginekt.transform.hydration.NadelHydrationUtil.getHydrationActorNodes
-import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.asMutable
 import graphql.nadel.enginekt.transform.result.json.JsonNode
@@ -22,6 +20,24 @@ import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.unwrapNonNull
 
 internal object NadelBatchHydrationByObjectId {
+    fun getHydrateInstructionsMatchingObjectIds(
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        state: NadelBatchHydrationTransform.State,
+        instruction: NadelBatchHydrationFieldInstruction,
+        parentNodes: List<JsonNode>,
+        batches: List<ServiceExecutionResult>,
+        matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers,
+    ): List<NadelResultInstruction> {
+        return getHydrateInstructionsMatchingObjectIds(
+            executionBlueprint,
+            state,
+            instruction,
+            parentNodes,
+            batches,
+            matchStrategy.objectIds,
+        )
+    }
+
     fun getHydrateInstructionsMatchingObjectId(
         executionBlueprint: NadelOverallExecutionBlueprint,
         state: NadelBatchHydrationTransform.State,
@@ -29,6 +45,24 @@ internal object NadelBatchHydrationByObjectId {
         parentNodes: List<JsonNode>,
         batches: List<ServiceExecutionResult>,
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
+    ): List<NadelResultInstruction> {
+        return getHydrateInstructionsMatchingObjectIds(
+            executionBlueprint,
+            state,
+            instruction,
+            parentNodes,
+            batches,
+            listOf(matchStrategy),
+        )
+    }
+
+    private fun getHydrateInstructionsMatchingObjectIds(
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        state: NadelBatchHydrationTransform.State,
+        instruction: NadelBatchHydrationFieldInstruction,
+        parentNodes: List<JsonNode>,
+        batches: List<ServiceExecutionResult>,
+        objectIds: List<NadelBatchHydrationMatchStrategy.MatchObjectIdentifier>,
     ): List<NadelResultInstruction> {
         // Associate by does not need to be strict here
         val resultNodesByObjectId = getHydrationActorNodes(instruction, batches)
@@ -41,26 +75,46 @@ internal object NadelBatchHydrationByObjectId {
                     else -> error("Hydration actor result must be an object")
                 }
             }
-            .associateBy {
-                // We don't want to show this in the overall result, so remove it here as we use it
-                it.asMutable().remove(state.aliasHelper.getResultKey(matchStrategy.objectId))
+            .associateBy { resultNode ->
+                objectIds
+                    .map { objectId ->
+                        // We don't want to show this in the overall result, so remove it here as we use it
+                        resultNode.asMutable().remove(state.aliasHelper.getResultKey(objectId.resultId))
+                    }
             }
 
-        val resultKeysToObjectIdOnHydrationParentNode = state.aliasHelper.getQueryPath(
-            getPathToObjectIdentifierOnHydrationParentNode(instruction),
-        )
+        val pathsToSourceIds = objectIds
+            .map { objectId ->
+                state.aliasHelper.getQueryPath(objectId.sourceId)
+            }
 
-        return parentNodes.map { parentNode ->
-            val parentNodeIdentifierNodes = JsonNodeExtractor.getNodesAt(
-                rootNode = parentNode,
-                queryPath = resultKeysToObjectIdOnHydrationParentNode,
-            )
+        return parentNodes.map { sourceNode ->
+            // [
+            //   [page-1, page-2, page-1], // page id
+            //   [draft,  posted, posted] // union of [draft posted]
+            // ]
+            val sourceIdNodes = pathsToSourceIds
+                .map { path ->
+                    JsonNodeExtractor.getNodesAt(sourceNode, path)
+                        .asSequence()
+                        .map(JsonNode::value)
+                        .flatten(recursively = true)
+                        .toList()
+                }
+
+            val sourceIds = (0 until sourceIdNodes.first().size)
+                .map { keyIndex ->
+                    sourceIdNodes
+                        .map {
+                            it[keyIndex]
+                        }
+                }
 
             getHydrateInstructionsForNodeMatchingObjectId(
                 executionBlueprint = executionBlueprint,
                 state = state,
-                parentNode = parentNode,
-                parentNodeIdentifierNodes = parentNodeIdentifierNodes,
+                sourceNode = sourceNode,
+                sourceIds = sourceIds,
                 resultNodesByObjectId = resultNodesByObjectId
             )
         }
@@ -69,13 +123,13 @@ internal object NadelBatchHydrationByObjectId {
     private fun getHydrateInstructionsForNodeMatchingObjectId(
         executionBlueprint: NadelOverallExecutionBlueprint,
         state: NadelBatchHydrationTransform.State,
-        parentNode: JsonNode,
-        parentNodeIdentifierNodes: List<JsonNode>,
-        resultNodesByObjectId: Map<Any?, JsonMap>,
+        sourceNode: JsonNode,
+        sourceIds: List<List<Any?>>,
+        resultNodesByObjectId: Map<List<Any?>, JsonMap>,
     ): NadelResultInstruction {
         val hydratedFieldDef = NadelTransformUtil.getOverallFieldDef(
             overallField = state.hydratedField,
-            parentNode = parentNode,
+            parentNode = sourceNode,
             service = state.hydratedFieldService,
             executionBlueprint = executionBlueprint,
             aliasHelper = state.aliasHelper,
@@ -83,58 +137,28 @@ internal object NadelBatchHydrationByObjectId {
 
         val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
             // Set to null if there were no identifier nodes
-            if (parentNodeIdentifierNodes.isNotEmpty() && parentNodeIdentifierNodes.all { it.value == null }) {
+            if (sourceIds.isNotEmpty() && sourceIds.all { it.all { it == null } }) {
                 null
             } else {
-                parentNodeIdentifierNodes
+                sourceIds
                     .asSequence()
-                    .map { it.value }
-                    .flatten(recursively = true)
-                    .filterNotNull()
+                    .map { it }
+                    // .flatten(recursively = true)
+                    // .filterNotNull()
                     .map { id ->
                         resultNodesByObjectId[id]
                     }
                     .toList()
             }
         } else {
-            parentNodeIdentifierNodes.emptyOrSingle()?.let { node ->
-                resultNodesByObjectId[node.value]
+            sourceIds.emptyOrSingle()?.let { sourceId ->
+                resultNodesByObjectId[sourceId]
             }
         }
 
         return NadelResultInstruction.Set(
-            subjectPath = parentNode.resultPath + state.hydratedField.resultKey,
+            subjectPath = sourceNode.resultPath + state.hydratedField.resultKey,
             newValue = newValue,
         )
-    }
-
-    /**
-     * For the following example
-     *
-     * ```
-     * type Issue {
-     *   details: IssueDetails
-     *   owner: User @hydrated(from: ["issueOwner"], args: [
-     *     {name: "issueId" valueFromField: ["details", "authorId"]}
-     *   ])
-     * }
-     *
-     * type IssueDetails {
-     *   authorId: ID!
-     * }
-     * ```
-     *
-     * We are getting the path `["details", "authorId"]`
-     */
-    private fun getPathToObjectIdentifierOnHydrationParentNode(
-        instruction: NadelBatchHydrationFieldInstruction,
-    ): NadelQueryPath {
-        return instruction
-            .actorInputValueDefs
-            .asSequence()
-            .map { it.valueSource }
-            .filterIsInstance<NadelHydrationActorInputDef.ValueSource.FieldResultValue>()
-            .single()
-            .queryPathToField
     }
 }

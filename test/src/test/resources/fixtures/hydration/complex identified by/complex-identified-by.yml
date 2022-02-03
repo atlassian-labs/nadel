@@ -1,0 +1,242 @@
+name: complex identified by
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  UserService: |
+    type Query {
+      usersByIds(id: [ID]): [User]
+    }
+    type User {
+      id: ID
+    }
+  Issues: |
+    type Query {
+      issues: [Issue]
+    }
+    type Issue {
+      id: ID
+      authors: [User] @hydrated(
+        service: "UserService"
+        field: "users"
+        arguments: [{name: "id" value: "$source.authorIds"}]
+        identifiedBy: "authorIds.userId:id,authorIds.site:siteId"
+        batchSize: 3
+      )
+    }
+underlyingSchema:
+  UserService: |
+    type Query {
+      users(id: [UserInput]): [User]
+    }
+    
+    input UserInput {
+      userId: ID
+      site: String
+    }
+
+    type User {
+      id: ID
+      siteId: ID
+    }
+  Issues: |
+    type Query {
+      issues: [Issue]
+    }
+    
+    type UserRef {
+      userId: ID
+      site: String
+    }
+    
+    type Issue {
+      authorIds: [UserRef]
+      id: ID
+    }
+query: |
+  query {
+    issues {
+      id
+      authors {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  current: [ ]
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            issues {
+              __typename__batch_hydration__authors: __typename
+              batch_hydration__authors__authorIds: authorIds
+              id
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__authorIds": [
+                  {
+                    "userId": "USER-1",
+                    "site": "hello"
+                  },
+                  {
+                    "userId": "USER-2",
+                    "site": "hello"
+                  }
+                ],
+                "id": "ISSUE-1"
+              },
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__authorIds": [
+                  {
+                    "userId": "USER-3",
+                    "site": "hello"
+                  }
+                ],
+                "id": "ISSUE-2"
+              },
+              {
+                "__typename__batch_hydration__authors": "Issue",
+                "batch_hydration__authors__authorIds": [
+                  {
+                    "userId": "USER-2",
+                    "site": "jdog"
+                  },
+                  {
+                    "userId": "USER-4",
+                    "site": "hello"
+                  },
+                  {
+                    "userId": "USER-5",
+                    "site": "hello"
+                  }
+                ],
+                "id": "ISSUE-3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            users(id: [{site : "hello", userId : "USER-1"}, {site : "hello", userId : "USER-2"}, {site : "hello", userId : "USER-3"}]) {
+              id
+              batch_hydration__authors__id: id
+              batch_hydration__authors__siteId: siteId
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "users": [
+              {
+                "id": "USER-1",
+                "batch_hydration__authors__id": "USER-1",
+                "batch_hydration__authors__siteId": "hello"
+              },
+              {
+                "id": "USER-2",
+                "batch_hydration__authors__id": "USER-2",
+                "batch_hydration__authors__siteId": "hello"
+              },
+              {
+                "id": "USER-3",
+                "batch_hydration__authors__id": "USER-3",
+                "batch_hydration__authors__siteId": "hello"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: UserService
+      request:
+        query: |
+          query {
+            users(id: [{site : "jdog", userId : "USER-2"}, {site : "hello", userId : "USER-4"}, {site : "hello", userId : "USER-5"}]) {
+              id
+              batch_hydration__authors__id: id
+              batch_hydration__authors__siteId: siteId
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "users": [
+              {
+                "id": "USER-2",
+                "batch_hydration__authors__id": "USER-2",
+                "batch_hydration__authors__siteId": "jdog"
+              },
+              {
+                "id": "USER-4",
+                "batch_hydration__authors__id": "USER-4",
+                "batch_hydration__authors__siteId": "hello"
+              },
+              {
+                "id": "USER-5",
+                "batch_hydration__authors__id": "USER-5",
+                "batch_hydration__authors__siteId": "hello"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "issues": [
+        {
+          "id": "ISSUE-1",
+          "authors": [
+            {
+              "id": "USER-1"
+            },
+            {
+              "id": "USER-2"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-2",
+          "authors": [
+            {
+              "id": "USER-3"
+            }
+          ]
+        },
+        {
+          "id": "ISSUE-3",
+          "authors": [
+            {
+              "id": "USER-2"
+            },
+            {
+              "id": "USER-4"
+            },
+            {
+              "id": "USER-5"
+            }
+          ]
+        }
+      ]
+    },
+    "extensions": {}
+  }

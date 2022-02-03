@@ -55,7 +55,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
-    ): ExecutableNormalizedField? {
+    ): List<ExecutableNormalizedField> {
         return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> makeObjectIdField(
                 executionBlueprint,
@@ -63,7 +63,13 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
                 batchHydrationInstruction,
                 matchStrategy,
             )
-            else -> null
+            is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> makeObjectIdFields(
+                executionBlueprint,
+                aliasHelper,
+                batchHydrationInstruction,
+                matchStrategy.objectIds,
+            )
+            else -> emptyList()
         }
     }
 
@@ -72,18 +78,35 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
-    ): ExecutableNormalizedField {
+    ): List<ExecutableNormalizedField> {
+        return makeObjectIdFields(
+            executionBlueprint,
+            aliasHelper,
+            batchHydrationInstruction,
+            listOf(matchStrategy),
+        )
+    }
+
+    private fun makeObjectIdFields(
+        executionBlueprint: NadelOverallExecutionBlueprint,
+        aliasHelper: NadelAliasHelper,
+        batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
+        objectIds: List<NadelBatchHydrationMatchStrategy.MatchObjectIdentifier>,
+    ): List<ExecutableNormalizedField> {
         val objectTypeNames = getObjectTypeNamesForIdField(
             executionBlueprint = executionBlueprint,
             actorService = batchHydrationInstruction.actorService,
             underlyingParentTypeOfIdField = batchHydrationInstruction.actorFieldDef.type,
         )
 
-        return newNormalizedField()
-            .objectTypeNames(objectTypeNames)
-            .fieldName(matchStrategy.objectId)
-            .alias(aliasHelper.getResultKey(matchStrategy.objectId))
-            .build()
+        return objectIds
+            .map { objectId ->
+                newNormalizedField()
+                    .objectTypeNames(objectTypeNames)
+                    .fieldName(objectId.resultId)
+                    .alias(aliasHelper.getResultKey(objectId.resultId))
+                    .build()
+            }
     }
 
     /**
