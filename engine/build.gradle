@@ -37,6 +37,10 @@ dependencies {
     testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:1.25"
     testImplementation "com.google.guava:guava:28.0-jre"
     testImplementation project(path: ":nadel-engine-nextgen")
+    testImplementation("com.graphql-java:graphql-java-extended-scalars:2021-06-29T01-19-32-8e19827") {
+        exclude group : "com.graphql-java", module: "com.graphql-java"
+    }
+
 }
 
 test {

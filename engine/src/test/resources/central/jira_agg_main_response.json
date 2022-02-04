@@ -1,0 +1,507 @@
+{
+  "data": {
+    "jira": {
+      "issueByKey": {
+        "fieldsById": {
+          "edges": [
+            {
+              "node": {
+                "__typename": "JiraProjectField",
+                "project": {
+                  "id": "SmlyYVByb2plY3Q6MTAwNTA",
+                  "key": "GHPOLLI",
+                  "name": " GitHub for Jira - Pollinator Checks - Staging",
+                  "avatar": {
+                    "medium": "https://fusion-pollinator.jira-dev.com/rest/api/2/universal_avatar/view/type/project/avatar/10407?size=medium"
+                  }
+                },
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/project"
+              }
+            }
+          ]
+        },
+        "fields": {
+          "edges": [
+            {
+              "node": {
+                "__typename": "JiraSingleSelectUserPickerField",
+                "__isJiraIssueField": "JiraSingleSelectUserPickerField",
+                "fieldId": "assignee",
+                "name": "issue.field.assignee",
+                "type": "assignee",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraSingleSelectUserPickerField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraSingleSelectUserPickerField",
+                "userFieldConfig": null,
+                "searchUrl": null,
+                "batch_hydration__user__user": null,
+                "__typename__batch_hydration__user": "JiraSingleSelectUserPickerField",
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/assignee"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraDateTimePickerField",
+                "__isJiraIssueField": "JiraDateTimePickerField",
+                "fieldId": "created",
+                "name": "issue.field.created",
+                "type": "created",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraDateTimePickerField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": false
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraDateTimePickerField",
+                "userFieldConfig": null,
+                "dateTime": "2021-11-28T20:38:38.049Z",
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/created"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraRichTextField",
+                "__isJiraIssueField": "JiraRichTextField",
+                "fieldId": "description",
+                "name": "issue.field.description",
+                "type": "description",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraRichTextField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraRichTextField",
+                "userFieldConfig": null,
+                "richText": null,
+                "renderer": null,
+                "mediaContext": {
+                  "uploadToken": null
+                },
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/description"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraMultipleVersionPickerField",
+                "__isJiraIssueField": "JiraMultipleVersionPickerField",
+                "fieldId": "fixVersions",
+                "name": "issue.field.fixversions",
+                "type": "fixVersions",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraMultipleVersionPickerField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraMultipleVersionPickerField",
+                "userFieldConfig": null,
+                "selectedVersionsConnection": {
+                  "totalCount": 0,
+                  "edges": []
+                },
+                "versions": {
+                  "totalCount": 0,
+                  "edges": []
+                },
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/fixVersions"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraIssueTypeField",
+                "__isJiraIssueField": "JiraIssueTypeField",
+                "fieldId": "issuetype",
+                "name": "issue.field.issuetype",
+                "type": "issuetype",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraIssueTypeField",
+                "fieldConfig": {
+                  "isRequired": true,
+                  "isEditable": true
+                },
+                "issueType": {
+                  "id": "SmlyYUlzc3VlVHlwZToxMDAwOA",
+                  "name": "Story",
+                  "description": "Stories track functionality or features expressed as user goals.",
+                  "avatar": {
+                    "xsmall": "https://fusion-pollinator.jira-dev.com/images/icons/issuetypes/story.svg",
+                    "small": "https://fusion-pollinator.jira-dev.com/images/icons/issuetypes/story.svg",
+                    "medium": "https://fusion-pollinator.jira-dev.com/images/icons/issuetypes/story.svg",
+                    "large": "https://fusion-pollinator.jira-dev.com/images/icons/issuetypes/story.svg"
+                  }
+                },
+                "issueTypes": {
+                  "edges": [
+                    {
+                      "node": {
+                        "id": "SmlyYUlzc3VlVHlwZToxMDAyNg",
+                        "name": "Task",
+                        "description": null,
+                        "avatar": {
+                          "xsmall": "/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+                          "small": "/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+                          "medium": "/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium",
+                          "large": "/rest/api/2/universal_avatar/view/type/issuetype/avatar/10318?size=medium"
+                        }
+                      }
+                    },
+                    {
+                      "node": {
+                        "id": "SmlyYUlzc3VlVHlwZToxMDAwOA",
+                        "name": "Story",
+                        "description": null,
+                        "avatar": {
+                          "xsmall": "/images/icons/issuetypes/story.svg",
+                          "small": "/images/icons/issuetypes/story.svg",
+                          "medium": "/images/icons/issuetypes/story.svg",
+                          "large": "/images/icons/issuetypes/story.svg"
+                        }
+                      }
+                    },
+                    {
+                      "node": {
+                        "id": "SmlyYUlzc3VlVHlwZToxMDAyOA",
+                        "name": "Bug",
+                        "description": null,
+                        "avatar": {
+                          "xsmall": "/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+                          "small": "/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+                          "medium": "/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium",
+                          "large": "/rest/api/2/universal_avatar/view/type/issuetype/avatar/10303?size=medium"
+                        }
+                      }
+                    },
+                    {
+                      "node": {
+                        "id": "SmlyYUlzc3VlVHlwZToxMDAwMA",
+                        "name": "Epic",
+                        "description": null,
+                        "avatar": {
+                          "xsmall": "/images/icons/issuetypes/epic.svg",
+                          "small": "/images/icons/issuetypes/epic.svg",
+                          "medium": "/images/icons/issuetypes/epic.svg",
+                          "large": "/images/icons/issuetypes/epic.svg"
+                        }
+                      }
+                    }
+                  ]
+                },
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/issuetype"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraLabelsField",
+                "__isJiraIssueField": "JiraLabelsField",
+                "fieldId": "labels",
+                "name": "issue.field.labels",
+                "type": "labels",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraLabelsField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraLabelsField",
+                "userFieldConfig": null,
+                "searchUrl": null,
+                "selectedLabelsConnection": {
+                  "totalCount": 0,
+                  "edges": []
+                },
+                "labels": null,
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/labels"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraParentIssueField",
+                "__isJiraIssueField": "JiraParentIssueField",
+                "fieldId": "parent",
+                "name": "issue.field.parent",
+                "type": "parent",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraParentIssueField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": false
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraParentIssueField",
+                "userFieldConfig": null,
+                "parentIssue": null,
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/parent"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraPriorityField",
+                "__isJiraIssueField": "JiraPriorityField",
+                "fieldId": "priority",
+                "name": "issue.field.priority",
+                "type": "priority",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraPriorityField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": true
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraPriorityField",
+                "userFieldConfig": null,
+                "priority": {
+                  "priorityId": "3",
+                  "name": "Medium",
+                  "iconUrl": "https://fusion-pollinator.jira-dev.com/images/icons/priorities/medium.svg",
+                  "color": "#f79232",
+                  "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:priority/activation/58a44bf7-5a68-4c56-ab19-4391fa88f62e/3"
+                },
+                "priorities": {
+                  "edges": [
+                    {
+                      "node": {
+                        "priorityId": "1",
+                        "name": "Highest",
+                        "iconUrl": "https://fusion-pollinator.jira-dev.com/images/icons/priorities/highest.svg",
+                        "color": "#d04437",
+                        "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:priority/activation/58a44bf7-5a68-4c56-ab19-4391fa88f62e/1"
+                      }
+                    },
+                    {
+                      "node": {
+                        "priorityId": "2",
+                        "name": "High",
+                        "iconUrl": "https://fusion-pollinator.jira-dev.com/images/icons/priorities/high.svg",
+                        "color": "#f15C75",
+                        "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:priority/activation/58a44bf7-5a68-4c56-ab19-4391fa88f62e/2"
+                      }
+                    },
+                    {
+                      "node": {
+                        "priorityId": "3",
+                        "name": "Medium",
+                        "iconUrl": "https://fusion-pollinator.jira-dev.com/images/icons/priorities/medium.svg",
+                        "color": "#f79232",
+                        "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:priority/activation/58a44bf7-5a68-4c56-ab19-4391fa88f62e/3"
+                      }
+                    },
+                    {
+                      "node": {
+                        "priorityId": "4",
+                        "name": "Low",
+                        "iconUrl": "https://fusion-pollinator.jira-dev.com/images/icons/priorities/low.svg",
+                        "color": "#707070",
+                        "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:priority/activation/58a44bf7-5a68-4c56-ab19-4391fa88f62e/4"
+                      }
+                    },
+                    {
+                      "node": {
+                        "priorityId": "5",
+                        "name": "Lowest",
+                        "iconUrl": "https://fusion-pollinator.jira-dev.com/images/icons/priorities/lowest.svg",
+                        "color": "#999999",
+                        "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:priority/activation/58a44bf7-5a68-4c56-ab19-4391fa88f62e/5"
+                      }
+                    }
+                  ]
+                },
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/priority"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraProjectField",
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/project"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraSingleSelectUserPickerField",
+                "__isJiraIssueField": "JiraSingleSelectUserPickerField",
+                "fieldId": "reporter",
+                "name": "issue.field.reporter",
+                "type": "reporter",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraSingleSelectUserPickerField",
+                "fieldConfig": {
+                  "isRequired": true,
+                  "isEditable": false
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraSingleSelectUserPickerField",
+                "userFieldConfig": null,
+                "searchUrl": "https://fusion-pollinator.jira-dev.com/rest/api/1.0/users/picker?showAvatar=true&query=",
+                "batch_hydration__user__user": {
+                  "accountId": "655362:7c09f19d-c909-4edf-b6d6-959a7679b01a"
+                },
+                "__typename__batch_hydration__user": "JiraSingleSelectUserPickerField",
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/reporter"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraDateTimePickerField",
+                "__isJiraIssueField": "JiraDateTimePickerField",
+                "fieldId": "resolutiondate",
+                "name": "issue.field.resolution.date",
+                "type": "resolutiondate",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraDateTimePickerField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": false
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraDateTimePickerField",
+                "userFieldConfig": null,
+                "dateTime": null,
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/resolutiondate"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraStatusField",
+                "__isJiraIssueField": "JiraStatusField",
+                "fieldId": "status",
+                "name": "issue.field.status",
+                "type": "status",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraStatusField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": false
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraStatusField",
+                "userFieldConfig": null,
+                "status": {
+                  "id": "SmlyYVN0YXR1czoxMDAyNw",
+                  "statusId": "10027",
+                  "statusCategory": {
+                    "id": "SmlyYVN0YXR1c0NhdGVnb3J5OjI",
+                    "statusCategoryId": "2",
+                    "key": "new",
+                    "name": "New",
+                    "colorName": "BLUE_GRAY"
+                  }
+                },
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/status"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraSingleLineTextField",
+                "__isJiraIssueField": "JiraSingleLineTextField",
+                "fieldId": "summary",
+                "name": "issue.field.summary",
+                "type": "summary",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraSingleLineTextField",
+                "fieldConfig": {
+                  "isRequired": true,
+                  "isEditable": true
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraSingleLineTextField",
+                "userFieldConfig": null,
+                "text": "test polli checks ",
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/summary"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraTimeTrackingField",
+                "__isJiraIssueField": "JiraTimeTrackingField",
+                "fieldId": "timetracking",
+                "name": "issue.field.timetracking",
+                "type": "timetracking",
+                "description": "An estimate of how much work remains until this issue will be resolved.<br>The format of this is ' *w *d *h *m ' (representing weeks, days, hours and minutes - where * can be any number)<br>Examples: 4d, 5h 30m, 60m and 3w.<br>",
+                "__isJiraIssueFieldConfiguration": "JiraTimeTrackingField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": false
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraTimeTrackingField",
+                "userFieldConfig": null,
+                "originalEstimate": null,
+                "remainingEstimate": null,
+                "timeSpent": null,
+                "timeTrackingSettings": {
+                  "isJiraConfiguredTimeTrackingEnabled": true,
+                  "workingHoursPerDay": 8,
+                  "workingDaysPerWeek": 5,
+                  "defaultFormat": "PRETTY",
+                  "defaultUnit": "MINUTE"
+                },
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/timetracking"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraDateTimePickerField",
+                "__isJiraIssueField": "JiraDateTimePickerField",
+                "fieldId": "updated",
+                "name": "issue.field.updated",
+                "type": "updated",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraDateTimePickerField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": false
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraDateTimePickerField",
+                "userFieldConfig": null,
+                "dateTime": "2021-11-28T20:38:38.049Z",
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/updated"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraVotesField",
+                "__isJiraIssueField": "JiraVotesField",
+                "fieldId": "votes",
+                "name": "issue.field.vote",
+                "type": "votes",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraVotesField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": false
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraVotesField",
+                "userFieldConfig": null,
+                "vote": {
+                  "hasVoted": false,
+                  "count": 0
+                },
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/votes"
+              }
+            },
+            {
+              "node": {
+                "__typename": "JiraWatchesField",
+                "__isJiraIssueField": "JiraWatchesField",
+                "fieldId": "watches",
+                "name": "issue.field.watch",
+                "type": "watches",
+                "description": "",
+                "__isJiraIssueFieldConfiguration": "JiraWatchesField",
+                "fieldConfig": {
+                  "isRequired": false,
+                  "isEditable": false
+                },
+                "__isJiraUserIssueFieldConfiguration": "JiraWatchesField",
+                "userFieldConfig": null,
+                "watch": {
+                  "isWatching": false,
+                  "count": 1
+                },
+                "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issuefieldvalue/10198/watches"
+              }
+            }
+          ]
+        },
+        "id": "ari:cloud:jira:0762a86e-e572-469e-9161-c02953504143:issue/10198"
+      }
+    }
+  }
+}
