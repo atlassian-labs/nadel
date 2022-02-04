@@ -11,11 +11,10 @@ import graphql.nadel.util.Util
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLType
 
 object NadelSchemaUtil {
-    fun getUnderlyingType(overallType: GraphQLNamedType, service: Service): GraphQLType? {
-        return service.underlyingSchema.getType(getRenamedFrom(overallType) ?: overallType.name)
+    fun getUnderlyingType(overallType: GraphQLNamedType, service: Service): GraphQLNamedType? {
+        return service.underlyingSchema.getType(getRenamedFrom(overallType) ?: overallType.name) as GraphQLNamedType?
     }
 
     fun getHydrations(field: GraphQLFieldDefinition, overallSchema: GraphQLSchema): List<UnderlyingServiceHydration> {
