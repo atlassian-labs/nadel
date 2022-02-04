@@ -46,6 +46,11 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                         type ExternalUser {
                             id: ID!
                             name: String!
+                            metadata: UserMetadata
+                        }
+                        
+                        type UserMetadata {
+                            payload: String
                         }
                     """.trimIndent(),
                 ),
@@ -71,6 +76,11 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                         type ExternalUser {
                             id: ID!
                             name: String!
+                            metadata: UserMetadata
+                        }
+                        
+                        type UserMetadata {
+                            payload: String
                         }
                     """.trimIndent(),
                 ),

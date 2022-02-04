@@ -158,12 +158,8 @@ internal class NadelTypeValidation(
         service: Service,
     ): Pair<List<NadelServiceSchemaElement>, List<NadelSchemaValidationError>> {
         val errors = mutableListOf<NadelSchemaValidationError>()
-        val nameNamesUsed = getTypeNamesUsed(service)
         val polymorphicHydrationUnions = getPolymorphicHydrationUnions(service)
-        val objectTypeNamesReferencedInPolymorphicHydrationUnions = polymorphicHydrationUnions
-            .flatMap { it.types }
-            .map { it.name }
-            .toSet()
+        val namesUsed = getTypeNamesUsed(service, externalTypes = polymorphicHydrationUnions)
 
         fun addMissingUnderlyingTypeError(overallType: GraphQLNamedType) {
             errors.add(MissingUnderlyingType(service, overallType))
@@ -173,13 +169,10 @@ internal class NadelTypeValidation(
             .typeMap
             .asSequence()
             .filter { (key) ->
-                key in nameNamesUsed
+                key in namesUsed
             }
             .filterNot { (key) ->
                 key in allNadelBuiltInTypeNames
-            }
-            .filterNot { (name, overallType) ->
-                name in objectTypeNamesReferencedInPolymorphicHydrationUnions || overallType in polymorphicHydrationUnions
             }
             .mapNotNull { (_, overallType) ->
                 val underlyingType = getUnderlyingType(overallType, service)
@@ -222,13 +215,15 @@ internal class NadelTypeValidation(
             .toSet()
     }
 
-    private fun getTypeNamesUsed(service: Service): Set<String> {
+    private fun getTypeNamesUsed(service: Service, externalTypes: Set<GraphQLNamedType>): Set<String> {
         // There is no shared service to validate.
         // These shared types are USED in other services. When they are used, the validation
         // will validate that the service has a compatible underlying type.
         if (service.name == "shared") {
             return emptySet()
         }
+
+        val namesToIgnore = externalTypes.map { it.name }.toSet()
 
         val definitionNames = service.definitionRegistry.definitions
             .asSequence()
@@ -243,7 +238,7 @@ internal class NadelTypeValidation(
             .map {
                 it.name
             }
-            .toSet()
+            .toSet() - namesToIgnore
 
         // If it can be reached by using your service, you must own it to return it!
         val referencedTypes = getReachableTypeNames(overallSchema, service, definitionNames)
