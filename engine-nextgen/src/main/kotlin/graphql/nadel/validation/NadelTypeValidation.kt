@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.language.ObjectTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.AnyNamedNode
 import graphql.nadel.enginekt.util.isExtensionDef
@@ -12,6 +13,7 @@ import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.enginekt.util.unwrapNonNull
 import graphql.nadel.enginekt.util.unwrapOne
 import graphql.nadel.schema.NadelDirectives
+import graphql.nadel.schema.NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
@@ -26,6 +28,7 @@ import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
+import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 
 internal class NadelTypeValidation(
@@ -156,6 +159,11 @@ internal class NadelTypeValidation(
     ): Pair<List<NadelServiceSchemaElement>, List<NadelSchemaValidationError>> {
         val errors = mutableListOf<NadelSchemaValidationError>()
         val nameNamesUsed = getTypeNamesUsed(service)
+        val syntheticUnions = getSyntheticUnions(service)
+        val objectTypeNamesReferencedInSyntheticUnions = syntheticUnions
+            .flatMap { it.types }
+            .map { it.name }
+            .toSet()
 
         fun addMissingUnderlyingTypeError(overallType: GraphQLNamedType) {
             errors.add(MissingUnderlyingType(service, overallType))
@@ -169,6 +177,9 @@ internal class NadelTypeValidation(
             }
             .filterNot { (key) ->
                 key in allNadelBuiltInTypeNames
+            }
+            .filterNot { (key, value) ->
+                key in objectTypeNamesReferencedInSyntheticUnions || value in syntheticUnions
             }
             .mapNotNull { (_, overallType) ->
                 val underlyingType = getUnderlyingType(overallType, service) as GraphQLNamedType?
@@ -196,6 +207,19 @@ internal class NadelTypeValidation(
                         },
                 )
             } to errors
+    }
+
+    private fun getSyntheticUnions(service: Service): Set<GraphQLUnionType> {
+        return service.definitionRegistry
+            .definitions
+            .asSequence()
+            .filterIsInstance<ObjectTypeDefinition>()
+            .flatMap { it.fieldDefinitions }
+            .filter { it.getDirectives(HYDRATED_DIRECTIVE_DEFINITION.name).size > 1 }
+            .map { it.type.unwrapAll() }
+            .map { overallSchema.getType(it.name) }
+            .filterIsInstance<GraphQLUnionType>()
+            .toSet()
     }
 
     private fun getTypeNamesUsed(service: Service): Set<String> {

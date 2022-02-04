@@ -48,6 +48,41 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
+        it("cannot have a synthetic union") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            world: World
+                        }
+                        type World {
+                            hello: String
+                        }
+                        union Something = Echo | World
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            world: World
+                        }
+                        type World {
+                            hello: String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+        }
+
         it("tracks visited types to avoid stack overflow").config(timeout = Duration.seconds(1)) {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(

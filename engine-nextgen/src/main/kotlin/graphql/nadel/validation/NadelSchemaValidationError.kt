@@ -214,6 +214,40 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class FieldWithPolymorphicHydrationMustReturnAUnion(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Field $of declares a polymorphic hydration so its output type MUST be a union"
+        }
+
+        override val subject = overallField
+    }
+
+    data class PolymorphicHydrationReturnTypeMismatch(
+        val actorField: GraphQLFieldDefinition,
+        val actorService: Service,
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            actorField
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Field $of declares a polymorphic hydration with incorrect return type. One of the hydrations' actor fields" +
+                " ${actorField.name} in the service ${actorService.name} returns the type " +
+                "${(actorField.type as GraphQLNamedType).name} which is not present in the polymorphic hydration return " +
+                "type ${(overallField.type as GraphQLNamedType).name}"
+        }
+
+        override val subject = overallField
+    }
+
     data class MissingHydrationFieldValueSource(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
