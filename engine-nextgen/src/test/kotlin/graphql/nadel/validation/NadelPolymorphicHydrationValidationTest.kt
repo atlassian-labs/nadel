@@ -2,7 +2,9 @@ package graphql.nadel.validation
 
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
+import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.PolymorphicHydrationReturnTypeMismatch
+import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
 import io.kotest.core.spec.style.DescribeSpec
 
@@ -88,6 +90,133 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
             assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("can detect if polymorphic hydration from the same service returns a type that does not exist in the underlying schema") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            hello: String
+                        }
+                        type Issue {
+                            id: ID!
+                            reference: ReferenceObject
+                            @hydrated(
+                                service: "issues"
+                                field: "issue"
+                                arguments: [
+                                    {name: "id", value: "$source.referenceId"}
+                                ]
+                            )
+                            @hydrated(
+                                service: "pages"
+                                field: "page"
+                                arguments: [
+                                    {name: "id", value: "$source.referenceId"}
+                                ]
+                            )    
+                        }
+                        union ReferenceObject = Issue | Page
+                    """.trimIndent(),
+                    "pages" to """
+                        type Page {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            hello: String
+                            issue(id: ID!): String
+                        }
+                    """.trimIndent(),
+                    "pages" to """
+                        type Query {
+                            page(id: ID!): Page
+                        }
+                        type Page {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            val error = errors.assertSingleOfType<MissingUnderlyingType>()
+            assert(error.overallType.name == "Issue")
+            assert(error.service.name == "issues")
+        }
+
+        it("can detect if polymorphic hydration from the same service references a type that does not exist in the underlying schema") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            hello: String
+                        }
+                        type Comment {
+                            id: ID
+                            text: String
+                        }
+                        type Issue {
+                            id: ID!
+                            comment: Comment
+                            reference: ReferenceObject
+                            @hydrated(
+                                service: "issues"
+                                field: "issue"
+                                arguments: [
+                                    {name: "id", value: "$source.referenceId"}
+                                ]
+                            )
+                            @hydrated(
+                                service: "pages"
+                                field: "page"
+                                arguments: [
+                                    {name: "id", value: "$source.referenceId"}
+                                ]
+                            )    
+                        }
+                        union ReferenceObject = Issue | Page
+                    """.trimIndent(),
+                    "pages" to """
+                        type Page {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            hello: String
+                            issue(id: ID!): Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            referenceId: ID
+                        }
+                    """.trimIndent(),
+                    "pages" to """
+                        type Query {
+                            page(id: ID!): Page
+                        }
+                        type Page {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            val error = errors.assertSingleOfType<MissingUnderlyingType>()
+            assert(error.overallType.name == "Comment")
+            assert(error.service.name == "issues")
         }
 
         it("passes if polymorphic hydration is valid when actor field returns a renamed type") {
