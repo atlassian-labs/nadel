@@ -235,7 +235,7 @@ private class Factory(
             )
         }
 
-        val actorInputValueDefs = getHydrationArguments(
+        val hydrationArgs = getHydrationArguments(
             hydration = hydration,
             hydratedFieldParentType = hydratedFieldParentType,
             hydratedFieldDef = hydratedFieldDef,
@@ -247,14 +247,20 @@ private class Factory(
             actorService = hydrationActorService,
             queryPathToActorField = NadelQueryPath(queryPathToActorField),
             actorFieldDef = actorFieldDef,
-            actorInputValueDefs = actorInputValueDefs,
+            actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             hydrationStrategy = getHydrationStrategy(
                 hydratedFieldParentType = hydratedFieldParentType,
                 hydratedFieldDef = hydratedFieldDef,
                 actorFieldDef = actorFieldDef,
-                actorInputValueDefs = actorInputValueDefs,
+                actorInputValueDefs = hydrationArgs,
             ),
+            sourceFields = hydrationArgs.mapNotNull {
+                when (it.valueSource) {
+                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
+                    is FieldResultValue -> it.valueSource.queryPathToField
+                }
+            },
         )
     }
 
@@ -305,6 +311,43 @@ private class Factory(
         val batchSize = hydration.batchSize ?: 50
         val hydrationArgs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef)
 
+        val matchStrategy = if (hydration.isObjectMatchByIndex) {
+            NadelBatchHydrationMatchStrategy.MatchIndex
+        } else if (hydration.objectIdentifier.contains(",")) {
+            NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers(
+                hydration.objectIdentifier.split(",")
+                    .map { objectIdentifier ->
+                        // Todo switch off using colon and use a complex GraphQL object or something rather
+                        NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
+                            sourceId = objectIdentifier.substringBefore(":", missingDelimiterValue = "")
+                                .takeIf {
+                                    it.isNotEmpty()
+                                }
+                                ?.let {
+                                    NadelQueryPath(segments = it.split("."))
+                                }
+                                ?: hydrationArgs
+                                    .asSequence()
+                                    .map(NadelHydrationActorInputDef::valueSource)
+                                    .filterIsInstance<FieldResultValue>()
+                                    .single()
+                                    .queryPathToField,
+                            resultId = objectIdentifier.substringAfter(":"),
+                        )
+                    },
+            )
+        } else {
+            NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
+                sourceId = hydrationArgs
+                    .asSequence()
+                    .map(NadelHydrationActorInputDef::valueSource)
+                    .filterIsInstance<FieldResultValue>()
+                    .single()
+                    .queryPathToField,
+                resultId = hydration.objectIdentifier.substringAfter(":"),
+            )
+        }
+
         return NadelBatchHydrationFieldInstruction(
             location = location,
             hydratedFieldDef = hydratedFieldDef,
@@ -314,41 +357,40 @@ private class Factory(
             actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             batchSize = batchSize,
-            batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {
-                NadelBatchHydrationMatchStrategy.MatchIndex
-            } else if (hydration.objectIdentifier.contains(",")) {
-                NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers(
-                    hydration.objectIdentifier.split(",")
-                        .map { objectIdentifier ->
-                            // Todo switch off using colon and use a complex GraphQL object or something rather
-                            NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
-                                sourceId = objectIdentifier.substringBefore(":", missingDelimiterValue = "")
-                                    .takeIf {
-                                        it.isNotEmpty()
-                                    }
-                                    ?.let {
-                                        NadelQueryPath(segments = it.split("."))
-                                    }
-                                    ?: hydrationArgs
-                                        .asSequence()
-                                        .map(NadelHydrationActorInputDef::valueSource)
-                                        .filterIsInstance<FieldResultValue>()
-                                        .single()
-                                        .queryPathToField,
-                                resultId = objectIdentifier.substringAfter(":"),
-                            )
-                        },
-                )
-            } else {
-                NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
-                    sourceId = hydrationArgs
-                        .asSequence()
-                        .map(NadelHydrationActorInputDef::valueSource)
-                        .filterIsInstance<FieldResultValue>()
-                        .single()
-                        .queryPathToField,
-                    resultId = hydration.objectIdentifier.substringAfter(":"),
-                )
+            batchHydrationMatchStrategy = matchStrategy,
+            sourceFields = Unit.let {
+                val paths = (when (matchStrategy) {
+                    NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
+                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> listOf(matchStrategy.sourceId)
+                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> matchStrategy.objectIds.map { it.sourceId }
+                } + hydrationArgs.mapNotNull {
+                    when (it.valueSource) {
+                        is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
+                        is FieldResultValue -> it.valueSource.queryPathToField
+                    }
+                }).toSet()
+
+                val prefixes = paths
+                    .asSequence()
+                    .map {
+                        it.segments.dropLast(1) + "*"
+                    }
+                    .toSet()
+
+                // Say we have paths = [
+                //     [page]
+                //     [page.id]
+                //     [page.status]
+                // ]
+                // (e.g. page was the input and the page.id and page.status are used to match batch objects)
+                // then this maps it to [
+                //     [page.id]
+                //     [page.status]
+                // ]
+                paths
+                    .filter {
+                        !prefixes.contains(it.segments + "*")
+                    }
             },
         )
     }

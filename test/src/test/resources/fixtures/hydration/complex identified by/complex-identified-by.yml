@@ -72,7 +72,12 @@ serviceCalls:
           query {
             issues {
               __typename__batch_hydration__authors: __typename
-              batch_hydration__authors__authorIds: authorIds
+              batch_hydration__authors__authorIds: authorIds {
+                userId
+              }
+              batch_hydration__authors__authorIds: authorIds {
+                site
+              }
               id
             }
           }

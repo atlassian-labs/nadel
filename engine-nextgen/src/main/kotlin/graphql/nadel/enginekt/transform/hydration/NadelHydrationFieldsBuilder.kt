@@ -105,7 +105,7 @@ internal object NadelHydrationFieldsBuilder {
             .toSet()
     }
 
-    fun makeFieldsUsedAsActorInputValues(
+    fun makeRequiredSourceFields(
         service: Service,
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
@@ -118,15 +118,13 @@ internal object NadelHydrationFieldsBuilder {
 
         return instructions
             .asSequence()
-            .flatMap { it.actorInputValueDefs }
-            .map { it.valueSource }
-            .filterIsInstance<NadelHydrationActorInputDef.ValueSource.FieldResultValue>()
-            .map { valueSource ->
+            .flatMap { it.sourceFields }
+            .map {
                 aliasHelper.toArtificial(
                     NFUtil.createField(
                         schema = service.underlyingSchema,
                         parentType = underlyingObjectType,
-                        queryPathToField = valueSource.queryPathToField,
+                        queryPathToField = it,
                         fieldArguments = emptyMap(),
                         fieldChildren = emptyList(), // This must be a leaf node
                     ),
