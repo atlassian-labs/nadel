@@ -237,7 +237,6 @@ sealed interface NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
         override val message = run {
-            actorField
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             "Field $of declares a polymorphic hydration with incorrect return type. One of the hydrations' actor fields" +
                 " ${actorField.name} in the service ${actorService.name} returns the type " +

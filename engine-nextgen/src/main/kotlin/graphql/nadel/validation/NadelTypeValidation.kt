@@ -159,8 +159,8 @@ internal class NadelTypeValidation(
     ): Pair<List<NadelServiceSchemaElement>, List<NadelSchemaValidationError>> {
         val errors = mutableListOf<NadelSchemaValidationError>()
         val nameNamesUsed = getTypeNamesUsed(service)
-        val syntheticUnions = getSyntheticUnions(service)
-        val objectTypeNamesReferencedInSyntheticUnions = syntheticUnions
+        val polymorphicHydrationUnions = getPolymophicHydrationUnions(service)
+        val objectTypeNamesReferencedInPolymorphicHydrationUnions = polymorphicHydrationUnions
             .flatMap { it.types }
             .map { it.name }
             .toSet()
@@ -178,8 +178,8 @@ internal class NadelTypeValidation(
             .filterNot { (key) ->
                 key in allNadelBuiltInTypeNames
             }
-            .filterNot { (key, value) ->
-                key in objectTypeNamesReferencedInSyntheticUnions || value in syntheticUnions
+            .filterNot { (name, overallType) ->
+                name in objectTypeNamesReferencedInPolymorphicHydrationUnions || overallType in polymorphicHydrationUnions
             }
             .mapNotNull { (_, overallType) ->
                 val underlyingType = getUnderlyingType(overallType, service) as GraphQLNamedType?
@@ -209,7 +209,7 @@ internal class NadelTypeValidation(
             } to errors
     }
 
-    private fun getSyntheticUnions(service: Service): Set<GraphQLUnionType> {
+    private fun getPolymophicHydrationUnions(service: Service): Set<GraphQLUnionType> {
         return service.definitionRegistry
             .definitions
             .asSequence()

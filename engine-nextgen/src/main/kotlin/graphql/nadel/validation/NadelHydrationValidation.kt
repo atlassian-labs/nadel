@@ -20,6 +20,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgum
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.PolymorphicHydrationReturnTypeMismatch
 import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
+import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLFieldsContainer
@@ -48,6 +49,7 @@ internal class NadelHydrationValidation(
             error("Don't invoke hydration validation if there is no hydration silly")
         }
 
+        val isPolymorphicHydration = hydrations.size > 1
         val errors = mutableListOf<NadelSchemaValidationError>()
         for (hydration in hydrations) {
             val actorService = services[hydration.serviceName]
@@ -65,7 +67,7 @@ internal class NadelHydrationValidation(
 
             val argumentIssues = getArgumentErrors(parent, overallField, hydration, actorServiceQueryType, actorField)
             val outputTypeIssues =
-                getOutputTypeIssues(parent, overallField, actorService, actorField, hydrations.size > 1)
+                getOutputTypeIssues(parent, overallField, actorService, actorField, isPolymorphicHydration)
             errors.addAll(argumentIssues)
             errors.addAll(outputTypeIssues)
         }
@@ -82,12 +84,14 @@ internal class NadelHydrationValidation(
     ): List<NadelSchemaValidationError> {
         // Ensures that the underlying type of the actor field matches with the expected overall output type
         var overallType = overallField.type.unwrapAll()
-        val typeValidationErrors: MutableList<NadelSchemaValidationError> = mutableListOf()
         if (isPolymorphicHydration) {
             if (overallType is GraphQLUnionType) {
                 val possibleObjectTypes = overallType.types
                 val actorFieldReturnType = actorField.type.unwrapAll().name
-                val overallTypeName = possibleObjectTypes.find { it.name == actorFieldReturnType }?.name
+                val overallTypeMatchingActorFieldReturnType = possibleObjectTypes.find {
+                    actorFieldReturnType == getUnderlyingType(it, actorService)?.name
+                }
+                val overallTypeName = overallTypeMatchingActorFieldReturnType?.name
                     ?: return listOf(
                         PolymorphicHydrationReturnTypeMismatch(
                             actorField,
@@ -98,16 +102,14 @@ internal class NadelHydrationValidation(
                     )
                 overallType = overallSchema.getType(overallTypeName) as GraphQLUnmodifiedType
             } else {
-                typeValidationErrors.add(FieldWithPolymorphicHydrationMustReturnAUnion(parent, overallField))
+                return listOf(FieldWithPolymorphicHydrationMustReturnAUnion(parent, overallField))
             }
         }
-        typeValidationErrors.addAll(
-            typeValidation.validate(
-                NadelServiceSchemaElement(
-                    overall = overallType,
-                    underlying = actorField.type.unwrapAll(),
-                    service = actorService,
-                )
+        val typeValidation = typeValidation.validate(
+            NadelServiceSchemaElement(
+                overall = overallType,
+                underlying = actorField.type.unwrapAll(),
+                service = actorService,
             )
         )
 
@@ -120,7 +122,7 @@ internal class NadelHydrationValidation(
             emptyList()
         }
 
-        return typeValidationErrors + outputTypeMustBeNullable
+        return typeValidation + outputTypeMustBeNullable
     }
 
     private fun getArgumentErrors(
