@@ -71,6 +71,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isEmpty())
         }
 
@@ -120,7 +121,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                     """.trimIndent(),
                 ),
             )
+
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
         }
 
@@ -144,6 +147,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                         }
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
                         type User {
                             id: ID!
                             name: String!
@@ -162,6 +168,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                     """.trimIndent(),
                     "users" to """
                         type Query {
+                            id: ID!
                             user(id: ID!): User
                         }
                         type User {
@@ -173,6 +180,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<CannotRenameHydratedField>()
@@ -193,6 +201,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                         }
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
                         type User {
                             id: ID!
                             name: String!
@@ -231,6 +242,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isEmpty())
         }
 
@@ -284,6 +296,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingHydrationActorService>()
@@ -294,7 +307,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.hydration.serviceName == "userService")
         }
 
-        it("fails if hydrated field is not null") {
+        it("fails if hydrated field is not nullable") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "issues" to """
@@ -312,6 +325,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                         }
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
                         type User {
                             id: ID!
                             name: String!
@@ -340,6 +356,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<HydrationFieldMustBeNullable>()
@@ -394,6 +411,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingHydrationActorField>()
@@ -422,6 +440,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                         }
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
                         type User {
                             id: ID!
                             name: String!
@@ -450,6 +471,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingHydrationFieldValueSource>()
@@ -472,6 +494,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                         }
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!, secrets: Boolean = false): User
+                        }
                         type User {
                             id: ID!
                             name: String!
@@ -511,6 +536,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingHydrationArgumentValueSource>()
@@ -533,6 +559,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                         }
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
                         type User {
                             id: ID!
                             name: String!
@@ -572,6 +601,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingHydrationActorFieldArgument>()
@@ -593,6 +623,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                         }
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!, other: Boolean): User
+                        }
                         type User {
                             id: ID!
                             name: String!
@@ -633,6 +666,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<DuplicatedHydrationArgument>()
@@ -664,13 +698,18 @@ class NadelHydrationValidationTest : DescribeSpec({
                                 field: "user"
                                 arguments: [
                                     {name: "id", value: "$source.creator"}
-                                    {name: "id", value: "$argument.someArg"}
                                     {name: "other", value: "$argument.other"}
                                 ]
                             )
                         }
                     """.trimIndent(),
                     "accounts" to """
+                        type Query {
+                            user(id: ID!, other: Boolean): Account 
+                        }
+                        type Account {
+                            id: ID!
+                        }
                     """.trimIndent(),
                 ),
                 underlyingSchema = mapOf(
@@ -704,6 +743,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
+
             assert(errors.map { it.message }.isNotEmpty())
 
             val error = errors.assertSingleOfType<MissingUnderlyingField>()
