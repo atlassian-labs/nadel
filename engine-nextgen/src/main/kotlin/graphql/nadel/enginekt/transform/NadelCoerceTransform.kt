@@ -90,6 +90,7 @@ internal class NadelCoerceTransform : NadelTransform<State> {
             }
             .map { it.type }
             .map(GraphQLType::unwrapAll)
+            .toSet()
 
         // In the case of scalars, there should only be 1 unwrapped type.
         // Object types could result in more than 1 distinct type, in the case of different interface implementations
