@@ -13,9 +13,14 @@ import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationObjec
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.deepClone
+import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
+import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLNamedType
+import graphql.schema.GraphQLType
+import graphql.schema.GraphQLUnionType
 
 internal object NadelHydrationFieldsBuilder {
     fun makeActorQueries(
@@ -54,12 +59,23 @@ internal object NadelHydrationFieldsBuilder {
             hooks = hooks
         )
 
-        val fieldChildren = deepClone(fields = hydratedField.children).let { children ->
-            when (val objectIdField = makeObjectIdField(executionBlueprint, aliasHelper, instruction)) {
-                null -> children
-                else -> children + objectIdField
+        val actorFieldOverallObjectTypeNames = getActorFieldOverallObjectTypenames(instruction, executionBlueprint)
+        val fieldChildren = deepClone(fields = hydratedField.children)
+            .mapNotNull { childField ->
+                val objectTypesAreNotReturnedByActorField =
+                    actorFieldOverallObjectTypeNames.intersect(childField.objectTypeNames).isEmpty()
+                if (objectTypesAreNotReturnedByActorField) {
+                    return@mapNotNull null
+                }
+                filterObjectTypeNamesToMatchActorField(childField, actorFieldOverallObjectTypeNames)
+                return@mapNotNull childField
             }
-        }
+            .let { children ->
+                when (val objectIdField = makeObjectIdField(executionBlueprint, aliasHelper, instruction)) {
+                    null -> children
+                    else -> children + objectIdField
+                }
+            }
 
         return argBatches.map { argBatch ->
             makeActorQueries(
@@ -68,6 +84,32 @@ internal object NadelHydrationFieldsBuilder {
                 fieldChildren = fieldChildren,
             )
         }
+    }
+
+    private fun filterObjectTypeNamesToMatchActorField(
+        field: ExecutableNormalizedField,
+        actorFieldOverallObjectTypeNames: Set<String>
+    ) {
+        field.objectTypeNames.removeIf { !actorFieldOverallObjectTypeNames.contains(it) }
+    }
+
+    private fun getActorFieldOverallObjectTypenames(
+        instruction: NadelBatchHydrationFieldInstruction,
+        executionBlueprint: NadelOverallExecutionBlueprint
+    ): Set<String> {
+        val actorFieldUnderlyingType = instruction.actorFieldDef.type.unwrapAll()
+        val overallTypeName =
+            executionBlueprint.getOverallTypeName(instruction.actorService, actorFieldUnderlyingType.name)
+        val actorFieldOverallObjectTypes: List<GraphQLType> =
+            when (val actorFieldOverallType = executionBlueprint.schema.getType(overallTypeName)!!) {
+                is GraphQLInterfaceType -> executionBlueprint.schema.getImplementations(actorFieldOverallType)
+                is GraphQLUnionType -> actorFieldOverallType.types
+                else -> {
+                    listOf(actorFieldOverallType)
+                }
+            }
+        return actorFieldOverallObjectTypes.map { (it as GraphQLNamedType).name }
+            .toSet()
     }
 
     fun makeFieldsUsedAsActorInputValues(

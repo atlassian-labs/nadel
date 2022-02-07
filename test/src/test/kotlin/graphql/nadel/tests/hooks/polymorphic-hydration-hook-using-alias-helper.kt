@@ -34,14 +34,23 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
         instruction: T,
         hydrationArgumentValue: String
     ): Boolean {
-        return instruction.actorService.name == "pets" && hydrationArgumentValue.startsWith("pet", ignoreCase = true) ||
-            instruction.actorService.name == "people" && hydrationArgumentValue.startsWith("human", ignoreCase = true)
+        return instruction.actorFieldDef.name.contains("pet") && hydrationArgumentValue.startsWith(
+            "pet", ignoreCase = true
+        ) ||
+            instruction.actorFieldDef.name.contains("human") && hydrationArgumentValue.startsWith(
+            "human", ignoreCase = true
+        )
     }
 }
 
-@UseHook
-class `batch-polymorphic-hydration` : EngineTestHook {
+open class PolymorphicHydrationWithAliasTestHook : EngineTestHook {
     override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
         return builder.serviceExecutionHooks(PolymorphicHydrationHookUsingAliasHelper())
     }
 }
+
+@UseHook
+class `batch-polymorphic-hydration` : PolymorphicHydrationWithAliasTestHook()
+
+@UseHook
+class `batch-polymorphic-hydration-actor-fields-are-in-the-same-service` : PolymorphicHydrationWithAliasTestHook()
