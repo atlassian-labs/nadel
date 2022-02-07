@@ -24,7 +24,7 @@ data class NadelOverallExecutionBlueprint(
     private val coordinatesToService: Map<FieldCoordinates, Service>,
 ) {
 
-    private fun mapOfTypes(
+    private fun setOfServiceTypes(
         map: Map<Service, Set<String>>,
         service: Service
     ): Set<String> {
@@ -32,11 +32,11 @@ data class NadelOverallExecutionBlueprint(
     }
 
     fun getUnderlyingTypeNamesForService(service: Service): Set<String> {
-        return mapOfTypes(underlyingTypeNamesByService, service)
+        return setOfServiceTypes(underlyingTypeNamesByService, service)
     }
 
     fun getOverAllTypeNamesForService(service: Service): Set<String> {
-        return mapOfTypes(overallTypeNamesByService, service)
+        return setOfServiceTypes(overallTypeNamesByService, service)
     }
 
     fun getUnderlyingTypeName(
