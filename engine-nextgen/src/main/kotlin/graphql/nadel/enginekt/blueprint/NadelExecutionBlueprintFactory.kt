@@ -67,16 +67,109 @@ private class Factory(
             it.location
         }
         val furtherTypeRenameInstructions = typeRenameInstructions.values +
-                SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
-                    .getTypeRenames()
+            SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
+                .getTypeRenames()
+
+        val underlyingBlueprints = deriveUnderlyingBlueprints(furtherTypeRenameInstructions)
+        val underlyingTypeNameToOverallNameByService =
+            makeUnderlyingTypeNamesToOverallNameByService(services, underlyingBlueprints)
+        // the above feeds into the below
+        val overAllTypeNameToUnderlyingNameByService =
+            makeOverAllTypeNameToUnderlyingNameByService(
+                services,
+                underlyingBlueprints,
+                underlyingTypeNameToOverallNameByService
+            )
+
+        val underlyingTypeNamesByService: Map<Service, Set<String>> = underlyingTypeNameToOverallNameByService.mapValues {
+            (_,mapOfTypes) -> mapOfTypes.keys.toSet()
+        }
+        val overallTypeNamesByService: Map<Service, Set<String>> = overAllTypeNameToUnderlyingNameByService.mapValues {
+            (_,mapOfTypes) -> mapOfTypes.keys.toSet()
+        }
 
         return NadelOverallExecutionBlueprint(
             schema = overallSchema,
             fieldInstructions = fieldInstructions,
-            underlyingBlueprints = deriveUnderlyingBlueprints(furtherTypeRenameInstructions),
+            underlyingTypeNameToOverallNameByService = underlyingTypeNameToOverallNameByService,
+            overAllTypeNameToUnderlyingNameByService = overAllTypeNameToUnderlyingNameByService,
+            underlyingTypeNamesByService = underlyingTypeNamesByService,
+            overallTypeNamesByService = overallTypeNamesByService,
+            underlyingBlueprints = underlyingBlueprints,
             coordinatesToService = coordinatesToService,
         )
     }
+
+    /**
+     * A map per service that contains a map of service underlying type name to overall type name
+     */
+    private fun makeUnderlyingTypeNamesToOverallNameByService(
+        services: List<Service>,
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>
+    ): Map<Service, Map<String, String>> {
+        val serviceMap = LinkedHashMap<Service, Map<String, String>>()
+        for (service in services) {
+            val underlyingNamesToOverallNames: Map<String, String> = service.underlyingSchema
+                .typeMap
+                .mapValues { (_, underlyingType) ->
+                    overAllTypeNameFromUnderlyingType(service, underlyingBlueprints, underlyingType.name)
+                }
+            serviceMap[service] = underlyingNamesToOverallNames
+        }
+        return serviceMap
+    }
+
+    private fun makeOverAllTypeNameToUnderlyingNameByService(
+        services: List<Service>,
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
+        underlyingTypeNameToOverallNameByService: Map<Service, Map<String, String>>
+    ): Map<Service, Map<String, String>> {
+        val serviceMap = LinkedHashMap<Service, Map<String, String>>()
+        for (service in services) {
+            // this can be !! because we know we built underlyingTypeNameToOverallNameByService per service above
+            val underlyingTypeNameToOverallName = underlyingTypeNameToOverallNameByService[service]!!
+            val overAllTypeNameToUnderlyingName = LinkedHashMap<String, String>()
+            underlyingTypeNameToOverallName.values.forEach { overAllName ->
+                val underlyingName = underlyingTypeNameFromOverallType(service, underlyingBlueprints, overAllName)
+                overAllTypeNameToUnderlyingName[overAllName] = underlyingName
+            }
+            serviceMap[service] = overAllTypeNameToUnderlyingName
+        }
+        return serviceMap
+    }
+
+    private fun overAllTypeNameFromUnderlyingType(
+        service: Service,
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
+        underlyingTypeName: String
+    ): String {
+        // TODO: THIS SHOULD NOT BE HAPPENING, INTROSPECTIONS ARE DUMB AND DON'T NEED TRANSFORMING
+        if (service.name == IntrospectionService.name) {
+            return underlyingTypeName
+        }
+
+        return underlyingExecutionBlueprint(underlyingBlueprints, service)
+            .typeInstructions.getOverallName(underlyingTypeName)
+    }
+
+    private fun underlyingTypeNameFromOverallType(
+        service: Service,
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
+        overallTypeName: String
+    ): String {
+        // TODO: THIS SHOULD NOT BE HAPPENING, INTROSPECTIONS ARE DUMB AND DON'T NEED TRANSFORMING
+        if (service.name == IntrospectionService.name) {
+            return overallTypeName
+        }
+
+        return underlyingExecutionBlueprint(underlyingBlueprints, service)
+            .typeInstructions.getUnderlyingName(overallTypeName)
+    }
+
+    private fun underlyingExecutionBlueprint(
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
+        service: Service
+    ) = (underlyingBlueprints[service.name] ?: error("Could not find service: $service.name"))
 
     private fun makeFieldInstructions(): List<NadelFieldInstruction> {
         return overallSchema.typeMap.values
@@ -179,7 +272,7 @@ private class Factory(
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
-                                && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
+                            && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
                     }
                 }
             }

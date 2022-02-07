@@ -16,18 +16,44 @@ import graphql.schema.GraphQLSchema
 data class NadelOverallExecutionBlueprint(
     val schema: GraphQLSchema,
     val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
+    val underlyingTypeNameToOverallNameByService: Map<Service, Map<String, String>>,
+    val overAllTypeNameToUnderlyingNameByService: Map<Service, Map<String, String>>,
+    val underlyingTypeNamesByService: Map<Service, Set<String>>,
+    val overallTypeNamesByService: Map<Service, Set<String>>,
     private val underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
     private val coordinatesToService: Map<FieldCoordinates, Service>,
 ) {
+
+    private fun mapOfTypes(
+        map: Map<Service, Set<String>>,
+        service: Service
+    ): Set<String> {
+        return (map[service] ?: error("Could not find service: ${service.name}"))
+    }
+
+    fun getUnderlyingTypeNamesForService(service: Service): Set<String> {
+        return mapOfTypes(underlyingTypeNamesByService, service)
+    }
+
+    fun getOverAllTypeNamesForService(service: Service): Set<String> {
+        return mapOfTypes(overallTypeNamesByService, service)
+    }
+
     fun getUnderlyingTypeName(
         service: Service,
         overallTypeName: String,
     ): String {
+        //
+        // BB - these methods should in theory be able to be implemented via the
+        // underlyingTypeNameToOverallNameByService BUT this failed tests, and I could not work out
+        // why, so I left these in.  NadelExecutionPlanFactory has this code kinda sorta.  Same below
+        // Someone more clever than me should work out why
+        //
+
         // TODO: THIS SHOULD NOT BE HAPPENING, INTROSPECTIONS ARE DUMB AND DON'T NEED TRANSFORMING
         if (service.name == IntrospectionService.name) {
             return overallTypeName
         }
-
         return getUnderlyingBlueprint(service).typeInstructions.getUnderlyingName(overallTypeName)
     }
 
