@@ -23,6 +23,7 @@ import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Warmup;
 
@@ -46,10 +47,11 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
  * Install it and then just hit "Run" on a certain benchmark method
  */
 
-@SuppressWarnings("UnstableApiUsage")
 public class JiraCentralBenchmark {
     @State(Scope.Benchmark)
     public static class TestFixture {
+        boolean useKtEngine = true;
+
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         Nadel nadel;
@@ -77,7 +79,6 @@ public class JiraCentralBenchmark {
             String responseString = readFromClasspath("central/jira_agg_main_response.json");
             Map<?, ?> responseMap = objectMapper.readValue(responseString, Map.class);
 
-            boolean kt = true;
 
             ServiceExecutionResult result = toServiceResult(responseMap);
             ServiceExecution serviceExecution = serviceExecutionParameters -> completedFuture(result);
@@ -97,7 +98,7 @@ public class JiraCentralBenchmark {
             String nadelSchemaText = readFromClasspath("central/overall_central.nadel.json");
             Map<String, String> nadelSchema = objectMapper.readValue(nadelSchemaText, Map.class);
             nadel = Nadel.newNadel()
-                    .engineFactory(kt ? NextgenEngine::new : NadelEngine::new)
+                    .engineFactory(useKtEngine ? NextgenEngine::new : NadelEngine::new)
                     .dsl(nadelSchema)
                     .serviceExecutionFactory(serviceExecutionFactory)
                     .underlyingWiringFactory(new GatewaySchemaWiringFactory())
@@ -106,6 +107,14 @@ public class JiraCentralBenchmark {
             query = readFromClasspath("central/jira_agg_main.graphql");
 
             document = new NadelGraphQLParser().parseDocument(query);
+        }
+
+        @TearDown
+        public void tearDown() {
+            System.err.println("\n=======================");
+            System.err.println("Forked JVM has ended");
+            System.err.println("=======================");
+
         }
 
     }
@@ -117,6 +126,20 @@ public class JiraCentralBenchmark {
     @BenchmarkMode(Mode.AverageTime)
     @OutputTimeUnit(TimeUnit.MILLISECONDS)
     public Object benchMarkAvgTime(TestFixture fixture) throws ExecutionException, InterruptedException {
+        return runNadel(fixture);
+    }
+
+    @Benchmark
+    @Warmup(iterations = 2)
+    @Measurement(iterations = 4, time = 10)
+    @Threads(8)
+    @BenchmarkMode(Mode.Throughput)
+    @OutputTimeUnit(TimeUnit.SECONDS)
+    public Object benchMarkThroughput(TestFixture fixture) throws ExecutionException, InterruptedException {
+        return runNadel(fixture);
+    }
+
+    private ExecutionResult runNadel(TestFixture fixture) throws InterruptedException, ExecutionException {
         NadelExecutionInput nadelExecutionInput = NadelExecutionInput.newNadelExecutionInput()
                 .query(fixture.query)
                 .variables(fixture.variables)
@@ -124,15 +147,21 @@ public class JiraCentralBenchmark {
         ExecutionResult result = fixture.nadel.execute(nadelExecutionInput).get();
 
         // For paranoid people like me who think the test is failing somewhere silently
-        if (fixture.numExecutions.incrementAndGet() % 100 == 0) {
+        int count = fixture.numExecutions.incrementAndGet();
+        if (count == 1) {
+            System.err.println("\n=======================");
+            System.err.println("Forked JVM has started - Attach JProfiler if need be!!");
+            System.err.println("=======================");
+        }
+        if (count % 100 == 0) {
             System.err.println("At " + fixture.numExecutions.get() + " executions");
-            System.out.println(result);
         }
 
         return result;
     }
 
-    public static void main(String[] args) throws IOException, ExecutionException, InterruptedException {
+    // Change the name to be able to run the debugger on this in IDEA
+    public static void mainXXX(String[] args) throws IOException, ExecutionException, InterruptedException {
 
         JiraCentralBenchmark benchmark = new JiraCentralBenchmark();
         TestFixture testFixture = new TestFixture();
