@@ -172,18 +172,12 @@ serviceCalls:
             petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
               ... on Dog {
                 __typename
-                __typename__type_filter____typename: __typename
-                __typename__type_filter__id: __typename
-                __typename__type_filter__name: __typename
                 breed
                 id
                 batch_hydration__data__id: id
               }
               ... on Fish {
                 __typename
-                __typename__type_filter____typename: __typename
-                __typename__type_filter__id: __typename
-                __typename__type_filter__name: __typename
                 fins
                 id
                 batch_hydration__data__id: id
@@ -197,33 +191,21 @@ serviceCalls:
           "data": {
             "petById": [{
               "__typename": "Dog",
-              "__typename__type_filter____typename": "Dog",
-              "__typename__type_filter__id": "Dog",
-              "__typename__type_filter__name": "Dog",
               "breed": "Akita",
               "id": "DOG-0",
               "batch_hydration__data__id": "DOG-0"
             }, {
               "__typename": "Fish",
-              "__typename__type_filter____typename": "Fish",
-              "__typename__type_filter__id": "Fish",
-              "__typename__type_filter__name": "Fish",
               "fins": 4,
               "id": "FISH-0",
               "batch_hydration__data__id": "FISH-0"
             }, {
               "__typename": "Dog",
-              "__typename__type_filter____typename": "Dog",
-              "__typename__type_filter__id": "Dog",
-              "__typename__type_filter__name": "Dog",
               "breed": "Labrador",
               "id": "DOG-1",
               "batch_hydration__data__id": "DOG-1"
             }, {
               "__typename": "Fish",
-              "__typename__type_filter____typename": "Fish",
-              "__typename__type_filter__id": "Fish",
-              "__typename__type_filter__name": "Fish",
               "fins": 8,
               "id": "FISH-1",
               "batch_hydration__data__id": "FISH-1"
@@ -236,13 +218,7 @@ serviceCalls:
         query: |
           query {
             humanById(ids: ["HUMAN-0"]) {
-              __typename__type_filter____typename: __typename
-              __typename__type_filter____typename: __typename
               __typename
-              __typename__type_filter__id: __typename
-              __typename__type_filter__id: __typename
-              __typename__type_filter__breed: __typename
-              __typename__type_filter__fins: __typename
               id
               batch_hydration__data__id: id
               name
@@ -254,13 +230,7 @@ serviceCalls:
         {
           "data": {
             "humanById": [{
-              "__typename__type_filter____typename": "Human",
-              "__typename__type_filter____typename": "Human",
               "__typename": "Human",
-              "__typename__type_filter__id": "Human",
-              "__typename__type_filter__id": "Human",
-              "__typename__type_filter__breed": "Human",
-              "__typename__type_filter__fins": "Human",
               "id": "HUMAN-0",
               "batch_hydration__data__id": "HUMAN-0",
               "name": "Fanny Longbottom"

@@ -148,10 +148,7 @@ serviceCalls:
         query: |
           query {
             humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
-              __typename__type_filter____typename: __typename
               __typename
-              __typename__type_filter__id: __typename
-              __typename__type_filter__breed: __typename
               id
               batch_hydration__data__id: id
               name
@@ -163,19 +160,13 @@ serviceCalls:
         {
           "data": {
             "humanById": [{
-              "__typename__type_filter____typename": "Human",
               "__typename": "Human",
-              "__typename__type_filter__id": "Human",
-              "__typename__type_filter__breed": "Human",
               "id": "HUMAN-0",
               "batch_hydration__data__id": "HUMAN-0",
               "name": "Fanny Longbottom"
             },
             {
-              "__typename__type_filter____typename": "Human",
               "__typename": "Human",
-              "__typename__type_filter__id": "Human",
-              "__typename__type_filter__breed": "Human",
               "id": "HUMAN-1",
               "batch_hydration__data__id": "HUMAN-1",
               "name": "John Doe"
