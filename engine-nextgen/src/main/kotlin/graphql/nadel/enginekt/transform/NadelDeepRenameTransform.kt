@@ -1,6 +1,7 @@
 package graphql.nadel.enginekt.transform
 
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDeepRenameFieldInstruction
@@ -84,6 +85,7 @@ internal class NadelDeepRenameTransform : NadelTransform<NadelDeepRenameTransfor
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         val deepRenameInstructions = executionBlueprint.fieldInstructions
             .getTypeNameToInstructionMap<NadelDeepRenameFieldInstruction>(overallField)

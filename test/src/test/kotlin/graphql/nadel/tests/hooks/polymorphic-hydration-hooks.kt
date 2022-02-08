@@ -8,6 +8,7 @@ import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.transform.result.json.JsonNodePath
+import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.UseHook
@@ -63,3 +64,6 @@ class `batch-polymorphic-hydration-when-hook-returns-null-1` : PolymorphicHydrat
 
 @UseHook
 class `solitary-polymorphic-hydration-when-hook-returns-null` : PolymorphicHydrationTestHook() {}
+
+@UseHook
+class `batch-polymorphic-hydration-with-lots-of-renames` : PolymorphicHydrationTestHook() {}

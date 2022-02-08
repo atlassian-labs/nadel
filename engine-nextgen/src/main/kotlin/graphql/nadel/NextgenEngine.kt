@@ -212,7 +212,7 @@ class NextgenEngine @JvmOverloads constructor(
             it.children.single()
         }
 
-        val (transformResult, executionPlan) = transformHydrationQuery(service, executionContext, actorField)
+        val (transformResult, executionPlan) = transformHydrationQuery(service, executionContext, actorField, serviceHydrationDetails)
 
         // Get to the top level field again using .parent N times on the new actor field
         val transformedQuery: ExecutableNormalizedField = fold(
@@ -243,8 +243,15 @@ class NextgenEngine @JvmOverloads constructor(
         service: Service,
         executionContext: NadelExecutionContext,
         actorField: ExecutableNormalizedField,
+        serviceHydrationDetails: ServiceExecutionHydrationDetails,
     ): Pair<NadelQueryTransformer.TransformResult, NadelExecutionPlan> {
-        val executionPlan = executionPlanner.create(executionContext, services, service, rootField = actorField)
+        val executionPlan = executionPlanner.create(
+            executionContext,
+            services,
+            service,
+            rootField = actorField,
+            serviceHydrationDetails,
+        )
 
         val queryTransform = transformQuery(service, executionContext, executionPlan, actorField)
 

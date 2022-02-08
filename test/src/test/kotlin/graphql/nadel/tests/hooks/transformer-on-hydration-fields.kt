@@ -2,6 +2,7 @@ package graphql.nadel.tests.hooks
 
 import graphql.language.StringValue
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
@@ -18,6 +19,15 @@ import graphql.normalized.NormalizedInputValue
 
 @UseHook
 class `transformer-on-hydration-fields` : EngineTestHook {
+
+    private fun hasParentWithName(field: ExecutableNormalizedField, parentName: String): Boolean {
+        return if (field.parent == null) {
+            false
+        } else if (field.parent.name == parentName) {
+            true
+        } else hasParentWithName(field.parent, parentName)
+    }
+
     override val customTransforms: List<NadelTransform<out Any>>
         get() = listOf(
             /**
@@ -33,8 +43,18 @@ class `transformer-on-hydration-fields` : EngineTestHook {
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
+                    hydrationDetails: ServiceExecutionHydrationDetails?,
                 ): Any? {
-                    return overallField.name.takeIf { it == "barById" }
+                    return if (overallField.name == "barById") {
+                        assert(hydrationDetails != null)
+                        overallField
+                    } else if (hasParentWithName(overallField, "barById")) {
+                        assert(hydrationDetails != null)
+                        null
+                    } else {
+                        assert(hydrationDetails == null)
+                        null
+                    }
                 }
 
                 override suspend fun transformField(

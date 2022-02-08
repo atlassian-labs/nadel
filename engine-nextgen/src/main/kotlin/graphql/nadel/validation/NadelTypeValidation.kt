@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.language.ObjectTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.AnyNamedNode
 import graphql.nadel.enginekt.util.isExtensionDef
@@ -12,6 +13,7 @@ import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.enginekt.util.unwrapNonNull
 import graphql.nadel.enginekt.util.unwrapOne
 import graphql.nadel.schema.NadelDirectives
+import graphql.nadel.schema.NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
@@ -26,6 +28,7 @@ import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
+import graphql.schema.GraphQLUnionType
 import graphql.schema.GraphQLUnmodifiedType
 
 internal class NadelTypeValidation(
@@ -156,7 +159,8 @@ internal class NadelTypeValidation(
         service: Service,
     ): Pair<List<NadelServiceSchemaElement>, List<NadelSchemaValidationError>> {
         val errors = mutableListOf<NadelSchemaValidationError>()
-        val nameNamesUsed = getTypeNamesUsed(service)
+        val polymorphicHydrationUnions = getPolymorphicHydrationUnions(service)
+        val namesUsed = getTypeNamesUsed(service, externalTypes = polymorphicHydrationUnions)
 
         fun addMissingUnderlyingTypeError(overallType: GraphQLNamedType) {
             errors.add(MissingUnderlyingType(service, overallType))
@@ -166,13 +170,13 @@ internal class NadelTypeValidation(
             .typeMap
             .asSequence()
             .filter { (key) ->
-                key in nameNamesUsed
+                key in namesUsed
             }
             .filterNot { (key) ->
                 key in allNadelBuiltInTypeNames
             }
             .mapNotNull { (_, overallType) ->
-                val underlyingType = getUnderlyingType(overallType, service) as GraphQLNamedType?
+                val underlyingType = getUnderlyingType(overallType, service)
 
                 if (underlyingType == null) {
                     addMissingUnderlyingTypeError(overallType).let { null }
@@ -199,13 +203,28 @@ internal class NadelTypeValidation(
             } to errors
     }
 
-    private fun getTypeNamesUsed(service: Service): Set<String> {
+    private fun getPolymorphicHydrationUnions(service: Service): Set<GraphQLUnionType> {
+        return service.definitionRegistry
+            .definitions
+            .asSequence()
+            .filterIsInstance<ObjectTypeDefinition>()
+            .flatMap { it.fieldDefinitions }
+            .filter { it.getDirectives(HYDRATED_DIRECTIVE_DEFINITION.name).size > 1 }
+            .map { it.type.unwrapAll() }
+            .map { overallSchema.getType(it.name) }
+            .filterIsInstance<GraphQLUnionType>()
+            .toSet()
+    }
+
+    private fun getTypeNamesUsed(service: Service, externalTypes: Set<GraphQLNamedType>): Set<String> {
         // There is no shared service to validate.
         // These shared types are USED in other services. When they are used, the validation
         // will validate that the service has a compatible underlying type.
         if (service.name == "shared") {
             return emptySet()
         }
+
+        val namesToIgnore = externalTypes.map { it.name }.toSet()
 
         val definitionNames = service.definitionRegistry.definitions
             .asSequence()
@@ -220,7 +239,7 @@ internal class NadelTypeValidation(
             .map {
                 it.name
             }
-            .toSet()
+            .toSet() - namesToIgnore
 
         // If it can be reached by using your service, you must own it to return it!
         val referencedTypes = getReachableTypeNames(overallSchema, service, definitionNames)

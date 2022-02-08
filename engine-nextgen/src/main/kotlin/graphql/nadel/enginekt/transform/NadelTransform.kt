@@ -2,6 +2,7 @@ package graphql.nadel.enginekt.transform
 
 import graphql.language.Directive
 import graphql.nadel.Service
+import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
@@ -26,6 +27,8 @@ interface NadelTransform<State : Any> {
      * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
      * @param service the [Service] the [overallField] belongs to
      * @param overallField the [ExecutableNormalizedField] in question, we are asking whether it [isApplicable] for transforms
+     * @param hydrationDetails the [ServiceExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
+     * hydrations, `null` otherwise
      *
      * @return null if the [NadelTransform] should not run, non-null [State] otherwise
      */
@@ -35,6 +38,7 @@ interface NadelTransform<State : Any> {
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): State?
 
     /**

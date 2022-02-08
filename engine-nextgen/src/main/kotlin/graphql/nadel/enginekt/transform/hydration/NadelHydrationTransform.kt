@@ -62,6 +62,7 @@ internal class NadelHydrationTransform(
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
+        hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
         val hydrationInstructionsByTypeNames = executionBlueprint.fieldInstructions
             .getTypeNameToInstructionsMap<NadelHydrationFieldInstruction>(overallField)

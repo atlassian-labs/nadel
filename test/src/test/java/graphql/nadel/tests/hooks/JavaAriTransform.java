@@ -2,6 +2,7 @@ package graphql.nadel.tests.hooks;
 
 import graphql.language.StringValue;
 import graphql.nadel.Service;
+import graphql.nadel.ServiceExecutionHydrationDetails;
 import graphql.nadel.ServiceExecutionResult;
 import graphql.nadel.enginekt.NadelExecutionContext;
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint;
@@ -49,7 +50,8 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
                                                        @NotNull NadelOverallExecutionBlueprint executionBlueprint,
                                                        @NotNull Map<String, ? extends Service> services,
                                                        @NotNull Service service,
-                                                       @NotNull ExecutableNormalizedField overallField) {
+                                                       @NotNull ExecutableNormalizedField overallField,
+                                                       @Nullable ServiceExecutionHydrationDetails hydrationDetails) {
 
         String singleObjectTypeName = getSingleObjectTypeName(overallField);
         FieldCoordinates fieldCoordinates = makeFieldCoordinates(singleObjectTypeName, overallField.getName());

@@ -1,0 +1,264 @@
+name: batch polymorphic hydration with lots of renames
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  bar: |
+    type Query {
+        animalById(ids: [ID]): [Animal] @renamed(from: "petById")
+        personById(ids: [ID]): [Person] @renamed(from: "humanById")
+    }
+
+    type Animal @renamed(from: "Pet") {
+        id: ID @renamed(from: "identifier")
+        breed: String @renamed(from: "kind")
+    }
+
+    type Person @renamed(from: "Human") {
+        id: ID @renamed(from: "identifier")
+        name: String
+    }
+  foo: |
+    type Query {
+        foo: [Foo]
+    }
+
+    type Foo {
+        id: ID
+        dataId: ID
+        data: Data
+        @hydrated(
+            service: "bar"
+            field: "petById"
+            arguments: [
+                {name: "ids" value: "$source.dataId"}
+            ]
+            identifiedBy: "hiddenId"
+        )
+        @hydrated(
+            service: "bar"
+            field: "humanById"
+            arguments: [
+                {name: "ids" value: "$source.dataId"}
+            ]
+            identifiedBy: "hiddenId"
+        )
+    }
+
+    union Data = Animal | Person
+underlyingSchema:
+  foo: |
+    type Query {
+      foo: [Foo]
+    }
+
+    type Foo {
+      id: ID
+      dataId: ID
+    }
+  bar: |
+    type Query {
+      humanById(ids: [ID]): [Human]
+      petById(ids: [ID]): [Pet]
+    }
+
+    type Human {
+      hiddenId: ID
+      identifier: ID
+      name: String
+    }
+    
+    type Pet {
+      hiddenId: ID
+      identifier: ID
+      kind: String
+    }
+
+query: |
+  query {
+    foo {
+      __typename
+      id
+      data {
+        ... on Animal {
+          __typename
+          id
+          breed
+        }
+        ... on Person {
+          __typename
+          id
+          name
+        }
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  nextgen:
+    - serviceName: foo
+      request:
+        query: |
+          query {
+            foo {
+              __typename
+              __typename__batch_hydration__data: __typename
+              batch_hydration__data__dataId: dataId
+              batch_hydration__data__dataId: dataId
+              id
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foo": [
+              {
+                "__typename": "Foo",
+                "__typename__batch_hydration__data": "Foo",
+                "batch_hydration__data__dataId": "PET-0",
+                "batch_hydration__data__dataId": "PET-0",
+                "id": "FOO-0"
+              },
+              {
+                "__typename": "Foo",
+                "__typename__batch_hydration__data": "Foo",
+                "batch_hydration__data__dataId": "HUMAN-0",
+                "batch_hydration__data__dataId": "HUMAN-0",
+                "id": "FOO-1"
+              },
+              {
+                "__typename": "Foo",
+                "__typename__batch_hydration__data": "Foo",
+                "batch_hydration__data__dataId": "PET-1",
+                "batch_hydration__data__dataId": "PET-1",
+                "id": "FOO-2"
+              },
+              {
+                "__typename": "Foo",
+                "__typename__batch_hydration__data": "Foo",
+                "batch_hydration__data__dataId": "HUMAN-1",
+                "batch_hydration__data__dataId": "HUMAN-1",
+                "id": "FOO-3"
+              } ]
+          },
+          "extensions": {}
+        }
+    - serviceName: bar
+      request:
+        query: |
+          query {
+            humanById(ids: ["HUMAN-0", "HUMAN-1"]) {
+              __typename
+              __typename__rename__id: __typename
+              batch_hydration__data__hiddenId: hiddenId
+              rename__id__identifier: identifier
+              name
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "humanById": [
+              {
+                "__typename": "Human",
+                "__typename__rename__id": "Human",
+                "batch_hydration__data__hiddenId": "HUMAN-0",
+                "rename__id__identifier": "PERSON-0",
+                "name": "Fanny Longbottom"
+              },
+              {
+                "__typename": "Human",
+                "__typename__rename__id": "Human",
+                "batch_hydration__data__hiddenId": "HUMAN-1",
+                "rename__id__identifier": "PERSON-1",
+                "name": "John Doe"
+              }]
+          },
+          "extensions": {}
+        }
+    - serviceName: bar
+      request:
+        query: |
+          query {
+            petById(ids: ["PET-0", "PET-1"]) {
+              __typename
+              __typename__rename__id: __typename
+              __typename__rename__breed: __typename
+              batch_hydration__data__hiddenId: hiddenId
+              rename__id__identifier: identifier
+              rename__breed__kind: kind
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "petById": [
+              {
+                "__typename": "Pet",
+                "__typename__rename__id": "Pet",
+                "__typename__rename__breed": "Pet",
+                "batch_hydration__data__hiddenId": "PET-0",
+                "rename__id__identifier": "ANIMAL-0",
+                "rename__breed__kind": "Akita"
+              },
+              {
+                "__typename": "Pet",
+                "__typename__rename__id": "Pet",
+                "__typename__rename__breed": "Pet",
+                "batch_hydration__data__hiddenId": "PET-1",
+                "rename__id__identifier": "ANIMAL-1",
+                "rename__breed__kind": "Labrador"
+              }]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": [
+        {
+          "__typename": "Foo",
+          "id": "FOO-0",
+          "data": {
+            "__typename": "Animal",
+            "id": "ANIMAL-0",
+            "breed": "Akita"
+          }
+        },
+        {
+          "__typename": "Foo",
+          "id": "FOO-1",
+          "data": {
+            "__typename": "Person",
+            "id": "PERSON-0",
+            "name": "Fanny Longbottom"
+          }
+        },
+        {
+          "__typename": "Foo",
+          "id": "FOO-2",
+          "data": {
+            "__typename": "Animal",
+            "id": "ANIMAL-1",
+            "breed": "Labrador"
+          }
+        },
+        {
+          "__typename": "Foo",
+          "id": "FOO-3",
+          "data": {
+            "__typename": "Person",
+            "id": "PERSON-1",
+            "name": "John Doe"
+          }
+        }]
+    },
+    "extensions": {}
+  }
