@@ -53,7 +53,7 @@ internal class NadelHydrationValidation(
                 continue
             }
             if (newHydrationValidation) {
-                // checks if field exists in overall schema, implicitly if it is in overall as a field then it is in underlying
+                // checks if field exists in overall schema, then implicitly if it is in overall as a field then it is also in underlying
                 hydrationActorFieldExistsInSchema(hydration, errors, parent, overallField, actorService, overallSchema.queryType)
             } else {
                 hydrationActorFieldExistsInSchema(hydration, errors, parent, overallField, actorService, actorService.underlyingSchema.queryType) // will deprecate
@@ -65,10 +65,6 @@ internal class NadelHydrationValidation(
 
     private fun hydrationActorFieldExistsInSchema(hydration: UnderlyingServiceHydration, errors: MutableList<NadelSchemaValidationError>, parent: NadelServiceSchemaElement, overallField: GraphQLFieldDefinition, actorService: Service, queryType: GraphQLObjectType) {
         val actorField = queryType.getFieldAt(hydration.pathToActorField)
-        //how we should do it
-        //given the @hydrated directives we want to verify that the fields used in the directives exist in the overall schema
-        // val coordinatesOfHydrationActorField: FieldCoordinates? = null //need to instantiate it properly instead of null
-        // actorField = overallSchema.getField(coordinatesOfHydrationActorField!!)
         if (actorField == null) {
             errors.add(MissingHydrationActorField(parent, overallField, hydration, queryType))
             return
