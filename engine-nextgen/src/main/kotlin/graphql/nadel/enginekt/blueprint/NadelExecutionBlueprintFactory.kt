@@ -313,26 +313,15 @@ private class Factory(
 
         val matchStrategy = if (hydration.isObjectMatchByIndex) {
             NadelBatchHydrationMatchStrategy.MatchIndex
-        } else if (hydration.objectIdentifier.contains(",")) {
+        } else if (hydration.objectIdentifiers.isNotEmpty()) {
             NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers(
-                hydration.objectIdentifier.split(",")
+                hydration.objectIdentifiers
                     .map { objectIdentifier ->
-                        // Todo switch off using colon and use a complex GraphQL object or something rather
                         NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
-                            sourceId = objectIdentifier.substringBefore(":", missingDelimiterValue = "")
-                                .takeIf {
-                                    it.isNotEmpty()
-                                }
-                                ?.let {
-                                    NadelQueryPath(segments = it.split("."))
-                                }
-                                ?: hydrationArgs
-                                    .asSequence()
-                                    .map(NadelHydrationActorInputDef::valueSource)
-                                    .filterIsInstance<FieldResultValue>()
-                                    .single()
-                                    .queryPathToField,
-                            resultId = objectIdentifier.substringAfter(":"),
+                            sourceId = NadelQueryPath(
+                                objectIdentifier.sourceId.split("."),
+                            ),
+                            resultId = objectIdentifier.resultId,
                         )
                     },
             )
@@ -344,7 +333,7 @@ private class Factory(
                     .filterIsInstance<FieldResultValue>()
                     .single()
                     .queryPathToField,
-                resultId = hydration.objectIdentifier.substringAfter(":"),
+                resultId = hydration.objectIdentifier,
             )
         }
 

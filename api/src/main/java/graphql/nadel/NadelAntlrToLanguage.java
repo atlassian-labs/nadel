@@ -46,6 +46,7 @@ import static graphql.nadel.dsl.ExtendedFieldDefinition.newExtendedFieldDefiniti
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
 import static graphql.nadel.util.FpKit.map;
+import static java.util.Collections.emptyList;
 
 @Internal
 public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
@@ -200,6 +201,7 @@ public class NadelAntlrToLanguage extends GraphqlAntlrToLanguage {
                 syntheticField,
                 remoteArguments,
                 objectIdentifier,
+                emptyList(),
                 objectIndexed,
                 batched,
                 batchSize,

@@ -20,7 +20,10 @@ overallSchema:
         service: "UserService"
         field: "users"
         arguments: [{name: "id" value: "$source.authorIds"}]
-        identifiedBy: "authorIds.userId:id,authorIds.site:siteId"
+        inputIdentifiedBy: [
+          {sourceId: "authorIds.userId" resultId: "id"}
+          {sourceId: "authorIds.site" resultId: "siteId"}
+        ]
         batchSize: 3
       )
     }

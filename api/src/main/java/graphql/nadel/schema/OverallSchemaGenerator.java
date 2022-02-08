@@ -73,8 +73,10 @@ public class OverallSchemaGenerator {
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION, InputObjectTypeDefinition.class);
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION, DirectiveDefinition.class);
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.RENAMED_DIRECTIVE_DEFINITION, DirectiveDefinition.class);
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.HIDDEN_DIRECTIVE_DEFINITION, DirectiveDefinition.class);
 
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION, InputObjectTypeDefinition.class);
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY, InputObjectTypeDefinition.class);
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION, EnumTypeDefinition.class);
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.HYDRATED_FROM_DIRECTIVE_DEFINITION, DirectiveDefinition.class);
         addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION, DirectiveDefinition.class);

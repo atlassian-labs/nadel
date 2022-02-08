@@ -1,7 +1,9 @@
 package graphql.nadel.schema;
 
 import graphql.Assert;
+import graphql.Scalars;
 import graphql.execution.ValuesResolver;
+import graphql.language.ArrayValue;
 import graphql.language.BooleanValue;
 import graphql.language.Description;
 import graphql.language.DirectiveDefinition;
@@ -9,15 +11,18 @@ import graphql.language.EnumTypeDefinition;
 import graphql.language.EnumValueDefinition;
 import graphql.language.InputObjectTypeDefinition;
 import graphql.language.IntValue;
+import graphql.language.NamedNode;
 import graphql.language.NonNullType;
 import graphql.language.SourceLocation;
 import graphql.language.StringValue;
+import graphql.language.Type;
 import graphql.language.TypeName;
 import graphql.nadel.dsl.FieldMappingDefinition;
 import graphql.nadel.dsl.RemoteArgumentDefinition;
 import graphql.nadel.dsl.RemoteArgumentSource;
 import graphql.nadel.dsl.TypeMappingDefinition;
 import graphql.nadel.dsl.UnderlyingServiceHydration;
+import graphql.nadel.dsl.UnderlyingServiceHydration.ObjectIdentifier;
 import graphql.nadel.util.FpKit;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLDirective;
@@ -25,6 +30,8 @@ import graphql.schema.GraphQLDirectiveContainer;
 import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLEnumValueDefinition;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLNamedSchemaElement;
+import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 
 import java.math.BigInteger;
@@ -32,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertTrue;
@@ -66,6 +74,7 @@ public class NadelDirectives {
     public static final DirectiveDefinition HIDDEN_DIRECTIVE_DEFINITION;
 
     public static final InputObjectTypeDefinition NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION;
+    public static final InputObjectTypeDefinition NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY;
     public static final DirectiveDefinition HYDRATED_FROM_DIRECTIVE_DEFINITION;
     public static final EnumTypeDefinition NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION;
     public static final DirectiveDefinition HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION;
@@ -97,7 +106,7 @@ public class NadelDirectives {
                         newInputValueDefinition()
                                 .name("from")
                                 .description(createDescription("The type to be renamed"))
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
                                 .build())
                 .build();
 
@@ -107,12 +116,27 @@ public class NadelDirectives {
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("name")
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("value")
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
+                                .build())
+                .build();
+
+        NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY = InputObjectTypeDefinition.newInputObjectDefinition()
+                .name("NadelBatchObjectIdentifiedBy")
+                .description(createDescription("This is required by batch hydration to understand how to pull out objects from the batched result"))
+                .inputValueDefinition(
+                        newInputValueDefinition()
+                                .name("sourceId")
+                                .type(nonNull(Scalars.GraphQLString))
+                                .build())
+                .inputValueDefinition(
+                        newInputValueDefinition()
+                                .name("resultId")
+                                .type(nonNull(Scalars.GraphQLString))
                                 .build())
                 .build();
 
@@ -125,54 +149,61 @@ public class NadelDirectives {
                         newInputValueDefinition()
                                 .name("service")
                                 .description(createDescription("The target service"))
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("field")
                                 .description(createDescription("The target top level field"))
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("identifiedBy")
                                 .description(createDescription("How to identify matching results"))
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
                                 .defaultValue(StringValue.newStringValue("id").build())
+                                .build())
+                .inputValueDefinition(
+                        newInputValueDefinition()
+                                .name("inputIdentifiedBy")
+                                .description(createDescription("How to identify matching results"))
+                                .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)).build()))
+                                .defaultValue(ArrayValue.newArrayValue().build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("indexed")
                                 .description(createDescription("Are results indexed"))
-                                .type(typeOf("Boolean"))
+                                .type(typeOf(Scalars.GraphQLBoolean))
                                 .defaultValue(BooleanValue.newBooleanValue(false).build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("batched")
                                 .description(createDescription("Is querying batched"))
-                                .type(typeOf("Boolean"))
+                                .type(typeOf(Scalars.GraphQLBoolean))
                                 .defaultValue(BooleanValue.newBooleanValue(false).build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("batchSize")
                                 .description(createDescription("The batch size"))
-                                .type(typeOf("Int"))
+                                .type(typeOf(Scalars.GraphQLInt))
                                 .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(200)).build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("timeout")
                                 .description(createDescription("The timeout to use when completing hydration"))
-                                .type(typeOf("Int"))
+                                .type(typeOf(Scalars.GraphQLInt))
                                 .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(-1)).build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("arguments")
                                 .description(createDescription("The arguments to the hydrated field"))
-                                .type(newListType().type(nonNull("NadelHydrationArgument")).build())
+                                .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_ARGUMENT_DEFINITION)).build()))
                                 .build())
                 .build();
 
@@ -182,17 +213,17 @@ public class NadelDirectives {
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("name")
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("valueFromField")
-                                .type(typeOf("String"))
+                                .type(typeOf(Scalars.GraphQLString))
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("valueFromArg")
-                                .type(typeOf("String"))
+                                .type(typeOf(Scalars.GraphQLString))
                                 .build())
                 .build();
 
@@ -210,13 +241,14 @@ public class NadelDirectives {
                         newInputValueDefinition()
                                 .name("arguments")
                                 .description(createDescription("The arguments to the hydrated field"))
-                                .type(newListType().type(nonNull("NadelHydrationFromArgument")).build())
+                                .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION)).build()))
+                                .defaultValue(ArrayValue.newArrayValue().build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("template")
                                 .description(createDescription("The hydration template to use"))
-                                .type(nonNull("NadelHydrationTemplate"))
+                                .type(nonNull(NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION))
                                 .build())
                 .build();
 
@@ -228,47 +260,54 @@ public class NadelDirectives {
                         newInputValueDefinition()
                                 .name("service")
                                 .description(createDescription("The target service"))
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("field")
                                 .description(createDescription("The target top level field"))
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("identifiedBy")
                                 .description(createDescription("How to identify matching results"))
-                                .type(nonNull("String"))
+                                .type(nonNull(Scalars.GraphQLString))
                                 .defaultValue(StringValue.newStringValue("id").build())
+                                .build())
+                .inputValueDefinition(
+                        newInputValueDefinition()
+                                .name("inputIdentifiedBy")
+                                .description(createDescription("How to identify matching results"))
+                                .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)).build()))
+                                .defaultValue(ArrayValue.newArrayValue().build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("indexed")
                                 .description(createDescription("Are results indexed"))
-                                .type(typeOf("Boolean"))
+                                .type(typeOf(Scalars.GraphQLBoolean))
                                 .defaultValue(BooleanValue.newBooleanValue(false).build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("batched")
                                 .description(createDescription("Is querying batched"))
-                                .type(typeOf("Boolean"))
+                                .type(typeOf(Scalars.GraphQLBoolean))
                                 .defaultValue(BooleanValue.newBooleanValue(false).build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("batchSize")
                                 .description(createDescription("The batch size"))
-                                .type(typeOf("Int"))
+                                .type(typeOf(Scalars.GraphQLInt))
                                 .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(200)).build())
                                 .build())
                 .inputValueDefinition(
                         newInputValueDefinition()
                                 .name("timeout")
                                 .description(createDescription("The timeout in milliseconds"))
-                                .type(typeOf("Int"))
+                                .type(typeOf(Scalars.GraphQLInt))
                                 .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(-1)).build())
                                 .build())
                 .build();
@@ -280,12 +319,27 @@ public class NadelDirectives {
                 .build();
     }
 
-    private static TypeName typeOf(String typename) {
-        return newTypeName().name(typename).build();
+    /**
+     * Don't use this directly, use one of the type safe methods below.
+     */
+    private static TypeName newTypeNameOf(Supplier<String> typeName) {
+        return newTypeName().name(typeName.get()).build();
     }
 
-    private static NonNullType nonNull(String typeName) {
-        return NonNullType.newNonNullType(typeOf(typeName)).build();
+    private static TypeName typeOf(GraphQLScalarType type) {
+        return newTypeName().name(type.getName()).build();
+    }
+
+    private static NonNullType nonNull(GraphQLNamedSchemaElement type) {
+        return NonNullType.newNonNullType(newTypeNameOf(type::getName)).build();
+    }
+
+    private static NonNullType nonNull(NamedNode<?> type) {
+        return NonNullType.newNonNullType(newTypeNameOf(type::getName)).build();
+    }
+
+    private static NonNullType nonNull(Type<?> type) {
+        return NonNullType.newNonNullType(type).build();
     }
 
     private static Description createDescription(String s) {
@@ -304,15 +358,21 @@ public class NadelDirectives {
                     if (directive.getName().equals(HYDRATED_FROM_DIRECTIVE_DEFINITION.getName())) {
                         return createTemplatedUnderlyingServiceHydration(directive, overallSchema);
                     }
-                    GraphQLArgument graphQLArgument = directive.getArgument("arguments");
-                    List<Object> argumentValues = resolveArgumentValue(graphQLArgument);
-                    List<RemoteArgumentDefinition> arguments = createArgs(argumentValues);
 
-                    return buildHydrationParameters(directive, arguments);
+                    List<Object> argumentValues = resolveArgumentValue(directive.getArgument("arguments"));
+                    var arguments = createArgs(argumentValues);
+
+                    GraphQLArgument inputIdentifiedBy = directive.getArgument("inputIdentifiedBy");
+                    List<Object> identifiedByValues = resolveArgumentValue(inputIdentifiedBy);
+                    var identifiedBy = createObjectIdentifiers(identifiedByValues);
+
+                    return buildHydrationParameters(directive, arguments, identifiedBy);
                 });
     }
 
-    private static UnderlyingServiceHydration buildHydrationParameters(GraphQLDirective directive, List<RemoteArgumentDefinition> arguments) {
+    private static UnderlyingServiceHydration buildHydrationParameters(GraphQLDirective directive,
+                                                                       List<RemoteArgumentDefinition> arguments,
+                                                                       List<ObjectIdentifier> identifiedBy) {
         String service = getDirectiveValue(directive, "service", String.class);
         String field = getDirectiveValue(directive, "field", String.class);
         String objectIdentifier = getDirectiveValue(directive, "identifiedBy", String.class);
@@ -344,6 +404,7 @@ public class NadelDirectives {
                 syntheticField,
                 arguments,
                 objectIdentifier,
+                identifiedBy,
                 objectIndexed,
                 batched,
                 batchSize,
@@ -369,7 +430,7 @@ public class NadelDirectives {
         List<Object> argumentValues = resolveArgumentValue(graphQLArgument);
         List<RemoteArgumentDefinition> arguments = createTemplatedHydratedArgs(argumentValues);
 
-        return buildHydrationParameters(templateDirective, arguments);
+        return buildHydrationParameters(templateDirective, arguments, emptyList());
     }
 
     private static <T> T resolveArgumentValue(GraphQLArgument graphQLArgument) {
@@ -390,6 +451,19 @@ public class NadelDirectives {
             remoteArgumentDefinitions.add(remoteArgumentDefinition);
         }
         return remoteArgumentDefinitions;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<ObjectIdentifier> createObjectIdentifiers(List<Object> arguments) {
+        List<ObjectIdentifier> ids = new ArrayList<>();
+        for (Object arg : arguments) {
+            Map<String, String> argMap = (Map<String, String>) arg;
+
+            String sourceId = argMap.get("sourceId");
+            String resultId = argMap.get("resultId");
+            ids.add(new ObjectIdentifier(sourceId, resultId));
+        }
+        return ids;
     }
 
     private static RemoteArgumentSource createRemoteArgumentSource(String value) {
