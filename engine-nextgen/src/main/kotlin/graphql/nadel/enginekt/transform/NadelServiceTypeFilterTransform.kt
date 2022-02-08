@@ -184,40 +184,4 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
     ): List<NadelResultInstruction> {
         return emptyList()
     }
-
-    /**
-     * Gets the type names a service owns. These are the overall type names.
-     *
-     * __WARNING:__
-     *
-     * These also include types that are not exposed, so use this list carefully.
-     *
-     * Only use this to create subsets of OTHER lists. Never use this list directly.
-     */
-    // private fun getTypeNamesServiceOwns(
-    //     executionBlueprint: NadelOverallExecutionBlueprint,
-    //     service: Service,
-    // ): Set<String> {
-    //     return service.underlyingSchema
-    //         .typeMap
-    //         .values
-    //         .asSequence()
-    //         .map {
-    //             executionBlueprint.getOverallTypeName(service, it.name)
-    //         }
-    //         .toSet()
-    // }
-    //
-    // private fun getUnderlyingTypeNamesServiceOwns(
-    //     executionBlueprint: NadelOverallExecutionBlueprint,
-    //     service: Service,
-    //     overallTypeNames: Set<String>
-    // ): Set<String> {
-    //     return overallTypeNames
-    //         .asSequence()
-    //         .map {
-    //             executionBlueprint.getUnderlyingTypeName(service, it)
-    //         }
-    //         .toSet()
-    // }
 }

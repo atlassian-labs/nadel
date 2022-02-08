@@ -71,6 +71,9 @@ private class Factory(
                 .getTypeRenames()
 
         val underlyingBlueprints = deriveUnderlyingBlueprints(furtherTypeRenameInstructions)
+
+        // we built this as a map and then only use the keys. In the future we can improve things such
+        // that we can use the maps themselves but this is left for another time
         val underlyingTypeNameToOverallNameByService =
             makeUnderlyingTypeNamesToOverallNameByService(services, underlyingBlueprints)
         // the above feeds into the below
@@ -91,8 +94,6 @@ private class Factory(
         return NadelOverallExecutionBlueprint(
             schema = overallSchema,
             fieldInstructions = fieldInstructions,
-            underlyingTypeNameToOverallNameByService = underlyingTypeNameToOverallNameByService,
-            overAllTypeNameToUnderlyingNameByService = overAllTypeNameToUnderlyingNameByService,
             underlyingTypeNamesByService = underlyingTypeNamesByService,
             overallTypeNamesByService = overallTypeNamesByService,
             underlyingBlueprints = underlyingBlueprints,
