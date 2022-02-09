@@ -89,8 +89,7 @@ data class NadelHydrationFieldInstruction(
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
     val hydrationStrategy: NadelHydrationStrategy,
-) : NadelFieldInstruction(), NadelGenericHydrationInstruction {
-}
+) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
 data class NadelBatchHydrationFieldInstruction(
     // For documentation of override props see the parent

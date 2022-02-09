@@ -51,13 +51,13 @@ import graphql.schema.GraphQLType
  * i.e. this code inserts the selection for the `id` field
  */
 internal object NadelBatchHydrationObjectIdFieldBuilder {
-    fun makeObjectIdField(
+    fun makeObjectIdFields(
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
     ): List<ExecutableNormalizedField> {
         return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
-            is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> makeObjectIdField(
+            is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> makeObjectIdFields(
                 executionBlueprint,
                 aliasHelper,
                 batchHydrationInstruction,
@@ -73,7 +73,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         }
     }
 
-    private fun makeObjectIdField(
+    private fun makeObjectIdFields(
         executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,

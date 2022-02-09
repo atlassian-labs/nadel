@@ -102,6 +102,12 @@ internal object NadelBatchHydrationByObjectId {
                         .toList()
                 }
 
+            // Turns sourceIdNodes into
+            // [
+            //   [page-1, draft],
+            //   [page-2, posted],
+            //   [page-1, posted]
+            // ]
             val sourceIds = (0 until sourceIdNodes.first().size)
                 .map { keyIndex ->
                     sourceIdNodes
@@ -137,14 +143,11 @@ internal object NadelBatchHydrationByObjectId {
 
         val newValue: Any? = if (hydratedFieldDef.type.unwrapNonNull().isList) {
             // Set to null if there were no identifier nodes
-            if (sourceIds.isNotEmpty() && sourceIds.all { it.all { it == null } }) {
+            if (isAllNull(sourceIds)) {
                 null
             } else {
                 sourceIds
                     .asSequence()
-                    .map { it }
-                    // .flatten(recursively = true)
-                    // .filterNotNull()
                     .map { id ->
                         resultNodesByObjectId[id]
                     }
@@ -160,5 +163,11 @@ internal object NadelBatchHydrationByObjectId {
             subjectPath = sourceNode.resultPath + state.hydratedField.resultKey,
             newValue = newValue,
         )
+    }
+
+    private fun isAllNull(sourceIds: List<List<Any?>>): Boolean {
+        return sourceIds.isNotEmpty() && sourceIds.all { compositeId ->
+            compositeId.all { it == null }
+        }
     }
 }

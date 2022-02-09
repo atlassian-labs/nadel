@@ -9,7 +9,7 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.transform.GraphQLObjectTypeName
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationInputBuilder
-import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationObjectIdFieldBuilder.makeObjectIdField
+import graphql.nadel.enginekt.transform.hydration.batch.NadelBatchHydrationObjectIdFieldBuilder.makeObjectIdFields
 import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.deepClone
@@ -72,7 +72,7 @@ internal object NadelHydrationFieldsBuilder {
                 }
             }
             .let { children ->
-                children + makeObjectIdField(executionBlueprint, aliasHelper, instruction)
+                children + makeObjectIdFields(executionBlueprint, aliasHelper, instruction)
             }
 
         return argBatches.map { argBatch ->
