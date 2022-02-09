@@ -29,8 +29,8 @@ class NadelSchemaValidationTest : DescribeSpec({
     }
 })
 
-fun validate(fixture: NadelValidationTestFixture, isNewValidation: Boolean = true): Set<NadelSchemaValidationError> {
+fun validate(fixture: NadelValidationTestFixture): Set<NadelSchemaValidationError> {
     val nadel = fixture.toNadel()
     val services = nadel.services.strictAssociateBy { it.name }
-    return NadelSchemaValidation(nadel.overallSchema, services).validate(isNewValidation)
+    return NadelSchemaValidation(nadel.overallSchema, services).validate(newHydrationValidation = true)
 }

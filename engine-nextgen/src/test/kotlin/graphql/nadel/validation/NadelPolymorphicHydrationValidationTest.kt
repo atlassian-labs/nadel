@@ -40,6 +40,10 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                         union AbstractUser = User | ExternalUser
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
                         type User {
                             id: ID!
                             name: String!
@@ -97,7 +101,7 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                 overallSchema = mapOf(
                     "issues" to """
                         type Query {
-                            hello: String
+                            issue(id: ID!): String 
                         }
                         type Issue {
                             id: ID!
@@ -120,6 +124,9 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                         union ReferenceObject = Issue | Page
                     """.trimIndent(),
                     "pages" to """
+                        type Query {
+                            page(id: ID!): Page
+                        }
                         type Page {
                             id: ID!
                             name: String!
@@ -129,7 +136,6 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                 underlyingSchema = mapOf(
                     "issues" to """
                         type Query {
-                            hello: String
                             issue(id: ID!): String
                         }
                     """.trimIndent(),
@@ -156,7 +162,7 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                 overallSchema = mapOf(
                     "issues" to """
                         type Query {
-                            hello: String
+                            issue(id: ID!): String
                         }
                         type Comment {
                             id: ID
@@ -184,6 +190,9 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                         union ReferenceObject = Issue | Page
                     """.trimIndent(),
                     "pages" to """
+                        type Query {
+                            page(id: ID!): Page
+                        }
                         type Page {
                             id: ID!
                             name: String!
@@ -193,7 +202,6 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                 underlyingSchema = mapOf(
                     "issues" to """
                         type Query {
-                            hello: String
                             issue(id: ID!): Issue
                         }
                         type Issue {
@@ -247,11 +255,14 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                         union AbstractUser = InternalUser | ExternalUser
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!): InternalUser
+                            externalUser(id: ID!): ExternalUser
+                        }
                         type InternalUser @renamed(from: "User") {
                             id: ID!
                             name: String!
                         }
-                        
                         type ExternalUser {
                             id: ID!
                             name: String!
@@ -317,11 +328,14 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                         union AbstractUser = User | ExternalUser
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
                         type User {
                             id: ID!
                             name: String!
                         }
-
                         type ExternalUser {
                             id: ID!
                             name: String!
@@ -356,7 +370,7 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assert(errors.isNotEmpty())
             val error = errors.filterIsInstance<FieldWithPolymorphicHydrationMustReturnAUnion>().single()
             assert(error.parentType.overall.name == "Issue")
             assert(error.overallField.name == "creator")
@@ -390,11 +404,14 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
                         union AbstractUser = User
                     """.trimIndent(),
                     "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
                         type User {
                             id: ID!
                             name: String!
                         }
-
                         type ExternalUser {
                             id: ID!
                             name: String!
@@ -429,7 +446,7 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
             )
 
             val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
+            assert(errors.isNotEmpty())
             val error = errors.singleOfType<PolymorphicHydrationReturnTypeMismatch>()
             assert(error.parentType.overall.name == "Issue")
             assert(error.actorField.name == "externalUser")
