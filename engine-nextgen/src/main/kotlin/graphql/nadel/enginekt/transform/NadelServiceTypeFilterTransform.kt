@@ -86,17 +86,18 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
             service.name == IntrospectionService.name -> return null
         }
 
-        val typeNamesOwnedByService = getTypeNamesServiceOwns(executionBlueprint, service)
+        val typeNamesOwnedByService = executionBlueprint.getOverAllTypeNamesForService(service)
         // Add underlying type names as well to handle combination of hydration and renames.
         // Transforms are applied to hydration fields as well, and those fields always reference
         // elements from the underlying schema
-        val underlyingTypeNamesOwnedByService =
-            getUnderlyingTypeNamesServiceOwns(executionBlueprint, service, typeNamesOwnedByService)
-
-        val allTypeNamesOwnedByService = typeNamesOwnedByService + underlyingTypeNamesOwnedByService
+        val underlyingTypeNamesOwnedByService = executionBlueprint.getUnderlyingTypeNamesForService(service)
 
         val fieldObjectTypeNamesOwnedByService = overallField.objectTypeNames
-            .filter { it in allTypeNamesOwnedByService }
+            .filter {
+                // it is MUCH quicker to compare membership in 2 sets rather than
+                // concat 1 giant set and then check
+                it in typeNamesOwnedByService || it in underlyingTypeNamesOwnedByService
+            }
 
         // All types are owned by service
         // Note: one list is a subset of the other, so if size is same, contents are too
@@ -182,41 +183,5 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
         nodes: JsonNodes,
     ): List<NadelResultInstruction> {
         return emptyList()
-    }
-
-    /**
-     * Gets the type names a service owns. These are the overall type names.
-     *
-     * __WARNING:__
-     *
-     * These also include types that are not exposed, so use this list carefully.
-     *
-     * Only use this to create subsets of OTHER lists. Never use this list directly.
-     */
-    private fun getTypeNamesServiceOwns(
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-    ): Set<String> {
-        return service.underlyingSchema
-            .typeMap
-            .values
-            .asSequence()
-            .map {
-                executionBlueprint.getOverallTypeName(service, it.name)
-            }
-            .toSet()
-    }
-
-    private fun getUnderlyingTypeNamesServiceOwns(
-        executionBlueprint: NadelOverallExecutionBlueprint,
-        service: Service,
-        overallTypeNames: Set<String>
-    ): Set<String> {
-        return overallTypeNames
-            .asSequence()
-            .map {
-                executionBlueprint.getUnderlyingTypeName(service, it)
-            }
-            .toSet()
     }
 }
