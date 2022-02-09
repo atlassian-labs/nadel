@@ -1,14 +1,12 @@
-name: complex identified by with array source id
+name: complex identified by with some null source ids
 enabled:
   current: false
   nextgen: true
 overallSchema:
   UserService: |
-    type Query {
-      usersByIds(id: [ID]): [User]
-    }
     type User {
       id: ID
+      name: String
     }
   Issues: |
     type Query {
@@ -40,6 +38,7 @@ underlyingSchema:
 
     type User {
       id: ID
+      name: String
       siteId: ID
     }
   Issues: |
@@ -62,6 +61,7 @@ query: |
       id
       authors {
         id
+        name
       }
     }
   }
@@ -93,10 +93,7 @@ serviceCalls:
               {
                 "__typename__batch_hydration__authors": "Issue",
                 "batch_hydration__authors__authorIds": [
-                  {
-                    "userId": "USER-1",
-                    "site": "hello"
-                  },
+                  null,
                   {
                     "userId": "USER-2",
                     "site": "hello"
@@ -121,10 +118,7 @@ serviceCalls:
                     "userId": "USER-2",
                     "site": "jdog"
                   },
-                  {
-                    "userId": "USER-4",
-                    "site": "hello"
-                  },
+                  null,
                   {
                     "userId": "USER-5",
                     "site": "hello"
@@ -140,9 +134,10 @@ serviceCalls:
       request:
         query: |
           query {
-            users(id: [{site : "hello", userId : "USER-1"}, {site : "hello", userId : "USER-2"}, {site : "hello", userId : "USER-3"}]) {
+            users(id: [{site : "hello", userId : "USER-2"}, {site : "hello", userId : "USER-3"}, {site : "jdog", userId : "USER-2"}]) {
               id
               batch_hydration__authors__id: id
+              name
               batch_hydration__authors__siteId: siteId
             }
           }
@@ -153,19 +148,22 @@ serviceCalls:
           "data": {
             "users": [
               {
-                "id": "USER-1",
-                "batch_hydration__authors__id": "USER-1",
-                "batch_hydration__authors__siteId": "hello"
-              },
-              {
                 "id": "USER-2",
+                "name": "H-Two",
                 "batch_hydration__authors__id": "USER-2",
                 "batch_hydration__authors__siteId": "hello"
               },
               {
                 "id": "USER-3",
+                "name": "H-Three",
                 "batch_hydration__authors__id": "USER-3",
                 "batch_hydration__authors__siteId": "hello"
+              },
+              {
+                "id": "USER-2",
+                "name": "J-Two",
+                "batch_hydration__authors__id": "USER-2",
+                "batch_hydration__authors__siteId": "jdog"
               }
             ]
           },
@@ -175,9 +173,10 @@ serviceCalls:
       request:
         query: |
           query {
-            users(id: [{site : "jdog", userId : "USER-2"}, {site : "hello", userId : "USER-4"}, {site : "hello", userId : "USER-5"}]) {
+            users(id: [{site : "hello", userId : "USER-5"}]) {
               id
               batch_hydration__authors__id: id
+              name
               batch_hydration__authors__siteId: siteId
             }
           }
@@ -188,17 +187,8 @@ serviceCalls:
           "data": {
             "users": [
               {
-                "id": "USER-2",
-                "batch_hydration__authors__id": "USER-2",
-                "batch_hydration__authors__siteId": "jdog"
-              },
-              {
-                "id": "USER-4",
-                "batch_hydration__authors__id": "USER-4",
-                "batch_hydration__authors__siteId": "hello"
-              },
-              {
                 "id": "USER-5",
+                "name": "H-Five",
                 "batch_hydration__authors__id": "USER-5",
                 "batch_hydration__authors__siteId": "hello"
               }
@@ -215,10 +205,8 @@ response: |-
           "id": "ISSUE-1",
           "authors": [
             {
-              "id": "USER-1"
-            },
-            {
-              "id": "USER-2"
+              "id": "USER-2",
+              "name": "H-Two"
             }
           ]
         },
@@ -226,7 +214,8 @@ response: |-
           "id": "ISSUE-2",
           "authors": [
             {
-              "id": "USER-3"
+              "id": "USER-3",
+              "name": "H-Three"
             }
           ]
         },
@@ -234,13 +223,12 @@ response: |-
           "id": "ISSUE-3",
           "authors": [
             {
-              "id": "USER-2"
+              "id": "USER-2",
+              "name": "J-Two"
             },
             {
-              "id": "USER-4"
-            },
-            {
-              "id": "USER-5"
+              "id": "USER-5",
+              "name": "H-Five"
             }
           ]
         }
