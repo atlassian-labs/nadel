@@ -15,9 +15,6 @@ import io.kotest.core.spec.style.DescribeSpec
 private const val source = "$" + "source"
 private const val argument = "$" + "argument"
 
-//1. are we getting rid of the @hydrated argument 'service' now or in the separate PR?
-//2. is it worth releasing it behind a feature flag/hint?
-
 class NadelHydrationValidationTest : DescribeSpec({
     describe("validate") {
         it("passes if hydration is valid") {

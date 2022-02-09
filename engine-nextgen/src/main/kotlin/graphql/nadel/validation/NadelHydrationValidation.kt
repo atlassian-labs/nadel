@@ -58,12 +58,13 @@ internal class NadelHydrationValidation(
                 errors.add(MissingHydrationActorService(parent, overallField, hydration))
                 continue
             }
-            if (newHydrationValidation) {
-                // checks if field exists in overall schema, then implicitly if it is in overall as a field then it is also in underlying
-                hydrationActorFieldExistsInSchema(hydration, errors, parent, overallField, actorService, isPolymorphicHydration, overallSchema.queryType)
-            } else {
-                hydrationActorFieldExistsInSchema(hydration, errors, parent, overallField, actorService, isPolymorphicHydration, actorService.underlyingSchema.queryType) // will deprecate
+
+            val queryType = when {
+                newHydrationValidation -> overallSchema.queryType
+                else -> actorService.underlyingSchema.queryType
             }
+
+            hydrationActorFieldExistsInSchema(hydration, errors, parent, overallField, actorService, isPolymorphicHydration, queryType)
         }
 
         return errors

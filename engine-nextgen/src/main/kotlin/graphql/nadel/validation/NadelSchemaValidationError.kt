@@ -195,7 +195,8 @@ sealed interface NadelSchemaValidationError {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = hydration.serviceName
             val af = "${actorServiceQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
-            "Field $of tried to hydrate from non-existent field in overall schema $af on service $s"
+            // TODO: change message to state field is missing in overall schema after new hydration validation is only validation
+            "Field $of tried to hydrate from non-existent field $af on service $s"
         }
 
         override val subject = overallField
