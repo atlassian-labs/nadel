@@ -64,6 +64,7 @@ public class NadelDirectives {
     public static final InputObjectTypeDefinition NADEL_HYDRATION_ARGUMENT_DEFINITION;
     public static final DirectiveDefinition DYNAMIC_SERVICE_DIRECTIVE_DEFINITION;
     public static final DirectiveDefinition NAMESPACED_DIRECTIVE_DEFINITION;
+    public static final DirectiveDefinition HIDDEN_DIRECTIVE_DEFINITION;
 
     public static final InputObjectTypeDefinition NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION;
     public static final DirectiveDefinition HYDRATED_FROM_DIRECTIVE_DEFINITION;
@@ -273,7 +274,11 @@ public class NadelDirectives {
                                 .build())
                 .build();
 
-
+        HIDDEN_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
+                .name("hidden")
+                .description(createDescription("Indicates that the field is not available for queries or introspection"))
+                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
+                .build();
     }
 
     private static TypeName typeOf(String typename) {

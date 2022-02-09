@@ -126,11 +126,11 @@ class NadelServiceTypeFilterTransform : NadelTransform<State> {
     ): NadelTransformFieldResult {
         // Nothing to query if there are no fields, we need to add selection
         if (state.fieldObjectTypeNamesOwnedByService.isEmpty()) {
-            val objectTypeNames = state.overallField.parent.getFieldDefinitions(executionBlueprint.schema)
+            val objectTypeNames = state.overallField.parent.getFieldDefinitions(executionBlueprint.engineSchema)
                 .asSequence()
                 .flatMap { fieldDef ->
                     resolveObjectTypes(
-                        executionBlueprint.schema,
+                        executionBlueprint.engineSchema,
                         type = fieldDef.type,
                         onNotObjectType = { type ->
                             error("Unable to resolve to object type: $type")

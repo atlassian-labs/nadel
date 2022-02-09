@@ -65,10 +65,11 @@ class NextgenEngine @JvmOverloads constructor(
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val services: Map<String, Service> = nadel.services.strictAssociateBy { it.name }
-    private val overallSchema = nadel.overallSchema
+    private val engineSchema = nadel.engineSchema
+    private val querySchema = nadel.querySchema
     private val serviceExecutionHooks: ServiceExecutionHooks = nadel.serviceExecutionHooks
     private val overallExecutionBlueprint = NadelExecutionBlueprintFactory.create(
-        overallSchema = nadel.overallSchema,
+        engineSchema = nadel.engineSchema,
         services = nadel.services,
     )
     private val executionPlanner = NadelExecutionPlanFactory.create(
@@ -79,11 +80,12 @@ class NextgenEngine @JvmOverloads constructor(
     private val resultTransformer = NadelResultTransformer(overallExecutionBlueprint)
     private val instrumentation = nadel.instrumentation
     private val dynamicServiceResolution = DynamicServiceResolution(
-        overallSchema = overallSchema,
+        engineSchema = engineSchema,
         serviceExecutionHooks = serviceExecutionHooks,
         services = services.values
     )
     private val fieldToService = NadelFieldToService(
+        querySchema = nadel.querySchema,
         overallExecutionBlueprint = overallExecutionBlueprint,
         introspectionRunnerFactory = introspectionRunnerFactory,
         dynamicServiceResolution = dynamicServiceResolution,
@@ -123,7 +125,7 @@ class NextgenEngine @JvmOverloads constructor(
     ): ExecutionResult {
         try {
             val query = createExecutableNormalizedOperationWithRawVariables(
-                overallExecutionBlueprint.schema,
+                querySchema,
                 queryDocument,
                 executionInput.operationName,
                 executionInput.variables,
@@ -134,7 +136,7 @@ class NextgenEngine @JvmOverloads constructor(
                 query,
                 queryDocument,
                 executionInput,
-                overallSchema,
+                engineSchema,
                 instrumentationState,
             )
 
@@ -274,7 +276,7 @@ class NextgenEngine @JvmOverloads constructor(
         val executionInput = executionContext.executionInput
         val (document, variables) = compileToDocument(
             service.underlyingSchema,
-            transformedQuery.getOperationKind(overallSchema),
+            transformedQuery.getOperationKind(engineSchema),
             getOperationName(service, executionContext),
             listOf(transformedQuery),
         )
