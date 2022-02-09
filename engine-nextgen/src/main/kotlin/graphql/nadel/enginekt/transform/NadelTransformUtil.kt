@@ -73,7 +73,7 @@ object NadelTransformUtil {
         ) ?: return null
 
         val coordinates = makeFieldCoordinates(overallTypeName, overallField.name)
-        return executionBlueprint.schema.getField(coordinates)
+        return executionBlueprint.engineSchema.getField(coordinates)
     }
 
     /**
