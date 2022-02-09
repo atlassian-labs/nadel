@@ -141,8 +141,7 @@ private fun GraphQLFieldsContainer.getFieldAt(
     pathToField: List<String>,
     pathIndex: Int,
 ): GraphQLFieldDefinition? {
-    val field = getField(pathToField[pathIndex])
-
+    val field = getField(pathToField[pathIndex]) ?: return null
     return if (pathIndex == pathToField.lastIndex) {
         field
     } else {
