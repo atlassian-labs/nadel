@@ -101,8 +101,8 @@ internal object NadelHydrationFieldsBuilder {
         val overallTypeName =
             executionBlueprint.getOverallTypeName(instruction.actorService, actorFieldUnderlyingType.name)
         val actorFieldOverallObjectTypes: List<GraphQLType> =
-            when (val actorFieldOverallType = executionBlueprint.schema.getType(overallTypeName)!!) {
-                is GraphQLInterfaceType -> executionBlueprint.schema.getImplementations(actorFieldOverallType)
+            when (val actorFieldOverallType = executionBlueprint.engineSchema.getType(overallTypeName)!!) {
+                is GraphQLInterfaceType -> executionBlueprint.engineSchema.getImplementations(actorFieldOverallType)
                 is GraphQLUnionType -> actorFieldOverallType.types
                 else -> {
                     listOf(actorFieldOverallType)
