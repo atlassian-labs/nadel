@@ -157,7 +157,23 @@ internal class NadelHydrationValidation(
             }
         }
 
-        return duplicatedArgumentsErrors + remoteArgErrors
+        val missingActorArgErrors = actorField.arguments.mapNotNull { actorArg ->
+            val hydrationArg = hydration.arguments.find { it.name.equals(actorArg.name) }
+            if (hydrationArg == null) {
+                //this is allowed if the actor field arg is nullable so check for that
+                MissingHydrationActorFieldArgument(
+                        parent,
+                        overallField,
+                        hydration,
+                        actorServiceQueryType,
+                        argument = actorArg.name,
+                )
+            } else {
+                null
+            }
+        }
+
+        return duplicatedArgumentsErrors + remoteArgErrors + missingActorArgErrors
     }
 
     private fun getRemoteArgErrors(
