@@ -46,7 +46,20 @@ private val singleTestToRun = (System.getenv("TEST_NAME") ?: "")
 private val defaultHints = NadelExecutionHints.newHints()
     .build()
 
+private val sep = "-".repeat(50)
+
 class EngineTests : FunSpec({
+
+    println("""
+        $sep
+        
+        In order to run a specific test set TEST_NAME=xxxxx before running the EngineTests
+        
+        The name will be repeated per test
+        
+        $sep
+        
+    """.trimIndent())
     val engineFactories = EngineTypeFactories()
 
     val fixturesDir = File(javaClass.classLoader.getResource("fixtures")!!.path)
@@ -133,7 +146,7 @@ private suspend fun execute(
         println()
     }
 
-    printSyncLine("Running ${fixture.name}")
+    printSyncLine("\n$sep\n${fixture.name}\n$sep")
 
     try {
         val nadel: Nadel = Nadel.newNadel()

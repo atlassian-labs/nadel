@@ -1,0 +1,73 @@
+name: cannot query hidden fields
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  MyService: |
+    directive @hidden on FIELD_DEFINITION
+    type Query {
+      hello: World
+    }
+    type World {
+      id: ID
+      name: String
+      area51: Area @hidden
+    }
+    
+    type Area {
+      name: String
+      coordinates: String
+    }
+
+underlyingSchema:
+  MyService: |
+    type Query {
+      hello: World
+    }
+
+    type World {
+      id: ID
+      name: String
+      area51: Area
+    }
+    
+    type Area {
+      name: String
+      coordinates: String
+    }
+
+query: |
+  query {
+    hello {
+      id
+      name
+      area51 {
+        name
+        coordinates
+      }
+    }
+  }
+
+variables: { }
+serviceCalls:
+  current: [ ]
+  nextgen: [ ]
+# language=JSON
+response: |-
+  {
+    "data": null,
+    "errors": [
+      {
+        "message": "Validation error of type FieldUndefined: Field 'area51' in type 'World' is undefined @ 'hello/area51'",
+        "locations":[
+          {
+            "line":5,
+            "column":5
+          }
+        ],
+        "extensions": {
+          "classification":"ValidationError"
+        }
+      }
+    ]
+  }

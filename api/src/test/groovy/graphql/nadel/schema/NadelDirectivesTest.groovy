@@ -15,6 +15,7 @@ class NadelDirectivesTest extends Specification {
             ${AstPrinter.printAst(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION)}
             ${AstPrinter.printAst(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION)}
 
+            ${AstPrinter.printAst(NadelDirectives.NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)}
             ${AstPrinter.printAst(NadelDirectives.NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION)}
             ${AstPrinter.printAst(NadelDirectives.NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION)}
             ${AstPrinter.printAst(NadelDirectives.HYDRATED_FROM_DIRECTIVE_DEFINITION)}
