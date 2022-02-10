@@ -195,8 +195,24 @@ sealed interface NadelSchemaValidationError {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = hydration.serviceName
             val af = "${actorServiceQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
-            // TODO: change message to state field is missing in overall schema after new hydration validation is only validation
             "Field $of tried to hydrate from non-existent field $af on service $s"
+        }
+
+        override val subject = overallField
+    }
+
+    data class MissingHydrationActorFieldInOverallSchema(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val hydration: UnderlyingServiceHydration,
+        val overallQueryType: GraphQLObjectType,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val af = "${overallQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
+            "Field $of tried to hydrate from non-existent field $af in the overall schema"
         }
 
         override val subject = overallField
@@ -241,9 +257,9 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             "Field $of declares a polymorphic hydration with incorrect return type. One of the hydrations' actor fields" +
-                " ${actorField.name} in the service ${actorService.name} returns the type " +
-                "${(actorField.type.unwrapAll() as GraphQLNamedType).name} which is not present in the polymorphic hydration return " +
-                "type ${(overallField.type.unwrapAll() as GraphQLNamedType).name}"
+                    " ${actorField.name} in the service ${actorService.name} returns the type " +
+                    "${(actorField.type.unwrapAll() as GraphQLNamedType).name} which is not present in the polymorphic hydration return " +
+                    "type ${(overallField.type.unwrapAll() as GraphQLNamedType).name}"
         }
 
         override val subject = overallField
