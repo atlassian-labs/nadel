@@ -1,0 +1,264 @@
+name: complex identified by uses same source for 2 hydrations and a deep rename
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Foo: |
+    type Query {
+      foos: [Foo]
+    }
+    type Foo {
+      renamedField: String @renamed(from: "issue.field")
+      issue: Issue @hydrated(
+        service: "Foo"
+        field: "issues"
+        arguments: [{name: "issueIds" value: "$source.fooId"}]
+        inputIdentifiedBy: [{sourceId: "fooId" resultId: "issueId"}]
+        batchSize: 2
+      )
+      detail: Detail @hydrated(
+        service: "Foo"
+        field: "details"
+        arguments: [{name: "detailIds" value: "$source.fooId"}]
+        inputIdentifiedBy: [{sourceId: "fooId" resultId: "detailId"}]
+        batchSize: 2
+      )
+    }
+    type Detail {
+      detailId: ID!
+      name: String
+    }
+    type Issue {
+      fooId: ID
+      field: String
+    }
+underlyingSchema:
+  Foo: |
+    type Detail {
+      detailId: ID!
+      name: String
+    }
+
+    type Foo {
+      field: String
+      fooId: ID
+      issue: Issue
+    }
+
+    type Issue {
+      field: String
+      fooId: ID
+    }
+
+    type Query {
+      details(detailIds: [ID]): [Detail]
+      foos: [Foo]
+      issues(issueIds: [ID]): [Issue]
+    }
+query: |
+  query {
+    foos {
+      renamedField
+      issue {
+        field
+      }
+      detail {
+        name
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  current: [ ]
+  nextgen:
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            foos {
+              __typename__deep_rename__renamedField: __typename
+              __typename__batch_hydration__issue: __typename
+              __typename__batch_hydration__detail: __typename
+              batch_hydration__issue__fooId: fooId
+              batch_hydration__detail__fooId: fooId
+              deep_rename__renamedField__issue: issue {
+                field
+              }
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "foos": [
+              {
+                "__typename__deep_rename__renamedField": "Foo",
+                "__typename__batch_hydration__issue": "Foo",
+                "__typename__batch_hydration__detail": "Foo",
+                "batch_hydration__issue__fooId": "Foo-1",
+                "batch_hydration__detail__fooId": "Foo-1",
+                "deep_rename__renamedField__issue": {
+                  "field": "hmm-1"
+                }
+              },
+              {
+                "__typename__deep_rename__renamedField": "Foo",
+                "__typename__batch_hydration__issue": "Foo",
+                "__typename__batch_hydration__detail": "Foo",
+                "batch_hydration__issue__fooId": "Foo-2",
+                "batch_hydration__detail__fooId": "Foo-2",
+                "deep_rename__renamedField__issue": {
+                  "field": "hmm-2"
+                }
+              },
+              {
+                "__typename__deep_rename__renamedField": "Foo",
+                "__typename__batch_hydration__issue": "Foo",
+                "__typename__batch_hydration__detail": "Foo",
+                "batch_hydration__issue__fooId": "Foo-3",
+                "batch_hydration__detail__fooId": "Foo-4",
+                "deep_rename__renamedField__issue": {
+                  "field": "hmm-3"
+                }
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            issues(issueIds: ["Foo-1", "Foo-2"]) {
+              batch_hydration__issue__issueId: issueId
+              field
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "batch_hydration__issue__issueId": "Foo-1",
+                "field": "field_name"
+              },
+              {
+                "batch_hydration__issue__issueId": "Foo-2",
+                "field": "field_name-2"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            issues(issueIds: ["Foo-3"]) {
+              batch_hydration__issue__issueId: issueId
+              field
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "issues": [
+              {
+                "batch_hydration__issue__issueId": "Foo-3",
+                "field": "field-3"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            details(detailIds: ["Foo-1", "Foo-2"]) {
+              batch_hydration__detail__detailId: detailId
+              name
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "details": [
+              {
+                "batch_hydration__detail__detailId": "Foo-2",
+                "name": "Foo 2 Electric Boogaloo"
+              },
+              {
+                "batch_hydration__detail__detailId": "Foo-1",
+                "name": "apple"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: Foo
+      request:
+        query: |
+          query {
+            details(detailIds: ["Foo-4"]) {
+              batch_hydration__detail__detailId: detailId
+              name
+            }
+          }
+        variables: { }
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "details": [
+              {
+                "batch_hydration__detail__detailId": "Foo-4",
+                "name": "Four Apples"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foos": [
+        {
+          "renamedField": "hmm-1",
+          "issue": {
+            "field": "field_name"
+          },
+          "detail": {
+            "name": "apple"
+          }
+        },
+        {
+          "renamedField": "hmm-2",
+          "issue": {
+            "field": "field_name-2"
+          },
+          "detail": {
+            "name": "Foo 2 Electric Boogaloo"
+          }
+        },
+        {
+          "renamedField": "hmm-3",
+          "issue": {
+            "field": "field-3"
+          },
+          "detail": {
+            "name": "Four Apples"
+          }
+        }
+      ]
+    },
+    "extensions": {}
+  }

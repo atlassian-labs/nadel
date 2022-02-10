@@ -117,7 +117,7 @@ class NSDLParserTest extends Specification {
 
             type Foo {
                 id(inputArg: ID!): ID => hydrated from OtherService.resolveId(otherId: $source.id, 
-                arg1: $context.ctxParam, arg2: $argument.inputArg)
+                arg2: $argument.inputArg)
             }
         }
         '''
@@ -140,7 +140,7 @@ class NSDLParserTest extends Specification {
 
             type Foo {
                 id(inputArg: ID!): ID => hydrated from OtherService.resolver.resolveId(otherId: $source.id, 
-                arg1: $context.ctxParam, arg2: $argument.inputArg)
+                arg2: $argument.inputArg)
             }
         }
         '''

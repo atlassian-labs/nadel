@@ -21,6 +21,7 @@ import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.util.AnyImplementingTypeDefinition
@@ -234,7 +235,7 @@ private class Factory(
             )
         }
 
-        val actorInputValueDefs = getHydrationArguments(
+        val hydrationArgs = getHydrationArguments(
             hydration = hydration,
             hydratedFieldParentType = hydratedFieldParentType,
             hydratedFieldDef = hydratedFieldDef,
@@ -246,14 +247,20 @@ private class Factory(
             actorService = hydrationActorService,
             queryPathToActorField = NadelQueryPath(queryPathToActorField),
             actorFieldDef = actorFieldDef,
-            actorInputValueDefs = actorInputValueDefs,
+            actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             hydrationStrategy = getHydrationStrategy(
                 hydratedFieldParentType = hydratedFieldParentType,
                 hydratedFieldDef = hydratedFieldDef,
                 actorFieldDef = actorFieldDef,
-                actorInputValueDefs = actorInputValueDefs,
+                actorInputValueDefs = hydrationArgs,
             ),
+            sourceFields = hydrationArgs.mapNotNull {
+                when (it.valueSource) {
+                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
+                    is FieldResultValue -> it.valueSource.queryPathToField
+                }
+            },
         )
     }
 
@@ -266,7 +273,7 @@ private class Factory(
         val manyToOneInputDef = actorInputValueDefs
             .asSequence()
             .mapNotNull { inputValueDef ->
-                if (inputValueDef.valueSource !is NadelHydrationActorInputDef.ValueSource.FieldResultValue) {
+                if (inputValueDef.valueSource !is FieldResultValue) {
                     return@mapNotNull null
                 }
 
@@ -302,19 +309,77 @@ private class Factory(
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
 
         val batchSize = hydration.batchSize ?: 50
+        val hydrationArgs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef)
+
+        val matchStrategy = if (hydration.isObjectMatchByIndex) {
+            NadelBatchHydrationMatchStrategy.MatchIndex
+        } else if (hydration.objectIdentifiers.isNotEmpty()) {
+            NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers(
+                hydration.objectIdentifiers
+                    .map { objectIdentifier ->
+                        NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
+                            sourceId = NadelQueryPath(
+                                objectIdentifier.sourceId.split("."),
+                            ),
+                            resultId = objectIdentifier.resultId,
+                        )
+                    },
+            )
+        } else {
+            NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
+                sourceId = hydrationArgs
+                    .asSequence()
+                    .map(NadelHydrationActorInputDef::valueSource)
+                    .filterIsInstance<FieldResultValue>()
+                    .single()
+                    .queryPathToField,
+                resultId = hydration.objectIdentifier,
+            )
+        }
+
         return NadelBatchHydrationFieldInstruction(
             location = location,
             hydratedFieldDef = hydratedFieldDef,
             actorService = actorService,
             queryPathToActorField = NadelQueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
             actorFieldDef = actorFieldDef,
-            actorInputValueDefs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef),
+            actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             batchSize = batchSize,
-            batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {
-                NadelBatchHydrationMatchStrategy.MatchIndex
-            } else {
-                NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(objectId = hydration.objectIdentifier)
+            batchHydrationMatchStrategy = matchStrategy,
+            sourceFields = Unit.let {
+                val paths = (when (matchStrategy) {
+                    NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
+                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> listOf(matchStrategy.sourceId)
+                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> matchStrategy.objectIds.map { it.sourceId }
+                } + hydrationArgs.mapNotNull {
+                    when (it.valueSource) {
+                        is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
+                        is FieldResultValue -> it.valueSource.queryPathToField
+                    }
+                }).toSet()
+
+                val prefixes = paths
+                    .asSequence()
+                    .map {
+                        it.segments.dropLast(1) + "*"
+                    }
+                    .toSet()
+
+                // Say we have paths = [
+                //     [page]
+                //     [page.id]
+                //     [page.status]
+                // ]
+                // (e.g. page was the input and the page.id and page.status are used to match batch objects)
+                // then this maps it to [
+                //     [page.id]
+                //     [page.status]
+                // ]
+                paths
+                    .filter {
+                        !prefixes.contains(it.segments + "*")
+                    }
             },
         )
     }
@@ -394,7 +459,7 @@ private class Factory(
                 }
                 OBJECT_FIELD -> {
                     val pathToField = remoteArgDef.remoteArgumentSource.path
-                    NadelHydrationActorInputDef.ValueSource.FieldResultValue(
+                    FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
                         fieldDefinition = getUnderlyingType(hydratedFieldParentType)
                             ?.getFieldAt(pathToField)

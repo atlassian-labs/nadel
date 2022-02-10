@@ -46,13 +46,6 @@
                     }
                   },
                   {
-                    "name": "arg1",
-                    "remoteArgumentSource": {
-                      "name": "ctxParam",
-                      "sourceType": "CONTEXT"
-                    }
-                  },
-                  {
                     "name": "arg2",
                     "remoteArgumentSource": {
                       "name": "inputArg",

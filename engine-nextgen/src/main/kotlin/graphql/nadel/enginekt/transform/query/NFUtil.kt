@@ -9,6 +9,9 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLTypeUtil
 
 object NFUtil {
+    // Exists for IntelliJ search everywhere purposes, DO NOT INVOKE
+    private fun pathToField(unit: Unit): Nothing = error("no-op")
+
     fun createField(
         schema: GraphQLSchema,
         parentType: GraphQLOutputType,
