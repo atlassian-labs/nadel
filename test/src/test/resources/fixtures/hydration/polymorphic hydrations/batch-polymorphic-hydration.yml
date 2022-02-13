@@ -10,6 +10,7 @@ overallSchema:
 
     type Pet {
       id: ID
+      name: String!
       breed: String
     }
   people: |
@@ -55,6 +56,7 @@ underlyingSchema:
 
     type Pet {
       id: ID
+      name: String!
       breed: String
     }
   people: |
@@ -85,6 +87,7 @@ query: |
         ... on Pet {
           __typename
           id
+          name
           breed
         }
         ... on Human {
@@ -151,6 +154,7 @@ serviceCalls:
               __typename
               breed
               id
+              name
               batch_hydration__data__id: id
             }
           }
@@ -162,12 +166,14 @@ serviceCalls:
             "petById": [{
               "__typename": "Pet",
               "breed": "Akita",
+              "name": "Bobik",
               "id": "PET-0",
               "batch_hydration__data__id": "PET-0"
             },
             {
               "__typename": "Pet",
               "breed": "Labrador",
+              "name": "Zhucka",
               "id": "PET-1",
               "batch_hydration__data__id": "PET-1"
             }]
