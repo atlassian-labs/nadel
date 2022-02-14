@@ -197,6 +197,10 @@ public class Nadel {
         return engineSchema;
     }
 
+    public GraphQLSchema getQuerySchema() {
+        return querySchema;
+    }
+
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput.Builder nadelExecutionInput) {
         return execute(nadelExecutionInput.build());
     }
