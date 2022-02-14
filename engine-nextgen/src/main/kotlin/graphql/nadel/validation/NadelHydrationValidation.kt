@@ -32,12 +32,12 @@ import graphql.schema.GraphQLUnmodifiedType
 internal class NadelHydrationValidation(
     private val services: Map<String, Service>,
     private val typeValidation: NadelTypeValidation,
-    private val overallSchema: GraphQLSchema
+    private val overallSchema: GraphQLSchema,
+    private val nadelValidationHints: NadelValidationHints?
 ) {
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        requireActorFieldInOverallSchema: Boolean,
     ): List<NadelSchemaValidationError> {
         if (hasRename(overallField)) {
             return listOf(
@@ -66,7 +66,9 @@ internal class NadelHydrationValidation(
                 continue
             }
 
-            if (requireActorFieldInOverallSchema) {
+            val serviceRequiresActorFieldsToBeDeclaredInOverallSchema =
+                nadelValidationHints?.requireHydrationActorFieldInOverallSchemaHint?.getHintValue(actorService) ?: false
+            if (serviceRequiresActorFieldsToBeDeclaredInOverallSchema) {
                 val actorFieldFromOverall = overallSchema.queryType.getFieldAt(hydration.pathToActorField)
                 if (actorFieldFromOverall == null) {
                     errors.add(
