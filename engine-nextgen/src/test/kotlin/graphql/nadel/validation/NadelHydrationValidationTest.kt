@@ -5,6 +5,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationAr
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorFieldArgument
+import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorFieldInOverallSchema
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
@@ -176,7 +177,12 @@ class NadelHydrationValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
 
-            assert(errors.map { it.message }.isNotEmpty())
+            assert(errors.size == 1)
+            val error = errors.assertSingleOfType<MissingHydrationActorFieldInOverallSchema>()
+            assert(error.service.name == "issues")
+            assert(error.hydration.serviceName == "users")
+            assert(error.overallField.name == "creator")
+            assert(error.parentType.overall.name == "Issue")
         }
 
         it("fails if hydrated field has rename") {

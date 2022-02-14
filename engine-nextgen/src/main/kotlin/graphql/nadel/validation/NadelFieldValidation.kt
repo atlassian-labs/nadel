@@ -72,7 +72,6 @@ internal class NadelFieldValidation(
         } else if (hasHydration(overallField)) {
             hydrationValidation.validate(parent, overallField)
         } else {
-            //this thing ensures that a field is present in the underlying if it is in the overall
             val underlyingField = underlyingFieldsByName[overallField.name]
             if (underlyingField == null) {
                 listOf(
