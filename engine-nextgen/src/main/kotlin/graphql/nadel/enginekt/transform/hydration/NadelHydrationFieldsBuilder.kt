@@ -66,10 +66,9 @@ internal object NadelHydrationFieldsBuilder {
                 if (objectTypesAreNotReturnedByActorField) {
                     null
                 } else {
-                    val originalTypeNames = HashSet(childField.objectTypeNames)
                     childField.toBuilder()
                         .clearObjectTypesNames()
-                        .objectTypeNames(originalTypeNames.filter { it in actorFieldOverallObjectTypeNames })
+                        .objectTypeNames(childField.objectTypeNames.filter { it in actorFieldOverallObjectTypeNames })
                         .build()
                 }
             }
