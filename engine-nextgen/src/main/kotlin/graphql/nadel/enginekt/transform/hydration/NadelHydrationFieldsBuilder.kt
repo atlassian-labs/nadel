@@ -14,7 +14,6 @@ import graphql.nadel.enginekt.transform.query.NFUtil
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.util.deepClone
 import graphql.nadel.enginekt.util.resolveObjectTypes
-import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedField
@@ -66,9 +65,8 @@ internal object NadelHydrationFieldsBuilder {
                 if (objectTypesAreNotReturnedByActorField) {
                     null
                 } else {
-                    childField.toBuilder()
-                        .objectTypeNames(childField.objectTypeNames.filter { it in actorFieldOverallObjectTypeNames })
-                        .build()
+                    childField.objectTypeNames.removeIf { it !in actorFieldOverallObjectTypeNames }
+                    childField
                 }
             }
             .let { children ->
