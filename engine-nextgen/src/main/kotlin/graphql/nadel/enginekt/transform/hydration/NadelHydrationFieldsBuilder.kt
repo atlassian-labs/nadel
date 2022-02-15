@@ -67,6 +67,7 @@ internal object NadelHydrationFieldsBuilder {
                     null
                 } else {
                     childField.toBuilder()
+                        .clearObjectTypesNames()
                         .objectTypeNames(childField.objectTypeNames.filter { it in actorFieldOverallObjectTypeNames })
                         .build()
                 }

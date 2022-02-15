@@ -54,3 +54,7 @@ class `batch-polymorphic-hydration` : PolymorphicHydrationWithAliasTestHook()
 
 @UseHook
 class `batch-polymorphic-hydration-actor-fields-are-in-the-same-service` : PolymorphicHydrationWithAliasTestHook()
+
+@UseHook
+class `batch-polymorphic-hydration-actor-fields-are-in-the-same-service-return-types-implement-same-interface` :
+    PolymorphicHydrationWithAliasTestHook()
