@@ -7,7 +7,6 @@ import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
-import graphql.nadel.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
@@ -37,6 +36,9 @@ import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
+import graphql.nadel.normalized.VariableAccumulator
+import graphql.nadel.normalized.VariableAccumulatorPredicate
 import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
@@ -214,7 +216,12 @@ class NextgenEngine @JvmOverloads constructor(
             it.children.single()
         }
 
-        val (transformResult, executionPlan) = transformHydrationQuery(service, executionContext, actorField, serviceHydrationDetails)
+        val (transformResult, executionPlan) = transformHydrationQuery(
+            service,
+            executionContext,
+            actorField,
+            serviceHydrationDetails
+        )
 
         // Get to the top level field again using .parent N times on the new actor field
         val transformedQuery: ExecutableNormalizedField = fold(
@@ -274,11 +281,17 @@ class NextgenEngine @JvmOverloads constructor(
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val executionInput = executionContext.executionInput
+
+        val jsonPredicate = VariableAccumulatorPredicate { _, _, normalizedInputValue ->
+            "JSON" == normalizedInputValue.unwrappedTypeName && normalizedInputValue.value != null
+        }
+        val variableAccumulator = VariableAccumulator(jsonPredicate)
         val (document, variables) = compileToDocument(
             service.underlyingSchema,
             transformedQuery.getOperationKind(engineSchema),
             getOperationName(service, executionContext),
             listOf(transformedQuery),
+            variableAccumulator
         )
 
         val serviceExecParams = newServiceExecutionParameters()

@@ -86,16 +86,4 @@ public class ValueToVariableValueCompiler {
         return "var_" + variableOrdinal;
     }
 
-    static class VariableValueWithDefinition {
-        final Object value;
-        final VariableDefinition definition;
-        final VariableReference variableReference;
-
-        public VariableValueWithDefinition(Object value, VariableDefinition definition, VariableReference variableReference) {
-            this.value = value;
-            this.definition = definition;
-            this.variableReference = variableReference;
-        }
-    }
-
 }
