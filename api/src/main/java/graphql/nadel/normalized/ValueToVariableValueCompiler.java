@@ -26,15 +26,7 @@ import static graphql.nadel.util.FpKit.map;
 public class ValueToVariableValueCompiler {
 
     static VariableValueWithDefinition normalizedInputValueToVariable(NormalizedInputValue normalizedInputValue, int queryVariableCount) {
-        Object variableValue;
-        Object inputValue = normalizedInputValue.getValue();
-        if (inputValue instanceof Value) {
-            variableValue = toVariableValue((Value) inputValue);
-        } else if (inputValue instanceof List) {
-            variableValue = toVariableValues((List) inputValue);
-        } else {
-            throw new AssertException("Should never happen. Did not expect NormalizedInputValue.getValue() of type: " + inputValue.getClass());
-        }
+        Object variableValue = normalisedValueToVariableValue(normalizedInputValue);
         String varName = getVarName(queryVariableCount);
         return new VariableValueWithDefinition(
                 variableValue,
@@ -45,6 +37,48 @@ public class ValueToVariableValueCompiler {
                 VariableReference.newVariableReference().name(varName).build());
     }
 
+    @SuppressWarnings("unchecked")
+    @Nullable
+    private static Object normalisedValueToVariableValue(Object maybeValue) {
+        Object variableValue;
+        if (maybeValue instanceof NormalizedInputValue) {
+            NormalizedInputValue normalizedInputValue = (NormalizedInputValue) maybeValue;
+            Object inputValue = normalizedInputValue.getValue();
+            if (inputValue instanceof Value) {
+                variableValue = toVariableValue((Value<?>) inputValue);
+            } else if (inputValue instanceof List) {
+                variableValue = normalisedValueToVariableValues((List<Object>) inputValue);
+            } else if (inputValue instanceof Map) {
+                variableValue = normalisedValueToVariableValues((Map<String, Object>) inputValue);
+            } else {
+                throw new AssertException("Should never happen. Did not expect NormalizedInputValue.getValue() of type: " + inputValue.getClass());
+            }
+        } else if (maybeValue instanceof Value) {
+            Value<?> value = (Value<?>) maybeValue;
+            variableValue = toVariableValue(value);
+        } else if (maybeValue instanceof List) {
+            variableValue = normalisedValueToVariableValues((List<Object>) maybeValue);
+        } else if (maybeValue instanceof Map) {
+            variableValue = normalisedValueToVariableValues((Map<String, Object>) maybeValue);
+        } else {
+            throw new AssertException("Should never happen. Did not expect type: " + maybeValue.getClass());
+        }
+        return variableValue;
+    }
+
+    private static List<Object> normalisedValueToVariableValues(List<Object> arrayValues) {
+        return map(arrayValues, ValueToVariableValueCompiler::normalisedValueToVariableValue);
+    }
+
+    @NotNull
+    private static Map<String, Object> normalisedValueToVariableValues(Map<String, Object> objectMap) {
+        Map<String, Object> output = new LinkedHashMap<>();
+        objectMap.forEach((k, v) -> {
+            Object value = normalisedValueToVariableValue(v);
+            output.put(k, value);
+        });
+        return output;
+    }
 
     private static Map<String, Object> toVariableValue(ObjectValue objectValue) {
         Map<String, Object> map = new LinkedHashMap<>();
@@ -83,7 +117,7 @@ public class ValueToVariableValueCompiler {
     }
 
     private static String getVarName(int variableOrdinal) {
-        return "var_" + variableOrdinal;
+        return "v" + variableOrdinal;
     }
 
 }

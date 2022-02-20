@@ -20,15 +20,15 @@ import static graphql.nadel.normalized.ValueToVariableValueCompiler.normalizedIn
 public class VariableAccumulator {
 
     private final List<VariableValueWithDefinition> valueWithDefinitions;
-    private final VariableAccumulatorPredicate variableAccumulatorPredicate;
+    private final VariablePredicate variablePredicate;
 
-    public VariableAccumulator(VariableAccumulatorPredicate variableAccumulatorPredicate) {
-        this.variableAccumulatorPredicate = variableAccumulatorPredicate;
+    public VariableAccumulator(VariablePredicate variablePredicate) {
+        this.variablePredicate = variablePredicate;
         valueWithDefinitions = new ArrayList<>();
     }
 
     public boolean shouldMakeVariable(ExecutableNormalizedField executableNormalizedField, String argName, NormalizedInputValue normalizedInputValue) {
-        return variableAccumulatorPredicate.shouldMakeVariable(executableNormalizedField, argName, normalizedInputValue);
+        return variablePredicate.shouldMakeVariable(executableNormalizedField, argName, normalizedInputValue);
     }
 
     public VariableValueWithDefinition accumulateVariable(NormalizedInputValue normalizedInputValue) {

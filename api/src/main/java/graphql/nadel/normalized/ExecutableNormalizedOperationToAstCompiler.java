@@ -43,10 +43,12 @@ public class ExecutableNormalizedOperationToAstCompiler {
             OperationDefinition.Operation operationKind,
             String operationName,
             List<ExecutableNormalizedField> topLevelFields,
-            VariableAccumulator variableAccumulator
+            VariablePredicate variablePredicate
     ) {
+        VariableAccumulator variableAccumulator = new VariableAccumulator(variablePredicate);
         List<Selection<?>> selections = selectionsForNormalizedFields(schema, topLevelFields, variableAccumulator);
         SelectionSet selectionSet = new SelectionSet(selections);
+
 
         OperationDefinition.Builder definitionBuilder = OperationDefinition.newOperationDefinition()
                 .name(operationName)

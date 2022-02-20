@@ -38,7 +38,7 @@ import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import graphql.nadel.normalized.VariableAccumulator
-import graphql.nadel.normalized.VariableAccumulatorPredicate
+import graphql.nadel.normalized.VariablePredicate
 import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
@@ -282,9 +282,10 @@ class NextgenEngine @JvmOverloads constructor(
     ): ServiceExecutionResult {
         val executionInput = executionContext.executionInput
 
-        val jsonPredicate = VariableAccumulatorPredicate { _, _, normalizedInputValue ->
-            "JSON" == normalizedInputValue.unwrappedTypeName && normalizedInputValue.value != null
-        }
+        val jsonPredicate =
+            VariablePredicate { _, _, normalizedInputValue ->
+                "JSON" == normalizedInputValue.unwrappedTypeName && normalizedInputValue.value != null
+            }
         val variableAccumulator = VariableAccumulator(jsonPredicate)
         val (document, variables) = compileToDocument(
             service.underlyingSchema,
