@@ -918,11 +918,11 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
         then:
         vars.size() == 1
         vars['v0'] == [[name    : "Zlatan",
-                           lastName: "Ibrahimoviç",
-                           clubs   : ["MU", "Barsa", "Inter", "Milan", null],
-                           "48x48" : "Zlatan_48x48.jpg",
-                           "96x96" : null
-                          ]]
+                        lastName: "Ibrahimoviç",
+                        clubs   : ["MU", "Barsa", "Inter", "Milan", null],
+                        "48x48" : "Zlatan_48x48.jpg",
+                        "96x96" : null
+                       ]]
         AstPrinter.printAst(document) == '''mutation ($v0: [JSON!]) {
   foo1(arg: {id : "ID-00", json : $v0})
 }
@@ -936,6 +936,7 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
             listField1(arg: [Int]): String
             listField2(arg: [I]): String
             foo(arg: I): Foo
+            fooNonNull(arg: [I!]!): String
         }
         type Foo {
             bar(arg: I): Bar
@@ -966,11 +967,13 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
                                 {arg1 : "v2"},
                                 {arg1 : "v3"}] )
 
+            fooNonNull(arg: [{arg1 : "fooNonNullArg1"}, {arg1 : "fooNonNullArg2"}])
+
             foo(arg: {arg1 : "fooArg"}) {
                 bar(arg: {arg1 : "barArg"}) {
                     baz {
                         ... on ABaz {
-                            boo(arg : {arg1 : "barArg"})
+                            boo(arg : {arg1 : "barFragArg"})
                             a
                         }
                     }
@@ -980,18 +983,26 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
         '''
         GraphQLSchema schema = TestUtil.schema(sdl)
         def fields = createNormalizedFields(schema, query)
+
+        def variablesAndDocument = compileToDocument(schema, QUERY, "named", fields, allVariables)
         when:
-        def document = compileToDocument(schema, QUERY, "named", fields, allVariables).first
+        def document = variablesAndDocument.first
+        def vars = variablesAndDocument.second
         def ast = AstPrinter.printAst(document)
         then:
-        ast == '''query named($v0: [Int], $v1: [I], $v2: I, $v3: I, $v4: I) {
+
+        println(ast)
+        println(vars)
+
+        ast == '''query named($v0: [Int], $v1: [I], $v2: [I!]!, $v3: I, $v4: I, $v5: I) {
   listField1(arg: $v0)
   listField2(arg: $v1)
-  foo(arg: $v4) {
-    bar(arg: $v3) {
+  fooNonNull(arg: $v2)
+  foo(arg: $v5) {
+    bar(arg: $v4) {
       baz {
         ... on ABaz {
-          boo(arg: $v2)
+          boo(arg: $v3)
           a
         }
       }
@@ -999,6 +1010,13 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
   }
 }
 '''
+
+        vars == [v0: [1, 2, 3],
+                 v1: [[arg1: "v1", arg2: [[arg1: "v1.1"]]], [arg1: "v2"], [arg1: "v3"]],
+                 v2: [[arg1: "fooNonNullArg1"], [arg1: "fooNonNullArg2"]],
+                 v3: [arg1: "barFragArg"],
+                 v4: [arg1: "barArg"],
+                 v5: [arg1: "fooArg"]]
     }
 
     private List<ExecutableNormalizedField> createNormalizedFields(GraphQLSchema schema, String query, Map<String, Object> variables = [:]) {
