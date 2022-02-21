@@ -103,6 +103,7 @@ data class NadelBatchHydrationFieldInstruction(
     override val sourceFields: List<NadelQueryPath>,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
+    val overallActorFieldDef: GraphQLFieldDefinition?,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
 data class NadelDeepRenameFieldInstruction(
