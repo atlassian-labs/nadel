@@ -48,6 +48,43 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
+        it("does not crash on schema definition") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        schema {
+                            query: Query
+                        }
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            world: World
+                        }
+                        type World {
+                            hello: String
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            world: World
+                        }
+                        type World {
+                            hello: String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
         it("cannot have a synthetic union") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
