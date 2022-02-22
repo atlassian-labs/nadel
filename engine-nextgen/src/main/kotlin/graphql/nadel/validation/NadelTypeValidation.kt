@@ -228,7 +228,7 @@ internal class NadelTypeValidation(
 
         val definitionNames = service.definitionRegistry.definitions
             .asSequence()
-            .map { it as AnyNamedNode }
+            .filterIsInstance<AnyNamedNode>()
             .filter { def ->
                 if (def.isExtensionDef) {
                     isNamespacedOperationType(typeName = def.name)
