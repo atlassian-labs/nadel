@@ -88,12 +88,14 @@ private class Factory(
                 underlyingTypeNameToOverallNameByService
             )
 
-        val underlyingTypeNamesByService: Map<Service, Set<String>> = underlyingTypeNameToOverallNameByService.mapValues {
-            (_,mapOfTypes) -> mapOfTypes.keys.toSet()
-        }
-        val overallTypeNamesByService: Map<Service, Set<String>> = overAllTypeNameToUnderlyingNameByService.mapValues {
-            (_,mapOfTypes) -> mapOfTypes.keys.toSet()
-        }
+        val underlyingTypeNamesByService: Map<Service, Set<String>> =
+            underlyingTypeNameToOverallNameByService.mapValues { (_, mapOfTypes) ->
+                mapOfTypes.keys.toSet()
+            }
+        val overallTypeNamesByService: Map<Service, Set<String>> =
+            overAllTypeNameToUnderlyingNameByService.mapValues { (_, mapOfTypes) ->
+                mapOfTypes.keys.toSet()
+            }
 
         return NadelOverallExecutionBlueprint(
             engineSchema = engineSchema,
@@ -223,6 +225,7 @@ private class Factory(
 
         val queryPathToActorField = listOfNotNull(hydration.syntheticField, hydration.topLevelField)
         val actorFieldDef = actorFieldSchema.queryType.getFieldAt(queryPathToActorField)!!
+        val overallActorFieldDef = engineSchema.queryType.getFieldAt(queryPathToActorField)
 
         if (hydration.isBatched || /*deprecated*/ actorFieldDef.type.unwrapNonNull().isList) {
             require(actorFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$queryPathToActorField' requires a list output type" }
@@ -232,6 +235,7 @@ private class Factory(
                 actorFieldDef = actorFieldDef,
                 hydration = hydration,
                 actorService = hydrationActorService,
+                overallActorFieldDef = overallActorFieldDef
             )
         }
 
@@ -305,6 +309,7 @@ private class Factory(
         actorFieldDef: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
         actorService: Service,
+        overallActorFieldDef: GraphQLFieldDefinition?,
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
 
@@ -381,6 +386,7 @@ private class Factory(
                         !prefixes.contains(it.segments + "*")
                     }
             },
+            overallActorFieldDef = overallActorFieldDef
         )
     }
 
