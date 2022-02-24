@@ -144,13 +144,15 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         }
     }
 
-    private fun coerceValue(state: State, value: Any): Any {
-        val coercedValue = state.fieldType.coercing.parseValue(value)
-        if (coercedValue != value) {
-            log.warn(
-                "The {} {} field returned a coerced value that that was different to its underlying value",
-                state.serviceName, state.fieldTypeAndName
-            )
+    private fun coerceValue(state: State, value: Any): Any? {
+        val coercedValue: Any? = state.fieldType.coercing.serialize(value)
+        if (coercedValue != null) {
+            if (coercedValue.javaClass != value.javaClass) {
+                log.warn(
+                    "The {} {} field returned a coerced {} value that was different to its underlying {} value",
+                    state.serviceName, state.fieldTypeAndName, coercedValue.javaClass, value.javaClass
+                )
+            }
         }
         return coercedValue
     }
