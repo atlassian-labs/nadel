@@ -33,7 +33,7 @@ internal class NadelHydrationValidation(
     private val services: Map<String, Service>,
     private val typeValidation: NadelTypeValidation,
     private val overallSchema: GraphQLSchema,
-    private val nadelValidationHints: NadelValidationHints?
+    private val nadelValidationHints: NadelValidationHints?,
 ) {
     fun validate(
         parent: NadelServiceSchemaElement,
@@ -176,22 +176,22 @@ internal class NadelHydrationValidation(
         }
 
         val missingActorArgErrors = actorField.arguments
-                .filter { it.type.isNonNull }
-                .mapNotNull { actorArg ->
-                    val hydrationArg = hydration.arguments.find { it.name == actorArg.name }
-                    if (hydrationArg == null) {
-                        //this is allowed if the actor field arg is nullable so check for that
-                        MissingHydrationActorFieldArgument(
-                                parent,
-                                overallField,
-                                hydration,
-                                actorServiceQueryType,
-                                argument = actorArg.name,
-                        )
-                    } else {
-                        null
-                    }
-        }
+            .filter { it.type.isNonNull }
+            .mapNotNull { actorArg ->
+                val hydrationArg = hydration.arguments.find { it.name == actorArg.name }
+                if (hydrationArg == null) {
+                    //this is allowed if the actor field arg is nullable so check for that
+                    MissingHydrationActorFieldArgument(
+                        parent,
+                        overallField,
+                        hydration,
+                        actorServiceQueryType,
+                        argument = actorArg.name,
+                    )
+                } else {
+                    null
+                }
+            }
 
         return duplicatedArgumentsErrors + remoteArgErrors + missingActorArgErrors
     }

@@ -20,8 +20,8 @@ class NadelHydrationValidationTest : DescribeSpec({
     describe("validate") {
         it("passes if hydration is valid") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: JiraIssue
                         }
@@ -36,7 +36,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -45,9 +45,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -56,7 +56,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -65,7 +65,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -74,8 +74,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if non-existent hydration reference field") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -90,7 +90,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -99,9 +99,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -110,7 +110,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -119,7 +119,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -130,8 +130,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration actor field exists only in the underlying and not in the overall") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -146,15 +146,15 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type User {
                             id: ID!
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -163,7 +163,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -172,7 +172,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -187,8 +187,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration actor field exists only in the underlying and not in the overall") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -203,15 +203,15 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type User {
                             id: ID!
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -220,7 +220,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -229,7 +229,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -244,8 +244,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydrated field has rename") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: JiraIssue
                         }
@@ -261,7 +261,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -270,9 +270,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -281,7 +281,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -290,7 +290,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -304,8 +304,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("can extend type with hydration") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: JiraIssue
                         }
@@ -313,7 +313,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -331,9 +331,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -342,7 +342,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -351,7 +351,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -360,8 +360,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration actor service does not exist") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: JiraIssue
                         }
@@ -369,7 +369,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type User {
                             id: ID!
                             name: String!
@@ -384,9 +384,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -395,7 +395,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -404,7 +404,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -420,8 +420,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydrated field is not nullable") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: JiraIssue
                         }
@@ -435,7 +435,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -444,9 +444,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -454,7 +454,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -463,7 +463,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -477,8 +477,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration actor field does not exist") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -492,15 +492,15 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type User {
                             id: ID!
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -508,7 +508,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -517,7 +517,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -533,8 +533,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration argument references non existent field") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -548,7 +548,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -557,9 +557,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -567,7 +567,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -576,7 +576,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -592,8 +592,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration argument references non existent argument") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -601,7 +601,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!, secrets: Boolean = false): User
                         }
@@ -620,9 +620,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -631,7 +631,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!, secrets: Boolean = false): User
                         }
@@ -640,7 +640,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -656,8 +656,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration argument references non existent remote argument") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -665,7 +665,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -684,9 +684,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -695,7 +695,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!): User
                         }
@@ -704,7 +704,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -719,8 +719,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration defines duplicated arguments") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -728,7 +728,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!, other: Boolean): User
                         }
@@ -748,9 +748,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -759,7 +759,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!, other: Boolean): User
                         }
@@ -768,7 +768,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -783,8 +783,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("checks the output type of the actor field against the output type of the hydrated field") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -792,7 +792,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type User {
                             id: ID!
                             name: String!
@@ -809,7 +809,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                            "accounts" to """
+                    "accounts" to """
                         type Query {
                             user(id: ID!, other: Boolean): Account 
                         }
@@ -817,9 +817,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -828,7 +828,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!, other: Boolean): User
                         }
@@ -837,7 +837,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                            "accounts" to """
+                    "accounts" to """
                         type Query {
                             user(id: ID!, other: Boolean): Account 
                         }
@@ -845,7 +845,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
