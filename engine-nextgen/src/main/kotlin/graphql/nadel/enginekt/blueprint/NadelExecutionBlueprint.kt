@@ -14,11 +14,29 @@ import graphql.schema.GraphQLSchema
  * Execution blueprint where keys are in terms of the overall schema.
  */
 data class NadelOverallExecutionBlueprint(
-    val schema: GraphQLSchema,
+    val engineSchema: GraphQLSchema,
     val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
+    private val underlyingTypeNamesByService: Map<Service, Set<String>>,
+    private val overallTypeNamesByService: Map<Service, Set<String>>,
     private val underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
     private val coordinatesToService: Map<FieldCoordinates, Service>,
 ) {
+
+    private fun setOfServiceTypes(
+        map: Map<Service, Set<String>>,
+        service: Service
+    ): Set<String> {
+        return (map[service] ?: error("Could not find service: ${service.name}"))
+    }
+
+    fun getUnderlyingTypeNamesForService(service: Service): Set<String> {
+        return setOfServiceTypes(underlyingTypeNamesByService, service)
+    }
+
+    fun getOverAllTypeNamesForService(service: Service): Set<String> {
+        return setOfServiceTypes(overallTypeNamesByService, service)
+    }
+
     fun getUnderlyingTypeName(
         service: Service,
         overallTypeName: String,
@@ -27,7 +45,6 @@ data class NadelOverallExecutionBlueprint(
         if (service.name == IntrospectionService.name) {
             return overallTypeName
         }
-
         return getUnderlyingBlueprint(service).typeInstructions.getUnderlyingName(overallTypeName)
     }
 
@@ -39,7 +56,6 @@ data class NadelOverallExecutionBlueprint(
         if (service.name == IntrospectionService.name) {
             return underlyingTypeName
         }
-
         return getUnderlyingBlueprint(service).typeInstructions.getOverallName(underlyingTypeName)
     }
 

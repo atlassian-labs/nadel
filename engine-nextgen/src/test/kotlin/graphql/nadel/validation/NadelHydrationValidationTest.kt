@@ -68,6 +68,62 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
+        it("fails if non-existent hydration reference field") {
+            val fixture = NadelValidationTestFixture(
+                    overallSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: User @hydrated(
+                                service: "users"
+                                field: "fakeField.user"
+                                arguments: [
+                                    {name: "id", value: "$source.creator"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                    ),
+                    underlyingSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(id: ID!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                    ),
+            )
+
+            val errors = validate(fixture)
+
+            assert(errors.map { it.message }.isNotEmpty())
+            errors.assertSingleOfType<MissingHydrationActorField>()
+        }
+
         it("passes if hydration is valid with synthetic field") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
@@ -878,4 +934,3 @@ class NadelHydrationValidationTest : DescribeSpec({
         }
     }
 })
-

@@ -6,6 +6,7 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelEngineExecutionHooks
 import graphql.nadel.enginekt.NadelExecutionContext
+import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.blueprint.NadelHydrationFieldInstruction
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.enginekt.blueprint.getTypeNameToInstructionsMap
@@ -35,6 +36,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
+/**
+ * Would recommend a read of [NadelGenericHydrationInstruction] for more context.
+ */
 internal class NadelHydrationTransform(
     private val engine: NextgenEngine,
 ) : NadelTransform<State> {
@@ -100,7 +104,7 @@ internal class NadelHydrationTransform(
                 },
             artificialFields = state.instructionsByObjectTypeNames
                 .flatMap { (typeName, instruction) ->
-                    NadelHydrationFieldsBuilder.makeFieldsUsedAsActorInputValues(
+                    NadelHydrationFieldsBuilder.makeRequiredSourceFields(
                         service = service,
                         executionBlueprint = executionBlueprint,
                         aliasHelper = state.aliasHelper,

@@ -55,7 +55,7 @@ public class JavaAriTransform implements NadelTransformJavaCompat<Set<String>> {
 
         String singleObjectTypeName = getSingleObjectTypeName(overallField);
         FieldCoordinates fieldCoordinates = makeFieldCoordinates(singleObjectTypeName, overallField.getName());
-        GraphQLFieldDefinition fieldDef = executionBlueprint.getSchema().getFieldDefinition(fieldCoordinates);
+        GraphQLFieldDefinition fieldDef = executionBlueprint.getEngineSchema().getFieldDefinition(fieldCoordinates);
         Objects.requireNonNull(fieldDef, "No field def");
 
         var argDefsByName = CollectionUtilKt.strictAssociateBy(fieldDef.getArguments(), GraphQLArgument::getName);

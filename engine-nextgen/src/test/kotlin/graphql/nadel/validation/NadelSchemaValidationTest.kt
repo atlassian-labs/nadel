@@ -1,5 +1,6 @@
 package graphql.nadel.validation
 
+import graphql.nadel.Service
 import graphql.nadel.enginekt.util.strictAssociateBy
 import io.kotest.core.spec.style.DescribeSpec
 
@@ -32,5 +33,10 @@ class NadelSchemaValidationTest : DescribeSpec({
 fun validate(fixture: NadelValidationTestFixture): Set<NadelSchemaValidationError> {
     val nadel = fixture.toNadel()
     val services = nadel.services.strictAssociateBy { it.name }
-    return NadelSchemaValidation(nadel.overallSchema, services).validate()
+    val hint: RequireHydrationActorFieldInOverallSchemaHint = object : RequireHydrationActorFieldInOverallSchemaHint {
+        override fun getHintValue(service: Service): Boolean {
+            return true
+        }
+    }
+    return NadelSchemaValidation(nadel.engineSchema, services).validate(NadelValidationHints(hint))
 }

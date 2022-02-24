@@ -5,6 +5,7 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.enginekt.log.getLogger
 import graphql.nadel.enginekt.transform.NadelCoerceTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
@@ -64,8 +65,13 @@ import graphql.schema.GraphQLType
  * This transformer replicates the exact same behaviour as the current gen.
  */
 internal class NadelCoerceTransform : NadelTransform<State> {
+
+    private val log = getLogger<NadelCoerceTransform>()
+
     data class State(
         val fieldType: GraphQLScalarType,
+        val fieldTypeAndName: String,
+        val serviceName: String,
     )
 
     override suspend fun isApplicable(
@@ -76,7 +82,7 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-        val schema = executionBlueprint.schema
+        val schema = executionBlueprint.engineSchema
 
         val distinctUnwrappedTypes = overallField.objectTypeNames
             .asSequence()
@@ -96,7 +102,13 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         // Object types could result in more than 1 distinct type, in the case of different interface implementations
         // having different concrete types, but this transform only cares about scalar types.
         return when (val singleType = distinctUnwrappedTypes.singleOrNull()) {
-            is GraphQLScalarType -> State(singleType)
+            is GraphQLScalarType -> {
+                State(
+                    singleType,
+                    "${overallField.singleObjectTypeName}.${overallField.name}",
+                    service.name
+                )
+            }
             else -> null
         }
     }
@@ -128,7 +140,18 @@ internal class NadelCoerceTransform : NadelTransform<State> {
             result,
             overallField,
         ) { value ->
-            state.fieldType.coercing.parseValue(value)
+            coerceValue(state, value)
         }
+    }
+
+    private fun coerceValue(state: State, value: Any): Any {
+        val coercedValue = state.fieldType.coercing.parseValue(value)
+        if (coercedValue != value) {
+            log.warn(
+                "The {} {} field returned a coerced value that that was different to its underlying value",
+                state.serviceName, state.fieldTypeAndName
+            )
+        }
+        return coercedValue
     }
 }

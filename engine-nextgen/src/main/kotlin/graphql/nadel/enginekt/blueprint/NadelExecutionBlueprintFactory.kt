@@ -21,6 +21,7 @@ import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
+import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef.ValueSource.FieldResultValue
 import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
 import graphql.nadel.enginekt.util.AnyImplementingTypeDefinition
@@ -47,13 +48,16 @@ import graphql.schema.GraphQLSchema
 import graphql.schema.GraphQLType
 
 internal object NadelExecutionBlueprintFactory {
-    fun create(overallSchema: GraphQLSchema, services: List<Service>): NadelOverallExecutionBlueprint {
-        return Factory(overallSchema, services).make()
+    fun create(
+        engineSchema: GraphQLSchema,
+        services: List<Service>
+    ): NadelOverallExecutionBlueprint {
+        return Factory(engineSchema, services).make()
     }
 }
 
 private class Factory(
-    private val overallSchema: GraphQLSchema,
+    private val engineSchema: GraphQLSchema,
     private val services: List<Service>,
 ) {
     private val definitionNamesToService: Map<String, Service> = makeDefinitionNamesToService()
@@ -67,19 +71,115 @@ private class Factory(
             it.location
         }
         val furtherTypeRenameInstructions = typeRenameInstructions.values +
-                SharedTypesAnalysis(overallSchema, services, fieldInstructions, typeRenameInstructions)
-                    .getTypeRenames()
+            SharedTypesAnalysis(engineSchema, services, fieldInstructions, typeRenameInstructions)
+                .getTypeRenames()
+
+        val underlyingBlueprints = deriveUnderlyingBlueprints(furtherTypeRenameInstructions)
+
+        // we built this as a map and then only use the keys. In the future we can improve things such
+        // that we can use the maps themselves but this is left for another time
+        val underlyingTypeNameToOverallNameByService =
+            makeUnderlyingTypeNamesToOverallNameByService(services, underlyingBlueprints)
+        // the above feeds into the below
+        val overAllTypeNameToUnderlyingNameByService =
+            makeOverAllTypeNameToUnderlyingNameByService(
+                services,
+                underlyingBlueprints,
+                underlyingTypeNameToOverallNameByService
+            )
+
+        val underlyingTypeNamesByService: Map<Service, Set<String>> =
+            underlyingTypeNameToOverallNameByService.mapValues { (_, mapOfTypes) ->
+                mapOfTypes.keys.toSet()
+            }
+        val overallTypeNamesByService: Map<Service, Set<String>> =
+            overAllTypeNameToUnderlyingNameByService.mapValues { (_, mapOfTypes) ->
+                mapOfTypes.keys.toSet()
+            }
 
         return NadelOverallExecutionBlueprint(
-            schema = overallSchema,
+            engineSchema = engineSchema,
             fieldInstructions = fieldInstructions,
-            underlyingBlueprints = deriveUnderlyingBlueprints(furtherTypeRenameInstructions),
+            underlyingTypeNamesByService = underlyingTypeNamesByService,
+            overallTypeNamesByService = overallTypeNamesByService,
+            underlyingBlueprints = underlyingBlueprints,
             coordinatesToService = coordinatesToService,
         )
     }
 
+    /**
+     * A map per service that contains a map of service underlying type name to overall type name
+     */
+    private fun makeUnderlyingTypeNamesToOverallNameByService(
+        services: List<Service>,
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>
+    ): Map<Service, Map<String, String>> {
+        val serviceMap = LinkedHashMap<Service, Map<String, String>>()
+        for (service in services) {
+            val underlyingNamesToOverallNames: Map<String, String> = service.underlyingSchema
+                .typeMap
+                .mapValues { (_, underlyingType) ->
+                    overAllTypeNameFromUnderlyingType(service, underlyingBlueprints, underlyingType.name)
+                }
+            serviceMap[service] = underlyingNamesToOverallNames
+        }
+        return serviceMap
+    }
+
+    private fun makeOverAllTypeNameToUnderlyingNameByService(
+        services: List<Service>,
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
+        underlyingTypeNameToOverallNameByService: Map<Service, Map<String, String>>
+    ): Map<Service, Map<String, String>> {
+        val serviceMap = LinkedHashMap<Service, Map<String, String>>()
+        for (service in services) {
+            // this can be !! because we know we built underlyingTypeNameToOverallNameByService per service above
+            val underlyingTypeNameToOverallName = underlyingTypeNameToOverallNameByService[service]!!
+            val overAllTypeNameToUnderlyingName = LinkedHashMap<String, String>()
+            underlyingTypeNameToOverallName.values.forEach { overAllName ->
+                val underlyingName = underlyingTypeNameFromOverallType(service, underlyingBlueprints, overAllName)
+                overAllTypeNameToUnderlyingName[overAllName] = underlyingName
+            }
+            serviceMap[service] = overAllTypeNameToUnderlyingName
+        }
+        return serviceMap
+    }
+
+    private fun overAllTypeNameFromUnderlyingType(
+        service: Service,
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
+        underlyingTypeName: String
+    ): String {
+        // TODO: THIS SHOULD NOT BE HAPPENING, INTROSPECTIONS ARE DUMB AND DON'T NEED TRANSFORMING
+        if (service.name == IntrospectionService.name) {
+            return underlyingTypeName
+        }
+
+        return underlyingExecutionBlueprint(underlyingBlueprints, service)
+            .typeInstructions.getOverallName(underlyingTypeName)
+    }
+
+    private fun underlyingTypeNameFromOverallType(
+        service: Service,
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
+        overallTypeName: String
+    ): String {
+        // TODO: THIS SHOULD NOT BE HAPPENING, INTROSPECTIONS ARE DUMB AND DON'T NEED TRANSFORMING
+        if (service.name == IntrospectionService.name) {
+            return overallTypeName
+        }
+
+        return underlyingExecutionBlueprint(underlyingBlueprints, service)
+            .typeInstructions.getUnderlyingName(overallTypeName)
+    }
+
+    private fun underlyingExecutionBlueprint(
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
+        service: Service
+    ) = (underlyingBlueprints[service.name] ?: error("Could not find service: $service.name"))
+
     private fun makeFieldInstructions(): List<NadelFieldInstruction> {
-        return overallSchema.typeMap.values
+        return engineSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLObjectType>()
             .flatMap { type ->
@@ -125,6 +225,7 @@ private class Factory(
 
         val queryPathToActorField = listOfNotNull(hydration.syntheticField, hydration.topLevelField)
         val actorFieldDef = actorFieldSchema.queryType.getFieldAt(queryPathToActorField)!!
+        val overallActorFieldDef = engineSchema.queryType.getFieldAt(queryPathToActorField)
 
         if (hydration.isBatched || /*deprecated*/ actorFieldDef.type.unwrapNonNull().isList) {
             require(actorFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$queryPathToActorField' requires a list output type" }
@@ -134,10 +235,11 @@ private class Factory(
                 actorFieldDef = actorFieldDef,
                 hydration = hydration,
                 actorService = hydrationActorService,
+                overallActorFieldDef = overallActorFieldDef
             )
         }
 
-        val actorInputValueDefs = getHydrationArguments(
+        val hydrationArgs = getHydrationArguments(
             hydration = hydration,
             hydratedFieldParentType = hydratedFieldParentType,
             hydratedFieldDef = hydratedFieldDef,
@@ -149,14 +251,20 @@ private class Factory(
             actorService = hydrationActorService,
             queryPathToActorField = NadelQueryPath(queryPathToActorField),
             actorFieldDef = actorFieldDef,
-            actorInputValueDefs = actorInputValueDefs,
+            actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             hydrationStrategy = getHydrationStrategy(
                 hydratedFieldParentType = hydratedFieldParentType,
                 hydratedFieldDef = hydratedFieldDef,
                 actorFieldDef = actorFieldDef,
-                actorInputValueDefs = actorInputValueDefs,
+                actorInputValueDefs = hydrationArgs,
             ),
+            sourceFields = hydrationArgs.mapNotNull {
+                when (it.valueSource) {
+                    is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
+                    is FieldResultValue -> it.valueSource.queryPathToField
+                }
+            },
         )
     }
 
@@ -169,7 +277,7 @@ private class Factory(
         val manyToOneInputDef = actorInputValueDefs
             .asSequence()
             .mapNotNull { inputValueDef ->
-                if (inputValueDef.valueSource !is NadelHydrationActorInputDef.ValueSource.FieldResultValue) {
+                if (inputValueDef.valueSource !is FieldResultValue) {
                     return@mapNotNull null
                 }
 
@@ -179,7 +287,7 @@ private class Factory(
                 inputValueDef.takeIf {
                     fieldDefs.any { fieldDef ->
                         fieldDef.type.unwrapNonNull().isList
-                                && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
+                            && !actorFieldDef.getArgument(inputValueDef.name).type.unwrapNonNull().isList
                     }
                 }
             }
@@ -201,24 +309,84 @@ private class Factory(
         actorFieldDef: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
         actorService: Service,
+        overallActorFieldDef: GraphQLFieldDefinition?,
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
 
         val batchSize = hydration.batchSize ?: 50
+        val hydrationArgs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef)
+
+        val matchStrategy = if (hydration.isObjectMatchByIndex) {
+            NadelBatchHydrationMatchStrategy.MatchIndex
+        } else if (hydration.objectIdentifiers.isNotEmpty()) {
+            NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers(
+                hydration.objectIdentifiers
+                    .map { objectIdentifier ->
+                        NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
+                            sourceId = NadelQueryPath(
+                                objectIdentifier.sourceId.split("."),
+                            ),
+                            resultId = objectIdentifier.resultId,
+                        )
+                    },
+            )
+        } else {
+            NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(
+                sourceId = hydrationArgs
+                    .asSequence()
+                    .map(NadelHydrationActorInputDef::valueSource)
+                    .filterIsInstance<FieldResultValue>()
+                    .single()
+                    .queryPathToField,
+                resultId = hydration.objectIdentifier,
+            )
+        }
+
         return NadelBatchHydrationFieldInstruction(
             location = location,
             hydratedFieldDef = hydratedFieldDef,
             actorService = actorService,
             queryPathToActorField = NadelQueryPath(listOfNotNull(hydration.syntheticField, hydration.topLevelField)),
             actorFieldDef = actorFieldDef,
-            actorInputValueDefs = getHydrationArguments(hydration, parentType, hydratedFieldDef, actorFieldDef),
+            actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             batchSize = batchSize,
-            batchHydrationMatchStrategy = if (hydration.isObjectMatchByIndex) {
-                NadelBatchHydrationMatchStrategy.MatchIndex
-            } else {
-                NadelBatchHydrationMatchStrategy.MatchObjectIdentifier(objectId = hydration.objectIdentifier)
+            batchHydrationMatchStrategy = matchStrategy,
+            sourceFields = Unit.let {
+                val paths = (when (matchStrategy) {
+                    NadelBatchHydrationMatchStrategy.MatchIndex -> emptyList()
+                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> listOf(matchStrategy.sourceId)
+                    is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> matchStrategy.objectIds.map { it.sourceId }
+                } + hydrationArgs.mapNotNull {
+                    when (it.valueSource) {
+                        is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> null
+                        is FieldResultValue -> it.valueSource.queryPathToField
+                    }
+                }).toSet()
+
+                val prefixes = paths
+                    .asSequence()
+                    .map {
+                        it.segments.dropLast(1) + "*"
+                    }
+                    .toSet()
+
+                // Say we have paths = [
+                //     [page]
+                //     [page.id]
+                //     [page.status]
+                // ]
+                // (e.g. page was the input and the page.id and page.status are used to match batch objects)
+                // then this maps it to [
+                //     [page.id]
+                //     [page.status]
+                // ]
+                paths
+                    .filter {
+                        !prefixes.contains(it.segments + "*")
+                    }
             },
+            overallActorFieldDef = overallActorFieldDef
         )
     }
 
@@ -234,7 +402,7 @@ private class Factory(
     }
 
     private fun makeTypeRenameInstructions(): Sequence<NadelTypeRenameInstruction> {
-        return overallSchema.typeMap.values
+        return engineSchema.typeMap.values
             .asSequence()
             .filterIsInstance<GraphQLDirectiveContainer>()
             .mapNotNull(this::makeTypeRenameInstruction)
@@ -297,7 +465,7 @@ private class Factory(
                 }
                 OBJECT_FIELD -> {
                     val pathToField = remoteArgDef.remoteArgumentSource.path
-                    NadelHydrationActorInputDef.ValueSource.FieldResultValue(
+                    FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
                         fieldDefinition = getUnderlyingType(hydratedFieldParentType)
                             ?.getFieldAt(pathToField)
@@ -332,7 +500,7 @@ private class Factory(
     private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
         val extendedDef = field.definition as? ExtendedFieldDefinition
         return when (val underlyingServiceHydration = extendedDef?.fieldTransformation?.underlyingServiceHydration) {
-            null -> NadelDirectives.createUnderlyingServiceHydration(field, overallSchema) ?: emptyList()
+            null -> NadelDirectives.createUnderlyingServiceHydration(field, engineSchema) ?: emptyList()
             else -> listOf(underlyingServiceHydration)
         }
     }
@@ -447,7 +615,7 @@ private class Factory(
  * we can assume that `NewThing` was renamed to `Shared` in the overall schema.
  */
 private class SharedTypesAnalysis(
-    private val overallSchema: GraphQLSchema,
+    private val engineSchema: GraphQLSchema,
     private val services: List<Service>,
     private val fieldInstructions: Map<FieldCoordinates, List<NadelFieldInstruction>>,
     private val typeRenameInstructions: Map<String, NadelTypeRenameInstruction>,
@@ -555,7 +723,7 @@ private class SharedTypesAnalysis(
             null
         }
 
-        val overallOutputType = overallSchema.getType(overallOutputTypeName)
+        val overallOutputType = engineSchema.getType(overallOutputTypeName)
             // Ensure type exists, schema transformation can delete types, so let's just ignore it
             .let { it ?: return emptyList() }
             // Return if not field container

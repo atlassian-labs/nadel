@@ -18,7 +18,7 @@ import static java.util.Collections.emptyList;
 
 @Internal
 public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
-    public enum SourceType {OBJECT_FIELD, FIELD_ARGUMENT, CONTEXT}
+    public enum SourceType {OBJECT_FIELD, FIELD_ARGUMENT}
 
     private final String name;
     // for OBJECT_FIELD

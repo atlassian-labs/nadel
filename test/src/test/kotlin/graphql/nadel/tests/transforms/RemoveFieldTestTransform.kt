@@ -31,7 +31,7 @@ class RemoveFieldTestTransform : NadelTransform<GraphQLError> {
     ): GraphQLError? {
         val objectType = overallField.objectTypeNames.asSequence()
             .map {
-                executionBlueprint.schema.getType(it) as GraphQLObjectType?
+                executionBlueprint.engineSchema.getType(it) as GraphQLObjectType?
             }
             .filterNotNull()
             .firstOrNull()

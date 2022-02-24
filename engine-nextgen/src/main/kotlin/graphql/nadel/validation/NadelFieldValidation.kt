@@ -18,9 +18,11 @@ internal class NadelFieldValidation(
     private val overallSchema: GraphQLSchema,
     services: Map<String, Service>,
     private val typeValidation: NadelTypeValidation,
+    nadelValidationHints: NadelValidationHints?,
 ) {
     private val renameValidation = NadelRenameValidation(this)
-    private val hydrationValidation = NadelHydrationValidation(services, typeValidation, overallSchema)
+    private val hydrationValidation =
+        NadelHydrationValidation(services, typeValidation, overallSchema, nadelValidationHints)
 
     fun validate(
         schemaElement: NadelServiceSchemaElement,
@@ -63,7 +65,7 @@ internal class NadelFieldValidation(
     fun validate(
         parent: NadelServiceSchemaElement,
         overallField: GraphQLFieldDefinition,
-        underlyingFieldsByName: Map<String, GraphQLFieldDefinition>,
+        underlyingFieldsByName: Map<String, GraphQLFieldDefinition>
     ): List<NadelSchemaValidationError> {
         return if (hasRename(overallField)) {
             renameValidation.validate(parent, overallField)
