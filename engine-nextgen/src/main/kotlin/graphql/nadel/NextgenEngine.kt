@@ -7,12 +7,12 @@ import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
-import graphql.nadel.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
 import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
+import graphql.nadel.enginekt.document.DocumentPredicates
 import graphql.nadel.enginekt.log.getLogger
 import graphql.nadel.enginekt.log.getNotPrivacySafeLogger
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
@@ -41,6 +41,8 @@ import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
+import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
+import graphql.normalized.VariablePredicate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -214,7 +216,12 @@ class NextgenEngine @JvmOverloads constructor(
             it.children.single()
         }
 
-        val (transformResult, executionPlan) = transformHydrationQuery(service, executionContext, actorField, serviceHydrationDetails)
+        val (transformResult, executionPlan) = transformHydrationQuery(
+            service,
+            executionContext,
+            actorField,
+            serviceHydrationDetails
+        )
 
         // Get to the top level field again using .parent N times on the new actor field
         val transformedQuery: ExecutableNormalizedField = fold(
@@ -274,21 +281,24 @@ class NextgenEngine @JvmOverloads constructor(
         executionHydrationDetails: ServiceExecutionHydrationDetails? = null,
     ): ServiceExecutionResult {
         val executionInput = executionContext.executionInput
-        val (document, variables) = compileToDocument(
+
+        val jsonPredicate: VariablePredicate = getDocumentVariablePredicate(executionContext.hints, service)
+        val compileResult = compileToDocument(
             service.underlyingSchema,
             transformedQuery.getOperationKind(engineSchema),
             getOperationName(service, executionContext),
             listOf(transformedQuery),
+            jsonPredicate
         )
 
         val serviceExecParams = newServiceExecutionParameters()
-            .query(document)
+            .query(compileResult.document)
             .context(executionInput.context)
             .executionId(executionInput.executionId ?: executionIdProvider.provide(executionInput))
             .cacheControl(executionInput.cacheControl)
-            .variables(variables)
+            .variables(compileResult.variables)
             .fragments(emptyMap())
-            .operationDefinition(document.definitions.singleOfType())
+            .operationDefinition(compileResult.document.definitions.singleOfType())
             .serviceContext(executionContext.getContextForService(service).await())
             .executionHydrationDetails(executionHydrationDetails)
             .build()
@@ -324,6 +334,14 @@ class NextgenEngine @JvmOverloads constructor(
                     ?: mutableMapOf(transformedQuery.resultKey to null)
             },
         )
+    }
+
+    private fun getDocumentVariablePredicate(hints: NadelExecutionHints, service: Service): VariablePredicate {
+        return if (hints.allDocumentVariablesHint.invoke(service)) {
+            DocumentPredicates.allVariablesPredicate
+        } else {
+            DocumentPredicates.jsonPredicate
+        }
     }
 
     private fun getOperationName(service: Service, executionContext: NadelExecutionContext): String? {

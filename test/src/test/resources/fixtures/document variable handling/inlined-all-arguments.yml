@@ -1,6 +1,6 @@
-name: primitive json arguments
+name: inlined all arguments
 enabled:
-  current: true
+  current: false
   nextgen: true
 overallSchema:
   MyService: |
@@ -9,6 +9,7 @@ overallSchema:
     }
     
     input InputWithJson {
+      names : [String!]!
       payload: JSON 
     }
     
@@ -20,41 +21,27 @@ underlyingSchema:
     }
     
     input InputWithJson {
+      names : [String!]!
       payload: JSON 
     }
     
     scalar JSON
 query: |
   query myQuery {
-    hello(arg: {payload: "String JSON input"}, arg1: false)
+    hello(arg: { names : ["Bobba", "Fett"] payload: {name: "Bobert", age: "23"}}, arg1: {interests: ["photography", "basketball"]})
   }
 variables: { }
 serviceCalls:
-  current:
-    - serviceName: MyService
-      request:
-        query: |
-          query nadel_2_MyService_myQuery {
-            hello(arg: {payload : "String JSON input"}, arg1: false)
-          }
-        variables: { }
-        operationName: nadel_2_MyService_myQuery
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "hello": "world"
-          },
-          "extensions": {}
-        }
   nextgen:
     - serviceName: MyService
       request:
         query: |
-          query myQuery($var_0: JSON, $var_1: JSON!) {
-            hello(arg: {payload : $var_0}, arg1: $var_1)
+          query myQuery($v0: InputWithJson, $v1: JSON!) {
+            hello(arg: $v0, arg1: $v1)
           }
-        variables: { var_0: "String JSON input", var_1: false }
+        variables:
+          v0: { names: ["Bobba","Fett"], payload: { "name": "Bobert", age: "23" } }
+          v1: { interests: [ "photography", "basketball" ] }
         operationName: myQuery
       # language=JSON
       response: |-

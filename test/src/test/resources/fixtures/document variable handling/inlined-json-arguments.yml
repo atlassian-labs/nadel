@@ -1,4 +1,4 @@
-name: primitive json arguments variables
+name: inlined json arguments
 enabled:
   current: true
   nextgen: true
@@ -25,19 +25,19 @@ underlyingSchema:
     
     scalar JSON
 query: |
-  query myQuery($var1: JSON!, $var2: JSON!) {
-    hello(arg: {payload: $var1}, arg1: $var2)
+  query myQuery {
+    hello(arg: {payload: {name: "Bobert", age: "23"}}, arg1: {interests: ["photography", "basketball"]})
   }
-variables: { var1: "String JSON input", var2: false }
+variables: { }
 serviceCalls:
   current:
     - serviceName: MyService
       request:
         query: |
-          query nadel_2_MyService_myQuery($var1: JSON!, $var2: JSON!) {
-            hello(arg: {payload : $var1}, arg1: $var2)
+          query nadel_2_MyService_myQuery {
+              hello(arg: {payload: {name: "Bobert", age: "23"}}, arg1: {interests: ["photography", "basketball"]})
           }
-        variables: { var1: "String JSON input", var2: false }
+        variables: { }
         operationName: nadel_2_MyService_myQuery
       # language=JSON
       response: |-
@@ -51,10 +51,12 @@ serviceCalls:
     - serviceName: MyService
       request:
         query: |
-          query myQuery($var_0: JSON, $var_1: JSON!) {
-            hello(arg: {payload : $var_0}, arg1: $var_1)
+          query myQuery($v0: JSON, $v1: JSON!) {
+            hello(arg: {payload : $v0}, arg1: $v1)
           }
-        variables: { var_0: "String JSON input", var_1: false }
+        variables:
+          v0: { "name": "Bobert", age: "23" }
+          v1: { interests: [ "photography", "basketball" ] }
         operationName: myQuery
       # language=JSON
       response: |-
