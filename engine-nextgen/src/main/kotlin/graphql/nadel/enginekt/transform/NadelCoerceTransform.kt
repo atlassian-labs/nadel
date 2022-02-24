@@ -150,9 +150,15 @@ internal class NadelCoerceTransform : NadelTransform<State> {
             if (coercedValue.javaClass != value.javaClass) {
                 log.warn(
                     "The {} {} field returned a coerced {} value that was different to its underlying {} value",
-                    state.serviceName, state.fieldTypeAndName, coercedValue.javaClass, value.javaClass
+                    state.serviceName, state.fieldTypeAndName, coercedValue.javaClass.simpleName, value.javaClass.simpleName
                 )
             }
+        } else {
+            // we don't expect this but belts and braces
+            log.warn(
+                "The {} {} field returned a coerced null value compared to its not null underlying {} value",
+                state.serviceName, state.fieldTypeAndName, value.javaClass.simpleName
+            )
         }
         return coercedValue
     }
