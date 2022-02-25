@@ -251,6 +251,7 @@ private class Factory(
             actorService = hydrationActorService,
             queryPathToActorField = NadelQueryPath(queryPathToActorField),
             actorFieldDef = actorFieldDef,
+            overallActorFieldDef = overallActorFieldDef,
             actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             hydrationStrategy = getHydrationStrategy(

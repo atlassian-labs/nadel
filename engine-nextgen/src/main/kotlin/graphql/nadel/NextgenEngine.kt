@@ -301,6 +301,7 @@ class NextgenEngine @JvmOverloads constructor(
             .operationDefinition(compileResult.document.definitions.singleOfType())
             .serviceContext(executionContext.getContextForService(service).await())
             .executionHydrationDetails(executionHydrationDetails)
+            .executableNormalizedField(transformedQuery)
             .build()
 
         val serviceExecResult = try {

@@ -48,6 +48,7 @@ interface NadelGenericHydrationInstruction {
     /**
      * The field definition referenced by [queryPathToActorField].
      */
+    @Deprecated("Start moving to overall field overallActorFieldDef")
     val actorFieldDef: GraphQLFieldDefinition
 
     /**
@@ -76,6 +77,12 @@ interface NadelGenericHydrationInstruction {
      * or [NadelBatchHydrationMatchStrategy.MatchObjectIdentifier.sourceId].
      */
     val sourceFields: List<NadelQueryPath>
+
+    /**
+     * The field definition in the overall schema referenced by [queryPathToActorField].
+     * should be non-null in the future
+     */
+    val overallActorFieldDef: GraphQLFieldDefinition?
 }
 
 data class NadelHydrationFieldInstruction(
@@ -88,6 +95,7 @@ data class NadelHydrationFieldInstruction(
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
+    override val overallActorFieldDef: GraphQLFieldDefinition?,
     val hydrationStrategy: NadelHydrationStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
@@ -97,15 +105,13 @@ data class NadelBatchHydrationFieldInstruction(
     override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
     override val queryPathToActorField: NadelQueryPath,
-    @Deprecated("Start moving to overall field overallActorFieldDef")
     override val actorFieldDef: GraphQLFieldDefinition,
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
+    override val overallActorFieldDef: GraphQLFieldDefinition?,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
-    //overallActorFieldDef should be non-null in the future
-    val overallActorFieldDef: GraphQLFieldDefinition?,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
 data class NadelDeepRenameFieldInstruction(
