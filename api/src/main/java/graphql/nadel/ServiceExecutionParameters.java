@@ -6,6 +6,7 @@ import graphql.execution.ExecutionId;
 import graphql.language.Document;
 import graphql.language.FragmentDefinition;
 import graphql.language.OperationDefinition;
+import graphql.normalized.ExecutableNormalizedField;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,6 +26,7 @@ public class ServiceExecutionParameters {
     private final CacheControl cacheControl;
     private final Object serviceContext;
     private final ServiceExecutionHydrationDetails hydrationDetails;
+    private final ExecutableNormalizedField executableNormalizedField;
 
     private ServiceExecutionParameters(Builder builder) {
         this.query = assertNotNull(builder.query);
@@ -36,6 +38,7 @@ public class ServiceExecutionParameters {
         this.cacheControl = builder.cacheControl;
         this.serviceContext = builder.serviceContext;
         this.hydrationDetails = builder.hydrationDetails;
+        this.executableNormalizedField = builder.executableNormalizedField;
     }
 
     public Document getQuery() {
@@ -85,6 +88,10 @@ public class ServiceExecutionParameters {
         return hydrationDetails;
     }
 
+    public ExecutableNormalizedField getExecutableNormalizedField() {
+        return executableNormalizedField;
+    }
+
     public static Builder newServiceExecutionParameters() {
         return new Builder();
     }
@@ -99,6 +106,7 @@ public class ServiceExecutionParameters {
         private CacheControl cacheControl;
         private Object serviceContext;
         private ServiceExecutionHydrationDetails hydrationDetails;
+        private ExecutableNormalizedField executableNormalizedField;
 
         private Builder() {
         }
@@ -145,6 +153,11 @@ public class ServiceExecutionParameters {
 
         public Builder executionHydrationDetails(ServiceExecutionHydrationDetails hydrationDetails) {
             this.hydrationDetails = hydrationDetails;
+            return this;
+        }
+
+        public Builder executableNormalizedField(ExecutableNormalizedField executableNormalizedField) {
+            this.executableNormalizedField = executableNormalizedField;
             return this;
         }
 
