@@ -174,17 +174,15 @@ serviceCalls:
         query: |
           query {
             petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
+              id
+              batch_hydration__data__id: id
               ... on Dog {
                 __typename
                 breed
-                id
-                batch_hydration__data__id: id
               }
               ... on Fish {
                 __typename
                 fins
-                id
-                batch_hydration__data__id: id
               }
             }
           }

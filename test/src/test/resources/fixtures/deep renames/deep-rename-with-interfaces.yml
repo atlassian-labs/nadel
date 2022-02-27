@@ -27,11 +27,13 @@ underlyingSchema:
     type Issue implements HasName {
       name: String
     }
-    type UserDetails {
+    type UserDetails implements HasName {
+      name: String
       firstName: String
     }
-    type User {
+    type User implements HasName {
       id: ID
+      name: String
       details: UserDetails
     }
 query: |

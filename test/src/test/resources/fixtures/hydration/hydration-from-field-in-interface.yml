@@ -117,9 +117,7 @@ serviceCalls:
             issue(id: "1") {
               __typename__hydration__issueAuthor: __typename
               hydration__issueAuthor__author: author {
-                ... on ProductUser {
-                  userId
-                }
+                userId
               }
               title
             }

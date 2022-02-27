@@ -26,6 +26,7 @@ underlyingSchema:
     }
     type Issue {
       id: ID
+      links: [Node]
     }
     type User {
       id: ID
@@ -59,27 +60,17 @@ serviceCalls:
         query: |
           query {
             rename__nodes__all: all {
+              __typename
               ... on Issue {
-                __typename
                 id
                 links {
-                  ... on Issue {
-                    __typename
-                  }
-                  ... on Monkey {
-                    __typename
-                  }
-                  ... on User {
-                    __typename
-                  }
+                  __typename
                 }
               }
               ... on Monkey {
-                __typename
                 id
               }
               ... on User {
-                __typename
                 id
               }
             }

@@ -88,10 +88,10 @@ serviceCalls:
         query: |
           query {
             issues {
+              __typename
+              id
               ... on Issue {
-                __typename
                 authorIds
-                id
               }
             }
           }

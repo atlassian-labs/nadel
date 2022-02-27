@@ -59,9 +59,7 @@ serviceCalls:
         query: |
           query {
             node(id: "world-1") {
-              ... on World {
-                id
-              }
+              id
             }
           }
         variables: {}

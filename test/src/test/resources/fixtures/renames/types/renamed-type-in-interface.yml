@@ -72,13 +72,11 @@ serviceCalls:
         query: |
           query {
             rename__nodes__all: all {
+              __typename
+              id
               ... on Issue {
-                __typename
-                id
                 links {
-                  ... on Issue {
-                    __typename
-                  }
+                  __typename
                 }
               }
             }

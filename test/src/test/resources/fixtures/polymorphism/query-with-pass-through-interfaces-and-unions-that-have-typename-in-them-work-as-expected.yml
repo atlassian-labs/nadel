@@ -232,12 +232,11 @@ serviceCalls:
         query: |
           query petQ {
             raining(isLoyal: true) {
+              __typename
               ... on Cat {
-                __typename
                 wearsBell
               }
               ... on Dog {
-                __typename
                 wearsCollar
               }
             }
@@ -260,14 +259,13 @@ serviceCalls:
         query: |
           query petQ {
             pets(isLoyal: true) {
+              name
               ... on Cat {
                 __typename
-                name
                 wearsBell
               }
               ... on Dog {
                 __typename
-                name
                 wearsCollar
               }
             }
