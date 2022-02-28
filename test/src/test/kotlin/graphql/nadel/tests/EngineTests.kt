@@ -50,7 +50,8 @@ private val sep = "-".repeat(50)
 
 class EngineTests : FunSpec({
 
-    println("""
+    println(
+        """
         $sep
         
         In order to run a specific test set TEST_NAME=xxxxx before running the EngineTests
@@ -59,7 +60,8 @@ class EngineTests : FunSpec({
         
         $sep
         
-    """.trimIndent())
+    """.trimIndent()
+    )
     val engineFactories = EngineTypeFactories()
 
     val fixturesDir = File(javaClass.classLoader.getResource("fixtures")!!.path)
@@ -165,25 +167,35 @@ private suspend fun execute(
                     return ServiceExecution { params ->
                         try {
                             val incomingQuery = params.query
-                            val incomingQueryPrinted = AstPrinter.printAst(
+                            val actualVariables = params.variables
+                            val actualOperationName = params.operationDefinition.name
+                            val actualQuery = AstPrinter.printAst(
                                 astSorter.sort(incomingQuery),
                             )
-                            printSyncLine(incomingQueryPrinted)
+                            printSyncLine(actualQuery)
 
                             val response = synchronized(serviceCalls) {
                                 val indexOfCall = serviceCalls
                                     .indexOfFirst {
                                         it.serviceName == serviceName
-                                            && AstPrinter.printAst(it.request.document) == incomingQueryPrinted
-                                            && it.request.operationName == params.operationDefinition.name
-                                            && it.request.variables == params.variables
+                                            && AstPrinter.printAst(it.request.document) == actualQuery
+                                            && it.request.operationName == actualOperationName
+                                            && it.request.variables == actualVariables
                                     }
                                     .takeIf { it != -1 }
 
                                 if (indexOfCall != null) {
                                     serviceCalls.removeAt(indexOfCall).response
                                 } else {
-                                    fail("Unable to match service call")
+                                    fail(
+                                        """Unable to match service call 
+                                        |   fixture : '${fixture.name}' 
+                                        |   service : '${serviceName}' 
+                                        |   query : '${actualQuery}' 
+                                        |   variables : '${actualVariables}' 
+                                        |   operation : '${actualOperationName}' 
+                                        """.trimMargin()
+                                    )
                                 }
                             }
 
@@ -196,7 +208,7 @@ private suspend fun execute(
                                 ),
                             )
                         } catch (e: Throwable) {
-                            fail("Unable to invoke service", e)
+                            fail("Unable to invoke service '$serviceName'", e)
                         }
                     }
                 }
