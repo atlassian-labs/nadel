@@ -4,7 +4,7 @@ plugins {
     groovy
 }
 
-val graphqlJavaVersion = "0.0.0-2022-02-23T01-12-39-39fa5820"
+val graphqlJavaVersion = "0.0.0-2022-02-28T04-15-47-83c97ebe"
 val slf4jVersion = "1.7.25"
 
 val graphqlJavaSource: Configuration by configurations.creating
