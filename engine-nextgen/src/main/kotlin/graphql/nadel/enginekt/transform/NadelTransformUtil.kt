@@ -90,7 +90,7 @@ object NadelTransformUtil {
         underlyingParentField: ExecutableNormalizedField?,
         result: ServiceExecutionResult,
         overallField: ExecutableNormalizedField,
-        transformerFunction: (Any) -> Any,
+        transformerFunction: (Any) -> Any?,
     ): List<NadelResultInstruction> {
         val parentQueryPath = underlyingParentField?.queryPath ?: NadelQueryPath.root
 
