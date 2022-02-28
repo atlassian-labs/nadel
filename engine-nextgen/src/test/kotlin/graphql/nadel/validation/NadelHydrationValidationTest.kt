@@ -810,7 +810,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                                 service: "users"
                                 field: "user"
                                 arguments: [
-                                    {name: "id", value: "$argument.creator"}
+                                    {name: "id", value: "$argument.someArg"}
                                 ]
                             )
                         }
