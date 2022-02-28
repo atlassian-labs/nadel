@@ -786,7 +786,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.argument == "other")
         }
 
-        it("fails if hydration field has missing non-nullable arguments with underlying top level fields") {
+        it("passes if hydration field has missing nullable arguments with underlying top level fields") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "issues" to """
