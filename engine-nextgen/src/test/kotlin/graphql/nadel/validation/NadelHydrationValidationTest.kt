@@ -781,6 +781,125 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.duplicates.map { it.name }.toSet() == setOf("id"))
         }
 
+        it("fails if hydration field has missing non-nullable arguments with underlying top level fields") {
+            val fixture = NadelValidationTestFixture(
+                    overallSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(id: ID!, other: Boolean!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type Issue {
+                            creator(someArg: ID!, other: Boolean): User @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$argument.creator"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                    ),
+                    underlyingSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(id: ID!, other: Boolean!): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                    ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.assertSingleOfType<MissingHydrationActorFieldArgument>()
+            assert(error.parentType.overall.name == "Issue")
+            assert(error.parentType.underlying.name == "Issue")
+            assert(error.overallField.name == "creator")
+            assert(error.argument == "other")
+        }
+
+        it("fails if hydration field has missing non-nullable arguments with underlying top level fields") {
+            val fixture = NadelValidationTestFixture(
+                    overallSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(id: ID!, other: Boolean): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        extend type Issue {
+                            creator(someArg: ID!, other: Boolean): User @hydrated(
+                                service: "users"
+                                field: "user"
+                                arguments: [
+                                    {name: "id", value: "$argument.creator"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                    ),
+                    underlyingSchema = mapOf(
+                            "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: ID!
+                        }
+                    """.trimIndent(),
+                            "users" to """
+                        type Query {
+                            user(id: ID!, other: Boolean): User
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                    ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+
         it("checks the output type of the actor field against the output type of the hydrated field") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
