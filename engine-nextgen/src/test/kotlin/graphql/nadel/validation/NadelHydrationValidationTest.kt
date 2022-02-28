@@ -185,63 +185,6 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "Issue")
         }
 
-        it("fails if hydration actor field exists only in the underlying and not in the overall") {
-            val fixture = NadelValidationTestFixture(
-                overallSchema = mapOf(
-                    "issues" to """
-                        type Query {
-                            issue: Issue
-                        }
-                        type Issue {
-                            id: ID!
-                            creator: User @hydrated(
-                                service: "users"
-                                field: "user"
-                                arguments: [
-                                    {name: "id", value: "$source.creator"}
-                                ]
-                            )
-                        }
-                    """.trimIndent(),
-                    "users" to """
-                        type User {
-                            id: ID!
-                            name: String!
-                        }
-                    """.trimIndent(),
-                ),
-                underlyingSchema = mapOf(
-                    "issues" to """
-                        type Query {
-                            issue: Issue
-                        }
-                        type Issue {
-                            id: ID!
-                            creator: ID!
-                        }
-                    """.trimIndent(),
-                    "users" to """
-                        type Query {
-                            user(id: ID!): User
-                        }
-                        type User {
-                            id: ID!
-                            name: String!
-                        }
-                    """.trimIndent(),
-                ),
-            )
-
-            val errors = validate(fixture)
-
-            assert(errors.size == 1)
-            val error = errors.assertSingleOfType<MissingHydrationActorFieldInOverallSchema>()
-            assert(error.service.name == "issues")
-            assert(error.hydration.serviceName == "users")
-            assert(error.overallField.name == "creator")
-            assert(error.parentType.overall.name == "Issue")
-        }
-
         it("fails if hydrated field has rename") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
