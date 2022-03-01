@@ -1,5 +1,4 @@
-name: query with pass through interfaces and unions that have MIXED __typename in
-  them work as expected
+name: query with pass through interfaces and unions that have MIXED __typename in them work as expected
 enabled:
   current: true
   nextgen: true
