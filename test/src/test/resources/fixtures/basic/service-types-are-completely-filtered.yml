@@ -114,9 +114,7 @@ serviceCalls:
             test {
               ... on QueryError {
                 extensions {
-                  ... on GenericQueryErrorExtension {
-                    __typename__type_filter__statusCode: __typename
-                  }
+                  __typename__type_filter__statusCode: __typename
                 }
               }
               ... on Test {

@@ -197,14 +197,13 @@ serviceCalls:
         query: |
           query petQ {
             pets(isLoyal: true) {
+              name
               ... on Cat {
                 aliasedCatTypeName: __typename
-                name
                 wearsBell
               }
               ... on Dog {
                 aliasedDogTypeName: __typename
-                name
                 wearsCollar
               }
             }

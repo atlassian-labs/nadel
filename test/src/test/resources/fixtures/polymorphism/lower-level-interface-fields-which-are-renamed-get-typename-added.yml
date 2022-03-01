@@ -187,29 +187,17 @@ serviceCalls:
         query: |
           query petQ {
             pets(isLoyal: true) {
+              __typename__rename__collarToRenamed: __typename
+              name
               ... on Cat {
-                __typename__rename__collarToRenamed: __typename
                 rename__collarToRenamed__collar: collar {
-                  ... on CatCollar {
-                    color
-                  }
-                  ... on DogCollar {
-                    color
-                  }
+                  color
                 }
-                name
               }
               ... on Dog {
-                __typename__rename__collarToRenamed: __typename
                 rename__collarToRenamed__collar: collar {
-                  ... on CatCollar {
-                    color
-                  }
-                  ... on DogCollar {
-                    color
-                  }
+                  color
                 }
-                name
               }
             }
           }

@@ -31,5 +31,6 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 configure<PowerAssertGradleExtension> {
+    // WARNING: do NOT touch this unless you have read https://github.com/bnorm/kotlin-power-assert/issues/55
     functions = listOf("kotlin.assert", "graphql.nadel.test.dbg")
 }

@@ -1,0 +1,103 @@
+name: rename with interfaces asking typename
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      nodes: [Node]
+    }
+    type JiraIssue implements Node @renamed(from: "Issue") {
+      id: ID! 
+    }
+    interface Node {
+      id: ID! 
+    }
+    type User implements Node {
+      id: ID! @renamed(from: "ari")
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      nodes: [Node]
+    }
+    interface Node {
+      id: ID! 
+    }
+    type Issue implements Node {
+      id: ID! 
+    }
+    type User implements Node {
+      id: ID! 
+      ari: ID!
+      name: String!
+    }
+query: |
+  query {
+    nodes {
+      __typename
+      id
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            nodes {
+              __typename
+              ... on Issue {
+                id
+              }
+              ... on User {
+                __typename__rename__id: __typename
+                rename__id__ari: ari
+              }
+            }
+          }
+        variables: {}
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "nodes": [
+              {
+                "__typename": "Issue",
+                "id": "GQLGW-001"
+              },
+              {
+                "__typename": "Issue",
+                "id": "GQLGW-1102"
+              },
+              {
+                "__typename": "User",
+                "__typename__rename__id": "User",
+                "rename__id__ari": "ari:i-always-forget-the-format/1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "nodes": [
+        {
+          "__typename": "JiraIssue",
+          "id": "GQLGW-001"
+        },
+        {
+          "__typename": "JiraIssue",
+          "id": "GQLGW-1102"
+        },
+        {
+          "__typename": "User",
+          "id": "ari:i-always-forget-the-format/1"
+        }
+      ]
+    },
+    "extensions": {}
+  }

@@ -27,10 +27,12 @@ underlyingSchema:
     type Issue implements HasName {
       name: String
     }
-    type UserDetails {
+    type UserDetails implements HasName {
+      name: String
       firstName: String
     }
-    type User {
+    type User implements HasName {
+      name: String
       id: ID
       details: UserDetails
     }

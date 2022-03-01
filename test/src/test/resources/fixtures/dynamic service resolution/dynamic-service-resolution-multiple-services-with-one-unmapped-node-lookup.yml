@@ -105,8 +105,8 @@ serviceCalls:
         query: |
           query {
             issue: node(id: "issue/id-123") {
+              id
               ... on Issue {
-                id
                 issueKey
               }
             }

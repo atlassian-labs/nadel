@@ -14,6 +14,7 @@ overallSchema:
       name: String
     }
     type Troll implements HasName {
+      # Trolls are typically named after whatever they first attempted to eat
       name: String @renamed(from: "firstEat.item.name")
     }
     interface HasName {
@@ -30,8 +31,9 @@ underlyingSchema:
     interface HasName {
       name: String
     }
-    type Troll {
+    type Troll implements HasName {
       id: ID
+      name: String
       firstEat: EatLog
     }
     type EatLog {
@@ -47,8 +49,9 @@ underlyingSchema:
     type UserDetails {
       firstName: String
     }
-    type User {
+    type User implements HasName {
       id: ID
+      name: String
       details: UserDetails
     }
 query: |

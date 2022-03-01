@@ -187,28 +187,10 @@ serviceCalls:
         query: |
           query petQ {
             pets(isLoyal: true) {
-              ... on Cat {
-                collar {
-                  ... on CatCollar {
-                    color
-                  }
-                  ... on DogCollar {
-                    color
-                  }
-                }
-                name
+              collar {
+                color
               }
-              ... on Dog {
-                collar {
-                  ... on CatCollar {
-                    color
-                  }
-                  ... on DogCollar {
-                    color
-                  }
-                }
-                name
-              }
+              name
             }
           }
         variables: {}

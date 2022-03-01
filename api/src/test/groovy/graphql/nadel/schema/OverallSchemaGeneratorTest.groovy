@@ -406,9 +406,9 @@ class OverallSchemaGeneratorTest extends Specification {
 
 
         then:
-        result.getDirectives(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.getName())
-        result.getDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.getName())
-        result.getType(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION.getName())
+        result.getDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.getName()) != null
+        result.getDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.getName()) != null
+        result.getType(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION.getName()) != null
 
         when: "we define the directives ourselves in schema"
         result = TestUtil.schemaFromNdsl([
@@ -449,9 +449,9 @@ class OverallSchemaGeneratorTest extends Specification {
 
 
         then:
-        result.getDirectives(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.getName())
-        result.getDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.getName())
-        result.getType(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION.getName())
+        result.getDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.getName()) != null
+        result.getDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.getName()) != null
+        result.getType(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION.getName()) != null
     }
 
 }

@@ -1,0 +1,118 @@
+name: hydration with interfaces asking typename
+enabled:
+  current: false
+  nextgen: true
+overallSchema:
+  Issues: |
+    type Query {
+      nodes: [Node]
+    }
+    type JiraIssue implements Node @renamed(from: "Issue") {
+      id: ID! 
+    }
+    interface Node {
+      id: ID! 
+    }
+    type User implements Node {
+      id: ID! @hydrated(service: "Issues" field: "ariById" arguments: [{name: "id" value: "$source.id"}])
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      ariById(id: ID!): ID
+      nodes: [Node]
+    }
+    interface Node {
+      id: ID! 
+    }
+    type Issue implements Node {
+      id: ID! 
+    }
+    type User implements Node {
+      id: ID! 
+      name: String!
+    }
+query: |
+  query {
+    nodes {
+      __typename
+      id
+    }
+  }
+variables: {}
+serviceCalls:
+  nextgen:
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            nodes {
+              __typename
+              ... on Issue {
+                id
+              }
+              ... on User {
+                __typename__hydration__id: __typename
+                hydration__id__id: id
+              }
+            }
+          }
+        variables: {}
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "nodes": [
+              {
+                "__typename": "Issue",
+                "id": "GQLGW-001"
+              },
+              {
+                "__typename": "Issue",
+                "id": "GQLGW-1102"
+              },
+              {
+                "__typename": "User",
+                "__typename__hydration__id": "User",
+                "hydration__id__id": "ari:i-always-forget-the-format/1"
+              }
+            ]
+          },
+          "extensions": {}
+        }
+    - serviceName: Issues
+      request:
+        query: |
+          query {
+            ariById(id: "ari:i-always-forget-the-format/1")
+          }
+        variables: {}
+      # language=JSON
+      response: |-
+        {
+          "data": {
+            "ariById": "Definitely an ARI"
+          },
+          "extensions": {}
+        }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "nodes": [
+        {
+          "__typename": "JiraIssue",
+          "id": "GQLGW-001"
+        },
+        {
+          "__typename": "JiraIssue",
+          "id": "GQLGW-1102"
+        },
+        {
+          "__typename": "User",
+          "id": "Definitely an ARI"
+        }
+      ]
+    },
+    "extensions": {}
+  }

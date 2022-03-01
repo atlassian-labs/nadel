@@ -67,12 +67,7 @@ serviceCalls:
         query: |
           query {
             user(id: "1000") {
-              ... on AccountUser {
-                id
-              }
-              ... on AdminUser {
-                id
-              }
+              id
             }
           }
         variables: {}

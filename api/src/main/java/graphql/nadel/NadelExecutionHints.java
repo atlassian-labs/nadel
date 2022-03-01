@@ -3,6 +3,7 @@ package graphql.nadel;
 import graphql.PublicApi;
 import graphql.nadel.hints.AllDocumentVariablesHint;
 import graphql.nadel.hints.LegacyOperationNamesHint;
+import graphql.nadel.hints.NewDocumentCompiler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -11,10 +12,12 @@ import java.util.Objects;
 public class NadelExecutionHints {
     private final LegacyOperationNamesHint legacyOperationNames;
     private final AllDocumentVariablesHint allDocumentVariablesHint;
+    private final NewDocumentCompiler newDocumentCompiler;
 
     private NadelExecutionHints(Builder builder) {
         this.legacyOperationNames = builder.legacyOperationNames;
         this.allDocumentVariablesHint = builder.allDocumentVariablesHint;
+        this.newDocumentCompiler = builder.newDocumentCompiler;
     }
 
     /**
@@ -31,6 +34,15 @@ public class NadelExecutionHints {
     @NotNull
     public LegacyOperationNamesHint getLegacyOperationNames() {
         return legacyOperationNames;
+    }
+
+    /**
+     * Flag to determine whether to use the new https://github.com/graphql-java/graphql-java/pull/2638
+     * or the previous version.
+     */
+    @NotNull
+    public NewDocumentCompiler getNewDocumentCompiler() {
+        return newDocumentCompiler;
     }
 
     /**
@@ -56,12 +68,15 @@ public class NadelExecutionHints {
     public static class Builder {
         private LegacyOperationNamesHint legacyOperationNames = service -> false;
         private AllDocumentVariablesHint allDocumentVariablesHint = service -> false;
+        private NewDocumentCompiler newDocumentCompiler = service -> false;
 
         private Builder() {
         }
 
         private Builder(NadelExecutionHints nadelExecutionHints) {
             legacyOperationNames = nadelExecutionHints.legacyOperationNames;
+            allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint;
+            newDocumentCompiler = nadelExecutionHints.newDocumentCompiler;
         }
 
         public Builder legacyOperationNames(@NotNull LegacyOperationNamesHint flag) {
@@ -73,6 +88,12 @@ public class NadelExecutionHints {
         public Builder allDocumentVariablesHint(@NotNull AllDocumentVariablesHint flag) {
             Objects.requireNonNull(flag);
             this.allDocumentVariablesHint = flag;
+            return this;
+        }
+
+        public Builder newDocumentCompiler(@NotNull NewDocumentCompiler flag) {
+            Objects.requireNonNull(flag);
+            this.newDocumentCompiler = flag;
             return this;
         }
 
