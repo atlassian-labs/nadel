@@ -18,6 +18,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActor
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
+import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
 import graphql.nadel.validation.NadelSchemaValidationError.PolymorphicHydrationReturnTypeMismatch
 import graphql.nadel.validation.util.NadelSchemaUtil.getHydrations
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
@@ -180,13 +181,12 @@ internal class NadelHydrationValidation(
             .mapNotNull { actorArg ->
                 val hydrationArg = hydration.arguments.find { it.name == actorArg.name }
                 if (hydrationArg == null) {
-                    //this is allowed if the actor field arg is nullable so check for that
-                    MissingHydrationActorFieldArgument(
-                        parent,
-                        overallField,
-                        hydration,
-                        actorServiceQueryType,
-                        argument = actorArg.name,
+                    NonExistentHydrationActorFieldArgument(
+                            parent,
+                            overallField,
+                            hydration,
+                            actorServiceQueryType,
+                            argument = actorArg.name,
                     )
                 } else {
                     null

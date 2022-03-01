@@ -779,7 +779,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<MissingHydrationActorFieldArgument>()
+            val error = errors.assertSingleOfType<NonExistentHydrationActorFieldArgument>()
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
