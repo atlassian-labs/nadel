@@ -330,7 +330,7 @@ sealed interface NadelSchemaValidationError {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = hydration.serviceName
             val af = "${actorServiceQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
-            "Hydration on field $of is missing argument $argument on hydration actor $s.$af"
+            "Hydration on field $of is missing the required argument $argument on hydration actor $s.$af"
         }
 
         override val subject = overallField
