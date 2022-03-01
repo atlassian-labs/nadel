@@ -1,7 +1,5 @@
 name: synthetic hydration call with two argument values from original field arguments
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   UserService: |
     type Query {
@@ -64,115 +62,60 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issues {
-              id
-              authorId
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__author: __typename
+            batch_hydration__author__authorId: authorId
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename__batch_hydration__author": "Issue",
+              "id": "ISSUE-1",
+              "batch_hydration__author__authorId": "USER-1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query {
+          usersQuery {
+            usersByIds(extraArg1: "extraArg1", extraArg2: 10, id: ["USER-1"]) {
+              batch_hydration__author__id: id
+              name
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersQuery": {
+            "usersByIds": [
               {
-                "id": "ISSUE-1",
-                "authorId": "USER-1"
+                "name": "User 1",
+                "batch_hydration__author__id": "USER-1"
               }
             ]
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            usersQuery {
-              usersByIds(id: ["USER-1"], extraArg1: "extraArg1", extraArg2: 10) {
-                name
-                object_identifier__UUID: id
-              }
-            }
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "usersQuery": {
-              "usersByIds": [
-                {
-                  "id": "USER-1",
-                  "name": "User 1",
-                  "object_identifier__UUID": "USER-1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issues {
-              __typename__batch_hydration__author: __typename
-              batch_hydration__author__authorId: authorId
-              id
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "__typename__batch_hydration__author": "Issue",
-                "id": "ISSUE-1",
-                "batch_hydration__author__authorId": "USER-1"
-              }
-            ]
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query {
-            usersQuery {
-              usersByIds(extraArg1: "extraArg1", extraArg2: 10, id: ["USER-1"]) {
-                batch_hydration__author__id: id
-                name
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "usersQuery": {
-              "usersByIds": [
-                {
-                  "name": "User 1",
-                  "batch_hydration__author__id": "USER-1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

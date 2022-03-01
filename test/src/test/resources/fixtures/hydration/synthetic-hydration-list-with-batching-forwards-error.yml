@@ -1,7 +1,5 @@
 name: synthetic hydration list with batching forwards error
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service2: |
     type Query {
@@ -53,106 +51,56 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: service1
-      request:
-        query: |
-          query nadel_2_service1 {
-            foo {
-              barId
+  - serviceName: service1
+    request:
+      query: |
+        query {
+          foo {
+            __typename__batch_hydration__bar: __typename
+            batch_hydration__bar__barId: barId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__batch_hydration__bar": "Foo",
+            "batch_hydration__bar__barId": [
+              "barId1",
+              "barId2",
+              "barId3"
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: service2
+    request:
+      query: |
+        query {
+          barsQuery {
+            barsById(id: ["barId1", "barId2", "barId3"]) {
+              batch_hydration__bar__id: id
+              name
             }
           }
-        variables: {}
-        operationName: nadel_2_service1
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "barId": [
-                "barId1",
-                "barId2",
-                "barId3"
-              ]
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: service2
-      request:
-        query: |
-          query nadel_2_service2 {
-            barsQuery {
-              barsById(id: ["barId1", "barId2", "barId3"]) {
-                name
-                object_identifier__UUID: id
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "errors": [
+          {
+            "message": "Some error occurred"
           }
-        variables: {}
-        operationName: nadel_2_service2
-      # language=JSON
-      response: |-
-        {
-          "errors": [
-            {
-              "message": "Some error occurred"
-            }
-          ],
-          "data": null,
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: service1
-      request:
-        query: |
-          query {
-            foo {
-              __typename__batch_hydration__bar: __typename
-              batch_hydration__bar__barId: barId
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "__typename__batch_hydration__bar": "Foo",
-              "batch_hydration__bar__barId": [
-                "barId1",
-                "barId2",
-                "barId3"
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: service2
-      request:
-        query: |
-          query {
-            barsQuery {
-              barsById(id: ["barId1", "barId2", "barId3"]) {
-                batch_hydration__bar__id: id
-                name
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "errors": [
-            {
-              "message": "Some error occurred"
-            }
-          ],
-          "data": null,
-          "extensions": {}
-        }
+        ],
+        "data": null,
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: deep rename of list
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -29,69 +27,38 @@ query: |
       labels
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            details {
-              issue {
-                labels
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          details {
+            __typename__deep_rename__labels: __typename
+            deep_rename__labels__issue: issue {
+              labels
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "details": [
-              {
-                "issue": {
-                  "labels": [
-                    "label1",
-                    "label2"
-                  ]
-                }
-              }
-            ]
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            details {
-              __typename__deep_rename__labels: __typename
-              deep_rename__labels__issue: issue {
-                labels
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "details": [
+            {
+              "deep_rename__labels__issue": {
+                "labels": [
+                  "label1",
+                  "label2"
+                ]
+              },
+              "__typename__deep_rename__labels": "IssueDetail"
             }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "details": [
-              {
-                "deep_rename__labels__issue": {
-                  "labels": [
-                    "label1",
-                    "label2"
-                  ]
-                },
-                "__typename__deep_rename__labels": "IssueDetail"
-              }
-            ]
-          },
-          "extensions": {}
-        }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

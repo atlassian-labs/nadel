@@ -1,7 +1,5 @@
 name: handles include directive field with hydrated parent
-enabled:
-  current: false # Not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -37,48 +35,46 @@ query: |
 variables:
   test: false
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            rename__foo__bar: bar {
-              __typename__hydration__water: __typename
-              hydration__water__id: id
-            }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          rename__foo__bar: bar {
+            __typename__hydration__water: __typename
+            hydration__water__id: id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__foo__bar": {
-              "__typename__hydration__water": "Foo",
-              "hydration__water__id": "Foo-1"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: service
-      request:
-        query: |
-          query {
-            fooById(id: "Foo-1") {
-              __typename__skip_include____skip: __typename
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__foo__bar": {
+            "__typename__hydration__water": "Foo",
+            "hydration__water__id": "Foo-1"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "fooById": {
-              "__typename__skip_include____skip": "Foo"
-            }
-          },
-          "extensions": {}
+        },
+        "extensions": {}
+      }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          fooById(id: "Foo-1") {
+            __typename__skip_include____skip: __typename
+          }
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "fooById": {
+            "__typename__skip_include____skip": "Foo"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

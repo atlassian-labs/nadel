@@ -1,7 +1,5 @@
 name: nested list hydration under a renamed top level field
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Foo: |
     type Query {
@@ -73,184 +71,96 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            service {
-              id
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          rename__fooService__service: service {
+            __typename__hydration__otherServices: __typename
+            hydration__otherServices__id: id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__fooService__service": {
+            "__typename__hydration__otherServices": "Service",
+            "hydration__otherServices__id": "ID"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          connection(id: "ID") {
+            __typename__hydration__nodes: __typename
+            hydration__nodes__edges: edges {
+              node
             }
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "service": {
-              "id": "ID"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            connection(id: "ID") {
-              edges {
-                node
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "connection": {
+            "__typename__hydration__nodes": "Connection",
+            "hydration__nodes__edges": [
+              {
+                "node": "1"
               }
-            }
+            ]
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "connection": {
-              "edges": [
-                {
-                  "node": "1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            node(id: "1") {
-              id
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          node(id: "1") {
+            __typename__hydration__space: __typename
+            hydration__space__id: id
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "node": {
-              "id": "1a"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            space(id: "1a") {
-              id
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "node": {
+            "hydration__space__id": "1a",
+            "__typename__hydration__space": "Node"
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "space": {
-              "id": "apple"
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            rename__fooService__service: service {
-              __typename__hydration__otherServices: __typename
-              hydration__otherServices__id: id
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          space(id: "1a") {
+            id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__fooService__service": {
-              "__typename__hydration__otherServices": "Service",
-              "hydration__otherServices__id": "ID"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            connection(id: "ID") {
-              __typename__hydration__nodes: __typename
-              hydration__nodes__edges: edges {
-                node
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "space": {
+            "id": "apple"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "connection": {
-              "__typename__hydration__nodes": "Connection",
-              "hydration__nodes__edges": [
-                {
-                  "node": "1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            node(id: "1") {
-              __typename__hydration__space: __typename
-              hydration__space__id: id
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "node": {
-              "hydration__space__id": "1a",
-              "__typename__hydration__space": "Node"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            space(id: "1a") {
-              id
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "space": {
-              "id": "apple"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

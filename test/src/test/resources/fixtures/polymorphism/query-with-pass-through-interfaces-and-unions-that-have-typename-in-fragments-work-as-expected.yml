@@ -1,7 +1,5 @@
 name: query with pass through interfaces and unions that have __typename in fragments work as expected
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   PetService: |
     type Query {
@@ -160,149 +158,69 @@ query: |
 variables:
   isLoyal: true
 serviceCalls:
-  current:
-    - serviceName: PetService
-      request:
-        query: |
-          query nadel_2_PetService_petQ($isLoyal: Boolean) {
-            pets(isLoyal: $isLoyal) {
-              name
-              ...DogFrag
-              ... on Dog {
-                wearsCollar
-                __typename
-              }
-              ... on Cat {
-                wearsBell
-                __typename
-              }
-              type_hint_typename__UUID: __typename
-            }
-          }
-
-          fragment DogFrag on Dog {
-            wearsCollar
+  - serviceName: PetService
+    request:
+      query: |
+        query petQ {
+          pets(isLoyal: true) {
             __typename
+            name
+            ... on Cat {
+              wearsBell
+            }
+            ... on Dog {
+              wearsCollar
+            }
           }
-        variables:
-          isLoyal: true
-        operationName: nadel_2_PetService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "wearsCollar": true,
-                "__typename": "Dog",
-                "type_hint_typename__UUID": "Dog"
-              },
-              {
-                "name": "Whiskers",
-                "wearsBell": false,
-                "__typename": "Cat",
-                "type_hint_typename__UUID": "Cat"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: PetService
-      request:
-        query: |
-          query nadel_2_PetService_petQ($isLoyal: Boolean) {
-            raining(isLoyal: $isLoyal) {
-              ... on Dog {
-                wearsCollar
-                __typename
-              }
-              ... on Cat {
-                wearsBell
-                __typename
-              }
-              type_hint_typename__UUID: __typename
-            }
-          }
-        variables:
-          isLoyal: true
-        operationName: nadel_2_PetService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "raining": {
-              "wearsCollar": true,
-              "__typename": "Dog",
-              "type_hint_typename__UUID": "Dog"
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: PetService
-      request:
-        query: |
-          query petQ {
-            pets(isLoyal: true) {
-              __typename
-              name
-              ... on Cat {
-                wearsBell
-              }
-              ... on Dog {
-                wearsCollar
-              }
-            }
-          }
-        variables: {}
-        operationName: petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "wearsCollar": true,
-                "__typename": "Dog"
-              },
-              {
-                "name": "Whiskers",
-                "wearsBell": false,
-                "__typename": "Cat"
-              }
-            ]
-          },
-          "extensions": {}
-        }
-    - serviceName: PetService
-      request:
-        query: |
-          query petQ {
-            raining(isLoyal: true) {
-              __typename
-              ... on Cat {
-                wearsBell
-              }
-              ... on Dog {
-                wearsCollar
-              }
-            }
-          }
-        variables: {}
-        operationName: petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "raining": {
+      variables: { }
+      operationName: petQ
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "pets": [
+            {
+              "name": "Sparky",
               "wearsCollar": true,
               "__typename": "Dog"
+            },
+            {
+              "name": "Whiskers",
+              "wearsBell": false,
+              "__typename": "Cat"
             }
-          },
-          "extensions": {}
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: PetService
+    request:
+      query: |
+        query petQ {
+          raining(isLoyal: true) {
+            __typename
+            ... on Cat {
+              wearsBell
+            }
+            ... on Dog {
+              wearsCollar
+            }
+          }
         }
+      variables: { }
+      operationName: petQ
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "raining": {
+            "wearsCollar": true,
+            "__typename": "Dog"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

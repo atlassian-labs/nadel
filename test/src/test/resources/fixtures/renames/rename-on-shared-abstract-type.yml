@@ -1,7 +1,5 @@
 name: rename on shared abstract type
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   shared: |
     interface Node {
@@ -51,28 +49,27 @@ query: |
       id
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: worlds
-      request:
-        query: |
-          query {
-            node(id: "world-1") {
-              id
-            }
+  - serviceName: worlds
+    request:
+      query: |
+        query {
+          node(id: "world-1") {
+            id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "node": {
-              "id": "Test"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "node": {
+            "id": "Test"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

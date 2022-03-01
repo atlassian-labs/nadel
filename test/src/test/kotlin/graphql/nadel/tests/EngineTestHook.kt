@@ -33,21 +33,20 @@ interface EngineTestHook {
     val wiringFactory: WiringFactory
         get() = NeverWiringFactory()
 
-    fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
     }
 
     fun makeExecutionInput(
-        engineType: NadelEngineType,
         builder: NadelExecutionInput.Builder,
     ): NadelExecutionInput.Builder {
         return builder
     }
 
-    fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
+    fun assertResult(result: ExecutionResult) {
     }
 
-    fun assertFailure(engineType: NadelEngineType, throwable: Throwable): Boolean {
+    fun assertFailure(throwable: Throwable): Boolean {
         return false
     }
 }

@@ -6,24 +6,20 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.language.AstSorter
 import graphql.language.Document
 import graphql.nadel.Nadel
-import graphql.nadel.NadelEngine
 import graphql.nadel.NadelExecutionEngine
-import graphql.nadel.NextgenEngine
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.parser.Parser
-import kotlin.reflect.full.createType
-import kotlin.reflect.full.memberProperties
 
 data class TestFixture(
     val name: String,
-    val enabled: EngineTypeEnabled = EngineTypeEnabled(),
-    val ignored: EngineTypeIgnored = EngineTypeIgnored(),
+    val enabled: Boolean,
+    val ignored: Boolean,
     val overallSchema: Map<String, String>,
     val underlyingSchema: Map<String, String>,
     val query: String,
     val variables: Map<String, Any?>,
     val operationName: String? = null,
-    val serviceCalls: ServiceCalls,
+    val serviceCalls: List<ServiceCall>,
     @JsonProperty("response")
     val responseJsonString: String?,
     val exception: ExpectedException?,
@@ -34,50 +30,9 @@ data class TestFixture(
     }
 }
 
-data class EngineTypeFactories(
-    override val current: TestEngineFactory = TestEngineFactory { nadel, _ ->
-        NadelEngine(nadel)
-    },
-    override val nextgen: TestEngineFactory = TestEngineFactory { nadel, testHook ->
-        NextgenEngine(
-            nadel = nadel,
-            transforms = testHook.customTransforms,
-        )
-    },
-) : NadelEngineTypeValueProvider<TestEngineFactory> {
-    val all = engines(factories = this)
-
-    companion object {
-        private fun engines(factories: EngineTypeFactories): List<Pair<NadelEngineType, TestEngineFactory>> {
-            return EngineTypeFactories::class.memberProperties
-                .filter {
-                    it.returnType == TestEngineFactory::class.createType()
-                }
-                .map {
-                    NadelEngineType.valueOf(it.name) to it.get(factories) as TestEngineFactory
-                }
-        }
-    }
-}
-
 fun interface TestEngineFactory {
     fun make(nadel: Nadel, testHook: EngineTestHook): NadelExecutionEngine
 }
-
-data class EngineTypeEnabled(
-    override val current: Boolean = true,
-    override val nextgen: Boolean = false,
-) : NadelEngineTypeValueProvider<Boolean>
-
-data class EngineTypeIgnored(
-    override val current: Boolean = false,
-    override val nextgen: Boolean = false,
-) : NadelEngineTypeValueProvider<Boolean>
-
-data class ServiceCalls(
-    override val current: List<ServiceCall> = emptyList(),
-    override val nextgen: List<ServiceCall> = emptyList(),
-) : NadelEngineTypeValueProvider<List<ServiceCall>>
 
 data class ServiceCall(
     val serviceName: String,

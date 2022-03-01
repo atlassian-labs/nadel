@@ -1,9 +1,6 @@
 name: renamed interface type is shared
-enabled:
-  current: false
-  nextgen: true
-ignored:
-  nextgen: true # This is a bug that we cannot fix, we need better syntax to declare the specific services
+enabled: true
+ignored: true # This is a bug that we cannot fix, we need better syntax to declare the specific services
 overallSchema:
   NextgenIssues: |-
     type Query {
@@ -47,23 +44,22 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: NextgenIssues
-      request:
-        query: |-
-          query {
-            node(id: "ISSUE-1") {
-              ... on NextgenIssue {
-                id
-              }
+  - serviceName: NextgenIssues
+    request:
+      query: |-
+        query {
+          node(id: "ISSUE-1") {
+            ... on NextgenIssue {
+              id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {}
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {}
 # language=JSON
 response: |-
   {}

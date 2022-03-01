@@ -1,7 +1,5 @@
 name: union rename direct works as expected
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -97,55 +95,29 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: MyService
-      request:
-        query: |
-          query nadel_2_MyService {
-            renameUnionUnderlying {
-              ... on XUnderlying {
-                x
-              }
-              type_hint_typename__UUID: __typename
+  - serviceName: MyService
+    request:
+      query: |
+        query {
+          rename__renameUnion__renameUnionUnderlying: renameUnionUnderlying {
+            ... on XUnderlying {
+              x
             }
           }
-        variables: {}
-        operationName: nadel_2_MyService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "renameUnionUnderlying": {
-              "x": 1,
-              "type_hint_typename__UUID": "XUnderlying"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query {
-            rename__renameUnion__renameUnionUnderlying: renameUnionUnderlying {
-              ... on XUnderlying {
-                x
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__renameUnion__renameUnionUnderlying": {
+            "x": 1
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__renameUnion__renameUnionUnderlying": {
-              "x": 1
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

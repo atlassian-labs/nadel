@@ -1,7 +1,5 @@
 name: deep rename with argument works
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   IssueService: |
     type Query {
@@ -29,59 +27,33 @@ query: |
       name(userId: "USER-01")
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: IssueService
-      request:
-        query: |
-          query nadel_2_IssueService {
-            issue {
-              detail {
-                detailName(userId: "USER-01")
-              }
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          issue {
+            __typename__deep_rename__name: __typename
+            deep_rename__name__detail: detail {
+              detailName(userId: "USER-01")
             }
           }
-        variables: {}
-        operationName: nadel_2_IssueService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "detail": {
-                "detailName": "My Issue"
-              }
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            issue {
-              __typename__deep_rename__name: __typename
-              deep_rename__name__detail: detail {
-                detailName(userId: "USER-01")
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "deep_rename__name__detail": {
+              "detailName": "My Issue"
+            },
+            "__typename__deep_rename__name": "Issue"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "deep_rename__name__detail": {
-                "detailName": "My Issue"
-              },
-              "__typename__deep_rename__name": "Issue"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

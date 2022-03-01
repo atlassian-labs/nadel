@@ -1,7 +1,5 @@
 name: two transforms on a field
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     directive @toBeDeleted on FIELD_DEFINITION
@@ -41,31 +39,29 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            foo {
-              uuid_typename: __typename
-              id
-            }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo {
+            uuid_typename: __typename
+            id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "id": "FOO-1",
-              "uuid_typename": "Foo"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "id": "FOO-1",
+            "uuid_typename": "Foo"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

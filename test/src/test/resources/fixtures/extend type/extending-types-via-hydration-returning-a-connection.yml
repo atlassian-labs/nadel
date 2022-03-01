@@ -1,7 +1,5 @@
 name: extending types via hydration returning a connection
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issue: |
     type Query {
@@ -88,159 +86,83 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issue
-      request:
-        query: |
-          query nadel_2_Issue {
-            synth {
-              issue {
-                id
-              }
+  - serviceName: Issue
+    request:
+      query: |
+        query {
+          synth {
+            issue {
+              __typename__hydration__association: __typename
+              hydration__association__id: id
             }
           }
-        variables: {}
-        operationName: nadel_2_Issue
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "synth": {
-              "issue": {
-                "id": "ISSUE-1"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Association
-      request:
-        query: |
-          query nadel_2_Association {
-            association(id: "ISSUE-1", filter: {name: "value"}) {
-              nodes {
-                pageId
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "synth": {
+            "issue": {
+              "hydration__association__id": "ISSUE-1",
+              "__typename__hydration__association": "Issue"
             }
           }
-        variables: {}
-        operationName: nadel_2_Association
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "association": {
-              "nodes": [
-                {
-                  "pageId": "1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Association
-      request:
-        query: |
-          query nadel_2_Association {
-            pages {
-              page(id: "1") {
-                id
-              }
+        },
+        "extensions": {}
+      }
+  - serviceName: Association
+    request:
+      query: |
+        query {
+          association(filter: {name : "value"}, id: "ISSUE-1") {
+            nodes {
+              __typename__hydration__page: __typename
+              hydration__page__pageId: pageId
             }
           }
-        variables: {}
-        operationName: nadel_2_Association
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pages": {
-              "page": {
-                "id": "1"
-              }
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Issue
-      request:
-        query: |
-          query {
-            synth {
-              issue {
-                __typename__hydration__association: __typename
-                hydration__association__id: id
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "association": {
+            "nodes": [
+              {
+                "__typename__hydration__page": "Association",
+                "hydration__page__pageId": "1"
               }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: Association
+    request:
+      query: |
+        query {
+          pages {
+            page(id: "1") {
+              id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "synth": {
-              "issue": {
-                "hydration__association__id": "ISSUE-1",
-                "__typename__hydration__association": "Issue"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Association
-      request:
-        query: |
-          query {
-            association(filter: {name : "value"}, id: "ISSUE-1") {
-              nodes {
-                __typename__hydration__page: __typename
-                hydration__page__pageId: pageId
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "pages": {
+            "page": {
+              "id": "1"
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "association": {
-              "nodes": [
-                {
-                  "__typename__hydration__page": "Association",
-                  "hydration__page__pageId": "1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Association
-      request:
-        query: |
-          query {
-            pages {
-              page(id: "1") {
-                id
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pages": {
-              "page": {
-                "id": "1"
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: rename with interfaces
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -40,41 +38,40 @@ query: |
   }
 variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            nodes {
-              ... on Issue {
-                id
-              }
-              ... on User {
-                __typename__rename__id: __typename
-                rename__id__ari: ari
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          nodes {
+            ... on Issue {
+              id
+            }
+            ... on User {
+              __typename__rename__id: __typename
+              rename__id__ari: ari
             }
           }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "nodes": [
-              {
-                "id": "GQLGW-001"
-              },
-              {
-                "id": "GQLGW-1102"
-              },
-              {
-                "__typename__rename__id": "User",
-                "rename__id__ari": "ari:i-always-forget-the-format/1"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "nodes": [
+            {
+              "id": "GQLGW-001"
+            },
+            {
+              "id": "GQLGW-1102"
+            },
+            {
+              "__typename__rename__id": "User",
+              "rename__id__ari": "ari:i-always-forget-the-format/1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: complex identified by uses same source for 2 hydrations
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Foo: |
     type Query {
@@ -67,147 +65,145 @@ query: |
   }
 variables: { }
 serviceCalls:
-  current: [ ]
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            foos {
-              __typename__batch_hydration__issue: __typename
-              __typename__batch_hydration__detail: __typename
-              batch_hydration__issue__fooId: fooId
-              batch_hydration__detail__fooId: fooId
-            }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          foos {
+            __typename__batch_hydration__issue: __typename
+            __typename__batch_hydration__detail: __typename
+            batch_hydration__issue__fooId: fooId
+            batch_hydration__detail__fooId: fooId
           }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foos": [
-              {
-                "__typename__batch_hydration__issue": "Foo",
-                "__typename__batch_hydration__detail": "Foo",
-                "batch_hydration__issue__fooId": "Foo-1",
-                "batch_hydration__detail__fooId": "Foo-1"
-              },
-              {
-                "__typename__batch_hydration__issue": "Foo",
-                "__typename__batch_hydration__detail": "Foo",
-                "batch_hydration__issue__fooId": "Foo-2",
-                "batch_hydration__detail__fooId": "Foo-2"
-              },
-              {
-                "__typename__batch_hydration__issue": "Foo",
-                "__typename__batch_hydration__detail": "Foo",
-                "batch_hydration__issue__fooId": "Foo-3",
-                "batch_hydration__detail__fooId": "Foo-4"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            issues(issueIds: ["Foo-1", "Foo-2"]) {
-              batch_hydration__issue__issueId: issueId
-              field
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foos": [
+            {
+              "__typename__batch_hydration__issue": "Foo",
+              "__typename__batch_hydration__detail": "Foo",
+              "batch_hydration__issue__fooId": "Foo-1",
+              "batch_hydration__detail__fooId": "Foo-1"
+            },
+            {
+              "__typename__batch_hydration__issue": "Foo",
+              "__typename__batch_hydration__detail": "Foo",
+              "batch_hydration__issue__fooId": "Foo-2",
+              "batch_hydration__detail__fooId": "Foo-2"
+            },
+            {
+              "__typename__batch_hydration__issue": "Foo",
+              "__typename__batch_hydration__detail": "Foo",
+              "batch_hydration__issue__fooId": "Foo-3",
+              "batch_hydration__detail__fooId": "Foo-4"
             }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          issues(issueIds: ["Foo-1", "Foo-2"]) {
+            batch_hydration__issue__issueId: issueId
+            field
           }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "batch_hydration__issue__issueId": "Foo-1",
-                "field": "field_name"
-              },
-              {
-                "batch_hydration__issue__issueId": "Foo-2",
-                "field": "field_name-2"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            issues(issueIds: ["Foo-3"]) {
-              batch_hydration__issue__issueId: issueId
-              field
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "batch_hydration__issue__issueId": "Foo-1",
+              "field": "field_name"
+            },
+            {
+              "batch_hydration__issue__issueId": "Foo-2",
+              "field": "field_name-2"
             }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          issues(issueIds: ["Foo-3"]) {
+            batch_hydration__issue__issueId: issueId
+            field
           }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "batch_hydration__issue__issueId": "Foo-3",
-                "field": "field-3"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            details(detailIds: ["Foo-1", "Foo-2"]) {
-              batch_hydration__detail__detailId: detailId
-              name
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "batch_hydration__issue__issueId": "Foo-3",
+              "field": "field-3"
             }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          details(detailIds: ["Foo-1", "Foo-2"]) {
+            batch_hydration__detail__detailId: detailId
+            name
           }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "details": [
-              {
-                "batch_hydration__detail__detailId": "Foo-2",
-                "name": "Foo 2 Electric Boogaloo"
-              },
-              {
-                "batch_hydration__detail__detailId": "Foo-1",
-                "name": "apple"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            details(detailIds: ["Foo-4"]) {
-              batch_hydration__detail__detailId: detailId
-              name
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "details": [
+            {
+              "batch_hydration__detail__detailId": "Foo-2",
+              "name": "Foo 2 Electric Boogaloo"
+            },
+            {
+              "batch_hydration__detail__detailId": "Foo-1",
+              "name": "apple"
             }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          details(detailIds: ["Foo-4"]) {
+            batch_hydration__detail__detailId: detailId
+            name
           }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "details": [
-              {
-                "batch_hydration__detail__detailId": "Foo-4",
-                "name": "Four Apples"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "details": [
+            {
+              "batch_hydration__detail__detailId": "Foo-4",
+              "name": "Four Apples"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: renamed field with normal field using same source
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Foo: |
     type Query {
@@ -50,77 +48,43 @@ query: |
       renamedField
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            foo {
-              issue {
-                fooDetail {
-                  name
-                }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          foo {
+            __typename__deep_rename__renamedField: __typename
+            issue {
+              fooDetail {
+                name
               }
-              issue {
-                field
-              }
+            }
+            deep_rename__renamedField__issue: issue {
+              field
             }
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "issue": {
-                "field": "field",
-                "fooDetail": {
-                  "name": "fooName"
-                }
-              }
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            foo {
-              __typename__deep_rename__renamedField: __typename
-              issue {
-                fooDetail {
-                  name
-                }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "issue": {
+              "fooDetail": {
+                "name": "fooName"
               }
-              deep_rename__renamedField__issue: issue {
-                field
-              }
+            },
+            "__typename__deep_rename__renamedField": "Foo",
+            "deep_rename__renamedField__issue": {
+              "field": "field"
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "issue": {
-                "fooDetail": {
-                  "name": "fooName"
-                }
-              },
-              "__typename__deep_rename__renamedField": "Foo",
-              "deep_rename__renamedField__issue": {
-                "field": "field"
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

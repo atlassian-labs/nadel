@@ -1,7 +1,5 @@
 name: coerce values in lists
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -16,45 +14,33 @@ query: |
   query {
     listField
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: service
-      request:
-        query: |
-          query nadel_2_service {
-            listField
-          }
-        variables: {}
-        operationName: nadel_2_service
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "listField": ["1", "2", "3"]
-          },
-          "extensions": {}
+  - serviceName: service
+    request:
+      query: |
+        query {
+          listField
         }
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            listField
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "listField": ["1", "2", "3"]
-          },
-          "extensions": {}
-        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "listField": [
+            "1",
+            "2",
+            "3"]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {
     "data": {
-      "listField": [1, 2, 3]
+      "listField": [
+        1,
+        2,
+        3]
     }
   }

@@ -1,7 +1,5 @@
 name: handles skip include directive on field
-enabled:
-  current: false # Not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -35,37 +33,35 @@ query: |
 variables:
   test: true
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo {
             foo {
-              foo {
-                __typename
-              }
-              bar: foo {
-                id
-              }
+              __typename
+            }
+            bar: foo {
+              id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "foo": {
-                "__typename": "Foo"
-              },
-              "bar": {
-                "id": "FOO-1"
-              }
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "foo": {
+              "__typename": "Foo"
+            },
+            "bar": {
+              "id": "FOO-1"
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

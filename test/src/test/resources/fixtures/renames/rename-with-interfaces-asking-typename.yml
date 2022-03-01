@@ -1,7 +1,5 @@
 name: rename with interfaces asking typename
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -39,47 +37,46 @@ query: |
       id
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            nodes {
-              __typename
-              ... on Issue {
-                id
-              }
-              ... on User {
-                __typename__rename__id: __typename
-                rename__id__ari: ari
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          nodes {
+            __typename
+            ... on Issue {
+              id
+            }
+            ... on User {
+              __typename__rename__id: __typename
+              rename__id__ari: ari
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "nodes": [
-              {
-                "__typename": "Issue",
-                "id": "GQLGW-001"
-              },
-              {
-                "__typename": "Issue",
-                "id": "GQLGW-1102"
-              },
-              {
-                "__typename": "User",
-                "__typename__rename__id": "User",
-                "rename__id__ari": "ari:i-always-forget-the-format/1"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "nodes": [
+            {
+              "__typename": "Issue",
+              "id": "GQLGW-001"
+            },
+            {
+              "__typename": "Issue",
+              "id": "GQLGW-1102"
+            },
+            {
+              "__typename": "User",
+              "__typename__rename__id": "User",
+              "rename__id__ari": "ari:i-always-forget-the-format/1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

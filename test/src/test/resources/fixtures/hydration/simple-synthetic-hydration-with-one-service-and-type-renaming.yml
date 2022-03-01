@@ -1,7 +1,5 @@
 name: simple synthetic hydration with one service and type renaming
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   testing: |
     type Query {
@@ -62,127 +60,66 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: testing
-      request:
-        query: |
-          query nadel_2_testing {
-            tests {
-              testing {
-                movie {
-                  id
-                  name
-                  characterId
-                }
-              }
-            }
-          }
-        variables: {}
-        operationName: nadel_2_testing
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "testing": {
-                "movie": {
-                  "id": "M1",
-                  "name": "Movie 1",
-                  "characterId": "C1"
-                }
-              }
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: testing
-      request:
-        query: |
-          query nadel_2_testing {
-            tests {
-              character(id: "C1") {
+  - serviceName: testing
+    request:
+      query: |
+        query {
+          tests {
+            testing {
+              movie {
+                __typename__hydration__character: __typename
+                hydration__character__characterId: characterId
                 id
                 name
               }
             }
           }
-        variables: {}
-        operationName: nadel_2_testing
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "character": {
-                "id": "C1",
-                "name": "Luke",
-                "object_identifier__UUID": "C1"
-              }
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: testing
-      request:
-        query: |
-          query {
-            tests {
-              testing {
-                movie {
-                  __typename__hydration__character: __typename
-                  hydration__character__characterId: characterId
-                  id
-                  name
-                }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": {
+            "testing": {
+              "movie": {
+                "name": "Movie 1",
+                "__typename__hydration__character": "Movie",
+                "hydration__character__characterId": "C1",
+                "id": "M1"
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "testing": {
-                "movie": {
-                  "name": "Movie 1",
-                  "__typename__hydration__character": "Movie",
-                  "hydration__character__characterId": "C1",
-                  "id": "M1"
-                }
-              }
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: testing
-      request:
-        query: |
-          query {
-            tests {
-              character(id: "C1") {
-                id
-                name
-              }
+        },
+        "extensions": {}
+      }
+  - serviceName: testing
+    request:
+      query: |
+        query {
+          tests {
+            character(id: "C1") {
+              id
+              name
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "character": {
-                "name": "Luke",
-                "id": "C1"
-              }
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": {
+            "character": {
+              "name": "Luke",
+              "id": "C1"
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

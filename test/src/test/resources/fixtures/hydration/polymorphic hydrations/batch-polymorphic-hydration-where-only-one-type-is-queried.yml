@@ -1,7 +1,5 @@
 name: batch polymorphic hydration where only one type is queried
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   pets: |
     type Query {
@@ -104,106 +102,115 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: foo
-      request:
-        query: |
-          query {
-            foo {
-              __typename__batch_hydration__data: __typename
-              batch_hydration__data__dataId: dataId
-              batch_hydration__data__dataId: dataId
-            }
+  - serviceName: foo
+    request:
+      query: |
+        query {
+          foo {
+            __typename__batch_hydration__data: __typename
+            batch_hydration__data__dataId: dataId
+            batch_hydration__data__dataId: dataId
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": [{
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": [
+            {
               "__typename__batch_hydration__data": "Foo",
               "batch_hydration__data__dataId": "DOG-0",
               "batch_hydration__data__dataId": "DOG-0"
-            }, {
+            },
+            {
               "__typename__batch_hydration__data": "Foo",
               "batch_hydration__data__dataId": "FISH-0",
               "batch_hydration__data__dataId": "FISH-0"
-            }, {
+            },
+            {
               "__typename__batch_hydration__data": "Foo",
               "batch_hydration__data__dataId": "DOG-1",
               "batch_hydration__data__dataId": "DOG-1"
-            }, {
+            },
+            {
               "__typename__batch_hydration__data": "Foo",
               "batch_hydration__data__dataId": "FISH-1",
               "batch_hydration__data__dataId": "FISH-1"
-            }, {
+            },
+            {
               "__typename__batch_hydration__data": "Foo",
               "batch_hydration__data__dataId": "HUMAN-0",
               "batch_hydration__data__dataId": "HUMAN-0"
             } ]
-          },
-          "extensions": {}
-        }
-    - serviceName: pets
-      request:
-        query: |
-          query {
-            petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
-              ... on Dog {
-                batch_hydration__data__id: id
-              }
-              ... on Fish {
-                __typename
-                fins
-                id
-                batch_hydration__data__id: id
-              }
+        },
+        "extensions": {}
+      }
+  - serviceName: pets
+    request:
+      query: |
+        query {
+          petById(ids: ["DOG-0", "FISH-0", "DOG-1", "FISH-1"]) {
+            ... on Dog {
+              batch_hydration__data__id: id
+            }
+            ... on Fish {
+              __typename
+              fins
+              id
+              batch_hydration__data__id: id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "petById": [{
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "petById": [
+            {
               "batch_hydration__data__id": "DOG-0"
-            }, {
+            },
+            {
               "__typename": "Fish",
               "fins": 4,
               "id": "FISH-0",
               "batch_hydration__data__id": "FISH-0"
-            }, {
+            },
+            {
               "batch_hydration__data__id": "DOG-1"
-            }, {
+            },
+            {
               "__typename": "Fish",
               "fins": 8,
               "id": "FISH-1",
               "batch_hydration__data__id": "FISH-1"
             }]
-          },
-          "extensions": {}
-        }
-    - serviceName: people
-      request:
-        query: |
-          query {
-            humanById(ids: ["HUMAN-0"]) {
-              batch_hydration__data__id: id
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: people
+    request:
+      query: |
+        query {
+          humanById(ids: ["HUMAN-0"]) {
+            batch_hydration__data__id: id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "humanById": [{
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "humanById": [
+            {
               "batch_hydration__data__id": "HUMAN-0"
             }]
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

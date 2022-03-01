@@ -1,7 +1,5 @@
 name: renamed type in union
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   IssueService: |
     type Query {
@@ -52,68 +50,67 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            rename__nodes__all: all {
-              __typename
-              ... on Issue {
-                id
-                links {
-                  __typename
-                }
-              }
-              ... on Monkey {
-                id
-              }
-              ... on User {
-                id
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          rename__nodes__all: all {
+            __typename
+            ... on Issue {
+              id
+              links {
+                __typename
               }
             }
+            ... on Monkey {
+              id
+            }
+            ... on User {
+              id
+            }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__nodes__all": [
-              {
-                "__typename": "Issue",
-                "links": null
-              },
-              null,
-              {
-                "__typename": "Issue",
-                "links": []
-              },
-              {
-                "__typename": "Issue",
-                "links": [
-                  {
-                    "__typename": "User"
-                  },
-                  {
-                    "__typename": "Issue"
-                  },
-                  {
-                    "__typename": "Monkey"
-                  }
-                ]
-              },
-              {
-                "__typename": "Monkey"
-              },
-              {
-                "__typename": "User"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__nodes__all": [
+            {
+              "__typename": "Issue",
+              "links": null
+            },
+            null,
+            {
+              "__typename": "Issue",
+              "links": []
+            },
+            {
+              "__typename": "Issue",
+              "links": [
+                {
+                  "__typename": "User"
+                },
+                {
+                  "__typename": "Issue"
+                },
+                {
+                  "__typename": "Monkey"
+                }
+              ]
+            },
+            {
+              "__typename": "Monkey"
+            },
+            {
+              "__typename": "User"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

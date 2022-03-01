@@ -1,7 +1,5 @@
 name: can generate legacy operation names forwarding original name
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   test: |
     type Query {
@@ -16,26 +14,24 @@ query: |
   query Original {
     foo
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: test
-      request:
-        query: |
-          query nadel_2_test_Original {
-            foo
-          }
-        variables: {}
-        operationName: nadel_2_test_Original
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": null
-          },
-          "extensions": {}
+  - serviceName: test
+    request:
+      query: |
+        query nadel_2_test_Original {
+          foo
         }
+      variables: { }
+      operationName: nadel_2_test_Original
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": null
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

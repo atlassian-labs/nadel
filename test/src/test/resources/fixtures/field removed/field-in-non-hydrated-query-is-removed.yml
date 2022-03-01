@@ -1,7 +1,5 @@
 name: field in non-hydrated query is removed
-enabled:
-  current: true
-  nextgen: false
+enabled: false
 overallSchema:
   CommentService: |
     type Query {
@@ -33,29 +31,28 @@ query: |
       created
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: CommentService
-      request:
-        query: |
-          query nadel_2_CommentService {
-            commentById(id: "C1") {
-              id
-            }
+  - serviceName: CommentService
+    request:
+      query: |
+        query nadel_2_CommentService {
+          commentById(id: "C1") {
+            id
           }
-        variables: {}
-        operationName: nadel_2_CommentService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "commentById": {
-              "id": "C1"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+      operationName: nadel_2_CommentService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "commentById": {
+            "id": "C1"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

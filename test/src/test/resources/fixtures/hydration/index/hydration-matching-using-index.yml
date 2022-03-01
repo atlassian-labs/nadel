@@ -1,7 +1,5 @@
 name: hydration matching using index
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   UserService: |
     type Query {
@@ -47,136 +45,70 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issues {
-              id
-              authorIds
-            }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__authors: __typename
+            batch_hydration__authors__authorIds: authorIds
+            id
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "id": "ISSUE-1",
-                "authorIds": [
-                  "1"
-                ]
-              },
-              {
-                "id": "ISSUE-2",
-                "authorIds": [
-                  "1",
-                  "2"
-                ]
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            usersByIds(ids: ["1", "1", "2"]) {
-              name
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "1"
+              ],
+              "id": "ISSUE-1"
+            },
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "1",
+                "2"
+              ],
+              "id": "ISSUE-2"
             }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query {
+          usersByIds(ids: ["1", "1", "2"]) {
+            name
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "usersByIds": [
-              {
-                "id": "USER-1",
-                "name": "Name"
-              },
-              {
-                "id": "USER-1",
-                "name": "Name"
-              },
-              {
-                "id": "USER-2",
-                "name": "Name 2"
-              }
-            ]
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issues {
-              __typename__batch_hydration__authors: __typename
-              batch_hydration__authors__authorIds: authorIds
-              id
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersByIds": [
+            {
+              "name": "Name"
+            },
+            {
+              "name": "Name"
+            },
+            {
+              "name": "Name 2"
             }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "__typename__batch_hydration__authors": "Issue",
-                "batch_hydration__authors__authorIds": [
-                  "1"
-                ],
-                "id": "ISSUE-1"
-              },
-              {
-                "__typename__batch_hydration__authors": "Issue",
-                "batch_hydration__authors__authorIds": [
-                  "1",
-                  "2"
-                ],
-                "id": "ISSUE-2"
-              }
-            ]
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query {
-            usersByIds(ids: ["1", "1", "2"]) {
-              name
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "usersByIds": [
-              {
-                "name": "Name"
-              },
-              {
-                "name": "Name"
-              },
-              {
-                "name": "Name 2"
-              }
-            ]
-          },
-          "extensions": {}
-        }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

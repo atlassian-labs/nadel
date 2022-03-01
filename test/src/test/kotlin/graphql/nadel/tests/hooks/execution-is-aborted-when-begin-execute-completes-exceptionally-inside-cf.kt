@@ -12,7 +12,6 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOpera
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
 import graphql.nadel.tests.util.extensions
@@ -32,7 +31,7 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally-inside-cf
     var instrumentationParams: NadelInstrumentationExecuteOperationParameters? = null
     var resultBeforeFinalInstrumentation: ExecutionResult? = null
 
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .instrumentation(object : NadelInstrumentation {
                 override fun createState(parameters: NadelInstrumentationCreateStateParameters): InstrumentationState {
@@ -67,7 +66,7 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally-inside-cf
             })
     }
 
-    override fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
+    override fun assertResult(result: ExecutionResult) {
         expectThat(result)
             .extensions["instrumentedExtension"]
             .isEqualTo("dummy extension")

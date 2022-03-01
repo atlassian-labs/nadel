@@ -1,7 +1,5 @@
 name: query to one service with execution input passed down
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -46,56 +44,30 @@ query: |
       id
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: MyService
-      request:
-        query: |
-          query nadel_2_MyService_OpName {
-            hello {
-              name
-            }
-            hello {
-              id
-            }
+  - serviceName: MyService
+    request:
+      query: |
+        query OpName {
+          hello {
+            id
+            name
           }
-        variables: {}
-        operationName: nadel_2_MyService_OpName
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "hello": {
-              "id": "3",
-              "name": "earth"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query OpName {
-            hello {
-              id
-              name
-            }
+      variables: { }
+      operationName: OpName
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "hello": {
+            "name": "earth",
+            "id": "3"
           }
-        variables: {}
-        operationName: OpName
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "hello": {
-              "name": "earth",
-              "id": "3"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

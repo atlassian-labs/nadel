@@ -1,7 +1,5 @@
 name: rejects multiple operation defs without explicit op name
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -25,10 +23,8 @@ query: |
   query Meow {
     cat: foo
   }
-variables: {}
-serviceCalls:
-  current: []
-  nextgen: []
+variables: { }
+serviceCalls: []
 # Assertion done in test hook
 # language=JSON
 response: null

@@ -1,7 +1,5 @@
 name: restricted field via fragments used twice
-enabled:
-  current: true
-  nextgen: false
+enabled: false
 overallSchema:
   Issues: |
     type Query {
@@ -37,39 +35,38 @@ query: |
     id
     restricted
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issue {
+  - serviceName: Issues
+    request:
+      query: |
+        query nadel_2_Issues {
+          issue {
+            ...IssueFragment
+            relatedIssue {
               ...IssueFragment
-              relatedIssue {
-                ...IssueFragment
-              }
             }
           }
-
-          fragment IssueFragment on Issue {
-            id
-          }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "id": "ID1",
-              "relatedIssue": {
-                "id": "ID2"
-              }
-            }
-          },
-          "extensions": {}
         }
+        
+        fragment IssueFragment on Issue {
+          id
+        }
+      variables: { }
+      operationName: nadel_2_Issues
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "id": "ID1",
+            "relatedIssue": {
+              "id": "ID2"
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: renamed type inside hydration
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   IssueService: |
     type Query {
@@ -60,55 +58,54 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: UserService
-      request:
-        query: |
-          query {
-            me {
-              __typename__hydration__issue: __typename
-              hydration__issue__issueId: issueId
+  - serviceName: UserService
+    request:
+      query: |
+        query {
+          me {
+            __typename__hydration__issue: __typename
+            hydration__issue__issueId: issueId
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "me": {
+            "__typename__hydration__issue": "User",
+            "hydration__issue__issueId": "issue-2"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          issueById(id: "issue-2") {
+            details {
+              __typename
+              name
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "me": {
-              "__typename__hydration__issue": "User",
-              "hydration__issue__issueId": "issue-2"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            issueById(id: "issue-2") {
-              details {
-                __typename
-                name
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issueById": {
+            "details": {
+              "__typename": "Details",
+              "name": "Issue two"
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issueById": {
-              "details": {
-                "__typename": "Details",
-                "name": "Issue two"
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: ari argument transform on renamed field
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     directive @interpretAri on ARGUMENT_DEFINITION
@@ -25,31 +23,29 @@ query: |
       key
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            rename__issue__issueById: issueById(id: "57") {
-              __typename__rename__key: __typename
-              rename__key__id: id
-            }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          rename__issue__issueById: issueById(id: "57") {
+            __typename__rename__key: __typename
+            rename__key__id: id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__issue__issueById": {
-              "__typename__rename__key": "Issue",
-              "rename__key__id": "57"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__issue__issueById": {
+            "__typename__rename__key": "Issue",
+            "rename__key__id": "57"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

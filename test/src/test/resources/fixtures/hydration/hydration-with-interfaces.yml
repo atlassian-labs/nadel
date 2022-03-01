@@ -1,7 +1,5 @@
 name: hydration with interfaces
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -41,56 +39,55 @@ query: |
   }
 variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            nodes {
-              ... on Issue {
-                id
-              }
-              ... on User {
-                __typename__hydration__id: __typename
-                hydration__id__ari: ari
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          nodes {
+            ... on Issue {
+              id
+            }
+            ... on User {
+              __typename__hydration__id: __typename
+              hydration__id__ari: ari
             }
           }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "nodes": [
-              {
-                "id": "GQLGW-001"
-              },
-              {
-                "id": "GQLGW-1102"
-              },
-              {
-                "__typename__hydration__id": "User",
-                "hydration__id__ari": "ari:i-always-forget-the-format/1"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            idByAri(id: "ari:i-always-forget-the-format/1")
-          }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "idByAri": "Hello World"
-          },
-          "extensions": {}
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "nodes": [
+            {
+              "id": "GQLGW-001"
+            },
+            {
+              "id": "GQLGW-1102"
+            },
+            {
+              "__typename__hydration__id": "User",
+              "hydration__id__ari": "ari:i-always-forget-the-format/1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          idByAri(id: "ari:i-always-forget-the-format/1")
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "idByAri": "Hello World"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

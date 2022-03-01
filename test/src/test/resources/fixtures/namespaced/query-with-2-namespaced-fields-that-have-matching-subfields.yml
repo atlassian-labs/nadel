@@ -1,7 +1,5 @@
 name: query with 2 namespaced fields that have matching subfields
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -98,151 +96,77 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issue {
-              getIssue {
-                text
-              }
+  - serviceName: IssueSearch
+    request:
+      query: |
+        query {
+          issue {
+            search {
+              count
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          query nadel_2_IssueSearch {
-            issue {
-              search {
-                count
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "search": {
+              "count": 100
             }
           }
-        variables: {}
-        operationName: nadel_2_IssueSearch
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 100
-              }
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Pages
-      request:
-        query: |
-          query nadel_2_Pages {
-            page {
-              getIssue {
-                pageText
-              }
+        },
+        "extensions": {}
+      }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issue {
+            getIssue {
+              text
             }
           }
-        variables: {}
-        operationName: nadel_2_Pages
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "page": {
-              "getIssue": {
-                "pageText": "Bar"
-              }
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: IssueSearch
-      request:
-        query: |
-          query {
-            issue {
-              search {
-                count
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "getIssue": {
+              "text": "Foo"
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 100
-              }
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issue {
-              getIssue {
-                text
-              }
+        },
+        "extensions": {}
+      }
+  - serviceName: Pages
+    request:
+      query: |
+        query {
+          page {
+            getIssue {
+              pageText
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Pages
-      request:
-        query: |
-          query {
-            page {
-              getIssue {
-                pageText
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "page": {
+            "getIssue": {
+              "pageText": "Bar"
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "page": {
-              "getIssue": {
-                "pageText": "Bar"
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

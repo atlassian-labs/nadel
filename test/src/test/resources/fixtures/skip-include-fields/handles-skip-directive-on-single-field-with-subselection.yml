@@ -1,7 +1,5 @@
 name: handles skip directive on single field with subselection
-enabled:
-  current: false # Not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -32,27 +30,25 @@ query: |
 variables:
   test: true
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            foo {
-              __typename__skip_include____skip: __typename
-            }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo {
+            __typename__skip_include____skip: __typename
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "__typename__skip_include____skip": "Foo"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__skip_include____skip": "Foo"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: can execute document with multiple operation definitions
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -25,27 +23,25 @@ query: |
   query Meow {
     cat: foo
   }
-variables: {}
+variables: { }
 operationName: Test
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query Test {
-            test: foo
-          }
-        variables: {}
-        operationName: Test
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "test": "Test Working"
-          },
-          "extensions": {}
+  - serviceName: service
+    request:
+      query: |
+        query Test {
+          test: foo
         }
+      variables: { }
+      operationName: Test
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "test": "Test Working"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

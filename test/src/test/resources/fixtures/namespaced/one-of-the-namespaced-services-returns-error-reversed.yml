@@ -1,7 +1,5 @@
 name: one of the namespaced services returns error reversed
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -65,106 +63,55 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issue {
-              getIssue {
-                text
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issue {
+            getIssue {
+              text
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": null
-          },
-          "errors": [
-            {
-              "message": "Error on IssueSearch"
-            }
-          ],
-          "extensions": {}
         }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          query nadel_2_IssueSearch {
-            issue {
-              search {
-                count
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": null
+        },
+        "errors": [
+          {
+            "message": "Error on IssueSearch"
+          }
+        ],
+        "extensions": {}
+      }
+  - serviceName: IssueSearch
+    request:
+      query: |
+        query {
+          issue {
+            search {
+              count
             }
           }
-        variables: {}
-        operationName: nadel_2_IssueSearch
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 1
-              }
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issue {
-              getIssue {
-                text
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "search": {
+              "count": 1
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": null
-          },
-          "errors": [
-            {
-              "message": "Error on IssueSearch"
-            }
-          ],
-          "extensions": {}
-        }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          query {
-            issue {
-              search {
-                count
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 1
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

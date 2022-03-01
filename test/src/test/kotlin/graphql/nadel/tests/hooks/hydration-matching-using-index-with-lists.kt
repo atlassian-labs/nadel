@@ -4,7 +4,6 @@ import graphql.nadel.Nadel
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.util.serviceExecutionFactory
 import graphql.schema.idl.TypeDefinitionRegistry
@@ -15,7 +14,7 @@ import graphql.schema.idl.TypeDefinitionRegistry
 @Suppress("UnusedEquals")
 @UseHook
 class `hydration-matching-using-index-with-lists` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         val serviceExecutionFactory = builder.serviceExecutionFactory
 
         return builder

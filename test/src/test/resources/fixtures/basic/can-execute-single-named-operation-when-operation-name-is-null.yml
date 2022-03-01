@@ -1,7 +1,5 @@
 name: can execute single named operation when operation name is null
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -16,26 +14,24 @@ query: |
   query Test {
     test: foo
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query Test {
-            test: foo
-          }
-        variables: {}
-        operationName: Test
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "test": "Test Working"
-          },
-          "extensions": {}
+  - serviceName: service
+    request:
+      query: |
+        query Test {
+          test: foo
         }
+      variables: { }
+      operationName: Test
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "test": "Test Working"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

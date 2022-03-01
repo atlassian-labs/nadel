@@ -1,7 +1,5 @@
 name: renamed type is shared deeper
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   NextgenIssues: |-
     type Query {
@@ -49,39 +47,37 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: NextgenIssues
-      request:
-        query: |
-          query {
-            issue(id: "ISSUE-1") {
+  - serviceName: NextgenIssues
+    request:
+      query: |
+        query {
+          issue(id: "ISSUE-1") {
+            __typename
+            assignee {
               __typename
-              assignee {
-                __typename
-                id
-              }
               id
             }
+            id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "__typename": "Issue",
-              "id": "ISSUE-1",
-              "assignee": {
-                "__typename": "NextgenAccount",
-                "id": "USER-1"
-              }
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "__typename": "Issue",
+            "id": "ISSUE-1",
+            "assignee": {
+              "__typename": "NextgenAccount",
+              "id": "USER-1"
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

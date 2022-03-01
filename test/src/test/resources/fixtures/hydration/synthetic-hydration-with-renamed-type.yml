@@ -1,7 +1,5 @@
 name: synthetic hydration with renamed type
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Bar: |
     type Query {
@@ -52,102 +50,54 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            fooOriginal {
-              id
-              fooBarId
-            }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          rename__foo__fooOriginal: fooOriginal {
+            __typename__hydration__fooBar: __typename
+            hydration__fooBar__fooBarId: fooBarId
+            id
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "fooOriginal": {
-              "id": "Foo",
-              "fooBarId": "hydrated-bar"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query nadel_2_Bar {
-            bars {
-              barById(id: "hydrated-bar") {
-                id
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__foo__fooOriginal": {
+            "hydration__fooBar__fooBarId": "hydrated-bar",
+            "id": "Foo",
+            "__typename__hydration__fooBar": "Foo"
           }
-        variables: {}
-        operationName: nadel_2_Bar
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "bars": {
-              "barById": {
-                "id": "hydrated-bar"
-              }
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            rename__foo__fooOriginal: fooOriginal {
-              __typename__hydration__fooBar: __typename
-              hydration__fooBar__fooBarId: fooBarId
+        },
+        "extensions": {}
+      }
+  - serviceName: Bar
+    request:
+      query: |
+        query {
+          bars {
+            barById(id: "hydrated-bar") {
               id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__foo__fooOriginal": {
-              "hydration__fooBar__fooBarId": "hydrated-bar",
-              "id": "Foo",
-              "__typename__hydration__fooBar": "Foo"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query {
-            bars {
-              barById(id: "hydrated-bar") {
-                id
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "bars": {
+            "barById": {
+              "id": "hydrated-bar"
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "bars": {
-              "barById": {
-                "id": "hydrated-bar"
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -19,7 +19,6 @@ import graphql.normalized.NormalizedInputValue
 
 @UseHook
 class `transformer-on-hydration-fields` : EngineTestHook {
-
     private fun hasParentWithName(field: ExecutableNormalizedField, parentName: String): Boolean {
         return if (field.parent == null) {
             false

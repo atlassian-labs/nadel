@@ -1,7 +1,5 @@
 name: test batch hydration null pointer when hydrated query field does not exist
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Bar: |
     type Query {
@@ -48,36 +46,7 @@ query: |
       }
     }
   }
-variables: {}
-serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            foos {
-              barId
-            }
-          }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foos": [
-              {
-                "barId": "bar1"
-              },
-              {
-                "barId": "bar2"
-              },
-              {
-                "barId": "bar3"
-              }
-            ]
-          },
-          "extensions": {}
-        }
+variables: { }
+serviceCalls: [ ]
 # language=JSON
 response: null

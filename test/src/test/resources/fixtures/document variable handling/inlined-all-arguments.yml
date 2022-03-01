@@ -1,7 +1,5 @@
 name: inlined all arguments
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -32,25 +30,24 @@ query: |
   }
 variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query myQuery($v0: InputWithJson, $v1: JSON!) {
-            hello(arg: $v0, arg1: $v1)
-          }
-        variables:
-          v0: { names: ["Bobba","Fett"], payload: { "name": "Bobert", age: "23" } }
-          v1: { interests: [ "photography", "basketball" ] }
-        operationName: myQuery
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "hello": "world"
-          },
-          "extensions": {}
+  - serviceName: MyService
+    request:
+      query: |
+        query myQuery($v0: InputWithJson, $v1: JSON!) {
+          hello(arg: $v0, arg1: $v1)
         }
+      variables:
+        v0: { names: [ "Bobba","Fett" ], payload: { "name": "Bobert", age: "23" } }
+        v1: { interests: [ "photography", "basketball" ] }
+      operationName: myQuery
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "hello": "world"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {
