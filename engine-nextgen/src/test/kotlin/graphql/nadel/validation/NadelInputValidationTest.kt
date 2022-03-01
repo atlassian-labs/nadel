@@ -223,4 +223,69 @@ class NadelInputValidationTest : DescribeSpec({
             assert(error.subject == error.overallField)
         }
     }
+
+    it("fails if input field in underlying is non-nullable but nullable in overlying") {
+        val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                        "test" to """
+                        $renameDirectiveDef
+ 
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            p: Professional
+                            m: Manager
+                        }
+                        enum Manager {
+                            M6
+                            M4
+                            M3
+                            M5
+                        }
+                        enum Professional {
+                            P5
+                            P4
+                            P6
+                            P3
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                        "test" to """
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            p: Professional!
+                            m: Manager
+                        }
+                        enum Manager {
+                            M6
+                            M4
+                            M3
+                            M5
+                        }
+                        enum Professional {
+                            P3
+                            P4
+                            P5
+                            P6
+                        }
+                    """.trimIndent(),
+                ),
+        )
+
+        val errors = validate(fixture)
+        assert(errors.map { it.message }.isNotEmpty())
+
+        val error = errors.assertSingleOfType<NadelSchemaValidationError.StricterUnderlyingInputField>()
+        assert(error.service.name == "test")
+        assert(error.parentType.overall.name == "Role")
+        assert(error.parentType.underlying.name == error.parentType.overall.name)
+        assert(error.overallField.name == "m")
+        assert(error.underlyingField.name == error.overallField.name)
+        assert(error.subject == error.overallField)
+    }
+
 })

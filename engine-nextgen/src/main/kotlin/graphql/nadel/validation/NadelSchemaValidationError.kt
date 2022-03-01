@@ -151,6 +151,25 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class StricterUnderlyingInputField(
+            val parentType: NadelServiceSchemaElement,
+            val overallField: GraphQLInputObjectField,
+            val underlyingField: GraphQLInputObjectField,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val uf = makeFieldCoordinates(parentType.underlying.name, underlyingField.name)
+            val s = service.name
+            val ot = parentType.overall.name
+            "Overall input field $of on the overall input type $ot on service $s cannot be nullable when underlying input field $uf is non-nullable. " +
+                    "The underlying input fields cannot have stricter arguments."
+        }
+
+        override val subject = overallField
+    }
+
     data class MissingUnderlyingEnumValue(
         val parentType: NadelServiceSchemaElement,
         val overallValue: GraphQLEnumValueDefinition,

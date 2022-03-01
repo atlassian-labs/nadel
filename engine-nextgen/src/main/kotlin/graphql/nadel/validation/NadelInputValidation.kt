@@ -27,15 +27,25 @@ internal class NadelInputValidation {
     ): List<NadelSchemaValidationError> {
         val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
 
-        return overallFields.mapNotNull { overallField ->
+        val missingUnderlyingFieldErrors: List<NadelSchemaValidationError> = overallFields.mapNotNull { overallField ->
             val underlyingField = underlyingFieldsByName[overallField.name]
 
             if (underlyingField == null) {
                 MissingUnderlyingInputField(parent, overallField)
             } else {
                 // TODO: type check here
+                getInputFieldErrors(parent, overallField, underlyingField)
                 null
             }
         }
+
+        return missingUnderlyingFieldErrors
+    }
+
+    private fun getInputFieldErrors(parent: NadelServiceSchemaElement,
+                                    overallField: GraphQLInputObjectField,
+                                    underlyingField: GraphQLInputObjectField,
+    ): List<NadelSchemaValidationError> {
+        TODO("Not yet implemented")
     }
 }
