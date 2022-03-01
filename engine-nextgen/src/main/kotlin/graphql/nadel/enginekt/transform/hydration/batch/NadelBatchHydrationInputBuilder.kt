@@ -7,6 +7,7 @@ import graphql.nadel.enginekt.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
+import graphql.nadel.enginekt.util.CountedBox
 import graphql.nadel.enginekt.util.emptyOrSingle
 import graphql.nadel.enginekt.util.flatten
 import graphql.nadel.enginekt.util.javaValueToAstValue
@@ -29,7 +30,7 @@ internal object NadelBatchHydrationInputBuilder {
         hydrationField: ExecutableNormalizedField,
         parentNodes: List<JsonNode>,
         hooks: ServiceExecutionHooks,
-    ): List<Map<NadelHydrationActorInputDef, NormalizedInputValue>> {
+    ): List<Map<NadelHydrationActorInputDef, CountedBox<NormalizedInputValue>>> {
         val nonBatchArgs = getNonBatchInputValues(instruction, hydrationField)
         val batchArgs = getBatchInputValues(instruction, parentNodes, aliasHelper, hooks)
 
@@ -39,14 +40,18 @@ internal object NadelBatchHydrationInputBuilder {
     private fun getNonBatchInputValues(
         instruction: NadelBatchHydrationFieldInstruction,
         hydrationField: ExecutableNormalizedField,
-    ): Map<NadelHydrationActorInputDef, NormalizedInputValue> {
-        return mapFrom(
+    ): Map<NadelHydrationActorInputDef, CountedBox<NormalizedInputValue>> {
+        var counter = 0
+        val map = mapFrom(
             instruction.actorInputValueDefs.mapNotNull { actorFieldArg ->
                 when (val valueSource = actorFieldArg.valueSource) {
                     is NadelHydrationActorInputDef.ValueSource.ArgumentValue -> {
                         when (val argValue = hydrationField.normalizedArguments[valueSource.argumentName]) {
                             null -> null
-                            else -> actorFieldArg to argValue
+                            else -> {
+                                counter++
+                                actorFieldArg to argValue
+                            }
                         }
                     }
                     // These are batch values, ignore them
@@ -54,6 +59,7 @@ internal object NadelBatchHydrationInputBuilder {
                 }
             },
         )
+        return map.mapValues { CountedBox(it.value, counter) }
     }
 
     private fun getBatchInputValues(
@@ -61,7 +67,7 @@ internal object NadelBatchHydrationInputBuilder {
         parentNodes: List<JsonNode>,
         aliasHelper: NadelAliasHelper,
         hooks: ServiceExecutionHooks,
-    ): List<Pair<NadelHydrationActorInputDef, NormalizedInputValue>> {
+    ): List<Pair<NadelHydrationActorInputDef, CountedBox<NormalizedInputValue>>> {
         val batchSize = instruction.batchSize
 
         val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction) ?: return emptyList()
@@ -75,11 +81,12 @@ internal object NadelBatchHydrationInputBuilder {
         }
 
         return partitionArgumentList.flatMap { it.chunked(size = batchSize) }
-            .map { chunk ->
-                batchInputDef to NormalizedInputValue(
+            .map { chunkedFieldResultValues ->
+                val normalizedInputValue = NormalizedInputValue(
                     GraphQLTypeUtil.simplePrint(actorBatchArgDef.type),
-                    javaValueToAstValue(chunk),
+                    javaValueToAstValue(chunkedFieldResultValues),
                 )
+                batchInputDef to CountedBox(normalizedInputValue, chunkedFieldResultValues.size)
             }
     }
 

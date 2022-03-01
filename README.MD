@@ -96,4 +96,6 @@ type User {
 
 In order to run the tests from `EngineTests` in IntelliJ you need to have the KoTest plugin installed.
 
+To run a specific test via `EngineTests` then put `TEST_NAME=xxxx xxxx` on the IDEA runner configuration
+
 

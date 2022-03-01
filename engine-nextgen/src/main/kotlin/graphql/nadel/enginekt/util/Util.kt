@@ -41,3 +41,8 @@ fun <T> fold(initial: T, count: Int, transform: (T) -> T): T {
     }
     return element
 }
+
+/**
+ * A box class that holds some value and a count associated with it
+ */
+data class CountedBox<T> (val boxedObject : T, val count : Int)
