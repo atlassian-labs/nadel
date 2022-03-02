@@ -82,6 +82,10 @@ internal class NadelCoerceTransform : NadelTransform<State> {
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
+        if (!executionContext.hints.runCoerceTransform.invoke(service)) {
+            return null
+        }
+
         val schema = executionBlueprint.engineSchema
 
         val distinctUnwrappedTypes = overallField.objectTypeNames
