@@ -4,6 +4,7 @@ import graphql.PublicApi;
 import graphql.nadel.hints.AllDocumentVariablesHint;
 import graphql.nadel.hints.LegacyOperationNamesHint;
 import graphql.nadel.hints.NewDocumentCompiler;
+import graphql.nadel.hints.RunCoerceTransform;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -13,11 +14,13 @@ public class NadelExecutionHints {
     private final LegacyOperationNamesHint legacyOperationNames;
     private final AllDocumentVariablesHint allDocumentVariablesHint;
     private final NewDocumentCompiler newDocumentCompiler;
+    private final RunCoerceTransform runCoerceTransform;
 
     private NadelExecutionHints(Builder builder) {
         this.legacyOperationNames = builder.legacyOperationNames;
         this.allDocumentVariablesHint = builder.allDocumentVariablesHint;
         this.newDocumentCompiler = builder.newDocumentCompiler;
+        this.runCoerceTransform = builder.runCoerceTransform;
     }
 
     /**
@@ -46,6 +49,14 @@ public class NadelExecutionHints {
     }
 
     /**
+     * Whether to run or disable graphql.nadel.enginekt.transform.NadelCoerceTransform
+     */
+    @NotNull
+    public RunCoerceTransform getRunCoerceTransform() {
+        return runCoerceTransform;
+    }
+
+    /**
      * Returns a builder with the same field values as this object.
      * <p>
      * This is useful for transforming the object.
@@ -69,6 +80,7 @@ public class NadelExecutionHints {
         private LegacyOperationNamesHint legacyOperationNames = service -> false;
         private AllDocumentVariablesHint allDocumentVariablesHint = service -> false;
         private NewDocumentCompiler newDocumentCompiler = service -> false;
+        private RunCoerceTransform runCoerceTransform = service -> true;
 
         private Builder() {
         }
@@ -77,6 +89,7 @@ public class NadelExecutionHints {
             legacyOperationNames = nadelExecutionHints.legacyOperationNames;
             allDocumentVariablesHint = nadelExecutionHints.allDocumentVariablesHint;
             newDocumentCompiler = nadelExecutionHints.newDocumentCompiler;
+            runCoerceTransform = nadelExecutionHints.runCoerceTransform;
         }
 
         public Builder legacyOperationNames(@NotNull LegacyOperationNamesHint flag) {
@@ -94,6 +107,12 @@ public class NadelExecutionHints {
         public Builder newDocumentCompiler(@NotNull NewDocumentCompiler flag) {
             Objects.requireNonNull(flag);
             this.newDocumentCompiler = flag;
+            return this;
+        }
+
+        public Builder runCoerceTransform(@NotNull RunCoerceTransform flag) {
+            Objects.requireNonNull(flag);
+            this.runCoerceTransform = flag;
             return this;
         }
 
