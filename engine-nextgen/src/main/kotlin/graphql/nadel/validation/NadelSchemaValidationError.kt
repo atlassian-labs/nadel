@@ -298,7 +298,7 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
-    data class MissingHydrationActorFieldArgument(
+    data class NonExistentHydrationActorFieldArgument(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val hydration: UnderlyingServiceHydration,
@@ -317,7 +317,7 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
-    data class NonExistentHydrationActorFieldArgument(
+    data class MissingRequiredHydrationActorFieldArgument(
             val parentType: NadelServiceSchemaElement,
             val overallField: GraphQLFieldDefinition,
             val hydration: UnderlyingServiceHydration,

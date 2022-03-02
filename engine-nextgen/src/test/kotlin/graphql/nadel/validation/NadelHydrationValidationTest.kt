@@ -4,13 +4,13 @@ import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedF
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
-import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorFieldArgument
+import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorFieldInOverallSchema
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
-import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
+import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrationActorFieldArgument
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
 
@@ -654,7 +654,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<MissingHydrationActorFieldArgument>()
+            val error = errors.assertSingleOfType<NonExistentHydrationActorFieldArgument>()
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
@@ -727,8 +727,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("fails if hydration field has missing non-nullable arguments with underlying top level fields") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -736,7 +736,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!, other: Boolean!): User
                         }
@@ -754,9 +754,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -765,7 +765,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!, other: Boolean!): User
                         }
@@ -774,13 +774,13 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<NonExistentHydrationActorFieldArgument>()
+            val error = errors.assertSingleOfType<MissingRequiredHydrationActorFieldArgument>()
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
@@ -789,8 +789,8 @@ class NadelHydrationValidationTest : DescribeSpec({
 
         it("passes if hydration field has missing nullable arguments with underlying top level fields") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "issues" to """
+                overallSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -798,7 +798,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             id: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!, other: Boolean): User
                         }
@@ -816,9 +816,9 @@ class NadelHydrationValidationTest : DescribeSpec({
                             )
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "issues" to """
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
                         type Query {
                             issue: Issue
                         }
@@ -827,7 +827,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             creator: ID!
                         }
                     """.trimIndent(),
-                            "users" to """
+                    "users" to """
                         type Query {
                             user(id: ID!, other: Boolean): User
                         }
@@ -836,7 +836,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                             name: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
