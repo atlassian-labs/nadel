@@ -134,7 +134,6 @@ serviceCalls:
         query: |
           query {
             humanById(id: "HUMAN-0") {
-              __typename__type_filter____typename: __typename
               __typename
               __typename__type_filter__id: __typename
               __typename__type_filter__breed: __typename
@@ -148,7 +147,6 @@ serviceCalls:
         {
           "data": {
             "humanById": {
-              "__typename__type_filter____typename": "Human",
               "__typename": "Human",
               "__typename__type_filter__id": "Human",
               "__typename__type_filter__breed": "Human",

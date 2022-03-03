@@ -22,6 +22,7 @@ import graphql.normalized.NormalizedInputValue;
 import graphql.normalized.VariableAccumulator;
 import graphql.normalized.VariablePredicate;
 import graphql.normalized.VariableValueWithDefinition;
+import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import static graphql.language.Field.newField;
 import static graphql.language.InlineFragment.newInlineFragment;
 import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.language.TypeName.newTypeName;
+import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 
 @Internal
 public class ExecutableNormalizedOperationToAstCompiler {
@@ -80,7 +82,7 @@ public class ExecutableNormalizedOperationToAstCompiler {
 
         for (ExecutableNormalizedField nf : executableNormalizedFields) {
             Map<String, List<Field>> groupFieldsForChild = selectionForNormalizedField(schema, nf, variableAccumulator);
-            if (nf.isConditional(schema)) {
+            if (isConditionalCompat(nf, schema)) {
                 groupFieldsForChild.forEach((objectTypeName, fields) -> {
                     List<Field> fieldList = conditionalFieldsByObjectTypeName.computeIfAbsent(objectTypeName, ignored -> new ArrayList<>());
                     fieldList.addAll(fields);
@@ -179,5 +181,16 @@ public class ExecutableNormalizedOperationToAstCompiler {
         } else {
             return argValue(executableNormalizedField, argName, normalizedInputValue.getValue(), variableAccumulator);
         }
+    }
+
+    private static boolean isConditionalCompat(ExecutableNormalizedField nf, GraphQLSchema schema) {
+        if (nf.getParent() == null) {
+            return false;
+        }
+        return nf.getObjectTypeNames().size() > 1 || unwrapAll(nf.getParent().getType(schema)) != getOneObjectTypeCompat(nf, schema);
+    }
+
+    public static GraphQLObjectType getOneObjectTypeCompat(ExecutableNormalizedField nf, GraphQLSchema schema) {
+        return (GraphQLObjectType) schema.getType(nf.getObjectTypeNames().iterator().next());
     }
 }
