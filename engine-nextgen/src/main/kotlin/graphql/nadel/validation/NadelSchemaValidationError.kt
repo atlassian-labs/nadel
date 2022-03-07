@@ -151,6 +151,25 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class IncompatibleFieldInputType(
+            val parentType: NadelServiceSchemaElement,
+            val overallInputField: GraphQLInputObjectField,
+            val underlyingInputField: GraphQLInputObjectField,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val s = service.name
+            val of = makeFieldCoordinates(parentType.overall.name, overallInputField.name)
+            val uf = makeFieldCoordinates(parentType.underlying.name, underlyingInputField.name)
+            val ot = GraphQLTypeUtil.simplePrint(overallInputField.type)
+            val ut = GraphQLTypeUtil.simplePrint(underlyingInputField.type)
+            "Overall field $of has input type $ot but underlying field $uf in service $s has input type $ut"
+        }
+
+        override val subject = overallInputField
+    }
+
     data class MissingUnderlyingEnumValue(
         val parentType: NadelServiceSchemaElement,
         val overallValue: GraphQLEnumValueDefinition,

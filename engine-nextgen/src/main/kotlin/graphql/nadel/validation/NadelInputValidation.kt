@@ -1,7 +1,12 @@
 package graphql.nadel.validation
 
+import graphql.nadel.enginekt.util.isList
 import graphql.nadel.enginekt.util.strictAssociateBy
+import graphql.nadel.enginekt.util.unwrapAll
+import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
+import graphql.nadel.validation.util.NadelInputValidationUtil.isMatchingInputTypeNameIgnoringNullableRenameScalar
+import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLInputObjectField
 import graphql.schema.GraphQLInputObjectType
 
@@ -27,14 +32,28 @@ internal class NadelInputValidation {
     ): List<NadelSchemaValidationError> {
         val underlyingFieldsByName = underlyingFields.strictAssociateBy { it.name }
 
-        return overallFields.mapNotNull { overallField ->
-            val underlyingField = underlyingFieldsByName[overallField.name]
+        return overallFields.flatMap { overallField ->
+            validate(parent, overallField, underlyingFieldsByName)
+        }
+    }
 
-            if (underlyingField == null) {
-                MissingUnderlyingInputField(parent, overallField)
+    private fun validate(
+            parent: NadelServiceSchemaElement,
+            overallInputField: GraphQLInputObjectField,
+            underlyingFieldsByName: Map<String, GraphQLInputObjectField>,
+    ): List<NadelSchemaValidationError> {
+        val underlyingInputField = underlyingFieldsByName[overallInputField.name]
+        return if (underlyingInputField == null) {
+            listOf(
+                    MissingUnderlyingInputField(parent, overallInputField),
+            )
+        } else {
+            if (!isMatchingInputTypeNameIgnoringNullableRenameScalar(overallInputField.type, underlyingInputField.type)) {
+                listOf(
+                        IncompatibleFieldInputType(parent, overallInputField, underlyingInputField)
+                )
             } else {
-                // TODO: type check here
-                null
+                listOf()
             }
         }
     }
