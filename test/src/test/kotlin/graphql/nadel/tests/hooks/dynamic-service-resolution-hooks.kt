@@ -54,17 +54,6 @@ class Hooks : ServiceExecutionHooks {
             ResultPath.fromList(listOf(executableNormalizedField.resultKey))
         )
     }
-
-
-    override fun resolveServiceForField(
-        services: Collection<Service>,
-        executionStepInfo: ExecutionStepInfo,
-    ): ServiceOrError {
-        val idArgument = executionStepInfo.arguments.get("id")
-
-        return resolveServiceGeneric(services, idArgument!!, executionStepInfo.path)
-
-    }
 }
 
 @UseHook
