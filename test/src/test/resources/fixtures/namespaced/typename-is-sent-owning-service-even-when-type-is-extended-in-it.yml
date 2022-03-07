@@ -1,7 +1,5 @@
 name: typename is sent owning service even when type is extended in it
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -83,61 +81,33 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issue {
-              __typename
-              getIssue {
-                text
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issue {
+            __typename
+            getIssue {
+              text
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "__typename": "IssueQuery",
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issue {
-              __typename
-              getIssue {
-                text
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "__typename": "IssueQuery",
+            "getIssue": {
+              "text": "Foo"
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "__typename": "IssueQuery",
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

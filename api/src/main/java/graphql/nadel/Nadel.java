@@ -361,7 +361,7 @@ public class Nadel {
 
         private NadelExecutionEngine buildDefaultEngine(Nadel nadel) {
             try {
-                Class<?> klass = Class.forName("graphql.nadel.NadelEngine");
+                Class<?> klass = Class.forName("graphql.nadel.NextgenEngine");
                 Constructor<?> declaredConstructor = klass.getDeclaredConstructor(Nadel.class);
                 declaredConstructor.setAccessible(true);
                 try {

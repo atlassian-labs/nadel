@@ -1,7 +1,5 @@
 name: rename with first path element returning null
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -29,55 +27,31 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issue {
-              details {
-                name
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issue {
+            __typename__deep_rename__name: __typename
+            deep_rename__name__details: details {
+              name
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "details": null
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issue {
-              __typename__deep_rename__name: __typename
-              deep_rename__name__details: details {
-                name
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "deep_rename__name__details": null,
+            "__typename__deep_rename__name": "Issue"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "deep_rename__name__details": null,
-              "__typename__deep_rename__name": "Issue"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

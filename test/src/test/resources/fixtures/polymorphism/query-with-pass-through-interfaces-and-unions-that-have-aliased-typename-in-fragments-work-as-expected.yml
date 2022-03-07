@@ -1,7 +1,5 @@
 name: query with pass through interfaces and unions that have aliased __typename in fragments work as expected
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   PetService: |
     type Query {
@@ -146,88 +144,43 @@ query: |
 variables:
   isLoyal: true
 serviceCalls:
-  current:
-    - serviceName: PetService
-      request:
-        query: |
-          query nadel_2_PetService_petQ($isLoyal: Boolean) {
-            pets(isLoyal: $isLoyal) {
-              name
-              ...DogFrag
-              ... on Cat {
-                wearsBell
-                aliasedCatTypeName: __typename
-              }
-              type_hint_typename__UUID: __typename
+  - serviceName: PetService
+    request:
+      query: |
+        query petQ {
+          pets(isLoyal: true) {
+            name
+            ... on Cat {
+              aliasedCatTypeName: __typename
+              wearsBell
+            }
+            ... on Dog {
+              aliasedDogTypeName: __typename
+              wearsCollar
             }
           }
-
-          fragment DogFrag on Dog {
-            wearsCollar
-            aliasedDogTypeName: __typename
-          }
-        variables:
-          isLoyal: true
-        operationName: nadel_2_PetService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "wearsCollar": true,
-                "aliasedDogTypeName": "Dog",
-                "type_hint_typename__UUID": "Dog"
-              },
-              {
-                "name": "Whiskers",
-                "wearsBell": false,
-                "aliasedCatTypeName": "Cat",
-                "type_hint_typename__UUID": "Cat"
-              }
-            ]
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: PetService
-      request:
-        query: |
-          query petQ {
-            pets(isLoyal: true) {
-              name
-              ... on Cat {
-                aliasedCatTypeName: __typename
-                wearsBell
-              }
-              ... on Dog {
-                aliasedDogTypeName: __typename
-                wearsCollar
-              }
+      variables: { }
+      operationName: petQ
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "pets": [
+            {
+              "name": "Sparky",
+              "wearsCollar": true,
+              "aliasedDogTypeName": "Dog"
+            },
+            {
+              "name": "Whiskers",
+              "wearsBell": false,
+              "aliasedCatTypeName": "Cat"
             }
-          }
-        variables: {}
-        operationName: petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "wearsCollar": true,
-                "aliasedDogTypeName": "Dog"
-              },
-              {
-                "name": "Whiskers",
-                "wearsBell": false,
-                "aliasedCatTypeName": "Cat"
-              }
-            ]
-          },
-          "extensions": {}
-        }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

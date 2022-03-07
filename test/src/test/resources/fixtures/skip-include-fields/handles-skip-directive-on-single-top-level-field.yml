@@ -1,7 +1,5 @@
 name: handles skip directive on single top level field
-enabled:
-  current: false # Not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -18,9 +16,7 @@ query: |
   }
 variables:
   test: true
-serviceCalls:
-  current: []
-  nextgen: []
+serviceCalls: []
 # language=JSON
 response: |-
   {

@@ -6,6 +6,7 @@ import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
+import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
@@ -50,7 +51,6 @@ private val defaultHints = NadelExecutionHints.newHints()
 private val sep = "-".repeat(50)
 
 class EngineTests : FunSpec({
-
     println(
         """
         $sep
@@ -60,10 +60,8 @@ class EngineTests : FunSpec({
         The name will be repeated per test
         
         $sep
-        
-    """.trimIndent()
+        """.trimIndent(),
     )
-    val engineFactories = EngineTypeFactories()
 
     val fixturesDir = File(javaClass.classLoader.getResource("fixtures")!!.path)
         // Note: resources end up in nadel/test/build/resources/test/fixtures/
@@ -97,44 +95,35 @@ class EngineTests : FunSpec({
                     }
                 }
         }
+        .filter {
+            it.enabled
+        }
+        .filter { fixture ->
+            if (singleTestToRun.isBlank()) {
+                true
+            } else {
+                fixture.name.equals(singleTestToRun, ignoreCase = true)
+                    || fixture.name.toSlug().equals(singleTestToRun, ignoreCase = true)
+            }
+        }
         .forEach { fixture ->
             println(fixture.name)
 
-            engineFactories.all
-                .filter {
-                    if (singleTestToRun.isBlank()) {
-                        true
-                    } else {
-                        fixture.name.equals(singleTestToRun, ignoreCase = true)
-                            || fixture.name.toSlug().equals(singleTestToRun, ignoreCase = true)
-                    }
-                }
-                .filter { (engineType) ->
-                    fixture.enabled.get(engineType = engineType) // && engineType == nextgen
-                }
-                .forEach { (engineType, engineFactory) ->
-                    // Run for tests that don't have nextgen calls
-                    val execute: suspend TestContext.() -> Unit = {
-                        execute(
-                            fixture = fixture,
-                            engineType = engineType,
-                            engineFactory = engineFactory,
-                        )
-                    }
-                    if (fixture.ignored.get(engineType = engineType)) {
-                        xtest("$engineType ${fixture.name}", execute)
-                    } else {
-                        test("$engineType ${fixture.name}", execute)
-                    }
-                }
+            // Run for tests that don't have nextgen calls
+            val execute: suspend TestContext.() -> Unit = {
+                execute(fixture = fixture)
+            }
+            if (fixture.ignored) {
+                xtest(fixture.name, execute)
+            } else {
+                test(fixture.name, execute)
+            }
         }
 })
 
 private suspend fun execute(
     fixture: TestFixture,
-    testHooks: EngineTestHook = getTestHook(fixture) ?: EngineTestHook.noOp,
-    engineType: NadelEngineType,
-    engineFactory: TestEngineFactory,
+    testHook: EngineTestHook = getTestHook(fixture) ?: EngineTestHook.noOp,
 ) {
     val printLock = Any()
     fun printSyncLine(message: String): Unit = synchronized(printLock) {
@@ -153,16 +142,19 @@ private suspend fun execute(
 
     try {
         val nadel: Nadel = Nadel.newNadel()
-            .schemaTransformationHook(testHooks.schemaTransformationHook)
+            .schemaTransformationHook(testHook.schemaTransformationHook)
             .engineFactory { nadel ->
-                engineFactory.make(nadel, testHooks)
+                NextgenEngine(
+                    nadel = nadel,
+                    transforms = testHook.customTransforms,
+                )
             }
             .dsl(fixture.overallSchema)
-            .overallWiringFactory(testHooks.wiringFactory)
-            .underlyingWiringFactory(testHooks.wiringFactory)
+            .overallWiringFactory(testHook.wiringFactory)
+            .underlyingWiringFactory(testHook.wiringFactory)
             .serviceExecutionFactory(object : ServiceExecutionFactory {
                 private val astSorter = AstSorter()
-                private val serviceCalls = fixture.serviceCalls[engineType].toMutableList()
+                private val serviceCalls = fixture.serviceCalls.toMutableList()
 
                 override fun getServiceExecution(serviceName: String): ServiceExecution {
                     return ServiceExecution { params ->
@@ -219,7 +211,7 @@ private suspend fun execute(
                 }
             })
             .let {
-                testHooks.makeNadel(engineType, it)
+                testHook.makeNadel(it)
             }
             .build()
 
@@ -230,7 +222,7 @@ private suspend fun execute(
                 .operationName(fixture.operationName)
                 .artificialFieldsUUID("UUID")
                 .let { builder ->
-                    testHooks.makeExecutionInput(engineType, builder.nadelExecutionHints(defaultHints.copy()))
+                    testHook.makeExecutionInput(builder.nadelExecutionHints(defaultHints.copy()))
                 }
                 .build(),
         ).await()
@@ -268,12 +260,12 @@ private suspend fun execute(
             )
         }
 
-        testHooks.assertResult(engineType, response)
+        testHook.assertResult(response)
     } catch (e: Throwable) {
         if (fixture.exception?.message?.matches(e.message ?: "") == true) {
             return
         }
-        if (testHooks.assertFailure(engineType, e)) {
+        if (testHook.assertFailure(e)) {
             return
         }
         fail("Unexpected error during engine execution", e)

@@ -1,7 +1,5 @@
 name: one hydration call with input value having longer path
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service2: |
     type Query {
@@ -52,99 +50,52 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: service1
-      request:
-        query: |
-          query nadel_2_service1 {
-            foo {
-              fooDetails {
-                externalBarId
-              }
+  - serviceName: service1
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__barLongerInput: __typename
+            hydration__barLongerInput__fooDetails: fooDetails {
+              externalBarId
             }
           }
-        variables: {}
-        operationName: nadel_2_service1
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "fooDetails": {
-                "externalBarId": "barId"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: service2
-      request:
-        query: |
-          query nadel_2_service2 {
-            barById(id: "barId") {
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__barLongerInput__fooDetails": {
+              "externalBarId": "barId"
+            },
+            "__typename__hydration__barLongerInput": "Foo"
           }
-        variables: {}
-        operationName: nadel_2_service2
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barById": {
-              "id": "barId",
-              "name": "Bar1"
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: service1
-      request:
-        query: |
-          query {
-            foo {
-              __typename__hydration__barLongerInput: __typename
-              hydration__barLongerInput__fooDetails: fooDetails {
-                externalBarId
-              }
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: service2
+    request:
+      query: |
+        query {
+          barById(id: "barId") {
+            name
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "hydration__barLongerInput__fooDetails": {
-                "externalBarId": "barId"
-              },
-              "__typename__hydration__barLongerInput": "Foo"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: service2
-      request:
-        query: |
-          query {
-            barById(id: "barId") {
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "name": "Bar1"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barById": {
-              "name": "Bar1"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

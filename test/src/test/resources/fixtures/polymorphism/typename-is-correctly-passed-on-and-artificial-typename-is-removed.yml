@@ -1,7 +1,5 @@
 name: __typename is correctly passed on and artificial typename is removed
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -38,88 +36,45 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issues {
-              __typename
-              id
-              ... on Issue {
-                authorIds
-              }
-              type_hint_typename__UUID: __typename
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issues {
+            __typename
+            id
+            ... on Issue {
+              authorIds
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "id": "ISSUE-1",
-                "authorIds": [
-                  "USER-1",
-                  "USER-2"
-                ],
-                "__typename": "Issue",
-                "type_hint_typename__UUID": "Issue"
-              },
-              {
-                "id": "ISSUE-2",
-                "authorIds": [
-                  "USER-3"
-                ],
-                "__typename": "Issue",
-                "type_hint_typename__UUID": "Issue"
-              }
-            ]
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issues {
-              __typename
-              id
-              ... on Issue {
-                authorIds
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "authorIds": [
+                "USER-1",
+                "USER-2"
+              ],
+              "__typename": "Issue",
+              "id": "ISSUE-1"
+            },
+            {
+              "authorIds": [
+                "USER-3"
+              ],
+              "__typename": "Issue",
+              "id": "ISSUE-2"
             }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "authorIds": [
-                  "USER-1",
-                  "USER-2"
-                ],
-                "__typename": "Issue",
-                "id": "ISSUE-1"
-              },
-              {
-                "authorIds": [
-                  "USER-3"
-                ],
-                "__typename": "Issue",
-                "id": "ISSUE-2"
-              }
-            ]
-          },
-          "extensions": {}
-        }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

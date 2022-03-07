@@ -1,7 +1,5 @@
 name: cannot query hidden top level fields
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     directive @hidden on FIELD_DEFINITION
@@ -31,9 +29,7 @@ query: |
   }
 
 variables: { }
-serviceCalls:
-  current: [ ]
-  nextgen: [ ]
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {

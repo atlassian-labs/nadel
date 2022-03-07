@@ -1,7 +1,5 @@
 name: dynamic service resolution multiple services with one unmapped node lookup
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Common: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
@@ -69,59 +67,30 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: IssueService
-      request:
-        query: |
-          query nadel_2_IssueService {
-            issue: node(id:"issue/id-123") {
-              type_hint_typename__UUID: __typename
-              ... on Issue {
-                id
-              }
-              ... on Issue {
-                issueKey
-              }
-            }
-          }
-        variables: {}
-        operationName: nadel_2_IssueService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "id": "issue/id-123",
-              "issueKey": "ISSUE-1",
-              "type_hint_typename__UUID": "Issue"
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          issue: node(id: "issue/id-123") {
+            id
+            ... on Issue {
+              issueKey
             }
           }
         }
-  nextgen:
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            issue: node(id: "issue/id-123") {
-              id
-              ... on Issue {
-                issueKey
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "id": "issue/id-123",
-              "issueKey": "ISSUE-1"
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "id": "issue/id-123",
+            "issueKey": "ISSUE-1"
           }
         }
+      }
 # language=JSON
 response: |-
   {
@@ -136,7 +105,8 @@ response: |-
       {
         "message": "Could not resolve service for field: /commit",
         "locations": [],
-        "path": ["commit"],
+        "path": [
+          "commit"],
         "extensions": {
           "classification": "ExecutionAborted"
         }

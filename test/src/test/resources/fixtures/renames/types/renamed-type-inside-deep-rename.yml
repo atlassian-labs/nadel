@@ -1,7 +1,5 @@
 name: renamed type inside deep rename
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   IssueService: |
     type Query {
@@ -46,52 +44,50 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            issueById(id: "issue-1") {
-              __typename__deep_rename__assignee: __typename
-              deep_rename__assignee__details: details {
-                assignee {
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          issueById(id: "issue-1") {
+            __typename__deep_rename__assignee: __typename
+            deep_rename__assignee__details: details {
+              assignee {
+                __typename
+                friends {
                   __typename
-                  friends {
-                    __typename
-                  }
-                  name
                 }
+                name
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issueById": {
-              "__typename__deep_rename__assignee": "Issue",
-              "deep_rename__assignee__details": {
-                "assignee": {
-                  "__typename": "User",
-                  "friends": [
-                    {
-                      "__typename": "User"
-                    },
-                    {
-                      "__typename": "User"
-                    }
-                  ],
-                  "name": "Franklin"
-                }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issueById": {
+            "__typename__deep_rename__assignee": "Issue",
+            "deep_rename__assignee__details": {
+              "assignee": {
+                "__typename": "User",
+                "friends": [
+                  {
+                    "__typename": "User"
+                  },
+                  {
+                    "__typename": "User"
+                  }
+                ],
+                "name": "Franklin"
               }
             }
-          },
-          "extensions": {}
-        }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

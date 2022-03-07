@@ -1,7 +1,5 @@
 name: expecting one child error on extensive field argument passed to synthetic hydration
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   TestBoard: |
     type Query {
@@ -72,186 +70,98 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: TestBoard
-      request:
-        query: |
-          query nadel_2_TestBoard {
-            board(id: 1) {
-              id
-              issueChildren {
-                issue {
-                  assignee {
-                    accountId
-                  }
+  - serviceName: TestBoard
+    request:
+      query: |
+        query {
+          board(id: 1) {
+            __typename__rename__cardChildren: __typename
+            id
+            rename__cardChildren__issueChildren: issueChildren {
+              __typename__batch_hydration__assignee: __typename
+              batch_hydration__assignee__issue: issue {
+                assignee {
+                  accountId
                 }
               }
             }
           }
-        variables: {}
-        operationName: nadel_2_TestBoard
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "board": {
-              "id": "1",
-              "issueChildren": [
-                {
-                  "issue": {
-                    "assignee": {
-                      "accountId": "1"
-                    }
-                  }
-                },
-                {
-                  "issue": {
-                    "assignee": {
-                      "accountId": "2"
-                    }
-                  }
-                },
-                {
-                  "issue": {
-                    "assignee": {
-                      "accountId": "3"
-                    }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "board": {
+            "__typename__rename__cardChildren": "Board",
+            "id": "1",
+            "rename__cardChildren__issueChildren": [
+              {
+                "__typename__batch_hydration__assignee": "Card",
+                "batch_hydration__assignee__issue": {
+                  "assignee": {
+                    "accountId": "1"
                   }
                 }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Users
-      request:
-        query: |
-          query nadel_2_Users {
-            usersQuery {
-              users(accountIds: ["1", "2", "3"]) {
-                accountId
-                object_identifier__UUID: accountId
-              }
-            }
-          }
-        variables: {}
-        operationName: nadel_2_Users
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "usersQuery": {
-              "users": [
-                {
-                  "accountId": "1",
-                  "object_identifier__UUID": "1"
-                },
-                {
-                  "accountId": "2",
-                  "object_identifier__UUID": "2"
-                },
-                {
-                  "accountId": "3",
-                  "object_identifier__UUID": "3"
+              },
+              {
+                "__typename__batch_hydration__assignee": "Card",
+                "batch_hydration__assignee__issue": {
+                  "assignee": {
+                    "accountId": "2"
+                  }
                 }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: TestBoard
-      request:
-        query: |
-          query {
-            board(id: 1) {
-              __typename__rename__cardChildren: __typename
-              id
-              rename__cardChildren__issueChildren: issueChildren {
-                __typename__batch_hydration__assignee: __typename
-                batch_hydration__assignee__issue: issue {
-                  assignee {
-                    accountId
+              },
+              {
+                "__typename__batch_hydration__assignee": "Card",
+                "batch_hydration__assignee__issue": {
+                  "assignee": {
+                    "accountId": "3"
                   }
                 }
               }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: Users
+    request:
+      query: |
+        query {
+          usersQuery {
+            users(accountIds: ["1", "2", "3"]) {
+              accountId
+              batch_hydration__assignee__accountId: accountId
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "board": {
-              "__typename__rename__cardChildren": "Board",
-              "id": "1",
-              "rename__cardChildren__issueChildren": [
-                {
-                  "__typename__batch_hydration__assignee": "Card",
-                  "batch_hydration__assignee__issue": {
-                    "assignee": {
-                      "accountId": "1"
-                    }
-                  }
-                },
-                {
-                  "__typename__batch_hydration__assignee": "Card",
-                  "batch_hydration__assignee__issue": {
-                    "assignee": {
-                      "accountId": "2"
-                    }
-                  }
-                },
-                {
-                  "__typename__batch_hydration__assignee": "Card",
-                  "batch_hydration__assignee__issue": {
-                    "assignee": {
-                      "accountId": "3"
-                    }
-                  }
-                }
-              ]
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Users
-      request:
-        query: |
-          query {
-            usersQuery {
-              users(accountIds: ["1", "2", "3"]) {
-                accountId
-                batch_hydration__assignee__accountId: accountId
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "usersQuery": {
+            "users": [
+              {
+                "batch_hydration__assignee__accountId": "1",
+                "accountId": "1"
+              },
+              {
+                "batch_hydration__assignee__accountId": "2",
+                "accountId": "2"
+              },
+              {
+                "batch_hydration__assignee__accountId": "3",
+                "accountId": "3"
               }
-            }
+            ]
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "usersQuery": {
-              "users": [
-                {
-                  "batch_hydration__assignee__accountId": "1",
-                  "accountId": "1"
-                },
-                {
-                  "batch_hydration__assignee__accountId": "2",
-                  "accountId": "2"
-                },
-                {
-                  "batch_hydration__assignee__accountId": "3",
-                  "accountId": "3"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

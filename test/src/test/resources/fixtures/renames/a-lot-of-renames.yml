@@ -1,7 +1,5 @@
 name: a lot of renames
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Boards: |
     type Query {
@@ -55,87 +53,49 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Boards
-      request:
-        query: |
-          query nadel_2_Boards {
-            boardScope {
-              issueParents {
-                issueType {
-                  id
-                  inlineIssueCreate {
-                    enabled
-                  }
+  - serviceName: Boards
+    request:
+      query: |
+        query {
+          boardScope {
+            __typename__rename__cardParents: __typename
+            rename__cardParents__issueParents: issueParents {
+              __typename__rename__cardType: __typename
+              rename__cardType__issueType: issueType {
+                __typename__rename__inlineCardCreate: __typename
+                id
+                rename__inlineCardCreate__inlineIssueCreate: inlineIssueCreate {
+                  enabled
                 }
               }
             }
           }
-        variables: {}
-        operationName: nadel_2_Boards
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "boardScope": {
-              "issueParents": [
-                {
-                  "issueType": {
-                    "id": "ID-1",
-                    "inlineIssueCreate": {
-                      "enabled": true
-                    }
-                  }
-                }
-              ]
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Boards
-      request:
-        query: |
-          query {
-            boardScope {
-              __typename__rename__cardParents: __typename
-              rename__cardParents__issueParents: issueParents {
-                __typename__rename__cardType: __typename
-                rename__cardType__issueType: issueType {
-                  __typename__rename__inlineCardCreate: __typename
-                  id
-                  rename__inlineCardCreate__inlineIssueCreate: inlineIssueCreate {
-                    enabled
-                  }
-                }
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "boardScope": {
-              "rename__cardParents__issueParents": [
-                {
-                  "rename__cardType__issueType": {
-                    "id": "ID-1",
-                    "rename__inlineCardCreate__inlineIssueCreate": {
-                      "enabled": true
-                    },
-                    "__typename__rename__inlineCardCreate": "IssueType"
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "boardScope": {
+            "rename__cardParents__issueParents": [
+              {
+                "rename__cardType__issueType": {
+                  "id": "ID-1",
+                  "rename__inlineCardCreate__inlineIssueCreate": {
+                    "enabled": true
                   },
-                  "__typename__rename__cardType": "IssueParent"
-                }
-              ],
-              "__typename__rename__cardParents": "BoardScope"
-            }
-          },
-          "extensions": {}
-        }
+                  "__typename__rename__inlineCardCreate": "IssueType"
+                },
+                "__typename__rename__cardType": "IssueParent"
+              }
+            ],
+            "__typename__rename__cardParents": "BoardScope"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

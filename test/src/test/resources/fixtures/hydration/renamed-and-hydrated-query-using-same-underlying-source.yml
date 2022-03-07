@@ -1,7 +1,5 @@
 name: renamed and hydrated query using same underlying source
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Foo: |
     type Query {
@@ -46,110 +44,60 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            foo {
-              issue {
-                field
-              }
-              issue {
-                fooId
-              }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          foo {
+            __typename__deep_rename__renamedField: __typename
+            __typename__hydration__details: __typename
+            deep_rename__renamedField__issue: issue {
+              field
+            }
+            hydration__details__issue: issue {
+              fooId
             }
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "issue": {
-                "field": "field",
-                "fooId": "ID"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            detail(detailId: "ID") {
-              name
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__deep_rename__renamedField": "Foo",
+            "__typename__hydration__details": "Foo",
+            "hydration__details__issue": {
+              "fooId": "ID"
+            },
+            "deep_rename__renamedField__issue": {
+              "field": "field"
             }
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "detail": {
-              "name": "apple"
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            foo {
-              __typename__deep_rename__renamedField: __typename
-              __typename__hydration__details: __typename
-              deep_rename__renamedField__issue: issue {
-                field
-              }
-              hydration__details__issue: issue {
-                fooId
-              }
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          detail(detailId: "ID") {
+            name
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "__typename__deep_rename__renamedField": "Foo",
-              "__typename__hydration__details": "Foo",
-              "hydration__details__issue": {
-                "fooId": "ID"
-              },
-              "deep_rename__renamedField__issue": {
-                "field": "field"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            detail(detailId: "ID") {
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "detail": {
+            "name": "apple"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "detail": {
-              "name": "apple"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

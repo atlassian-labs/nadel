@@ -1,7 +1,5 @@
 name: rename with more interfaces
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -44,54 +42,53 @@ query: |
       id
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            nodes {
-              ... on Issue {
-                id
-              }
-              ... on Troll {
-                __typename__rename__id: __typename
-                rename__id__nameOfFirstThingEaten: nameOfFirstThingEaten
-              }
-              ... on User {
-                __typename__rename__id: __typename
-                rename__id__ari: ari
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          nodes {
+            ... on Issue {
+              id
+            }
+            ... on Troll {
+              __typename__rename__id: __typename
+              rename__id__nameOfFirstThingEaten: nameOfFirstThingEaten
+            }
+            ... on User {
+              __typename__rename__id: __typename
+              rename__id__ari: ari
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "nodes": [
-              {
-                "id": "GQLGW-001"
-              },
-              {
-                "id": "GQLGW-1102"
-              },
-              {
-                "__typename__rename__id": "Troll",
-                "rename__id__nameOfFirstThingEaten": "My Arm"
-              },
-              {
-                "__typename__rename__id": "User",
-                "rename__id__ari": "Franklin"
-              },
-              {
-                "id": "GQLGW-11"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "nodes": [
+            {
+              "id": "GQLGW-001"
+            },
+            {
+              "id": "GQLGW-1102"
+            },
+            {
+              "__typename__rename__id": "Troll",
+              "rename__id__nameOfFirstThingEaten": "My Arm"
+            },
+            {
+              "__typename__rename__id": "User",
+              "rename__id__ari": "Franklin"
+            },
+            {
+              "id": "GQLGW-11"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

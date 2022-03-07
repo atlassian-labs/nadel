@@ -8,9 +8,7 @@ import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.enginekt.transform.result.json.JsonNodeExtractor
 import graphql.nadel.enginekt.transform.result.json.JsonNodePath
-import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.UseHook
 
 private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
@@ -36,7 +34,7 @@ private class PolymorphicHydrationHooks : NadelEngineExecutionHooks {
 }
 
 open class PolymorphicHydrationTestHook : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder.serviceExecutionHooks(PolymorphicHydrationHooks())
     }
 }

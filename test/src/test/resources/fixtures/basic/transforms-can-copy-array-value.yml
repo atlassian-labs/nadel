@@ -1,7 +1,5 @@
 name: transforms can copy array value
-enabled:
-  current: false # This is testing nextgen behaviour
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -24,33 +22,31 @@ query: |
       ids
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            foo {
-              ids
-            }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo {
+            ids
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "ids": [
-                "FOO-ONE",
-                "FOO-TWO",
-                "FOO-THREE"
-              ]
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "ids": [
+              "FOO-ONE",
+              "FOO-TWO",
+              "FOO-THREE"
+            ]
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

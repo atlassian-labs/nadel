@@ -3,7 +3,6 @@ package graphql.nadel.tests.hooks
 import graphql.nadel.Nadel
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLSchemaElement
@@ -17,7 +16,7 @@ import strikt.assertions.single
 
 @UseHook
 class `schema-transformation-is-applied` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder.schemaTransformationHook { originalSchema, services ->
             expectThat(services).single().get { name }.isEqualTo("MyService")
 

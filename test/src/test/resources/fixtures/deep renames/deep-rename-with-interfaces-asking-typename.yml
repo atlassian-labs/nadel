@@ -1,7 +1,5 @@
 name: deep rename with interfaces asking typename
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -43,52 +41,51 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            names {
-              ... on Issue {
-                __typename
-                name
-              }
-              ... on User {
-                __typename
-                __typename__deep_rename__name: __typename
-                deep_rename__name__details: details {
-                  firstName
-                }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          names {
+            ... on Issue {
+              __typename
+              name
+            }
+            ... on User {
+              __typename
+              __typename__deep_rename__name: __typename
+              deep_rename__name__details: details {
+                firstName
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "names": [
-              {
-                "__typename": "Issue",
-                "name": "GQLGW-001"
-              },
-              {
-                "__typename": "Issue",
-                "name": "GQLGW-1102"
-              },
-              {
-                "__typename": "User",
-                "__typename__deep_rename__name": "User",
-                "deep_rename__name__details": {
-                  "firstName": "Franklin"
-                }
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "names": [
+            {
+              "__typename": "Issue",
+              "name": "GQLGW-001"
+            },
+            {
+              "__typename": "Issue",
+              "name": "GQLGW-1102"
+            },
+            {
+              "__typename": "User",
+              "__typename__deep_rename__name": "User",
+              "deep_rename__name__details": {
+                "firstName": "Franklin"
+              }
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

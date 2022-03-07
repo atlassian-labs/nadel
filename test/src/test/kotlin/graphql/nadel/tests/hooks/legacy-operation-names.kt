@@ -2,12 +2,10 @@ package graphql.nadel.tests.hooks
 
 import graphql.nadel.NadelExecutionInput
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.UseHook
 
 abstract class `legacy-operation-names` : EngineTestHook {
     override fun makeExecutionInput(
-        engineType: NadelEngineType,
         builder: NadelExecutionInput.Builder,
     ): NadelExecutionInput.Builder {
         return builder.transformExecutionHints {
@@ -37,7 +35,6 @@ class `can-generate-legacy-operation-name-on-batch-hydration` : `legacy-operatio
 @UseHook
 class `can-generate-legacy-operation-name-on-batch-hydration-for-specific-service` : EngineTestHook {
     override fun makeExecutionInput(
-        engineType: NadelEngineType,
         builder: NadelExecutionInput.Builder,
     ): NadelExecutionInput.Builder {
         return builder.transformExecutionHints {

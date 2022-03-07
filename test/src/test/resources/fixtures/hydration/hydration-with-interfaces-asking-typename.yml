@@ -1,7 +1,5 @@
 name: hydration with interfaces asking typename
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -39,62 +37,61 @@ query: |
       id
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            nodes {
-              __typename
-              ... on Issue {
-                id
-              }
-              ... on User {
-                __typename__hydration__id: __typename
-                hydration__id__id: id
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          nodes {
+            __typename
+            ... on Issue {
+              id
+            }
+            ... on User {
+              __typename__hydration__id: __typename
+              hydration__id__id: id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "nodes": [
-              {
-                "__typename": "Issue",
-                "id": "GQLGW-001"
-              },
-              {
-                "__typename": "Issue",
-                "id": "GQLGW-1102"
-              },
-              {
-                "__typename": "User",
-                "__typename__hydration__id": "User",
-                "hydration__id__id": "ari:i-always-forget-the-format/1"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            ariById(id: "ari:i-always-forget-the-format/1")
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "ariById": "Definitely an ARI"
-          },
-          "extensions": {}
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "nodes": [
+            {
+              "__typename": "Issue",
+              "id": "GQLGW-001"
+            },
+            {
+              "__typename": "Issue",
+              "id": "GQLGW-1102"
+            },
+            {
+              "__typename": "User",
+              "__typename__hydration__id": "User",
+              "hydration__id__id": "ari:i-always-forget-the-format/1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          ariById(id: "ari:i-always-forget-the-format/1")
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "ariById": "Definitely an ARI"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: top level field in batched query is removed
-enabled:
-  current: true
-  nextgen: false
+enabled: false
 overallSchema:
   IssueService: |
     type Query {
@@ -101,34 +99,33 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: IssueService
-      request:
-        query: |
-          query nadel_2_IssueService {
-            issues {
-              key
-            }
+  - serviceName: IssueService
+    request:
+      query: |
+        query nadel_2_IssueService {
+          issues {
+            key
           }
-        variables: {}
-        operationName: nadel_2_IssueService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "key": "WORK-I1"
-              },
-              {
-                "key": "WORK-I2"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+      operationName: nadel_2_IssueService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "key": "WORK-I1"
+            },
+            {
+              "key": "WORK-I2"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: primitive json arguments variables
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -30,40 +28,22 @@ query: |
   }
 variables: { var1: "String JSON input", var2: false }
 serviceCalls:
-  current:
-    - serviceName: MyService
-      request:
-        query: |
-          query nadel_2_MyService_myQuery($var1: JSON!, $var2: JSON!) {
-            hello(arg: {payload : $var1}, arg1: $var2)
-          }
-        variables: { var1: "String JSON input", var2: false }
-        operationName: nadel_2_MyService_myQuery
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "hello": "world"
-          },
-          "extensions": {}
+  - serviceName: MyService
+    request:
+      query: |
+        query myQuery($v0: JSON, $v1: JSON!) {
+          hello(arg: {payload : $v0}, arg1: $v1)
         }
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query myQuery($v0: JSON, $v1: JSON!) {
-            hello(arg: {payload : $v0}, arg1: $v1)
-          }
-        variables: { v0: "String JSON input", v1: false }
-        operationName: myQuery
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "hello": "world"
-          },
-          "extensions": {}
-        }
+      variables: { v0: "String JSON input", v1: false }
+      operationName: myQuery
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "hello": "world"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

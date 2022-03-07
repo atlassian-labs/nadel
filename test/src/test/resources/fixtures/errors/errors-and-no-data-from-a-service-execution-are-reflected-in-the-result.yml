@@ -1,7 +1,5 @@
 name: errors and no data from a service execution are reflected in the result
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -36,57 +34,31 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: MyService
-      request:
-        query: |
-          query nadel_2_MyService {
-            hello {
-              name
-            }
+  - serviceName: MyService
+    request:
+      query: |
+        query {
+          hello {
+            name
           }
-        variables: {}
-        operationName: nadel_2_MyService
-      # language=JSON
-      response: |-
-        {
-          "errors": [
-            {
-              "message": "Problem1"
-            },
-            {
-              "message": "Problem2"
-            }
-          ],
-          "data": null,
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query {
-            hello {
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "errors": [
+          {
+            "message": "Problem1"
+          },
+          {
+            "message": "Problem2"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "errors": [
-            {
-              "message": "Problem1"
-            },
-            {
-              "message": "Problem2"
-            }
-          ],
-          "data": null,
-          "extensions": {}
-        }
+        ],
+        "data": null,
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

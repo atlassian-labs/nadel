@@ -1,7 +1,5 @@
 name: renamed type inside list
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   IssueService: |
     type Query {
@@ -24,38 +22,36 @@ query: |
       __typename
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            issues {
-              __typename
-            }
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          issues {
+            __typename
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "__typename": "Issue"
-              },
-              null,
-              {
-                "__typename": "Issue"
-              },
-              {
-                "__typename": "Issue"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename": "Issue"
+            },
+            null,
+            {
+              "__typename": "Issue"
+            },
+            {
+              "__typename": "Issue"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: top level field is removed
-enabled:
-  current: true
-  nextgen: false
+enabled: false
 overallSchema:
   IssueService: |
     type Query {
@@ -94,9 +92,8 @@ query: |
       id
     }
   }
-variables: {}
-serviceCalls:
-  current: []
+variables: { }
+serviceCalls: [ ]
 # language=JSON
 response: |-
   {

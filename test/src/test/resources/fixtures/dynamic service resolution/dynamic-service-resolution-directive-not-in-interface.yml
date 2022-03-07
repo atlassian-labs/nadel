@@ -1,7 +1,5 @@
 name: dynamic service resolution directive not in interface
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   RepoService: |
     directive @dynamicServiceResolution on FIELD_DEFINITION
@@ -29,23 +27,15 @@ query: |-
       description
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: RepoService
-      request:
-        query: |
-        variables: {}
-      # language=JSON
-      response: |
-  nextgen:
-    - serviceName: RepoService
-      request:
-        query: |
-        variables: {}
-      # language=JSON
-      response: |
-# language=JSON
+  - serviceName: RepoService
+    request:
+      query: |
+      variables: { }
+    # language=JSON
+    response: |
+    # language=JSON
 response: null
 exception:
   message: field annotated with dynamicServiceResolution directive is expected to be of GraphQLInterfaceType

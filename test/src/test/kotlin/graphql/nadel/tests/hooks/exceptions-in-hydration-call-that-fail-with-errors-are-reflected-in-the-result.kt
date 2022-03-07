@@ -8,7 +8,6 @@ import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.assertJsonKeys
 import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
@@ -26,7 +25,7 @@ import strikt.assertions.single
 
 @UseHook
 class `exceptions-in-hydration-call-that-fail-with-errors-are-reflected-in-the-result` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         val serviceExecutionFactory = builder.serviceExecutionFactory
 
         return builder
@@ -47,7 +46,7 @@ class `exceptions-in-hydration-call-that-fail-with-errors-are-reflected-in-the-r
             })
     }
 
-    override fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
+    override fun assertResult(result: ExecutionResult) {
         expectThat(result).data
             .isNotNull()
             .isAJsonMap()["foo"]

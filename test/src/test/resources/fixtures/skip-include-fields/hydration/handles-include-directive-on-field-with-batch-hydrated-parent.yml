@@ -1,7 +1,5 @@
 name: handles include directive on field with batch hydrated parent
-enabled:
-  current: false # Not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -43,62 +41,60 @@ query: |
 variables:
   test: false
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            foos {
-              __typename__batch_hydration__test: __typename
-              batch_hydration__test__id: id
-            }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foos {
+            __typename__batch_hydration__test: __typename
+            batch_hydration__test__id: id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foos": [
-              {
-                "__typename__batch_hydration__test": "Foo",
-                "batch_hydration__test__id": "Foo-3"
-              },
-              {
-                "__typename__batch_hydration__test": "Foo",
-                "batch_hydration__test__id": "Foo-4"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: service
-      request:
-        query: |
-          query {
-            tests(ids: ["Foo-3", "Foo-4"]) {
-              __typename__skip_include____skip: __typename
-              batch_hydration__test__id: id
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foos": [
+            {
+              "__typename__batch_hydration__test": "Foo",
+              "batch_hydration__test__id": "Foo-3"
+            },
+            {
+              "__typename__batch_hydration__test": "Foo",
+              "batch_hydration__test__id": "Foo-4"
             }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          tests(ids: ["Foo-3", "Foo-4"]) {
+            __typename__skip_include____skip: __typename
+            batch_hydration__test__id: id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": [
-              {
-                "__typename__skip_include____skip": "Foo",
-                "batch_hydration__test__id": "Foo-4"
-              },
-              {
-                "__typename__skip_include____skip": "Foo",
-                "batch_hydration__test__id": "Foo-3"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": [
+            {
+              "__typename__skip_include____skip": "Foo",
+              "batch_hydration__test__id": "Foo-4"
+            },
+            {
+              "__typename__skip_include____skip": "Foo",
+              "batch_hydration__test__id": "Foo-3"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

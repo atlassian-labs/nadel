@@ -1,7 +1,5 @@
 name: hydration with more interfaces
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -46,84 +44,83 @@ query: |
       id
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            nodes {
-              ... on Issue {
-                id
-              }
-              ... on Troll {
-                __typename__hydration__id: __typename
-                hydration__id__id: id
-              }
-              ... on User {
-                __typename__hydration__id: __typename
-                hydration__id__id: id
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          nodes {
+            ... on Issue {
+              id
+            }
+            ... on Troll {
+              __typename__hydration__id: __typename
+              hydration__id__id: id
+            }
+            ... on User {
+              __typename__hydration__id: __typename
+              hydration__id__id: id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "nodes": [
-              {
-                "id": "GQLGW-001"
-              },
-              {
-                "id": "GQLGW-1102"
-              },
-              {
-                "__typename__hydration__id": "Troll",
-                "hydration__id__id": "My Arm"
-              },
-              {
-                "__typename__hydration__id": "User",
-                "hydration__id__id": "Franklin"
-              },
-              {
-                "id": "GQLGW-11"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            trollName(id: "My Arm")
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "trollName": "Troll"
-          },
-          "extensions": {}
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "nodes": [
+            {
+              "id": "GQLGW-001"
+            },
+            {
+              "id": "GQLGW-1102"
+            },
+            {
+              "__typename__hydration__id": "Troll",
+              "hydration__id__id": "My Arm"
+            },
+            {
+              "__typename__hydration__id": "User",
+              "hydration__id__id": "Franklin"
+            },
+            {
+              "id": "GQLGW-11"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          trollName(id: "My Arm")
         }
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            ariById(id: "Franklin")
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "ariById": "ari:user/Franklin"
-          },
-          "extensions": {}
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "trollName": "Troll"
+        },
+        "extensions": {}
+      }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          ariById(id: "Franklin")
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "ariById": "ari:user/Franklin"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

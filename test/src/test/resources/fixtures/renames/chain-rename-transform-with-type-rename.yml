@@ -1,7 +1,5 @@
 name: chain rename transform with type rename
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -47,36 +45,35 @@ query: |
       cities(continent: Oceania)
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: MyService
-      request:
-        # Notice the changed values to "aaarrg" and "Asia"
-        query: |
-          query {
-            rename__test__world: world(arg: "aaarrg") {
-              __typename
-              __typename__rename__cities: __typename
-              id
-              rename__cities__places: places(continent: Asia)
-            }
+  - serviceName: MyService
+    request:
+      # Notice the changed values to "aaarrg" and "Asia"
+      query: |
+        query {
+          rename__test__world: world(arg: "aaarrg") {
+            __typename
+            __typename__rename__cities: __typename
+            id
+            rename__cities__places: places(continent: Asia)
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__test__world": {
-              "__typename": "World",
-              "__typename__rename__cities": "World",
-              "id": "Earth",
-              "rename__cities__places": ["Uhh yea I know cities"]
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__test__world": {
+            "__typename": "World",
+            "__typename__rename__cities": "World",
+            "id": "Earth",
+            "rename__cities__places": [
+              "Uhh yea I know cities"]
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

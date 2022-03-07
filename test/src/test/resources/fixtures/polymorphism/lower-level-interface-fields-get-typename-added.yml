@@ -1,7 +1,5 @@
 name: lower level interface fields get typename added
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   PetService: |
     type Query {
@@ -139,83 +137,40 @@ query: |
 variables:
   isLoyal: true
 serviceCalls:
-  current:
-    - serviceName: PetService
-      request:
-        query: |
-          query nadel_2_PetService_petQ($isLoyal: Boolean) {
-            pets(isLoyal: $isLoyal) {
-              name
-              collar {
-                color
-                type_hint_typename__UUID: __typename
-              }
-              type_hint_typename__UUID: __typename
+  - serviceName: PetService
+    request:
+      query: |
+        query petQ {
+          pets(isLoyal: true) {
+            collar {
+              color
             }
+            name
           }
-        variables:
-          isLoyal: true
-        operationName: nadel_2_PetService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "collar": {
-                  "color": "blue",
-                  "type_hint_typename__UUID": "CatCollar"
-                },
-                "type_hint_typename__UUID": "Dog"
-              },
-              {
-                "name": "Whiskers",
-                "collar": {
-                  "color": "red",
-                  "type_hint_typename__UUID": "CatCollar"
-                },
-                "type_hint_typename__UUID": "Cat"
-              }
-            ]
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: PetService
-      request:
-        query: |
-          query petQ {
-            pets(isLoyal: true) {
-              collar {
-                color
+      variables: { }
+      operationName: petQ
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "pets": [
+            {
+              "name": "Sparky",
+              "collar": {
+                "color": "blue"
               }
-              name
+            },
+            {
+              "name": "Whiskers",
+              "collar": {
+                "color": "red"
+              }
             }
-          }
-        variables: {}
-        operationName: petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "collar": {
-                  "color": "blue"
-                }
-              },
-              {
-                "name": "Whiskers",
-                "collar": {
-                  "color": "red"
-                }
-              }
-            ]
-          },
-          "extensions": {}
-        }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

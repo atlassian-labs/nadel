@@ -1,7 +1,5 @@
 name: field is removed from nested hydrated field
-enabled:
-  current: true
-  nextgen: false
+enabled: false
 overallSchema:
   IssueService: |
     type Query {
@@ -107,345 +105,344 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: IssueService
-      request:
-        query: |
-          query nadel_2_IssueService {
-            issues {
-              key
-              summary
-              key
-              summary
-              reporterId
-              commentIds
-            }
+  - serviceName: IssueService
+    request:
+      query: |
+        query nadel_2_IssueService {
+          issues {
+            key
+            summary
+            key
+            summary
+            reporterId
+            commentIds
           }
-        variables: {}
-        operationName: nadel_2_IssueService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "key": "WORK-I1",
-                "summary": "Summary for WORK-I1",
-                "reporterId": "fred",
-                "commentIds": [
-                  "C1",
-                  "C3",
-                  "C5"
-                ]
-              },
-              {
-                "key": "WORK-I2",
-                "summary": "Summary for WORK-I2",
-                "reporterId": "zed",
-                "commentIds": [
-                  "C2",
-                  "C4",
-                  "C6"
-                ]
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            userById(id: "fred") {
-              displayName
+      variables: { }
+      operationName: nadel_2_IssueService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "key": "WORK-I1",
+              "summary": "Summary for WORK-I1",
+              "reporterId": "fred",
+              "commentIds": [
+                "C1",
+                "C3",
+                "C5"
+              ]
+            },
+            {
+              "key": "WORK-I2",
+              "summary": "Summary for WORK-I2",
+              "reporterId": "zed",
+              "commentIds": [
+                "C2",
+                "C4",
+                "C6"
+              ]
             }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query nadel_2_UserService {
+          userById(id: "fred") {
+            displayName
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userById": {
-              "displayName": "Display name of fred"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            userById(id: "zed") {
-              displayName
-            }
+      variables: { }
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "displayName": "Display name of fred"
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userById": {
-              "displayName": "Display name of zed"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: CommentService
-      request:
-        query: |
-          query nadel_2_CommentService {
-            commentById(id: "C1") {
-              text
-              authorId
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query nadel_2_UserService {
+          userById(id: "zed") {
+            displayName
           }
-        variables: {}
-        operationName: nadel_2_CommentService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "commentById": {
-              "text": "Text of C1",
-              "authorId": "fred"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: CommentService
-      request:
-        query: |
-          query nadel_2_CommentService {
-            commentById(id: "C3") {
-              text
-              authorId
-            }
+      variables: { }
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "displayName": "Display name of zed"
           }
-        variables: {}
-        operationName: nadel_2_CommentService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "commentById": {
-              "text": "Text of C3",
-              "authorId": "zed"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: CommentService
-      request:
-        query: |
-          query nadel_2_CommentService {
-            commentById(id: "C5") {
-              text
-              authorId
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: CommentService
+    request:
+      query: |
+        query nadel_2_CommentService {
+          commentById(id: "C1") {
+            text
+            authorId
           }
-        variables: {}
-        operationName: nadel_2_CommentService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "commentById": {
-              "text": "Text of C5",
-              "authorId": "fred"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: CommentService
-      request:
-        query: |
-          query nadel_2_CommentService {
-            commentById(id: "C2") {
-              text
-              authorId
-            }
+      variables: { }
+      operationName: nadel_2_CommentService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "commentById": {
+            "text": "Text of C1",
+            "authorId": "fred"
           }
-        variables: {}
-        operationName: nadel_2_CommentService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "commentById": {
-              "text": "Text of C2",
-              "authorId": "ned"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: CommentService
-      request:
-        query: |
-          query nadel_2_CommentService {
-            commentById(id: "C4") {
-              text
-              authorId
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: CommentService
+    request:
+      query: |
+        query nadel_2_CommentService {
+          commentById(id: "C3") {
+            text
+            authorId
           }
-        variables: {}
-        operationName: nadel_2_CommentService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "commentById": {
-              "text": "Text of C4",
-              "authorId": "jed"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: CommentService
-      request:
-        query: |
-          query nadel_2_CommentService {
-            commentById(id: "C6") {
-              text
-              authorId
-            }
+      variables: { }
+      operationName: nadel_2_CommentService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "commentById": {
+            "text": "Text of C3",
+            "authorId": "zed"
           }
-        variables: {}
-        operationName: nadel_2_CommentService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "commentById": {
-              "text": "Text of C6",
-              "authorId": "ted"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            userById(id: "fred") {
-              displayName
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: CommentService
+    request:
+      query: |
+        query nadel_2_CommentService {
+          commentById(id: "C5") {
+            text
+            authorId
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userById": {
-              "displayName": "Display name of fred"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            userById(id: "zed") {
-              displayName
-            }
+      variables: { }
+      operationName: nadel_2_CommentService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "commentById": {
+            "text": "Text of C5",
+            "authorId": "fred"
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userById": {
-              "displayName": "Display name of zed"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            userById(id: "fred") {
-              displayName
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: CommentService
+    request:
+      query: |
+        query nadel_2_CommentService {
+          commentById(id: "C2") {
+            text
+            authorId
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userById": {
-              "displayName": "Display name of fred"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            userById(id: "ned") {
-              displayName
-            }
+      variables: { }
+      operationName: nadel_2_CommentService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "commentById": {
+            "text": "Text of C2",
+            "authorId": "ned"
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userById": {
-              "displayName": "Display name of ned"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            userById(id: "jed") {
-              displayName
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: CommentService
+    request:
+      query: |
+        query nadel_2_CommentService {
+          commentById(id: "C4") {
+            text
+            authorId
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userById": {
-              "displayName": "Display name of jed"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            userById(id: "ted") {
-              displayName
-            }
+      variables: { }
+      operationName: nadel_2_CommentService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "commentById": {
+            "text": "Text of C4",
+            "authorId": "jed"
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userById": {
-              "displayName": "Display name of ted"
-            }
-          },
-          "extensions": {}
+        },
+        "extensions": {}
+      }
+  - serviceName: CommentService
+    request:
+      query: |
+        query nadel_2_CommentService {
+          commentById(id: "C6") {
+            text
+            authorId
+          }
         }
+      variables: { }
+      operationName: nadel_2_CommentService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "commentById": {
+            "text": "Text of C6",
+            "authorId": "ted"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query nadel_2_UserService {
+          userById(id: "fred") {
+            displayName
+          }
+        }
+      variables: { }
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "displayName": "Display name of fred"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query nadel_2_UserService {
+          userById(id: "zed") {
+            displayName
+          }
+        }
+      variables: { }
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "displayName": "Display name of zed"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query nadel_2_UserService {
+          userById(id: "fred") {
+            displayName
+          }
+        }
+      variables: { }
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "displayName": "Display name of fred"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query nadel_2_UserService {
+          userById(id: "ned") {
+            displayName
+          }
+        }
+      variables: { }
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "displayName": "Display name of ned"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query nadel_2_UserService {
+          userById(id: "jed") {
+            displayName
+          }
+        }
+      variables: { }
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "displayName": "Display name of jed"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query nadel_2_UserService {
+          userById(id: "ted") {
+            displayName
+          }
+        }
+      variables: { }
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "displayName": "Display name of ted"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

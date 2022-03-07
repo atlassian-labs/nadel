@@ -1,7 +1,5 @@
 name: solitary polymorphic hydration
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   pets: |
     type Query {
@@ -95,116 +93,119 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: foo
-      request:
-        query: |
-          query {
-            foo {
-              __typename
-              __typename__hydration__data: __typename
-              hydration__data__dataId: dataId
-              hydration__data__dataId: dataId
-              id
-            }
+  - serviceName: foo
+    request:
+      query: |
+        query {
+          foo {
+            __typename
+            __typename__hydration__data: __typename
+            hydration__data__dataId: dataId
+            hydration__data__dataId: dataId
+            id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": [{
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": [
+            {
               "__typename": "Foo",
               "__typename__hydration__data": "Foo",
               "hydration__data__dataId": "PET-0",
               "id": "FOO-0"
-            },{
+            },
+            {
               "__typename": "Foo",
               "__typename__hydration__data": "Foo",
               "hydration__data__dataId": "HUMAN-0",
               "id": "FOO-1"
             }]
-          },
-          "extensions": {}
-        }
-    - serviceName: pets
-      request:
-        query: |
-          query {
-            petById(id: "PET-0") {
-              __typename
-              __typename__type_filter__id: __typename
-              __typename__type_filter__name: __typename
-              breed
-              id
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: pets
+    request:
+      query: |
+        query {
+          petById(id: "PET-0") {
+            __typename
+            __typename__type_filter__id: __typename
+            __typename__type_filter__name: __typename
+            breed
+            id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "petById": {
-              "__typename": "Pet",
-              "__typename__type_filter__id": "Pet",
-              "__typename__type_filter__name": "Pet",
-              "id": "PET-0",
-              "breed": "Akita"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: people
-      request:
-        query: |
-          query {
-            humanById(id: "HUMAN-0") {
-              __typename
-              __typename__type_filter__id: __typename
-              __typename__type_filter__breed: __typename
-              id
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "petById": {
+            "__typename": "Pet",
+            "__typename__type_filter__id": "Pet",
+            "__typename__type_filter__name": "Pet",
+            "id": "PET-0",
+            "breed": "Akita"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "humanById": {
-              "__typename": "Human",
-              "__typename__type_filter__id": "Human",
-              "__typename__type_filter__breed": "Human",
-              "id": "HUMAN-0",
-              "name": "Fanny Longbottom"
-            }
-          },
-          "extensions": {}
+        },
+        "extensions": {}
+      }
+  - serviceName: people
+    request:
+      query: |
+        query {
+          humanById(id: "HUMAN-0") {
+            __typename
+            __typename__type_filter__id: __typename
+            __typename__type_filter__breed: __typename
+            id
+            name
+          }
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "humanById": {
+            "__typename": "Human",
+            "__typename__type_filter__id": "Human",
+            "__typename__type_filter__breed": "Human",
+            "id": "HUMAN-0",
+            "name": "Fanny Longbottom"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {
     "data": {
-      "foo": [{
-        "__typename": "Foo",
-        "id": "FOO-0",
-        "data": {
-          "__typename": "Pet",
-          "id": "PET-0",
-          "breed": "Akita"
+      "foo": [
+        {
+          "__typename": "Foo",
+          "id": "FOO-0",
+          "data": {
+            "__typename": "Pet",
+            "id": "PET-0",
+            "breed": "Akita"
+          }
+        },
+        {
+          "__typename": "Foo",
+          "id": "FOO-1",
+          "data": {
+            "__typename": "Human",
+            "id": "HUMAN-0",
+            "name": "Fanny Longbottom"
+          }
         }
-      },
-      {
-        "__typename": "Foo",
-        "id": "FOO-1",
-        "data": {
-          "__typename": "Human",
-          "id": "HUMAN-0",
-          "name": "Fanny Longbottom"
-        }
-      }]
+      ]
     },
     "extensions": {}
   }

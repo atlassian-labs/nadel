@@ -1,7 +1,5 @@
 name: deep rename works
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   IssueService: |
     type Query {
@@ -29,59 +27,33 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: IssueService
-      request:
-        query: |
-          query nadel_2_IssueService {
-            issue {
-              detail {
-                detailName
-              }
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          issue {
+            __typename__deep_rename__name: __typename
+            deep_rename__name__detail: detail {
+              detailName
             }
           }
-        variables: {}
-        operationName: nadel_2_IssueService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "detail": {
-                "detailName": "My Issue"
-              }
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            issue {
-              __typename__deep_rename__name: __typename
-              deep_rename__name__detail: detail {
-                detailName
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "deep_rename__name__detail": {
+              "detailName": "My Issue"
+            },
+            "__typename__deep_rename__name": "Issue"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "deep_rename__name__detail": {
-                "detailName": "My Issue"
-              },
-              "__typename__deep_rename__name": "Issue"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

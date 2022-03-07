@@ -1,9 +1,6 @@
 name: renamed type shared PageInfo
-enabled:
-  current: false
-  nextgen: true
-ignored:
-  nextgen: true # We do not allow implicit renames, enable this test once we have explicit renames for shared types
+enabled: true
+ignored: true # We do not allow implicit renames, enable this test once we have explicit renames for shared types
 overallSchema:
   IssueService: |-
     type Query {
@@ -64,48 +61,47 @@ query: |
       __typename
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            ... on Query {
-              issues {
-                ... on IssueConnection {
-                  __typename
-                  nodes {
-                    ... on Issue {
-                      id
-                    }
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          ... on Query {
+            issues {
+              ... on IssueConnection {
+                __typename
+                nodes {
+                  ... on Issue {
+                    id
                   }
-                  pageInfo {
-                    ... on IssuePageInfo {
-                      __typename
-                      endCursor
-                    }
+                }
+                pageInfo {
+                  ... on IssuePageInfo {
+                    __typename
+                    endCursor
                   }
                 }
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": {
-              "__typename": "IssueConnection",
-              "nodes": [],
-              "pageInfo": {
-                "__typename": "IssuePageInfo",
-                "endCursor": "last-item"
-              }
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": {
+            "__typename": "IssueConnection",
+            "nodes": [],
+            "pageInfo": {
+              "__typename": "IssuePageInfo",
+              "endCursor": "last-item"
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

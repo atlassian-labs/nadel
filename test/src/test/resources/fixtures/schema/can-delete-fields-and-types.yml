@@ -1,7 +1,5 @@
 name: can delete fields and types
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -36,9 +34,7 @@ query: |
       }
     }
   }
-variables: {}
-serviceCalls:
-  current: []
-  nextgen: []
+variables: { }
+serviceCalls: []
 # language=JSON
 response: null

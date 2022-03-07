@@ -6,7 +6,6 @@ import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.assertJsonKeys
 import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
@@ -23,7 +22,7 @@ import java.util.concurrent.CompletableFuture
 
 @UseHook
 class `exceptions-in-service-execution-result-completable-future-in-graphql-errors` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         val serviceExecutionFactory = builder.serviceExecutionFactory
 
         return builder
@@ -43,7 +42,7 @@ class `exceptions-in-service-execution-result-completable-future-in-graphql-erro
             })
     }
 
-    override fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
+    override fun assertResult(result: ExecutionResult) {
         expectThat(result).data
             .isNotNull()
             .assertJsonKeys()["hello"]

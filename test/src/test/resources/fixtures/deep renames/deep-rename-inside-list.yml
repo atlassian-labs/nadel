@@ -1,7 +1,5 @@
 name: deep rename inside list
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -27,47 +25,45 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            rename__issues__all: all {
-              __typename__deep_rename__name: __typename
-              deep_rename__name__details: details {
-                key
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          rename__issues__all: all {
+            __typename__deep_rename__name: __typename
+            deep_rename__name__details: details {
+              key
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__issues__all": [
-              {
-                "deep_rename__name__details": {
-                  "key": "GQLGW-1012"
-                },
-                "__typename__deep_rename__name": "Issue"
-              },
-              {
-                "deep_rename__name__details": null,
-                "__typename__deep_rename__name": "Issue"
-              },
-              {
-                "deep_rename__name__details": {
-                  "key": "Fix the bug"
-                },
-                "__typename__deep_rename__name": "Issue"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__issues__all": [
+            {
+              "deep_rename__name__details": {
+                "key": "GQLGW-1012"
+              },
+              "__typename__deep_rename__name": "Issue"
+            },
+            {
+              "deep_rename__name__details": null,
+              "__typename__deep_rename__name": "Issue"
+            },
+            {
+              "deep_rename__name__details": {
+                "key": "Fix the bug"
+              },
+              "__typename__deep_rename__name": "Issue"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

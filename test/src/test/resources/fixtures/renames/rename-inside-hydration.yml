@@ -1,7 +1,5 @@
 name: rename inside hydration
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   service2: |
     type Query {
@@ -64,52 +62,50 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service1
-      request:
-        query: |
-          query {
-            foo {
-              __typename__hydration__bar: __typename
-              hydration__bar__barId: barId
-            }
+  - serviceName: service1
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__barId: barId
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "hydration__bar__barId": "barId",
-              "__typename__hydration__bar": "Foo"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: service2
-      request:
-        query: |
-          query {
-            barById(id: "barId") {
-              __typename__rename__title: __typename
-              rename__title__name: name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__bar__barId": "barId",
+            "__typename__hydration__bar": "Foo"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barById": {
-              "rename__title__name": "Bar1",
-              "__typename__rename__title": "Bar"
-            }
-          },
-          "extensions": {}
+        },
+        "extensions": {}
+      }
+  - serviceName: service2
+    request:
+      query: |
+        query {
+          barById(id: "barId") {
+            __typename__rename__title: __typename
+            rename__title__name: name
+          }
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "rename__title__name": "Bar1",
+            "__typename__rename__title": "Bar"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

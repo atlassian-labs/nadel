@@ -7,8 +7,6 @@ import graphql.nadel.hooks.HydrationArguments
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.normalized.NormalizedQueryField
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.schema.GraphQLSchema
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
@@ -17,23 +15,23 @@ import graphql.GraphqlErrorException as GraphQLErrorException
 private class RejectField(private val fieldNames: List<String>) : ServiceExecutionHooks {
     constructor(vararg fieldNames: String) : this(fieldNames.toList())
 
-    override fun isFieldForbidden(
-        normalizedField: NormalizedQueryField,
-        hydrationArguments: HydrationArguments,
-        variables: MutableMap<String, Any>,
-        graphQLSchema: GraphQLSchema,
-        userSuppliedContext: Any,
-    ): CompletableFuture<Optional<GraphQLError>> {
-        return CompletableFuture.completedFuture(
-            Optional.ofNullable(
-                if (normalizedField.name in fieldNames) {
-                    makeError(normalizedField.path)
-                } else {
-                    null
-                }
-            )
-        )
-    }
+    // override fun isFieldForbidden(
+    //     normalizedField: NormalizedQueryField,
+    //     hydrationArguments: HydrationArguments,
+    //     variables: MutableMap<String, Any>,
+    //     graphQLSchema: GraphQLSchema,
+    //     userSuppliedContext: Any,
+    // ): CompletableFuture<Optional<GraphQLError>> {
+    //     return CompletableFuture.completedFuture(
+    //         Optional.ofNullable(
+    //             if (normalizedField.name in fieldNames) {
+    //                 makeError(normalizedField.path)
+    //             } else {
+    //                 null
+    //             }
+    //         )
+    //     )
+    // }
 
     companion object {
         fun makeError(path: List<String>): GraphQLError {
@@ -51,190 +49,190 @@ private class RejectField(private val fieldNames: List<String>) : ServiceExecuti
     }
 }
 
-@UseHook
+// @UseHook
 class `hydrated-field-is-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("author"))
     }
 }
 
-@UseHook
+// @UseHook
 class `nested-hydrated-field-is-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("author"))
     }
 }
 
-@UseHook
+// @UseHook
 class `field-is-removed-from-nested-hydrated-field` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("userId"))
     }
 }
 
-@UseHook
+// @UseHook
 class `all-fields-in-a-selection-set-are-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("title", "description"))
     }
 }
 
-@UseHook
+// @UseHook
 class `field-in-a-selection-set-is-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("title"))
     }
 }
 
-@UseHook
+// @UseHook
 class `one-of-top-level-fields-is-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("commentById"))
     }
 }
 
-@UseHook
+// @UseHook
 class `top-level-field-is-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("commentById"))
     }
 }
 
-@UseHook
+// @UseHook
 class `top-level-field-in-batched-query-is-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("comments"))
     }
 }
 
-@UseHook
+// @UseHook
 class `all-fields-are-removed-from-hydrated-field` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("userId", "displayName"))
     }
 }
 
-@UseHook
+// @UseHook
 class `field-is-removed-from-hydrated-field` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("userId"))
     }
 }
 
-@UseHook
+// @UseHook
 class `all-non-hydrated-fields-in-query-are-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("id", "created", "commentText"))
     }
 }
 
-@UseHook
+// @UseHook
 class `field-with-selections-is-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("epic"))
     }
 }
 
-@UseHook
+// @UseHook
 class `the-only-field-in-a-selection-set-is-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("title"))
     }
 }
 
-@UseHook
+// @UseHook
 class `field-in-non-hydrated-query-is-removed` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("created"))
     }
 }
 
-@UseHook
+// @UseHook
 class `restricted-field-inside-hydration-via-fragments-used-twice` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("restricted"))
     }
 }
 
-@UseHook
+// @UseHook
 class `restricted-field-via-fragments-used-twice` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("restricted"))
     }
 }
 
-@UseHook
+// @UseHook
 class `inserts-one-error-for-a-forbidden-field-in-a-list` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(RejectField("restricted"))
     }
 }
 
-@UseHook
+// @UseHook
 class `restricted-single-field-inside-hydration-via-fragments-used-twice` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(object : ServiceExecutionHooks {
-                override fun isFieldForbidden(
-                    normalizedField: NormalizedQueryField,
-                    hydrationArguments: HydrationArguments,
-                    variables: MutableMap<String, Any>,
-                    graphQLSchema: GraphQLSchema,
-                    userSuppliedContext: Any,
-                ): CompletableFuture<Optional<GraphQLError>> {
-                    return CompletableFuture.completedFuture(
-                        Optional.ofNullable(
-                            if (normalizedField.name == "restricted" && normalizedField.parent.parent.name == "issue") {
-                                RejectField.makeError(path = normalizedField.path)
-                            } else {
-                                null
-                            }
-                        ),
-                    )
-                }
+                // override fun isFieldForbidden(
+                //     normalizedField: NormalizedQueryField,
+                //     hydrationArguments: HydrationArguments,
+                //     variables: MutableMap<String, Any>,
+                //     graphQLSchema: GraphQLSchema,
+                //     userSuppliedContext: Any,
+                // ): CompletableFuture<Optional<GraphQLError>> {
+                //     return CompletableFuture.completedFuture(
+                //         Optional.ofNullable(
+                //             if (normalizedField.name == "restricted" && normalizedField.parent.parent.name == "issue") {
+                //                 RejectField.makeError(path = normalizedField.path)
+                //             } else {
+                //                 null
+                //             }
+                //         ),
+                //     )
+                // }
             })
     }
 }
 
-@UseHook
+// @UseHook
 class `restricted-single-field-via-fragments-used-twice` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .serviceExecutionHooks(object : ServiceExecutionHooks {
-                override fun isFieldForbidden(
-                    normalizedField: NormalizedQueryField,
-                    hydrationArguments: HydrationArguments,
-                    variables: MutableMap<String, Any>,
-                    graphQLSchema: GraphQLSchema,
-                    userSuppliedContext: Any,
-                ): CompletableFuture<Optional<GraphQLError>> {
-                    return CompletableFuture.completedFuture(
-                        Optional.ofNullable(
-                            if (normalizedField.name == "restricted" && normalizedField.parent.name == "issue") {
-                                RejectField.makeError(path = normalizedField.path)
-                            } else {
-                                null
-                            }
-                        ),
-                    )
-                }
+                // override fun isFieldForbidden(
+                //     normalizedField: NormalizedQueryField,
+                //     hydrationArguments: HydrationArguments,
+                //     variables: MutableMap<String, Any>,
+                //     graphQLSchema: GraphQLSchema,
+                //     userSuppliedContext: Any,
+                // ): CompletableFuture<Optional<GraphQLError>> {
+                //     return CompletableFuture.completedFuture(
+                //         Optional.ofNullable(
+                //             if (normalizedField.name == "restricted" && normalizedField.parent.name == "issue") {
+                //                 RejectField.makeError(path = normalizedField.path)
+                //             } else {
+                //                 null
+                //             }
+                //         ),
+                //     )
+                // }
             })
     }
 }

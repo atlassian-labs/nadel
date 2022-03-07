@@ -11,7 +11,6 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOpera
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.util.data
 import graphql.nadel.tests.util.errors
 import graphql.nadel.tests.util.message
@@ -29,7 +28,7 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally-using-cha
     var firstInstrumentExecutionResultCalled = 0
     var secondInstrumentExecutionResultCalled = 0
 
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         val first = object : NadelInstrumentation {
             override fun beginExecute(
                 parameters: NadelInstrumentationExecuteOperationParameters,
@@ -70,7 +69,7 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally-using-cha
         return builder.instrumentation(ChainedNadelInstrumentation(instrumentations))
     }
 
-    override fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
+    override fun assertResult(result: ExecutionResult) {
         expectThat(firstBeginExecuteCalled).isEqualTo(1)
         expectThat(secondBeginExecuteCalled).isEqualTo(0)
         expectThat(firstInstrumentExecutionResultCalled).isEqualTo(1)

@@ -5,7 +5,6 @@ import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.assertJsonKeys
 import graphql.nadel.tests.util.data
 import graphql.schema.GraphQLFieldDefinition
@@ -49,7 +48,7 @@ class `can-delete-fields-and-types` : EngineTestHook {
         })
     }
 
-    override fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
+    override fun assertResult(result: ExecutionResult) {
         expectThat(result)
             .data
             .isNotNull()
