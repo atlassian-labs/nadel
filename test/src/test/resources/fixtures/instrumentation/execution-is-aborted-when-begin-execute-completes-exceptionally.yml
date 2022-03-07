@@ -1,7 +1,5 @@
 name: execution is aborted when beginExecute completes exceptionally
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -26,10 +24,8 @@ query: |
       name
     }
   }
-variables: {}
-serviceCalls:
-  current: []
-  nextgen: []
+variables: { }
+serviceCalls: []
 # language=JSON
 response: |-
   {

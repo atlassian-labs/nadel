@@ -1,7 +1,5 @@
 name: can generate legacy operation name on batch hydration
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   service2: |
     type Query {
@@ -46,68 +44,66 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service1
-      request:
-        query: |
-          query nadel_2_service1 {
-            foo {
-              __typename__batch_hydration__bar: __typename
-              batch_hydration__bar__barId: barId
-            }
+  - serviceName: service1
+    request:
+      query: |
+        query nadel_2_service1 {
+          foo {
+            __typename__batch_hydration__bar: __typename
+            batch_hydration__bar__barId: barId
           }
-        variables: {}
-        operationName: nadel_2_service1
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "__typename__batch_hydration__bar": "Foo",
-              "batch_hydration__bar__barId": [
-                "barId1",
-                "barId2",
-                "barId3"
-              ]
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: service2
-      request:
-        query: |
-          query nadel_2_service2 {
-            barsById(id: ["barId1", "barId2", "barId3"]) {
-              batch_hydration__bar__id: id
-              name
-            }
-          }
-        variables: {}
-        operationName: nadel_2_service2
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barsById": [
-              {
-                "name": "Bar1",
-                "batch_hydration__bar__id": "barId1"
-              },
-              {
-                "name": "Bar2",
-                "batch_hydration__bar__id": "barId2"
-              },
-              {
-                "name": "Bar3",
-                "batch_hydration__bar__id": "barId3"
-              }
+      variables: { }
+      operationName: nadel_2_service1
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__batch_hydration__bar": "Foo",
+            "batch_hydration__bar__barId": [
+              "barId1",
+              "barId2",
+              "barId3"
             ]
-          },
-          "extensions": {}
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: service2
+    request:
+      query: |
+        query nadel_2_service2 {
+          barsById(id: ["barId1", "barId2", "barId3"]) {
+            batch_hydration__bar__id: id
+            name
+          }
         }
+      variables: { }
+      operationName: nadel_2_service2
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barsById": [
+            {
+              "name": "Bar1",
+              "batch_hydration__bar__id": "barId1"
+            },
+            {
+              "name": "Bar2",
+              "batch_hydration__bar__id": "barId2"
+            },
+            {
+              "name": "Bar3",
+              "batch_hydration__bar__id": "barId3"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

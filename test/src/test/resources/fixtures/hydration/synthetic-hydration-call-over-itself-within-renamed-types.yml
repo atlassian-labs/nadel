@@ -1,7 +1,5 @@
 name: synthetic hydration call over itself within renamed types
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   testing: |
     type Query {
@@ -62,252 +60,129 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: testing
-      request:
-        query: |
-          query nadel_2_testing {
-            tests {
-              testing {
-                movies {
-                  id
-                  name
-                  characterIds
-                }
-              }
-            }
-          }
-        variables: {}
-        operationName: nadel_2_testing
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "testing": {
-                "movies": [
-                  {
-                    "id": "M1",
-                    "name": "Movie 1",
-                    "characterIds": [
-                      "C1",
-                      "C2"
-                    ]
-                  },
-                  {
-                    "id": "M2",
-                    "name": "Movie 2",
-                    "characterIds": [
-                      "C1",
-                      "C2",
-                      "C3"
-                    ]
-                  }
-                ]
-              }
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: testing
-      request:
-        query: |
-          query nadel_2_testing {
-            tests {
-              characters(ids: ["C1", "C2", "C1"]) {
+  - serviceName: testing
+    request:
+      query: |
+        query {
+          tests {
+            testing {
+              movies {
+                __typename__batch_hydration__characters: __typename
+                batch_hydration__characters__characterIds: characterIds
                 id
                 name
-                object_identifier__UUID: id
               }
             }
           }
-        variables: {}
-        operationName: nadel_2_testing
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "characters": [
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": {
+            "testing": {
+              "movies": [
                 {
-                  "id": "C1",
-                  "name": "Luke",
-                  "object_identifier__UUID": "C1"
+                  "name": "Movie 1",
+                  "id": "M1",
+                  "batch_hydration__characters__characterIds": [
+                    "C1",
+                    "C2"
+                  ],
+                  "__typename__batch_hydration__characters": "Movie"
                 },
                 {
-                  "id": "C2",
-                  "name": "Leia",
-                  "object_identifier__UUID": "C2"
-                },
-                {
-                  "id": "C1",
-                  "name": "Luke",
-                  "object_identifier__UUID": "C1"
+                  "name": "Movie 2",
+                  "id": "M2",
+                  "batch_hydration__characters__characterIds": [
+                    "C1",
+                    "C2",
+                    "C3"
+                  ],
+                  "__typename__batch_hydration__characters": "Movie"
                 }
               ]
             }
-          },
-          "extensions": {}
-        }
-    - serviceName: testing
-      request:
-        query: |
-          query nadel_2_testing {
-            tests {
-              characters(ids: ["C2", "C3"]) {
-                id
-                name
-                object_identifier__UUID: id
-              }
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: testing
+    request:
+      query: |
+        query {
+          tests {
+            characters(ids: ["C2", "C3"]) {
+              id
+              batch_hydration__characters__id: id
+              name
             }
           }
-        variables: {}
-        operationName: nadel_2_testing
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "characters": [
-                {
-                  "id": "C2",
-                  "name": "Leia",
-                  "object_identifier__UUID": "C2"
-                },
-                {
-                  "id": "C3",
-                  "name": "Anakin",
-                  "object_identifier__UUID": "C3"
-                }
-              ]
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: testing
-      request:
-        query: |
-          query {
-            tests {
-              testing {
-                movies {
-                  __typename__batch_hydration__characters: __typename
-                  batch_hydration__characters__characterIds: characterIds
-                  id
-                  name
-                }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": {
+            "characters": [
+              {
+                "name": "Leia",
+                "batch_hydration__characters__id": "C2",
+                "id": "C2"
+              },
+              {
+                "name": "Anakin",
+                "batch_hydration__characters__id": "C3",
+                "id": "C3"
               }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: testing
+    request:
+      query: |
+        query {
+          tests {
+            characters(ids: ["C1", "C2", "C1"]) {
+              id
+              batch_hydration__characters__id: id
+              name
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "testing": {
-                "movies": [
-                  {
-                    "name": "Movie 1",
-                    "id": "M1",
-                    "batch_hydration__characters__characterIds": [
-                      "C1",
-                      "C2"
-                    ],
-                    "__typename__batch_hydration__characters": "Movie"
-                  },
-                  {
-                    "name": "Movie 2",
-                    "id": "M2",
-                    "batch_hydration__characters__characterIds": [
-                      "C1",
-                      "C2",
-                      "C3"
-                    ],
-                    "__typename__batch_hydration__characters": "Movie"
-                  }
-                ]
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: testing
-      request:
-        query: |
-          query {
-            tests {
-              characters(ids: ["C2", "C3"]) {
-                id
-                batch_hydration__characters__id: id
-                name
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "tests": {
+            "characters": [
+              {
+                "name": "Luke",
+                "batch_hydration__characters__id": "C1",
+                "id": "C1"
+              },
+              {
+                "name": "Leia",
+                "batch_hydration__characters__id": "C2",
+                "id": "C2"
+              },
+              {
+                "name": "Luke",
+                "batch_hydration__characters__id": "C1",
+                "id": "C1"
               }
-            }
+            ]
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "characters": [
-                {
-                  "name": "Leia",
-                  "batch_hydration__characters__id": "C2",
-                  "id": "C2"
-                },
-                {
-                  "name": "Anakin",
-                  "batch_hydration__characters__id": "C3",
-                  "id": "C3"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: testing
-      request:
-        query: |
-          query {
-            tests {
-              characters(ids: ["C1", "C2", "C1"]) {
-                id
-                batch_hydration__characters__id: id
-                name
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "tests": {
-              "characters": [
-                {
-                  "name": "Luke",
-                  "batch_hydration__characters__id": "C1",
-                  "id": "C1"
-                },
-                {
-                  "name": "Leia",
-                  "batch_hydration__characters__id": "C2",
-                  "id": "C2"
-                },
-                {
-                  "name": "Luke",
-                  "batch_hydration__characters__id": "C1",
-                  "id": "C1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

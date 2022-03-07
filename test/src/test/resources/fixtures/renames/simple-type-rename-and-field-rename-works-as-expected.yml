@@ -1,7 +1,5 @@
 name: simple type rename and field rename works as expected
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -95,49 +93,27 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: MyService
-      request:
-        query: |
-          query nadel_2_MyService {
-            renameObjectUnderlying {
-              name
-            }
+  - serviceName: MyService
+    request:
+      query: |
+        query {
+          rename__renameObject__renameObjectUnderlying: renameObjectUnderlying {
+            name
           }
-        variables: {}
-        operationName: nadel_2_MyService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "renameObjectUnderlying": {
-              "name": "val"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query {
-            rename__renameObject__renameObjectUnderlying: renameObjectUnderlying {
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__renameObject__renameObjectUnderlying": {
+            "name": "val"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__renameObject__renameObjectUnderlying": {
-              "name": "val"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

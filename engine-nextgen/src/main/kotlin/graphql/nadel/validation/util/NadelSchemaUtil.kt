@@ -28,7 +28,7 @@ object NadelSchemaUtil {
     }
 
     fun hasHydration(field: GraphQLFieldDefinition): Boolean {
-        return hasHydration(field.definition)
+        return hasHydration(field.definition!!)
     }
 
     fun hasHydration(def: FieldDefinition): Boolean {
@@ -51,7 +51,7 @@ object NadelSchemaUtil {
     }
 
     fun hasRename(field: GraphQLFieldDefinition): Boolean {
-        return hasRename(field.definition)
+        return hasRename(field.definition!!)
     }
 
     fun hasRename(def: FieldDefinition): Boolean {

@@ -1,7 +1,5 @@
 name: deep rename inside renamed type
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -31,62 +29,60 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            first {
-              __typename
-              __typename__deep_rename__name: __typename
-              deep_rename__name__details: details {
-                name
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          first {
+            __typename
+            __typename__deep_rename__name: __typename
+            deep_rename__name__details: details {
+              name
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "first": {
-              "__typename": "Issue",
-              "deep_rename__name__details": {
-                "name": "name-from-details"
-              },
-              "__typename__deep_rename__name": "Issue"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            second: first {
-              __typename__deep_rename__name: __typename
-              deep_rename__name__details: details {
-                name
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "first": {
+            "__typename": "Issue",
+            "deep_rename__name__details": {
+              "name": "name-from-details"
+            },
+            "__typename__deep_rename__name": "Issue"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          second: first {
+            __typename__deep_rename__name: __typename
+            deep_rename__name__details: details {
+              name
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "second": {
-              "deep_rename__name__details": {
-                "name": "name-from-details-2"
-              },
-              "__typename__deep_rename__name": "Issue"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "second": {
+            "deep_rename__name__details": {
+              "name": "name-from-details-2"
+            },
+            "__typename__deep_rename__name": "Issue"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

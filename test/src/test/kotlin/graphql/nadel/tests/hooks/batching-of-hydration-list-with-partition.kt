@@ -7,7 +7,6 @@ import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
 import graphql.nadel.enginekt.transform.result.json.JsonNode
 import graphql.nadel.tests.EngineTestHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.nadel.tests.UseHook
 
 private class BatchHydrationHooks : NadelEngineExecutionHooks {
@@ -31,7 +30,7 @@ private class BatchHydrationHooks : NadelEngineExecutionHooks {
 
 @UseHook
 class `batching-of-hydration-list-with-partition` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder.serviceExecutionHooks(BatchHydrationHooks())
     }
 }

@@ -1,0 +1,86 @@
+name: hydration with interfaces no source id
+enabled: true
+overallSchema:
+  Issues: |
+    type Query {
+      nodes: [Node]
+    }
+    type JiraIssue implements Node @renamed(from: "Issue") {
+      id: ID! 
+    }
+    interface Node {
+      id: ID! 
+    }
+    type User implements Node {
+      id: ID! @hydrated(service: "Issues" field: "idByAri" arguments: [{name: "id" value: "$source.ari"}])
+    }
+underlyingSchema:
+  Issues: |
+    type Query {
+      nodes: [Node]
+      idByAri(id: ID!): ID
+    }
+    interface Node {
+      id: ID!
+    }
+    type Issue implements Node {
+      id: ID!
+    }
+    type User implements Node {
+      id: ID!
+      ari: ID!
+      name: String!
+    }
+query: |
+  query {
+    nodes {
+      id
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          nodes {
+            ... on Issue {
+              id
+            }
+            ... on User {
+              __typename__hydration__id: __typename
+              hydration__id__ari: ari
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "nodes": [
+            {
+              "id": "GQLGW-001"
+            },
+            {
+              "id": "GQLGW-1102"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "nodes": [
+        {
+          "id": "GQLGW-001"
+        },
+        {
+          "id": "GQLGW-1102"
+        }
+      ]
+    },
+    "extensions": {}
+  }

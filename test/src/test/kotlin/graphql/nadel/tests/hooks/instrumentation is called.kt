@@ -12,7 +12,6 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.validation.ValidationError
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
@@ -25,7 +24,7 @@ class `instrumentation-is-called` : EngineTestHook {
     var instrumentationValidateCalled = 0
     var instrumentationExecuteCalled = 0
 
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .instrumentation(object : NadelInstrumentation {
                 override fun createState(parameters: NadelInstrumentationCreateStateParameters?): InstrumentationState {
@@ -51,7 +50,7 @@ class `instrumentation-is-called` : EngineTestHook {
             })
     }
 
-    override fun assertResult(engineType: NadelEngineType, result: ExecutionResult) {
+    override fun assertResult(result: ExecutionResult) {
         expectThat(instrumentationCalled).isEqualTo(1)
         expectThat(instrumentationParseCalled).isEqualTo(1)
         expectThat(instrumentationValidateCalled).isEqualTo(1)

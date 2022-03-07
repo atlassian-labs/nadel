@@ -1,7 +1,5 @@
 name: renamed type inside batch hydration
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   IssueService: |
     type Query {
@@ -61,83 +59,82 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: UserService
-      request:
-        query: |
-          query {
-            users {
-              __typename__batch_hydration__issue: __typename
-              batch_hydration__issue__issueId: issueId
-            }
+  - serviceName: UserService
+    request:
+      query: |
+        query {
+          users {
+            __typename__batch_hydration__issue: __typename
+            batch_hydration__issue__issueId: issueId
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "users": [
-              {
-                "__typename__batch_hydration__issue": "User",
-                "batch_hydration__issue__issueId": "issue-1"
-              },
-              {
-                "__typename__batch_hydration__issue": "User",
-                "batch_hydration__issue__issueId": "issue-2"
-              },
-              {
-                "__typename__batch_hydration__issue": "User",
-                "batch_hydration__issue__issueId": "issue-3"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
-              details {
-                __typename
-                name
-              }
-              batch_hydration__issue__id: id
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "users": [
+            {
+              "__typename__batch_hydration__issue": "User",
+              "batch_hydration__issue__issueId": "issue-1"
+            },
+            {
+              "__typename__batch_hydration__issue": "User",
+              "batch_hydration__issue__issueId": "issue-2"
+            },
+            {
+              "__typename__batch_hydration__issue": "User",
+              "batch_hydration__issue__issueId": "issue-3"
             }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
+            details {
+              __typename
+              name
+            }
+            batch_hydration__issue__id: id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issuesByIds": [
-              {
-                "batch_hydration__issue__id": "issue-1",
-                "details": {
-                  "__typename": "Details",
-                  "name": "Details of issue one"
-                }
-              },
-              {
-                "batch_hydration__issue__id": "issue-2",
-                "details": {
-                  "__typename": "Details",
-                  "name": "Issue two"
-                }
-              },
-              {
-                "batch_hydration__issue__id": "issue-3",
-                "details": {
-                  "__typename": "Details",
-                  "name": "Issue four – no wait three"
-                }
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issuesByIds": [
+            {
+              "batch_hydration__issue__id": "issue-1",
+              "details": {
+                "__typename": "Details",
+                "name": "Details of issue one"
+              }
+            },
+            {
+              "batch_hydration__issue__id": "issue-2",
+              "details": {
+                "__typename": "Details",
+                "name": "Issue two"
+              }
+            },
+            {
+              "batch_hydration__issue__id": "issue-3",
+              "details": {
+                "__typename": "Details",
+                "name": "Issue four – no wait three"
+              }
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

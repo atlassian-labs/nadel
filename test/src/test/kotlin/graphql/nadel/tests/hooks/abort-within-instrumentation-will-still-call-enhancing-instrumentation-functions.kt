@@ -11,7 +11,6 @@ import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecuti
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
-import graphql.nadel.tests.NadelEngineType
 import graphql.validation.ValidationError
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
@@ -19,7 +18,7 @@ import java.util.concurrent.CompletableFuture.completedFuture
 @UseHook
 class `abort-begin-execute-within-instrumentation-still-calls-enhancing-instrumentation` :
     EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .instrumentation(object : NadelInstrumentation {
                 override fun beginExecute(
@@ -46,7 +45,7 @@ class `abort-begin-execute-within-instrumentation-still-calls-enhancing-instrume
 
 @UseHook
 class `abort-begin-execute-in-cf-within-instrumentation-still-calls-enhancing-instrumentation` : EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .instrumentation(object : NadelInstrumentation {
                 override fun beginExecute(
@@ -77,7 +76,7 @@ class `abort-begin-execute-in-cf-within-instrumentation-still-calls-enhancing-in
 @UseHook
 class `abort-begin-query-execution-within-instrumentation-still-calls-enhancing-instrumentation` :
     EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .instrumentation(object : NadelInstrumentation {
                 override fun beginQueryExecution(
@@ -105,7 +104,7 @@ class `abort-begin-query-execution-within-instrumentation-still-calls-enhancing-
 @UseHook
 class `abort-begin-validation-within-instrumentation-still-calls-enhancing-instrumentation` :
     EngineTestHook {
-    override fun makeNadel(engineType: NadelEngineType, builder: Nadel.Builder): Nadel.Builder {
+    override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .instrumentation(object : NadelInstrumentation {
                 override fun beginValidation(

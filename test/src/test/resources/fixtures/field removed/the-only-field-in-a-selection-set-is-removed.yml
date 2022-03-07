@@ -1,7 +1,5 @@
 name: the only field in a selection set is removed
-enabled:
-  current: true
-  nextgen: false
+enabled: false
 overallSchema:
   IssueService: |
     type Query {
@@ -51,35 +49,34 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: IssueService
-      request:
-        query: |
-          query nadel_2_IssueService {
-            issueById(id: "I1") {
-              id
-              epic {
-                empty_selection_set_typename__UUID: __typename
-              }
+  - serviceName: IssueService
+    request:
+      query: |
+        query nadel_2_IssueService {
+          issueById(id: "I1") {
+            id
+            epic {
+              empty_selection_set_typename__UUID: __typename
             }
           }
-        variables: {}
-        operationName: nadel_2_IssueService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issueById": {
-              "id": "I1",
-              "epic": {
-                "empty_selection_set_typename__UUID": "Epic"
-              }
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+      operationName: nadel_2_IssueService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issueById": {
+            "id": "I1",
+            "epic": {
+              "empty_selection_set_typename__UUID": "Epic"
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

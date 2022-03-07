@@ -1,7 +1,5 @@
 name: nested renamed types
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   service1: |
     type Query {
@@ -44,45 +42,43 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service1
-      request:
-        query: |
-          query {
-            foo {
+  - serviceName: service1
+    request:
+      query: |
+        query {
+          foo {
+            __typename
+            parent {
               __typename
-              parent {
+              building {
                 __typename
-                building {
-                  __typename
-                  id
-                }
                 id
+              }
+              id
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename": "Foo",
+            "parent": {
+              "__typename": "Foo",
+              "id": "ParentFoo1",
+              "building": {
+                "__typename": "Building",
+                "id": "Bar-1"
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "__typename": "Foo",
-              "parent": {
-                "__typename": "Foo",
-                "id": "ParentFoo1",
-                "building": {
-                  "__typename": "Building",
-                  "id": "Bar-1"
-                }
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

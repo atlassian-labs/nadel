@@ -1,7 +1,5 @@
 name: typename is sent to owning service even when no fields are queried
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -76,100 +74,52 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issue {
-              __typename
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issue {
+            __typename
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "__typename": "IssueQuery"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: IssueSearch
+    request:
+      query: |
+        query {
+          issue {
+            search {
+              count
+              id
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "__typename": "IssueQuery"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          query nadel_2_IssueSearch {
-            issue {
-              search {
-                id
-                count
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "search": {
+              "count": 1001,
+              "id": "search-id"
             }
           }
-        variables: {}
-        operationName: nadel_2_IssueSearch
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "id" : "search-id",
-                "count": 1001
-              }
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issue {
-              __typename
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "__typename": "IssueQuery"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          query {
-            issue {
-              search {
-                count
-                id
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 1001,
-                "id": "search-id"
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

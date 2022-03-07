@@ -1,8 +1,5 @@
-name: query with pass through interfaces and unions that DONT have __typename in them
-  work as expected
-enabled:
-  current: true
-  nextgen: true
+name: query with pass through interfaces and unions that DONT have __typename in them work as expected
+enabled: true
 overallSchema:
   PetService: |
     type Query {
@@ -151,132 +148,64 @@ query: |
 variables:
   isLoyal: true
 serviceCalls:
-  current:
-    - serviceName: PetService
-      request:
-        query: |
-          query nadel_2_PetService_petQ($isLoyal: Boolean) {
-            pets(isLoyal: $isLoyal) {
-              name
-              ... on Dog {
-                wearsCollar
-              }
-              ... on Cat {
-                wearsBell
-              }
-              type_hint_typename__UUID: __typename
+  - serviceName: PetService
+    request:
+      query: |
+        query petQ {
+          raining(isLoyal: true) {
+            ... on Cat {
+              wearsBell
+            }
+            ... on Dog {
+              wearsCollar
             }
           }
-        variables:
-          isLoyal: true
-        operationName: nadel_2_PetService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "wearsCollar": true,
-                "type_hint_typename__UUID": "Dog"
-              },
-              {
-                "name": "Whiskers",
-                "wearsBell": false,
-                "type_hint_typename__UUID": "Cat"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: PetService
-      request:
-        query: |
-          query nadel_2_PetService_petQ($isLoyal: Boolean) {
-            raining(isLoyal: $isLoyal) {
-              ... on Dog {
-                wearsCollar
-              }
-              ... on Cat {
-                wearsBell
-              }
-              type_hint_typename__UUID: __typename
+      variables: { }
+      operationName: petQ
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "raining": {
+            "wearsCollar": true
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: PetService
+    request:
+      query: |
+        query petQ {
+          pets(isLoyal: true) {
+            name
+            ... on Cat {
+              wearsBell
+            }
+            ... on Dog {
+              wearsCollar
             }
           }
-        variables:
-          isLoyal: true
-        operationName: nadel_2_PetService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "raining": {
-              "wearsCollar": true,
-              "type_hint_typename__UUID": "Dog"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: PetService
-      request:
-        query: |
-          query petQ {
-            raining(isLoyal: true) {
-              ... on Cat {
-                wearsBell
-              }
-              ... on Dog {
-                wearsCollar
-              }
-            }
-          }
-        variables: {}
-        operationName: petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "raining": {
+      variables: { }
+      operationName: petQ
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "pets": [
+            {
+              "name": "Sparky",
               "wearsCollar": true
+            },
+            {
+              "name": "Whiskers",
+              "wearsBell": false
             }
-          },
-          "extensions": {}
-        }
-    - serviceName: PetService
-      request:
-        query: |
-          query petQ {
-            pets(isLoyal: true) {
-              ... on Cat {
-                name
-                wearsBell
-              }
-              ... on Dog {
-                name
-                wearsCollar
-              }
-            }
-          }
-        variables: {}
-        operationName: petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "wearsCollar": true
-              },
-              {
-                "name": "Whiskers",
-                "wearsBell": false
-              }
-            ]
-          },
-          "extensions": {}
-        }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

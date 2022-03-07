@@ -42,6 +42,7 @@ import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
 import graphql.normalized.ExecutableNormalizedOperationToAstCompiler.compileToDocument
+import graphql.nadel.compat.ExecutableNormalizedOperationToAstCompiler.compileToDocument as oldCompileToDocument
 import graphql.normalized.VariablePredicate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -283,13 +284,24 @@ class NextgenEngine @JvmOverloads constructor(
         val executionInput = executionContext.executionInput
 
         val jsonPredicate: VariablePredicate = getDocumentVariablePredicate(executionContext.hints, service)
-        val compileResult = compileToDocument(
-            service.underlyingSchema,
-            transformedQuery.getOperationKind(engineSchema),
-            getOperationName(service, executionContext),
-            listOf(transformedQuery),
-            jsonPredicate
-        )
+
+        val compileResult = if (executionContext.hints.newDocumentCompiler.invoke(service)) {
+            compileToDocument(
+                service.underlyingSchema,
+                transformedQuery.getOperationKind(engineSchema),
+                getOperationName(service, executionContext),
+                listOf(transformedQuery),
+                jsonPredicate
+            )
+        } else {
+            oldCompileToDocument(
+                service.underlyingSchema,
+                transformedQuery.getOperationKind(engineSchema),
+                getOperationName(service, executionContext),
+                listOf(transformedQuery),
+                jsonPredicate
+            )
+        }
 
         val serviceExecParams = newServiceExecutionParameters()
             .query(compileResult.document)

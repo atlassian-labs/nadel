@@ -1,7 +1,5 @@
 name: query with three nested hydrations and synthetic fields
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Bar: |
     type Query {
@@ -63,318 +61,165 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            foos {
-              barId
-            }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          foos {
+            __typename__batch_hydration__bar: __typename
+            batch_hydration__bar__barId: barId
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foos": [
-              {
-                "barId": "bar1"
-              },
-              {
-                "barId": "bar2"
-              },
-              {
-                "barId": "bar3"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query nadel_2_Bar {
-            barsQuery {
-              barsById(id: ["bar1", "bar2"]) {
-                name
-                nestedBarId
-                object_identifier__UUID: barId
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foos": [
+            {
+              "__typename__batch_hydration__bar": "Foo",
+              "batch_hydration__bar__barId": "bar1"
+            },
+            {
+              "__typename__batch_hydration__bar": "Foo",
+              "batch_hydration__bar__barId": "bar2"
+            },
+            {
+              "__typename__batch_hydration__bar": "Foo",
+              "batch_hydration__bar__barId": "bar3"
             }
-          }
-        variables: {}
-        operationName: nadel_2_Bar
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barsQuery": {
-              "barsById": [
-                {
-                  "object_identifier__UUID": "bar1",
-                  "name": "Bar 1",
-                  "nestedBarId": "nestedBar1"
-                },
-                {
-                  "object_identifier__UUID": "bar2",
-                  "name": "Bar 2",
-                  "nestedBarId": "nestedBar2"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Bar
-      request:
-        query: |
-          query nadel_2_Bar {
-            barsQuery {
-              barsById(id: ["bar3"]) {
-                name
-                nestedBarId
-                object_identifier__UUID: barId
-              }
-            }
-          }
-        variables: {}
-        operationName: nadel_2_Bar
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barsQuery": {
-              "barsById": [
-                {
-                  "object_identifier__UUID": "bar3",
-                  "name": "Bar 3",
-                  "nestedBarId": null
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Bar
-      request:
-        query: |
-          query nadel_2_Bar {
-            barsQuery {
-              barsById(id: ["nestedBar1", "nestedBar2"]) {
-                name
-                nestedBarId
-                object_identifier__UUID: barId
-              }
-            }
-          }
-        variables: {}
-        operationName: nadel_2_Bar
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barsQuery": {
-              "barsById": [
-                {
-                  "object_identifier__UUID": "nestedBar1",
-                  "name": "NestedBarName1",
-                  "nestedBarId": "nestedBarId456"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Bar
-      request:
-        query: |
-          query nadel_2_Bar {
-            barsQuery {
-              barsById(id: ["nestedBarId456"]) {
-                name
-                object_identifier__UUID: barId
-              }
-            }
-          }
-        variables: {}
-        operationName: nadel_2_Bar
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barsQuery": {
-              "barsById": [
-                {
-                  "object_identifier__UUID": "nestedBarId456",
-                  "name": "NestedBarName2"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            foos {
-              __typename__batch_hydration__bar: __typename
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: Bar
+    request:
+      query: |
+        query {
+          barsQuery {
+            barsById(id: ["bar3"]) {
+              __typename__batch_hydration__nestedBar: __typename
               batch_hydration__bar__barId: barId
+              name
+              batch_hydration__nestedBar__nestedBarId: nestedBarId
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foos": [
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barsQuery": {
+            "barsById": [
               {
-                "__typename__batch_hydration__bar": "Foo",
-                "batch_hydration__bar__barId": "bar1"
-              },
-              {
-                "__typename__batch_hydration__bar": "Foo",
-                "batch_hydration__bar__barId": "bar2"
-              },
-              {
-                "__typename__batch_hydration__bar": "Foo",
-                "batch_hydration__bar__barId": "bar3"
+                "name": "Bar 3",
+                "batch_hydration__bar__barId": "bar3",
+                "batch_hydration__nestedBar__nestedBarId": null,
+                "__typename__batch_hydration__nestedBar": "Bar"
               }
             ]
-          },
-          "extensions": {}
-        }
-    - serviceName: Bar
-      request:
-        query: |
-          query {
-            barsQuery {
-              barsById(id: ["bar3"]) {
-                __typename__batch_hydration__nestedBar: __typename
-                batch_hydration__bar__barId: barId
-                name
-                batch_hydration__nestedBar__nestedBarId: nestedBarId
-              }
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: Bar
+    request:
+      query: |
+        query {
+          barsQuery {
+            barsById(id: ["bar1", "bar2"]) {
+              __typename__batch_hydration__nestedBar: __typename
+              batch_hydration__bar__barId: barId
+              name
+              batch_hydration__nestedBar__nestedBarId: nestedBarId
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barsQuery": {
-              "barsById": [
-                {
-                  "name": "Bar 3",
-                  "batch_hydration__bar__barId": "bar3",
-                  "batch_hydration__nestedBar__nestedBarId": null,
-                  "__typename__batch_hydration__nestedBar": "Bar"
-                }
-              ]
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query {
-            barsQuery {
-              barsById(id: ["bar1", "bar2"]) {
-                __typename__batch_hydration__nestedBar: __typename
-                batch_hydration__bar__barId: barId
-                name
-                batch_hydration__nestedBar__nestedBarId: nestedBarId
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barsQuery": {
+            "barsById": [
+              {
+                "name": "Bar 1",
+                "batch_hydration__bar__barId": "bar1",
+                "batch_hydration__nestedBar__nestedBarId": "nestedBar1",
+                "__typename__batch_hydration__nestedBar": "Bar"
+              },
+              {
+                "name": "Bar 2",
+                "batch_hydration__bar__barId": "bar2",
+                "batch_hydration__nestedBar__nestedBarId": "nestedBar2",
+                "__typename__batch_hydration__nestedBar": "Bar"
               }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: Bar
+    request:
+      query: |
+        query {
+          barsQuery {
+            barsById(id: ["nestedBar1", "nestedBar2"]) {
+              __typename__batch_hydration__nestedBar: __typename
+              batch_hydration__nestedBar__barId: barId
+              name
+              batch_hydration__nestedBar__nestedBarId: nestedBarId
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barsQuery": {
-              "barsById": [
-                {
-                  "name": "Bar 1",
-                  "batch_hydration__bar__barId": "bar1",
-                  "batch_hydration__nestedBar__nestedBarId": "nestedBar1",
-                  "__typename__batch_hydration__nestedBar": "Bar"
-                },
-                {
-                  "name": "Bar 2",
-                  "batch_hydration__bar__barId": "bar2",
-                  "batch_hydration__nestedBar__nestedBarId": "nestedBar2",
-                  "__typename__batch_hydration__nestedBar": "Bar"
-                }
-              ]
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query {
-            barsQuery {
-              barsById(id: ["nestedBar1", "nestedBar2"]) {
-                __typename__batch_hydration__nestedBar: __typename
-                batch_hydration__nestedBar__barId: barId
-                name
-                batch_hydration__nestedBar__nestedBarId: nestedBarId
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barsQuery": {
+            "barsById": [
+              {
+                "name": "NestedBarName1",
+                "batch_hydration__nestedBar__barId": "nestedBar1",
+                "batch_hydration__nestedBar__nestedBarId": "nestedBarId456",
+                "__typename__batch_hydration__nestedBar": "Bar"
               }
+            ]
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: Bar
+    request:
+      query: |
+        query {
+          barsQuery {
+            barsById(id: ["nestedBarId456"]) {
+              batch_hydration__nestedBar__barId: barId
+              name
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barsQuery": {
-              "barsById": [
-                {
-                  "name": "NestedBarName1",
-                  "batch_hydration__nestedBar__barId": "nestedBar1",
-                  "batch_hydration__nestedBar__nestedBarId": "nestedBarId456",
-                  "__typename__batch_hydration__nestedBar": "Bar"
-                }
-              ]
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query {
-            barsQuery {
-              barsById(id: ["nestedBarId456"]) {
-                batch_hydration__nestedBar__barId: barId
-                name
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barsQuery": {
+            "barsById": [
+              {
+                "name": "NestedBarName2",
+                "batch_hydration__nestedBar__barId": "nestedBarId456"
               }
-            }
+            ]
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barsQuery": {
-              "barsById": [
-                {
-                  "name": "NestedBarName2",
-                  "batch_hydration__nestedBar__barId": "nestedBarId456"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

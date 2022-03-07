@@ -1,7 +1,5 @@
 name: rename inside renamed type
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   service1: |
     type Query {
@@ -28,33 +26,31 @@ query: |
       title
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service1
-      request:
-        query: |
-          query {
-            foo {
-              __typename
-              __typename__rename__title: __typename
-              rename__title__barId: barId
-            }
+  - serviceName: service1
+    request:
+      query: |
+        query {
+          foo {
+            __typename
+            __typename__rename__title: __typename
+            rename__title__barId: barId
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "__typename": "Foo",
-              "__typename__rename__title": "Foo",
-              "rename__title__barId": "Bar1"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename": "Foo",
+            "__typename__rename__title": "Foo",
+            "rename__title__barId": "Bar1"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

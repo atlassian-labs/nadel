@@ -1,7 +1,5 @@
 name: coerce values in interfaces
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -36,56 +34,27 @@ query: |
       id
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: service
-      request:
-        query: |
-          query nadel_2_service {
-            user(id: "1000") {
-              id
-              type_hint_typename__UUID: __typename
-            }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          user(id: "1000") {
+            id
           }
-        variables: {}
-        operationName: nadel_2_service
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "user": {
-              "id": "1000",
-              "type_hint_typename__UUID": "AccountUser"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            user(id: "1000") {
-              ... on AccountUser {
-                id
-              }
-              ... on AdminUser {
-                id
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "user": {
+            "id": "1000"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "user": {
-              "id": "1000"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

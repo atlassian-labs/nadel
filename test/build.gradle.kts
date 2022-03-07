@@ -7,7 +7,6 @@ plugins {
 
 dependencies {
     implementation(project(":nadel-api"))
-    implementation(project(":nadel-engine"))
     implementation(project(":nadel-engine-nextgen"))
     testImplementation("com.graphql-java:graphql-java-extended-scalars:2021-06-29T01-19-32-8e19827") {
         exclude(group = "com.graphql-java", module = "com.graphql-java")

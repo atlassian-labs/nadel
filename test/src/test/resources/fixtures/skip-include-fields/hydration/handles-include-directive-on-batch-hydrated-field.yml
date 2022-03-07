@@ -1,7 +1,5 @@
 name: handles include directive on batch hydrated field
-enabled:
-  current: false # Not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -43,29 +41,27 @@ query: |
 variables:
   test: false
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            foos {
-              __typename__skip_include____skip: __typename
-            }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foos {
+            __typename__skip_include____skip: __typename
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foos": [
-              {
-                "__typename__skip_include____skip": "Foo"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foos": [
+            {
+              "__typename__skip_include____skip": "Foo"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

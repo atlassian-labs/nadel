@@ -1,7 +1,5 @@
 name: inserts one error for a forbidden field in a list
-enabled:
-  current: true
-  nextgen: false
+enabled: false
 overallSchema:
   Issues: |
     type Query {
@@ -30,37 +28,36 @@ query: |
       restricted
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issues {
-              id
-            }
+  - serviceName: Issues
+    request:
+      query: |
+        query nadel_2_Issues {
+          issues {
+            id
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "id": "test-1"
-              },
-              {
-                "id": "test-2"
-              },
-              {
-                "id": "test-3"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+      operationName: nadel_2_Issues
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "id": "test-1"
+            },
+            {
+              "id": "test-2"
+            },
+            {
+              "id": "test-3"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

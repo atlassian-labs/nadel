@@ -1,7 +1,5 @@
 name: deep rename returns null
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -32,37 +30,35 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            troll {
-              __typename__deep_rename__name: __typename
-              deep_rename__name__firstEat: firstEat {
-                item {
-                  name
-                }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          troll {
+            __typename__deep_rename__name: __typename
+            deep_rename__name__firstEat: firstEat {
+              item {
+                name
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "troll": {
-              "__typename__deep_rename__name": "Troll",
-              "deep_rename__name__firstEat": {
-                "item": null
-              }
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "troll": {
+            "__typename__deep_rename__name": "Troll",
+            "deep_rename__name__firstEat": {
+              "item": null
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

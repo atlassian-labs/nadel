@@ -1,7 +1,5 @@
 name: interface rename direct works as expected
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -95,53 +93,27 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: MyService
-      request:
-        query: |
-          query nadel_2_MyService {
-            renameInterfaceUnderlying {
-              name
-              type_hint_typename__UUID: __typename
-            }
+  - serviceName: MyService
+    request:
+      query: |
+        query {
+          rename__renameInterface__renameInterfaceUnderlying: renameInterfaceUnderlying {
+            name
           }
-        variables: {}
-        operationName: nadel_2_MyService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "renameInterfaceUnderlying": {
-              "name": "val",
-              "type_hint_typename__UUID": "ObjectUnderlying"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query {
-            rename__renameInterface__renameInterfaceUnderlying: renameInterfaceUnderlying {
-              ... on ObjectUnderlying {
-                name
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__renameInterface__renameInterfaceUnderlying": {
+            "name": "val"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__renameInterface__renameInterfaceUnderlying": {
-              "name": "val"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: can query non hidden fields
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     directive @hidden on FIELD_DEFINITION
@@ -35,29 +33,27 @@ query: |
 
 variables: { }
 serviceCalls:
-  current: [ ]
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query {
-            hello {
-              id
-              name
-            }
+  - serviceName: MyService
+    request:
+      query: |
+        query {
+          hello {
+            id
+            name
           }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "hello": {
-              "id": "ID",
-              "name": "World"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "hello": {
+            "id": "ID",
+            "name": "World"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

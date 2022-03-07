@@ -1,7 +1,5 @@
 name: string field rename
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -93,41 +91,23 @@ query: |
   query {
     renameString
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: MyService
-      request:
-        query: |
-          query nadel_2_MyService {
-            renameStringUnderlying
-          }
-        variables: {}
-        operationName: nadel_2_MyService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "renameStringUnderlying": "hello"
-          },
-          "extensions": {}
+  - serviceName: MyService
+    request:
+      query: |
+        query {
+          rename__renameString__renameStringUnderlying: renameStringUnderlying
         }
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query {
-            rename__renameString__renameStringUnderlying: renameStringUnderlying
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__renameString__renameStringUnderlying": "hello"
-          },
-          "extensions": {}
-        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__renameString__renameStringUnderlying": "hello"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

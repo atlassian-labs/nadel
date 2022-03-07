@@ -1,7 +1,5 @@
 name: mutation with two services sharing a namespaced field
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -78,104 +76,54 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          mutation nadel_2_Issues {
-            issue {
-              getIssue {
-                text
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        mutation {
+          issue {
+            getIssue {
+              text
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          mutation nadel_2_IssueSearch {
-            issue {
-              search {
-                count
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "getIssue": {
+              "text": "Foo"
             }
           }
-        variables: {}
-        operationName: nadel_2_IssueSearch
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 100
-              }
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          mutation {
-            issue {
-              getIssue {
-                text
-              }
+        },
+        "extensions": {}
+      }
+  - serviceName: IssueSearch
+    request:
+      query: |
+        mutation {
+          issue {
+            search {
+              count
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          mutation {
-            issue {
-              search {
-                count
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "search": {
+              "count": 100
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 100
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: handles skip include directive on field with subselections
-enabled:
-  current: false # Not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -35,31 +33,29 @@ query: |
 variables:
   test: true
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            foo {
-              bar: foo {
-                id
-              }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo {
+            bar: foo {
+              id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "bar": {
-                "id": "FOO-1"
-              }
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "bar": {
+              "id": "FOO-1"
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: query to two services with field rename
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Bar: |
     type Query {
@@ -43,102 +41,54 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            otherFoo: fooOriginal {
-              name
-            }
-          }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "otherFoo": {
-              "name": "Foo"
-            }
-          },
-          "extensions": {
-            "ext1": "val1",
-            "merged": "m1"
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          rename__otherFoo__fooOriginal: fooOriginal {
+            name
           }
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query nadel_2_Bar {
-            bar {
-              title
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__otherFoo__fooOriginal": {
+            "name": "Foo"
           }
-        variables: {}
-        operationName: nadel_2_Bar
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "bar": {
-              "title": "Bar"
-            }
-          },
-          "extensions": {
-            "ext2": "val2",
-            "merged": "m2"
+        },
+        "extensions": {
+          "ext1": "val1",
+          "merged": "m1"
+        }
+      }
+  - serviceName: Bar
+    request:
+      query: |
+        query {
+          bar {
+            __typename__rename__name: __typename
+            rename__name__title: title
           }
         }
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            rename__otherFoo__fooOriginal: fooOriginal {
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "bar": {
+            "rename__name__title": "Bar",
+            "__typename__rename__name": "Bar"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__otherFoo__fooOriginal": {
-              "name": "Foo"
-            }
-          },
-          "extensions": {
-            "ext1": "val1",
-            "merged": "m1"
-          }
+        },
+        "extensions": {
+          "ext2": "val2",
+          "merged": "m2"
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query {
-            bar {
-              __typename__rename__name: __typename
-              rename__name__title: title
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "bar": {
-              "rename__name__title": "Bar",
-              "__typename__rename__name": "Bar"
-            }
-          },
-          "extensions": {
-            "ext2": "val2",
-            "merged": "m2"
-          }
-        }
+      }
 # language=JSON
 response: |-
   {

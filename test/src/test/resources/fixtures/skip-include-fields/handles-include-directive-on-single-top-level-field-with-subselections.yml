@@ -1,7 +1,5 @@
 name: handles include directive on single top level field with subselections
-enabled:
-  current: false # Not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -26,9 +24,7 @@ query: |
   }
 variables:
   test: false
-serviceCalls:
-  current: []
-  nextgen: []
+serviceCalls: []
 # language=JSON
 response: |-
   {

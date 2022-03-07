@@ -1,7 +1,5 @@
 name: field in a selection set is removed
-enabled:
-  current: true
-  nextgen: false
+enabled: false
 overallSchema:
   IssueService: |
     type Query {
@@ -98,35 +96,34 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: IssueService
-      request:
-        query: |
-          query nadel_2_IssueService {
-            issueById(id: "I1") {
+  - serviceName: IssueService
+    request:
+      query: |
+        query nadel_2_IssueService {
+          issueById(id: "I1") {
+            id
+            epic {
               id
-              epic {
-                id
-              }
             }
           }
-        variables: {}
-        operationName: nadel_2_IssueService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issueById": {
-              "id": "I1",
-              "epic": {
-                "id": "E1"
-              }
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+      operationName: nadel_2_IssueService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issueById": {
+            "id": "I1",
+            "epic": {
+              "id": "E1"
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

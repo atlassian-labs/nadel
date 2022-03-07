@@ -1,7 +1,5 @@
 name: coerce values with renames
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -16,41 +14,23 @@ query: |
   query {
     aFieldRenamed
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: service
-      request:
-        query: |
-          query nadel_2_service {
-            aField
-          }
-        variables: {}
-        operationName: nadel_2_service
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "aField": "1000"
-          },
-          "extensions": {}
+  - serviceName: service
+    request:
+      query: |
+        query {
+          rename__aFieldRenamed__aField: aField
         }
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            rename__aFieldRenamed__aField: aField
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__aFieldRenamed__aField": "1000"
-          },
-          "extensions": {}
-        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__aFieldRenamed__aField": "1000"
+        },
+        "extensions": {}
+      }
 # TODO: the returned data is not correct. The field is not being coerced to the overall type. But we'll leave
 # like this for now just to maintain the same behaviour for current and nextgen.
 # language=JSON

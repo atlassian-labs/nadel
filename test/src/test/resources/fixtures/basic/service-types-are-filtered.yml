@@ -1,7 +1,5 @@
 name: service types are filtered
-enabled:
-  current: false # Bug we're not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   test: |-
     type Query {
@@ -108,39 +106,35 @@ query: |
       statusCode
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: test
-      request:
-        query: |
-          query {
-            test {
-              ... on QueryError {
-                extensions {
-                  ... on GenericQueryErrorExtension {
-                    __typename__type_filter__statusCode: __typename
-                    errorType
-                  }
-                }
+  - serviceName: test
+    request:
+      query: |
+        query {
+          test {
+            ... on QueryError {
+              extensions {
+                __typename__type_filter__statusCode: __typename
+                errorType
               }
-              ... on Test {
-                id
-              }
+            }
+            ... on Test {
+              id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "test": {
-              "id": "Test-1"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "test": {
+            "id": "Test-1"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

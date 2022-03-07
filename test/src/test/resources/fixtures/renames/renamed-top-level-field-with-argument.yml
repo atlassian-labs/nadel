@@ -1,7 +1,5 @@
 name: renamed top level field with argument
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   MyService: |
     type Query {
@@ -25,49 +23,27 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: MyService
-      request:
-        query: |
-          query nadel_2_MyService {
-            renameObjectUnderlying(id: "OBJECT-001") {
-              name
-            }
+  - serviceName: MyService
+    request:
+      query: |
+        query {
+          rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
+            name
           }
-        variables: {}
-        operationName: nadel_2_MyService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "renameObjectUnderlying": {
-              "name": "Object 001"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: MyService
-      request:
-        query: |
-          query {
-            rename__renameObject__renameObjectUnderlying: renameObjectUnderlying(id: "OBJECT-001") {
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__renameObject__renameObjectUnderlying": {
+            "name": "Object 001"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__renameObject__renameObjectUnderlying": {
-              "name": "Object 001"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

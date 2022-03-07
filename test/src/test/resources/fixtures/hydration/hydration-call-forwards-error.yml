@@ -1,7 +1,5 @@
 name: hydration call forwards error
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service2: |
     type Query {
@@ -46,105 +44,57 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: service1
-      request:
-        query: |
-          query nadel_2_service1 {
-            foo {
-              barId
-            }
+  - serviceName: service1
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__barId: barId
           }
-        variables: {}
-        operationName: nadel_2_service1
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "barId": "barId1"
-            }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__bar__barId": "barId1",
+            "__typename__hydration__bar": "Foo"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: service2
+    request:
+      query: |
+        query {
+          barById(id: "barId1") {
+            name
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "errors": [
+          {
+            "message": "Some error occurred"
           },
-          "extensions": {}
-        }
-    - serviceName: service2
-      request:
-        query: |
-          query nadel_2_service2 {
-            barById(id: "barId1") {
-              name
+          {
+            "message": "Some error with extension occurred",
+            "path": [
+              "barById",
+              "name"],
+            "extensions": {
+              "classification": "SomeCustomError"
             }
           }
-        variables: {}
-        operationName: nadel_2_service2
-      # language=JSON
-      response: |-
-        {
-          "data": null,
-          "errors": [
-            {
-              "message": "Some error occurred"
-            },
-            {
-              "message": "Some error with extension occurred",
-              "path": ["barById", "name"],
-              "extensions": {
-                "classification": "SomeCustomError"
-              }
-            }
-          ],
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: service1
-      request:
-        query: |
-          query {
-            foo {
-              __typename__hydration__bar: __typename
-              hydration__bar__barId: barId
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "hydration__bar__barId": "barId1",
-              "__typename__hydration__bar": "Foo"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: service2
-      request:
-        query: |
-          query {
-            barById(id: "barId1") {
-              name
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "errors": [
-            {
-              "message": "Some error occurred"
-            },
-            {
-              "message": "Some error with extension occurred",
-              "path": ["barById", "name"],
-              "extensions": {
-                "classification": "SomeCustomError"
-              }
-            }
-          ],
-          "extensions": {}
-        }
+        ],
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {
@@ -155,9 +105,12 @@ response: |-
         "extensions": {
           "classification": "DataFetchingException"
         }
-      }, {
+      },
+      {
         "message": "Some error with extension occurred",
-        "path": ["barById", "name"],
+        "path": [
+          "barById",
+          "name"],
         "locations": [],
         "extensions": {
           "classification": "SomeCustomError"

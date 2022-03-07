@@ -1,7 +1,5 @@
 name: deep rename inside batch hydration
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   IssueService: |
     type Query {
@@ -55,84 +53,82 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: UserService
-      request:
-        query: |
-          query {
-            users {
-              __typename__batch_hydration__issue: __typename
-              batch_hydration__issue__issueId: issueId
-            }
+  - serviceName: UserService
+    request:
+      query: |
+        query {
+          users {
+            __typename__batch_hydration__issue: __typename
+            batch_hydration__issue__issueId: issueId
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "users": [
-              {
-                "__typename__batch_hydration__issue": "User",
-                "batch_hydration__issue__issueId": "issue-1"
-              },
-              {
-                "__typename__batch_hydration__issue": "User",
-                "batch_hydration__issue__issueId": "issue-2"
-              },
-              {
-                "__typename__batch_hydration__issue": "User",
-                "batch_hydration__issue__issueId": "issue-3"
-              }
-            ]
-          },
-          "extensions": {}
         }
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
-              __typename__deep_rename__name: __typename
-              deep_rename__name__detail: detail {
-                detailName
-              }
-              batch_hydration__issue__id: id
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "users": [
+            {
+              "__typename__batch_hydration__issue": "User",
+              "batch_hydration__issue__issueId": "issue-1"
+            },
+            {
+              "__typename__batch_hydration__issue": "User",
+              "batch_hydration__issue__issueId": "issue-2"
+            },
+            {
+              "__typename__batch_hydration__issue": "User",
+              "batch_hydration__issue__issueId": "issue-3"
             }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          issuesByIds(id: ["issue-1", "issue-2", "issue-3"]) {
+            __typename__deep_rename__name: __typename
+            deep_rename__name__detail: detail {
+              detailName
+            }
+            batch_hydration__issue__id: id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issuesByIds": [
-              {
-                "batch_hydration__issue__id": "issue-1",
-                "deep_rename__name__detail": {
-                  "detailName": "It amounts to nothing"
-                },
-                "__typename__deep_rename__name": "Issue"
-              },
-              {
-                "batch_hydration__issue__id": "issue-2",
-                "deep_rename__name__detail": {
-                  "detailName": "Details are cool"
-                },
-                "__typename__deep_rename__name": "Issue"
-              },
-              {
-                "batch_hydration__issue__id": "issue-3",
-                "deep_rename__name__detail": {
-                  "detailName": "Names are arbitrary"
-                },
-                "__typename__deep_rename__name": "Issue"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issuesByIds": [
+            {
+              "batch_hydration__issue__id": "issue-1",
+              "deep_rename__name__detail": {
+                "detailName": "It amounts to nothing"
+              },
+              "__typename__deep_rename__name": "Issue"
+            },
+            {
+              "batch_hydration__issue__id": "issue-2",
+              "deep_rename__name__detail": {
+                "detailName": "Details are cool"
+              },
+              "__typename__deep_rename__name": "Issue"
+            },
+            {
+              "batch_hydration__issue__id": "issue-3",
+              "deep_rename__name__detail": {
+                "detailName": "Names are arbitrary"
+              },
+              "__typename__deep_rename__name": "Issue"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

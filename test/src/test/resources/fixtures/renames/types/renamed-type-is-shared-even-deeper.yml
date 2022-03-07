@@ -1,7 +1,5 @@
 name: renamed type is shared even deeper
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Nextgen: |-
     type Query {
@@ -77,45 +75,43 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: Nextgen
-      request:
-        query: |
-          query {
-            elements {
+  - serviceName: Nextgen
+    request:
+      query: |
+        query {
+          elements {
+            __typename
+            nodes {
               __typename
-              nodes {
+              other {
                 __typename
-                other {
-                  __typename
-                  id
-                }
+                id
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "elements": {
-              "__typename": "ElementConnection",
-              "nodes": [
-                {
-                  "__typename": "Element",
-                  "other": {
-                    "__typename": "Other",
-                    "id": "OTHER-1"
-                  }
-                }
-              ]
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "elements": {
+            "__typename": "ElementConnection",
+            "nodes": [
+              {
+                "__typename": "Element",
+                "other": {
+                  "__typename": "Other",
+                  "id": "OTHER-1"
+                }
+              }
+            ]
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

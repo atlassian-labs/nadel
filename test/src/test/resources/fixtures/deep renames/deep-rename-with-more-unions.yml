@@ -1,7 +1,5 @@
 name: deep rename with more unions
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -64,69 +62,68 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            names {
-              ... on Edible {
-                name
-              }
-              ... on Issue {
-                name
-              }
-              ... on Troll {
-                __typename__deep_rename__name: __typename
-                deep_rename__name__firstEat: firstEat {
-                  item {
-                    name
-                  }
-                }
-              }
-              ... on User {
-                __typename__deep_rename__name: __typename
-                deep_rename__name__details: details {
-                  firstName
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          names {
+            ... on Edible {
+              name
+            }
+            ... on Issue {
+              name
+            }
+            ... on Troll {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__firstEat: firstEat {
+                item {
+                  name
                 }
               }
             }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "names": [
-              {
-                "name": "GQLGW-001"
-              },
-              {
-                "name": "GQLGW-1102"
-              },
-              {
-                "__typename__deep_rename__name": "Troll",
-                "deep_rename__name__firstEat": {
-                  "item": {
-                    "name": "My Arm"
-                  }
-                }
-              },
-              {
-                "__typename__deep_rename__name": "User",
-                "deep_rename__name__details": {
-                  "firstName": "Franklin"
-                }
-              },
-              {
-                "name": "Spaghetti"
+            ... on User {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__details: details {
+                firstName
               }
-            ]
-          },
-          "extensions": {}
+            }
+          }
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "names": [
+            {
+              "name": "GQLGW-001"
+            },
+            {
+              "name": "GQLGW-1102"
+            },
+            {
+              "__typename__deep_rename__name": "Troll",
+              "deep_rename__name__firstEat": {
+                "item": {
+                  "name": "My Arm"
+                }
+              }
+            },
+            {
+              "__typename__deep_rename__name": "User",
+              "deep_rename__name__details": {
+                "firstName": "Franklin"
+              }
+            },
+            {
+              "name": "Spaghetti"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

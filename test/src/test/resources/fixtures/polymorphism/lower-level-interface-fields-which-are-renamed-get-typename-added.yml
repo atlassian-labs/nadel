@@ -1,7 +1,5 @@
 name: lower level interface fields which are renamed get typename added
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   PetService: |
     type Query {
@@ -139,105 +137,50 @@ query: |
 variables:
   isLoyal: true
 serviceCalls:
-  current:
-    - serviceName: PetService
-      request:
-        query: |
-          query nadel_2_PetService_petQ($isLoyal: Boolean) {
-            pets(isLoyal: $isLoyal) {
-              name
-              collar {
+  - serviceName: PetService
+    request:
+      query: |
+        query petQ {
+          pets(isLoyal: true) {
+            __typename__rename__collarToRenamed: __typename
+            name
+            ... on Cat {
+              rename__collarToRenamed__collar: collar {
                 color
-                type_hint_typename__UUID: __typename
               }
-              type_hint_typename__UUID: __typename
             }
-          }
-        variables:
-          isLoyal: true
-        operationName: nadel_2_PetService_petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "collar": {
-                  "color": "blue",
-                  "type_hint_typename__UUID": "CatCollar"
-                },
-                "type_hint_typename__UUID": "Dog"
-              },
-              {
-                "name": "Whiskers",
-                "collar": {
-                  "color": "red",
-                  "type_hint_typename__UUID": "CatCollar"
-                },
-                "type_hint_typename__UUID": "Cat"
-              }
-            ]
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: PetService
-      request:
-        query: |
-          query petQ {
-            pets(isLoyal: true) {
-              ... on Cat {
-                __typename__rename__collarToRenamed: __typename
-                rename__collarToRenamed__collar: collar {
-                  ... on CatCollar {
-                    color
-                  }
-                  ... on DogCollar {
-                    color
-                  }
-                }
-                name
-              }
-              ... on Dog {
-                __typename__rename__collarToRenamed: __typename
-                rename__collarToRenamed__collar: collar {
-                  ... on CatCollar {
-                    color
-                  }
-                  ... on DogCollar {
-                    color
-                  }
-                }
-                name
+            ... on Dog {
+              rename__collarToRenamed__collar: collar {
+                color
               }
             }
           }
-        variables: {}
-        operationName: petQ
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "pets": [
-              {
-                "name": "Sparky",
-                "rename__collarToRenamed__collar": {
-                  "color": "blue"
-                },
-                "__typename__rename__collarToRenamed": "Dog"
-              },
-              {
-                "name": "Whiskers",
-                "rename__collarToRenamed__collar": {
-                  "color": "red"
-                },
-                "__typename__rename__collarToRenamed": "Cat"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+      operationName: petQ
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "pets": [
+            {
+              "name": "Sparky",
+              "rename__collarToRenamed__collar": {
+                "color": "blue"
+              },
+              "__typename__rename__collarToRenamed": "Dog"
+            },
+            {
+              "name": "Whiskers",
+              "rename__collarToRenamed__collar": {
+                "color": "red"
+              },
+              "__typename__rename__collarToRenamed": "Cat"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

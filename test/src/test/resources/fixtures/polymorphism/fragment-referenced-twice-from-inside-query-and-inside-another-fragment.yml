@@ -1,7 +1,5 @@
 name: fragment referenced twice from inside query and inside another fragment
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Foo: |
     type Query {
@@ -36,60 +34,27 @@ query: |
     id
     ...F2
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            foo {
-              id
-              ...F2
-              ...F1
-            }
-          }
-
-          fragment F2 on Bar {
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          foo {
             id
           }
-
-          fragment F1 on Bar {
-            id
-            ...F2
-          }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "id": "ID"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            foo {
-              id
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "id": "ID"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "id": "ID"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

@@ -1,7 +1,5 @@
 name: coerce values non null
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -16,41 +14,23 @@ query: |
   query {
     aField
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: service
-      request:
-        query: |
-          query nadel_2_service {
-            aField
-          }
-        variables: {}
-        operationName: nadel_2_service
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "aField": "1000"
-          },
-          "extensions": {}
+  - serviceName: service
+    request:
+      query: |
+        query {
+          aField
         }
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            aField
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "aField": "1000"
-          },
-          "extensions": {}
-        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "aField": "1000"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

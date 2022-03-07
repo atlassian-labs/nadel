@@ -1,7 +1,5 @@
 name: two deep renames merged fields with same path and field rename
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -43,89 +41,53 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issue {
-              id
-              authorDetails {
-                authorId
-              }
-              authorDetails {
-                name
-              }
-              authorDetails {
-                extraInfo
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issue {
+            __typename__deep_rename__authorId: __typename
+            __typename__deep_rename__authorName: __typename
+            __typename__rename__details: __typename
+            deep_rename__authorId__authorDetails: authorDetails {
+              authorId
+            }
+            deep_rename__authorName__authorDetails: authorDetails {
+              name
+            }
+            rename__details__authorDetails: authorDetails {
+              __typename__rename__extra: __typename
+              rename__extra__extraInfo: extraInfo
+            }
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "deep_rename__authorId__authorDetails": {
+              "authorId": "USER-1"
+            },
+            "__typename__deep_rename__authorId": "Issue",
+            "__typename__rename__details": "Issue",
+            "__typename__deep_rename__authorName": "Issue",
+            "id": "ISSUE-1",
+            "rename__details__authorDetails": {
+              "__typename__rename__extra": "AuthorDetail",
+              "rename__extra__extraInfo": "extra 1"
+            },
+            "deep_rename__authorName__authorDetails": {
+              "name": "User 1"
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "id": "ISSUE-1",
-              "authorDetails": {
-                "authorId": "USER-1",
-                "name": "User 1",
-                "extraInfo": "extra 1"
-              }
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issue {
-              __typename__deep_rename__authorId: __typename
-              __typename__deep_rename__authorName: __typename
-              __typename__rename__details: __typename
-              deep_rename__authorId__authorDetails: authorDetails {
-                authorId
-              }
-              deep_rename__authorName__authorDetails: authorDetails {
-                name
-              }
-              rename__details__authorDetails: authorDetails {
-                __typename__rename__extra: __typename
-                rename__extra__extraInfo: extraInfo
-              }
-              id
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "deep_rename__authorId__authorDetails": {
-                "authorId": "USER-1"
-              },
-              "__typename__deep_rename__authorId": "Issue",
-              "__typename__rename__details": "Issue",
-              "__typename__deep_rename__authorName": "Issue",
-              "id": "ISSUE-1",
-              "rename__details__authorDetails": {
-                "__typename__rename__extra": "AuthorDetail",
-                "rename__extra__extraInfo": "extra 1"
-              },
-              "deep_rename__authorName__authorDetails": {
-                "name": "User 1"
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

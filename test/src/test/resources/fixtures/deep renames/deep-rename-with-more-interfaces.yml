@@ -1,7 +1,5 @@
 name: deep rename with more interfaces
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -14,6 +12,7 @@ overallSchema:
       name: String
     }
     type Troll implements HasName {
+      # Trolls are typically named after whatever they first attempted to eat
       name: String @renamed(from: "firstEat.item.name")
     }
     interface HasName {
@@ -30,8 +29,9 @@ underlyingSchema:
     interface HasName {
       name: String
     }
-    type Troll {
+    type Troll implements HasName {
       id: ID
+      name: String
       firstEat: EatLog
     }
     type EatLog {
@@ -47,8 +47,9 @@ underlyingSchema:
     type UserDetails {
       firstName: String
     }
-    type User {
+    type User implements HasName {
       id: ID
+      name: String
       details: UserDetails
     }
 query: |
@@ -57,69 +58,68 @@ query: |
       name
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            names {
-              ... on Edible {
-                name
-              }
-              ... on Issue {
-                name
-              }
-              ... on Troll {
-                __typename__deep_rename__name: __typename
-                deep_rename__name__firstEat: firstEat {
-                  item {
-                    name
-                  }
-                }
-              }
-              ... on User {
-                __typename__deep_rename__name: __typename
-                deep_rename__name__details: details {
-                  firstName
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          names {
+            ... on Edible {
+              name
+            }
+            ... on Issue {
+              name
+            }
+            ... on Troll {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__firstEat: firstEat {
+                item {
+                  name
                 }
               }
             }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "names": [
-              {
-                "name": "GQLGW-001"
-              },
-              {
-                "name": "GQLGW-1102"
-              },
-              {
-                "__typename__deep_rename__name": "Troll",
-                "deep_rename__name__firstEat": {
-                  "item": {
-                    "name": "My Arm"
-                  }
-                }
-              },
-              {
-                "__typename__deep_rename__name": "User",
-                "deep_rename__name__details": {
-                  "firstName": "Franklin"
-                }
-              },
-              {
-                "name": "Spaghetti"
+            ... on User {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__details: details {
+                firstName
               }
-            ]
-          },
-          "extensions": {}
+            }
+          }
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "names": [
+            {
+              "name": "GQLGW-001"
+            },
+            {
+              "name": "GQLGW-1102"
+            },
+            {
+              "__typename__deep_rename__name": "Troll",
+              "deep_rename__name__firstEat": {
+                "item": {
+                  "name": "My Arm"
+                }
+              }
+            },
+            {
+              "__typename__deep_rename__name": "User",
+              "deep_rename__name__details": {
+                "firstName": "Franklin"
+              }
+            },
+            {
+              "name": "Spaghetti"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

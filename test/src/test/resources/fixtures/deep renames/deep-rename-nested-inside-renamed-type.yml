@@ -1,7 +1,5 @@
 name: deep rename nested inside renamed type
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -42,70 +40,68 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            first {
-              user {
-                __typename__deep_rename__name: __typename
-                deep_rename__name__details: details {
-                  firstName
-                }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          first {
+            user {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__details: details {
+                firstName
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "first": {
-              "user": {
-                "__typename__deep_rename__name": "User",
-                "deep_rename__name__details": {
-                  "firstName": "name-from-details"
-                }
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            second: first {
-              __typename
-              user {
-                __typename__deep_rename__name: __typename
-                deep_rename__name__details: details {
-                  firstName
-                }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "first": {
+            "user": {
+              "__typename__deep_rename__name": "User",
+              "deep_rename__name__details": {
+                "firstName": "name-from-details"
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "second": {
-              "__typename": "Issue",
-              "user": {
-                "__typename__deep_rename__name": "User",
-                "deep_rename__name__details": {
-                  "firstName": "name-from-details-2"
-                }
+        },
+        "extensions": {}
+      }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          second: first {
+            __typename
+            user {
+              __typename__deep_rename__name: __typename
+              deep_rename__name__details: details {
+                firstName
               }
             }
-          },
-          "extensions": {}
+          }
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "second": {
+            "__typename": "Issue",
+            "user": {
+              "__typename__deep_rename__name": "User",
+              "deep_rename__name__details": {
+                "firstName": "name-from-details-2"
+              }
+            }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

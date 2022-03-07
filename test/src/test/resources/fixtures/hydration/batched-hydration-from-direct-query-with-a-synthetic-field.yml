@@ -1,7 +1,5 @@
 name: batched-hydration-from-direct-query-with-a-synthetic-field
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service2: |
     type Query {
@@ -70,237 +68,122 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: service1
-      request:
-        query: |
-          query nadel_2_service1 {
-            issues {
+  - serviceName: service1
+    request:
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__authors: __typename
+            batch_hydration__authors__authorIds: authorIds
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "USER-1",
+                "USER-2"
+              ],
+              "id": "ISSUE-1"
+            },
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "USER-3"
+              ],
+              "id": "ISSUE-2"
+            },
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authorIds": [
+                "USER-2",
+                "USER-4",
+                "USER-5"
+              ],
+              "id": "ISSUE-3"
+            }
+          ]
+        },
+        "extensions": {}
+      }
+  - serviceName: service2
+    request:
+      query: |
+        query {
+          users {
+            usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
               id
-              authorIds
+              batch_hydration__authors__id: id
             }
           }
-        variables: {}
-        operationName: nadel_2_service1
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "users": {
+            "usersByIds": [
               {
-                "id": "ISSUE-1",
-                "authorIds": [
-                  "USER-1",
-                  "USER-2"
-                ]
+                "id": "USER-2",
+                "batch_hydration__authors__id": "USER-2"
               },
               {
-                "id": "ISSUE-2",
-                "authorIds": [
-                  "USER-3"
-                ]
+                "id": "USER-4",
+                "batch_hydration__authors__id": "USER-4"
               },
               {
-                "id": "ISSUE-3",
-                "authorIds": [
-                  "USER-2",
-                  "USER-4",
-                  "USER-5"
-                ]
+                "id": "USER-5",
+                "batch_hydration__authors__id": "USER-5"
               }
             ]
-          },
-          "extensions": {}
-        }
-    - serviceName: service2
-      request:
-        query: |
-          query nadel_2_service2 {
-            users {
-              usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
-                id
-                object_identifier__UUID: id
-              }
-            }
           }
-        variables: {}
-        operationName: nadel_2_service2
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "users": {
-              "usersByIds": [
-                {
-                  "id": "USER-1",
-                  "object_identifier__UUID": "USER-1"
-                },
-                {
-                  "id": "USER-2",
-                  "object_identifier__UUID": "USER-2"
-                },
-                {
-                  "id": "USER-3",
-                  "object_identifier__UUID": "USER-3"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: service2
-      request:
-        query: |
-          query nadel_2_service2 {
-            users {
-              usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
-                id
-                object_identifier__UUID: id
-              }
-            }
-          }
-        variables: {}
-        operationName: nadel_2_service2
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "users": {
-              "usersByIds": [
-                {
-                  "id": "USER-2",
-                  "object_identifier__UUID": "USER-2"
-                },
-                {
-                  "id": "USER-4",
-                  "object_identifier__UUID": "USER-4"
-                },
-                {
-                  "id": "USER-5",
-                  "object_identifier__UUID": "USER-5"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: service1
-      request:
-        query: |
-          query {
-            issues {
-              __typename__batch_hydration__authors: __typename
-              batch_hydration__authors__authorIds: authorIds
+        },
+        "extensions": {}
+      }
+  - serviceName: service2
+    request:
+      query: |
+        query {
+          users {
+            usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
               id
+              batch_hydration__authors__id: id
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "users": {
+            "usersByIds": [
               {
-                "__typename__batch_hydration__authors": "Issue",
-                "batch_hydration__authors__authorIds": [
-                  "USER-1",
-                  "USER-2"
-                ],
-                "id": "ISSUE-1"
+                "id": "USER-1",
+                "batch_hydration__authors__id": "USER-1"
               },
               {
-                "__typename__batch_hydration__authors": "Issue",
-                "batch_hydration__authors__authorIds": [
-                  "USER-3"
-                ],
-                "id": "ISSUE-2"
+                "id": "USER-2",
+                "batch_hydration__authors__id": "USER-2"
               },
               {
-                "__typename__batch_hydration__authors": "Issue",
-                "batch_hydration__authors__authorIds": [
-                  "USER-2",
-                  "USER-4",
-                  "USER-5"
-                ],
-                "id": "ISSUE-3"
+                "id": "USER-3",
+                "batch_hydration__authors__id": "USER-3"
               }
             ]
-          },
-          "extensions": {}
-        }
-    - serviceName: service2
-      request:
-        query: |
-          query {
-            users {
-              usersByIds(id: ["USER-2", "USER-4", "USER-5"]) {
-                id
-                batch_hydration__authors__id: id
-              }
-            }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "users": {
-              "usersByIds": [
-                {
-                  "id": "USER-2",
-                  "batch_hydration__authors__id": "USER-2"
-                },
-                {
-                  "id": "USER-4",
-                  "batch_hydration__authors__id": "USER-4"
-                },
-                {
-                  "id": "USER-5",
-                  "batch_hydration__authors__id": "USER-5"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: service2
-      request:
-        query: |
-          query {
-            users {
-              usersByIds(id: ["USER-1", "USER-2", "USER-3"]) {
-                id
-                batch_hydration__authors__id: id
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "users": {
-              "usersByIds": [
-                {
-                  "id": "USER-1",
-                  "batch_hydration__authors__id": "USER-1"
-                },
-                {
-                  "id": "USER-2",
-                  "batch_hydration__authors__id": "USER-2"
-                },
-                {
-                  "id": "USER-3",
-                  "batch_hydration__authors__id": "USER-3"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

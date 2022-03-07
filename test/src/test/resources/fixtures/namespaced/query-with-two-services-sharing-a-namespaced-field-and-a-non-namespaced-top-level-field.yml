@@ -1,8 +1,6 @@
 name: query with two services sharing a namespaced field and a non namespaced top
   level field
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     directive @namespaced on FIELD_DEFINITION
@@ -83,143 +81,73 @@ query: |
       title
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issue {
-              getIssue {
-                text
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          conf {
+            title
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "conf": {
+            "title": "Page title"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: IssueSearch
+    request:
+      query: |
+        query {
+          issue {
+            search {
+              count
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          query nadel_2_IssueSearch {
-            issue {
-              search {
-                count
-              }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "search": {
+              "count": 100
             }
           }
-        variables: {}
-        operationName: nadel_2_IssueSearch
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 100
-              }
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            conf {
-              title
+        },
+        "extensions": {}
+      }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issue {
+            getIssue {
+              text
             }
           }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "conf": {
-              "title": "Page title"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            conf {
-              title
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "getIssue": {
+              "text": "Foo"
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "conf": {
-              "title": "Page title"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: IssueSearch
-      request:
-        query: |
-          query {
-            issue {
-              search {
-                count
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "search": {
-                "count": 100
-              }
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issue {
-              getIssue {
-                text
-              }
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "getIssue": {
-                "text": "Foo"
-              }
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

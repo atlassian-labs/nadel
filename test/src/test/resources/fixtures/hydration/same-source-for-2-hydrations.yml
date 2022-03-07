@@ -1,7 +1,5 @@
 name: same source for 2 hydrations
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Foo: |
     type Query {
@@ -53,134 +51,71 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            foo {
-              fooId
-              fooId
-            }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__issue: __typename
+            __typename__hydration__detail: __typename
+            hydration__issue__fooId: fooId
+            hydration__detail__fooId: fooId
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "fooId": "ID"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            issue(issueId: "ID") {
-              field
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__detail__fooId": "ID",
+            "hydration__issue__fooId": "ID",
+            "__typename__hydration__issue": "Foo",
+            "__typename__hydration__detail": "Foo"
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "field": "field_name"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            detail(detailId: "ID") {
-              name
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          issue(issueId: "ID") {
+            field
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "detail": {
-              "name": "apple"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            foo {
-              __typename__hydration__issue: __typename
-              __typename__hydration__detail: __typename
-              hydration__issue__fooId: fooId
-              hydration__detail__fooId: fooId
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "field": "field_name"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "hydration__detail__fooId": "ID",
-              "hydration__issue__fooId": "ID",
-              "__typename__hydration__issue": "Foo",
-              "__typename__hydration__detail": "Foo"
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            issue(issueId: "ID") {
-              field
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          detail(detailId: "ID") {
+            name
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "field": "field_name"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            detail(detailId: "ID") {
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "detail": {
+            "name": "apple"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "detail": {
-              "name": "apple"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

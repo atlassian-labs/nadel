@@ -1,7 +1,5 @@
 name: solitary polymorphic hydration when hook returns null
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   pets: |
     type Query {
@@ -95,87 +93,87 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  nextgen:
-    - serviceName: foo
-      request:
-        query: |
-          query {
-            foo {
-              __typename
-              __typename__hydration__data: __typename
-              hydration__data__dataId: dataId
-              hydration__data__dataId: dataId
-              id
-            }
+  - serviceName: foo
+    request:
+      query: |
+        query {
+          foo {
+            __typename
+            __typename__hydration__data: __typename
+            hydration__data__dataId: dataId
+            hydration__data__dataId: dataId
+            id
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": [{
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": [
+            {
               "__typename": "Foo",
               "__typename__hydration__data": "Foo",
               "hydration__data__dataId": "NULL-0",
               "id": "FOO-0"
-            },{
+            },
+            {
               "__typename": "Foo",
               "__typename__hydration__data": "Foo",
               "hydration__data__dataId": "HUMAN-0",
               "id": "FOO-1"
             }]
-          },
-          "extensions": {}
-        }
-    - serviceName: people
-      request:
-        query: |
-          query {
-            humanById(id: "HUMAN-0") {
-              __typename__type_filter____typename: __typename
-              __typename
-              __typename__type_filter__id: __typename
-              __typename__type_filter__breed: __typename
-              id
-              name
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: people
+    request:
+      query: |
+        query {
+          humanById(id: "HUMAN-0") {
+            __typename
+            __typename__type_filter__id: __typename
+            __typename__type_filter__breed: __typename
+            id
+            name
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "humanById": {
-              "__typename__type_filter____typename": "Human",
-              "__typename": "Human",
-              "__typename__type_filter__id": "Human",
-              "__typename__type_filter__breed": "Human",
-              "id": "HUMAN-0",
-              "name": "Fanny Longbottom"
-            }
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "humanById": {
+            "__typename": "Human",
+            "__typename__type_filter__id": "Human",
+            "__typename__type_filter__breed": "Human",
+            "id": "HUMAN-0",
+            "name": "Fanny Longbottom"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {
     "data": {
-      "foo": [{
-        "__typename": "Foo",
-        "id": "FOO-0",
-        "data": null
-      },
-      {
-        "__typename": "Foo",
-        "id": "FOO-1",
-        "data": {
-          "__typename": "Human",
-          "id": "HUMAN-0",
-          "name": "Fanny Longbottom"
-        }
-      }]
+      "foo": [
+        {
+          "__typename": "Foo",
+          "id": "FOO-0",
+          "data": null
+        },
+        {
+          "__typename": "Foo",
+          "id": "FOO-1",
+          "data": {
+            "__typename": "Human",
+            "id": "HUMAN-0",
+            "name": "Fanny Longbottom"
+          }
+        }]
     },
     "extensions": {}
   }

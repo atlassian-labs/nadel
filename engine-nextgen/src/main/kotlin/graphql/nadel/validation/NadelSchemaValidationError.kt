@@ -317,7 +317,7 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
-    data class MissingHydrationActorFieldArgument(
+    data class NonExistentHydrationActorFieldArgument(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val hydration: UnderlyingServiceHydration,
@@ -331,6 +331,25 @@ sealed interface NadelSchemaValidationError {
             val s = hydration.serviceName
             val af = "${actorServiceQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
             "Hydration on field $of references non-existent argument $argument on hydration actor $s.$af"
+        }
+
+        override val subject = overallField
+    }
+
+    data class MissingRequiredHydrationActorFieldArgument(
+            val parentType: NadelServiceSchemaElement,
+            val overallField: GraphQLFieldDefinition,
+            val hydration: UnderlyingServiceHydration,
+            val actorServiceQueryType: GraphQLObjectType,
+            val argument: String,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val s = hydration.serviceName
+            val af = "${actorServiceQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
+            "Hydration on field $of is missing the required argument $argument on hydration actor $s.$af"
         }
 
         override val subject = overallField

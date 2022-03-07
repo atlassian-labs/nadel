@@ -1,7 +1,5 @@
 name: deep rename inside deep rename
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -38,45 +36,43 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            rename__issue__first: first {
-              __typename__deep_rename__extras: __typename
-              deep_rename__extras__details: details {
-                extras {
-                  __typename__deep_rename__ownerName: __typename
-                  deep_rename__ownerName__owner: owner {
-                    name
-                  }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          rename__issue__first: first {
+            __typename__deep_rename__extras: __typename
+            deep_rename__extras__details: details {
+              extras {
+                __typename__deep_rename__ownerName: __typename
+                deep_rename__ownerName__owner: owner {
+                  name
                 }
               }
             }
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__issue__first": {
-              "__typename__deep_rename__extras": "Issue",
-              "deep_rename__extras__details": {
-                "extras": {
-                  "__typename__deep_rename__ownerName": "IssueExtra",
-                  "deep_rename__ownerName__owner": {
-                    "name": "Franklin"
-                  }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__issue__first": {
+            "__typename__deep_rename__extras": "Issue",
+            "deep_rename__extras__details": {
+              "extras": {
+                "__typename__deep_rename__ownerName": "IssueExtra",
+                "deep_rename__ownerName__owner": {
+                  "name": "Franklin"
                 }
               }
             }
-          },
-          "extensions": {}
-        }
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

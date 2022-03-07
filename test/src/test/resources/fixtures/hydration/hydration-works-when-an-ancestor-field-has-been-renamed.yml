@@ -1,7 +1,5 @@
 name: hydration works when an ancestor field has been renamed
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   IssueService: |
     type DevOpsIssue @renamed(from: "Issue") {
@@ -45,102 +43,54 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: IssueService
-      request:
-        query: |
-          query nadel_2_IssueService {
-            relationships {
-              nodes {
-                issueId
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          rename__devOpsRelationships__relationships: relationships {
+            nodes {
+              __typename__hydration__devOpsIssue: __typename
+              hydration__devOpsIssue__issueId: issueId
+            }
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__devOpsRelationships__relationships": {
+            "nodes": [
+              {
+                "__typename__hydration__devOpsIssue": "Relationship",
+                "hydration__devOpsIssue__issueId": "1"
               }
-            }
+            ]
           }
-        variables: {}
-        operationName: nadel_2_IssueService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "relationships": {
-              "nodes": [
-                {
-                  "issueId": "1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: IssueService
-      request:
-        query: |
-          query nadel_2_IssueService {
-            issue(id: "1") {
-              id
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: IssueService
+    request:
+      query: |
+        query {
+          issue(id: "1") {
+            id
           }
-        variables: {}
-        operationName: nadel_2_IssueService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "id": "1"
-            }
-          },
-          "extensions": {}
         }
-  nextgen:
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            rename__devOpsRelationships__relationships: relationships {
-              nodes {
-                __typename__hydration__devOpsIssue: __typename
-                hydration__devOpsIssue__issueId: issueId
-              }
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issue": {
+            "id": "1"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "rename__devOpsRelationships__relationships": {
-              "nodes": [
-                {
-                  "__typename__hydration__devOpsIssue": "Relationship",
-                  "hydration__devOpsIssue__issueId": "1"
-                }
-              ]
-            }
-          },
-          "extensions": {}
-        }
-    - serviceName: IssueService
-      request:
-        query: |
-          query {
-            issue(id: "1") {
-              id
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issue": {
-              "id": "1"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

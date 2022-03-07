@@ -1,7 +1,5 @@
 name: hydration list with one element
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   service2: |
     type Query {
@@ -47,98 +45,52 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: service1
-      request:
-        query: |
-          query nadel_2_service1 {
-            foo {
-              barId
-            }
+  - serviceName: service1
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__barId: barId
           }
-        variables: {}
-        operationName: nadel_2_service1
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "barId": [
-                "barId1"
-              ]
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: service2
-      request:
-        query: |
-          query nadel_2_service2 {
-            barById(id: "barId1") {
-              id
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__bar__barId": [
+              "barId1"
+            ],
+            "__typename__hydration__bar": "Foo"
           }
-        variables: {}
-        operationName: nadel_2_service2
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barById": {
-              "id": "barId1",
-              "name": "Bar1"
-            }
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: service1
-      request:
-        query: |
-          query {
-            foo {
-              __typename__hydration__bar: __typename
-              hydration__bar__barId: barId
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: service2
+    request:
+      query: |
+        query {
+          barById(id: "barId1") {
+            id
+            name
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "hydration__bar__barId": [
-                "barId1"
-              ],
-              "__typename__hydration__bar": "Foo"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: service2
-      request:
-        query: |
-          query {
-            barById(id: "barId1") {
-              id
-              name
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "barById": {
+            "name": "Bar1",
+            "id": "barId1"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "barById": {
-              "name": "Bar1",
-              "id": "barId1"
-            }
-          },
-          "extensions": {}
-        }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

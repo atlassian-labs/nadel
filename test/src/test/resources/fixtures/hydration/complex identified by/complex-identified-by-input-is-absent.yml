@@ -1,7 +1,5 @@
 name: complex identified by input is absent
-enabled:
-  current: false
-  nextgen: true
+enabled: true
 overallSchema:
   UserService: |
     type Query {
@@ -60,35 +58,33 @@ query: |
   }
 variables: { }
 serviceCalls:
-  current: [ ]
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issues {
-              __typename__batch_hydration__authors: __typename
-              batch_hydration__authors__authors: authors {
-                id
-              }
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issues {
+            __typename__batch_hydration__authors: __typename
+            batch_hydration__authors__authors: authors {
               id
             }
+            id
           }
-        variables: { }
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "__typename__batch_hydration__authors": "Issue",
-                "batch_hydration__authors__authors": [],
-                "id": "ISSUE-1"
-              }
-            ]
-          },
-          "extensions": {}
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "__typename__batch_hydration__authors": "Issue",
+              "batch_hydration__authors__authors": [],
+              "id": "ISSUE-1"
+            }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

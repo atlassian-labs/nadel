@@ -1,7 +1,5 @@
 name: query with hydration that fail with errors are reflected in the result
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Bar: |
     type Query {
@@ -54,99 +52,53 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Foo
-      request:
-        query: |
-          query nadel_2_Foo {
-            foo {
-              barId
-            }
+  - serviceName: Foo
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__bar: __typename
+            hydration__bar__barId: barId
           }
-        variables: {}
-        operationName: nadel_2_Foo
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "barId": "barId123"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query nadel_2_Bar {
-            barById(id: "barId123") {
-              name
-              nestedBarId
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "hydration__bar__barId": "barId123",
+            "__typename__hydration__bar": "Foo"
           }
-        variables: {}
-        operationName: nadel_2_Bar
-      # language=JSON
-      response: |-
-        {
-          "errors": [
-            {
-              "message": "Error during hydration"
-            }
-          ],
-          "data": {
-            "barById": null
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Foo
-      request:
-        query: |
-          query {
-            foo {
-              __typename__hydration__bar: __typename
-              hydration__bar__barId: barId
-            }
+        },
+        "extensions": {}
+      }
+  - serviceName: Bar
+    request:
+      query: |
+        query {
+          barById(id: "barId123") {
+            __typename__hydration__nestedBar: __typename
+            name
+            hydration__nestedBar__nestedBarId: nestedBarId
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "foo": {
-              "hydration__bar__barId": "barId123",
-              "__typename__hydration__bar": "Foo"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: Bar
-      request:
-        query: |
-          query {
-            barById(id: "barId123") {
-              __typename__hydration__nestedBar: __typename
-              name
-              hydration__nestedBar__nestedBarId: nestedBarId
-            }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "errors": [
+          {
+            "message": "Error during hydration"
           }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "errors": [
-            {
-              "message": "Error during hydration"
-            }
-          ],
-          "data": {
-            "barById": null
-          },
-          "extensions": {}
-        }
+        ],
+        "data": {
+          "barById": null
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

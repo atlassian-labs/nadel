@@ -1,7 +1,5 @@
 name: field is removed from hydrated field
-enabled:
-  current: true
-  nextgen: false
+enabled: false
 overallSchema:
   UserService: |
     type Query {
@@ -57,49 +55,48 @@ query: |
       }
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: CommentService
-      request:
-        query: |
-          query nadel_2_CommentService {
-            commentById(id: "C1") {
-              authorId
-            }
+  - serviceName: CommentService
+    request:
+      query: |
+        query nadel_2_CommentService {
+          commentById(id: "C1") {
+            authorId
           }
-        variables: {}
-        operationName: nadel_2_CommentService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "commentById": {
-              "authorId": "fred"
-            }
-          },
-          "extensions": {}
         }
-    - serviceName: UserService
-      request:
-        query: |
-          query nadel_2_UserService {
-            userById(id: "fred") {
-              displayName
-            }
+      variables: { }
+      operationName: nadel_2_CommentService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "commentById": {
+            "authorId": "fred"
           }
-        variables: {}
-        operationName: nadel_2_UserService
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "userById": {
-              "displayName": "Display name of Fred"
-            }
-          },
-          "extensions": {}
+        },
+        "extensions": {}
+      }
+  - serviceName: UserService
+    request:
+      query: |
+        query nadel_2_UserService {
+          userById(id: "fred") {
+            displayName
+          }
         }
+      variables: { }
+      operationName: nadel_2_UserService
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "userById": {
+            "displayName": "Display name of Fred"
+          }
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

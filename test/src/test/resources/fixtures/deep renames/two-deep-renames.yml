@@ -1,7 +1,5 @@
 name: two deep renames
-enabled:
-  current: true
-  nextgen: true
+enabled: true
 overallSchema:
   Issues: |
     type Query {
@@ -35,97 +33,56 @@ query: |
       authorName
     }
   }
-variables: {}
+variables: { }
 serviceCalls:
-  current:
-    - serviceName: Issues
-      request:
-        query: |
-          query nadel_2_Issues {
-            issues {
-              id
-              authorDetails {
-                authorId
+  - serviceName: Issues
+    request:
+      query: |
+        query {
+          issues {
+            __typename__deep_rename__authorId: __typename
+            __typename__deep_rename__authorName: __typename
+            deep_rename__authorId__authorDetails: authorDetails {
+              authorId
+            }
+            deep_rename__authorName__authorDetails: authorDetails {
+              name
+            }
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "issues": [
+            {
+              "deep_rename__authorId__authorDetails": {
+                "authorId": "USER-1"
+              },
+              "__typename__deep_rename__authorId": "Issue",
+              "id": "ISSUE-1",
+              "__typename__deep_rename__authorName": "Issue",
+              "deep_rename__authorName__authorDetails": {
+                "name": "User 1"
               }
-              authorDetails {
-                name
+            },
+            {
+              "deep_rename__authorId__authorDetails": {
+                "authorId": "USER-2"
+              },
+              "__typename__deep_rename__authorId": "Issue",
+              "id": "ISSUE-2",
+              "__typename__deep_rename__authorName": "Issue",
+              "deep_rename__authorName__authorDetails": {
+                "name": "User 2"
               }
             }
-          }
-        variables: {}
-        operationName: nadel_2_Issues
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "id": "ISSUE-1",
-                "authorDetails": {
-                  "authorId": "USER-1",
-                  "name": "User 1"
-                }
-              },
-              {
-                "id": "ISSUE-2",
-                "authorDetails": {
-                  "authorId": "USER-2",
-                  "name": "User 2"
-                }
-              }
-            ]
-          },
-          "extensions": {}
-        }
-  nextgen:
-    - serviceName: Issues
-      request:
-        query: |
-          query {
-            issues {
-              __typename__deep_rename__authorId: __typename
-              __typename__deep_rename__authorName: __typename
-              deep_rename__authorId__authorDetails: authorDetails {
-                authorId
-              }
-              deep_rename__authorName__authorDetails: authorDetails {
-                name
-              }
-              id
-            }
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "issues": [
-              {
-                "deep_rename__authorId__authorDetails": {
-                  "authorId": "USER-1"
-                },
-                "__typename__deep_rename__authorId": "Issue",
-                "id": "ISSUE-1",
-                "__typename__deep_rename__authorName": "Issue",
-                "deep_rename__authorName__authorDetails": {
-                  "name": "User 1"
-                }
-              },
-              {
-                "deep_rename__authorId__authorDetails": {
-                  "authorId": "USER-2"
-                },
-                "__typename__deep_rename__authorId": "Issue",
-                "id": "ISSUE-2",
-                "__typename__deep_rename__authorName": "Issue",
-                "deep_rename__authorName__authorDetails": {
-                  "name": "User 2"
-                }
-              }
-            ]
-          },
-          "extensions": {}
-        }
+          ]
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

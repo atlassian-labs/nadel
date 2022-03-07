@@ -1,7 +1,5 @@
 name: handles skip directive on top level field
-enabled:
-  current: false # Not fixing
-  nextgen: true
+enabled: true
 overallSchema:
   service: |
     type Query {
@@ -22,23 +20,21 @@ query: |
 variables:
   test: true
 serviceCalls:
-  current: []
-  nextgen:
-    - serviceName: service
-      request:
-        query: |
-          query {
-            bar
-          }
-        variables: {}
-      # language=JSON
-      response: |-
-        {
-          "data": {
-            "bar": "Bar"
-          },
-          "extensions": {}
+  - serviceName: service
+    request:
+      query: |
+        query {
+          bar
         }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "bar": "Bar"
+        },
+        "extensions": {}
+      }
 # language=JSON
 response: |-
   {

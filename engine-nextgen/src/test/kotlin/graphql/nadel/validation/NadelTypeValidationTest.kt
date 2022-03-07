@@ -48,6 +48,56 @@ class NadelTypeValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
+        it("fails if a type is implicitly renamed") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                    "delta" to """
+                        type Query {
+                            delta: Echo
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo: Echo
+                        }
+                        type Echo {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                    "delta" to """
+                        type Query {
+                            delta: Delta
+                        }
+                        type Delta {
+                            echo: String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val missingTypeError = errors.assertSingleOfType<MissingUnderlyingType>()
+            assert(missingTypeError.service.name == "delta")
+            assert(missingTypeError.overallType.name == "Echo")
+
+            val fieldTypeError = errors.assertSingleOfType<IncompatibleFieldOutputType>()
+            assert(fieldTypeError.service.name == "delta")
+            assert(fieldTypeError.overallField.name == "delta")
+            assert(fieldTypeError.parentType.overall.name == "Query")
+        }
+
         it("does not crash on schema definition") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
