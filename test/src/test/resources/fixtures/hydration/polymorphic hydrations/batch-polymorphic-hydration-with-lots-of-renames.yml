@@ -4,7 +4,9 @@ overallSchema:
   bar: |
     type Query {
         animalById(ids: [ID]): [Animal] @renamed(from: "petById")
+        petById(ids: [ID]): [Animal]
         personById(ids: [ID]): [Person] @renamed(from: "humanById")
+        humanById(ids: [ID]): [Person]
     }
 
     type Animal @renamed(from: "Pet") {

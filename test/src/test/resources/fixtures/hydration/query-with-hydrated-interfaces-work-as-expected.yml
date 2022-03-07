@@ -41,7 +41,7 @@ overallSchema:
     }
   OwnerService: |
     type Query {
-      owner(id: String): Owner
+      ownerById(id: String): Owner
     }
     interface Owner {
       name: String

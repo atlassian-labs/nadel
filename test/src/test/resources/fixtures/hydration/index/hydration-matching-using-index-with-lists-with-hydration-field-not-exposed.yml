@@ -4,6 +4,7 @@ overallSchema:
   UserService: |
     type Query {
       echo: String
+      usersByIssueIds(issueIds: [ID]): [[User]]
     }
     type User {
       id: ID

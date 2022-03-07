@@ -4,6 +4,7 @@ overallSchema:
   Bar: |-
     type Query {
       bar: Bar
+      barById(id: ID): Bar
     }
     type Bar {
       barId: ID

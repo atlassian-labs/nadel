@@ -4,6 +4,7 @@ overallSchema:
   Issues: |
     type Query {
       nodes: [Node]
+      idByAri(id: ID!): ID
     }
     type JiraIssue implements Node @renamed(from: "Issue") {
       id: ID! 

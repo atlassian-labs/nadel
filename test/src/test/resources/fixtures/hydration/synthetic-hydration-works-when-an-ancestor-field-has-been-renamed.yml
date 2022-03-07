@@ -13,9 +13,11 @@ overallSchema:
     }
     type SyntheticIssue {
       devOpsIssue(id: ID): DevOpsIssue @renamed(from: "issue")
+      issue(id: ID): DevOpsIssue
     }
     type Query {
       devOpsRelationships: DevOpsRelationshipConnection @renamed(from: "relationships")
+      syntheticIssue: SyntheticIssue
     }
 underlyingSchema:
   IssueService: |

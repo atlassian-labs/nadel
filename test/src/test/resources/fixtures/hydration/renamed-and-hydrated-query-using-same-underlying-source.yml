@@ -3,6 +3,7 @@ enabled: true
 overallSchema:
   Foo: |
     type Query {
+      detail(detailId: ID): Detail
       foo: Foo
     }
     type Foo {
