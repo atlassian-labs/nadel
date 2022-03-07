@@ -170,6 +170,25 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallInputField
     }
 
+    data class IncompatibleArgumentInputType(
+            val parentType: NadelServiceSchemaElement,
+            val overallInputArg: GraphQLArgument,
+            val underlyingInputArg: GraphQLArgument,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val s = service.name
+            val ofa = makeFieldCoordinates(parentType.overall.name, overallInputArg.name)
+            val ufa = makeFieldCoordinates(parentType.underlying.name, underlyingInputArg.name)
+            val ot = GraphQLTypeUtil.simplePrint(overallInputArg.type)
+            val ut = GraphQLTypeUtil.simplePrint(underlyingInputArg.type)
+            "Overall field argument $ofa has input type $ot but underlying field argument $ufa in service $s has input type $ut"
+        }
+
+        override val subject = overallInputArg
+    }
+
     data class MissingUnderlyingEnumValue(
         val parentType: NadelServiceSchemaElement,
         val overallValue: GraphQLEnumValueDefinition,

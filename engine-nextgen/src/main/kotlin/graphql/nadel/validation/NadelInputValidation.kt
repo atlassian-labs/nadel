@@ -1,14 +1,12 @@
 package graphql.nadel.validation
 
-import graphql.nadel.enginekt.util.isList
 import graphql.nadel.enginekt.util.strictAssociateBy
-import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
 import graphql.nadel.validation.util.NadelInputValidationUtil.isMatchingInputTypeNameIgnoringNullableRenameScalar
-import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLInputObjectField
 import graphql.schema.GraphQLInputObjectType
+import graphql.schema.GraphQLInputType
 
 internal class NadelInputValidation {
     fun validate(
@@ -57,4 +55,5 @@ internal class NadelInputValidation {
             }
         }
     }
+
 }
