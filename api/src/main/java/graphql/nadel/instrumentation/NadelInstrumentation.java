@@ -7,11 +7,9 @@ import graphql.execution.instrumentation.DocumentAndVariables;
 import graphql.execution.instrumentation.InstrumentationContext;
 import graphql.execution.instrumentation.InstrumentationState;
 import graphql.language.Document;
-import graphql.nadel.ServiceExecution;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
-import graphql.nadel.instrumentation.parameters.NadelInstrumentationServiceExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
 import graphql.validation.ValidationError;
 
@@ -117,16 +115,5 @@ public interface NadelInstrumentation {
      */
     default CompletableFuture<ExecutionResult> instrumentExecutionResult(ExecutionResult executionResult, NadelInstrumentationQueryExecutionParameters parameters) {
         return CompletableFuture.completedFuture(executionResult);
-    }
-
-    /**
-     * This is called to allow instrumentation a service execution
-     *
-     * @param serviceExecution the {@link graphql.nadel.ServiceExecution} to be changed
-     * @param parameters       the parameters to this step
-     * @return a new service execution
-     */
-    default ServiceExecution instrumentServiceExecution(ServiceExecution serviceExecution, NadelInstrumentationServiceExecutionParameters parameters) {
-        return serviceExecution;
     }
 }
