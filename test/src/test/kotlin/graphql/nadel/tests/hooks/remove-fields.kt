@@ -3,13 +3,8 @@ package graphql.nadel.tests.hooks
 import graphql.ErrorClassification
 import graphql.GraphQLError
 import graphql.nadel.Nadel
-import graphql.nadel.hooks.HydrationArguments
 import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.normalized.NormalizedQueryField
 import graphql.nadel.tests.EngineTestHook
-import graphql.schema.GraphQLSchema
-import java.util.Optional
-import java.util.concurrent.CompletableFuture
 import graphql.GraphqlErrorException as GraphQLErrorException
 
 private class RejectField(private val fieldNames: List<String>) : ServiceExecutionHooks {

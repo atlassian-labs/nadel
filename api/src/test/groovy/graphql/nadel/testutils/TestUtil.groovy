@@ -6,14 +6,11 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.ser.FilterProvider
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider
-import graphql.ExecutionInput
 import graphql.ExecutionResult
 import graphql.GraphQL
 import graphql.TypeResolutionEnvironment
-import graphql.execution.ExecutionId
 import graphql.execution.MergedField
 import graphql.execution.MergedSelectionSet
-import graphql.execution.nextgen.ExecutionHelper
 import graphql.introspection.Introspection
 import graphql.language.AstPrinter
 import graphql.language.Document
@@ -25,15 +22,11 @@ import graphql.language.ScalarTypeDefinition
 import graphql.language.SelectionSet
 import graphql.nadel.DefinitionRegistry
 import graphql.nadel.NSDLParser
-import graphql.nadel.NadelExecutionHints
 import graphql.nadel.NadelGraphQLParser
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionParameters
 import graphql.nadel.ServiceExecutionResult
-import graphql.nadel.engine.NadelContext
-import graphql.nadel.normalized.NormalizedQueryFactory
-import graphql.nadel.normalized.NormalizedQueryFromAst
 import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.OverallSchemaGenerator
 import graphql.nadel.util.FpKit
@@ -307,11 +300,6 @@ class TestUtil {
         new NadelGraphQLParser().parseDocument(query)
     }
 
-    static NormalizedQueryFromAst createNormalizedQuery(GraphQLSchema schema, Document document) {
-        NormalizedQueryFactory normalizedQueryFactory = new NormalizedQueryFactory()
-        return normalizedQueryFactory.createNormalizedQuery(schema, document, null, [:])
-    }
-
     static Field parseField(String sdlField) {
         String spec = """ query Foo {
         $sdlField
@@ -337,25 +325,6 @@ class TestUtil {
 
     static MergedSelectionSet mergedSelectionSet(Map<String, MergedField> subFields) {
         return MergedSelectionSet.newMergedSelectionSet().subFields(subFields).build()
-    }
-
-
-    static def executionData(GraphQLSchema schema, Document query, Map variables = [:]) {
-        def normalizedQuery = new NormalizedQueryFactory().createNormalizedQuery(schema, query, null, variables)
-        def nadelContext = NadelContext.newContext()
-                .originalOperationName(query, null)
-                .normalizedOverallQuery(normalizedQuery)
-                .artificialFieldsUUID("UUID")
-                .nadelExecutionHints(NadelExecutionHints.newHints().build())
-                .build()
-        ExecutionInput executionInput = newExecutionInput()
-                .query(AstPrinter.printAst(query))
-                .context(nadelContext)
-                .variables(variables)
-                .build()
-        ExecutionHelper executionHelper = new ExecutionHelper()
-        def executionData = executionHelper.createExecutionData(query, schema, ExecutionId.generate(), executionInput, null)
-        [executionData.executionContext, executionHelper.getFieldSubSelection(executionData.executionContext)]
     }
 
 

@@ -23,8 +23,6 @@ import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
 import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
-import graphql.nadel.introspection.DefaultIntrospectionRunner;
-import graphql.nadel.introspection.IntrospectionRunner;
 import graphql.nadel.schema.NeverWiringFactory;
 import graphql.nadel.schema.OverallSchemaGenerator;
 import graphql.nadel.schema.QuerySchemaGenerator;
@@ -77,7 +75,6 @@ public class Nadel {
     final ServiceExecutionHooks serviceExecutionHooks;
     final PreparsedDocumentProvider preparsedDocumentProvider;
     final ExecutionIdProvider executionIdProvider;
-    final IntrospectionRunner introspectionRunner;
     final DefinitionRegistry commonTypes;
     final WiringFactory overallWiringFactory;
     final WiringFactory underlyingWiringFactory;
@@ -90,7 +87,6 @@ public class Nadel {
             NadelInstrumentation instrumentation,
             PreparsedDocumentProvider preparsedDocumentProvider,
             ExecutionIdProvider executionIdProvider,
-            IntrospectionRunner introspectionRunner,
             ServiceExecutionHooks serviceExecutionHooks,
             WiringFactory overallWiringFactory,
             WiringFactory underlyingWiringFactory,
@@ -103,7 +99,6 @@ public class Nadel {
         this.executionIdProvider = executionIdProvider;
         this.schemaTransformationHook = schemaTransformationHook;
 
-        this.introspectionRunner = introspectionRunner;
         this.overallWiringFactory = overallWiringFactory;
         this.underlyingWiringFactory = underlyingWiringFactory;
         this.stitchingDsls = createDSLs(serviceNDSLs);
@@ -122,7 +117,6 @@ public class Nadel {
         this.executionIdProvider = originalNadel.executionIdProvider;
         this.schemaTransformationHook = originalNadel.schemaTransformationHook;
 
-        this.introspectionRunner = originalNadel.introspectionRunner;
         this.overallWiringFactory = originalNadel.overallWiringFactory;
         this.underlyingWiringFactory = originalNadel.underlyingWiringFactory;
         this.stitchingDsls = originalNadel.stitchingDsls;
@@ -353,7 +347,6 @@ public class Nadel {
         };
         private PreparsedDocumentProvider preparsedDocumentProvider = NoOpPreparsedDocumentProvider.INSTANCE;
         private ExecutionIdProvider executionIdProvider = ExecutionIdProvider.DEFAULT_EXECUTION_ID_PROVIDER;
-        private IntrospectionRunner introspectionRunner = new DefaultIntrospectionRunner();
         private WiringFactory overallWiringFactory = new NeverWiringFactory();
         private WiringFactory underlyingWiringFactory = new NeverWiringFactory();
         private SchemaTransformationHook schemaTransformationHook = SchemaTransformationHook.IDENTITY;
@@ -422,11 +415,6 @@ public class Nadel {
             return this;
         }
 
-        public Builder introspectionRunner(IntrospectionRunner introspectionRunner) {
-            this.introspectionRunner = requireNonNull(introspectionRunner);
-            return this;
-        }
-
         public Builder serviceExecutionHooks(ServiceExecutionHooks serviceExecutionHooks) {
             this.serviceExecutionHooks = requireNonNull(serviceExecutionHooks);
             return this;
@@ -459,7 +447,6 @@ public class Nadel {
                     instrumentation,
                     preparsedDocumentProvider,
                     executionIdProvider,
-                    introspectionRunner,
                     serviceExecutionHooks,
                     overallWiringFactory,
                     underlyingWiringFactory,

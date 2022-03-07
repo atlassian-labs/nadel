@@ -1,10 +1,8 @@
 package graphql.nadel.schema;
 
 import graphql.Internal;
-import graphql.nadel.engine.NadelContext;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetcherFactory;
-import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.TypeResolver;
 import graphql.schema.idl.FieldWiringEnvironment;
@@ -14,11 +12,6 @@ import graphql.schema.idl.SchemaDirectiveWiring;
 import graphql.schema.idl.SchemaDirectiveWiringEnvironment;
 import graphql.schema.idl.UnionWiringEnvironment;
 import graphql.schema.idl.WiringFactory;
-
-import java.util.Map;
-
-import static graphql.Assert.assertNotNull;
-import static graphql.Assert.assertTrue;
 
 /**
  * This underlying wiring factory has special type resolver support that is needed by Nadel.
@@ -39,38 +32,17 @@ public class UnderlyingWiringFactory implements WiringFactory {
 
     @Override
     public TypeResolver getTypeResolver(InterfaceWiringEnvironment environment) {
-        return underScoreTypeNameResolver();
+        return delegateWiringFactory.getTypeResolver(environment);
     }
 
     @Override
     public boolean providesTypeResolver(UnionWiringEnvironment environment) {
-        return true;
+        return delegateWiringFactory.providesTypeResolver(environment);
     }
 
     @Override
     public TypeResolver getTypeResolver(UnionWiringEnvironment environment) {
-        return underScoreTypeNameResolver();
-    }
-
-    @SuppressWarnings({"unchecked", "ConstantConditions"})
-    private TypeResolver underScoreTypeNameResolver() {
-        return env -> {
-            NadelContext nadelContext = env.getContext();
-            String underscoreTypeNameAlias = nadelContext.getUnderscoreTypeNameAlias();
-
-            Object source = env.getObject();
-            assertTrue(source instanceof Map, () -> "The Nadel result object MUST be a Map");
-
-            Map<String, Object> sourceMap = (Map<String, Object>) source;
-            assertTrue(sourceMap.containsKey(underscoreTypeNameAlias), () -> "The Nadel result object for interfaces and unions MUST have an aliased __typename in them");
-
-            Object typeName = sourceMap.get(underscoreTypeNameAlias);
-            assertNotNull(typeName, () -> "The Nadel result object for interfaces and unions MUST have an aliased__typename with a non null value in them");
-
-            GraphQLObjectType objectType = env.getSchema().getObjectType(typeName.toString());
-            assertNotNull(objectType, () -> String.format("There must be an underlying graphql object type called '%s'", typeName));
-            return objectType;
-        };
+        return delegateWiringFactory.getTypeResolver(environment);
     }
 
     @Override
