@@ -1,7 +1,6 @@
 package graphql.nadel;
 
 import graphql.PublicApi;
-import graphql.nadel.dsl.ServiceDefinition;
 import graphql.schema.GraphQLSchema;
 
 @PublicApi
@@ -11,19 +10,16 @@ public class Service {
     private final GraphQLSchema underlyingSchema;
     // this is not enough in the future as we need to allow for dynamic delegationExecution
     private final ServiceExecution serviceExecution;
-    private final ServiceDefinition serviceDefinition;
-    private final DefinitionRegistry definitionRegistry;
+    private final NadelDefinitionRegistry nadelDefinitionRegistry;
 
     public Service(String name,
                    GraphQLSchema underlyingSchema,
                    ServiceExecution serviceExecution,
-                   ServiceDefinition serviceDefinition,
-                   DefinitionRegistry definitionRegistry) {
+                   NadelDefinitionRegistry nadelDefinitionRegistry) {
         this.name = name;
         this.underlyingSchema = underlyingSchema;
         this.serviceExecution = serviceExecution;
-        this.serviceDefinition = serviceDefinition;
-        this.definitionRegistry = definitionRegistry;
+        this.nadelDefinitionRegistry = nadelDefinitionRegistry;
     }
 
     public String getName() {
@@ -43,14 +39,10 @@ public class Service {
         return serviceExecution;
     }
 
-    public ServiceDefinition getServiceDefinition() {
-        return serviceDefinition;
-    }
-
     /**
      * These are the GraphQL definitions that a service contributes to the OVERALL schema.
      */
-    public DefinitionRegistry getDefinitionRegistry() {
-        return definitionRegistry;
+    public NadelDefinitionRegistry getDefinitionRegistry() {
+        return nadelDefinitionRegistry;
     }
 }

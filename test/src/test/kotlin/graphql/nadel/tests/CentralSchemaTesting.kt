@@ -149,7 +149,6 @@ suspend fun main() {
     nadel
         .execute(
             newNadelExecutionInput()
-                .artificialFieldsUUID("UUID")
                 .query(query)
                 .build(),
         )

@@ -15,22 +15,21 @@ import graphql.execution.preparsed.NoOpPreparsedDocumentProvider;
 import graphql.execution.preparsed.PreparsedDocumentEntry;
 import graphql.execution.preparsed.PreparsedDocumentProvider;
 import graphql.language.Document;
-import graphql.nadel.dsl.CommonDefinition;
-import graphql.nadel.dsl.ServiceDefinition;
-import graphql.nadel.dsl.StitchingDsl;
+import graphql.language.SDLDefinition;
 import graphql.nadel.hooks.ServiceExecutionHooks;
 import graphql.nadel.instrumentation.NadelInstrumentation;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters;
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters;
-import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters;
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters;
 import graphql.nadel.schema.NeverWiringFactory;
 import graphql.nadel.schema.OverallSchemaGenerator;
 import graphql.nadel.schema.QuerySchemaGenerator;
 import graphql.nadel.schema.SchemaTransformationHook;
 import graphql.nadel.schema.UnderlyingSchemaGenerator;
 import graphql.nadel.util.LogKit;
-import graphql.nadel.util.Util;
+import graphql.nadel.util.SchemaUtil;
 import graphql.parser.InvalidSyntaxException;
+import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.ScalarInfo;
 import graphql.schema.idl.TypeDefinitionRegistry;
@@ -55,7 +54,6 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import static graphql.execution.instrumentation.DocumentAndVariables.newDocumentAndVariables;
-import static graphql.nadel.util.Util.buildServiceRegistry;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
@@ -65,7 +63,6 @@ public class Nadel {
     private static final Logger log = LoggerFactory.getLogger(Nadel.class);
 
     private final NadelExecutionEngine engine;
-    final Map<String, StitchingDsl> stitchingDsls;
     final ServiceExecutionFactory serviceExecutionFactory;
     final List<Service> services;
     final GraphQLSchema engineSchema;
@@ -75,22 +72,20 @@ public class Nadel {
     final ServiceExecutionHooks serviceExecutionHooks;
     final PreparsedDocumentProvider preparsedDocumentProvider;
     final ExecutionIdProvider executionIdProvider;
-    final DefinitionRegistry commonTypes;
     final WiringFactory overallWiringFactory;
     final WiringFactory underlyingWiringFactory;
     final SchemaTransformationHook schemaTransformationHook;
-    final OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
 
     private Nadel(
-            Map<String, Reader> serviceNDSLs,
-            ServiceExecutionFactory serviceExecutionFactory,
-            NadelInstrumentation instrumentation,
-            PreparsedDocumentProvider preparsedDocumentProvider,
-            ExecutionIdProvider executionIdProvider,
-            ServiceExecutionHooks serviceExecutionHooks,
-            WiringFactory overallWiringFactory,
-            WiringFactory underlyingWiringFactory,
-            SchemaTransformationHook schemaTransformationHook
+        Map<String, Reader> serviceNDSLs,
+        ServiceExecutionFactory serviceExecutionFactory,
+        @NotNull NadelInstrumentation instrumentation,
+        PreparsedDocumentProvider preparsedDocumentProvider,
+        ExecutionIdProvider executionIdProvider,
+        ServiceExecutionHooks serviceExecutionHooks,
+        WiringFactory overallWiringFactory,
+        WiringFactory underlyingWiringFactory,
+        SchemaTransformationHook schemaTransformationHook
     ) {
         this.serviceExecutionFactory = serviceExecutionFactory;
         this.instrumentation = instrumentation;
@@ -101,9 +96,7 @@ public class Nadel {
 
         this.overallWiringFactory = overallWiringFactory;
         this.underlyingWiringFactory = underlyingWiringFactory;
-        this.stitchingDsls = createDSLs(serviceNDSLs);
-        this.services = createServices();
-        this.commonTypes = createCommonTypes();
+        this.services = createServices(serviceNDSLs);
         this.engineSchema = createEngineSchema();
         this.querySchema = QuerySchemaGenerator.generateQuerySchema(this.engineSchema);
         this.engine = null;
@@ -119,66 +112,45 @@ public class Nadel {
 
         this.overallWiringFactory = originalNadel.overallWiringFactory;
         this.underlyingWiringFactory = originalNadel.underlyingWiringFactory;
-        this.stitchingDsls = originalNadel.stitchingDsls;
         this.services = originalNadel.services;
-        this.commonTypes = originalNadel.commonTypes;
         this.engineSchema = originalNadel.engineSchema;
         this.querySchema = originalNadel.querySchema;
         this.engine = engine;
     }
 
-    private Map<String, StitchingDsl> createDSLs(Map<String, Reader> serviceNDSLs) {
-        NSDLParser nadelParser = new NSDLParser();
-        Map<String, StitchingDsl> mapOfDSLs = new LinkedHashMap<>();
-        for (Map.Entry<String, Reader> e : serviceNDSLs.entrySet()) {
-            StitchingDsl stitchingDsl = nadelParser.parseDSL(e.getValue());
-            mapOfDSLs.put(e.getKey(), stitchingDsl);
-        }
-        return mapOfDSLs;
-    }
-
-    private DefinitionRegistry createCommonTypes() {
-        List<CommonDefinition> commonDefinitions = stitchingDsls.values().stream()
-                .filter(dsl -> dsl.getCommonDefinition() != null)
-                .map(StitchingDsl::getCommonDefinition)
-                .collect(toList());
-        return buildServiceRegistry(commonDefinitions);
-    }
-
-    private List<Service> createServices() {
+    private List<Service> createServices(Map<String, Reader> serviceNDSLs) {
         List<Service> serviceList = new ArrayList<>();
         UnderlyingSchemaGenerator underlyingSchemaGenerator = new UnderlyingSchemaGenerator();
 
-        for (Map.Entry<String, StitchingDsl> e : stitchingDsls.entrySet()) {
+        for (Map.Entry<String, Reader> e : serviceNDSLs.entrySet()) {
             String serviceName = e.getKey();
-            StitchingDsl stitchingDsl = e.getValue();
-            if (stitchingDsl.getCommonDefinition() != null) {
-                continue;
-            }
-            ServiceDefinition serviceDefinition = Util.buildServiceDefinition(serviceName, stitchingDsl);
-            ServiceExecution serviceExecution = this.serviceExecutionFactory.getServiceExecution(serviceName);
-            TypeDefinitionRegistry underlyingTypeDefinitions = this.serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName);
+            List<SDLDefinition> serviceSchema = SchemaUtil.parseDefinitions(e.getValue());
 
-            GraphQLSchema underlyingSchema = underlyingSchemaGenerator
-                    .buildUnderlyingSchema(serviceName, underlyingTypeDefinitions, underlyingWiringFactory);
-            DefinitionRegistry definitionRegistry = buildServiceRegistry(serviceDefinition);
+            ServiceExecution serviceExecution = serviceExecutionFactory.getServiceExecution(serviceName);
+            TypeDefinitionRegistry underlyingTypeDefinitions = serviceExecutionFactory.getUnderlyingTypeDefinitions(serviceName);
+            GraphQLSchema underlyingSchema = underlyingSchemaGenerator.buildUnderlyingSchema(serviceName, underlyingTypeDefinitions, underlyingWiringFactory);
 
-            Service service = new Service(serviceName, underlyingSchema, serviceExecution, serviceDefinition, definitionRegistry);
+            NadelDefinitionRegistry nadelDefinitionRegistry = NadelDefinitionRegistry.from(serviceSchema);
+
+            Service service = new Service(serviceName, underlyingSchema, serviceExecution, nadelDefinitionRegistry);
             serviceList.add(service);
         }
         return serviceList;
     }
 
     private GraphQLSchema createEngineSchema() {
-        List<DefinitionRegistry> registries = this.services.stream()
-                .map(Service::getDefinitionRegistry)
-                .collect(toList());
-        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(registries, commonTypes, overallWiringFactory);
+        OverallSchemaGenerator overallSchemaGenerator = new OverallSchemaGenerator();
+
+        List<NadelDefinitionRegistry> serviceRegistries = this.services.stream()
+            .map(Service::getDefinitionRegistry)
+            .collect(toList());
+
+        GraphQLSchema schema = overallSchemaGenerator.buildOverallSchema(serviceRegistries, overallWiringFactory);
 
         GraphQLSchema newSchema = schemaTransformationHook.apply(schema, this.services);
 
         //
-        // make sure that the overall schema has the standard scalars in it since he underlying may use them EVEN if the overall does not
+        // make sure that the overall schema has the standard scalars in it since the underlying may use them EVEN if the overall does not
         // make direct use of them, we still have to map between them
         return newSchema.transform(builder -> ScalarInfo.GRAPHQL_SPECIFICATION_SCALARS.forEach(builder::additionalType));
     }
@@ -205,50 +177,42 @@ public class Nadel {
 
     @NotNull
     public CompletableFuture<ExecutionResult> execute(NadelExecutionInput nadelExecutionInput) {
-        long startTime = System.currentTimeMillis();
         ExecutionInput executionInput = ExecutionInput.newExecutionInput()
-                .query(nadelExecutionInput.getQuery())
-                .operationName(nadelExecutionInput.getOperationName())
-                .context(nadelExecutionInput.getContext())
-                .variables(nadelExecutionInput.getVariables())
-                .executionId(nadelExecutionInput.getExecutionId())
-                .build();
+            .query(nadelExecutionInput.getQuery())
+            .operationName(nadelExecutionInput.getOperationName())
+            .context(nadelExecutionInput.getContext())
+            .variables(nadelExecutionInput.getVariables())
+            .executionId(nadelExecutionInput.getExecutionId())
+            .build();
 
-        NadelExecutionParams nadelExecutionParams = new NadelExecutionParams(nadelExecutionInput.getArtificialFieldsUUID(), nadelExecutionInput.getNadelExecutionHints());
+        NadelExecutionParams nadelExecutionParams = new NadelExecutionParams(nadelExecutionInput.getNadelExecutionHints());
 
         InstrumentationState instrumentationState = instrumentation.createState(new NadelInstrumentationCreateStateParameters(querySchema, executionInput));
         NadelInstrumentationQueryExecutionParameters instrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, querySchema, instrumentationState);
         try {
             logNotSafe.debug("Executing request. operation name: '{}'. query: '{}'. variables '{}'", executionInput.getOperationName(), executionInput.getQuery(), executionInput.getVariables());
 
-            NadelInstrumentationQueryExecutionParameters inputInstrumentationParameters = new NadelInstrumentationQueryExecutionParameters(executionInput, querySchema, instrumentationState);
-            executionInput = instrumentation.instrumentExecutionInput(executionInput, inputInstrumentationParameters);
-
             InstrumentationContext<ExecutionResult> executionInstrumentation = instrumentation.beginQueryExecution(instrumentationParameters);
 
             return parseValidateAndExecute(executionInput, querySchema, instrumentationState, nadelExecutionParams)
-                    //
-                    // finish up instrumentation
-                    .whenComplete(executionInstrumentation::onCompleted)
-                    .exceptionally(throwable -> {
-                        if (throwable instanceof AbortExecutionException) {
-                            AbortExecutionException abortException = (AbortExecutionException) throwable;
-                            return abortException.toExecutionResult();
-                        } else if (throwable instanceof CompletionException && throwable.getCause() instanceof AbortExecutionException) {
-                            AbortExecutionException abortException = (AbortExecutionException) throwable.getCause();
-                            return abortException.toExecutionResult();
-                        } else if (throwable instanceof RuntimeException) {
-                            throw (RuntimeException) throwable;
-                        }
-                        throw new RuntimeException(throwable);
-                    })
-                    //
-                    // allow instrumentation to tweak the result
-                    .thenCompose(result -> instrumentation.instrumentExecutionResult(result, instrumentationParameters))
-                    .whenComplete((executionResult, throwable) -> {
-                        long elapsedTime = System.currentTimeMillis() - startTime;
-                        log.debug("Finished execution in {} ms, executionId: {}", elapsedTime, nadelExecutionInput.getExecutionId());
-                    });
+                //
+                // finish up instrumentation
+                .whenComplete(executionInstrumentation::onCompleted)
+                .exceptionally(throwable -> {
+                    if (throwable instanceof AbortExecutionException) {
+                        AbortExecutionException abortException = (AbortExecutionException) throwable;
+                        return abortException.toExecutionResult();
+                    } else if (throwable instanceof CompletionException && throwable.getCause() instanceof AbortExecutionException) {
+                        AbortExecutionException abortException = (AbortExecutionException) throwable.getCause();
+                        return abortException.toExecutionResult();
+                    } else if (throwable instanceof RuntimeException) {
+                        throw (RuntimeException) throwable;
+                    }
+                    throw new RuntimeException(throwable);
+                })
+                //
+                // allow instrumentation to tweak the result
+                .thenCompose(result -> instrumentation.instrumentExecutionResult(result, instrumentationParameters));
         } catch (AbortExecutionException abortException) {
             return instrumentation.instrumentExecutionResult(abortException.toExecutionResult(), instrumentationParameters);
         }
@@ -308,10 +272,11 @@ public class Nadel {
         Document document;
         DocumentAndVariables documentAndVariables;
         try {
-            document = new NadelGraphQLParser().parseDocument(executionInput.getQuery());
+            document = new Parser().parseDocument(executionInput.getQuery());
             documentAndVariables = newDocumentAndVariables()
-                    .document(document).variables(executionInput.getVariables()).build();
-            documentAndVariables = instrumentation.instrumentDocumentAndVariables(documentAndVariables, parameters);
+                .document(document)
+                .variables(executionInput.getVariables())
+                .build();
         } catch (InvalidSyntaxException e) {
             parseInstrumentation.onCompleted(null, e);
             return ParseAndValidateResult.newResult().syntaxException(e).build();
@@ -322,7 +287,7 @@ public class Nadel {
     }
 
     private List<ValidationError> validate(ExecutionInput executionInput, Document document, GraphQLSchema graphQLSchema, InstrumentationState instrumentationState) {
-        InstrumentationContext<List<ValidationError>> validationCtx = instrumentation.beginValidation(new NadelNadelInstrumentationQueryValidationParameters(executionInput, document, graphQLSchema, instrumentationState));
+        InstrumentationContext<List<ValidationError>> validationCtx = instrumentation.beginValidation(new NadelInstrumentationQueryValidationParameters(executionInput, document, graphQLSchema, instrumentationState));
 
         Validator validator = new Validator();
         List<ValidationError> validationErrors = validator.validateDocument(graphQLSchema, document);
@@ -442,15 +407,15 @@ public class Nadel {
 
         public Nadel build() {
             Nadel nadelStep1 = new Nadel(
-                    serviceNDSLs,
-                    serviceExecutionFactory,
-                    instrumentation,
-                    preparsedDocumentProvider,
-                    executionIdProvider,
-                    serviceExecutionHooks,
-                    overallWiringFactory,
-                    underlyingWiringFactory,
-                    schemaTransformationHook);
+                serviceNDSLs,
+                serviceExecutionFactory,
+                instrumentation,
+                preparsedDocumentProvider,
+                executionIdProvider,
+                serviceExecutionHooks,
+                overallWiringFactory,
+                underlyingWiringFactory,
+                schemaTransformationHook);
 
             NadelExecutionEngine executionEngine;
             if (engineFactory == null) {

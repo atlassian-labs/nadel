@@ -16,11 +16,11 @@ import java.util.Map;
 @Internal
 public class ErrorUtil {
 
-    public static List<GraphQLError> createGraphQlErrorsFromRawErrors(List<Map<String, Object>> errors) {
-        return FpKit.map(errors, ErrorUtil::createGraphqlErrorFromRawError);
+    public static List<GraphQLError> createGraphQLErrorsFromRawErrors(List<Map<String, Object>> errors) {
+        return FpKit.map(errors, ErrorUtil::createGraphQLErrorFromRawError);
     }
 
-    public static GraphQLError createGraphqlErrorFromRawError(Map<String, Object> rawError) {
+    public static GraphQLError createGraphQLErrorFromRawError(Map<String, Object> rawError) {
         GraphqlErrorBuilder errorBuilder = GraphqlErrorBuilder.newError();
         errorBuilder.message(String.valueOf(rawError.get("message")));
         errorBuilder.errorType(ErrorType.DataFetchingException);

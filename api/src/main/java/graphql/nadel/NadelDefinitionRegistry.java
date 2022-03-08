@@ -13,20 +13,30 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 
+/**
+ * Alternative to {@link graphql.schema.idl.TypeDefinitionRegistry} but is more generic
+ * and tailored to Nadel specific operations to build the overall schema.
+ */
 @Internal
-public class DefinitionRegistry {
+public class NadelDefinitionRegistry {
     private final List<SDLDefinition> definitions = new ArrayList<>();
     private final Map<Class<? extends SDLDefinition>, List<SDLDefinition>> definitionsByClass = new LinkedHashMap<>();
     private final Map<String, List<SDLDefinition>> definitionsByName = new LinkedHashMap<>();
+
+    public static NadelDefinitionRegistry from(List<SDLDefinition> definitions) {
+        NadelDefinitionRegistry registry = new NadelDefinitionRegistry();
+        for (SDLDefinition<?> definition : definitions) {
+            registry.add(definition);
+        }
+        return registry;
+    }
 
     public void add(SDLDefinition sdlDefinition) {
         definitions.add(sdlDefinition);
@@ -48,22 +58,13 @@ public class DefinitionRegistry {
     }
 
     public Map<OperationKind, List<ObjectTypeDefinition>> getOperationMap() {
-        return Stream.of(OperationKind.values()).collect(HashMap::new, (m, v) -> m.put(v, getOpsDefinitions(v)), HashMap::putAll);
-    }
+        Map<OperationKind, List<ObjectTypeDefinition>> operationMap = new LinkedHashMap<>();
 
-    @NotNull
-    public List<ObjectTypeDefinition> getQueryType() {
-        return getOpsDefinitions(OperationKind.QUERY);
-    }
+        for (OperationKind operationKind : OperationKind.values()) {
+            operationMap.put(operationKind, getOpsDefinitions(operationKind));
+        }
 
-    @NotNull
-    public List<ObjectTypeDefinition> getMutationType() {
-        return getOpsDefinitions(OperationKind.MUTATION);
-    }
-
-    @NotNull
-    public List<ObjectTypeDefinition> getSubscriptionType() {
-        return getOpsDefinitions(OperationKind.SUBSCRIPTION);
+        return operationMap;
     }
 
     @NotNull
@@ -89,7 +90,7 @@ public class DefinitionRegistry {
         }
 
         // This is the default name if there is no schema definition
-        return operationKind.getDisplayName();
+        return operationKind.getDefaultTypeName();
     }
 
     @NotNull

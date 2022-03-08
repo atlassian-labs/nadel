@@ -6,7 +6,7 @@ overallSchema:
       userQuery: UserQuery
     }
     type UserQuery {
-      usersByIds(id: [ID]): [User] default batch size 2
+      usersByIds(id: [ID]): [User]
     }
     type User {
       id: ID

@@ -1,24 +1,15 @@
 package graphql.nadel.dsl;
 
 import graphql.Internal;
-import graphql.language.AbstractNode;
-import graphql.language.Comment;
-import graphql.language.IgnoredChars;
-import graphql.language.Node;
-import graphql.language.NodeChildrenContainer;
-import graphql.language.NodeVisitor;
-import graphql.language.SourceLocation;
-import graphql.util.TraversalControl;
-import graphql.util.TraverserContext;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 import static graphql.Assert.assertTrue;
 
 @Internal
-public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHydration> {
+public class UnderlyingServiceHydration {
 
     public static class ObjectIdentifier {
         private final String sourceId;
@@ -49,21 +40,18 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
     private final Integer batchSize;
     private final int timeout;
 
-    public UnderlyingServiceHydration(SourceLocation sourceLocation,
-                                      List<Comment> comments,
-                                      String serviceName,
-                                      String topLevelField,
-                                      String syntheticField,
-                                      List<RemoteArgumentDefinition> arguments,
-                                      String objectIdentifier,
-                                      List<ObjectIdentifier> objectIdentifiers,
-                                      boolean objectIndexed,
-                                      boolean batched,
-                                      Integer batchSize,
-                                      int timeout,
-                                      Map<String, String> additionalData
+    public UnderlyingServiceHydration(
+        String serviceName,
+        String topLevelField,
+        String syntheticField,
+        List<RemoteArgumentDefinition> arguments,
+        String objectIdentifier,
+        List<ObjectIdentifier> objectIdentifiers,
+        boolean objectIndexed,
+        boolean batched,
+        Integer batchSize,
+        int timeout
     ) {
-        super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
         assertTrue(!objectIndexed ^ objectIdentifier == null, () -> "An object identifier cannot be provided if the hydration is by index");
 
         this.serviceName = serviceName;
@@ -119,36 +107,44 @@ public class UnderlyingServiceHydration extends AbstractNode<UnderlyingServiceHy
     }
 
     @Override
-    public List<Node> getChildren() {
-        return null;
-    }
-
-    @Override
-    public NodeChildrenContainer getNamedChildren() {
-        return null;
-    }
-
-    @Override
-    public UnderlyingServiceHydration withNewChildren(NodeChildrenContainer newChildren) {
-        return null;
-    }
-
-    @Override
-    public boolean isEqualTo(Node node) {
-        return false;
-    }
-
-    @Override
-    public UnderlyingServiceHydration deepCopy() {
-        return null;
-    }
-
-    @Override
-    public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
-        return null;
+    public String toString() {
+        return "UnderlyingServiceHydration{" +
+            "serviceName='" + serviceName + '\'' +
+            ", topLevelField='" + topLevelField + '\'' +
+            ", syntheticField='" + syntheticField + '\'' +
+            ", arguments=" + arguments +
+            ", objectIdentifier='" + objectIdentifier + '\'' +
+            ", objectIdentifiers=" + objectIdentifiers +
+            ", objectIndexed=" + objectIndexed +
+            ", batched=" + batched +
+            ", batchSize=" + batchSize +
+            ", timeout=" + timeout +
+            '}';
     }
 
     public String getSyntheticField() {
         return syntheticField;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UnderlyingServiceHydration that = (UnderlyingServiceHydration) o;
+        return objectIndexed == that.objectIndexed
+            && batched == that.batched
+            && timeout == that.timeout
+            && Objects.equals(serviceName, that.serviceName)
+            && Objects.equals(topLevelField, that.topLevelField)
+            && Objects.equals(syntheticField, that.syntheticField)
+            && Objects.equals(arguments, that.arguments)
+            && Objects.equals(objectIdentifier, that.objectIdentifier)
+            && Objects.equals(objectIdentifiers, that.objectIdentifiers)
+            && Objects.equals(batchSize, that.batchSize);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(serviceName, topLevelField, syntheticField, arguments, objectIdentifier, objectIdentifiers, objectIndexed, batched, batchSize, timeout);
     }
 }

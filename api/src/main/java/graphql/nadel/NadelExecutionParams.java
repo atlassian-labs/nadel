@@ -6,18 +6,11 @@ import org.jetbrains.annotations.NotNull;
 @Internal
 public class NadelExecutionParams {
 
-    private final String artificialFieldsUUID;
     @NotNull
     private final NadelExecutionHints nadelExecutionHints;
 
-    public NadelExecutionParams(String artificialFieldsUUID,
-                                @NotNull NadelExecutionHints nadelExecutionHints) {
-        this.artificialFieldsUUID = artificialFieldsUUID;
+    public NadelExecutionParams(@NotNull NadelExecutionHints nadelExecutionHints) {
         this.nadelExecutionHints = nadelExecutionHints;
-    }
-
-    public String getArtificialFieldsUUID() {
-        return artificialFieldsUUID;
     }
 
     @NotNull

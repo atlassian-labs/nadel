@@ -1,73 +1,45 @@
 package graphql.nadel.dsl;
 
 import graphql.Internal;
-import graphql.language.AbstractNode;
-import graphql.language.Comment;
-import graphql.language.IgnoredChars;
-import graphql.language.Node;
-import graphql.language.NodeChildrenContainer;
-import graphql.language.NodeVisitor;
-import graphql.language.SourceLocation;
-import graphql.util.TraversalControl;
-import graphql.util.TraverserContext;
 
-import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 @Internal
-public class TypeMappingDefinition extends AbstractNode<TypeMappingDefinition> {
+public class TypeMappingDefinition {
+    private final String underlyingName;
+    private final String overallName;
 
-    private String underlyingName;
-    private String overallName;
-
-
-    public TypeMappingDefinition(SourceLocation sourceLocation, List<Comment> comments, Map<String, String> additionalData) {
-        super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
+    public TypeMappingDefinition(String underlyingName, String overallName) {
+        this.underlyingName = underlyingName;
+        this.overallName = overallName;
     }
 
     public String getUnderlyingName() {
         return underlyingName;
     }
 
-    public void setUnderlyingName(String underlyingName) {
-        this.underlyingName = underlyingName;
-    }
-
     public String getOverallName() {
         return overallName;
     }
 
-    public void setOverallName(String overallName) {
-        this.overallName = overallName;
+    @Override
+    public String toString() {
+        return "TypeMappingDefinition{" +
+            "underlyingName='" + underlyingName + '\'' +
+            ", overallName='" + overallName + '\'' +
+            '}';
     }
 
     @Override
-    public List<Node> getChildren() {
-        return null;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TypeMappingDefinition that = (TypeMappingDefinition) o;
+        return Objects.equals(underlyingName, that.underlyingName) && Objects.equals(overallName, that.overallName);
     }
 
     @Override
-    public NodeChildrenContainer getNamedChildren() {
-        return null;
-    }
-
-    @Override
-    public TypeMappingDefinition withNewChildren(NodeChildrenContainer newChildren) {
-        return null;
-    }
-
-    @Override
-    public boolean isEqualTo(Node node) {
-        return false;
-    }
-
-    @Override
-    public TypeMappingDefinition deepCopy() {
-        return null;
-    }
-
-    @Override
-    public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
-        return null;
+    public int hashCode() {
+        return Objects.hash(underlyingName, overallName);
     }
 }

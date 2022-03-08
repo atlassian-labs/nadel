@@ -220,7 +220,6 @@ private suspend fun execute(
                 .query(fixture.query)
                 .variables(fixture.variables)
                 .operationName(fixture.operationName)
-                .artificialFieldsUUID("UUID")
                 .let { builder ->
                     testHook.makeExecutionInput(builder.nadelExecutionHints(defaultHints.copy()))
                 }

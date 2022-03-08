@@ -1,8 +1,10 @@
 package graphql.nadel.util;
 
+import graphql.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@Internal
 public class OperationNameUtil {
     private OperationNameUtil() {
     }

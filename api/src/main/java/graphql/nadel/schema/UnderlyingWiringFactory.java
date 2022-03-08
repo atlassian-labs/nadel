@@ -18,7 +18,6 @@ import graphql.schema.idl.WiringFactory;
  */
 @Internal
 public class UnderlyingWiringFactory implements WiringFactory {
-
     private final WiringFactory delegateWiringFactory;
 
     public UnderlyingWiringFactory(WiringFactory delegateWiringFactory) {
@@ -27,7 +26,7 @@ public class UnderlyingWiringFactory implements WiringFactory {
 
     @Override
     public boolean providesTypeResolver(InterfaceWiringEnvironment environment) {
-        return true;
+        return delegateWiringFactory.providesTypeResolver(environment);
     }
 
     @Override

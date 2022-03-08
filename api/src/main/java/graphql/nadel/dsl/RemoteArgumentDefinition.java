@@ -1,32 +1,18 @@
 package graphql.nadel.dsl;
 
 import graphql.Internal;
-import graphql.language.AbstractNode;
-import graphql.language.IgnoredChars;
-import graphql.language.Node;
-import graphql.language.NodeChildrenContainer;
-import graphql.language.NodeVisitor;
-import graphql.language.SourceLocation;
-import graphql.util.TraversalControl;
-import graphql.util.TraverserContext;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import static java.util.Collections.emptyList;
+import java.util.Objects;
 
 @Internal
-public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinition> {
-
+public class RemoteArgumentDefinition {
     private final String name;
     private final RemoteArgumentSource remoteArgumentSource;
 
-    public RemoteArgumentDefinition(String name,
-                                    RemoteArgumentSource remoteArgumentSource,
-                                    SourceLocation sourceLocation,
-                                    Map<String, String> additionalData) {
-        super(sourceLocation, emptyList(), IgnoredChars.EMPTY, additionalData);
+    public RemoteArgumentDefinition(
+        String name,
+        RemoteArgumentSource remoteArgumentSource
+    ) {
         this.name = name;
         this.remoteArgumentSource = remoteArgumentSource;
     }
@@ -40,32 +26,24 @@ public class RemoteArgumentDefinition extends AbstractNode<RemoteArgumentDefinit
     }
 
     @Override
-    public List<Node> getChildren() {
-        return new ArrayList<>();
+    public String toString() {
+        return "RemoteArgumentDefinition{" +
+            "name='" + name + '\'' +
+            ", remoteArgumentSource=" + remoteArgumentSource +
+            '}';
     }
 
     @Override
-    public NodeChildrenContainer getNamedChildren() {
-        return null;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RemoteArgumentDefinition that = (RemoteArgumentDefinition) o;
+        return Objects.equals(name, that.name)
+            && Objects.equals(remoteArgumentSource, that.remoteArgumentSource);
     }
 
     @Override
-    public RemoteArgumentDefinition withNewChildren(NodeChildrenContainer newChildren) {
-        return null;
-    }
-
-    @Override
-    public boolean isEqualTo(Node node) {
-        return false;
-    }
-
-    @Override
-    public RemoteArgumentDefinition deepCopy() {
-        return null;
-    }
-
-    @Override
-    public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
-        return null;
+    public int hashCode() {
+        return Objects.hash(name, remoteArgumentSource);
     }
 }

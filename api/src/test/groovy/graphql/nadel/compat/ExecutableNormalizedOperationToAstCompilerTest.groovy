@@ -9,6 +9,7 @@ import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory
 import graphql.normalized.NormalizedInputValue
 import graphql.normalized.VariablePredicate
+import graphql.parser.Parser
 import graphql.scalars.object.JsonScalar
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
@@ -1003,7 +1004,7 @@ class ExecutableNormalizedOperationToAstCompilerTest extends Specification {
 
     private List<ExecutableNormalizedField> createNormalizedFields(GraphQLSchema schema, String query, Map<String, Object> variables = [:]) {
         assertValidQuery(schema, query, variables)
-        Document originalDocument = TestUtil.parseQuery(query)
+        Document originalDocument = new Parser().parseDocument(query)
 
         ExecutableNormalizedOperationFactory dependencyGraph = new ExecutableNormalizedOperationFactory()
         def tree = dependencyGraph.createExecutableNormalizedOperationWithRawVariables(schema, originalDocument, null, variables)

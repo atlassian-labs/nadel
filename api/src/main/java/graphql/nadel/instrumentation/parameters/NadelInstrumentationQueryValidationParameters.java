@@ -10,10 +10,10 @@ import graphql.schema.GraphQLSchema;
  * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
  */
 @PublicApi
-public class NadelNadelInstrumentationQueryValidationParameters extends NadelInstrumentationQueryExecutionParameters {
+public class NadelInstrumentationQueryValidationParameters extends NadelInstrumentationQueryExecutionParameters {
     private final Document document;
 
-    public NadelNadelInstrumentationQueryValidationParameters(ExecutionInput executionInput, Document document, GraphQLSchema schema, InstrumentationState instrumentationState) {
+    public NadelInstrumentationQueryValidationParameters(ExecutionInput executionInput, Document document, GraphQLSchema schema, InstrumentationState instrumentationState) {
         super(executionInput, schema, instrumentationState);
         this.document = document;
     }
@@ -26,8 +26,8 @@ public class NadelNadelInstrumentationQueryValidationParameters extends NadelIns
      * @return a new parameters object with the new state
      */
     @Override
-    public NadelNadelInstrumentationQueryValidationParameters withNewState(InstrumentationState instrumentationState) {
-        return new NadelNadelInstrumentationQueryValidationParameters(
+    public NadelInstrumentationQueryValidationParameters withNewState(InstrumentationState instrumentationState) {
+        return new NadelInstrumentationQueryValidationParameters(
                 this.getExecutionInput(), document, getSchema(), instrumentationState);
     }
 

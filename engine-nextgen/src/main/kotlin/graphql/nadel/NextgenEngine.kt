@@ -201,7 +201,7 @@ class NextgenEngine @JvmOverloads constructor(
         @Suppress("UNCHECKED_CAST")
         return newExecutionResult()
             .data(transformedResult.data)
-            .errors(ErrorUtil.createGraphQlErrorsFromRawErrors(transformedResult.errors))
+            .errors(ErrorUtil.createGraphQLErrorsFromRawErrors(transformedResult.errors))
             .extensions(transformedResult.extensions as Map<Any, Any>)
             .build()
     }

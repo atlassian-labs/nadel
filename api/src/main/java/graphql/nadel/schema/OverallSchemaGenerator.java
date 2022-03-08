@@ -15,7 +15,7 @@ import graphql.language.SDLExtensionDefinition;
 import graphql.language.SDLNamedDefinition;
 import graphql.language.SchemaDefinition;
 import graphql.language.SourceLocation;
-import graphql.nadel.DefinitionRegistry;
+import graphql.nadel.NadelDefinitionRegistry;
 import graphql.nadel.OperationKind;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
@@ -37,35 +37,37 @@ import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
 @Internal
 public class OverallSchemaGenerator {
 
-    public GraphQLSchema buildOverallSchema(List<DefinitionRegistry> serviceRegistries, DefinitionRegistry commonTypes, WiringFactory wiringFactory) {
+    public GraphQLSchema buildOverallSchema(List<NadelDefinitionRegistry> serviceRegistries, WiringFactory wiringFactory) {
         SchemaGenerator schemaGenerator = new SchemaGenerator();
         RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
-                .wiringFactory(wiringFactory)
-                .build();
-        return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries, commonTypes), runtimeWiring);
+            .wiringFactory(wiringFactory)
+            .build();
+        return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring);
     }
 
-    private TypeDefinitionRegistry createTypeRegistry(List<DefinitionRegistry> serviceRegistries, DefinitionRegistry commonTypes) {
-        //TODO: this merging not completely correct for example schema definition nodes are not handled correctly
-        Map<OperationKind, List<FieldDefinition>> fieldsMapByType = new LinkedHashMap<>();
-        Arrays.stream(OperationKind.values()).forEach(
-                value -> fieldsMapByType.put(value, new ArrayList<>()));
+    private TypeDefinitionRegistry createTypeRegistry(List<NadelDefinitionRegistry> serviceRegistries) {
+        // TODO: this merging not completely correct for example schema definition nodes are not handled correctly
+        Map<OperationKind, List<FieldDefinition>> topLevelFields = new LinkedHashMap<>();
+        Arrays.stream(OperationKind.values())
+            .forEach(value -> topLevelFields.put(value, new ArrayList<>()));
 
         TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
         List<SDLDefinition<?>> allDefinitions = new ArrayList<>();
 
-        for (DefinitionRegistry definitionRegistry : serviceRegistries) {
-            collectTypes(fieldsMapByType, allDefinitions, definitionRegistry);
+        for (NadelDefinitionRegistry definitionRegistry : serviceRegistries) {
+            collectTypes(topLevelFields, allDefinitions, definitionRegistry);
         }
-        collectTypes(fieldsMapByType, allDefinitions, commonTypes);
 
-        fieldsMapByType.keySet().forEach(key -> {
-            List<FieldDefinition> fields = fieldsMapByType.get(key);
+        topLevelFields.keySet().forEach(operationKind -> {
+            List<FieldDefinition> fields = topLevelFields.get(operationKind);
             if (fields.size() > 0) {
-                overallRegistry.add(newObjectTypeDefinition()
-                        .name(key.getDisplayName())
+                overallRegistry.add(
+                    newObjectTypeDefinition()
+                        .name(operationKind.getDefaultTypeName())
                         .sourceLocation(new SourceLocation(-1, -1, "generated"))
-                        .fieldDefinitions(fields).build());
+                        .fieldDefinitions(fields)
+                        .build()
+                );
             }
         });
 
@@ -87,6 +89,7 @@ public class OverallSchemaGenerator {
                 throw new GraphQLException("Unable to add definition to overall registry: " + error.get().getMessage());
             }
         }
+
         return overallRegistry;
     }
 
@@ -98,24 +101,24 @@ public class OverallSchemaGenerator {
 
     private boolean containsElement(List<SDLDefinition<?>> allDefinitions, String name, Class<?> targetClass) {
         return allDefinitions.stream().anyMatch(sdlDef -> {
-                    if (sdlDef instanceof NamedNode) {
-                        String targetName = ((NamedNode<?>) sdlDef).getName();
-                        if (targetName.equals(name)) {
-                            // if it's an `extent type Foo` then it does not count since we need an actual `type Foo` defined
-                            if (!(sdlDef instanceof SDLExtensionDefinition)) {
-                                Class<?> sdlDefClass = sdlDef.getClass();
-                                Assert.assertTrue(sdlDefClass.equals(targetClass),
-                                        () -> String.format("The element %s is expected to be a %s but is in fact a %s", name, targetClass, sdlDefClass));
-                                return true;
-                            }
+                if (sdlDef instanceof NamedNode) {
+                    String targetName = ((NamedNode<?>) sdlDef).getName();
+                    if (targetName.equals(name)) {
+                        // if it's an `extent type Foo` then it does not count since we need an actual `type Foo` defined
+                        if (!(sdlDef instanceof SDLExtensionDefinition)) {
+                            Class<?> sdlDefClass = sdlDef.getClass();
+                            Assert.assertTrue(sdlDefClass.equals(targetClass),
+                                () -> String.format("The element %s is expected to be a %s but is in fact a %s", name, targetClass, sdlDefClass));
+                            return true;
                         }
                     }
-                    return false;
                 }
+                return false;
+            }
         );
     }
 
-    private void collectTypes(Map<OperationKind, List<FieldDefinition>> fieldsMapByType, List<SDLDefinition<?>> allDefinitions, DefinitionRegistry definitionRegistry) {
+    private void collectTypes(Map<OperationKind, List<FieldDefinition>> fieldsMapByType, List<SDLDefinition<?>> allDefinitions, NadelDefinitionRegistry definitionRegistry) {
         Map<OperationKind, List<ObjectTypeDefinition>> opTypes = definitionRegistry.getOperationMap();
         Set<String> opTypeNames = new HashSet<>(3);
 
@@ -136,17 +139,17 @@ public class OverallSchemaGenerator {
         });
 
         definitionRegistry
-                .getDefinitions()
-                .stream()
-                .filter(definition -> {
-                    // Don't add operation types
-                    if (definition instanceof ObjectTypeDefinition) {
-                        ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) definition;
-                        return !opTypeNames.contains(objectTypeDefinition.getName());
-                    }
+            .getDefinitions()
+            .stream()
+            .filter(definition -> {
+                // Don't add operation types
+                if (definition instanceof ObjectTypeDefinition) {
+                    ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) definition;
+                    return !opTypeNames.contains(objectTypeDefinition.getName());
+                }
 
-                    return !(definition instanceof SchemaDefinition);
-                })
-                .forEach(allDefinitions::add);
+                return !(definition instanceof SchemaDefinition);
+            })
+            .forEach(allDefinitions::add);
     }
 }
