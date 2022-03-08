@@ -7,6 +7,7 @@ overallSchema:
     }
     type TestQuery {
       testing: Testing
+      characters(ids: [ID!]!): [TestingCharacter]
     }
     type Testing {
       movies: [TestingMovie]

@@ -2,6 +2,15 @@ name: complex identified by with list source id
 enabled: true
 overallSchema:
   UserService: |
+    type Query {
+      users(id: [UserInput]): [User]
+    }
+    
+    input UserInput {
+      userId: ID
+      site: String
+    }
+    
     type User {
       id: ID
       name: String

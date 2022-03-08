@@ -4,6 +4,10 @@ overallSchema:
   Foo: |
     type Query {
       fooService: FooService @renamed(from: "service")
+
+      connection(id: ID): Connection
+      node(id: ID): Node
+      space(id: ID): Space
     }
     type FooService @renamed(from: "Service") {
       otherServices: Connection @hydrated(service: "Foo" field: "connection" arguments: [{name: "id" value: "$source.id"}])

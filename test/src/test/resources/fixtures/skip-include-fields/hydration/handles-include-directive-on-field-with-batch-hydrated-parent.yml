@@ -4,6 +4,7 @@ overallSchema:
   service: |
     type Query {
       foos: [Foo]
+      tests(ids: [ID]): [Test]
     }
     type Foo {
       test: Test @hydrated(

@@ -50,7 +50,7 @@ import graphql.schema.GraphQLType
 internal object NadelExecutionBlueprintFactory {
     fun create(
         engineSchema: GraphQLSchema,
-        services: List<Service>
+        services: List<Service>,
     ): NadelOverallExecutionBlueprint {
         return Factory(engineSchema, services).make()
     }
@@ -112,7 +112,7 @@ private class Factory(
      */
     private fun makeUnderlyingTypeNamesToOverallNameByService(
         services: List<Service>,
-        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>
+        underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
     ): Map<Service, Map<String, String>> {
         val serviceMap = LinkedHashMap<Service, Map<String, String>>()
         for (service in services) {
@@ -129,7 +129,7 @@ private class Factory(
     private fun makeOverAllTypeNameToUnderlyingNameByService(
         services: List<Service>,
         underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
-        underlyingTypeNameToOverallNameByService: Map<Service, Map<String, String>>
+        underlyingTypeNameToOverallNameByService: Map<Service, Map<String, String>>,
     ): Map<Service, Map<String, String>> {
         val serviceMap = LinkedHashMap<Service, Map<String, String>>()
         for (service in services) {
@@ -148,7 +148,7 @@ private class Factory(
     private fun overAllTypeNameFromUnderlyingType(
         service: Service,
         underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
-        underlyingTypeName: String
+        underlyingTypeName: String,
     ): String {
         // TODO: THIS SHOULD NOT BE HAPPENING, INTROSPECTIONS ARE DUMB AND DON'T NEED TRANSFORMING
         if (service.name == IntrospectionService.name) {
@@ -162,7 +162,7 @@ private class Factory(
     private fun underlyingTypeNameFromOverallType(
         service: Service,
         underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
-        overallTypeName: String
+        overallTypeName: String,
     ): String {
         // TODO: THIS SHOULD NOT BE HAPPENING, INTROSPECTIONS ARE DUMB AND DON'T NEED TRANSFORMING
         if (service.name == IntrospectionService.name) {
@@ -175,7 +175,7 @@ private class Factory(
 
     private fun underlyingExecutionBlueprint(
         underlyingBlueprints: Map<String, NadelUnderlyingExecutionBlueprint>,
-        service: Service
+        service: Service,
     ) = (underlyingBlueprints[service.name] ?: error("Could not find service: $service.name"))
 
     private fun makeFieldInstructions(): List<NadelFieldInstruction> {
@@ -225,7 +225,7 @@ private class Factory(
 
         val queryPathToActorField = listOfNotNull(hydration.syntheticField, hydration.topLevelField)
         val actorFieldDef = actorFieldSchema.queryType.getFieldAt(queryPathToActorField)!!
-        val overallActorFieldDef = engineSchema.queryType.getFieldAt(queryPathToActorField)
+        val overallActorFieldDef = engineSchema.queryType.getFieldAt(queryPathToActorField)!!
 
         if (hydration.isBatched || /*deprecated*/ actorFieldDef.type.unwrapNonNull().isList) {
             require(actorFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$queryPathToActorField' requires a list output type" }
@@ -310,7 +310,7 @@ private class Factory(
         actorFieldDef: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
         actorService: Service,
-        overallActorFieldDef: GraphQLFieldDefinition?,
+        overallActorFieldDef: GraphQLFieldDefinition,
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
 
