@@ -31,7 +31,6 @@ public class NadelNadelInstrumentationQueryValidationParameters extends NadelIns
                 this.getExecutionInput(), document, getSchema(), instrumentationState);
     }
 
-
     public Document getDocument() {
         return document;
     }

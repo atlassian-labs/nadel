@@ -12,7 +12,6 @@ public class ServiceOrError {
     private final Service service;
     private final GraphQLError error;
 
-
     public ServiceOrError(Service service, GraphQLError error) {
         assertFalse(service == null && error == null, () -> "Both service and error cannot be null");
         assertFalse(service != null && error != null, () -> "Both service and error cannot be non-null");
