@@ -14,6 +14,10 @@ overallSchema:
   Association: |
     type Query {
       association(id: ID, filter: Filter): AssociationConnection
+      pages: Pages
+    }
+    type Pages {
+      page(id: ID): Page
     }
     type AssociationConnection {
       nodes: [Association]

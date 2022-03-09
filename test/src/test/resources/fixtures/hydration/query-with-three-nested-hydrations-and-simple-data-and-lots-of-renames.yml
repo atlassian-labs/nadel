@@ -4,6 +4,7 @@ overallSchema:
   Bar: |
     type Query {
       ibar: Bar @renamed(from: "bar")
+      barsById(id: [ID]): [Bar]
     }
     type Bar {
       barId: ID

@@ -4,6 +4,8 @@ overallSchema:
   Foo: |
     type Query {
       foo: Foo
+      detail(detailId: ID): Detail
+      issue(issueId: ID): Issue
     }
     type Foo {
       issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.fooId"}])

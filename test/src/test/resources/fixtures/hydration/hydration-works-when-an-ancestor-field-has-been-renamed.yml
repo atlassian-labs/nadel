@@ -14,6 +14,7 @@ overallSchema:
     type Query {
       devOpsRelationships: DevOpsRelationshipConnection @renamed(from: "relationships")
       devOpsIssue(id: ID): DevOpsIssue @renamed(from: "issue")
+      issue(id: ID): DevOpsIssue @hidden
     }
 underlyingSchema:
   IssueService: |

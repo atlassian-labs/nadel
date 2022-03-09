@@ -4,6 +4,8 @@ overallSchema:
   Foo: |
     type Query {
       foos: [Foo]
+      details(detailIds: [ID]): [Detail]
+      issues(issueIds: [ID]): [Issue]
     }
     type Foo {
       issue: Issue @hydrated(

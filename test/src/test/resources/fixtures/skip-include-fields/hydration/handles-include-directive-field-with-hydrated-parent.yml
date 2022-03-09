@@ -4,6 +4,7 @@ overallSchema:
   service: |
     type Query {
       foo: Foo @renamed(from: "bar")
+      fooById(id: ID): Foo
     }
     type Foo {
       id: String

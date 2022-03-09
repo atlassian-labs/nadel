@@ -5,6 +5,7 @@ overallSchema:
     service Foo {
       type Query {
         foo: Foo
+        issues(issueIds: [ID!]): [Issue!]
       }
       type Foo {
         issue: Issue => hydrated from Foo.issues(issueIds: $source.issueId)

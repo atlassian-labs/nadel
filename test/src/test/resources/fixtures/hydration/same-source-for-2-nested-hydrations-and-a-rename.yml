@@ -4,6 +4,8 @@ overallSchema:
   Foo: |
     type Query {
       foo: Foo
+      detail(detailId: ID): Detail
+      issue(issueId: ID): Issue
     }
     type Foo {
       renamedField: String @renamed(from: "issue.field")
