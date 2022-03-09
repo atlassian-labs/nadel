@@ -3,12 +3,10 @@ package graphql.nadel.validation
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.enginekt.util.unwrapAll
-import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleArgumentInputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnderlying
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
-import graphql.nadel.validation.util.NadelInputValidationUtil.isMatchingInputTypeNameIgnoringNullableRenameScalar
 import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
 import graphql.nadel.validation.util.NadelSchemaUtil.hasRename
 import graphql.schema.GraphQLFieldDefinition
@@ -110,13 +108,7 @@ internal class NadelFieldValidation(
                         )
                 )
 
-                val inputTypeIssues = if (!isMatchingInputTypeNameIgnoringNullableRenameScalar(overallArg.type, underlyingArg.type)) {
-                    listOf(
-                            IncompatibleArgumentInputType(parent, overallArg, underlyingArg)
-                    )
-                } else {
-                    listOf()
-                }
+                val inputTypeIssues = inputValidation.validate(parent, overallField, overallArg, underlyingArg)
 
                 unwrappedTypeIssues + inputTypeIssues
             }
