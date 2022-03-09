@@ -1,0 +1,58 @@
+name: url scalar as input type
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo(input: URL): Foo
+    }
+    type Foo {
+      thing: JSON
+    }
+    scalar JSON
+    scalar URL
+underlyingSchema:
+  service: |
+    type Query {
+      foo(input: URL): Foo
+    }
+    type Foo {
+      thing: JSON
+    }
+    scalar JSON
+    scalar URL
+query: |
+  query {
+    foo(input: "https://atlassian.com") {
+      thing
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo(input: "https://atlassian.com") {
+            thing
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "thing": "What, were you expecting something else?"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "thing": "What, were you expecting something else?"
+      }
+    }
+  }

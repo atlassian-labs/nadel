@@ -1,0 +1,105 @@
+name: hydrating json data
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo(input: JSON): Foo
+    }
+    type Foo {
+      id: ID!
+      foo: Foo @hydrated(
+        service: "Baz"
+        field: "otherFoo"
+        arguments: [{ name: "id" value: "$source.id" }]
+      )
+    }
+  Baz: |
+    type Query {
+      otherFoo(id: ID!): Foo @hidden
+    }
+  Shared: |
+    scalar JSON
+underlyingSchema:
+  service: |
+    type Query {
+      foo(input: JSON): Foo
+    }
+    type Foo {
+      id: ID!
+    }
+    scalar JSON
+  Baz: |
+    type Query {
+      otherFoo(id: ID!): Foo
+    }
+    type Foo {
+      id: ID!
+    }
+  Shared: |
+    type Query {
+      echo: String
+    }
+query: |
+  query {
+    foo(input: {something: true answer: 42}) {
+      foo {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query ($v0: JSON) {
+          foo(input: $v0) {
+            __typename__hydration__foo: __typename
+            hydration__foo__id: id
+          }
+        }
+      variables:
+        v0:
+          something: true
+          answer: 42
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__hydration__foo": "Foo",
+            "hydration__foo__id": "10000"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: Baz
+    request:
+      query: |
+        query {
+          otherFoo(id: "10000") {
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "otherFoo": {
+            "id": "-10000"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "foo": {
+          "id": "-10000"
+        }
+      }
+    }
+  }

@@ -1,0 +1,63 @@
+name: renaming json typed field
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      aField: JSON @renamed(from: "test")
+    }
+    scalar JSON
+underlyingSchema:
+  service: |
+    type Query {
+      test: JSON
+    }
+    scalar JSON
+query: |
+  query {
+    aField
+    test: aField
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          rename__aField__test: test
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__aField__test": {
+            "object": "aField"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          rename__test__test: test
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__test__test": false
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "aField": {
+        "object": "aField"
+      },
+      "test": false
+    }
+  }

@@ -1,0 +1,59 @@
+name: custom json scalar as input type
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo(input: JSON): Foo
+    }
+    type Foo {
+      id: ID!
+    }
+    scalar JSON
+underlyingSchema:
+  service: |
+    type Query {
+      foo(input: JSON): Foo
+    }
+    type Foo {
+      id: ID!
+    }
+    scalar JSON
+query: |
+  query {
+    foo(input: {something: true answer: 42}) {
+      id
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query ($v0: JSON) {
+          foo(input: $v0) {
+            id
+          }
+        }
+      variables:
+        v0:
+          something: true
+          answer: 42
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "id": "10000"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "id": "10000"
+      }
+    }
+  }
