@@ -309,7 +309,7 @@ class NadelInputValidationTest : DescribeSpec({
             assert(error.subject == error.overallInputField)
         }
 
-        it("passes if all input values exist in underlying type but overall input is less strict") {
+        it("fails if overall input is less strict") {
             val fixture = NadelValidationTestFixture(
                     overallSchema = mapOf(
                             "test" to """
