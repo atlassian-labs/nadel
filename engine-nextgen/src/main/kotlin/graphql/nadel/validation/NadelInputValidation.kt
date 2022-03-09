@@ -86,7 +86,7 @@ internal class NadelInputValidation {
 
     /**
      * It checks whether the type name and type wrappings e.g. [graphql.schema.GraphQLNonNull] make sense.
-     * Same as NadelFieldValidation.isOutputTypeValid but with the logic for acceptable nullability logic flipped
+     * Same as [NadelTypeValidation.isOutputTypeValid] but with the logic for acceptable nullability logic flipped
      * i.e. we allow the overall input type to be non-nullable and the underlying input type to be nullable
      */
     private fun isInputTypeValid(
