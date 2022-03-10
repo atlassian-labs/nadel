@@ -6,6 +6,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldInpu
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingInputField
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.datatest.withData
 
 class NadelInputValidationTest : DescribeSpec({
     describe("validate") {
@@ -377,5 +378,82 @@ class NadelInputValidationTest : DescribeSpec({
             assert(errors.map { it.message }.isEmpty())
         }
 
+        it("passes if underlying input type is less strict with more wrappings") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        $renameDirectiveDef
+ 
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            m: [[String!]!]
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            m: [[String]]
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+        context("fails if argument type list wrappings are not equal") {
+            withData(
+                nameFn = { (underlying, overall) -> "Underlying=$underlying, overall=$overall" },
+                "String" to "[String]",
+                "String!" to "[String]",
+                "[String]" to "String",
+                "[String]" to "String!",
+                "[[String]]" to "[String]",
+                "[String]" to "[[String]]",
+                "[String!]" to "[[String]]",
+                "[[String]]" to "[String!]",
+            ) { (underlying, overall) ->
+                val fixture = NadelValidationTestFixture(
+                    overallSchema = mapOf(
+                        "test" to """
+                        $renameDirectiveDef
+ 
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            m: $overall
+                        }
+                    """.trimIndent(),
+                    ),
+                    underlyingSchema = mapOf(
+                        "test" to """
+                        type Query {
+                            pay(role: Role): Int
+                        }
+                        input Role {
+                            m: $underlying
+                        }
+                    """.trimIndent(),
+                    ),
+                )
+
+                val errors = validate(fixture)
+
+                val error = errors.assertSingleOfType<IncompatibleFieldInputType>()
+                assert(error.service.name == "test")
+                assert(error.parentType.overall.name == "Role")
+                assert(error.parentType.underlying.name == error.parentType.overall.name)
+                assert(error.overallInputField.type.unwrapAll().name == error.underlyingInputField.type.unwrapAll().name)
+                assert(error.overallInputField.name == "m")
+            }
+        }
     }
 })

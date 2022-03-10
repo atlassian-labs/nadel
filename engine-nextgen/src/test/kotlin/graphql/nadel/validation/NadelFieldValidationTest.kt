@@ -6,6 +6,7 @@ import graphql.nadel.validation.NadelSchemaValidationError.MissingArgumentOnUnde
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.util.assertSingleOfType
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.datatest.withData
 
 val namespaceDirectiveDef = """
     directive @namespaced on FIELD_DEFINITION
@@ -64,7 +65,7 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(error.argument.name == "world")
         }
 
-        it("passes if overall argument value is more strict") {
+        it("passes if overall argument value is stricter") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "test" to """
@@ -84,10 +85,103 @@ class NadelFieldValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
             assert(errors.map { it.message }.isEmpty())
-
         }
 
-        it("fails if underlying argument value is more strict within list type") {
+        it("passes if overall argument value is stricter with more wrappings") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo(world: [[Boolean]!]): String
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo(world: [[Boolean]]): String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("passes if overall argument value is stricter with more wrappings 2") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo(world: [Boolean]): String
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
+                        type Query {
+                            echo(world: [Boolean]!): String
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isNotEmpty())
+
+            val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
+            assert(error.parentType.overall.name == "Query")
+            assert(error.parentType.underlying.name == "Query")
+            assert(error.overallInputArg.type.unwrapAll().name == "Boolean")
+            assert(error.subject == error.overallInputArg)
+            assert(error.overallField.name == "echo")
+            assert(error.overallInputArg.name == "world")
+        }
+
+        context("fails if argument type list wrappings are not equal") {
+            withData(
+                nameFn = { (underlying, overall) -> "Underlying=$underlying, overall=$overall" },
+                "Boolean" to "[Boolean]",
+                "Boolean!" to "[Boolean]",
+                "[Boolean]" to "Boolean",
+                "[Boolean]" to "Boolean!",
+                "[[Boolean]]" to "[Boolean]",
+                "[Boolean]" to "[[Boolean]]",
+                "[Boolean!]" to "[[Boolean]]",
+                "[[Boolean]]" to "[Boolean!]",
+            ) { (underlying, overall) ->
+                val fixture = NadelValidationTestFixture(
+                    overallSchema = mapOf(
+                        "test" to """
+                        type Query {
+                            echo(world: $overall): String
+                        }
+                    """.trimIndent(),
+                    ),
+                    underlyingSchema = mapOf(
+                        "test" to """
+                        type Query {
+                            echo(world: $underlying): String
+                        }
+                    """.trimIndent(),
+                    ),
+                )
+
+                val errors = validate(fixture)
+                assert(errors.map { it.message }.isNotEmpty())
+
+                val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
+                assert(error.parentType.overall.name == "Query")
+                assert(error.parentType.underlying.name == "Query")
+                assert(error.subject == error.overallInputArg)
+                assert(error.overallField.name == "echo")
+                assert(error.overallInputArg.name == "world")
+                assert(error.overallInputArg.type.unwrapAll().name == error.overallInputArg.type.unwrapAll().name)
+            }
+        }
+
+        it("fails if underlying argument value is stricter within list type") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "test" to """
@@ -113,10 +207,9 @@ class NadelFieldValidationTest : DescribeSpec({
             assert(error.parentType.underlying.name == "Query")
             assert(error.overallInputArg.type.unwrapAll().name == "Boolean")
             assert(error.subject == error.overallInputArg)
-
         }
 
-        it("fails if underlying argument value is more strict") {
+        it("fails if underlying argument value is stricter") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
                     "test" to """

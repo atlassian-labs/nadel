@@ -99,9 +99,9 @@ internal class NadelInputValidation {
         var underlying: GraphQLType = underlyingType
 
         while (overall.isWrapped && underlying.isWrapped) {
-            if (underlying.isNonNull && !overall.isNonNull) {
-                // Overall type is allowed to have looser restrictions
-                underlying = underlying.unwrapOne()
+            if (!underlying.isNonNull && overall.isNonNull) {
+                // Overall type is allowed to have stricter restrictions
+                overall = overall.unwrapOne()
             } else if ((overall.isList && underlying.isList) || (overall.isNonNull && underlying.isNonNull)) {
                 overall = overall.unwrapOne()
                 underlying = underlying.unwrapOne()
