@@ -181,34 +181,6 @@ class NadelFieldValidationTest : DescribeSpec({
             }
         }
 
-        it("fails if underlying argument value is stricter within list type") {
-            val fixture = NadelValidationTestFixture(
-                overallSchema = mapOf(
-                    "test" to """
-                        type Query {
-                            echo(world: [Boolean]): String
-                        }
-                    """.trimIndent(),
-                ),
-                underlyingSchema = mapOf(
-                    "test" to """
-                        type Query {
-                            echo(world: [Boolean!]): String
-                        }
-                    """.trimIndent(),
-                ),
-            )
-
-            val errors = validate(fixture)
-            assert(errors.map { it.message }.isNotEmpty())
-
-            val error = errors.assertSingleOfType<IncompatibleArgumentInputType>()
-            assert(error.parentType.overall.name == "Query")
-            assert(error.parentType.underlying.name == "Query")
-            assert(error.overallInputArg.type.unwrapAll().name == "Boolean")
-            assert(error.subject == error.overallInputArg)
-        }
-
         it("fails if underlying argument value is stricter") {
             val fixture = NadelValidationTestFixture(
                 overallSchema = mapOf(
