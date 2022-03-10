@@ -1,0 +1,42 @@
+name: long scalar as output type
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      aField: Long
+    }
+    scalar Long
+underlyingSchema:
+  service: |
+    type Query {
+      aField: Long
+    }
+    scalar Long
+query: |
+  query {
+    aField
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          aField
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "aField": 3000000000
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "aField": 3000000000
+    }
+  }

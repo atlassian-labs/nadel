@@ -1,0 +1,42 @@
+name: url scalar is passthrough and can be anything technically
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      aField: URL
+    }
+    scalar URL
+underlyingSchema:
+  service: |
+    type Query {
+      aField: URL
+    }
+    scalar URL
+query: |
+  query {
+    aField
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          aField
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "aField": "KFC Good"
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "aField": "KFC Good"
+    }
+  }

@@ -1,0 +1,87 @@
+name: hydrating using long as arg
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo: Foo
+      successor(after: Long): Foo
+    }
+    type Foo {
+      id: ID
+      createdAt: Long
+      successor: Foo @hydrated(service: "service" field: "successor" arguments: [{ name: "after" value: "$source.createdAt" }])
+    }
+    scalar Long
+underlyingSchema:
+  service: |
+    type Query {
+      foo: Foo
+      successor(after: Long): Foo
+    }
+    type Foo {
+      id: ID
+      createdAt: Long
+      successor: Foo
+    }
+    scalar Long
+query: |
+  query {
+    foo {
+      successor {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo {
+            __typename__hydration__successor: __typename
+            hydration__successor__createdAt: createdAt
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__hydration__successor": "Foo",
+            "hydration__successor__createdAt": 3000000000
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          successor(after: 3000000000) {
+            id
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "successor": {
+            "id": "2023"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "successor": {
+          "id": "2023"
+        }
+      }
+    }
+  }

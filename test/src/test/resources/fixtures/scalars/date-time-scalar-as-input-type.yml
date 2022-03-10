@@ -1,0 +1,58 @@
+name: date time scalar as input type
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo(input: DateTime): Foo
+    }
+    type Foo {
+      thing: JSON
+    }
+    scalar JSON
+    scalar DateTime
+underlyingSchema:
+  service: |
+    type Query {
+      foo(input: DateTime): Foo
+    }
+    type Foo {
+      thing: JSON
+    }
+    scalar JSON
+    scalar DateTime
+query: |
+  query {
+    foo(input: "2022-03-09T05:01:50Z") {
+      thing
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo(input: "2022-03-09T05:01:50Z") {
+            thing
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "thing": "What, were you expecting something else?"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "thing": "What, were you expecting something else?"
+      }
+    }
+  }

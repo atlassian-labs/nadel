@@ -1,0 +1,42 @@
+name: renaming url typed field
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      aField: URL @renamed(from: "test")
+    }
+    scalar URL
+underlyingSchema:
+  service: |
+    type Query {
+      test: URL 
+    }
+    scalar URL
+query: |
+  query {
+    aField
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          rename__aField__test: test
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__aField__test": "https://github.com/atlassian-labs/nadel"
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "aField": "https://github.com/atlassian-labs/nadel"
+    }
+  }

@@ -10,6 +10,8 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
+import graphql.nadel.enginekt.util.AnyList
+import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
@@ -21,6 +23,7 @@ import io.kotest.core.test.TestContext
 import kotlinx.coroutines.future.await
 import org.junit.jupiter.api.fail
 import java.io.File
+import java.math.BigInteger
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -160,7 +163,7 @@ private suspend fun execute(
                     return ServiceExecution { params ->
                         try {
                             val incomingQuery = params.query
-                            val actualVariables = params.variables
+                            val actualVariables = fixVariables(params.variables)
                             val actualOperationName = params.operationDefinition.name
                             val actualQuery = AstPrinter.printAst(
                                 astSorter.sort(incomingQuery),
@@ -208,6 +211,42 @@ private suspend fun execute(
 
                 override fun getUnderlyingTypeDefinitions(serviceName: String): TypeDefinitionRegistry {
                     return SchemaParser().parse(fixture.underlyingSchema[serviceName])
+                }
+
+                private fun fixVariables(variables: JsonMap): JsonMap {
+                    return variables
+                        .mapValues { (_, value) ->
+                            fixVariableValue(value)
+                        }
+                }
+
+                private fun fixVariables(variables: List<Any?>): List<Any?> {
+                    return variables
+                        .map {
+                            fixVariableValue(it)
+                        }
+                }
+
+                /**
+                 * Fixes issues with test fixture having Int but where the engine produces BigInteger etc.
+                 */
+                private fun fixVariableValue(value: Any?): Any? {
+                    return if (value is BigInteger) {
+                        // Jackson will parse into the Int or Long depending on size
+                        // Match that here
+                        if (value.toLong() <= Int.MAX_VALUE) {
+                            value.toInt()
+                        } else {
+                            value.toLong()
+                        }
+                    } else if (value is AnyMap) {
+                        @Suppress("UNCHECKED_CAST")
+                        fixVariables(value as JsonMap)
+                    } else if (value is AnyList) {
+                        fixVariables(value)
+                    } else {
+                        value
+                    }
                 }
             })
             .let {

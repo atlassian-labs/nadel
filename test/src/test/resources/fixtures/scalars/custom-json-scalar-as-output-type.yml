@@ -1,0 +1,99 @@
+name: custom json scalar as output type
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      aField: JSON
+      bField: JSON
+    }
+    scalar JSON
+underlyingSchema:
+  service: |
+    type Query {
+      aField: JSON
+      bField: JSON
+    }
+    scalar JSON
+query: |
+  query {
+    aField
+    bField
+    cField: bField
+    dField: aField
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          aField
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "aField": "1000"
+        },
+        "extensions": {}
+      }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          bField
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "bField": 1000
+        },
+        "extensions": {}
+      }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          cField: bField
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "cField": {
+            "Something": "Cool"
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: service
+    request:
+      query: |
+        query {
+          dField: aField
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "dField": false
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "aField": "1000",
+      "bField": 1000,
+      "dField": false,
+      "cField": {
+        "Something": "Cool"
+      }
+    }
+  }

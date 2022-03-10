@@ -1,0 +1,58 @@
+name: long scalar as input type
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo(input: Long): Foo
+    }
+    type Foo {
+      thing: JSON
+    }
+    scalar JSON
+    scalar Long
+underlyingSchema:
+  service: |
+    type Query {
+      foo(input: Long): Foo
+    }
+    type Foo {
+      thing: JSON
+    }
+    scalar JSON
+    scalar Long
+query: |
+  query {
+    foo(input: 3000000000) {
+      thing
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          foo(input: 3000000000) {
+            thing
+          }
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "thing": "What, were you expecting something else?"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "thing": "What, were you expecting something else?"
+      }
+    }
+  }

@@ -1,0 +1,119 @@
+name: hydrating using json data as arg
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      foo(input: JSON): Foo
+    }
+    type Foo {
+      id: ID!
+      baz: JSON @hidden
+      foo: Foo @hydrated(
+        service: "Baz"
+        field: "baz"
+        arguments: [{ name: "data" value: "$source.baz" }]
+      )
+    }
+  Baz: |
+    type Query {
+      baz(data: JSON!): Foo @hidden
+    }
+  Shared: |
+    scalar JSON
+underlyingSchema:
+  service: |
+    type Query {
+      foo(input: JSON): Foo
+    }
+    type Foo {
+      id: ID!
+      baz: JSON
+    }
+    scalar JSON
+  Baz: |
+    type Query {
+      baz(data: JSON!): Foo
+    }
+    type Foo {
+      id: ID!
+    }
+    scalar JSON
+  Shared: |
+    type Query {
+      echo: String
+    }
+query: |
+  query {
+    foo(input: {something: true answer: 42}) {
+      foo {
+        id
+      }
+    }
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query ($v0: JSON) {
+          foo(input: $v0) {
+            __typename__hydration__foo: __typename
+            hydration__foo__baz: baz
+          }
+        }
+      variables:
+        v0:
+          something: true
+          answer: 42
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "foo": {
+            "__typename__hydration__foo": "Foo",
+            "hydration__foo__baz": {
+              "id": "102",
+              "appConfig": {
+                "status": "active",
+                "bounce": false
+              }
+            }
+          }
+        },
+        "extensions": {}
+      }
+  - serviceName: Baz
+    request:
+      query: |
+        query ($v0: JSON!) {
+          baz(data: $v0) {
+            id
+          }
+        }
+      variables:
+        v0:
+          id: "102"
+          appConfig:
+            status: "active"
+            bounce: false
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "baz": {
+            "id": "10000"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "foo": {
+        "foo": {
+          "id": "10000"
+        }
+      }
+    }
+  }

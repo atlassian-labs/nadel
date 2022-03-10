@@ -3,7 +3,6 @@ package graphql.nadel.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.GraphQLError
-import graphql.Scalars
 import graphql.language.AstPrinter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
@@ -13,20 +12,13 @@ import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.JsonMap
 import graphql.nadel.enginekt.util.strictAssociateBy
-import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
-import graphql.scalars.ExtendedScalars.GraphQLLong
-import graphql.scalars.ExtendedScalars.Json
-import graphql.schema.GraphQLScalarType
-import graphql.schema.idl.ScalarInfo
-import graphql.schema.idl.ScalarWiringEnvironment
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import kotlinx.coroutines.future.asDeferred
 import java.io.File
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
 
 val File.parents: Sequence<File>
     get() = sequence<File> {
@@ -158,62 +150,6 @@ suspend fun main() {
         .also {
             println(it)
         }
-}
-
-class GatewaySchemaWiringFactory : NeverWiringFactory() {
-    private val passThruScalars: MutableMap<String, GraphQLScalarType> = ConcurrentHashMap()
-
-    override fun providesScalar(env: ScalarWiringEnvironment): Boolean {
-        val scalarName = env.scalarTypeDefinition.name
-        return if (defaultScalars.containsKey(scalarName)) {
-            true
-        } else !ScalarInfo.isGraphqlSpecifiedScalar(scalarName)
-    }
-
-    override fun getScalar(env: ScalarWiringEnvironment): GraphQLScalarType {
-        val scalarName = env.scalarTypeDefinition.name
-        val scalarType = defaultScalars[scalarName]
-        return scalarType ?: passThruScalars.computeIfAbsent(scalarName) {
-            passThruScalar(env)
-        }
-    }
-
-    private fun passThruScalar(env: ScalarWiringEnvironment): GraphQLScalarType {
-        val scalarTypeDefinition = env.scalarTypeDefinition
-        val scalarName = scalarTypeDefinition.name
-        val scalarDescription = if (scalarTypeDefinition.description == null) {
-            scalarName
-        } else {
-            scalarTypeDefinition.description.content
-        }
-
-        return GraphQLScalarType.newScalar().name(scalarName)
-            .definition(scalarTypeDefinition)
-            .description(scalarDescription)
-            .coercing(Json.coercing)
-            .build()
-    }
-
-    companion object {
-        private val urlScalar = GraphQLScalarType.newScalar()
-            .name("URL")
-            .description("A URL Scalar type")
-            .coercing(Scalars.GraphQLString.coercing)
-            .build()
-
-        private val dateTimeScalar = GraphQLScalarType.newScalar()
-            .name("DateTime")
-            .description("DateTime type")
-            .coercing(Scalars.GraphQLString.coercing)
-            .build()
-
-        private val defaultScalars = mapOf(
-            urlScalar.name to urlScalar,
-            Json.name to Json,
-            GraphQLLong.name to GraphQLLong,
-            dateTimeScalar.name to dateTimeScalar,
-        )
-    }
 }
 
 const val query = ""

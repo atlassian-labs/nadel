@@ -1,0 +1,42 @@
+name: url scalar as output type
+enabled: true
+overallSchema:
+  service: |
+    type Query {
+      aField: URL
+    }
+    scalar URL
+underlyingSchema:
+  service: |
+    type Query {
+      aField: URL
+    }
+    scalar URL
+query: |
+  query {
+    aField
+  }
+variables: { }
+serviceCalls:
+  - serviceName: service
+    request:
+      query: |
+        query {
+          aField
+        }
+      variables: { }
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "aField": "https://atlassian.com"
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "aField": "https://atlassian.com"
+    }
+  }
