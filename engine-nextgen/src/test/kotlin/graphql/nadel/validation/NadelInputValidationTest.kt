@@ -67,8 +67,8 @@ class NadelInputValidationTest : DescribeSpec({
 
         it("passes if all input values exist in underlying type and input types match accounting for rename") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "test" to """
+                overallSchema = mapOf(
+                    "test" to """
                         $renameDirectiveDef
  
                         type Query {
@@ -81,9 +81,9 @@ class NadelInputValidationTest : DescribeSpec({
                             M1
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "test" to """
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
                         type Query {
                             pay(role: Role): Int
                         }
@@ -94,7 +94,7 @@ class NadelInputValidationTest : DescribeSpec({
                             M1
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -264,8 +264,8 @@ class NadelInputValidationTest : DescribeSpec({
 
         it("fails if input types dont match") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "test" to """
+                overallSchema = mapOf(
+                    "test" to """
                         $renameDirectiveDef
  
                         type Query {
@@ -278,9 +278,9 @@ class NadelInputValidationTest : DescribeSpec({
                             M1
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "test" to """
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
                         type Query {
                             pay(role: Role): Int
                         }
@@ -294,7 +294,7 @@ class NadelInputValidationTest : DescribeSpec({
                             M1
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -311,8 +311,8 @@ class NadelInputValidationTest : DescribeSpec({
 
         it("fails if overall input is less strict") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "test" to """
+                overallSchema = mapOf(
+                    "test" to """
                         $renameDirectiveDef
  
                         type Query {
@@ -322,9 +322,9 @@ class NadelInputValidationTest : DescribeSpec({
                             m: String
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "test" to """
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
                         type Query {
                             pay(role: Role): Int
                         }
@@ -332,7 +332,7 @@ class NadelInputValidationTest : DescribeSpec({
                             m: String!
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -349,8 +349,8 @@ class NadelInputValidationTest : DescribeSpec({
 
         it("passes if underlying input type is less strict") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "test" to """
+                overallSchema = mapOf(
+                    "test" to """
                         $renameDirectiveDef
  
                         type Query {
@@ -360,9 +360,9 @@ class NadelInputValidationTest : DescribeSpec({
                             m: String!
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "test" to """
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
                         type Query {
                             pay(role: Role): Int
                         }
@@ -370,7 +370,7 @@ class NadelInputValidationTest : DescribeSpec({
                             m: String
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)

@@ -46,7 +46,7 @@ object NadelBuiltInTypes {
         HYDRATED_FROM_DIRECTIVE_DEFINITION,
         HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION,
 
-    ).map {
+        ).map {
         it.name
     }.toSet()
 

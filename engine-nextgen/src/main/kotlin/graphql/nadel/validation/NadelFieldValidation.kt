@@ -99,11 +99,11 @@ internal class NadelFieldValidation(
                 )
             } else {
                 val unwrappedTypeIssues = typeValidation.validate(
-                        NadelServiceSchemaElement(
-                                service = parent.service,
-                                overall = overallArg.type.unwrapAll(),
-                                underlying = underlyingArg.type.unwrapAll(),
-                        )
+                    NadelServiceSchemaElement(
+                        service = parent.service,
+                        overall = overallArg.type.unwrapAll(),
+                        underlying = underlyingArg.type.unwrapAll(),
+                    )
                 )
 
                 val inputTypeIssues = inputValidation.validate(parent, overallField, overallArg, underlyingArg)

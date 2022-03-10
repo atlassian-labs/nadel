@@ -47,24 +47,25 @@ internal class NadelInputValidation {
     }
 
     private fun validate(
-            parent: NadelServiceSchemaElement,
-            overallInputField: GraphQLInputObjectField,
-            underlyingFieldsByName: Map<String, GraphQLInputObjectField>,
+        parent: NadelServiceSchemaElement,
+        overallInputField: GraphQLInputObjectField,
+        underlyingFieldsByName: Map<String, GraphQLInputObjectField>,
     ): List<NadelSchemaValidationError> {
         val underlyingInputField = underlyingFieldsByName[overallInputField.name]
         return if (underlyingInputField == null) {
             listOf(
-                    MissingUnderlyingInputField(parent, overallInputField),
+                MissingUnderlyingInputField(parent, overallInputField),
             )
         } else {
             validate(parent, overallInputField, underlyingInputField)
         }
     }
 
-    private fun validate(parent: NadelServiceSchemaElement,
-                         overallInputField: GraphQLInputObjectField,
-                         underlyingInputField: GraphQLInputObjectField
-    ): List<NadelSchemaValidationError>  {
+    private fun validate(
+        parent: NadelServiceSchemaElement,
+        overallInputField: GraphQLInputObjectField,
+        underlyingInputField: GraphQLInputObjectField,
+    ): List<NadelSchemaValidationError> {
         return if (!isInputTypeValid(overallInputField.type, underlyingInputField.type)) {
             listOf(IncompatibleFieldInputType(parent, overallInputField, underlyingInputField))
         } else {
@@ -72,11 +73,12 @@ internal class NadelInputValidation {
         }
     }
 
-    fun validate(parent: NadelServiceSchemaElement,
-                 overallField: GraphQLFieldDefinition,
-                 overallInputArgument: GraphQLArgument,
-                 underlyingInputArgument: GraphQLArgument
-    ): List<NadelSchemaValidationError>  {
+    fun validate(
+        parent: NadelServiceSchemaElement,
+        overallField: GraphQLFieldDefinition,
+        overallInputArgument: GraphQLArgument,
+        underlyingInputArgument: GraphQLArgument,
+    ): List<NadelSchemaValidationError> {
         return if (!isInputTypeValid(overallInputArgument.type, underlyingInputArgument.type)) {
             listOf(IncompatibleArgumentInputType(parent, overallField, overallInputArgument, underlyingInputArgument))
         } else {
@@ -90,8 +92,8 @@ internal class NadelInputValidation {
      * i.e. we allow the overall input type to be non-nullable and the underlying input type to be nullable
      */
     private fun isInputTypeValid(
-            overallType: GraphQLInputType,
-            underlyingType: GraphQLInputType,
+        overallType: GraphQLInputType,
+        underlyingType: GraphQLInputType,
     ): Boolean {
         var overall: GraphQLType = overallType
         var underlying: GraphQLType = underlyingType
@@ -110,14 +112,14 @@ internal class NadelInputValidation {
 
         if (overall.isNotWrapped && underlying.isNotWrapped) {
             return isInputTypeNameValid(
-                    overallType = overall as GraphQLUnmodifiedType,
-                    underlyingType = underlying as GraphQLUnmodifiedType,
+                overallType = overall as GraphQLUnmodifiedType,
+                underlyingType = underlying as GraphQLUnmodifiedType,
             )
         } else if (overall.isWrapped && underlying.isNotWrapped) {
             if (overall.isNonNull && overall.unwrapNonNull().isNotWrapped) {
                 return isInputTypeNameValid(
-                        overallType = overall.unwrapNonNull() as GraphQLUnmodifiedType,
-                        underlyingType = underlying as GraphQLUnmodifiedType,
+                    overallType = overall.unwrapNonNull() as GraphQLUnmodifiedType,
+                    underlyingType = underlying as GraphQLUnmodifiedType,
                 )
             }
             return false
@@ -127,10 +129,9 @@ internal class NadelInputValidation {
     }
 
     private fun isInputTypeNameValid(
-            overallType: GraphQLUnmodifiedType,
-            underlyingType: GraphQLUnmodifiedType,
+        overallType: GraphQLUnmodifiedType,
+        underlyingType: GraphQLUnmodifiedType,
     ): Boolean {
         return NadelSchemaUtil.getUnderlyingName(overallType) == underlyingType.name
     }
-
 }

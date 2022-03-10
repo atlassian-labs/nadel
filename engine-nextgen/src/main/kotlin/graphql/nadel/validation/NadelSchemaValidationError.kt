@@ -152,9 +152,9 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class IncompatibleFieldInputType(
-            val parentType: NadelServiceSchemaElement,
-            val overallInputField: GraphQLInputObjectField,
-            val underlyingInputField: GraphQLInputObjectField,
+        val parentType: NadelServiceSchemaElement,
+        val overallInputField: GraphQLInputObjectField,
+        val underlyingInputField: GraphQLInputObjectField,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -171,10 +171,10 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class IncompatibleArgumentInputType(
-            val parentType: NadelServiceSchemaElement,
-            val overallField: GraphQLFieldDefinition,
-            val overallInputArg: GraphQLArgument,
-            val underlyingInputArg: GraphQLArgument,
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val overallInputArg: GraphQLArgument,
+        val underlyingInputArg: GraphQLArgument,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
@@ -297,9 +297,9 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             "Field $of declares a polymorphic hydration with incorrect return type. One of the hydrations' actor fields" +
-                    " ${actorField.name} in the service ${actorService.name} returns the type " +
-                    "${(actorField.type.unwrapAll() as GraphQLNamedType).name} which is not present in the polymorphic hydration return " +
-                    "type ${(overallField.type.unwrapAll() as GraphQLNamedType).name}"
+                " ${actorField.name} in the service ${actorService.name} returns the type " +
+                "${(actorField.type.unwrapAll() as GraphQLNamedType).name} which is not present in the polymorphic hydration return " +
+                "type ${(overallField.type.unwrapAll() as GraphQLNamedType).name}"
         }
 
         override val subject = overallField
@@ -358,11 +358,11 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class MissingRequiredHydrationActorFieldArgument(
-            val parentType: NadelServiceSchemaElement,
-            val overallField: GraphQLFieldDefinition,
-            val hydration: UnderlyingServiceHydration,
-            val actorServiceQueryType: GraphQLObjectType,
-            val argument: String,
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val hydration: UnderlyingServiceHydration,
+        val actorServiceQueryType: GraphQLObjectType,
+        val argument: String,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 

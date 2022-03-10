@@ -66,20 +66,20 @@ class NadelFieldValidationTest : DescribeSpec({
 
         it("passes if overall argument value is more strict") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "test" to """
+                overallSchema = mapOf(
+                    "test" to """
                         type Query {
                             echo(world: Boolean!): String
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "test" to """
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
                         type Query {
                             echo(world: Boolean): String
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -89,20 +89,20 @@ class NadelFieldValidationTest : DescribeSpec({
 
         it("fails if underlying argument value is more strict within list type") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "test" to """
+                overallSchema = mapOf(
+                    "test" to """
                         type Query {
                             echo(world: [Boolean]): String
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "test" to """
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
                         type Query {
                             echo(world: [Boolean!]): String
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -118,20 +118,20 @@ class NadelFieldValidationTest : DescribeSpec({
 
         it("fails if underlying argument value is more strict") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "test" to """
+                overallSchema = mapOf(
+                    "test" to """
                         type Query {
                             echo(world: Boolean): String
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "test" to """
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
                         type Query {
                             echo(world: Boolean!): String
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
@@ -146,20 +146,20 @@ class NadelFieldValidationTest : DescribeSpec({
 
         it("fails if argument value is not matching") {
             val fixture = NadelValidationTestFixture(
-                    overallSchema = mapOf(
-                            "test" to """
+                overallSchema = mapOf(
+                    "test" to """
                         type Query {
                             echo(world: Boolean): String
                         }
                     """.trimIndent(),
-                    ),
-                    underlyingSchema = mapOf(
-                            "test" to """
+                ),
+                underlyingSchema = mapOf(
+                    "test" to """
                         type Query {
                             echo(world: String): String
                         }
                     """.trimIndent(),
-                    ),
+                ),
             )
 
             val errors = validate(fixture)
