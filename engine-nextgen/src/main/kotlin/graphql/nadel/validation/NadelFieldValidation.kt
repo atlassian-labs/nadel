@@ -20,6 +20,7 @@ internal class NadelFieldValidation(
     private val typeValidation: NadelTypeValidation,
 ) {
     private val renameValidation = NadelRenameValidation(this)
+    private val inputValidation = NadelInputValidation()
     private val hydrationValidation = NadelHydrationValidation(services, typeValidation, overallSchema)
 
     fun validate(
@@ -97,14 +98,17 @@ internal class NadelFieldValidation(
                     MissingArgumentOnUnderlying(parent, overallField, underlyingField, overallArg),
                 )
             } else {
-                // TODO check the type wrappings are equal
-                typeValidation.validate(
+                val unwrappedTypeIssues = typeValidation.validate(
                     NadelServiceSchemaElement(
                         service = parent.service,
                         overall = overallArg.type.unwrapAll(),
                         underlying = underlyingArg.type.unwrapAll(),
                     )
                 )
+
+                val inputTypeIssues = inputValidation.validate(parent, overallField, overallArg, underlyingArg)
+
+                unwrappedTypeIssues + inputTypeIssues
             }
         }
 

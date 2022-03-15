@@ -45,7 +45,6 @@ object NadelBuiltInTypes {
         NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION,
         HYDRATED_FROM_DIRECTIVE_DEFINITION,
         HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION,
-
     ).map {
         it.name
     }.toSet()

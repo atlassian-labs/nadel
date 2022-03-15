@@ -151,6 +151,46 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class IncompatibleFieldInputType(
+        val parentType: NadelServiceSchemaElement,
+        val overallInputField: GraphQLInputObjectField,
+        val underlyingInputField: GraphQLInputObjectField,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val s = service.name
+            val of = makeFieldCoordinates(parentType.overall.name, overallInputField.name)
+            val uf = makeFieldCoordinates(parentType.underlying.name, underlyingInputField.name)
+            val ot = GraphQLTypeUtil.simplePrint(overallInputField.type)
+            val ut = GraphQLTypeUtil.simplePrint(underlyingInputField.type)
+            "Overall field $of has input type $ot but underlying field $uf in service $s has input type $ut"
+        }
+
+        override val subject = overallInputField
+    }
+
+    data class IncompatibleArgumentInputType(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val overallInputArg: GraphQLArgument,
+        val underlyingInputArg: GraphQLArgument,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val s = service.name
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val ofa = makeFieldCoordinates(parentType.overall.name, overallInputArg.name)
+            val ufa = makeFieldCoordinates(parentType.underlying.name, underlyingInputArg.name)
+            val ot = GraphQLTypeUtil.simplePrint(overallInputArg.type)
+            val ut = GraphQLTypeUtil.simplePrint(underlyingInputArg.type)
+            "Overall field $of has argument $ofa has input type $ot but underlying field argument $ufa in service $s has input type $ut"
+        }
+
+        override val subject = overallInputArg
+    }
+
     data class MissingUnderlyingEnumValue(
         val parentType: NadelServiceSchemaElement,
         val overallValue: GraphQLEnumValueDefinition,
@@ -257,9 +297,9 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             "Field $of declares a polymorphic hydration with incorrect return type. One of the hydrations' actor fields" +
-                    " ${actorField.name} in the service ${actorService.name} returns the type " +
-                    "${(actorField.type.unwrapAll() as GraphQLNamedType).name} which is not present in the polymorphic hydration return " +
-                    "type ${(overallField.type.unwrapAll() as GraphQLNamedType).name}"
+                " ${actorField.name} in the service ${actorService.name} returns the type " +
+                "${(actorField.type.unwrapAll() as GraphQLNamedType).name} which is not present in the polymorphic hydration return " +
+                "type ${(overallField.type.unwrapAll() as GraphQLNamedType).name}"
         }
 
         override val subject = overallField
@@ -318,11 +358,11 @@ sealed interface NadelSchemaValidationError {
     }
 
     data class MissingRequiredHydrationActorFieldArgument(
-            val parentType: NadelServiceSchemaElement,
-            val overallField: GraphQLFieldDefinition,
-            val hydration: UnderlyingServiceHydration,
-            val actorServiceQueryType: GraphQLObjectType,
-            val argument: String,
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val hydration: UnderlyingServiceHydration,
+        val actorServiceQueryType: GraphQLObjectType,
+        val argument: String,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
