@@ -58,11 +58,11 @@ class NadelDirectivesTest extends Specification {
 
         hydration.arguments[0].name == "fieldVal"
         hydration.arguments[0].remoteArgumentSource.sourceType == OBJECT_FIELD
-        hydration.arguments[0].remoteArgumentSource.path == ["namespace", "issueId"]
+        hydration.arguments[0].remoteArgumentSource.pathToField == ["namespace", "issueId"]
 
         hydration.arguments[1].name == "argVal"
         hydration.arguments[1].remoteArgumentSource.sourceType == FIELD_ARGUMENT
-        hydration.arguments[1].remoteArgumentSource.name == "cloudId"
+        hydration.arguments[1].remoteArgumentSource.argumentName == "cloudId"
     }
 
     def "can handle new @hydratedFrom directives"() {
@@ -113,19 +113,19 @@ class NadelDirectivesTest extends Specification {
 
         hydration.arguments[0].name == "fieldVal"
         hydration.arguments[0].remoteArgumentSource.sourceType == OBJECT_FIELD
-        hydration.arguments[0].remoteArgumentSource.path == ["namespace", "issueId"]
+        hydration.arguments[0].remoteArgumentSource.pathToField == ["namespace", "issueId"]
 
         hydration.arguments[1].name == "argVal"
         hydration.arguments[1].remoteArgumentSource.sourceType == FIELD_ARGUMENT
-        hydration.arguments[1].remoteArgumentSource.name == "cloudId"
+        hydration.arguments[1].remoteArgumentSource.argumentName == "cloudId"
 
         hydration.arguments[2].name == "fieldValLegacy"
         hydration.arguments[2].remoteArgumentSource.sourceType == OBJECT_FIELD
-        hydration.arguments[2].remoteArgumentSource.path == ["namespace", "issueId"]
+        hydration.arguments[2].remoteArgumentSource.pathToField == ["namespace", "issueId"]
 
         hydration.arguments[3].name == "argValLegacy"
         hydration.arguments[3].remoteArgumentSource.sourceType == FIELD_ARGUMENT
-        hydration.arguments[3].remoteArgumentSource.name == "cloudId"
+        hydration.arguments[3].remoteArgumentSource.argumentName == "cloudId"
     }
 
     def "throws exception for if valueFromField or valueFromArg both or none specified"() {

@@ -13,7 +13,6 @@ import graphql.language.InputObjectTypeDefinition;
 import graphql.language.IntValue;
 import graphql.language.NamedNode;
 import graphql.language.NonNullType;
-import graphql.language.SourceLocation;
 import graphql.language.StringValue;
 import graphql.language.Type;
 import graphql.language.TypeName;
@@ -33,6 +32,7 @@ import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLNamedSchemaElement;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -58,7 +58,6 @@ import static graphql.language.TypeName.newTypeName;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
 import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
 
 public class NadelDirectives {
 
@@ -81,242 +80,242 @@ public class NadelDirectives {
 
     static {
         DYNAMIC_SERVICE_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-                .name("dynamicServiceResolution")
-                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-                .description(createDescription("Indicates that the field uses dynamic service resolution. This directive should only be used in commons fields, i.e. fields that are not part of a particular service."))
-                .build();
+            .name("dynamicServiceResolution")
+            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
+            .description(createDescription("Indicates that the field uses dynamic service resolution. This directive should only be used in commons fields, i.e. fields that are not part of a particular service."))
+            .build();
 
         NAMESPACED_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-                .name("namespaced")
-                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-                .description(createDescription("Indicates that the field is a namespaced field."))
-                .build();
+            .name("namespaced")
+            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
+            .description(createDescription("Indicates that the field is a namespaced field."))
+            .build();
 
         RENAMED_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-                .name("renamed")
-                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-                .directiveLocation(newDirectiveLocation().name(OBJECT.name()).build())
-                .directiveLocation(newDirectiveLocation().name(INTERFACE.name()).build())
-                .directiveLocation(newDirectiveLocation().name(UNION.name()).build())
-                .directiveLocation(newDirectiveLocation().name(INPUT_OBJECT.name()).build())
-                .directiveLocation(newDirectiveLocation().name(SCALAR.name()).build())
-                .directiveLocation(newDirectiveLocation().name(ENUM.name()).build())
-                .description(createDescription("This allows you to rename a type or field in the overall schema"))
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("from")
-                                .description(createDescription("The type to be renamed"))
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .build();
+            .name("renamed")
+            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
+            .directiveLocation(newDirectiveLocation().name(OBJECT.name()).build())
+            .directiveLocation(newDirectiveLocation().name(INTERFACE.name()).build())
+            .directiveLocation(newDirectiveLocation().name(UNION.name()).build())
+            .directiveLocation(newDirectiveLocation().name(INPUT_OBJECT.name()).build())
+            .directiveLocation(newDirectiveLocation().name(SCALAR.name()).build())
+            .directiveLocation(newDirectiveLocation().name(ENUM.name()).build())
+            .description(createDescription("This allows you to rename a type or field in the overall schema"))
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("from")
+                    .description(createDescription("The type to be renamed"))
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .build();
 
         NADEL_HYDRATION_ARGUMENT_DEFINITION = InputObjectTypeDefinition.newInputObjectDefinition()
-                .name("NadelHydrationArgument")
-                .description(createDescription("This allows you to hydrate new values into fields"))
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("name")
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("value")
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .build();
+            .name("NadelHydrationArgument")
+            .description(createDescription("This allows you to hydrate new values into fields"))
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("name")
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("value")
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .build();
 
         NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY = InputObjectTypeDefinition.newInputObjectDefinition()
-                .name("NadelBatchObjectIdentifiedBy")
-                .description(createDescription("This is required by batch hydration to understand how to pull out objects from the batched result"))
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("sourceId")
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("resultId")
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .build();
+            .name("NadelBatchObjectIdentifiedBy")
+            .description(createDescription("This is required by batch hydration to understand how to pull out objects from the batched result"))
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("sourceId")
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("resultId")
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .build();
 
         HYDRATED_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-                .name("hydrated")
-                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-                .description(createDescription("This allows you to hydrate new values into fields"))
-                .repeatable(true)
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("service")
-                                .description(createDescription("The target service"))
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("field")
-                                .description(createDescription("The target top level field"))
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("identifiedBy")
-                                .description(createDescription("How to identify matching results"))
-                                .type(nonNull(Scalars.GraphQLString))
-                                .defaultValue(StringValue.newStringValue("id").build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("inputIdentifiedBy")
-                                .description(createDescription("How to identify matching results"))
-                                .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)).build()))
-                                .defaultValue(ArrayValue.newArrayValue().build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("indexed")
-                                .description(createDescription("Are results indexed"))
-                                .type(typeOf(Scalars.GraphQLBoolean))
-                                .defaultValue(BooleanValue.newBooleanValue(false).build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("batched")
-                                .description(createDescription("Is querying batched"))
-                                .type(typeOf(Scalars.GraphQLBoolean))
-                                .defaultValue(BooleanValue.newBooleanValue(false).build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("batchSize")
-                                .description(createDescription("The batch size"))
-                                .type(typeOf(Scalars.GraphQLInt))
-                                .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(200)).build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("timeout")
-                                .description(createDescription("The timeout to use when completing hydration"))
-                                .type(typeOf(Scalars.GraphQLInt))
-                                .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(-1)).build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("arguments")
-                                .description(createDescription("The arguments to the hydrated field"))
-                                .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_ARGUMENT_DEFINITION)).build()))
-                                .build())
-                .build();
+            .name("hydrated")
+            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
+            .description(createDescription("This allows you to hydrate new values into fields"))
+            .repeatable(true)
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("service")
+                    .description(createDescription("The target service"))
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("field")
+                    .description(createDescription("The target top level field"))
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("identifiedBy")
+                    .description(createDescription("How to identify matching results"))
+                    .type(nonNull(Scalars.GraphQLString))
+                    .defaultValue(StringValue.newStringValue("id").build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("inputIdentifiedBy")
+                    .description(createDescription("How to identify matching results"))
+                    .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)).build()))
+                    .defaultValue(ArrayValue.newArrayValue().build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("indexed")
+                    .description(createDescription("Are results indexed"))
+                    .type(typeOf(Scalars.GraphQLBoolean))
+                    .defaultValue(BooleanValue.newBooleanValue(false).build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("batched")
+                    .description(createDescription("Is querying batched"))
+                    .type(typeOf(Scalars.GraphQLBoolean))
+                    .defaultValue(BooleanValue.newBooleanValue(false).build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("batchSize")
+                    .description(createDescription("The batch size"))
+                    .type(typeOf(Scalars.GraphQLInt))
+                    .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(200)).build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("timeout")
+                    .description(createDescription("The timeout to use when completing hydration"))
+                    .type(typeOf(Scalars.GraphQLInt))
+                    .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(-1)).build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("arguments")
+                    .description(createDescription("The arguments to the hydrated field"))
+                    .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_ARGUMENT_DEFINITION)).build()))
+                    .build())
+            .build();
 
         NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION = InputObjectTypeDefinition.newInputObjectDefinition()
-                .name("NadelHydrationFromArgument")
-                .description(createDescription("This allows you to hydrate new values into fields with the @hydratedFrom directive"))
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("name")
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("valueFromField")
-                                .type(typeOf(Scalars.GraphQLString))
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("valueFromArg")
-                                .type(typeOf(Scalars.GraphQLString))
-                                .build())
-                .build();
+            .name("NadelHydrationFromArgument")
+            .description(createDescription("This allows you to hydrate new values into fields with the @hydratedFrom directive"))
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("name")
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("valueFromField")
+                    .type(typeOf(Scalars.GraphQLString))
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("valueFromArg")
+                    .type(typeOf(Scalars.GraphQLString))
+                    .build())
+            .build();
 
         NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION = EnumTypeDefinition.newEnumTypeDefinition()
-                .name("NadelHydrationTemplate")
-                .enumValueDefinition(EnumValueDefinition.newEnumValueDefinition().name("NADEL_PLACEHOLDER").build())
-                .build();
+            .name("NadelHydrationTemplate")
+            .enumValueDefinition(EnumValueDefinition.newEnumValueDefinition().name("NADEL_PLACEHOLDER").build())
+            .build();
 
         HYDRATED_FROM_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-                .name("hydratedFrom")
-                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-                .description(createDescription("This allows you to hydrate new values into fields"))
-                .repeatable(true)
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("arguments")
-                                .description(createDescription("The arguments to the hydrated field"))
-                                .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION)).build()))
-                                .defaultValue(ArrayValue.newArrayValue().build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("template")
-                                .description(createDescription("The hydration template to use"))
-                                .type(nonNull(NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION))
-                                .build())
-                .build();
+            .name("hydratedFrom")
+            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
+            .description(createDescription("This allows you to hydrate new values into fields"))
+            .repeatable(true)
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("arguments")
+                    .description(createDescription("The arguments to the hydrated field"))
+                    .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION)).build()))
+                    .defaultValue(ArrayValue.newArrayValue().build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("template")
+                    .description(createDescription("The hydration template to use"))
+                    .type(nonNull(NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION))
+                    .build())
+            .build();
 
         HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-                .name("hydratedTemplate")
-                .directiveLocation(newDirectiveLocation().name(ENUM_VALUE.name()).build())
-                .description(createDescription("This template directive provides common values to hydrated fields"))
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("service")
-                                .description(createDescription("The target service"))
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("field")
-                                .description(createDescription("The target top level field"))
-                                .type(nonNull(Scalars.GraphQLString))
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("identifiedBy")
-                                .description(createDescription("How to identify matching results"))
-                                .type(nonNull(Scalars.GraphQLString))
-                                .defaultValue(StringValue.newStringValue("id").build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("inputIdentifiedBy")
-                                .description(createDescription("How to identify matching results"))
-                                .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)).build()))
-                                .defaultValue(ArrayValue.newArrayValue().build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("indexed")
-                                .description(createDescription("Are results indexed"))
-                                .type(typeOf(Scalars.GraphQLBoolean))
-                                .defaultValue(BooleanValue.newBooleanValue(false).build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("batched")
-                                .description(createDescription("Is querying batched"))
-                                .type(typeOf(Scalars.GraphQLBoolean))
-                                .defaultValue(BooleanValue.newBooleanValue(false).build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("batchSize")
-                                .description(createDescription("The batch size"))
-                                .type(typeOf(Scalars.GraphQLInt))
-                                .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(200)).build())
-                                .build())
-                .inputValueDefinition(
-                        newInputValueDefinition()
-                                .name("timeout")
-                                .description(createDescription("The timeout in milliseconds"))
-                                .type(typeOf(Scalars.GraphQLInt))
-                                .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(-1)).build())
-                                .build())
-                .build();
+            .name("hydratedTemplate")
+            .directiveLocation(newDirectiveLocation().name(ENUM_VALUE.name()).build())
+            .description(createDescription("This template directive provides common values to hydrated fields"))
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("service")
+                    .description(createDescription("The target service"))
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("field")
+                    .description(createDescription("The target top level field"))
+                    .type(nonNull(Scalars.GraphQLString))
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("identifiedBy")
+                    .description(createDescription("How to identify matching results"))
+                    .type(nonNull(Scalars.GraphQLString))
+                    .defaultValue(StringValue.newStringValue("id").build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("inputIdentifiedBy")
+                    .description(createDescription("How to identify matching results"))
+                    .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)).build()))
+                    .defaultValue(ArrayValue.newArrayValue().build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("indexed")
+                    .description(createDescription("Are results indexed"))
+                    .type(typeOf(Scalars.GraphQLBoolean))
+                    .defaultValue(BooleanValue.newBooleanValue(false).build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("batched")
+                    .description(createDescription("Is querying batched"))
+                    .type(typeOf(Scalars.GraphQLBoolean))
+                    .defaultValue(BooleanValue.newBooleanValue(false).build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("batchSize")
+                    .description(createDescription("The batch size"))
+                    .type(typeOf(Scalars.GraphQLInt))
+                    .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(200)).build())
+                    .build())
+            .inputValueDefinition(
+                newInputValueDefinition()
+                    .name("timeout")
+                    .description(createDescription("The timeout in milliseconds"))
+                    .type(typeOf(Scalars.GraphQLInt))
+                    .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(-1)).build())
+                    .build())
+            .build();
 
         HIDDEN_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-                .name("hidden")
-                .description(createDescription("Indicates that the field is not available for queries or introspection"))
-                .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-                .build();
+            .name("hidden")
+            .description(createDescription("Indicates that the field is not available for queries or introspection"))
+            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
+            .build();
     }
 
     /**
@@ -349,25 +348,25 @@ public class NadelDirectives {
     public static List<UnderlyingServiceHydration> createUnderlyingServiceHydration(GraphQLFieldDefinition fieldDefinition, GraphQLSchema overallSchema) {
 
         List<GraphQLDirective> hydrationDirectives = FpKit.concat(
-                fieldDefinition.getDirectives(HYDRATED_DIRECTIVE_DEFINITION.getName()),
-                fieldDefinition.getDirectives(HYDRATED_FROM_DIRECTIVE_DEFINITION.getName())
+            fieldDefinition.getDirectives(HYDRATED_DIRECTIVE_DEFINITION.getName()),
+            fieldDefinition.getDirectives(HYDRATED_FROM_DIRECTIVE_DEFINITION.getName())
         );
         return FpKit.map(hydrationDirectives,
-                directive -> {
+            directive -> {
 
-                    if (directive.getName().equals(HYDRATED_FROM_DIRECTIVE_DEFINITION.getName())) {
-                        return createTemplatedUnderlyingServiceHydration(directive, overallSchema);
-                    }
+                if (directive.getName().equals(HYDRATED_FROM_DIRECTIVE_DEFINITION.getName())) {
+                    return createTemplatedUnderlyingServiceHydration(directive, overallSchema);
+                }
 
-                    List<Object> argumentValues = resolveArgumentValue(directive.getArgument("arguments"));
-                    var arguments = createArgs(argumentValues);
+                List<Object> argumentValues = resolveArgumentValue(directive.getArgument("arguments"));
+                var arguments = createArgs(argumentValues);
 
-                    GraphQLArgument inputIdentifiedBy = directive.getArgument("inputIdentifiedBy");
-                    List<Object> identifiedByValues = resolveArgumentValue(inputIdentifiedBy);
-                    var identifiedBy = createObjectIdentifiers(identifiedByValues);
+                GraphQLArgument inputIdentifiedBy = directive.getArgument("inputIdentifiedBy");
+                List<Object> identifiedByValues = resolveArgumentValue(inputIdentifiedBy);
+                var identifiedBy = createObjectIdentifiers(identifiedByValues);
 
-                    return buildHydrationParameters(directive, arguments, identifiedBy);
-                });
+                return buildHydrationParameters(directive, arguments, identifiedBy);
+            });
     }
 
     private static UnderlyingServiceHydration buildHydrationParameters(GraphQLDirective directive,
@@ -397,19 +396,16 @@ public class NadelDirectives {
         // nominally this should be some other data class that's not an AST element
         // but history is what it is, and it's an AST element that's' really a data class
         return new UnderlyingServiceHydration(
-                emptySrc(),
-                emptyList(),
-                service,
-                topLevelFieldName,
-                syntheticField,
-                arguments,
-                objectIdentifier,
-                identifiedBy,
-                objectIndexed,
-                batched,
-                batchSize,
-                timeout,
-                emptyMap()
+            service,
+            topLevelFieldName,
+            syntheticField,
+            arguments,
+            objectIdentifier,
+            identifiedBy,
+            objectIndexed,
+            batched,
+            batchSize,
+            timeout
         );
     }
 
@@ -447,7 +443,7 @@ public class NadelDirectives {
             String remoteArgName = argMap.get("name");
             String remoteArgValue = argMap.get("value");
             RemoteArgumentSource remoteArgumentSource = createRemoteArgumentSource(remoteArgValue);
-            RemoteArgumentDefinition remoteArgumentDefinition = new RemoteArgumentDefinition(remoteArgName, remoteArgumentSource, emptySrc(), emptyMap());
+            RemoteArgumentDefinition remoteArgumentDefinition = new RemoteArgumentDefinition(remoteArgName, remoteArgumentSource);
             remoteArgumentDefinitions.add(remoteArgumentDefinition);
         }
         return remoteArgumentDefinitions;
@@ -483,7 +479,7 @@ public class NadelDirectives {
         } else {
             Assert.assertShouldNeverHappen("The hydration arguments are invalid : %s", value);
         }
-        return new RemoteArgumentSource(argumentName, path, argumentType, emptySrc(), emptyMap());
+        return new RemoteArgumentSource(argumentName, path, argumentType);
     }
 
     @SuppressWarnings("unchecked")
@@ -505,7 +501,7 @@ public class NadelDirectives {
             } else {
                 remoteArgumentSource = createTemplatedRemoteArgumentSource(remoteArgArgValue, FIELD_ARGUMENT);
             }
-            RemoteArgumentDefinition remoteArgumentDefinition = new RemoteArgumentDefinition(remoteArgName, remoteArgumentSource, emptySrc(), emptyMap());
+            RemoteArgumentDefinition remoteArgumentDefinition = new RemoteArgumentDefinition(remoteArgName, remoteArgumentSource);
             remoteArgumentDefinitions.add(remoteArgumentDefinition);
         }
         return remoteArgumentDefinitions;
@@ -524,7 +520,7 @@ public class NadelDirectives {
         if (argumentType == FIELD_ARGUMENT) {
             argumentName = values.get(0);
         }
-        return new RemoteArgumentSource(argumentName, path, argumentType, emptySrc(), emptyMap());
+        return new RemoteArgumentSource(argumentName, path, argumentType);
     }
 
     private static String removePrefix(String value, String prefix) {
@@ -542,9 +538,10 @@ public class NadelDirectives {
 
         String fromValue = getDirectiveValue(directive, "from", String.class);
         List<String> fromPath = dottedString(String.valueOf(fromValue));
-        return new FieldMappingDefinition(fromPath, emptySrc(), emptyList(), emptyMap());
+        return new FieldMappingDefinition(fromPath);
     }
 
+    @Nullable
     public static TypeMappingDefinition createTypeMapping(GraphQLDirectiveContainer directivesContainer) {
         GraphQLDirective directive = directivesContainer.getDirective(RENAMED_DIRECTIVE_DEFINITION.getName());
         if (directive == null) {
@@ -552,19 +549,12 @@ public class NadelDirectives {
         }
 
         String from = getDirectiveValue(directive, "from", String.class);
-        TypeMappingDefinition typeMappingDefinition = new TypeMappingDefinition(emptySrc(), emptyList(), emptyMap());
-        typeMappingDefinition.setOverallName(directivesContainer.getName());
-        typeMappingDefinition.setUnderlyingName(from);
-        return typeMappingDefinition;
+        return new TypeMappingDefinition(/*underlying*/ from, /*overall*/ directivesContainer.getName());
     }
 
     private static List<String> dottedString(String from) {
         String[] split = from.split("\\.");
         return Arrays.asList(split);
-    }
-
-    private static SourceLocation emptySrc() {
-        return new SourceLocation(-1, -1);
     }
 
     private static <T> T getDirectiveValueImpl(GraphQLDirective directive, String name, Class<T> clazz, boolean allowMissingArg) {

@@ -15,11 +15,11 @@ public enum OperationKind {
     SUBSCRIPTION("subscription", "Subscription", OperationDefinition.Operation.SUBSCRIPTION);
 
     private final String name;
-    private final String displayName;
+    private final String defaultTypeName;
     private final OperationDefinition.Operation astOperation;
 
-    OperationKind(String name, String displayName, OperationDefinition.Operation astOperation) {
-        this.displayName = displayName;
+    OperationKind(String name, String defaultTypeName, OperationDefinition.Operation astOperation) {
+        this.defaultTypeName = defaultTypeName;
         this.name = name;
         this.astOperation = astOperation;
     }
@@ -28,8 +28,8 @@ public enum OperationKind {
         return name;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public String getDefaultTypeName() {
+        return defaultTypeName;
     }
 
     public OperationDefinition.Operation getAstOperation() {

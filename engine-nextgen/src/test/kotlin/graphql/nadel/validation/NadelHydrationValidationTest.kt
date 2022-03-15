@@ -530,8 +530,8 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
-            assert(error.remoteArgSource.path == listOf("creatorId"))
-            assert(error.remoteArgSource.name == null)
+            assert(error.remoteArgSource.pathToField == listOf("creatorId"))
+            assert(error.remoteArgSource.argumentName == null)
         }
 
         it("fails if hydration argument references non existent argument") {
@@ -594,8 +594,8 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
-            assert(error.remoteArgSource.name == "secrets")
-            assert(error.remoteArgSource.path == null)
+            assert(error.remoteArgSource.argumentName == "secrets")
+            assert(error.remoteArgSource.pathToField == null)
         }
 
         it("fails if hydration argument references non existent remote argument") {

@@ -2,12 +2,10 @@ package graphql.nadel.validation.util
 
 import graphql.language.FieldDefinition
 import graphql.nadel.Service
-import graphql.nadel.dsl.ExtendedFieldDefinition
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
-import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.schema.NadelDirectives
-import graphql.nadel.util.Util
+import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLSchema
@@ -18,12 +16,6 @@ object NadelSchemaUtil {
     }
 
     fun getHydrations(field: GraphQLFieldDefinition, overallSchema: GraphQLSchema): List<UnderlyingServiceHydration> {
-        val def = field.definition
-        if (def is ExtendedFieldDefinition) {
-            val underlyingServiceHydration = def.fieldTransformation?.underlyingServiceHydration ?: return emptyList()
-            return listOf(underlyingServiceHydration)
-        }
-
         return NadelDirectives.createUnderlyingServiceHydration(field, overallSchema)
     }
 
@@ -32,21 +24,12 @@ object NadelSchemaUtil {
     }
 
     fun hasHydration(def: FieldDefinition): Boolean {
-        if (def is ExtendedFieldDefinition) {
-            return def.fieldTransformation?.underlyingServiceHydration != null
-        }
-
         val hydratedPresent = def.hasDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.name)
         val hydratedFromPresent = def.hasDirective(NadelDirectives.HYDRATED_FROM_DIRECTIVE_DEFINITION.name)
         return hydratedPresent || hydratedFromPresent
     }
 
     fun getRename(field: GraphQLFieldDefinition): FieldMappingDefinition? {
-        val def = field.definition
-        if (def is ExtendedFieldDefinition) {
-            return def.fieldTransformation?.fieldMappingDefinition
-        }
-
         return NadelDirectives.createFieldMapping(field)
     }
 
@@ -55,10 +38,6 @@ object NadelSchemaUtil {
     }
 
     fun hasRename(def: FieldDefinition): Boolean {
-        if (def is ExtendedFieldDefinition) {
-            return def.fieldTransformation?.fieldMappingDefinition != null
-        }
-
         return def.hasDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.name)
     }
 
@@ -67,6 +46,7 @@ object NadelSchemaUtil {
     }
 
     fun getRenamedFrom(type: GraphQLNamedType): String? {
-        return Util.getTypeMappingDefinitionFor(type.unwrapAll())?.underlyingName
+        val asDirectivesContainer = type as? GraphQLDirectiveContainer ?: return null
+        return NadelDirectives.createTypeMapping(asDirectivesContainer)?.underlyingName
     }
 }

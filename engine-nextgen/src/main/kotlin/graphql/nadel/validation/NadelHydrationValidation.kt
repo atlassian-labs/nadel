@@ -198,7 +198,7 @@ internal class NadelHydrationValidation(
     ): NadelSchemaValidationError? {
         return when (remoteArgSource.sourceType) {
             OBJECT_FIELD -> {
-                val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.path)
+                val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField)
                 if (field == null) {
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
@@ -207,7 +207,7 @@ internal class NadelHydrationValidation(
                 }
             }
             FIELD_ARGUMENT -> {
-                val argument = overallField.getArgument(remoteArgSource.name)
+                val argument = overallField.getArgument(remoteArgSource.argumentName)
                 if (argument == null) {
                     MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource)
                 } else {

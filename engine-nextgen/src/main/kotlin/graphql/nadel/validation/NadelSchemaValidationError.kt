@@ -314,7 +314,7 @@ sealed interface NadelSchemaValidationError {
 
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val uf = "${parentType.underlying.name}.${remoteArgSource.path.joinToString(separator = ".")}"
+            val uf = "${parentType.underlying.name}.${remoteArgSource.pathToField.joinToString(separator = ".")}"
             val s = service.name
             "Field $of tried to hydrate using value of non-existent underlying field $uf from service $s as an argument"
         }
@@ -331,7 +331,7 @@ sealed interface NadelSchemaValidationError {
 
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val a = remoteArgSource.name
+            val a = remoteArgSource.argumentName
             "Field $of tried to hydrate using value of non-existent field $a as an argument"
         }
 

@@ -1,27 +1,15 @@
 package graphql.nadel.dsl;
 
 import graphql.Internal;
-import graphql.language.AbstractNode;
-import graphql.language.Comment;
-import graphql.language.IgnoredChars;
-import graphql.language.Node;
-import graphql.language.NodeChildrenContainer;
-import graphql.language.NodeVisitor;
-import graphql.language.SourceLocation;
-import graphql.util.TraversalControl;
-import graphql.util.TraverserContext;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 @Internal
-public class FieldMappingDefinition extends AbstractNode<FieldMappingDefinition> {
-
+public class FieldMappingDefinition {
     private final List<String> inputPath;
 
-    public FieldMappingDefinition(List<String> inputPath, SourceLocation sourceLocation, List<Comment> comments, Map<String, String> additionalData) {
-        super(sourceLocation, comments, IgnoredChars.EMPTY, additionalData);
+    public FieldMappingDefinition(List<String> inputPath) {
         this.inputPath = inputPath;
     }
 
@@ -30,39 +18,22 @@ public class FieldMappingDefinition extends AbstractNode<FieldMappingDefinition>
     }
 
     @Override
-    public List<Node> getChildren() {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public NodeChildrenContainer getNamedChildren() {
-        return null;
-    }
-
-    @Override
-    public FieldMappingDefinition withNewChildren(NodeChildrenContainer newChildren) {
-        return null;
-    }
-
-    @Override
-    public boolean isEqualTo(Node node) {
-        return false;
-    }
-
-    @Override
-    public FieldMappingDefinition deepCopy() {
-        return null;
-    }
-
-    @Override
-    public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
-        return null;
-    }
-
-    @Override
     public String toString() {
         return "FieldMappingDefinition{" +
-                "inputPath=" + inputPath +
-                '}';
+            "inputPath=" + inputPath +
+            '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FieldMappingDefinition that = (FieldMappingDefinition) o;
+        return Objects.equals(inputPath, that.inputPath);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(inputPath);
     }
 }

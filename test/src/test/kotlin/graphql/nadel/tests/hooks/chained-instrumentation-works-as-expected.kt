@@ -11,7 +11,7 @@ import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
-import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.parser.Parser
@@ -70,7 +70,7 @@ class `chained-instrumentation-works-as-expected` : EngineTestHook {
                 return super.beginParse(parameters)
             }
 
-            override fun beginValidation(parameters: NadelNadelInstrumentationQueryValidationParameters): InstrumentationContext<MutableList<ValidationError>> {
+            override fun beginValidation(parameters: NadelInstrumentationQueryValidationParameters): InstrumentationContext<MutableList<ValidationError>> {
                 instrumentationValidateCalled++
                 return super.beginValidation(parameters)
             }

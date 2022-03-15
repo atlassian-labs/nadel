@@ -25,26 +25,22 @@ public class NadelExecutionInput {
     @NotNull
     private final Map<String, Object> variables;
     @Nullable
-    private final String artificialFieldsUUID;
-    @Nullable
     private final ExecutionId executionId;
     @NotNull
     private final NadelExecutionHints nadelExecutionHints;
 
     private NadelExecutionInput(
-            String query,
-            @Nullable String operationName,
-            @Nullable Object context,
-            Map<String, Object> variables,
-            @Nullable String artificialFieldsUUID,
-            @Nullable ExecutionId executionId,
-            @NotNull NadelExecutionHints nadelExecutionHints
+        String query,
+        @Nullable String operationName,
+        @Nullable Object context,
+        Map<String, Object> variables,
+        @Nullable ExecutionId executionId,
+        @NotNull NadelExecutionHints nadelExecutionHints
     ) {
         this.query = requireNonNull(query);
         this.operationName = operationName;
         this.context = context;
         this.variables = requireNonNull(variables);
-        this.artificialFieldsUUID = artificialFieldsUUID;
         this.executionId = executionId;
         this.nadelExecutionHints = nadelExecutionHints;
     }
@@ -56,11 +52,6 @@ public class NadelExecutionInput {
     @NotNull
     public String getQuery() {
         return query;
-    }
-
-    @Nullable
-    public String getArtificialFieldsUUID() {
-        return artificialFieldsUUID;
     }
 
     @Nullable
@@ -79,7 +70,7 @@ public class NadelExecutionInput {
     }
 
     /**
-     * @return Id that will be/was used to execute this operation.
+     * @return id that will be/was used to execute this operation.
      */
     @Nullable
     public ExecutionId getExecutionId() {
@@ -96,7 +87,6 @@ public class NadelExecutionInput {
         private String operationName;
         private Object context = newContext().build();
         private Map<String, Object> variables = new LinkedHashMap<>();
-        private String artificialFieldsUUID;
         private ExecutionId executionId;
         private NadelExecutionHints nadelExecutionHints = NadelExecutionHints.newHints().build();
 
@@ -128,11 +118,6 @@ public class NadelExecutionInput {
             return this;
         }
 
-        public Builder artificialFieldsUUID(String artificialFieldsUUID) {
-            this.artificialFieldsUUID = artificialFieldsUUID;
-            return this;
-        }
-
         public Builder nadelExecutionHints(NadelExecutionHints nadelExecutionHints) {
             this.nadelExecutionHints = assertNotNull(nadelExecutionHints);
             return this;
@@ -149,7 +134,7 @@ public class NadelExecutionInput {
         }
 
         public NadelExecutionInput build() {
-            return new NadelExecutionInput(query, operationName, context, variables, artificialFieldsUUID, executionId, nadelExecutionHints);
+            return new NadelExecutionInput(query, operationName, context, variables, executionId, nadelExecutionHints);
         }
     }
 }

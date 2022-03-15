@@ -9,12 +9,7 @@ import graphql.language.EnumTypeDefinition
 import graphql.language.FieldDefinition
 import graphql.language.ImplementingTypeDefinition
 import graphql.nadel.Service
-import graphql.nadel.dsl.EnumTypeDefinitionWithTransformation
-import graphql.nadel.dsl.ExtendedFieldDefinition
 import graphql.nadel.dsl.FieldMappingDefinition
-import graphql.nadel.dsl.InputObjectTypeDefinitionWithTransformation
-import graphql.nadel.dsl.InterfaceTypeDefinitionWithTransformation
-import graphql.nadel.dsl.ObjectTypeDefinitionWithTransformation
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD
 import graphql.nadel.dsl.TypeMappingDefinition
@@ -410,15 +405,7 @@ private class Factory(
     }
 
     private fun makeTypeRenameInstruction(type: GraphQLDirectiveContainer): NadelTypeRenameInstruction? {
-        return when (val def = type.definition) {
-            is ObjectTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
-            is InterfaceTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
-            is InputObjectTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
-            is EnumTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
-            // These don't really mean anything anyway as these cannot be used as fragment type conditions
-            // And we don't have variables in normalized queries so they can't be var types
-            // is ScalarTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
-            // is UnionTypeDefinitionWithTransformation -> makeTypeRenameInstruction(def.typeMappingDefinition)
+        return when (type.definition) {
             else -> when (val typeMappingDef = createTypeMapping(type)) {
                 null -> null
                 else -> makeTypeRenameInstruction(typeMappingDef)
@@ -457,7 +444,7 @@ private class Factory(
         return hydration.arguments.map { remoteArgDef ->
             val valueSource = when (val argSourceType = remoteArgDef.remoteArgumentSource.sourceType) {
                 FIELD_ARGUMENT -> {
-                    val argumentName = remoteArgDef.remoteArgumentSource.name
+                    val argumentName = remoteArgDef.remoteArgumentSource.argumentName
                     NadelHydrationActorInputDef.ValueSource.ArgumentValue(
                         argumentName = argumentName,
                         argumentDefinition = hydratedFieldDef.getArgument(argumentName)
@@ -465,7 +452,7 @@ private class Factory(
                     )
                 }
                 OBJECT_FIELD -> {
-                    val pathToField = remoteArgDef.remoteArgumentSource.path
+                    val pathToField = remoteArgDef.remoteArgumentSource.pathToField
                     FieldResultValue(
                         queryPathToField = NadelQueryPath(pathToField),
                         fieldDefinition = getUnderlyingType(hydratedFieldParentType)
@@ -493,17 +480,11 @@ private class Factory(
     }
 
     private fun getFieldMappingDefinition(field: GraphQLFieldDefinition): FieldMappingDefinition? {
-        val extendedDef = field.definition as? ExtendedFieldDefinition
-        return extendedDef?.fieldTransformation?.fieldMappingDefinition
-            ?: NadelDirectives.createFieldMapping(field)
+        return NadelDirectives.createFieldMapping(field)
     }
 
     private fun getUnderlyingServiceHydrations(field: GraphQLFieldDefinition): List<UnderlyingServiceHydration> {
-        val extendedDef = field.definition as? ExtendedFieldDefinition
-        return when (val underlyingServiceHydration = extendedDef?.fieldTransformation?.underlyingServiceHydration) {
-            null -> NadelDirectives.createUnderlyingServiceHydration(field, engineSchema) ?: emptyList()
-            else -> listOf(underlyingServiceHydration)
-        }
+        return NadelDirectives.createUnderlyingServiceHydration(field, engineSchema) ?: emptyList()
     }
 
     private fun deriveUnderlyingBlueprints(

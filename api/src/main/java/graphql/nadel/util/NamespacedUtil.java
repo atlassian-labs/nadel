@@ -14,10 +14,11 @@ public final class NamespacedUtil {
     }
 
     public static boolean serviceOwnsNamespacedField(String namespacedObjectTypeName, Service service) {
-        return service.getDefinitionRegistry().getDefinitions(ObjectTypeDefinition.class)
-                .stream()
-                // the type can't be an extension in the owning service
-                .filter(objectTypeDef -> !(objectTypeDef instanceof ObjectTypeExtensionDefinition))
-                .anyMatch(objectTypeDef -> objectTypeDef.getName().equals(namespacedObjectTypeName));
+        return service.getDefinitionRegistry()
+            .getDefinitions(ObjectTypeDefinition.class)
+            .stream()
+            // the type can't be an extension in the owning service
+            .filter(objectTypeDef -> !(objectTypeDef instanceof ObjectTypeExtensionDefinition))
+            .anyMatch(objectTypeDef -> objectTypeDef.getName().equals(namespacedObjectTypeName));
     }
 }

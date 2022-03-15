@@ -1,76 +1,63 @@
 package graphql.nadel.dsl;
 
 import graphql.Internal;
-import graphql.language.AbstractNode;
-import graphql.language.IgnoredChars;
-import graphql.language.Node;
-import graphql.language.NodeChildrenContainer;
-import graphql.language.NodeVisitor;
-import graphql.language.SourceLocation;
-import graphql.util.TraversalControl;
-import graphql.util.TraverserContext;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-import static java.util.Collections.emptyList;
+import java.util.Objects;
 
 @Internal
-public class RemoteArgumentSource extends AbstractNode<RemoteArgumentSource> {
-    public enum SourceType {OBJECT_FIELD, FIELD_ARGUMENT}
+public class RemoteArgumentSource {
+    public enum SourceType {
+        OBJECT_FIELD,
+        FIELD_ARGUMENT,
+    }
 
-    private final String name;
+    private final String argumentName;
+
     // for OBJECT_FIELD
-    private final List<String> path;
+    private final List<String> pathToField;
 
     private final SourceType sourceType;
 
-    public RemoteArgumentSource(String name, List<String> path, SourceType sourceType, SourceLocation sourceLocation, Map<String, String> additionalData) {
-        super(sourceLocation, emptyList(), IgnoredChars.EMPTY, additionalData);
-        this.name = name;
-        this.path = path;
+    public RemoteArgumentSource(String argumentName, List<String> pathToField, SourceType sourceType) {
+        this.argumentName = argumentName;
+        this.pathToField = pathToField;
         this.sourceType = sourceType;
     }
 
-    public List<String> getPath() {
-        return path;
+    public List<String> getPathToField() {
+        return pathToField;
     }
 
-    public String getName() {
-        return name;
+    public String getArgumentName() {
+        return argumentName;
     }
 
     public SourceType getSourceType() {
         return sourceType;
     }
 
-    public List<Node> getChildren() {
-        return new ArrayList<>();
+    @Override
+    public String toString() {
+        return "RemoteArgumentSource{" +
+            "argumentName='" + argumentName + '\'' +
+            ", pathToField=" + pathToField +
+            ", sourceType=" + sourceType +
+            '}';
     }
 
     @Override
-    public NodeChildrenContainer getNamedChildren() {
-        return null;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RemoteArgumentSource that = (RemoteArgumentSource) o;
+        return Objects.equals(argumentName, that.argumentName)
+            && Objects.equals(pathToField, that.pathToField)
+            && sourceType == that.sourceType;
     }
 
     @Override
-    public RemoteArgumentSource withNewChildren(NodeChildrenContainer newChildren) {
-        return null;
-    }
-
-    @Override
-    public boolean isEqualTo(Node node) {
-        return false;
-    }
-
-    @Override
-    public RemoteArgumentSource deepCopy() {
-        return null;
-    }
-
-    @Override
-    public TraversalControl accept(TraverserContext<Node> context, NodeVisitor visitor) {
-        return null;
+    public int hashCode() {
+        return Objects.hash(argumentName, pathToField, sourceType);
     }
 }

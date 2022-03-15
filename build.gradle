@@ -60,10 +60,6 @@ subprojects {
     apply plugin: "maven-publish"
     apply plugin: "com.jfrog.artifactory"
 
-    tasks.withType(Javadoc) {
-        exclude("**/antlr/**")
-    }
-
     task sourcesJar(type: Jar) {
         dependsOn classes
         classifier "sources"
@@ -90,16 +86,7 @@ subprojects {
                 artifactId project.name
                 version rootProject.version
                 pom.withXml {
-                    // The ANTLR-related code below--introdcued in `1ac98bf`--addresses an issue with
-                    // the Gradle ANTLR plugin. `1ac98bf` can be reverted and this comment removed once
-                    // that issue is fixed and Gradle upgraded. See https://goo.gl/L92KiF and https://goo.gl/FY0PVR.
-                    Node pomNode = asNode()
-                    pomNode.dependencies."*".findAll() {
-                        it.artifactId.text() == "antlr4"
-                    }.each() {
-                        it.parent().remove(it)
-                    }
-                    pomNode.children().last() + {
+                    asNode().children().last() + {
                         resolveStrategy = Closure.DELEGATE_FIRST
                         name project.name
                         description project.description
@@ -112,7 +99,7 @@ subprojects {
                         licenses {
                             license {
                                 name "Apache License 2.0"
-                                url "http://www.apache.org/licenses/"
+                                url "https://www.apache.org/licenses/"
                                 distribution "repo"
                             }
                         }

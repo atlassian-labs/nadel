@@ -2,20 +2,18 @@ name: repeated hydrated fields on the same level. overlapping fields in the quer
 enabled: true
 overallSchema:
   Foo: |
-    service Foo {
-      type Query {
-        foo: Foo
-        issue(issueId: ID): Issue
-      }
-      type Foo {
-        issue: Issue => hydrated from Foo.issue(issueId: $source.issueId)
-      }
-      type Issue {
-        id: ID
-        name: String
-        desc: String
-        summary: String
-      }
+    type Query {
+      foo: Foo
+      issue(issueId: ID): Issue
+    }
+    type Foo {
+      issue: Issue @hydrated(service: "Foo" field: "issue" arguments: [{name: "issueId" value: "$source.issueId"}])
+    }
+    type Issue {
+      id: ID
+      name: String
+      desc: String
+      summary: String
     }
 underlyingSchema:
   Foo: |

@@ -8,7 +8,7 @@ import graphql.nadel.Nadel
 import graphql.nadel.instrumentation.NadelInstrumentation
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationExecuteOperationParameters
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryExecutionParameters
-import graphql.nadel.instrumentation.parameters.NadelNadelInstrumentationQueryValidationParameters
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationQueryValidationParameters
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.validation.ValidationError
@@ -108,7 +108,7 @@ class `abort-begin-validation-within-instrumentation-still-calls-enhancing-instr
         return builder
             .instrumentation(object : NadelInstrumentation {
                 override fun beginValidation(
-                    parameters: NadelNadelInstrumentationQueryValidationParameters,
+                    parameters: NadelInstrumentationQueryValidationParameters,
                 ): InstrumentationContext<MutableList<ValidationError>> {
                     throw AbortExecutionException("beginValidation")
                 }

@@ -26,7 +26,6 @@ import graphql.language.NamedNode
 import graphql.language.Node
 import graphql.language.NullValue
 import graphql.language.ObjectField
-import graphql.language.ObjectTypeDefinition
 import graphql.language.ObjectTypeExtensionDefinition
 import graphql.language.ObjectValue
 import graphql.language.OperationDefinition
@@ -38,7 +37,6 @@ import graphql.language.Type
 import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
-import graphql.nadel.DefinitionRegistry
 import graphql.nadel.OperationKind
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.UnderlyingServiceHydration
@@ -103,14 +101,6 @@ fun GraphQLSchema.getField(coordinates: FieldCoordinates): GraphQLFieldDefinitio
 }
 
 fun GraphQLSchema.getOperationType(kind: OperationKind): GraphQLObjectType? {
-    return when (kind) {
-        OperationKind.QUERY -> queryType
-        OperationKind.MUTATION -> mutationType
-        OperationKind.SUBSCRIPTION -> subscriptionType
-    }
-}
-
-fun DefinitionRegistry.getOperationTypes(kind: OperationKind): List<ObjectTypeDefinition> {
     return when (kind) {
         OperationKind.QUERY -> queryType
         OperationKind.MUTATION -> mutationType
