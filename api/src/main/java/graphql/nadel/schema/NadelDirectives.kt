@@ -3,262 +3,39 @@ package graphql.nadel.schema
 import graphql.Scalars
 import graphql.Scalars.GraphQLString
 import graphql.execution.ValuesResolver
-import graphql.introspection.Introspection
 import graphql.language.ArrayValue
 import graphql.language.BooleanValue
-import graphql.language.BooleanValue.newBooleanValue
-import graphql.language.Description
-import graphql.language.DirectiveDefinition
 import graphql.language.DirectiveDefinition.newDirectiveDefinition
-import graphql.language.DirectiveLocation.newDirectiveLocation
 import graphql.language.EnumTypeDefinition.newEnumTypeDefinition
 import graphql.language.EnumValueDefinition.newEnumValueDefinition
-import graphql.language.InputObjectTypeDefinition
 import graphql.language.InputObjectTypeDefinition.newInputObjectDefinition
-import graphql.language.InputValueDefinition.newInputValueDefinition
-import graphql.language.IntValue
-import graphql.language.IntValue.newIntValue
-import graphql.language.ListType
-import graphql.language.ListType.newListType
-import graphql.language.NamedNode
-import graphql.language.NonNullType
-import graphql.language.NonNullType.newNonNullType
 import graphql.language.StringValue
-import graphql.language.Type
-import graphql.language.TypeName.newTypeName
-import graphql.language.Value
 import graphql.nadel.dsl.FieldMappingDefinition
 import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType
 import graphql.nadel.dsl.TypeMappingDefinition
 import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.nadel.util.IntValue
+import graphql.nadel.util.description
+import graphql.nadel.util.emptyArrayValue
+import graphql.nadel.util.inputValueDefinition
+import graphql.nadel.util.list
+import graphql.nadel.util.nonNull
+import graphql.nadel.util.onEnum
+import graphql.nadel.util.onEnumValue
+import graphql.nadel.util.onFieldDefinition
+import graphql.nadel.util.onInputObject
+import graphql.nadel.util.onInterface
+import graphql.nadel.util.onObject
+import graphql.nadel.util.onScalar
+import graphql.nadel.util.onUnion
 import graphql.schema.GraphQLAppliedDirective
 import graphql.schema.GraphQLAppliedDirectiveArgument
 import graphql.schema.GraphQLDirectiveContainer
 import graphql.schema.GraphQLEnumType
 import graphql.schema.GraphQLFieldDefinition
-import graphql.schema.GraphQLNamedInputType
-import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLSchema
-
-val DirectiveOnQuery = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.QUERY.name)
-    .build()
-val DirectiveOnMutation = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.MUTATION.name)
-    .build()
-val DirectiveOnSubscription = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.SUBSCRIPTION.name)
-    .build()
-val DirectiveOnField = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.FIELD.name)
-    .build()
-val DirectiveOnFragmentDefinition = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.FRAGMENT_DEFINITION.name)
-    .build()
-val DirectiveOnFragmentSpread = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.FRAGMENT_SPREAD.name)
-    .build()
-val DirectiveOnInlineFragment = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.INLINE_FRAGMENT.name)
-    .build()
-val DirectiveOnVariableDefinition = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.VARIABLE_DEFINITION.name)
-    .build()
-val DirectiveOnSchema = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.SCHEMA.name)
-    .build()
-val DirectiveOnScalar = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.SCALAR.name)
-    .build()
-val DirectiveOnObject = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.OBJECT.name)
-    .build()
-val DirectiveOnFieldDefinition = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.FIELD_DEFINITION.name)
-    .build()
-val DirectiveOnArgumentDefinition = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.ARGUMENT_DEFINITION.name)
-    .build()
-val DirectiveOnInterface = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.INTERFACE.name)
-    .build()
-val DirectiveOnUnion = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.UNION.name)
-    .build()
-val DirectiveOnEnum = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.ENUM.name)
-    .build()
-val DirectiveOnEnumValue = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.ENUM_VALUE.name)
-    .build()
-val DirectiveOnInputObject = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.INPUT_OBJECT.name)
-    .build()
-val DirectiveOnInputFieldDefinition = newDirectiveLocation()
-    .name(Introspection.DirectiveLocation.INPUT_FIELD_DEFINITION.name)
-    .build()
-
-internal fun DirectiveDefinition.Builder.onQuery(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnQuery)
-}
-
-internal fun DirectiveDefinition.Builder.onMutation(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnMutation)
-}
-
-internal fun DirectiveDefinition.Builder.onSubscription(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnSubscription)
-}
-
-internal fun DirectiveDefinition.Builder.onField(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnField)
-}
-
-internal fun DirectiveDefinition.Builder.onFragmentDefinition(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnFragmentDefinition)
-}
-
-internal fun DirectiveDefinition.Builder.onFragmentSpread(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnFragmentSpread)
-}
-
-internal fun DirectiveDefinition.Builder.onInlineFragment(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnInlineFragment)
-}
-
-internal fun DirectiveDefinition.Builder.onVariableDefinition(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnVariableDefinition)
-}
-
-internal fun DirectiveDefinition.Builder.onSchema(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnSchema)
-}
-
-internal fun DirectiveDefinition.Builder.onScalar(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnScalar)
-}
-
-internal fun DirectiveDefinition.Builder.onObject(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnObject)
-}
-
-internal fun DirectiveDefinition.Builder.onFieldDefinition(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnFieldDefinition)
-}
-
-internal fun DirectiveDefinition.Builder.onArgumentDefinition(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnArgumentDefinition)
-}
-
-internal fun DirectiveDefinition.Builder.onInterface(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnInterface)
-}
-
-internal fun DirectiveDefinition.Builder.onUnion(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnUnion)
-}
-
-internal fun DirectiveDefinition.Builder.onEnum(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnEnum)
-}
-
-internal fun DirectiveDefinition.Builder.onEnumValue(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnEnumValue)
-}
-
-internal fun DirectiveDefinition.Builder.onInputObject(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnInputObject)
-}
-
-internal fun DirectiveDefinition.Builder.onInputFieldDefinition(): DirectiveDefinition.Builder {
-    return directiveLocation(DirectiveOnInputFieldDefinition)
-}
-
-internal fun DirectiveDefinition.Builder.inputValueDefinition(
-    name: String,
-    type: Type<*>,
-    description: String? = null,
-    defaultValue: Value<*>? = null,
-): DirectiveDefinition.Builder {
-    return inputValueDefinition(
-        newInputValueDefinition()
-            .name(name)
-            .type(type)
-            .also { builder ->
-                if (description != null) builder.description(Description(description, null, false))
-                if (defaultValue != null) builder.defaultValue(defaultValue)
-            }
-            .build()
-    )
-}
-
-internal fun DirectiveDefinition.Builder.inputValueDefinition(
-    name: String,
-    type: GraphQLNamedInputType,
-    description: String? = null,
-    defaultValue: Value<*>? = null,
-): DirectiveDefinition.Builder {
-    return inputValueDefinition(
-        name = name,
-        type = newTypeName(type.name).build(),
-        description = description,
-        defaultValue = defaultValue,
-    )
-}
-
-internal fun InputObjectTypeDefinition.Builder.inputValueDefinition(
-    name: String,
-    type: Type<*>,
-    description: String? = null,
-    defaultValue: Value<*>? = null,
-): InputObjectTypeDefinition.Builder {
-    return inputValueDefinition(
-        newInputValueDefinition()
-            .name(name)
-            .type(type)
-            .also { builder ->
-                if (description != null) builder.description(Description(description, null, false))
-                if (defaultValue != null) builder.defaultValue(defaultValue)
-            }
-            .build()
-    )
-}
-
-internal fun InputObjectTypeDefinition.Builder.inputValueDefinition(
-    name: String,
-    type: GraphQLNamedInputType,
-    description: String? = null,
-    defaultValue: Value<*>? = null,
-): InputObjectTypeDefinition.Builder {
-    return inputValueDefinition(
-        name = name,
-        type = newTypeName(type.name).build(),
-        description = description,
-        defaultValue = defaultValue,
-    )
-}
-
-internal fun InputObjectTypeDefinition.Builder.description(description: String): InputObjectTypeDefinition.Builder {
-    return description(Description(description, null, false))
-}
-
-internal fun DirectiveDefinition.Builder.description(description: String): DirectiveDefinition.Builder {
-    return description(Description(description, null, false))
-}
-
-internal fun IntValue(value: Int): IntValue {
-    return newIntValue().value(value).build()
-}
-
-internal fun BooleanValue(value: Boolean): BooleanValue {
-    return newBooleanValue(value).build()
-}
-
-internal fun emptyArrayValue(): ArrayValue {
-    return ArrayValue.newArrayValue().build()
-}
 
 /**
  * If you update this file please add to NadelBuiltInTypes
@@ -466,35 +243,11 @@ object NadelDirectives {
         )
         .build()
 
-    private fun nonNull(type: GraphQLNamedSchemaElement): NonNullType {
-        return newNonNullType(
-            newTypeName()
-                .name(type.name)
-                .build(),
-        ).build()
-    }
-
-    private fun nonNull(type: NamedNode<*>): NonNullType {
-        return newNonNullType(
-            newTypeName()
-                .name(type.name)
-                .build(),
-        ).build()
-    }
-
-    private fun list(type: NonNullType): ListType {
-        return newListType(type).build()
-    }
-
-    private fun nonNull(type: Type<*>): NonNullType {
-        return newNonNullType(type).build()
-    }
-
     fun createUnderlyingServiceHydration(
         fieldDefinition: GraphQLFieldDefinition,
         overallSchema: GraphQLSchema,
     ): List<UnderlyingServiceHydration> {
-        return (fieldDefinition.getAppliedDirectives(hydratedDirectiveDefinition.name)
+        val hydrations = fieldDefinition.getAppliedDirectives(hydratedDirectiveDefinition.name)
             .asSequence()
             .map { directive ->
                 val argumentValues = resolveArgumentValue<List<Any>>(directive.getArgument("arguments"))
@@ -505,11 +258,15 @@ object NadelDirectives {
                 val identifiedBy = createObjectIdentifiers(identifiedByValues)
 
                 buildHydrationParameters(directive, arguments, identifiedBy)
-            } + fieldDefinition.getAppliedDirectives(hydratedFromDirectiveDefinition.name)
+            }
+
+        val templatedHydrations = fieldDefinition.getAppliedDirectives(hydratedFromDirectiveDefinition.name)
             .asSequence()
             .map { directive ->
                 createTemplatedUnderlyingServiceHydration(directive, overallSchema)
-            }).toList()
+            }
+
+        return (hydrations + templatedHydrations).toList()
     }
 
     private fun buildHydrationParameters(
