@@ -33,7 +33,9 @@ import graphql.nadel.engine.util.provide
 import graphql.nadel.engine.util.singleOfType
 import graphql.nadel.engine.util.strictAssociateBy
 import graphql.nadel.engine.util.toBuilder
+import graphql.nadel.enginekt.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.ServiceExecutionHooks
+import graphql.nadel.instrumentation.parameters.NadelInstrumentationTimingParameters.Step
 import graphql.nadel.util.ErrorUtil
 import graphql.nadel.util.LogKit.getLogger
 import graphql.nadel.util.LogKit.getNotPrivacySafeLogger
@@ -132,7 +134,19 @@ class NextgenEngine @JvmOverloads constructor(
                 executionInput.variables,
             )
 
-            val executionContext = NadelExecutionContext(executionInput, query, serviceExecutionHooks, executionHints)
+            val timer = NadelInstrumentationTimer(
+                instrumentation,
+                userContext = executionInput.context,
+                instrumentationState,
+            )
+            val executionContext = NadelExecutionContext(
+                executionInput,
+                query,
+                serviceExecutionHooks,
+                executionHints,
+                instrumentationState,
+                timer,
+            )
             val beginExecuteContext = instrumentation.beginExecute(
                 query,
                 queryDocument,
@@ -180,20 +194,27 @@ class NextgenEngine @JvmOverloads constructor(
         service: Service,
         executionContext: NadelExecutionContext,
     ): ExecutionResult {
-        val executionPlan = executionPlanner.create(executionContext, services, service, topLevelField)
-        val queryTransform = transformQuery(service, executionContext, executionPlan, topLevelField)
+        val timer = executionContext.timer
+        val executionPlan = timer.time(step = Step.ExecutionPlanning) {
+            executionPlanner.create(executionContext, services, service, topLevelField)
+        }
+        val queryTransform = timer.time(step = Step.QueryTransforming) {
+            transformQuery(service, executionContext, executionPlan, topLevelField)
+        }
         val transformedQuery = queryTransform.result.single()
         val result: ServiceExecutionResult = executeService(service, transformedQuery, executionContext)
         val transformedResult: ServiceExecutionResult = when {
             topLevelField.name.startsWith("__") -> result
-            else -> resultTransformer.transform(
-                executionContext = executionContext,
-                executionPlan = executionPlan,
-                artificialFields = queryTransform.artificialFields,
-                overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
-                service = service,
-                result = result,
-            )
+            else -> timer.time(step = Step.ResultTransforming) {
+                resultTransformer.transform(
+                    executionContext = executionContext,
+                    executionPlan = executionPlan,
+                    artificialFields = queryTransform.artificialFields,
+                    overallToUnderlyingFields = queryTransform.overallToUnderlyingFields,
+                    service = service,
+                    result = result,
+                )
+            }
         }
 
         @Suppress("UNCHECKED_CAST")
