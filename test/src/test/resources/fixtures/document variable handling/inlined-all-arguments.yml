@@ -6,7 +6,7 @@ overallSchema:
       hello(arg: InputWithJson, arg1: JSON!): String
     }
     
-    input InputWithJson {
+    input InputWithJson @renamed(from: "InputWithJsonUnderlying") {
       names : [String!]!
       payload: JSON 
     }
@@ -15,10 +15,10 @@ overallSchema:
 underlyingSchema:
   MyService: |-
     type Query {
-      hello(arg: InputWithJson, arg1: JSON!): String
+      hello(arg: InputWithJsonUnderlying, arg1: JSON!): String
     }
     
-    input InputWithJson {
+    input InputWithJsonUnderlying {
       names : [String!]!
       payload: JSON 
     }
@@ -33,7 +33,7 @@ serviceCalls:
   - serviceName: MyService
     request:
       query: |
-        query myQuery($v0: InputWithJson, $v1: JSON!) {
+        query myQuery($v0: InputWithJsonUnderlying, $v1: JSON!) {
           hello(arg: $v0, arg1: $v1)
         }
       variables:

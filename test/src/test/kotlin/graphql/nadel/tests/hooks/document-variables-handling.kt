@@ -43,8 +43,7 @@ class `primitive-json-arguments-variables` : EngineTestHook {
     override val wiringFactory = NeverWiringFactoryWithExtendedJsonScalar()
 }
 
-@UseHook
-class `inlined-all-arguments` : EngineTestHook {
+open class AllDocumentVariablesHintHook : EngineTestHook {
     override val wiringFactory = NeverWiringFactoryWithExtendedJsonScalar()
 
     override fun makeExecutionInput(
@@ -56,4 +55,12 @@ class `inlined-all-arguments` : EngineTestHook {
             }
         }
     }
+}
+
+@UseHook
+class `inlined-all-arguments` : AllDocumentVariablesHintHook() {
+}
+
+@UseHook
+class `inlined-all-arguments-with-mixed-literals-and-variables` : AllDocumentVariablesHintHook() {
 }
