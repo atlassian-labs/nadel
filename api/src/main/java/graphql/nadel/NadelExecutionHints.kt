@@ -67,6 +67,7 @@ data class NadelExecutionHints constructor(
     }
 
     companion object {
+        @JvmStatic
         fun newHints(): Builder {
             return Builder()
         }

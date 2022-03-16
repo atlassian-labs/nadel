@@ -26,7 +26,12 @@ tasks.withType<Test> {
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.apply {
         jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs = listOf("-progressive", "-java-parameters")
+        freeCompilerArgs = listOf(
+            "-progressive",
+            "-java-parameters",
+            "-Xopt-in=kotlin.RequiresOptIn",
+            "-Xjvm-default=all",
+        )
     }
     sourceCompatibility = JavaVersion.VERSION_11.toString()
     targetCompatibility = JavaVersion.VERSION_11.toString()

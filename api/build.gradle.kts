@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm")
     groovy
@@ -37,4 +39,18 @@ tasks.compileJava {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.apply {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+        freeCompilerArgs = listOf(
+            "-progressive",
+            "-java-parameters",
+            "-Xopt-in=kotlin.RequiresOptIn",
+            "-Xjvm-default=all",
+        )
+    }
+    sourceCompatibility = JavaVersion.VERSION_11.toString()
+    targetCompatibility = JavaVersion.VERSION_11.toString()
 }

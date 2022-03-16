@@ -26,5 +26,8 @@ class ServiceExecutionParameters constructor(
         @Suppress("UNCHECKED_CAST") // Trust caller
         return serviceContext as T?
     }
+
+    val isHydrationCall: Boolean
+        get() = hydrationDetails != null
 }
 
