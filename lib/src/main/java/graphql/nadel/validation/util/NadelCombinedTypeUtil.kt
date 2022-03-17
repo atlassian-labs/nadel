@@ -9,7 +9,7 @@ import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLSchema
 
-object NadelCombinedTypeUtil {
+internal object NadelCombinedTypeUtil {
     fun getFieldsThatServiceContributed(schemaElement: NadelServiceSchemaElement): Set<String> {
         return getFieldsThatServiceContributed(
             service = schemaElement.service,
@@ -68,7 +68,7 @@ object NadelCombinedTypeUtil {
      */
     fun isCombinedType(overallSchema: GraphQLSchema, type: GraphQLNamedSchemaElement): Boolean {
         val usesTypeAsNamespaced = { field: GraphQLFieldDefinition ->
-            field.hasDirective(NadelDirectives.namespacedDirectiveDefinition.name)
+            field.hasAppliedDirective(NadelDirectives.namespacedDirectiveDefinition.name)
                 && field.type.unwrapAll().name == type.name
         }
 

@@ -8,7 +8,6 @@ import graphql.nadel.engine.NadelEngineExecutionHooks
 import graphql.nadel.engine.NadelExecutionContext
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.getTypeNameToInstructionsMap
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationStrategy
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
@@ -62,13 +61,12 @@ internal class NadelHydrationTransform(
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
         hydrationDetails: ServiceExecutionHydrationDetails?,
     ): State? {
-        val hydrationInstructionsByTypeNames = executionBlueprint.fieldInstructions
+        val hydrationInstructionsByTypeNames = service.blueprint.fieldInstructions
             .getTypeNameToInstructionsMap<NadelHydrationFieldInstruction>(overallField)
 
         return if (hydrationInstructionsByTypeNames.isEmpty()) {
@@ -86,7 +84,6 @@ internal class NadelHydrationTransform(
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -106,7 +103,6 @@ internal class NadelHydrationTransform(
                 .flatMap { (typeName, instruction) ->
                     NadelHydrationFieldsBuilder.makeRequiredSourceFields(
                         service = service,
-                        executionBlueprint = executionBlueprint,
                         aliasHelper = state.aliasHelper,
                         objectTypeName = typeName,
                         instructions = instruction,
@@ -139,7 +135,6 @@ internal class NadelHydrationTransform(
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
@@ -158,7 +153,6 @@ internal class NadelHydrationTransform(
                     hydrate(
                         parentNode = it,
                         state = state,
-                        executionBlueprint = executionBlueprint,
                         fieldToHydrate = overallField,
                         executionContext = executionContext,
                     )
@@ -172,12 +166,10 @@ internal class NadelHydrationTransform(
     private suspend fun hydrate(
         parentNode: JsonNode,
         state: State,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         fieldToHydrate: ExecutableNormalizedField, // Field asking for hydration from the overall query
         executionContext: NadelExecutionContext,
     ): List<NadelResultInstruction> {
         val instructions = state.instructionsByObjectTypeNames.getInstructionsForNode(
-            executionBlueprint = executionBlueprint,
             service = state.hydratedFieldService,
             aliasHelper = state.aliasHelper,
             parentNode = parentNode,
@@ -199,7 +191,6 @@ internal class NadelHydrationTransform(
                 parentNode = parentNode,
             ).map { actorQuery ->
                 async {
-                    val hydrationSourceService = executionBlueprint.getServiceOwning(instruction.location)!!
                     engine.executeHydration(
                         service = instruction.actorService,
                         topLevelField = actorQuery,
@@ -208,7 +199,7 @@ internal class NadelHydrationTransform(
                         serviceHydrationDetails = ServiceExecutionHydrationDetails(
                             instruction.timeout,
                             1,
-                            hydrationSourceService,
+                            state.hydratedFieldService,
                             instruction.location
                         )
                     )

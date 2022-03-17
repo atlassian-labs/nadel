@@ -4,7 +4,6 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.engine.transform.NadelTransformFieldResult
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
@@ -23,7 +22,6 @@ class `transforms-can-copy-array-value` : EngineTestHook {
             object : NadelTransform<Any> {
                 override suspend fun isApplicable(
                     executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     services: Map<String, Service>,
                     service: Service,
                     overallField: ExecutableNormalizedField,
@@ -35,7 +33,6 @@ class `transforms-can-copy-array-value` : EngineTestHook {
                 override suspend fun transformField(
                     executionContext: NadelExecutionContext,
                     transformer: NadelQueryTransformer,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     field: ExecutableNormalizedField,
                     state: Any,
@@ -45,7 +42,6 @@ class `transforms-can-copy-array-value` : EngineTestHook {
 
                 override suspend fun getResultInstructions(
                     executionContext: NadelExecutionContext,
-                    executionBlueprint: NadelOverallExecutionBlueprint,
                     service: Service,
                     overallField: ExecutableNormalizedField,
                     underlyingParentField: ExecutableNormalizedField?,

@@ -2,7 +2,6 @@ package graphql.nadel.engine.transform.hydration.batch
 
 import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelBatchHydrationMatchStrategy
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
 import graphql.nadel.engine.util.resolveObjectTypes
@@ -52,19 +51,16 @@ import graphql.schema.GraphQLType
  */
 internal object NadelBatchHydrationObjectIdFieldBuilder {
     fun makeObjectIdFields(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
     ): List<ExecutableNormalizedField> {
         return when (val matchStrategy = batchHydrationInstruction.batchHydrationMatchStrategy) {
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifier -> makeObjectIdFields(
-                executionBlueprint,
                 aliasHelper,
                 batchHydrationInstruction,
                 matchStrategy,
             )
             is NadelBatchHydrationMatchStrategy.MatchObjectIdentifiers -> makeObjectIdFields(
-                executionBlueprint,
                 aliasHelper,
                 batchHydrationInstruction,
                 matchStrategy.objectIds,
@@ -74,13 +70,11 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
     }
 
     private fun makeObjectIdFields(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
         matchStrategy: NadelBatchHydrationMatchStrategy.MatchObjectIdentifier,
     ): List<ExecutableNormalizedField> {
         return makeObjectIdFields(
-            executionBlueprint,
             aliasHelper,
             batchHydrationInstruction,
             listOf(matchStrategy),
@@ -88,13 +82,11 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
     }
 
     private fun makeObjectIdFields(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         batchHydrationInstruction: NadelBatchHydrationFieldInstruction,
         objectIds: List<NadelBatchHydrationMatchStrategy.MatchObjectIdentifier>,
     ): List<ExecutableNormalizedField> {
         val objectTypeNames = getObjectTypeNamesForIdField(
-            executionBlueprint = executionBlueprint,
             actorService = batchHydrationInstruction.actorService,
             underlyingParentTypeOfIdField = batchHydrationInstruction.actorFieldDef.type,
         )
@@ -114,18 +106,16 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
      * must be the OVERALL type names.
      */
     private fun getObjectTypeNamesForIdField(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         actorService: Service,
         underlyingParentTypeOfIdField: GraphQLOutputType,
     ): List<String> {
         val overallType = getUnwrappedOverallType(
-            executionBlueprint = executionBlueprint,
             service = actorService,
             underlyingType = underlyingParentTypeOfIdField,
         ) ?: error("Could not find the overall output type for the actor field")
 
         return resolveObjectTypes(
-            schema = executionBlueprint.engineSchema,
+            schema = actorService.schema,
             type = overallType,
             onNotObjectType = {
                 errorForUnsupportedObjectIdParentType()
@@ -138,13 +128,12 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
      * We use this function to get the overall output type of the hydrated field.
      */
     private fun getUnwrappedOverallType(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         underlyingType: GraphQLType,
     ): GraphQLType? {
         val underlyingTypeName = underlyingType.unwrapAll().name
-        val overallTypeName = executionBlueprint.getOverallTypeName(service, underlyingTypeName)
-        return executionBlueprint.engineSchema.getType(overallTypeName)
+        val overallTypeName = service.blueprint.typeRenames.getOverallName(underlyingTypeName = underlyingTypeName)
+        return service.schema.getType(overallTypeName)
     }
 
     private fun errorForUnsupportedObjectIdParentType(): Nothing {

@@ -4,7 +4,6 @@ import graphql.nadel.NextgenEngine
 import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelDeepRenameTransform
 import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform
 import graphql.nadel.engine.transform.NadelRenameTransform
@@ -17,7 +16,7 @@ import graphql.nadel.engine.transform.skipInclude.SkipIncludeTransform
 import graphql.normalized.ExecutableNormalizedField
 
 internal class NadelExecutionPlanFactory(
-    private val executionBlueprint: NadelOverallExecutionBlueprint,
+    private val services: Map<String, Service>,
     private val transforms: List<NadelTransform<Any>>,
 ) {
     /**
@@ -26,7 +25,6 @@ internal class NadelExecutionPlanFactory(
      */
     suspend fun create(
         executionContext: NadelExecutionContext,
-        services: Map<String, Service>,
         service: Service,
         rootField: ExecutableNormalizedField,
         serviceHydrationDetails: ServiceExecutionHydrationDetails? = null,
@@ -37,7 +35,6 @@ internal class NadelExecutionPlanFactory(
             transforms.forEach { transform ->
                 val state = transform.isApplicable(
                     executionContext,
-                    executionBlueprint,
                     services,
                     service,
                     field,
@@ -73,12 +70,12 @@ internal class NadelExecutionPlanFactory(
 
     companion object {
         fun create(
-            executionBlueprint: NadelOverallExecutionBlueprint,
+            services: Map<String, Service>,
             transforms: List<NadelTransform<out Any>>,
             engine: NextgenEngine,
         ): NadelExecutionPlanFactory {
             return NadelExecutionPlanFactory(
-                executionBlueprint,
+                services,
                 transforms = listOfTransforms(
                     SkipIncludeTransform(),
                     NadelServiceTypeFilterTransform(),

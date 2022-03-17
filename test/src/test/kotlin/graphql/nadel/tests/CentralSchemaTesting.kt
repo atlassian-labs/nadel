@@ -36,7 +36,7 @@ val File.parents: Sequence<File>
  * Set this to true to run the query. You'll have to modify the [ServiceExecutionFactory] to
  * actually return something e.g. response from Splunk etc.
  */
-const val runQuery = false
+const val runQuery = true
 
 /**
  * You can use this script to run central schema locally in Nadel without
@@ -152,4 +152,4 @@ suspend fun main() {
         }
 }
 
-const val query = ""
+const val query = "{echo}"

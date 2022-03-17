@@ -14,7 +14,7 @@ import graphql.schema.GraphQLSchema
 internal class DynamicServiceResolution(
     private val engineSchema: GraphQLSchema,
     private val serviceExecutionHooks: ServiceExecutionHooks,
-    private val services: List<Service>,
+    private val services: Map<String, Service>,
 ) {
 
     /**
@@ -39,7 +39,7 @@ internal class DynamicServiceResolution(
      * Resolves the service for a field
      */
     fun resolveServiceForField(field: ExecutableNormalizedField): Service {
-        val serviceOrError = serviceExecutionHooks.resolveServiceForField(services, field)
+        val serviceOrError = serviceExecutionHooks.resolveServiceForField(services.values.toList(), field)
             ?: throw GraphqlErrorException.newErrorException()
                 .message("Could not resolve service for field '${field.name}'")
                 .path(field.queryPath.segments)

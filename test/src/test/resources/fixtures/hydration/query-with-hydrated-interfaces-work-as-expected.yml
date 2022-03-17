@@ -57,6 +57,10 @@ overallSchema:
     }
 underlyingSchema:
   PetService: |
+    interface Owner {
+      name: String
+    }
+
     interface Collar {
       color: String
       size: String

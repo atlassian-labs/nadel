@@ -5,7 +5,7 @@ import graphql.language.ObjectTypeExtensionDefinition
 import graphql.nadel.Service
 import graphql.schema.GraphQLObjectType
 
-object NamespacedUtil {
+internal object NamespacedUtil {
     fun serviceOwnsNamespacedField(namespacedObjectType: GraphQLObjectType, service: Service): Boolean {
         return serviceOwnsNamespacedField(namespacedObjectType.name, service)
     }

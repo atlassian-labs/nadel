@@ -2,8 +2,10 @@ package graphql.nadel.validation.util
 
 import graphql.nadel.Service
 import graphql.nadel.engine.util.unwrapAll
+import graphql.nadel.util.mapToSet
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.getFieldsThatServiceContributed
 import graphql.nadel.validation.util.NadelCombinedTypeUtil.isCombinedType
+import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
 import graphql.nadel.validation.util.NadelSchemaUtil.hasHydration
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLCompositeType
@@ -48,13 +50,17 @@ internal fun getReachableTypeNames(
     fun add(name: String) = reachableTypeNames.add(name)
     fun addAll(elements: Collection<String>) = reachableTypeNames.addAll(elements)
 
+    // Util functions
+    fun add(type: GraphQLNamedSchemaElement) = add(type.name)
+    fun addAll(types: List<GraphQLNamedSchemaElement>) = addAll(types.map { it.name })
+
     val serviceDefinitions = overallSchema.typeMap.values.filter { it.name in definitionNames }
     val traverser = object : GraphQLTypeVisitorStub() {
         override fun visitGraphQLArgument(
             node: GraphQLArgument,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.type.unwrapAll().name)
+            add(node.type.unwrapAll())
             return CONTINUE
         }
 
@@ -62,7 +68,7 @@ internal fun getReachableTypeNames(
             node: GraphQLUnionType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            addAll(node.types.map { it.name })
+            addAll(node.types)
             return CONTINUE
         }
 
@@ -70,15 +76,34 @@ internal fun getReachableTypeNames(
             node: GraphQLInterfaceType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
+            addAll(getImplementations(node))
+
             return CONTINUE
+        }
+
+        private fun getImplementations(node: GraphQLInterfaceType): List<GraphQLObjectType> {
+            val underlyingType = NadelSchemaUtil.getUnderlyingType(node, service)
+
+            // Note: if it's not or doesn't exist, we'll fail validation elsewhere
+            if (underlyingType is GraphQLInterfaceType) {
+                val underlyingImplTypeNames = service.underlyingSchema.getImplementations(underlyingType)
+                    .mapToSet(GraphQLObjectType::getName)
+
+                return overallSchema.getImplementations(node)
+                    .filter {
+                        getUnderlyingName(it) in underlyingImplTypeNames
+                    }
+            }
+
+            return emptyList()
         }
 
         override fun visitGraphQLEnumType(
             node: GraphQLEnumType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
             return CONTINUE
         }
 
@@ -99,7 +124,7 @@ internal fun getReachableTypeNames(
             node: GraphQLInputObjectField,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.type.unwrapAll().name)
+            add(node.type.unwrapAll())
             return CONTINUE
         }
 
@@ -107,7 +132,7 @@ internal fun getReachableTypeNames(
             node: GraphQLInputObjectType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
             return CONTINUE
         }
 
@@ -115,7 +140,7 @@ internal fun getReachableTypeNames(
             node: GraphQLList,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.unwrapAll().name)
+            add(node.unwrapAll())
             return CONTINUE
         }
 
@@ -123,7 +148,7 @@ internal fun getReachableTypeNames(
             node: GraphQLNonNull,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.unwrapAll().name)
+            add(node.unwrapAll())
             return CONTINUE
         }
 
@@ -131,7 +156,7 @@ internal fun getReachableTypeNames(
             node: GraphQLObjectType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
             return CONTINUE
         }
 
@@ -139,7 +164,7 @@ internal fun getReachableTypeNames(
             node: GraphQLScalarType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
             return CONTINUE
         }
 
@@ -147,15 +172,14 @@ internal fun getReachableTypeNames(
             node: GraphQLTypeReference,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
-            return CONTINUE
+            throw IllegalStateException("Expecting all type references to be resolved")
         }
 
         override fun visitGraphQLModifiedType(
             node: GraphQLModifiedType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.unwrapAll().name)
+            add(node.unwrapAll())
             return CONTINUE
         }
 
@@ -163,7 +187,7 @@ internal fun getReachableTypeNames(
             node: GraphQLCompositeType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
             return CONTINUE
         }
 
@@ -180,7 +204,7 @@ internal fun getReachableTypeNames(
             node: GraphQLDirectiveContainer,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
             return CONTINUE
         }
 
@@ -188,7 +212,7 @@ internal fun getReachableTypeNames(
             node: GraphQLFieldsContainer,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
             return CONTINUE
         }
 
@@ -196,7 +220,7 @@ internal fun getReachableTypeNames(
             node: GraphQLInputFieldsContainer,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
             return CONTINUE
         }
 
@@ -204,7 +228,7 @@ internal fun getReachableTypeNames(
             node: GraphQLNullableType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.unwrapAll().name)
+            add(node.unwrapAll())
             return CONTINUE
         }
 
@@ -212,7 +236,7 @@ internal fun getReachableTypeNames(
             node: GraphQLOutputType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.unwrapAll().name)
+            add(node.unwrapAll())
             return CONTINUE
         }
 
@@ -220,7 +244,7 @@ internal fun getReachableTypeNames(
             node: GraphQLUnmodifiedType,
             context: TraverserContext<GraphQLSchemaElement>,
         ): TraversalControl {
-            add(node.name)
+            add(node)
             return CONTINUE
         }
     }

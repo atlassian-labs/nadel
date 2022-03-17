@@ -5,7 +5,7 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
+import graphql.nadel.engine.blueprint.NadelServiceBlueprint
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
 import graphql.nadel.engine.transform.result.json.JsonNodes
@@ -18,14 +18,13 @@ interface NadelTransform<State : Any> {
      * The returned [State] is then fed into [transformField] and [getResultInstructions].
      *
      * So here you will want to check whether the [overallField] has a specific [Directive] or
-     * if the field has an instruction inside [NadelOverallExecutionBlueprint] etc.
+     * if the field has an instruction inside [NadelServiceBlueprint] etc.
      *
      * The state should hold data that is shared between [transformField] and [getResultInstructions]
      * e.g. the names of fields that will be added etc. The implementation of [State] is completely up
      * to you. You can make it mutable if that makes your life easier etc.
      *
-     * @param executionBlueprint the [NadelOverallExecutionBlueprint] of the Nadel instance being operated on
-     * @param service the [Service] the [overallField] belongs to
+     * @param service the [Service] the [overallField] is being executed on
      * @param overallField the [ExecutableNormalizedField] in question, we are asking whether it [isApplicable] for transforms
      * @param hydrationDetails the [ServiceExecutionHydrationDetails] when the [NadelTransform] is applied to fields inside
      * hydrations, `null` otherwise
@@ -34,7 +33,6 @@ interface NadelTransform<State : Any> {
      */
     suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
@@ -51,7 +49,6 @@ interface NadelTransform<State : Any> {
     suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -65,7 +62,6 @@ interface NadelTransform<State : Any> {
      */
     suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,

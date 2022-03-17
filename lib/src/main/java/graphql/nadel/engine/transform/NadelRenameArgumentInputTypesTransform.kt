@@ -4,7 +4,6 @@ import graphql.nadel.Service
 import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.engine.NadelExecutionContext
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.transform.NadelRenameArgumentInputTypesTransform.State
 import graphql.nadel.engine.transform.query.NadelQueryTransformer
 import graphql.nadel.engine.transform.result.NadelResultInstruction
@@ -30,7 +29,6 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
 
     override suspend fun isApplicable(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         services: Map<String, Service>,
         service: Service,
         overallField: ExecutableNormalizedField,
@@ -40,7 +38,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         var changeCount = 0
         val newFieldArgs: Map<String, NormalizedInputValue> = overallField.normalizedArguments
             .mapValues { (_, inputValue) ->
-                val newInputValue = renameInputValueType(inputValue, executionBlueprint, service)
+                val newInputValue = renameInputValueType(inputValue, service)
                 if (newInputValue != inputValue) {
                     changeCount++
                 }
@@ -56,7 +54,6 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
     override suspend fun transformField(
         executionContext: NadelExecutionContext,
         transformer: NadelQueryTransformer,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         field: ExecutableNormalizedField,
         state: State,
@@ -68,7 +65,6 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
 
     override suspend fun getResultInstructions(
         executionContext: NadelExecutionContext,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
         overallField: ExecutableNormalizedField,
         underlyingParentField: ExecutableNormalizedField?,
@@ -81,11 +77,10 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
 
     private fun renameInputValueType(
         inputValue: NormalizedInputValue,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
     ): NormalizedInputValue {
         val overallTypeName = inputValue.unwrappedTypeName
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName)
+        val underlyingTypeName = service.blueprint.typeRenames.getUnderlyingName(overallTypeName)
         if (underlyingTypeName != overallTypeName) {
             //
             // in theory one could navigate down the `value` and if it's an object / list

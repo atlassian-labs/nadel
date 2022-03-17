@@ -1,4 +1,4 @@
-package graphql.nadel.engine.blueprint
+package graphql.nadel.engine.introspection
 
 import graphql.ExecutionInput
 import graphql.GraphQL
@@ -12,12 +12,18 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.schema.GraphQLSchema
 import java.util.concurrent.CompletableFuture
 
-internal class IntrospectionService constructor(
-    schema: GraphQLSchema,
-    introspectionRunnerFactory: NadelIntrospectionRunnerFactory,
-) : Service(name, schema, introspectionRunnerFactory.make(schema), NadelDefinitionRegistry()) {
-    companion object {
-        const val name = "__introspection"
+internal object IntrospectionService {
+    const val name = "__introspection"
+}
+
+internal object IntrospectionServiceFactory {
+    fun make(schema: GraphQLSchema, runnerFactory: NadelIntrospectionRunnerFactory): Service {
+        return Service(
+            name = IntrospectionService.name,
+            underlyingSchema = schema,
+            serviceExecution = runnerFactory.make(schema),
+            definitionRegistry = NadelDefinitionRegistry(),
+        )
     }
 }
 

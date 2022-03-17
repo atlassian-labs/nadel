@@ -4,7 +4,6 @@ import graphql.nadel.Service
 import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
 import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
 import graphql.nadel.engine.blueprint.NadelHydrationFieldInstruction
-import graphql.nadel.engine.blueprint.NadelOverallExecutionBlueprint
 import graphql.nadel.engine.blueprint.hydration.NadelHydrationActorInputDef
 import graphql.nadel.engine.transform.GraphQLObjectTypeName
 import graphql.nadel.engine.transform.artificial.NadelAliasHelper
@@ -42,7 +41,6 @@ internal object NadelHydrationFieldsBuilder {
     }
 
     fun makeBatchActorQueries(
-        executionBlueprint: NadelOverallExecutionBlueprint,
         instruction: NadelBatchHydrationFieldInstruction,
         aliasHelper: NadelAliasHelper,
         hydratedField: ExecutableNormalizedField,
@@ -57,7 +55,7 @@ internal object NadelHydrationFieldsBuilder {
             hooks = hooks
         )
 
-        val actorFieldOverallObjectTypeNames = getActorFieldOverallObjectTypenames(instruction, executionBlueprint)
+        val actorFieldOverallObjectTypeNames = getActorFieldOverallObjectTypenames(instruction)
         val fieldChildren = deepClone(fields = hydratedField.children)
             .mapNotNull { childField ->
                 val objectTypesAreNotReturnedByActorField =
@@ -73,7 +71,7 @@ internal object NadelHydrationFieldsBuilder {
                 }
             }
             .let { children ->
-                children + makeObjectIdFields(executionBlueprint, aliasHelper, instruction)
+                children + makeObjectIdFields(aliasHelper, instruction)
             }
 
         return argBatches.map { argBatch ->
@@ -87,14 +85,14 @@ internal object NadelHydrationFieldsBuilder {
 
     private fun getActorFieldOverallObjectTypenames(
         instruction: NadelBatchHydrationFieldInstruction,
-        executionBlueprint: NadelOverallExecutionBlueprint,
     ): Set<String> {
         val overallTypeName = instruction.actorFieldDef.type.unwrapAll().name
 
-        val overallType = executionBlueprint.engineSchema.getType(overallTypeName)
+        val actorServiceSchema = instruction.actorService.schema
+        val overallType = actorServiceSchema.getType(overallTypeName)
             ?: error("Unable to find overall type $overallTypeName")
 
-        val actorFieldOverallObjectTypes = resolveObjectTypes(executionBlueprint.engineSchema, overallType) { type ->
+        val actorFieldOverallObjectTypes = resolveObjectTypes(actorServiceSchema, overallType) { type ->
             error("Unable to resolve to object type: $type")
         }
 
@@ -106,12 +104,11 @@ internal object NadelHydrationFieldsBuilder {
 
     fun makeRequiredSourceFields(
         service: Service,
-        executionBlueprint: NadelOverallExecutionBlueprint,
         aliasHelper: NadelAliasHelper,
         objectTypeName: GraphQLObjectTypeName,
         instructions: List<NadelGenericHydrationInstruction>,
     ): List<ExecutableNormalizedField> {
-        val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName = objectTypeName)
+        val underlyingTypeName = service.blueprint.typeRenames.getUnderlyingName(overallTypeName = objectTypeName)
         val underlyingObjectType = service.underlyingSchema.getObjectType(underlyingTypeName)
             ?: error("No underlying object type")
 
