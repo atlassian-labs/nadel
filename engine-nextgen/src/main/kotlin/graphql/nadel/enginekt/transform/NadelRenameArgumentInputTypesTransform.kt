@@ -86,6 +86,13 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         val overallTypeName = inputValue.typeName
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName)
         if (underlyingTypeName != overallTypeName) {
+            //
+            // in theory one could navigate down the `value` and if it's an object / list
+            // we could rename the types inside it.  However, right now Nadel will never
+            // address these inner NormalizedInputValue named types and hence for performance / complexity
+            // reasons we don't do it.  Also, Nadel currently does not allow an input field to be renamed
+            // and hence we don't have to change inner map keys either.
+            //
             return NormalizedInputValue(underlyingTypeName, inputValue.value)
         }
         return inputValue
