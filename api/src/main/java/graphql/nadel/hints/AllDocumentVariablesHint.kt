@@ -1,13 +1,13 @@
-package graphql.nadel.hints;
+package graphql.nadel.hints
 
-import graphql.nadel.Service;
+import graphql.nadel.Service
 
-public interface AllDocumentVariablesHint {
+fun interface AllDocumentVariablesHint {
     /**
      * Determines whether to use all variables for arguments in the document sent to a service
      *
      * @param service the service in question
      * @return true to use all variables
      */
-    boolean invoke(Service service);
+    operator fun invoke(service: Service): Boolean
 }

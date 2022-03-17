@@ -1,404 +1,540 @@
-package graphql.nadel.schema;
+package graphql.nadel.schema
 
-import graphql.Assert;
-import graphql.Scalars;
-import graphql.execution.ValuesResolver;
-import graphql.language.ArrayValue;
-import graphql.language.BooleanValue;
-import graphql.language.Description;
-import graphql.language.DirectiveDefinition;
-import graphql.language.EnumTypeDefinition;
-import graphql.language.EnumValueDefinition;
-import graphql.language.InputObjectTypeDefinition;
-import graphql.language.IntValue;
-import graphql.language.NamedNode;
-import graphql.language.NonNullType;
-import graphql.language.StringValue;
-import graphql.language.Type;
-import graphql.language.TypeName;
-import graphql.nadel.dsl.FieldMappingDefinition;
-import graphql.nadel.dsl.RemoteArgumentDefinition;
-import graphql.nadel.dsl.RemoteArgumentSource;
-import graphql.nadel.dsl.TypeMappingDefinition;
-import graphql.nadel.dsl.UnderlyingServiceHydration;
-import graphql.nadel.dsl.UnderlyingServiceHydration.ObjectIdentifier;
-import graphql.nadel.util.FpKit;
-import graphql.schema.GraphQLArgument;
-import graphql.schema.GraphQLDirective;
-import graphql.schema.GraphQLDirectiveContainer;
-import graphql.schema.GraphQLEnumType;
-import graphql.schema.GraphQLEnumValueDefinition;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLNamedSchemaElement;
-import graphql.schema.GraphQLScalarType;
-import graphql.schema.GraphQLSchema;
-import org.jetbrains.annotations.Nullable;
+import graphql.Scalars
+import graphql.Scalars.GraphQLString
+import graphql.execution.ValuesResolver
+import graphql.introspection.Introspection
+import graphql.language.ArrayValue
+import graphql.language.BooleanValue
+import graphql.language.BooleanValue.newBooleanValue
+import graphql.language.Description
+import graphql.language.DirectiveDefinition
+import graphql.language.DirectiveDefinition.newDirectiveDefinition
+import graphql.language.DirectiveLocation.newDirectiveLocation
+import graphql.language.EnumTypeDefinition.newEnumTypeDefinition
+import graphql.language.EnumValueDefinition.newEnumValueDefinition
+import graphql.language.InputObjectTypeDefinition
+import graphql.language.InputObjectTypeDefinition.newInputObjectDefinition
+import graphql.language.InputValueDefinition.newInputValueDefinition
+import graphql.language.IntValue
+import graphql.language.IntValue.newIntValue
+import graphql.language.ListType
+import graphql.language.ListType.newListType
+import graphql.language.NamedNode
+import graphql.language.NonNullType
+import graphql.language.NonNullType.newNonNullType
+import graphql.language.StringValue
+import graphql.language.Type
+import graphql.language.TypeName.newTypeName
+import graphql.language.Value
+import graphql.nadel.dsl.FieldMappingDefinition
+import graphql.nadel.dsl.RemoteArgumentDefinition
+import graphql.nadel.dsl.RemoteArgumentSource
+import graphql.nadel.dsl.RemoteArgumentSource.SourceType
+import graphql.nadel.dsl.TypeMappingDefinition
+import graphql.nadel.dsl.UnderlyingServiceHydration
+import graphql.schema.GraphQLAppliedDirective
+import graphql.schema.GraphQLAppliedDirectiveArgument
+import graphql.schema.GraphQLDirectiveContainer
+import graphql.schema.GraphQLEnumType
+import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLNamedInputType
+import graphql.schema.GraphQLNamedSchemaElement
+import graphql.schema.GraphQLSchema
 
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
+val DirectiveOnQuery = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.QUERY.name)
+    .build()
+val DirectiveOnMutation = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.MUTATION.name)
+    .build()
+val DirectiveOnSubscription = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.SUBSCRIPTION.name)
+    .build()
+val DirectiveOnField = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.FIELD.name)
+    .build()
+val DirectiveOnFragmentDefinition = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.FRAGMENT_DEFINITION.name)
+    .build()
+val DirectiveOnFragmentSpread = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.FRAGMENT_SPREAD.name)
+    .build()
+val DirectiveOnInlineFragment = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.INLINE_FRAGMENT.name)
+    .build()
+val DirectiveOnVariableDefinition = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.VARIABLE_DEFINITION.name)
+    .build()
+val DirectiveOnSchema = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.SCHEMA.name)
+    .build()
+val DirectiveOnScalar = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.SCALAR.name)
+    .build()
+val DirectiveOnObject = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.OBJECT.name)
+    .build()
+val DirectiveOnFieldDefinition = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.FIELD_DEFINITION.name)
+    .build()
+val DirectiveOnArgumentDefinition = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.ARGUMENT_DEFINITION.name)
+    .build()
+val DirectiveOnInterface = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.INTERFACE.name)
+    .build()
+val DirectiveOnUnion = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.UNION.name)
+    .build()
+val DirectiveOnEnum = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.ENUM.name)
+    .build()
+val DirectiveOnEnumValue = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.ENUM_VALUE.name)
+    .build()
+val DirectiveOnInputObject = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.INPUT_OBJECT.name)
+    .build()
+val DirectiveOnInputFieldDefinition = newDirectiveLocation()
+    .name(Introspection.DirectiveLocation.INPUT_FIELD_DEFINITION.name)
+    .build()
 
-import static graphql.Assert.assertNotNull;
-import static graphql.Assert.assertTrue;
-import static graphql.introspection.Introspection.DirectiveLocation.ENUM;
-import static graphql.introspection.Introspection.DirectiveLocation.ENUM_VALUE;
-import static graphql.introspection.Introspection.DirectiveLocation.FIELD_DEFINITION;
-import static graphql.introspection.Introspection.DirectiveLocation.INPUT_OBJECT;
-import static graphql.introspection.Introspection.DirectiveLocation.INTERFACE;
-import static graphql.introspection.Introspection.DirectiveLocation.OBJECT;
-import static graphql.introspection.Introspection.DirectiveLocation.SCALAR;
-import static graphql.introspection.Introspection.DirectiveLocation.UNION;
-import static graphql.language.DirectiveLocation.newDirectiveLocation;
-import static graphql.language.InputValueDefinition.newInputValueDefinition;
-import static graphql.language.ListType.newListType;
-import static graphql.language.TypeName.newTypeName;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT;
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD;
-import static java.util.Collections.emptyList;
+internal fun DirectiveDefinition.Builder.onQuery(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnQuery)
+}
 
-public class NadelDirectives {
+internal fun DirectiveDefinition.Builder.onMutation(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnMutation)
+}
 
-    //
-    // If you add to this, please update NadelBuiltInTypes
-    //
+internal fun DirectiveDefinition.Builder.onSubscription(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnSubscription)
+}
 
-    public static final DirectiveDefinition RENAMED_DIRECTIVE_DEFINITION;
-    public static final DirectiveDefinition HYDRATED_DIRECTIVE_DEFINITION;
-    public static final InputObjectTypeDefinition NADEL_HYDRATION_ARGUMENT_DEFINITION;
-    public static final DirectiveDefinition DYNAMIC_SERVICE_DIRECTIVE_DEFINITION;
-    public static final DirectiveDefinition NAMESPACED_DIRECTIVE_DEFINITION;
-    public static final DirectiveDefinition HIDDEN_DIRECTIVE_DEFINITION;
+internal fun DirectiveDefinition.Builder.onField(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnField)
+}
 
-    public static final InputObjectTypeDefinition NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION;
-    public static final InputObjectTypeDefinition NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY;
-    public static final DirectiveDefinition HYDRATED_FROM_DIRECTIVE_DEFINITION;
-    public static final EnumTypeDefinition NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION;
-    public static final DirectiveDefinition HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION;
+internal fun DirectiveDefinition.Builder.onFragmentDefinition(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnFragmentDefinition)
+}
 
-    static {
-        DYNAMIC_SERVICE_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-            .name("dynamicServiceResolution")
-            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-            .description(createDescription("Indicates that the field uses dynamic service resolution. This directive should only be used in commons fields, i.e. fields that are not part of a particular service."))
-            .build();
+internal fun DirectiveDefinition.Builder.onFragmentSpread(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnFragmentSpread)
+}
 
-        NAMESPACED_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-            .name("namespaced")
-            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-            .description(createDescription("Indicates that the field is a namespaced field."))
-            .build();
+internal fun DirectiveDefinition.Builder.onInlineFragment(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnInlineFragment)
+}
 
-        RENAMED_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-            .name("renamed")
-            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-            .directiveLocation(newDirectiveLocation().name(OBJECT.name()).build())
-            .directiveLocation(newDirectiveLocation().name(INTERFACE.name()).build())
-            .directiveLocation(newDirectiveLocation().name(UNION.name()).build())
-            .directiveLocation(newDirectiveLocation().name(INPUT_OBJECT.name()).build())
-            .directiveLocation(newDirectiveLocation().name(SCALAR.name()).build())
-            .directiveLocation(newDirectiveLocation().name(ENUM.name()).build())
-            .description(createDescription("This allows you to rename a type or field in the overall schema"))
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("from")
-                    .description(createDescription("The type to be renamed"))
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .build();
+internal fun DirectiveDefinition.Builder.onVariableDefinition(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnVariableDefinition)
+}
 
-        NADEL_HYDRATION_ARGUMENT_DEFINITION = InputObjectTypeDefinition.newInputObjectDefinition()
-            .name("NadelHydrationArgument")
-            .description(createDescription("This allows you to hydrate new values into fields"))
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("name")
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("value")
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .build();
+internal fun DirectiveDefinition.Builder.onSchema(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnSchema)
+}
 
-        NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY = InputObjectTypeDefinition.newInputObjectDefinition()
-            .name("NadelBatchObjectIdentifiedBy")
-            .description(createDescription("This is required by batch hydration to understand how to pull out objects from the batched result"))
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("sourceId")
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("resultId")
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .build();
+internal fun DirectiveDefinition.Builder.onScalar(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnScalar)
+}
 
-        HYDRATED_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-            .name("hydrated")
-            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-            .description(createDescription("This allows you to hydrate new values into fields"))
-            .repeatable(true)
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("service")
-                    .description(createDescription("The target service"))
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("field")
-                    .description(createDescription("The target top level field"))
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("identifiedBy")
-                    .description(createDescription("How to identify matching results"))
-                    .type(nonNull(Scalars.GraphQLString))
-                    .defaultValue(StringValue.newStringValue("id").build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("inputIdentifiedBy")
-                    .description(createDescription("How to identify matching results"))
-                    .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)).build()))
-                    .defaultValue(ArrayValue.newArrayValue().build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("indexed")
-                    .description(createDescription("Are results indexed"))
-                    .type(typeOf(Scalars.GraphQLBoolean))
-                    .defaultValue(BooleanValue.newBooleanValue(false).build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("batched")
-                    .description(createDescription("Is querying batched"))
-                    .type(typeOf(Scalars.GraphQLBoolean))
-                    .defaultValue(BooleanValue.newBooleanValue(false).build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("batchSize")
-                    .description(createDescription("The batch size"))
-                    .type(typeOf(Scalars.GraphQLInt))
-                    .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(200)).build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("timeout")
-                    .description(createDescription("The timeout to use when completing hydration"))
-                    .type(typeOf(Scalars.GraphQLInt))
-                    .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(-1)).build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("arguments")
-                    .description(createDescription("The arguments to the hydrated field"))
-                    .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_ARGUMENT_DEFINITION)).build()))
-                    .build())
-            .build();
+internal fun DirectiveDefinition.Builder.onObject(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnObject)
+}
 
-        NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION = InputObjectTypeDefinition.newInputObjectDefinition()
-            .name("NadelHydrationFromArgument")
-            .description(createDescription("This allows you to hydrate new values into fields with the @hydratedFrom directive"))
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("name")
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("valueFromField")
-                    .type(typeOf(Scalars.GraphQLString))
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("valueFromArg")
-                    .type(typeOf(Scalars.GraphQLString))
-                    .build())
-            .build();
+internal fun DirectiveDefinition.Builder.onFieldDefinition(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnFieldDefinition)
+}
 
-        NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION = EnumTypeDefinition.newEnumTypeDefinition()
-            .name("NadelHydrationTemplate")
-            .enumValueDefinition(EnumValueDefinition.newEnumValueDefinition().name("NADEL_PLACEHOLDER").build())
-            .build();
+internal fun DirectiveDefinition.Builder.onArgumentDefinition(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnArgumentDefinition)
+}
 
-        HYDRATED_FROM_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-            .name("hydratedFrom")
-            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-            .description(createDescription("This allows you to hydrate new values into fields"))
-            .repeatable(true)
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("arguments")
-                    .description(createDescription("The arguments to the hydrated field"))
-                    .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION)).build()))
-                    .defaultValue(ArrayValue.newArrayValue().build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("template")
-                    .description(createDescription("The hydration template to use"))
-                    .type(nonNull(NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION))
-                    .build())
-            .build();
+internal fun DirectiveDefinition.Builder.onInterface(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnInterface)
+}
 
-        HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-            .name("hydratedTemplate")
-            .directiveLocation(newDirectiveLocation().name(ENUM_VALUE.name()).build())
-            .description(createDescription("This template directive provides common values to hydrated fields"))
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("service")
-                    .description(createDescription("The target service"))
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("field")
-                    .description(createDescription("The target top level field"))
-                    .type(nonNull(Scalars.GraphQLString))
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("identifiedBy")
-                    .description(createDescription("How to identify matching results"))
-                    .type(nonNull(Scalars.GraphQLString))
-                    .defaultValue(StringValue.newStringValue("id").build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("inputIdentifiedBy")
-                    .description(createDescription("How to identify matching results"))
-                    .type(nonNull(newListType().type(nonNull(NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)).build()))
-                    .defaultValue(ArrayValue.newArrayValue().build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("indexed")
-                    .description(createDescription("Are results indexed"))
-                    .type(typeOf(Scalars.GraphQLBoolean))
-                    .defaultValue(BooleanValue.newBooleanValue(false).build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("batched")
-                    .description(createDescription("Is querying batched"))
-                    .type(typeOf(Scalars.GraphQLBoolean))
-                    .defaultValue(BooleanValue.newBooleanValue(false).build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("batchSize")
-                    .description(createDescription("The batch size"))
-                    .type(typeOf(Scalars.GraphQLInt))
-                    .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(200)).build())
-                    .build())
-            .inputValueDefinition(
-                newInputValueDefinition()
-                    .name("timeout")
-                    .description(createDescription("The timeout in milliseconds"))
-                    .type(typeOf(Scalars.GraphQLInt))
-                    .defaultValue(IntValue.newIntValue().value(BigInteger.valueOf(-1)).build())
-                    .build())
-            .build();
+internal fun DirectiveDefinition.Builder.onUnion(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnUnion)
+}
 
-        HIDDEN_DIRECTIVE_DEFINITION = DirectiveDefinition.newDirectiveDefinition()
-            .name("hidden")
-            .description(createDescription("Indicates that the field is not available for queries or introspection"))
-            .directiveLocation(newDirectiveLocation().name(FIELD_DEFINITION.name()).build())
-            .build();
+internal fun DirectiveDefinition.Builder.onEnum(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnEnum)
+}
+
+internal fun DirectiveDefinition.Builder.onEnumValue(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnEnumValue)
+}
+
+internal fun DirectiveDefinition.Builder.onInputObject(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnInputObject)
+}
+
+internal fun DirectiveDefinition.Builder.onInputFieldDefinition(): DirectiveDefinition.Builder {
+    return directiveLocation(DirectiveOnInputFieldDefinition)
+}
+
+internal fun DirectiveDefinition.Builder.inputValueDefinition(
+    name: String,
+    type: Type<*>,
+    description: String? = null,
+    defaultValue: Value<*>? = null,
+): DirectiveDefinition.Builder {
+    return inputValueDefinition(
+        newInputValueDefinition()
+            .name(name)
+            .type(type)
+            .also { builder ->
+                if (description != null) builder.description(Description(description, null, false))
+                if (defaultValue != null) builder.defaultValue(defaultValue)
+            }
+            .build()
+    )
+}
+
+internal fun DirectiveDefinition.Builder.inputValueDefinition(
+    name: String,
+    type: GraphQLNamedInputType,
+    description: String? = null,
+    defaultValue: Value<*>? = null,
+): DirectiveDefinition.Builder {
+    return inputValueDefinition(
+        name = name,
+        type = newTypeName(type.name).build(),
+        description = description,
+        defaultValue = defaultValue,
+    )
+}
+
+internal fun InputObjectTypeDefinition.Builder.inputValueDefinition(
+    name: String,
+    type: Type<*>,
+    description: String? = null,
+    defaultValue: Value<*>? = null,
+): InputObjectTypeDefinition.Builder {
+    return inputValueDefinition(
+        newInputValueDefinition()
+            .name(name)
+            .type(type)
+            .also { builder ->
+                if (description != null) builder.description(Description(description, null, false))
+                if (defaultValue != null) builder.defaultValue(defaultValue)
+            }
+            .build()
+    )
+}
+
+internal fun InputObjectTypeDefinition.Builder.inputValueDefinition(
+    name: String,
+    type: GraphQLNamedInputType,
+    description: String? = null,
+    defaultValue: Value<*>? = null,
+): InputObjectTypeDefinition.Builder {
+    return inputValueDefinition(
+        name = name,
+        type = newTypeName(type.name).build(),
+        description = description,
+        defaultValue = defaultValue,
+    )
+}
+
+internal fun InputObjectTypeDefinition.Builder.description(description: String): InputObjectTypeDefinition.Builder {
+    return description(Description(description, null, false))
+}
+
+internal fun DirectiveDefinition.Builder.description(description: String): DirectiveDefinition.Builder {
+    return description(Description(description, null, false))
+}
+
+internal fun IntValue(value: Int): IntValue {
+    return newIntValue().value(value).build()
+}
+
+internal fun BooleanValue(value: Boolean): BooleanValue {
+    return newBooleanValue(value).build()
+}
+
+internal fun emptyArrayValue(): ArrayValue {
+    return ArrayValue.newArrayValue().build()
+}
+
+/**
+ * If you update this file please add to NadelBuiltInTypes
+ */
+// todo make this internal when we merge api/ and engine-nextgen/
+object NadelDirectives {
+    val renamedDirectiveDefinition = newDirectiveDefinition()
+        .name("renamed")
+        .onFieldDefinition().onObject().onInterface().onUnion().onInputObject().onScalar().onEnum()
+        .description("This allows you to rename a type or field in the overall schema")
+        .inputValueDefinition(name = "from", type = nonNull(GraphQLString), description = "The type to be renamed")
+        .build()
+
+    val nadelHydrationComplexIdentifiedBy = newInputObjectDefinition()
+        .name("NadelBatchObjectIdentifiedBy")
+        .description("This is required by batch hydration to understand how to pull out objects from the batched result")
+        .inputValueDefinition(
+            name = "sourceId",
+            type = nonNull(GraphQLString),
+        )
+        .inputValueDefinition(
+            name = "resultId",
+            type = nonNull(GraphQLString),
+        )
+        .build()
+
+    val nadelHydrationArgumentDefinition = newInputObjectDefinition()
+        .name("NadelHydrationArgument")
+        .description("This allows you to hydrate new values into fields")
+        .inputValueDefinition(
+            name = "name",
+            type = nonNull(GraphQLString),
+        )
+        .inputValueDefinition(
+            name = "value",
+            type = nonNull(GraphQLString),
+        )
+        .build()
+
+    val hydratedDirectiveDefinition = newDirectiveDefinition()
+        .name("hydrated")
+        .onFieldDefinition()
+        .description("This allows you to hydrate new values into fields")
+        .repeatable(true)
+        .inputValueDefinition(
+            name = "service",
+            type = nonNull(GraphQLString),
+            description = "The target service",
+        )
+        .inputValueDefinition(
+            name = "field",
+            type = nonNull(GraphQLString),
+            description = "The target top level field",
+        )
+        .inputValueDefinition(
+            name = "identifiedBy",
+            type = nonNull(GraphQLString),
+            description = "How to identify matching results",
+            defaultValue = StringValue("id"),
+        )
+        .inputValueDefinition(
+            name = "inputIdentifiedBy",
+            type = nonNull(list(nonNull(nadelHydrationComplexIdentifiedBy))),
+            description = "How to identify matching results",
+            defaultValue = emptyArrayValue(),
+        )
+        .inputValueDefinition(
+            name = "indexed",
+            description = "Are results indexed",
+            type = nonNull(Scalars.GraphQLBoolean),
+            defaultValue = BooleanValue(false),
+        )
+        .inputValueDefinition(
+            name = "batched",
+            description = "Is querying batched",
+            type = nonNull(Scalars.GraphQLBoolean),
+            defaultValue = BooleanValue(false),
+        )
+        .inputValueDefinition(
+            name = "batchSize",
+            description = "The batch size",
+            type = nonNull(Scalars.GraphQLInt),
+            defaultValue = IntValue(200),
+        )
+        .inputValueDefinition(
+            name = "timeout",
+            description = "The timeout to use when completing hydration",
+            type = nonNull(Scalars.GraphQLInt),
+            defaultValue = IntValue(-1),
+        )
+        .inputValueDefinition(
+            name = "arguments",
+            description = "The arguments to the hydrated field",
+            type = nonNull(list(nonNull(nadelHydrationArgumentDefinition))),
+        )
+        .build()
+
+    val dynamicServiceDirectiveDefinition = newDirectiveDefinition()
+        .name("dynamicServiceResolution")
+        .onFieldDefinition()
+        .description("Indicates that the field uses dynamic service resolution. This directive should only be used in commons fields, i.e. fields that are not part of a particular service.")
+        .build()
+
+    val namespacedDirectiveDefinition = newDirectiveDefinition()
+        .name("namespaced")
+        .onFieldDefinition()
+        .description("Indicates that the field is a namespaced field.")
+        .build()
+
+    val hiddenDirectiveDefinition = newDirectiveDefinition()
+        .name("hidden")
+        .description("Indicates that the field is not available for queries or introspection")
+        .onFieldDefinition()
+        .build()
+
+    val nadelHydrationFromArgumentDefinition = newInputObjectDefinition()
+        .name("NadelHydrationFromArgument")
+        .description("This allows you to hydrate new values into fields with the @hydratedFrom directive")
+        .inputValueDefinition(
+            name = "name",
+            type = nonNull(GraphQLString),
+        )
+        .inputValueDefinition(
+            name = "valueFromField",
+            type = GraphQLString,
+        )
+        .inputValueDefinition(
+            name = "valueFromArg",
+            type = GraphQLString,
+        )
+        .build()
+
+    val nadelHydrationTemplateEnumDefinition = newEnumTypeDefinition()
+        .name("NadelHydrationTemplate")
+        .enumValueDefinition(newEnumValueDefinition().name("NADEL_PLACEHOLDER").build())
+        .build()
+
+    val hydratedFromDirectiveDefinition = newDirectiveDefinition()
+        .name("hydratedFrom")
+        .onFieldDefinition()
+        .description("This allows you to hydrate new values into fields")
+        .repeatable(true)
+        .inputValueDefinition(
+            name = "arguments",
+            description = "The arguments to the hydrated field",
+            type = nonNull(list(nonNull(nadelHydrationFromArgumentDefinition))),
+            defaultValue = ArrayValue.newArrayValue().build(),
+        )
+        .inputValueDefinition(
+            name = "template",
+            description = "The hydration template to use",
+            type = nonNull(nadelHydrationTemplateEnumDefinition),
+        )
+        .build()
+
+    val hydratedTemplateDirectiveDefinition = newDirectiveDefinition()
+        .name("hydratedTemplate")
+        .onEnumValue()
+        .description("This template directive provides common values to hydrated fields")
+        .inputValueDefinition(
+            name = "service",
+            type = nonNull(GraphQLString),
+            description = "The target service"
+        )
+        .inputValueDefinition(
+            name = "field",
+            type = nonNull(GraphQLString),
+            description = "The target top level field"
+        )
+        .inputValueDefinition(
+            name = "identifiedBy",
+            description = "How to identify matching results",
+            type = nonNull(GraphQLString),
+            defaultValue = StringValue.newStringValue("id").build(),
+        )
+        .inputValueDefinition(
+            name = "inputIdentifiedBy",
+            description = "How to identify matching results",
+            type = nonNull(list(nonNull(nadelHydrationComplexIdentifiedBy))),
+            defaultValue = ArrayValue.newArrayValue().build(),
+        )
+        .inputValueDefinition(
+            name = "indexed",
+            description = "Are results indexed",
+            type = Scalars.GraphQLBoolean,
+            defaultValue = BooleanValue(false),
+        )
+        .inputValueDefinition(
+            name = "batched",
+            description = "Is querying batched",
+            type = Scalars.GraphQLBoolean,
+            defaultValue = BooleanValue(false),
+        )
+        .inputValueDefinition(
+            name = "batchSize",
+            description = "The batch size",
+            type = Scalars.GraphQLInt,
+            defaultValue = IntValue(200),
+        )
+        .inputValueDefinition(
+            name = "timeout",
+            description = "The timeout in milliseconds",
+            type = Scalars.GraphQLInt,
+            defaultValue = IntValue(-1),
+        )
+        .build()
+
+    private fun nonNull(type: GraphQLNamedSchemaElement): NonNullType {
+        return newNonNullType(
+            newTypeName()
+                .name(type.name)
+                .build(),
+        ).build()
     }
 
-    /**
-     * Don't use this directly, use one of the type safe methods below.
-     */
-    private static TypeName newTypeNameOf(Supplier<String> typeName) {
-        return newTypeName().name(typeName.get()).build();
+    private fun nonNull(type: NamedNode<*>): NonNullType {
+        return newNonNullType(
+            newTypeName()
+                .name(type.name)
+                .build(),
+        ).build()
     }
 
-    private static TypeName typeOf(GraphQLScalarType type) {
-        return newTypeName().name(type.getName()).build();
+    private fun list(type: NonNullType): ListType {
+        return newListType(type).build()
     }
 
-    private static NonNullType nonNull(GraphQLNamedSchemaElement type) {
-        return NonNullType.newNonNullType(newTypeNameOf(type::getName)).build();
+    private fun nonNull(type: Type<*>): NonNullType {
+        return newNonNullType(type).build()
     }
 
-    private static NonNullType nonNull(NamedNode<?> type) {
-        return NonNullType.newNonNullType(newTypeNameOf(type::getName)).build();
+    fun createUnderlyingServiceHydration(
+        fieldDefinition: GraphQLFieldDefinition,
+        overallSchema: GraphQLSchema,
+    ): List<UnderlyingServiceHydration> {
+        return (fieldDefinition.getAppliedDirectives(hydratedDirectiveDefinition.name)
+            .asSequence()
+            .map { directive ->
+                val argumentValues = resolveArgumentValue<List<Any>>(directive.getArgument("arguments"))
+                val arguments = createRemoteArgs(argumentValues)
+
+                val inputIdentifiedBy = directive.getArgument("inputIdentifiedBy")
+                val identifiedByValues = resolveArgumentValue<List<Any>>(inputIdentifiedBy)
+                val identifiedBy = createObjectIdentifiers(identifiedByValues)
+
+                buildHydrationParameters(directive, arguments, identifiedBy)
+            } + fieldDefinition.getAppliedDirectives(hydratedFromDirectiveDefinition.name)
+            .asSequence()
+            .map { directive ->
+                createTemplatedUnderlyingServiceHydration(directive, overallSchema)
+            }).toList()
     }
 
-    private static NonNullType nonNull(Type<?> type) {
-        return NonNullType.newNonNullType(type).build();
-    }
+    private fun buildHydrationParameters(
+        directive: GraphQLAppliedDirective,
+        arguments: List<RemoteArgumentDefinition>,
+        identifiedBy: List<UnderlyingServiceHydration.ObjectIdentifier>,
+    ): UnderlyingServiceHydration {
+        val service = getDirectiveValue<String>(directive, "service")
+        val fieldNames = getDirectiveValue<String>(directive, "field").split('.')
+        val objectIdentifier = getDirectiveValue<String>(directive, "identifiedBy")
+        val objectIndexed = getDirectiveValue<Boolean>(directive, "indexed")
 
-    private static Description createDescription(String s) {
-        return new Description(s, null, false);
-    }
-
-    public static List<UnderlyingServiceHydration> createUnderlyingServiceHydration(GraphQLFieldDefinition fieldDefinition, GraphQLSchema overallSchema) {
-
-        List<GraphQLDirective> hydrationDirectives = FpKit.concat(
-            fieldDefinition.getDirectives(HYDRATED_DIRECTIVE_DEFINITION.getName()),
-            fieldDefinition.getDirectives(HYDRATED_FROM_DIRECTIVE_DEFINITION.getName())
-        );
-        return FpKit.map(hydrationDirectives,
-            directive -> {
-
-                if (directive.getName().equals(HYDRATED_FROM_DIRECTIVE_DEFINITION.getName())) {
-                    return createTemplatedUnderlyingServiceHydration(directive, overallSchema);
-                }
-
-                List<Object> argumentValues = resolveArgumentValue(directive.getArgument("arguments"));
-                var arguments = createArgs(argumentValues);
-
-                GraphQLArgument inputIdentifiedBy = directive.getArgument("inputIdentifiedBy");
-                List<Object> identifiedByValues = resolveArgumentValue(inputIdentifiedBy);
-                var identifiedBy = createObjectIdentifiers(identifiedByValues);
-
-                return buildHydrationParameters(directive, arguments, identifiedBy);
-            });
-    }
-
-    private static UnderlyingServiceHydration buildHydrationParameters(GraphQLDirective directive,
-                                                                       List<RemoteArgumentDefinition> arguments,
-                                                                       List<ObjectIdentifier> identifiedBy) {
-        String service = getDirectiveValue(directive, "service", String.class);
-        String field = getDirectiveValue(directive, "field", String.class);
-        String objectIdentifier = getDirectiveValue(directive, "identifiedBy", String.class);
-        Boolean objectIndexed = getDirectiveValue(directive, "indexed", Boolean.class, false);
         // Note: this is not properly implemented yet, so the value does not matter
-        boolean batched = false; // getDirectiveValue(directive, "batched", Boolean.class, false);
-        if (objectIndexed) {
-            objectIdentifier = null; // we cant have both but it has a default
-        }
-        int batchSize = getDirectiveValue(directive, "batchSize", Integer.class, 200);
-        int timeout = getDirectiveValue(directive, "timeout", Integer.class, -1);
+        val batched = false // getDirectiveValue(directive, "batched", Boolean.class, false);
 
-        List<String> fieldNames = dottedString(field);
-        assertTrue(fieldNames.size() >= 1);
-        String topLevelFieldName = fieldNames.get(0);
-        String syntheticField = null;
-        if (fieldNames.size() > 1) {
-            syntheticField = fieldNames.get(0);
-            topLevelFieldName = fieldNames.get(1);
-        }
+        val batchSize = getDirectiveValue<Int>(directive, "batchSize")
+        val timeout = getDirectiveValue<Int>(directive, "timeout")
+
+        require(fieldNames.isNotEmpty())
 
         // nominally this should be some other data class that's not an AST element
         // but history is what it is, and it's an AST element that's' really a data class
-        return new UnderlyingServiceHydration(
+        return UnderlyingServiceHydration(
             service,
-            topLevelFieldName,
-            syntheticField,
+            fieldNames,
             arguments,
             objectIdentifier,
             identifiedBy,
@@ -406,176 +542,167 @@ public class NadelDirectives {
             batched,
             batchSize,
             timeout
-        );
+        )
     }
 
-    private static UnderlyingServiceHydration createTemplatedUnderlyingServiceHydration(GraphQLDirective hydratedFromDirective, GraphQLSchema overallSchema) {
-
-        GraphQLArgument template = hydratedFromDirective.getArgument("template");
-        String enumTargetName = resolveArgumentValue(template);
-        GraphQLEnumType templateEnumType = overallSchema.getTypeAs("NadelHydrationTemplate");
-        assertNotNull(templateEnumType, () -> "There MUST be a enum called NadelHydrationTemplate");
-
-        GraphQLEnumValueDefinition enumValue = templateEnumType.getValue(enumTargetName);
-        assertNotNull(enumValue, () -> String.format("There MUST be a enum value in NadelHydrationTemplate called '%s'", enumTargetName));
-
-        GraphQLDirective templateDirective = enumValue.getDirective(HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION.getName());
-        assertNotNull(templateDirective, () -> String.format("The enum value '%s' in NadelHydrationTemplate must have a directive called '%s'", enumTargetName, HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION.getName()));
-
-        GraphQLArgument graphQLArgument = hydratedFromDirective.getArgument("arguments");
-        List<Object> argumentValues = resolveArgumentValue(graphQLArgument);
-        List<RemoteArgumentDefinition> arguments = createTemplatedHydratedArgs(argumentValues);
-
-        return buildHydrationParameters(templateDirective, arguments, emptyList());
-    }
-
-    private static <T> T resolveArgumentValue(GraphQLArgument graphQLArgument) {
-        //noinspection unchecked
-        return (T) ValuesResolver.valueToInternalValue(graphQLArgument.getArgumentValue(), graphQLArgument.getType());
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<RemoteArgumentDefinition> createArgs(List<Object> arguments) {
-        List<RemoteArgumentDefinition> remoteArgumentDefinitions = new ArrayList<>();
-        for (Object arg : arguments) {
-            Map<String, String> argMap = (Map<String, String>) arg;
-
-            String remoteArgName = argMap.get("name");
-            String remoteArgValue = argMap.get("value");
-            RemoteArgumentSource remoteArgumentSource = createRemoteArgumentSource(remoteArgValue);
-            RemoteArgumentDefinition remoteArgumentDefinition = new RemoteArgumentDefinition(remoteArgName, remoteArgumentSource);
-            remoteArgumentDefinitions.add(remoteArgumentDefinition);
+    private fun createTemplatedUnderlyingServiceHydration(
+        hydratedFromDirective: GraphQLAppliedDirective,
+        overallSchema: GraphQLSchema,
+    ): UnderlyingServiceHydration {
+        val template = hydratedFromDirective.getArgument("template")
+        val enumTargetName = resolveArgumentValue<String?>(template)
+        val templateEnumType = overallSchema.getTypeAs<GraphQLEnumType?>("NadelHydrationTemplate")
+        requireNotNull(templateEnumType) { "There MUST be a enum called NadelHydrationTemplate" }
+        val enumValue = templateEnumType.getValue(enumTargetName)
+        requireNotNull(enumValue) {
+            "There MUST be a enum value in NadelHydrationTemplate called '${enumTargetName}'"
         }
-        return remoteArgumentDefinitions;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<ObjectIdentifier> createObjectIdentifiers(List<Object> arguments) {
-        List<ObjectIdentifier> ids = new ArrayList<>();
-        for (Object arg : arguments) {
-            Map<String, String> argMap = (Map<String, String>) arg;
-
-            String sourceId = argMap.get("sourceId");
-            String resultId = argMap.get("resultId");
-            ids.add(new ObjectIdentifier(sourceId, resultId));
+        val templateDirective = enumValue.getAppliedDirective(hydratedTemplateDirectiveDefinition.name)
+        requireNotNull(templateDirective) {
+            "The enum value '${enumTargetName}' in NadelHydrationTemplate must have a directive called '${hydratedTemplateDirectiveDefinition.name}'"
         }
-        return ids;
+
+        val graphQLArgument = hydratedFromDirective.getArgument("arguments")
+        val argumentValues = resolveArgumentValue<List<Any>>(graphQLArgument)
+        val arguments = createTemplatedHydratedArgs(argumentValues)
+        return buildHydrationParameters(
+            templateDirective,
+            arguments,
+            emptyList()
+        )
     }
 
-    private static RemoteArgumentSource createRemoteArgumentSource(String value) {
-        List<String> values = dottedString(String.valueOf(value));
-        assertTrue(values.size() >= 2);
-
-        String type = values.get(0);
-        RemoteArgumentSource.SourceType argumentType = null;
-        String argumentName = null;
-        List<String> path = null;
-        if ("$source".equals(type)) {
-            argumentType = OBJECT_FIELD;
-            path = values.subList(1, values.size());
-        } else if ("$argument".equals(type)) {
-            argumentType = FIELD_ARGUMENT;
-            argumentName = values.get(1);
-        } else {
-            Assert.assertShouldNeverHappen("The hydration arguments are invalid : %s", value);
-        }
-        return new RemoteArgumentSource(argumentName, path, argumentType);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static List<RemoteArgumentDefinition> createTemplatedHydratedArgs(List<Object> arguments) {
-        List<RemoteArgumentDefinition> remoteArgumentDefinitions = new ArrayList<>();
-        for (Object arg : arguments) {
-            Map<String, String> argMap = (Map<String, String>) arg;
-
-            String remoteArgName = argMap.get("name");
-            String remoteArgFieldValue = argMap.get("valueFromField");
-            String remoteArgArgValue = argMap.get("valueFromArg");
-            boolean bothSet = remoteArgArgValue != null && remoteArgFieldValue != null;
-            boolean noneSet = remoteArgArgValue == null && remoteArgFieldValue == null;
-            Assert.assertTrue(!(bothSet || noneSet), () -> "You must specify only one of valueForField or valueForArg in NadelHydrationFromArgument arguments");
-
-            RemoteArgumentSource remoteArgumentSource;
-            if (remoteArgFieldValue != null) {
-                remoteArgumentSource = createTemplatedRemoteArgumentSource(remoteArgFieldValue, OBJECT_FIELD);
-            } else {
-                remoteArgumentSource = createTemplatedRemoteArgumentSource(remoteArgArgValue, FIELD_ARGUMENT);
+    private fun createRemoteArgs(arguments: List<Any>): List<RemoteArgumentDefinition> {
+        fun Map<String, String>.requireArgument(key: String): String {
+            return requireNotNull(this[key]) {
+                "${nadelHydrationArgumentDefinition.name} definition requires '$key' to be not-null"
             }
-            RemoteArgumentDefinition remoteArgumentDefinition = new RemoteArgumentDefinition(remoteArgName, remoteArgumentSource);
-            remoteArgumentDefinitions.add(remoteArgumentDefinition);
         }
-        return remoteArgumentDefinitions;
+
+        return arguments
+            .map { arg ->
+                @Suppress("UNCHECKED_CAST") // trust GraphQL type system and caller
+                val argMap = arg as Map<String, String>
+                val remoteArgName = argMap.requireArgument("name")
+                val remoteArgValue = argMap.requireArgument("value")
+                val remoteArgumentSource = createRemoteArgumentSource(remoteArgValue)
+                RemoteArgumentDefinition(remoteArgName, remoteArgumentSource)
+            }
     }
 
-    private static RemoteArgumentSource createTemplatedRemoteArgumentSource(String value, RemoteArgumentSource.SourceType argumentType) {
+    private fun createObjectIdentifiers(arguments: List<Any>): List<UnderlyingServiceHydration.ObjectIdentifier> {
+        fun Map<String, String>.requireArgument(key: String): String {
+            return requireNotNull(this[key]) {
+                "${nadelHydrationComplexIdentifiedBy.name} definition requires '$key' to be not-null"
+            }
+        }
+        return arguments.map { arg ->
+            @Suppress("UNCHECKED_CAST") // trust GraphQL type system and caller
+            val argMap = arg as MutableMap<String, String>
+            val sourceId = argMap.requireArgument("sourceId")
+            val resultId = argMap.requireArgument("resultId")
+            UnderlyingServiceHydration.ObjectIdentifier(sourceId, resultId)
+        }
+    }
+
+    private fun createRemoteArgumentSource(value: String): RemoteArgumentSource {
+        val values = listFromDottedString(value)
+
+        return when (values.first()) {
+            "\$source" -> RemoteArgumentSource(
+                argumentName = null,
+                pathToField = values.subList(1, values.size),
+                sourceType = SourceType.ObjectField,
+            )
+            "\$argument" -> RemoteArgumentSource(
+                argumentName = values.subList(1, values.size).single(),
+                pathToField = null,
+                sourceType = SourceType.FieldArgument,
+            )
+            else -> throw IllegalArgumentException("$value must begin with \$source. or \$argument.")
+        }
+    }
+
+    private fun createTemplatedHydratedArgs(arguments: List<Any>): List<RemoteArgumentDefinition> {
+        val inputObjectTypeName = nadelHydrationFromArgumentDefinition.name
+        val valueFromFieldKey = "valueFromField"
+        val valueFromArgKey = "valueFromArg"
+
+        return arguments.map { arg ->
+            @Suppress("UNCHECKED_CAST") // trust graphQL type system and caller
+            val argMap = arg as Map<String, String>
+
+            val remoteArgName = requireNotNull(argMap["name"]) {
+                "$inputObjectTypeName requires 'name' to be not-null"
+            }
+
+            val remoteArgFieldValue = argMap[valueFromFieldKey]
+            val remoteArgArgValue = argMap[valueFromArgKey]
+
+            val remoteArgumentSource = if (remoteArgFieldValue != null && remoteArgArgValue != null) {
+                throw IllegalArgumentException("$inputObjectTypeName can not have both $valueFromFieldKey and $valueFromArgKey set")
+            } else if (remoteArgFieldValue != null) {
+                createTemplatedRemoteArgumentSource(remoteArgFieldValue, SourceType.ObjectField)
+            } else if (remoteArgArgValue != null) {
+                createTemplatedRemoteArgumentSource(remoteArgArgValue, SourceType.FieldArgument)
+            } else {
+                throw IllegalArgumentException("$inputObjectTypeName requires one of $valueFromFieldKey or $valueFromArgKey to be set")
+            }
+
+            RemoteArgumentDefinition(remoteArgName, remoteArgumentSource)
+        }
+    }
+
+    private fun createTemplatedRemoteArgumentSource(value: String, argumentType: SourceType): RemoteArgumentSource {
         // for backwards compat reasons - we will allow them to specify "$source.field.name" and treat it as just "field.name"
-        value = removePrefix(value, "$source.");
-        value = removePrefix(value, "$argument.");
-        List<String> values = dottedString(value);
-        String argumentName = null;
-        List<String> path = null;
-        if (argumentType == OBJECT_FIELD) {
-            path = values;
-        }
-        if (argumentType == FIELD_ARGUMENT) {
-            argumentName = values.get(0);
-        }
-        return new RemoteArgumentSource(argumentName, path, argumentType);
-    }
+        val values = value
+            .removePrefix("\$source.")
+            .removePrefix("\$argument.")
+            .split('.')
 
-    private static String removePrefix(String value, String prefix) {
-        if (value.startsWith(prefix)) {
-            return value.replace(prefix, "");
-        }
-        return value;
-    }
-
-    public static FieldMappingDefinition createFieldMapping(GraphQLFieldDefinition fieldDefinition) {
-        GraphQLDirective directive = fieldDefinition.getDirective(RENAMED_DIRECTIVE_DEFINITION.getName());
-        if (directive == null) {
-            return null;
+        var argumentName: String? = null
+        var path: List<String>? = null
+        when (argumentType) {
+            SourceType.ObjectField -> path = values
+            SourceType.FieldArgument -> argumentName = values.single()
         }
 
-        String fromValue = getDirectiveValue(directive, "from", String.class);
-        List<String> fromPath = dottedString(String.valueOf(fromValue));
-        return new FieldMappingDefinition(fromPath);
+        return RemoteArgumentSource(argumentName, path, argumentType)
     }
 
-    @Nullable
-    public static TypeMappingDefinition createTypeMapping(GraphQLDirectiveContainer directivesContainer) {
-        GraphQLDirective directive = directivesContainer.getDirective(RENAMED_DIRECTIVE_DEFINITION.getName());
-        if (directive == null) {
-            return null;
-        }
+    fun createFieldMapping(fieldDefinition: GraphQLFieldDefinition): FieldMappingDefinition? {
+        val directive = fieldDefinition.getAppliedDirective(renamedDirectiveDefinition.name)
+            ?: return null
+        val fromValue = getDirectiveValue<String>(directive, "from")
 
-        String from = getDirectiveValue(directive, "from", String.class);
-        return new TypeMappingDefinition(/*underlying*/ from, /*overall*/ directivesContainer.getName());
+        return FieldMappingDefinition(inputPath = fromValue.split('.'))
     }
 
-    private static List<String> dottedString(String from) {
-        String[] split = from.split("\\.");
-        return Arrays.asList(split);
+    fun createTypeMapping(directivesContainer: GraphQLDirectiveContainer): TypeMappingDefinition? {
+        val directive = directivesContainer.getAppliedDirective(renamedDirectiveDefinition.name)
+            ?: return null
+        val from = getDirectiveValue<String>(directive, "from")
+
+        return TypeMappingDefinition(underlyingName = from, overallName = directivesContainer.name)
     }
 
-    private static <T> T getDirectiveValueImpl(GraphQLDirective directive, String name, Class<T> clazz, boolean allowMissingArg) {
-        GraphQLArgument argument = directive.getArgument(name);
-        if (allowMissingArg && argument == null) {
-            return null;
-        }
-        assertNotNull(argument, () -> String.format("The @%s directive argument '%s argument MUST be present - how is this possible?", directive.getName(), name));
-        Object value = resolveArgumentValue(argument);
-        return clazz.cast(value);
+    private fun listFromDottedString(from: String): List<String> {
+        return from.split('.').toList()
     }
 
-    private static <T> T getDirectiveValue(GraphQLDirective directive, String name, Class<T> clazz) {
-        return getDirectiveValueImpl(directive, name, clazz, false);
+    private inline fun <reified T : Any> getDirectiveValue(
+        directive: GraphQLAppliedDirective,
+        name: String,
+    ): T {
+        val argument = directive.getArgument(name)
+            ?: throw IllegalStateException("The @${directive.name} directive argument '$name' argument MUST be present")
+
+        val value = resolveArgumentValue<Any?>(argument)
+        return T::class.java.cast(value)
     }
 
-    private static <T> T getDirectiveValue(GraphQLDirective directive, String name, Class<T> clazz, T defaultValue) {
-        T value = getDirectiveValueImpl(directive, name, clazz, true);
-        if (value == null) {
-            return defaultValue;
-        }
-        return value;
+    private fun <T> resolveArgumentValue(graphQLArgument: GraphQLAppliedDirectiveArgument): T {
+        @Suppress("UNCHECKED_CAST") // Trust caller. Can't do much
+        return ValuesResolver.valueToInternalValue(graphQLArgument.argumentValue, graphQLArgument.type) as T
     }
 }

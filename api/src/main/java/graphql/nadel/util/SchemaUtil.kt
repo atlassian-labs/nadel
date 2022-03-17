@@ -1,27 +1,26 @@
-package graphql.nadel.util;
+package graphql.nadel.util
 
-import graphql.language.SDLDefinition;
-import graphql.parser.Parser;
-import graphql.parser.ParserOptions;
+import graphql.language.SDLDefinition
+import graphql.parser.Parser
+import graphql.parser.ParserOptions
+import java.io.Reader
 
-import java.io.Reader;
-import java.util.List;
+object SchemaUtil {
+    private val defaultParserOptions = ParserOptions.newParserOptions()
+        .maxTokens(Int.MAX_VALUE)
+        .build()
 
-import static graphql.parser.ParserOptions.newParserOptions;
-import static java.lang.Integer.MAX_VALUE;
+    private val parser = Parser()
 
-public class SchemaUtil {
-    private static final ParserOptions defaultParserOptions = newParserOptions()
-        .maxTokens(MAX_VALUE)
-        .build();
-
-    public static List<SDLDefinition> parseDefinitions(String schema) {
-        return new Parser().parseDocument(schema, defaultParserOptions)
-            .getDefinitionsOfType(SDLDefinition.class);
+    fun parseDefinitions(schema: String): List<AnySDLDefinition> {
+        return parser
+            .parseDocument(schema, defaultParserOptions)
+            .getDefinitionsOfType(SDLDefinition::class.java)
     }
 
-    public static List<SDLDefinition> parseDefinitions(Reader schema) {
-        return new Parser().parseDocument(schema, defaultParserOptions)
-            .getDefinitionsOfType(SDLDefinition.class);
+    fun parseDefinitions(schema: Reader): List<AnySDLDefinition> {
+        return parser
+            .parseDocument(schema, defaultParserOptions)
+            .getDefinitionsOfType(SDLDefinition::class.java)
     }
 }

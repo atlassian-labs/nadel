@@ -1,115 +1,106 @@
-package graphql.nadel;
+package graphql.nadel
 
-import graphql.Internal;
-import graphql.language.DirectiveDefinition;
-import graphql.language.NamedNode;
-import graphql.language.ObjectTypeDefinition;
-import graphql.language.OperationTypeDefinition;
-import graphql.language.SDLDefinition;
-import graphql.language.SchemaDefinition;
-import graphql.language.TypeDefinition;
-import graphql.nadel.util.FpKit;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import static java.util.Collections.emptyList;
+import graphql.language.DirectiveDefinition
+import graphql.language.NamedNode
+import graphql.language.ObjectTypeDefinition
+import graphql.language.SchemaDefinition
+import graphql.language.TypeDefinition
+import graphql.nadel.util.AnySDLDefinition
+import java.util.Collections
 
 /**
- * Alternative to {@link graphql.schema.idl.TypeDefinitionRegistry} but is more generic
+ * Alternative to [graphql.schema.idl.TypeDefinitionRegistry] but is more generic
  * and tailored to Nadel specific operations to build the overall schema.
  */
-@Internal
-public class NadelDefinitionRegistry {
-    private final List<SDLDefinition> definitions = new ArrayList<>();
-    private final Map<Class<? extends SDLDefinition>, List<SDLDefinition>> definitionsByClass = new LinkedHashMap<>();
-    private final Map<String, List<SDLDefinition>> definitionsByName = new LinkedHashMap<>();
+class NadelDefinitionRegistry {
+    private val _definitions: MutableList<AnySDLDefinition> = ArrayList()
+    private val definitionsByClass = LinkedHashMap<Class<out AnySDLDefinition>, MutableList<AnySDLDefinition>>()
+    private val definitionsByName = LinkedHashMap<String, MutableList<AnySDLDefinition>>()
 
-    public static NadelDefinitionRegistry from(List<SDLDefinition> definitions) {
-        NadelDefinitionRegistry registry = new NadelDefinitionRegistry();
-        for (SDLDefinition<?> definition : definitions) {
-            registry.add(definition);
-        }
-        return registry;
-    }
+    val definitions: List<AnySDLDefinition>
+        get() = Collections.unmodifiableList(_definitions)
 
-    public void add(SDLDefinition sdlDefinition) {
-        definitions.add(sdlDefinition);
-        definitionsByClass.computeIfAbsent(sdlDefinition.getClass(), key -> new ArrayList<>());
-        definitionsByClass.get(sdlDefinition.getClass()).add(sdlDefinition);
+    fun add(sdlDefinition: AnySDLDefinition) {
+        _definitions.add(sdlDefinition)
 
-        if (sdlDefinition instanceof TypeDefinition || sdlDefinition instanceof DirectiveDefinition) {
-            String name = ((NamedNode) sdlDefinition).getName();
-            definitionsByName.computeIfAbsent(name, key -> new ArrayList<>());
-            definitionsByName.get(name).add(sdlDefinition);
+        definitionsByClass.computeIfAbsent(sdlDefinition.javaClass) {
+            ArrayList()
+        }.add(sdlDefinition)
+
+        if (sdlDefinition is TypeDefinition<*> || sdlDefinition is DirectiveDefinition) {
+            val name = (sdlDefinition as NamedNode<*>).name
+
+            definitionsByName.computeIfAbsent(name) {
+                ArrayList()
+            }.add(sdlDefinition)
         }
     }
 
-    public SchemaDefinition getSchemaDefinition() {
-        if (!definitionsByClass.containsKey(SchemaDefinition.class)) {
-            return null;
-        }
-        return (SchemaDefinition) definitionsByClass.get(SchemaDefinition.class).get(0);
-    }
-
-    public Map<OperationKind, List<ObjectTypeDefinition>> getOperationMap() {
-        Map<OperationKind, List<ObjectTypeDefinition>> operationMap = new LinkedHashMap<>();
-
-        for (OperationKind operationKind : OperationKind.values()) {
-            operationMap.put(operationKind, getOpsDefinitions(operationKind));
+    val schemaDefinition: SchemaDefinition?
+        get() = if (!definitionsByClass.containsKey(SchemaDefinition::class.java)) {
+            null
+        } else {
+            definitionsByClass[SchemaDefinition::class.java]!![0] as SchemaDefinition?
         }
 
-        return operationMap;
+    val operationMap: Map<NadelOperationKind, List<ObjectTypeDefinition>>
+        get() {
+            return NadelOperationKind.values().associateWith(::getOpsDefinitions)
+        }
+
+    private fun getOpsDefinitions(operationKind: NadelOperationKind): List<ObjectTypeDefinition> {
+        val type = getOperationTypeName(operationKind)
+        return getDefinitionsOfType(type)
     }
 
-    @NotNull
-    private List<ObjectTypeDefinition> getOpsDefinitions(OperationKind operationKind) {
-        String type = getOperationTypeName(operationKind);
-        return getDefinition(type, ObjectTypeDefinition.class);
-    }
-
-    @Nullable
-    public String getOperationTypeName(OperationKind operationKind) {
-        String operationName = operationKind.getName(); // e.g. query, mutation etc.
+    fun getOperationTypeName(operationKind: NadelOperationKind): String {
+        val operationName = operationKind.name // e.g. query, mutation etc.
 
         // Check the schema definition for the operation type
         // i.e. we are trying to find MyOwnQueryType in: schema { query: MyOwnQueryType }
-        SchemaDefinition schemaDefinition = getSchemaDefinition();
+        val schemaDefinition = schemaDefinition
         if (schemaDefinition != null) {
-            for (OperationTypeDefinition opTypeDef : schemaDefinition.getOperationTypeDefinitions()) {
-                if (opTypeDef.getName().equalsIgnoreCase(operationName)) {
-                    return opTypeDef.getTypeName().getName();
+            for (opTypeDef in schemaDefinition.operationTypeDefinitions) {
+                if (opTypeDef.name.equals(operationName, ignoreCase = true)) {
+                    return opTypeDef.typeName.name
                 }
             }
-            return null;
         }
 
         // This is the default name if there is no schema definition
-        return operationKind.getDefaultTypeName();
+        return operationKind.defaultTypeName
     }
 
-    @NotNull
-    private <T extends SDLDefinition> List<T> getDefinition(String name, Class<? extends T> clazz) {
-        List<SDLDefinition> sdlDefinitions = definitionsByName.get(name);
-        if (sdlDefinitions == null) {
-            return emptyList();
+    private inline fun <reified T : AnySDLDefinition> getDefinitionsOfType(name: String): List<T> {
+        val sdlDefinitions = definitionsByName[name]
+            ?: return emptyList()
+
+        return sdlDefinitions.filterIsInstance<T>()
+    }
+
+    inline fun <reified T : AnySDLDefinition> getDefinitionsOfType(): List<T> {
+        return getDefinitionsOfType(T::class.java)
+    }
+
+    fun <T : AnySDLDefinition> getDefinitionsOfType(klass: Class<T>): List<T> {
+        return _definitions
+            .asSequence()
+            .filter {
+                klass.isInstance(it)
+            }
+            .map {
+                @Suppress("UNCHECKED_CAST")
+                it as T
+            }
+            .toList()
+    }
+
+    companion object {
+        @JvmStatic
+        fun from(definitions: List<AnySDLDefinition>): NadelDefinitionRegistry {
+            val registry = NadelDefinitionRegistry()
+            definitions.forEach(registry::add)
+            return registry
         }
-        List<SDLDefinition> result = sdlDefinitions.stream().filter(clazz::isInstance).collect(Collectors.toList());
-        return (List<T>) result;
-    }
-
-    @NotNull
-    public List<SDLDefinition> getDefinitions() {
-        return definitions;
-    }
-
-    @NotNull
-    public <T extends SDLDefinition> List<T> getDefinitions(Class<T> targetClass) {
-        return (List<T>) FpKit.filter(getDefinitions(), targetClass::isInstance);
     }
 }

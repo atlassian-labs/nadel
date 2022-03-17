@@ -5,13 +5,13 @@ import graphql.nadel.ServiceExecutionHydrationDetails
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelOverallExecutionBlueprint
-import graphql.nadel.enginekt.log.getLogger
 import graphql.nadel.enginekt.transform.NadelCoerceTransform.State
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodes
 import graphql.nadel.enginekt.util.makeFieldCoordinates
 import graphql.nadel.enginekt.util.unwrapAll
+import graphql.nadel.util.LogKit.getLogger
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLType
@@ -154,7 +154,10 @@ internal class NadelCoerceTransform : NadelTransform<State> {
             if (coercedValue.javaClass != value.javaClass) {
                 log.warn(
                     "The {} {} field returned a coerced {} value that was different to its underlying {} value",
-                    state.serviceName, state.fieldTypeAndName, coercedValue.javaClass.simpleName, value.javaClass.simpleName
+                    state.serviceName,
+                    state.fieldTypeAndName,
+                    coercedValue.javaClass.simpleName,
+                    value.javaClass.simpleName
                 )
             }
         } else {

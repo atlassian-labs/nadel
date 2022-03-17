@@ -1,6 +1,6 @@
 package graphql.nadel.enginekt.transform.query
 
-import graphql.nadel.schema.NadelDirectives
+import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLSchema
 
@@ -9,7 +9,7 @@ object NadelNamespacedFields {
         return overallField
             .getFieldDefinitions(schema)
             .any {
-                it.hasAppliedDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name)
+                it.hasAppliedDirective(namespacedDirectiveDefinition.name)
             }
     }
 }

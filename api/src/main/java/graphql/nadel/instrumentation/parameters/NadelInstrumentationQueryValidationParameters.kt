@@ -1,37 +1,28 @@
-package graphql.nadel.instrumentation.parameters;
+package graphql.nadel.instrumentation.parameters
 
-import graphql.ExecutionInput;
-import graphql.PublicApi;
-import graphql.execution.instrumentation.InstrumentationState;
-import graphql.language.Document;
-import graphql.schema.GraphQLSchema;
+import graphql.ExecutionInput
+import graphql.PublicApi
+import graphql.execution.instrumentation.InstrumentationState
+import graphql.language.Document
+import graphql.schema.GraphQLSchema
 
 /**
- * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
+ * Parameters sent to [graphql.nadel.instrumentation.NadelInstrumentation] methods
  */
-@PublicApi
-public class NadelInstrumentationQueryValidationParameters extends NadelInstrumentationQueryExecutionParameters {
-    private final Document document;
-
-    public NadelInstrumentationQueryValidationParameters(ExecutionInput executionInput, Document document, GraphQLSchema schema, InstrumentationState instrumentationState) {
-        super(executionInput, schema, instrumentationState);
-        this.document = document;
+data class NadelInstrumentationQueryValidationParameters(
+    val executionInput: ExecutionInput,
+    val document: Document,
+    val schema: GraphQLSchema,
+    private val instrumentationState: InstrumentationState?,
+    private val context: Any?,
+){
+    fun <T> getContext(): T? {
+        @Suppress("UNCHECKED_CAST") // trust the caller
+        return context as T?
     }
 
-    /**
-     * Returns a cloned parameters object with the new state
-     *
-     * @param instrumentationState the new state for this parameters object
-     *
-     * @return a new parameters object with the new state
-     */
-    @Override
-    public NadelInstrumentationQueryValidationParameters withNewState(InstrumentationState instrumentationState) {
-        return new NadelInstrumentationQueryValidationParameters(
-                this.getExecutionInput(), document, getSchema(), instrumentationState);
-    }
-
-    public Document getDocument() {
-        return document;
+    fun <T : InstrumentationState?> getInstrumentationState(): T? {
+        @Suppress("UNCHECKED_CAST") // trust the caller
+        return instrumentationState as T?
     }
 }

@@ -1,155 +1,155 @@
-package graphql.nadel.schema;
+package graphql.nadel.schema
 
-import graphql.Assert;
-import graphql.GraphQLError;
-import graphql.GraphQLException;
-import graphql.Internal;
-import graphql.language.DirectiveDefinition;
-import graphql.language.EnumTypeDefinition;
-import graphql.language.FieldDefinition;
-import graphql.language.InputObjectTypeDefinition;
-import graphql.language.NamedNode;
-import graphql.language.ObjectTypeDefinition;
-import graphql.language.SDLDefinition;
-import graphql.language.SDLExtensionDefinition;
-import graphql.language.SDLNamedDefinition;
-import graphql.language.SchemaDefinition;
-import graphql.language.SourceLocation;
-import graphql.nadel.NadelDefinitionRegistry;
-import graphql.nadel.OperationKind;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.idl.RuntimeWiring;
-import graphql.schema.idl.SchemaGenerator;
-import graphql.schema.idl.TypeDefinitionRegistry;
-import graphql.schema.idl.WiringFactory;
+import graphql.GraphQLException
+import graphql.language.FieldDefinition
+import graphql.language.ObjectTypeDefinition
+import graphql.language.ObjectTypeDefinition.newObjectTypeDefinition
+import graphql.language.SchemaDefinition
+import graphql.language.SourceLocation
+import graphql.nadel.NadelDefinitionRegistry
+import graphql.nadel.NadelOperationKind
+import graphql.nadel.util.AnyNamedNode
+import graphql.nadel.util.AnySDLDefinition
+import graphql.nadel.util.AnySDLNamedDefinition
+import graphql.nadel.util.isExtensionDef
+import graphql.schema.GraphQLSchema
+import graphql.schema.idl.RuntimeWiring
+import graphql.schema.idl.SchemaGenerator
+import graphql.schema.idl.TypeDefinitionRegistry
+import graphql.schema.idl.WiringFactory
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import static graphql.language.ObjectTypeDefinition.newObjectTypeDefinition;
-
-@Internal
-public class OverallSchemaGenerator {
-
-    public GraphQLSchema buildOverallSchema(List<NadelDefinitionRegistry> serviceRegistries, WiringFactory wiringFactory) {
-        SchemaGenerator schemaGenerator = new SchemaGenerator();
-        RuntimeWiring runtimeWiring = RuntimeWiring.newRuntimeWiring()
+internal class OverallSchemaGenerator {
+    fun buildOverallSchema(
+        serviceRegistries: List<NadelDefinitionRegistry>,
+        wiringFactory: WiringFactory,
+    ): GraphQLSchema {
+        val schemaGenerator = SchemaGenerator()
+        val runtimeWiring = RuntimeWiring.newRuntimeWiring()
             .wiringFactory(wiringFactory)
-            .build();
-        return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring);
+            .build()
+
+        return schemaGenerator.makeExecutableSchema(createTypeRegistry(serviceRegistries), runtimeWiring)
     }
 
-    private TypeDefinitionRegistry createTypeRegistry(List<NadelDefinitionRegistry> serviceRegistries) {
-        // TODO: this merging not completely correct for example schema definition nodes are not handled correctly
-        Map<OperationKind, List<FieldDefinition>> topLevelFields = new LinkedHashMap<>();
-        Arrays.stream(OperationKind.values())
-            .forEach(value -> topLevelFields.put(value, new ArrayList<>()));
+    private fun createTypeRegistry(serviceRegistries: List<NadelDefinitionRegistry>): TypeDefinitionRegistry {
+        val topLevelFields: MutableMap<NadelOperationKind, MutableList<FieldDefinition>> = LinkedHashMap()
 
-        TypeDefinitionRegistry overallRegistry = new TypeDefinitionRegistry();
-        List<SDLDefinition<?>> allDefinitions = new ArrayList<>();
+        NadelOperationKind.values()
+            .forEach {
+                topLevelFields[it] = ArrayList()
+            }
 
-        for (NadelDefinitionRegistry definitionRegistry : serviceRegistries) {
-            collectTypes(topLevelFields, allDefinitions, definitionRegistry);
+        val overallRegistry = TypeDefinitionRegistry()
+        val allDefinitions = ArrayList<AnySDLDefinition>()
+
+        for (definitionRegistry in serviceRegistries) {
+            collectTypes(topLevelFields, allDefinitions, definitionRegistry)
         }
 
-        topLevelFields.keySet().forEach(operationKind -> {
-            List<FieldDefinition> fields = topLevelFields.get(operationKind);
-            if (fields.size() > 0) {
+        // Create merged operation types in schema for all top level fields
+        topLevelFields.keys.forEach { operationKind ->
+            val fields = topLevelFields[operationKind]
+            if (fields?.isNotEmpty() == true) {
                 overallRegistry.add(
                     newObjectTypeDefinition()
-                        .name(operationKind.getDefaultTypeName())
-                        .sourceLocation(new SourceLocation(-1, -1, "generated"))
+                        .name(operationKind.defaultTypeName)
+                        .sourceLocation(SourceLocation(-1, -1, "Generated"))
                         .fieldDefinitions(fields)
                         .build()
-                );
+                )
             }
-        });
+        }
 
         // add our custom directives if they are not present
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION, InputObjectTypeDefinition.class);
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION, DirectiveDefinition.class);
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.RENAMED_DIRECTIVE_DEFINITION, DirectiveDefinition.class);
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.HIDDEN_DIRECTIVE_DEFINITION, DirectiveDefinition.class);
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationArgumentDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedDirectiveDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.renamedDirectiveDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hiddenDirectiveDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationFromArgumentDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationComplexIdentifiedBy)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.nadelHydrationTemplateEnumDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedFromDirectiveDefinition)
+        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.hydratedTemplateDirectiveDefinition)
 
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION, InputObjectTypeDefinition.class);
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY, InputObjectTypeDefinition.class);
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION, EnumTypeDefinition.class);
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.HYDRATED_FROM_DIRECTIVE_DEFINITION, DirectiveDefinition.class);
-        addIfNotPresent(overallRegistry, allDefinitions, NadelDirectives.HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION, DirectiveDefinition.class);
-
-        for (SDLDefinition<?> definition : allDefinitions) {
-            Optional<GraphQLError> error = overallRegistry.add(definition);
-            if (error.isPresent()) {
-                throw new GraphQLException("Unable to add definition to overall registry: " + error.get().getMessage());
+        for (definition in allDefinitions) {
+            val error = overallRegistry.add(definition)
+            if (error.isPresent) {
+                throw GraphQLException("Unable to add definition to overall registry: " + error.get().message)
             }
         }
 
-        return overallRegistry;
+        return overallRegistry
     }
 
-    private void addIfNotPresent(TypeDefinitionRegistry overallRegistry, List<SDLDefinition<?>> allDefinitions, SDLNamedDefinition<?> namedDefinition, Class<?> targetClass) {
-        if (!containsElement(allDefinitions, namedDefinition.getName(), targetClass)) {
-            overallRegistry.add(namedDefinition);
+    private inline fun <reified T : AnySDLNamedDefinition> addIfNotPresent(
+        overallRegistry: TypeDefinitionRegistry,
+        allDefinitions: MutableList<AnySDLDefinition>,
+        namedDefinition: T,
+    ) {
+        if (!containsElement(allDefinitions, namedDefinition)) {
+            overallRegistry.add(namedDefinition)
         }
     }
 
-    private boolean containsElement(List<SDLDefinition<?>> allDefinitions, String name, Class<?> targetClass) {
-        return allDefinitions.stream().anyMatch(sdlDef -> {
-                if (sdlDef instanceof NamedNode) {
-                    String targetName = ((NamedNode<?>) sdlDef).getName();
-                    if (targetName.equals(name)) {
-                        // if it's an `extent type Foo` then it does not count since we need an actual `type Foo` defined
-                        if (!(sdlDef instanceof SDLExtensionDefinition)) {
-                            Class<?> sdlDefClass = sdlDef.getClass();
-                            Assert.assertTrue(sdlDefClass.equals(targetClass),
-                                () -> String.format("The element %s is expected to be a %s but is in fact a %s", name, targetClass, sdlDefClass));
-                            return true;
-                        }
-                    }
+    private inline fun <reified T : AnySDLNamedDefinition> containsElement(
+        allDefinitions: List<AnySDLDefinition>,
+        def: T,
+    ): Boolean {
+        return allDefinitions
+            .asSequence()
+            .filterIsInstance<AnyNamedNode>()
+            .filter { it.name == def.name }
+            // if it's an `extent type Foo` then it does not count since we need an actual `type Foo` defined
+            .filterNot { it.isExtensionDef }
+            .any { element ->
+                require(element is T) {
+                    val name = def.name
+                    val expected = T::class.java.name
+                    val actual = element.javaClass.name
+                    "The element schema $name is expected to be a $expected but is in fact a $actual"
                 }
-                return false;
+
+                element.name == def.name
             }
-        );
     }
 
-    private void collectTypes(Map<OperationKind, List<FieldDefinition>> fieldsMapByType, List<SDLDefinition<?>> allDefinitions, NadelDefinitionRegistry definitionRegistry) {
-        Map<OperationKind, List<ObjectTypeDefinition>> opTypes = definitionRegistry.getOperationMap();
-        Set<String> opTypeNames = new HashSet<>(3);
+    private fun collectTypes(
+        topLevelFields: Map<NadelOperationKind, MutableList<FieldDefinition>>,
+        allDefinitions: MutableList<AnySDLDefinition>,
+        definitionRegistry: NadelDefinitionRegistry,
+    ) {
+        val opDefinitions = definitionRegistry.operationMap
+        val opTypeNames: MutableSet<String> = HashSet(3)
 
-        opTypes.keySet().forEach(opType -> {
-            List<ObjectTypeDefinition> opsDefinitions = opTypes.get(opType);
+        opDefinitions.keys.forEach { opType: NadelOperationKind ->
+            val opsDefinitions = opDefinitions[opType]
             if (opsDefinitions != null) {
                 // Collect field definitions
-                for (ObjectTypeDefinition objectTypeDefinition : opsDefinitions) {
-                    fieldsMapByType.get(opType).addAll(objectTypeDefinition.getFieldDefinitions());
+                for (objectTypeDefinition in opsDefinitions) {
+                    topLevelFields[opType]!!.addAll(objectTypeDefinition.fieldDefinitions)
                 }
 
                 // Record down the type name for each operation
-                String operationTypeName = definitionRegistry.getOperationTypeName(opType);
-                if (operationTypeName != null) {
-                    opTypeNames.add(operationTypeName);
-                }
+                val operationTypeName = definitionRegistry.getOperationTypeName(opType)
+                opTypeNames.add(operationTypeName)
             }
-        });
+        }
 
         definitionRegistry
-            .getDefinitions()
-            .stream()
-            .filter(definition -> {
-                // Don't add operation types
-                if (definition instanceof ObjectTypeDefinition) {
-                    ObjectTypeDefinition objectTypeDefinition = (ObjectTypeDefinition) definition;
-                    return !opTypeNames.contains(objectTypeDefinition.getName());
+            .definitions
+            .asSequence()
+            .filter { definition ->
+                if (definition is ObjectTypeDefinition) {
+                    // Don't add operation types
+                    !opTypeNames.contains(definition.name)
+                } else {
+                    true
                 }
-
-                return !(definition instanceof SchemaDefinition);
-            })
-            .forEach(allDefinitions::add);
+            }
+            .filter { definition ->
+                // Don't add schema definitions, everything gets merged into a generated type with the default name
+                definition !is SchemaDefinition
+            }
+            .forEach(allDefinitions::add)
     }
 }

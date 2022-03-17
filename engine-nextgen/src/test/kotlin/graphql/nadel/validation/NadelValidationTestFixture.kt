@@ -1,12 +1,18 @@
 package graphql.nadel.validation
 
+import graphql.ExecutionInput
+import graphql.ExecutionResult
+import graphql.execution.instrumentation.InstrumentationState
+import graphql.language.Document
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionEngine
+import graphql.nadel.NadelExecutionParams
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.schema.idl.SchemaParser
 import graphql.schema.idl.TypeDefinitionRegistry
 import graphql.schema.idl.errors.SchemaProblem
+import java.util.concurrent.CompletableFuture
 
 data class NadelValidationTestFixture(
     val overallSchema: Map<String, String>,
@@ -15,13 +21,20 @@ data class NadelValidationTestFixture(
     fun toNadel(): Nadel {
         return Nadel.newNadel()
             .engineFactory {
-                NadelExecutionEngine { _, _, _, _ ->
-                    error("no-op")
+                object : NadelExecutionEngine {
+                    override fun execute(
+                        executionInput: ExecutionInput,
+                        queryDocument: Document,
+                        instrumentationState: InstrumentationState?,
+                        nadelExecutionParams: NadelExecutionParams,
+                    ): CompletableFuture<ExecutionResult> {
+                        error("no-op")
+                    }
                 }
             }
             .dsl(overallSchema)
             .serviceExecutionFactory(object : ServiceExecutionFactory {
-                override fun getServiceExecution(serviceName: String?): ServiceExecution {
+                override fun getServiceExecution(serviceName: String): ServiceExecution {
                     return ServiceExecution {
                         error("no-op")
                     }

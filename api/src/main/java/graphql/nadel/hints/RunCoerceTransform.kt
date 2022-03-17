@@ -1,13 +1,13 @@
-package graphql.nadel.hints;
+package graphql.nadel.hints
 
-import graphql.nadel.Service;
+import graphql.nadel.Service
 
-public interface RunCoerceTransform {
+fun interface RunCoerceTransform {
     /**
      * Determines whether to run graphql.nadel.enginekt.transform.NadelCoerceTransform
      *
      * @param service the service in question
      * @return true to run the coerce transform
      */
-    boolean invoke(Service service);
+    operator fun invoke(service: Service): Boolean
 }

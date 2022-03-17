@@ -1,23 +1,21 @@
-package graphql.nadel.schema;
+package graphql.nadel.schema
 
-import graphql.PublicSpi;
-import graphql.nadel.Service;
-import graphql.schema.GraphQLSchema;
-
-import java.util.List;
+import graphql.nadel.Service
+import graphql.schema.GraphQLSchema
 
 /**
  * High level representation of a transformation for an overall (not underlying) schema. Warning: the schema resulting
  * from the transformation is not validated by Nadel, so may produce unpredictable results if incorrect.
  *
- * <p>Example usage, to delete a field:
- * <code>
- * SchemaTransformation transformation = originalSchema -{@literal >} {
- * {@literal @}Override
+ *
+ * Example usage, to delete a field:
+ * `
+ * SchemaTransformation transformation = originalSchema -> {
+ * @Override
  * GraphQLSchema apply(GraphQLSchema originalSchema) {
  * return SchemaTransformer.transformSchema(originalSchema, new GraphQLTypeVisitorStub() {
- * {@literal @}Override
- * TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext{@literal <}GraphQLSchemaElement{@literal >} context) {
+ * @Override
+ * TraversalControl visitGraphQLFieldDefinition(GraphQLFieldDefinition node, TraverserContext<GraphQLSchemaElement> context) {
  * if (node.getName() == "secretField") {
  * return TreeTransformerUtil.deleteNode(node);
  * }
@@ -27,17 +25,13 @@ import java.util.List;
  * }
  * }
  * }
- * </code>
+` *
  *
  * @see graphql.schema.SchemaTransformer
+ *
  * @see graphql.schema.GraphQLTypeVisitorStub
  */
-@PublicSpi
-@FunctionalInterface
-public interface SchemaTransformationHook {
-
-    SchemaTransformationHook IDENTITY = (originalSchema, services) -> originalSchema; // no-op
-
+fun interface SchemaTransformationHook {
     /**
      * Apply a transformation to a schema object, returning the new schema.
      *
@@ -46,6 +40,9 @@ public interface SchemaTransformationHook {
      *
      * @return transformed schema
      */
-    GraphQLSchema apply(GraphQLSchema originalSchema, List<Service> services);
+    fun apply(originalSchema: GraphQLSchema, services: List<Service>): GraphQLSchema
 
+    companion object {
+        val Identity = SchemaTransformationHook { originalSchema, _ -> originalSchema }
+    }
 }

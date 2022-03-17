@@ -1,13 +1,13 @@
-package graphql.nadel.hints;
+package graphql.nadel.hints
 
-import graphql.nadel.Service;
+import graphql.nadel.Service
 
-public interface NewDocumentCompiler {
+fun interface NewDocumentCompiler {
     /**
-     * Determines whether to use the compatability {@link graphql.nadel.compat.ExecutableNormalizedOperationToAstCompiler}.
+     * Determines whether to use the compatability [graphql.nadel.compat.ExecutableNormalizedOperationToAstCompiler].
      *
      * @param service the service in question
      * @return true to use new document printer, false to use previous version
      */
-    boolean invoke(Service service);
+    operator fun invoke(service: Service): Boolean
 }

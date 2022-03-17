@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
-    id("com.bnorm.power.kotlin-power-assert") version "0.11.0"
+    id("com.bnorm.power.kotlin-power-assert")
 }
 
 dependencies {

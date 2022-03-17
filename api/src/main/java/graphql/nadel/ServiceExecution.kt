@@ -1,11 +1,7 @@
-package graphql.nadel;
+package graphql.nadel
 
+import java.util.concurrent.CompletableFuture
 
-import graphql.PublicSpi;
-
-import java.util.concurrent.CompletableFuture;
-
-@PublicSpi
-public interface ServiceExecution {
-    CompletableFuture<ServiceExecutionResult> execute(ServiceExecutionParameters serviceExecutionParameters);
+fun interface ServiceExecution {
+    fun execute(serviceExecutionParameters: ServiceExecutionParameters): CompletableFuture<ServiceExecutionResult>
 }

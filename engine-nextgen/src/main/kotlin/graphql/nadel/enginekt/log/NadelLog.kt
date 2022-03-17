@@ -1,16 +1,6 @@
 package graphql.nadel.enginekt.log
 
-import graphql.nadel.util.LogKit
 import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-
-internal inline fun <reified T> getLogger(): Logger {
-    return LoggerFactory.getLogger(T::class.java)
-}
-
-internal inline fun <reified T> getNotPrivacySafeLogger(): Logger {
-    return LogKit.getNotPrivacySafeLogger(T::class.java)
-}
 
 inline fun Logger.ifTraceEnabled(logFunc: Logger.() -> Unit) {
     if (isTraceEnabled) {

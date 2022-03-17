@@ -1,4 +1,4 @@
-name: batched-hydration-from-direct-query-with-a-synthetic-field
+name: batched hydration from direct query with a synthetic field
 enabled: true
 overallSchema:
   service2: |
@@ -18,12 +18,12 @@ overallSchema:
       issues: [Issue]
     }
     extend enum NadelHydrationTemplate {
-        USER_TEMPLATE @hydratedTemplate(
-                    service: "service2"
-                    field: "users.usersByIds"
-                    identifiedBy: "id"
-                    batchSize: 3
-            )
+      USER_TEMPLATE @hydratedTemplate(
+        service: "service2"
+        field: "users.usersByIds"
+        identifiedBy: "id"
+        batchSize: 3
+      )
     }
 
     type Issue {
@@ -34,7 +34,6 @@ overallSchema:
           {name: "id" valueFromField: "authorIds"}
         ]
       )
-
     }
 underlyingSchema:
   service2: |

@@ -5,7 +5,7 @@ import graphql.language.AstPrinter
 import graphql.language.AstSorter
 import graphql.nadel.Nadel
 import graphql.nadel.NadelExecutionHints
-import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
+import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
@@ -13,6 +13,7 @@ import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.AnyList
 import graphql.nadel.enginekt.util.AnyMap
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.enginekt.util.MutableJsonMap
 import graphql.nadel.tests.util.getAncestorFile
 import graphql.nadel.tests.util.requireIsDirectory
 import graphql.nadel.tests.util.toSlug
@@ -198,9 +199,9 @@ private suspend fun execute(
                             @Suppress("UNCHECKED_CAST")
                             CompletableFuture.completedFuture(
                                 ServiceExecutionResult(
-                                    response["data"] as JsonMap?,
-                                    response["errors"] as List<JsonMap>?,
-                                    response["extensions"] as JsonMap?,
+                                    response["data"] as MutableJsonMap? ?: LinkedHashMap(),
+                                    response["errors"] as MutableList<MutableJsonMap>? ?: ArrayList(),
+                                    response["extensions"] as MutableJsonMap? ?: LinkedHashMap(),
                                 ),
                             )
                         } catch (e: Throwable) {
@@ -260,7 +261,7 @@ private suspend fun execute(
                 .variables(fixture.variables)
                 .operationName(fixture.operationName)
                 .let { builder ->
-                    testHook.makeExecutionInput(builder.nadelExecutionHints(defaultHints.copy()))
+                    testHook.makeExecutionInput(builder.executionHints(defaultHints.copy()))
                 }
                 .build(),
         ).await()

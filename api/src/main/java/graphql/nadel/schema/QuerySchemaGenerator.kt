@@ -1,30 +1,21 @@
-package graphql.nadel.schema;
+package graphql.nadel.schema
 
-import graphql.Internal;
-import graphql.schema.GraphQLDirective;
-import graphql.schema.GraphQLDirectiveContainer;
-import graphql.schema.GraphQLSchema;
-import graphql.schema.transform.FieldVisibilitySchemaTransformation;
-import graphql.schema.transform.VisibleFieldPredicate;
+import graphql.schema.GraphQLDirectiveContainer
+import graphql.schema.GraphQLSchema
+import graphql.schema.transform.FieldVisibilitySchemaTransformation
+import graphql.schema.transform.VisibleFieldPredicate
 
-import static graphql.nadel.schema.NadelDirectives.HIDDEN_DIRECTIVE_DEFINITION;
-
-@Internal
-public class QuerySchemaGenerator {
-
-    private static final VisibleFieldPredicate visibleFieldPredicate = environment -> {
-        if (environment.getSchemaElement() instanceof GraphQLDirectiveContainer) {
-            GraphQLDirectiveContainer container = (GraphQLDirectiveContainer) environment.getSchemaElement();
-            return container.getDirectives()
-                    .stream()
-                    .map(GraphQLDirective::getName)
-                    .noneMatch(HIDDEN_DIRECTIVE_DEFINITION.getName()::equalsIgnoreCase);
+internal object QuerySchemaGenerator {
+    private val visibleFieldPredicate = VisibleFieldPredicate { environment ->
+        if (environment.schemaElement is GraphQLDirectiveContainer) {
+            val container = environment.schemaElement as GraphQLDirectiveContainer
+            container.hasAppliedDirective(NadelDirectives.hiddenDirectiveDefinition.name) == false
+        } else {
+            true
         }
-        return true;
-    };
-
-    public static GraphQLSchema generateQuerySchema(GraphQLSchema engineSchema) {
-        return new FieldVisibilitySchemaTransformation(visibleFieldPredicate).apply(engineSchema);
     }
 
+    fun generateQuerySchema(engineSchema: GraphQLSchema): GraphQLSchema {
+        return FieldVisibilitySchemaTransformation(visibleFieldPredicate).apply(engineSchema)
+    }
 }

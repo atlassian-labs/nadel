@@ -1,140 +1,76 @@
-package graphql.nadel;
+package graphql.nadel
 
-import graphql.PublicApi;
-import graphql.execution.ExecutionId;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import graphql.execution.ExecutionId
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.function.Consumer;
+class NadelExecutionInput private constructor(
+    val query: String,
+    val operationName: String?,
+    val context: Any?,
+    val variables: Map<String, Any?>,
+    val executionId: ExecutionId?,
+    val nadelExecutionHints: NadelExecutionHints,
+) {
+    class Builder {
+        private var query: String? = null
+        private var operationName: String? = null
+        private var context: Any? = null
+        private var variables: Map<String, Any?> = LinkedHashMap()
+        private var executionId: ExecutionId? = null
+        private var executionHints = NadelExecutionHints.newHints().build()
 
-import static graphql.Assert.assertNotNull;
-import static graphql.GraphQLContext.newContext;
-import static java.util.Objects.requireNonNull;
-
-@PublicApi
-public class NadelExecutionInput {
-
-    @NotNull
-    private final String query;
-    @Nullable
-    private final String operationName;
-    @Nullable
-    private final Object context;
-    @NotNull
-    private final Map<String, Object> variables;
-    @Nullable
-    private final ExecutionId executionId;
-    @NotNull
-    private final NadelExecutionHints nadelExecutionHints;
-
-    private NadelExecutionInput(
-        String query,
-        @Nullable String operationName,
-        @Nullable Object context,
-        Map<String, Object> variables,
-        @Nullable ExecutionId executionId,
-        @NotNull NadelExecutionHints nadelExecutionHints
-    ) {
-        this.query = requireNonNull(query);
-        this.operationName = operationName;
-        this.context = context;
-        this.variables = requireNonNull(variables);
-        this.executionId = executionId;
-        this.nadelExecutionHints = nadelExecutionHints;
-    }
-
-    public static Builder newNadelExecutionInput() {
-        return new Builder();
-    }
-
-    @NotNull
-    public String getQuery() {
-        return query;
-    }
-
-    @Nullable
-    public String getOperationName() {
-        return operationName;
-    }
-
-    @Nullable
-    public Object getContext() {
-        return context;
-    }
-
-    @NotNull
-    public Map<String, Object> getVariables() {
-        return new LinkedHashMap<>(variables);
-    }
-
-    /**
-     * @return id that will be/was used to execute this operation.
-     */
-    @Nullable
-    public ExecutionId getExecutionId() {
-        return executionId;
-    }
-
-    @NotNull
-    public NadelExecutionHints getNadelExecutionHints() {
-        return nadelExecutionHints;
-    }
-
-    public static class Builder {
-        private String query;
-        private String operationName;
-        private Object context = newContext().build();
-        private Map<String, Object> variables = new LinkedHashMap<>();
-        private ExecutionId executionId;
-        private NadelExecutionHints nadelExecutionHints = NadelExecutionHints.newHints().build();
-
-        private Builder() {
+        fun query(query: String): Builder {
+            this.query = query
+            return this
         }
 
-        public Builder query(String query) {
-            this.query = query;
-            return this;
+        fun operationName(operationName: String?): Builder {
+            this.operationName = operationName
+            return this
         }
 
-        public Builder operationName(String operationName) {
-            this.operationName = operationName;
-            return this;
+        fun context(context: Any?): Builder {
+            this.context = context
+            return this
         }
 
-        public Builder context(Object context) {
-            this.context = context;
-            return this;
+        fun variables(variables: Map<String, Any?>?): Builder {
+            this.variables = variables ?: emptyMap()
+            return this
         }
 
-        public Builder variables(Map<String, Object> variables) {
-            this.variables = variables;
-            return this;
+        fun executionId(executionId: ExecutionId): Builder {
+            this.executionId = executionId
+            return this
         }
 
-        public Builder executionId(ExecutionId executionId) {
-            this.executionId = executionId;
-            return this;
+        fun executionHints(nadelExecutionHints: NadelExecutionHints): Builder {
+            this.executionHints = nadelExecutionHints
+            return this
         }
 
-        public Builder nadelExecutionHints(NadelExecutionHints nadelExecutionHints) {
-            this.nadelExecutionHints = assertNotNull(nadelExecutionHints);
-            return this;
+        fun transformExecutionHints(transformFunc: (NadelExecutionHints.Builder) -> Unit): Builder {
+            this.executionHints = executionHints.toBuilder()
+                .also(transformFunc)
+                .build()
+            return this
         }
 
-        public Builder transformExecutionHints(Consumer<NadelExecutionHints.Builder> builderConsumer) {
-            final NadelExecutionHints.Builder hintsBuilder = this.nadelExecutionHints.toBuilder();
-
-            builderConsumer.accept(hintsBuilder);
-
-            this.nadelExecutionHints = hintsBuilder.build();
-
-            return this;
+        fun build(): NadelExecutionInput {
+            return NadelExecutionInput(
+                query = requireNotNull(query) { "Query must be provided" },
+                operationName = operationName,
+                context = context,
+                variables = variables,
+                executionId = executionId,
+                nadelExecutionHints = executionHints,
+            )
         }
+    }
 
-        public NadelExecutionInput build() {
-            return new NadelExecutionInput(query, operationName, context, variables, executionId, nadelExecutionHints);
+    companion object {
+        @JvmStatic
+        fun newNadelExecutionInput(): Builder {
+            return Builder()
         }
     }
 }

@@ -44,7 +44,7 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally-inside-cf
 
                 override fun beginExecute(
                     parameters: NadelInstrumentationExecuteOperationParameters,
-                ): CompletableFuture<InstrumentationContext<ExecutionResult?>> {
+                ): CompletableFuture<InstrumentationContext<ExecutionResult>> {
                     instrumentationParams = parameters
                     return CompletableFuture.supplyAsync {
                         throw AbortExecutionException("instrumented-error")
@@ -54,7 +54,7 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally-inside-cf
                 override fun instrumentExecutionResult(
                     executionResult: ExecutionResult,
                     parameters: NadelInstrumentationQueryExecutionParameters,
-                ): CompletableFuture<ExecutionResult?> {
+                ): CompletableFuture<ExecutionResult> {
                     resultBeforeFinalInstrumentation = executionResult
                     return completedFuture(
                         ExecutionResultImpl.Builder()
@@ -85,7 +85,7 @@ class `execution-is-aborted-when-begin-execute-completes-exceptionally-inside-cf
         expectThat(instrumentationParams)
             .isNotNull()
             .get {
-                getInstrumentationState<InstrumentationState>()
+                getInstrumentationState<InstrumentationState>()!!
             }
             .getToString()
             .isEqualTo("so-annoying")

@@ -24,8 +24,8 @@ object NadelSchemaUtil {
     }
 
     fun hasHydration(def: FieldDefinition): Boolean {
-        val hydratedPresent = def.hasDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.name)
-        val hydratedFromPresent = def.hasDirective(NadelDirectives.HYDRATED_FROM_DIRECTIVE_DEFINITION.name)
+        val hydratedPresent = def.hasDirective(NadelDirectives.hydratedDirectiveDefinition.name)
+        val hydratedFromPresent = def.hasDirective(NadelDirectives.hydratedFromDirectiveDefinition.name)
         return hydratedPresent || hydratedFromPresent
     }
 
@@ -38,7 +38,7 @@ object NadelSchemaUtil {
     }
 
     fun hasRename(def: FieldDefinition): Boolean {
-        return def.hasDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.name)
+        return def.hasDirective(NadelDirectives.renamedDirectiveDefinition.name)
     }
 
     fun getUnderlyingName(type: GraphQLNamedType): String {

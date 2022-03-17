@@ -1,5 +1,5 @@
-package graphql.nadel;
+package graphql.nadel
 
-public interface NadelExecutionEngineFactory {
-    NadelExecutionEngine create(Nadel nadel);
+fun interface NadelExecutionEngineFactory {
+    fun create(nadel: Nadel): NadelExecutionEngine
 }

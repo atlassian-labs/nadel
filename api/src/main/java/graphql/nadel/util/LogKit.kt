@@ -1,11 +1,13 @@
-package graphql.nadel.util;
+package graphql.nadel.util
 
-import graphql.Internal;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-@Internal
-public class LogKit {
+// todo: make internal once we merge api/ and engine-nextgen
+object LogKit {
+    inline fun <reified T> getLogger(): Logger {
+        return LoggerFactory.getLogger(T::class.java)
+    }
 
     /**
      * Creates a logger with a name indicating that the content might not be privacy safe
@@ -15,8 +17,7 @@ public class LogKit {
      *
      * @return a new Logger
      */
-    public static Logger getNotPrivacySafeLogger(Class clazz) {
-        return LoggerFactory.getLogger(String.format("notprivacysafe.%s", clazz.getName()));
+    inline fun <reified T> getNotPrivacySafeLogger(): Logger {
+        return LoggerFactory.getLogger("notprivacysafe." + T::class.java.name)
     }
-
 }

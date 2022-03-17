@@ -1,75 +1,42 @@
-package graphql.nadel.instrumentation.parameters;
+package graphql.nadel.instrumentation.parameters
 
-import graphql.ExecutionInput;
-import graphql.PublicApi;
-import graphql.execution.instrumentation.InstrumentationState;
-import graphql.schema.GraphQLSchema;
-
-import java.util.Collections;
-import java.util.Map;
+import graphql.ExecutionInput
+import graphql.execution.instrumentation.InstrumentationState
+import graphql.schema.GraphQLSchema
 
 /**
- * Parameters sent to {@link graphql.nadel.instrumentation.NadelInstrumentation} methods
+ * Parameters sent to [graphql.nadel.instrumentation.NadelInstrumentation] methods
  */
-@PublicApi
-public class NadelInstrumentationQueryExecutionParameters {
-    private final ExecutionInput executionInput;
-    private final String query;
-    private final String operation;
-    private final Object context;
-    private final Map<String, Object> variables;
-    private final InstrumentationState instrumentationState;
-    private final GraphQLSchema schema;
+data class NadelInstrumentationQueryExecutionParameters(
+    val executionInput: ExecutionInput,
+    val query: String,
+    val operation: String?,
+    private val context: Any?,
+    val variables: Map<String?, Any?>,
+    private val instrumentationState: InstrumentationState?,
+    val schema: GraphQLSchema,
+) {
+    constructor(
+        executionInput: ExecutionInput,
+        schema: GraphQLSchema,
+        instrumentationState: InstrumentationState?,
+    ) : this(
+        executionInput,
+        query = executionInput.query,
+        operation = executionInput.operationName,
+        context = executionInput.context,
+        variables = executionInput.variables,
+        instrumentationState,
+        schema,
+    )
 
-    public NadelInstrumentationQueryExecutionParameters(ExecutionInput executionInput, GraphQLSchema schema, InstrumentationState instrumentationState) {
-        this.executionInput = executionInput;
-        this.query = executionInput.getQuery();
-        this.operation = executionInput.getOperationName();
-        this.context = executionInput.getContext();
-        this.variables = executionInput.getVariables() != null ? executionInput.getVariables() : Collections.emptyMap();
-        this.instrumentationState = instrumentationState;
-        this.schema = schema;
+    fun <T> getContext(): T? {
+        @Suppress("UNCHECKED_CAST") // trust the caller
+        return context as T?
     }
 
-    /**
-     * Returns a cloned parameters object with the new state
-     *
-     * @param instrumentationState the new state for this parameters object
-     *
-     * @return a new parameters object with the new state
-     */
-    public NadelInstrumentationQueryExecutionParameters withNewState(InstrumentationState instrumentationState) {
-        return new NadelInstrumentationQueryExecutionParameters(this.getExecutionInput(), this.schema, instrumentationState);
-    }
-
-    public ExecutionInput getExecutionInput() {
-        return executionInput;
-    }
-
-    public String getQuery() {
-        return query;
-    }
-
-    public String getOperation() {
-        return operation;
-    }
-
-    @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
-    public <T> T getContext() {
-        return (T) context;
-    }
-
-    public Map<String, Object> getVariables() {
-        return variables;
-    }
-
-    @SuppressWarnings("TypeParameterUnusedInFormals")
-    public <T extends InstrumentationState> T getInstrumentationState() {
-        //noinspection unchecked
-        return (T) instrumentationState;
-    }
-
-    public GraphQLSchema getSchema() {
-        return this.schema;
+    fun <T : InstrumentationState?> getInstrumentationState(): T? {
+        @Suppress("UNCHECKED_CAST") // trust the caller
+        return instrumentationState as T?
     }
 }

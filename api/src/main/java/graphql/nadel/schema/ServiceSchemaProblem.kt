@@ -1,41 +1,18 @@
-package graphql.nadel.schema;
+package graphql.nadel.schema
 
-import graphql.GraphQLError;
-import graphql.GraphQLException;
-import graphql.PublicApi;
-import graphql.schema.idl.errors.SchemaProblem;
-
-import java.util.List;
+import graphql.GraphQLError
+import graphql.GraphQLException
+import graphql.schema.idl.errors.SchemaProblem
 
 /**
- * This exception wraps a {@link graphql.schema.idl.errors.SchemaProblem} and associates the specific
+ * This exception wraps a [graphql.schema.idl.errors.SchemaProblem] and associates the specific
  * problems with a service name
  */
-@PublicApi
-public class ServiceSchemaProblem extends GraphQLException {
-
-    private final String serviceName;
-    private final SchemaProblem cause;
-
-    public ServiceSchemaProblem(String message, String serviceName, SchemaProblem cause) {
-        super(message, cause);
-        this.serviceName = serviceName;
-        this.cause = cause;
-    }
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public List<GraphQLError> getErrors() {
-        return cause.getErrors();
-    }
-
-    @Override
-    public String toString() {
-        return "ServiceSchemaProblem{" +
-                "service=" + serviceName +
-                ", errors=" + getErrors() +
-                '}';
-    }
+data class ServiceSchemaProblem(
+    override val message: String,
+    val serviceName: String,
+    override val cause: SchemaProblem,
+) : GraphQLException(message, cause) {
+    val errors: List<GraphQLError>
+        get() = cause.errors
 }
