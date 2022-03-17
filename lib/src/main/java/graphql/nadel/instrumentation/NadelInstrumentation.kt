@@ -3,7 +3,6 @@ package graphql.nadel.instrumentation
 import graphql.ExecutionResult
 import graphql.execution.instrumentation.InstrumentationContext
 import graphql.execution.instrumentation.InstrumentationState
-import graphql.execution.instrumentation.SimpleInstrumentationContext
 import graphql.execution.instrumentation.SimpleInstrumentationContext.noOp
 import graphql.language.Document
 import graphql.nadel.instrumentation.parameters.NadelInstrumentationCreateStateParameters
@@ -40,7 +39,11 @@ interface NadelInstrumentation {
     }
 
     /**
+     * This is called just before timing some specific Nadel code. See [NadelInstrumentationTimingParameters.step].
      *
+     * After the timing of the step is complete [InstrumentationContext.onCompleted] is invoked.
+     *
+     * You can implement this function to record metrics in your Gateway service to determine what part of Nadel is taking up time.
      */
     fun beginTiming(parameters: NadelInstrumentationTimingParameters): InstrumentationContext<Duration> {
         return noOp()

@@ -16,9 +16,8 @@ internal class NadelInstrumentationTimer(
         function: () -> T,
     ): T {
         val parameters = NadelInstrumentationTimingParameters(step, userContext, instrumentationState)
-        val start = System.nanoTime()
-
         val context = instrumentation.beginTiming(parameters)
+        val start = System.nanoTime()
 
         return function()
             .also {

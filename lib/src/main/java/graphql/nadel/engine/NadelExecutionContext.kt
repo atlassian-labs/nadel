@@ -3,8 +3,8 @@ package graphql.nadel.engine
 import graphql.ExecutionInput
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.nadel.NadelExecutionHints
-import graphql.nadel.NadelInstrumentationTimer
 import graphql.nadel.Service
+import graphql.nadel.enginekt.instrumentation.NadelInstrumentationTimer
 import graphql.nadel.hooks.CreateServiceContextParams
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.normalized.ExecutableNormalizedOperation
