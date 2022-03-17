@@ -19,10 +19,20 @@ internal class NadelInstrumentationTimer(
         val context = instrumentation.beginTiming(parameters)
         val start = System.nanoTime()
 
-        return function()
-            .also {
-                val end = System.nanoTime()
-                context.onCompleted(Duration.ofNanos(end - start), null)
-            }
+        try {
+            return function()
+                .also {
+                    context.onCompleted(getDurationSince(start), null)
+                }
+        } catch (e: Throwable) {
+            context.onCompleted(getDurationSince(start), e)
+            throw e
+        }
+    }
+
+    @Suppress("NOTHING_TO_INLINE") // inline anyway
+    private inline fun getDurationSince(startNanos: Long): Duration? {
+        val end = System.nanoTime()
+        return Duration.ofNanos(end - startNanos)
     }
 }
