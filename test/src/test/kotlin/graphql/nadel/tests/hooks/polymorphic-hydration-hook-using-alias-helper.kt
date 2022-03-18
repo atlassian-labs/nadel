@@ -33,10 +33,10 @@ private class PolymorphicHydrationHookUsingAliasHelper : NadelEngineExecutionHoo
         instruction: T,
         hydrationArgumentValue: String
     ): Boolean {
-        return instruction.actorFieldDef.name.contains("pet") && hydrationArgumentValue.startsWith(
+        return instruction.overallActorFieldDef.name.contains("pet") && hydrationArgumentValue.startsWith(
             "pet", ignoreCase = true
         ) ||
-            instruction.actorFieldDef.name.contains("human") && hydrationArgumentValue.startsWith(
+            instruction.overallActorFieldDef.name.contains("human") && hydrationArgumentValue.startsWith(
             "human", ignoreCase = true
         )
     }

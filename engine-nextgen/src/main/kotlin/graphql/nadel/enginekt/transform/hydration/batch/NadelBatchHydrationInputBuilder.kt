@@ -65,7 +65,7 @@ internal object NadelBatchHydrationInputBuilder {
         val batchSize = instruction.batchSize
 
         val (batchInputDef, batchInputValueSource) = getBatchInputDef(instruction) ?: return emptyList()
-        val actorBatchArgDef = instruction.actorFieldDef.getArgument(batchInputDef.name)
+        val actorBatchArgDef = instruction.overallActorFieldDef.getArgument(batchInputDef.name)
 
         val args = getFieldResultValues(batchInputValueSource, parentNodes, aliasHelper)
 

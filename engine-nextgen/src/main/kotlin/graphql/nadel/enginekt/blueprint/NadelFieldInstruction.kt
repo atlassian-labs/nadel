@@ -46,12 +46,6 @@ interface NadelGenericHydrationInstruction {
     val queryPathToActorField: NadelQueryPath
 
     /**
-     * The field definition referenced by [queryPathToActorField].
-     */
-    @Deprecated("Start moving to overall field overallActorFieldDef")
-    val actorFieldDef: GraphQLFieldDefinition
-
-    /**
      * Arguments needed to invoke [actorFieldDef].
      *
      * e.g. given
@@ -90,7 +84,6 @@ data class NadelHydrationFieldInstruction(
     override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
     override val queryPathToActorField: NadelQueryPath,
-    override val actorFieldDef: GraphQLFieldDefinition,
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
@@ -104,7 +97,6 @@ data class NadelBatchHydrationFieldInstruction(
     override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
     override val queryPathToActorField: NadelQueryPath,
-    override val actorFieldDef: GraphQLFieldDefinition,
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,

@@ -96,7 +96,7 @@ internal object NadelBatchHydrationObjectIdFieldBuilder {
         val objectTypeNames = getObjectTypeNamesForIdField(
             executionBlueprint = executionBlueprint,
             actorService = batchHydrationInstruction.actorService,
-            underlyingParentTypeOfIdField = batchHydrationInstruction.actorFieldDef.type,
+            underlyingParentTypeOfIdField = batchHydrationInstruction.overallActorFieldDef.type,
         )
 
         return objectIds
