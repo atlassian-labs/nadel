@@ -146,11 +146,6 @@ internal class NadelTypeValidation(
             return true
         }
 
-        // Ignore what the name is for scalars
-        if (overallType is GraphQLScalarType && underlyingType is GraphQLScalarType) {
-            return true
-        }
-
         return false
     }
 
