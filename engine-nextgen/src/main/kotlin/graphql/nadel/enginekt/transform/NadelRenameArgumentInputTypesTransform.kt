@@ -83,7 +83,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
     ): NormalizedInputValue {
-        val overallTypeName = inputValue.typeName
+        val overallTypeName = inputValue.unwrappedTypeName
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName)
         if (underlyingTypeName != overallTypeName) {
             //
@@ -93,7 +93,10 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
             // reasons we don't do it.  Also, Nadel currently does not allow an input field to be renamed
             // and hence we don't have to change inner map keys either.
             //
-            return NormalizedInputValue(underlyingTypeName, inputValue.value)
+            val overallWrappedTypename = inputValue.typeName
+            val newUnderlyingTypeNameWithOriginalWrapping =
+                overallWrappedTypename.replace(overallTypeName, underlyingTypeName)
+            return NormalizedInputValue(newUnderlyingTypeNameWithOriginalWrapping, inputValue.value)
         }
         return inputValue
     }

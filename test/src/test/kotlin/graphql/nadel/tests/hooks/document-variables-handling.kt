@@ -67,6 +67,10 @@ class `inlined-all-arguments-with-mixed-literals-and-variables` : AllDocumentVar
 
 @UseHook
 class `inlined-all-arguments-with-renamed-field` : AllDocumentVariablesHintHook() {
+
+}
+@UseHook
+class `inlined-all-arguments-with-renamed-field-input-is-wrapped-in-a-list` : AllDocumentVariablesHintHook() {
 }
 
 @UseHook
