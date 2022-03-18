@@ -1,17 +1,18 @@
 package graphql.nadel.validation
 
+import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationFieldMustBeNullable
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationIncompatibleOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorField
-import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
-import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorFieldInOverallSchema
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationActorService
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationArgumentValueSource
 import graphql.nadel.validation.NadelSchemaValidationError.MissingHydrationFieldValueSource
-import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingField
 import graphql.nadel.validation.NadelSchemaValidationError.MissingRequiredHydrationActorFieldArgument
+import graphql.nadel.validation.NadelSchemaValidationError.NonExistentHydrationActorFieldArgument
 import graphql.nadel.validation.util.assertSingleOfType
+import graphql.schema.GraphQLNamedType
 import io.kotest.core.spec.style.DescribeSpec
 
 private const val source = "$" + "source"
@@ -179,7 +180,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
 
             assert(errors.size == 1)
-            val error = errors.assertSingleOfType<MissingHydrationActorFieldInOverallSchema>()
+            val error = errors.assertSingleOfType<MissingHydrationActorField>()
             assert(error.service.name == "issues")
             assert(error.hydration.serviceName == "users")
             assert(error.overallField.name == "creator")
@@ -866,7 +867,6 @@ class NadelHydrationValidationTest : DescribeSpec({
                                 field: "user"
                                 arguments: [
                                     {name: "id", value: "$source.creator"}
-                                    {name: "id", value: "$argument.someArg"}
                                     {name: "other", value: "$argument.other"}
                                 ]
                             )
@@ -874,7 +874,7 @@ class NadelHydrationValidationTest : DescribeSpec({
                     """.trimIndent(),
                     "accounts" to """
                         type Query {
-                            user(id: ID!, other: Boolean): Account 
+                            user(id: ID!, other: Boolean): Account
                         }
                         type Account {
                             id: ID!
@@ -914,11 +914,295 @@ class NadelHydrationValidationTest : DescribeSpec({
             val errors = validate(fixture)
             assert(errors.map { it.message }.isNotEmpty())
 
-            val error = errors.assertSingleOfType<MissingUnderlyingField>()
-            assert(error.parentType.overall.name == "User")
-            assert(error.parentType.underlying.name == "Account")
-            assert(error.overallField.name == "name")
+            val error = errors.assertSingleOfType<HydrationIncompatibleOutputType>()
+            assert(error.parentType.overall.name == "Issue")
+            assert(error.overallField.name == "creator")
             assert(error.subject == error.overallField)
+            assert(error.incompatibleOutputType.name == "Account")
+        }
+
+        it("fails if one of the hydration return types is not in the union") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: AbstractUser
+                            @hydrated(
+                                service: "users"
+                                field: "externalUser"
+                                arguments: [
+                                    {name: "id", value: "$source.creatorId"}
+                                ]
+                            )
+                        }
+                        union AbstractUser = User
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        type ExternalUser {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creatorId: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        type ExternalUser {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.isNotEmpty())
+            val error = errors.singleOfType<HydrationIncompatibleOutputType>()
+            assert(error.parentType.overall.name == "Issue")
+            assert(error.actorField.name == "externalUser")
+            assert((error.actorField.type as GraphQLNamedType).name == "ExternalUser")
+            assert(error.incompatibleOutputType.name == "ExternalUser")
+        }
+
+        it("fails if actor output type does not implement interface") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: AbstractUser
+                            @hydrated(
+                                service: "users"
+                                field: "externalUser"
+                                arguments: [
+                                    {name: "id", value: "$source.creatorId"}
+                                ]
+                            )
+                        }
+                        interface AbstractUser {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User implements AbstractUser {
+                            id: ID!
+                            name: String!
+                        }
+                        type ExternalUser {
+                            id: ID!
+                            name: String!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creatorId: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User implements AbstractUser {
+                            id: ID!
+                            name: String!
+                        }
+                        type ExternalUser {
+                            id: ID!
+                            name: String!
+                        }
+                        interface AbstractUser {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.isNotEmpty())
+            val error = errors.singleOfType<HydrationIncompatibleOutputType>()
+            assert(error.parentType.overall.name == "Issue")
+            assert(error.actorField.name == "externalUser")
+            assert(error.incompatibleOutputType.name == "ExternalUser")
+        }
+
+        it("passes if actor output type implements the interface") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: AbstractUser
+                            @hydrated(
+                                service: "users"
+                                field: "externalUser"
+                                arguments: [
+                                    {name: "id", value: "$source.creatorId"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User implements AbstractUser {
+                            id: ID!
+                            name: String!
+                        }
+                        type ExternalUser implements AbstractUser {
+                            id: ID!
+                            name: String!
+                        }
+                        interface AbstractUser {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creatorId: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User implements AbstractUser {
+                            id: ID!
+                            name: String!
+                        }
+                        type ExternalUser implements AbstractUser {
+                            id: ID!
+                            name: String!
+                        }
+                        interface AbstractUser {
+                            id: ID!
+                        }
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
+        }
+
+        it("passes if actor output type belongs in union") {
+            val fixture = NadelValidationTestFixture(
+                overallSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creator: AbstractUser
+                            @hydrated(
+                                service: "users"
+                                field: "externalUser"
+                                arguments: [
+                                    {name: "id", value: "$source.creatorId"}
+                                ]
+                            )
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        type ExternalUser {
+                            id: ID!
+                            name: String!
+                        }
+                        union AbstractUser = User | ExternalUser
+                    """.trimIndent(),
+                ),
+                underlyingSchema = mapOf(
+                    "issues" to """
+                        type Query {
+                            issue: Issue
+                        }
+                        type Issue {
+                            id: ID!
+                            creatorId: ID!
+                        }
+                    """.trimIndent(),
+                    "users" to """
+                        type Query {
+                            user(id: ID!): User
+                            externalUser(id: ID!): ExternalUser
+                        }
+                        type User {
+                            id: ID!
+                            name: String!
+                        }
+                        type ExternalUser {
+                            id: ID!
+                            name: String!
+                        }
+                        union AbstractUser = User | ExternalUser
+                    """.trimIndent(),
+                ),
+            )
+
+            val errors = validate(fixture)
+            assert(errors.map { it.message }.isEmpty())
         }
     }
 })

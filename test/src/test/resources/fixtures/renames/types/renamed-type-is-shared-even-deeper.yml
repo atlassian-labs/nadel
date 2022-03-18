@@ -62,6 +62,9 @@ underlyingSchema:
     interface Node {
       id: ID
     }
+    type Stub implements Node {
+      id: ID
+    }
 query: |
   query {
     elements {

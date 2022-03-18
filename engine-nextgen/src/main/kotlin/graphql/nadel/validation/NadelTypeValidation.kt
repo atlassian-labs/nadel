@@ -1,5 +1,7 @@
 package graphql.nadel.validation
 
+import graphql.Scalars.GraphQLID
+import graphql.Scalars.GraphQLString
 import graphql.language.ObjectTypeDefinition
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.AnyNamedNode
@@ -23,7 +25,11 @@ import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingName
 import graphql.nadel.validation.util.NadelSchemaUtil.getUnderlyingType
 import graphql.nadel.validation.util.getReachableTypeNames
 import graphql.schema.GraphQLFieldDefinition
+import graphql.schema.GraphQLImplementingType
+import graphql.schema.GraphQLInterfaceType
+import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedType
+import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLOutputType
 import graphql.schema.GraphQLScalarType
 import graphql.schema.GraphQLSchema
@@ -38,6 +44,7 @@ internal class NadelTypeValidation(
 ) {
     private val fieldValidation = NadelFieldValidation(overallSchema, services, this)
     private val inputValidation = NadelInputValidation()
+    private val unionValidation = NadelUnionValidation(this)
     private val enumValidation = NadelEnumValidation()
     private val interfaceValidation = NadelInterfaceValidation()
 
@@ -68,6 +75,7 @@ internal class NadelTypeValidation(
 
         return fieldValidation.validate(schemaElement) +
             inputValidation.validate(schemaElement) +
+            unionValidation.validate(schemaElement) +
             interfaceValidation.validate(schemaElement) +
             enumValidation.validate(schemaElement)
     }
@@ -96,6 +104,31 @@ internal class NadelTypeValidation(
         }
 
         return typeErrors + listOfNotNull(outputTypeError)
+    }
+
+    /**
+     * Answers whether `rhs` assignable to `lhs`?
+     *
+     * i.e. does the following compile
+     *
+     * ```
+     * vol output: lhs = rhs
+     * ```
+     *
+     * Note: this assumes both types are from the same schema. This does NOT
+     * deal with differences between overall and underlying schema.
+     */
+    fun isAssignableTo(lhs: GraphQLNamedOutputType, rhs: GraphQLNamedOutputType): Boolean {
+        if (lhs.name == rhs.name) {
+            return true
+        }
+        if (lhs.name == GraphQLID.name && rhs.name == GraphQLString.name) {
+            return true
+        }
+        if (lhs is GraphQLInterfaceType && rhs is GraphQLImplementingType) {
+            return rhs.interfaces.contains(lhs)
+        }
+        return false
     }
 
     /**

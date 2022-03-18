@@ -19,7 +19,7 @@ overallSchema:
 underlyingSchema:
   Bar: |
     type Bar {
-      id: ID
+      id: ID!
     }
 
     type Query {

@@ -18,14 +18,14 @@ overallSchema:
     }
   Baz: |
     type Query {
-      baz(data: JSON!): Foo @hidden
+      baz(data: [JSON!]!): [Foo] @hidden
     }
   Shared: |
     scalar JSON
 underlyingSchema:
   service: |
     type Query {
-      foo(input: JSON): Foo
+      foo(input: JSON): [Foo]
     }
     type Foo {
       id: ID!
@@ -38,12 +38,14 @@ underlyingSchema:
     }
     type Foo {
       id: ID!
+      baz: JSON
     }
     scalar JSON
   Shared: |
     type Query {
       echo: String
     }
+    scalar JSON
 query: |
   query {
     foo(input: {something: true answer: 42}) {

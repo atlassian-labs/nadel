@@ -8,7 +8,7 @@ overallSchema:
     type Issue {
       id: ID
       authorId: ID @renamed(from: "authorDetails.authorId")
-      authorName: ID @renamed(from: "authorDetails.name")
+      authorName: String @renamed(from: "authorDetails.name")
     }
 underlyingSchema:
   Issues: |

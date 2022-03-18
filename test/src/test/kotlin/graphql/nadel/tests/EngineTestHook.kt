@@ -8,6 +8,7 @@ import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.SchemaTransformationHook
 import graphql.nadel.tests.util.join
 import graphql.nadel.tests.util.toSlug
+import graphql.nadel.validation.NadelSchemaValidationError
 import graphql.schema.idl.WiringFactory
 import org.reflections.Reflections
 import java.io.File
@@ -41,6 +42,10 @@ interface EngineTestHook {
         builder: NadelExecutionInput.Builder,
     ): NadelExecutionInput.Builder {
         return builder
+    }
+
+    fun isSchemaValid(errors: Set<NadelSchemaValidationError>): Boolean {
+        return errors.isEmpty()
     }
 
     fun assertResult(result: ExecutionResult) {

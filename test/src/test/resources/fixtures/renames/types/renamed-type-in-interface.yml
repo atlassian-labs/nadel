@@ -12,10 +12,10 @@ overallSchema:
     interface Node {
       id: ID
     }
-    type User {
+    type User implements Node {
       id: ID
     }
-    type Donkey @renamed(from: "Monkey") {
+    type Donkey implements Node @renamed(from: "Monkey") {
       id: ID
     }
 underlyingSchema:
@@ -30,24 +30,10 @@ underlyingSchema:
     interface Node {
       id: ID
     }
-  UserService: |
-    type Query {
-      me: User
-    }
     type User implements Node {
       id: ID
     }
-    interface Node {
-      id: ID
-    }
-  AnimalService: |
-    type Query {
-      monkey: Monkey
-    }
     type Monkey implements Node {
-      id: ID
-    }
-    interface Node {
       id: ID
     }
 query: |

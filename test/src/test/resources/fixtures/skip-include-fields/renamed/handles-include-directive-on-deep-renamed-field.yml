@@ -6,7 +6,7 @@ overallSchema:
       foo: Foo
     }
     type Foo {
-      name: String @renamed(from: "details.id")
+      name: ID @renamed(from: "details.id")
     }
 underlyingSchema:
   service: |

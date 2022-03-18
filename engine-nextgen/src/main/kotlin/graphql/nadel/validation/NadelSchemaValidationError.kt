@@ -16,11 +16,13 @@ import graphql.schema.GraphQLDirective
 import graphql.schema.GraphQLEnumValueDefinition
 import graphql.schema.GraphQLFieldDefinition
 import graphql.schema.GraphQLInputObjectField
+import graphql.schema.GraphQLNamedOutputType
 import graphql.schema.GraphQLNamedSchemaElement
 import graphql.schema.GraphQLNamedType
 import graphql.schema.GraphQLObjectType
 import graphql.schema.GraphQLType
 import graphql.schema.GraphQLTypeUtil
+import graphql.schema.GraphQLUnionType
 
 private class NadelSchemaValidationErrorClassification(
     private val type: NadelSchemaValidationError,
@@ -57,6 +59,21 @@ sealed interface NadelSchemaValidationError {
             .message(message)
             .errorType(NadelSchemaValidationErrorClassification(this))
             .build()
+    }
+
+    data class UnionHasExtraType(
+        val service: Service,
+        val unionType: GraphQLUnionType,
+        val extraType: GraphQLObjectType,
+    ) : NadelSchemaValidationError {
+        override val message = run {
+            val ut = unionType.name
+            val s = service.name
+            val et = extraType.name
+            "Union $ut in service $s has possible type $et but underlying schema does not"
+        }
+
+        override val subject = unionType
     }
 
     data class MissingUnderlyingType(
@@ -226,32 +243,14 @@ sealed interface NadelSchemaValidationError {
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val hydration: UnderlyingServiceHydration,
-        val actorServiceQueryType: GraphQLObjectType,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
 
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = hydration.serviceName
-            val af = "${actorServiceQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
-            "Field $of tried to hydrate from non-existent field $af on service $s"
-        }
-
-        override val subject = overallField
-    }
-
-    data class MissingHydrationActorFieldInOverallSchema(
-        val parentType: NadelServiceSchemaElement,
-        val overallField: GraphQLFieldDefinition,
-        val hydration: UnderlyingServiceHydration,
-        val overallQueryType: GraphQLObjectType,
-    ) : NadelSchemaValidationError {
-        val service: Service get() = parentType.service
-
-        override val message = run {
-            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val af = "${overallQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
-            "Field $of tried to hydrate from non-existent field $af in the overall schema"
+            val af = hydration.pathToActorField.joinToString(separator = ".")
+            "Field $of tried to hydrate from non-existent field Query.$af on service $s"
         }
 
         override val subject = overallField
@@ -271,6 +270,25 @@ sealed interface NadelSchemaValidationError {
         override val subject = overallField
     }
 
+    data class HydrationIncompatibleOutputType(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+        val actorField: GraphQLFieldDefinition,
+        val incompatibleOutputType: GraphQLNamedOutputType,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            val af = makeFieldCoordinates(parentType.overall.name, actorField.name)
+            val at = incompatibleOutputType.unwrapAll().name
+            val ot = overallField.type.unwrapAll().name
+            "Field $of tries to hydrate from $af but $af returns $at which cannot be assigned to with $ot"
+        }
+
+        override val subject = overallField
+    }
+
     data class FieldWithPolymorphicHydrationMustReturnAUnion(
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
@@ -280,25 +298,6 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             "Field $of declares a polymorphic hydration so its output type MUST be a union"
-        }
-
-        override val subject = overallField
-    }
-
-    data class PolymorphicHydrationReturnTypeMismatch(
-        val actorField: GraphQLFieldDefinition,
-        val actorService: Service,
-        val parentType: NadelServiceSchemaElement,
-        val overallField: GraphQLFieldDefinition,
-    ) : NadelSchemaValidationError {
-        val service: Service get() = parentType.service
-
-        override val message = run {
-            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            "Field $of declares a polymorphic hydration with incorrect return type. One of the hydrations' actor fields" +
-                " ${actorField.name} in the service ${actorService.name} returns the type " +
-                "${(actorField.type.unwrapAll() as GraphQLNamedType).name} which is not present in the polymorphic hydration return " +
-                "type ${(overallField.type.unwrapAll() as GraphQLNamedType).name}"
         }
 
         override val subject = overallField
@@ -341,7 +340,6 @@ sealed interface NadelSchemaValidationError {
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val hydration: UnderlyingServiceHydration,
-        val actorServiceQueryType: GraphQLObjectType,
         val argument: String,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
@@ -349,8 +347,8 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = hydration.serviceName
-            val af = "${actorServiceQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
-            "Hydration on field $of references non-existent argument $argument on hydration actor $s.$af"
+            val af = hydration.pathToActorField.joinToString(separator = ".")
+            "Hydration on field $of references non-existent argument $argument on hydration actor $s.Query.$af"
         }
 
         override val subject = overallField
@@ -360,7 +358,6 @@ sealed interface NadelSchemaValidationError {
         val parentType: NadelServiceSchemaElement,
         val overallField: GraphQLFieldDefinition,
         val hydration: UnderlyingServiceHydration,
-        val actorServiceQueryType: GraphQLObjectType,
         val argument: String,
     ) : NadelSchemaValidationError {
         val service: Service get() = parentType.service
@@ -368,8 +365,8 @@ sealed interface NadelSchemaValidationError {
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
             val s = hydration.serviceName
-            val af = "${actorServiceQueryType.name}.${hydration.pathToActorField.joinToString(separator = ".")}"
-            "Hydration on field $of is missing the required argument $argument on hydration actor $s.$af"
+            val af = hydration.pathToActorField.joinToString(separator = ".")
+            "Hydration on field $of is missing the required argument $argument on hydration actor $s.Query.$af"
         }
 
         override val subject = overallField

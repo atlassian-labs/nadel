@@ -2,9 +2,9 @@ package graphql.nadel.validation
 
 import graphql.nadel.enginekt.util.singleOfType
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
+import graphql.nadel.validation.NadelSchemaValidationError.HydrationIncompatibleOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.HydrationsMismatch
 import graphql.nadel.validation.NadelSchemaValidationError.MissingUnderlyingType
-import graphql.nadel.validation.NadelSchemaValidationError.PolymorphicHydrationReturnTypeMismatch
 import graphql.nadel.validation.util.assertSingleOfType
 import graphql.schema.GraphQLNamedType
 import io.kotest.core.spec.style.DescribeSpec
@@ -536,11 +536,11 @@ class NadelPolymorphicHydrationValidationTest : DescribeSpec({
 
             val errors = validate(fixture)
             assert(errors.isNotEmpty())
-            val error = errors.singleOfType<PolymorphicHydrationReturnTypeMismatch>()
+            val error = errors.singleOfType<HydrationIncompatibleOutputType>()
             assert(error.parentType.overall.name == "Issue")
             assert(error.actorField.name == "externalUser")
-            assert(error.actorService.name == "users")
             assert((error.actorField.type as GraphQLNamedType).name == "ExternalUser")
+            assert(error.incompatibleOutputType.name == "ExternalUser")
         }
     }
 })

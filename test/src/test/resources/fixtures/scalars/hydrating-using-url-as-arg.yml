@@ -22,7 +22,7 @@ underlyingSchema:
   service: |
     type Query {
       foo: Foo
-      lookup(url: URL): Foo
+      lookup(url: URL): Lookup
     }
     type Foo {
       id: ID
@@ -30,7 +30,7 @@ underlyingSchema:
     }
     type Lookup {
       baseUrl: URL
-      createdAt: String
+      createdAt: DateTime
       owner: String
     }
     scalar URL
@@ -76,11 +76,9 @@ serviceCalls:
       query: |
         query {
           lookup(url: "https://github.com/atlassian-labs/nadel") {
-            ... on Lookup {
-              baseUrl
-              createdAt
-              owner
-            }
+            baseUrl
+            createdAt
+            owner
           }
         }
       variables: { }

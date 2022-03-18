@@ -1,5 +1,6 @@
 name: query with hydrated interfaces work as expected
 enabled: true
+# todo: handle synthetic fields in interfaces better
 overallSchema:
   PetService: |
     type Query {
@@ -8,7 +9,7 @@ overallSchema:
     }
     interface Pet {
       name: String
-      owners: [Owner]
+      owners: [Owner] @hydrated(service: "OwnerService" field: "ownerById" arguments: [{name: "id" value: "$source.ownerIds"}])
       collar: Collar
       collarToRenamed: Collar @renamed(from: "collar")
     }
