@@ -9,6 +9,7 @@ import graphql.nadel.enginekt.transform.NadelRenameArgumentInputTypesTransform.S
 import graphql.nadel.enginekt.transform.query.NadelQueryTransformer
 import graphql.nadel.enginekt.transform.result.NadelResultInstruction
 import graphql.nadel.enginekt.transform.result.json.JsonNodes
+import graphql.nadel.enginekt.util.replaceTypeName
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.NormalizedInputValue
@@ -83,7 +84,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
         executionBlueprint: NadelOverallExecutionBlueprint,
         service: Service,
     ): NormalizedInputValue {
-        val overallTypeName = inputValue.typeName
+        val overallTypeName = inputValue.unwrappedTypeName
         val underlyingTypeName = executionBlueprint.getUnderlyingTypeName(service, overallTypeName)
         if (underlyingTypeName != overallTypeName) {
             //
@@ -93,7 +94,7 @@ internal class NadelRenameArgumentInputTypesTransform : NadelTransform<State> {
             // reasons we don't do it.  Also, Nadel currently does not allow an input field to be renamed
             // and hence we don't have to change inner map keys either.
             //
-            return NormalizedInputValue(underlyingTypeName, inputValue.value)
+            return inputValue.replaceTypeName(underlyingTypeName)
         }
         return inputValue
     }

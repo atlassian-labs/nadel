@@ -1,0 +1,87 @@
+name: inlined-all-arguments-with-renamed-field-input-is-wrapped-in-a-list
+enabled: true
+overallSchema:
+  MyService: |
+    type Query {
+      hello(arg: [InputArgType]): Output @renamed(from: "helloUnderlying")
+    }
+    
+    input InputArgType @renamed(from: "UnderlyingInputArgType") {
+      age : Int
+      inputWithJson : [InputWithJson]
+    }
+
+    input InputWithJson @renamed(from: "InputWithJsonUnderlying") {
+      names : [String!]!
+      payload: JSON 
+    }
+    
+    type Output @renamed(from: "OutputUnderlying") {
+      value : String
+    }
+    
+    scalar JSON
+
+underlyingSchema:
+  MyService: |-
+    type Query {
+      helloUnderlying(arg: [UnderlyingInputArgType]): OutputUnderlying
+    }
+    
+    input UnderlyingInputArgType {
+      age : Int
+      inputWithJson : [InputWithJsonUnderlying]
+    }
+
+    input InputWithJsonUnderlying {
+      names : [String!]!
+      payload: JSON 
+    }
+    
+    type OutputUnderlying  {
+      value : String
+    }
+    
+    scalar JSON
+query: |
+  query myQuery($varX : [InputWithJson])  {
+    hello(arg: [{ age : 50, inputWithJson : $varX }] ) {
+      value
+    }
+  }
+
+variables:
+  varX: [ { names: [ "Bobba","Fett" ], payload: { "name": "Bobert", age: "23" } } ]
+
+serviceCalls:
+  - serviceName: MyService
+    request:
+      query: |
+        query myQuery($v0: [UnderlyingInputArgType]) {
+          rename__hello__helloUnderlying: helloUnderlying(arg: $v0) {
+            value
+          }
+        }
+      variables:
+        v0: [ { age: 50, inputWithJson: [ { names: [ "Bobba","Fett" ], payload: { "name": "Bobert", age: "23" } } ] } ]
+      operationName: myQuery
+    # language=JSON
+    response: |-
+      {
+        "data": {
+          "rename__hello__helloUnderlying": {
+            "value" : "world"
+          }
+        },
+        "extensions": {}
+      }
+# language=JSON
+response: |-
+  {
+    "data": {
+      "hello": {
+        "value" : "world"
+      }
+    },
+    "extensions": {}
+  }

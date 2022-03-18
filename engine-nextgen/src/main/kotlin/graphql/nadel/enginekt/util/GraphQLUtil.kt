@@ -428,6 +428,17 @@ fun makeNormalizedInputValue(
     )
 }
 
+/**
+ * Will return a new NormalizedInputValue with a new typename. The type will be renamed but the
+ * original wrapping will be intact.
+ *
+ * todo: find a better way of doing this? currently it's just a string.replace hack
+ */
+fun NormalizedInputValue.replaceTypeName(newTypeName: String): NormalizedInputValue {
+    val newTypenameWithOriginalWrapping = this.typeName.replace(this.unwrappedTypeName, newTypeName)
+    return NormalizedInputValue(newTypenameWithOriginalWrapping, this.value)
+}
+
 internal fun javaValueToAstValue(value: Any?): AnyAstValue {
     return when (value) {
         is AnyList -> ArrayValue(
