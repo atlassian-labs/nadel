@@ -471,7 +471,7 @@ class NadelHydrationValidationTest : DescribeSpec({
             assert(error.parentType.overall.name == "Issue")
             assert(error.parentType.underlying.name == "Issue")
             assert(error.overallField.name == "creator")
-            assert(error.hydration.topLevelField == "userById")
+            assert(error.hydration.pathToActorField == listOf("userById"))
             assert(error.overallField == error.subject)
         }
 

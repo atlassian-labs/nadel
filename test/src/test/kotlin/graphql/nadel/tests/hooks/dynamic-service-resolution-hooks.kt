@@ -45,7 +45,7 @@ class Hooks : ServiceExecutionHooks {
     }
 
     override fun resolveServiceForField(
-        services: Collection<Service>,
+        services: List<Service>,
         executableNormalizedField: ExecutableNormalizedField
     ): ServiceOrError {
         return resolveServiceGeneric(

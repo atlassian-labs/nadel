@@ -7,14 +7,11 @@ import graphql.ExecutionResultImpl.newExecutionResult
 import graphql.GraphQLError
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
-import graphql.nadel.ServiceExecutionParameters.newServiceExecutionParameters
 import graphql.nadel.enginekt.NadelExecutionContext
 import graphql.nadel.enginekt.blueprint.NadelDefaultIntrospectionRunner
 import graphql.nadel.enginekt.blueprint.NadelExecutionBlueprintFactory
 import graphql.nadel.enginekt.blueprint.NadelIntrospectionRunnerFactory
 import graphql.nadel.enginekt.document.DocumentPredicates
-import graphql.nadel.enginekt.log.getLogger
-import graphql.nadel.enginekt.log.getNotPrivacySafeLogger
 import graphql.nadel.enginekt.plan.NadelExecutionPlan
 import graphql.nadel.enginekt.plan.NadelExecutionPlanFactory
 import graphql.nadel.enginekt.transform.NadelTransform
@@ -38,6 +35,8 @@ import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.enginekt.util.toBuilder
 import graphql.nadel.hooks.ServiceExecutionHooks
 import graphql.nadel.util.ErrorUtil
+import graphql.nadel.util.LogKit.getLogger
+import graphql.nadel.util.LogKit.getNotPrivacySafeLogger
 import graphql.nadel.util.OperationNameUtil
 import graphql.normalized.ExecutableNormalizedField
 import graphql.normalized.ExecutableNormalizedOperationFactory.createExecutableNormalizedOperationWithRawVariables
@@ -85,7 +84,7 @@ class NextgenEngine @JvmOverloads constructor(
     private val dynamicServiceResolution = DynamicServiceResolution(
         engineSchema = engineSchema,
         serviceExecutionHooks = serviceExecutionHooks,
-        services = services.values
+        services = nadel.services,
     )
     private val fieldToService = NadelFieldToService(
         querySchema = nadel.querySchema,
@@ -303,18 +302,17 @@ class NextgenEngine @JvmOverloads constructor(
             )
         }
 
-        val serviceExecParams = newServiceExecutionParameters()
-            .query(compileResult.document)
-            .context(executionInput.context)
-            .executionId(executionInput.executionId ?: executionIdProvider.provide(executionInput))
-            .cacheControl(executionInput.cacheControl)
-            .variables(compileResult.variables)
-            .fragments(emptyMap())
-            .operationDefinition(compileResult.document.definitions.singleOfType())
-            .serviceContext(executionContext.getContextForService(service).await())
-            .executionHydrationDetails(executionHydrationDetails)
-            .executableNormalizedField(transformedQuery)
-            .build()
+        val serviceExecParams = ServiceExecutionParameters(
+            query = compileResult.document,
+            context = executionInput.context,
+            executionId = executionInput.executionId ?: executionIdProvider.provide(executionInput),
+            cacheControl = executionInput.cacheControl,
+            variables = compileResult.variables,
+            operationDefinition = compileResult.document.definitions.singleOfType(),
+            serviceContext = executionContext.getContextForService(service).await(),
+            hydrationDetails = executionHydrationDetails,
+            executableNormalizedField = transformedQuery,
+        )
 
         val serviceExecResult = try {
             service.serviceExecution

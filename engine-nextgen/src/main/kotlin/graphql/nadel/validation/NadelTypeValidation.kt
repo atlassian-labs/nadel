@@ -13,7 +13,7 @@ import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.enginekt.util.unwrapNonNull
 import graphql.nadel.enginekt.util.unwrapOne
 import graphql.nadel.schema.NadelDirectives
-import graphql.nadel.schema.NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION
+import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedUnderlyingType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleFieldOutputType
 import graphql.nadel.validation.NadelSchemaValidationError.IncompatibleType
@@ -203,7 +203,7 @@ internal class NadelTypeValidation(
             .asSequence()
             .filterIsInstance<ObjectTypeDefinition>()
             .flatMap { it.fieldDefinitions }
-            .filter { it.getDirectives(HYDRATED_DIRECTIVE_DEFINITION.name).size > 1 }
+            .filter { it.getDirectives(hydratedDirectiveDefinition.name).size > 1 }
             .map { it.type.unwrapAll() }
             .map { overallSchema.getType(it.name) }
             .filterIsInstance<GraphQLUnionType>()
@@ -244,7 +244,7 @@ internal class NadelTypeValidation(
     private fun isNamespacedOperationType(typeName: String): Boolean {
         return overallSchema.operationTypes.any { operationType ->
             operationType.fields.any { field ->
-                field.hasDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name) &&
+                field.hasAppliedDirective(NadelDirectives.namespacedDirectiveDefinition.name) &&
                     field.type.unwrapAll().name == typeName
             }
         }

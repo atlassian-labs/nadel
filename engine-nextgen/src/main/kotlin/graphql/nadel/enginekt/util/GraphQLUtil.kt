@@ -37,7 +37,7 @@ import graphql.language.Type
 import graphql.language.TypeName
 import graphql.language.UnionTypeExtensionDefinition
 import graphql.language.Value
-import graphql.nadel.OperationKind
+import graphql.nadel.NadelOperationKind
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.transform.query.NadelQueryPath
@@ -100,11 +100,11 @@ fun GraphQLSchema.getField(coordinates: FieldCoordinates): GraphQLFieldDefinitio
         ?.getField(coordinates.fieldName)
 }
 
-fun GraphQLSchema.getOperationType(kind: OperationKind): GraphQLObjectType? {
+fun GraphQLSchema.getOperationType(kind: NadelOperationKind): GraphQLObjectType? {
     return when (kind) {
-        OperationKind.QUERY -> queryType
-        OperationKind.MUTATION -> mutationType
-        OperationKind.SUBSCRIPTION -> subscriptionType
+        NadelOperationKind.Query -> queryType
+        NadelOperationKind.Mutation -> mutationType
+        NadelOperationKind.Subscription -> subscriptionType
     }
 }
 
@@ -270,7 +270,7 @@ fun makeFieldCoordinates(parentType: GraphQLObjectType, field: GraphQLFieldDefin
     return makeFieldCoordinates(typeName = parentType.name, fieldName = field.name)
 }
 
-fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId? {
+fun ExecutionIdProvider.provide(executionInput: ExecutionInput): ExecutionId {
     return provide(executionInput.query, executionInput.operationName, executionInput.context)
 }
 
@@ -473,9 +473,6 @@ internal fun javaValueToAstValue(value: Any?): AnyAstValue {
         else -> error("Unknown value type '${value.javaClass.name}'")
     }
 }
-
-val UnderlyingServiceHydration.pathToActorField
-    get() = listOfNotNull(syntheticField, topLevelField)
 
 val GraphQLSchema.operationTypes
     get() = listOfNotNull(queryType, mutationType, subscriptionType)

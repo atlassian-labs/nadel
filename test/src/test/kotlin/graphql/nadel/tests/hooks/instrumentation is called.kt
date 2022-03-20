@@ -27,23 +27,23 @@ class `instrumentation-is-called` : EngineTestHook {
     override fun makeNadel(builder: Nadel.Builder): Nadel.Builder {
         return builder
             .instrumentation(object : NadelInstrumentation {
-                override fun createState(parameters: NadelInstrumentationCreateStateParameters?): InstrumentationState {
+                override fun createState(parameters: NadelInstrumentationCreateStateParameters): InstrumentationState {
                     instrumentationCalled++
                     return object : InstrumentationState {
                     }
                 }
 
-                override fun beginParse(parameters: NadelInstrumentationQueryExecutionParameters?): InstrumentationContext<Document> {
+                override fun beginParse(parameters: NadelInstrumentationQueryExecutionParameters): InstrumentationContext<Document> {
                     instrumentationParseCalled++
                     return super.beginParse(parameters)
                 }
 
-                override fun beginValidation(parameters: NadelInstrumentationQueryValidationParameters?): InstrumentationContext<MutableList<ValidationError>> {
+                override fun beginValidation(parameters: NadelInstrumentationQueryValidationParameters): InstrumentationContext<List<ValidationError>> {
                     instrumentationValidateCalled++
                     return super.beginValidation(parameters)
                 }
 
-                override fun beginExecute(parameters: NadelInstrumentationExecuteOperationParameters?): CompletableFuture<InstrumentationContext<ExecutionResult>> {
+                override fun beginExecute(parameters: NadelInstrumentationExecuteOperationParameters): CompletableFuture<InstrumentationContext<ExecutionResult>> {
                     instrumentationExecuteCalled++
                     return super.beginExecute(parameters)
                 }

@@ -9,7 +9,6 @@ import graphql.schema.GraphQLScalarType
 import graphql.schema.idl.ScalarWiringEnvironment
 
 class NeverWiringFactoryWithExtendedJsonScalar : NeverWiringFactory() {
-
     override fun providesScalar(environment: ScalarWiringEnvironment): Boolean {
         val scalarName: String? = environment.scalarTypeDefinition?.name
         return scalarName == ExtendedScalars.Json.name

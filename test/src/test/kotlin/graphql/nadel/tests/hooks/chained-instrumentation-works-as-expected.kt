@@ -70,7 +70,7 @@ class `chained-instrumentation-works-as-expected` : EngineTestHook {
                 return super.beginParse(parameters)
             }
 
-            override fun beginValidation(parameters: NadelInstrumentationQueryValidationParameters): InstrumentationContext<MutableList<ValidationError>> {
+            override fun beginValidation(parameters: NadelInstrumentationQueryValidationParameters): InstrumentationContext<List<ValidationError>> {
                 instrumentationValidateCalled++
                 return super.beginValidation(parameters)
             }

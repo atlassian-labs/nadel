@@ -10,7 +10,6 @@ import graphql.nadel.dsl.RemoteArgumentDefinition
 import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.util.makeFieldCoordinates
-import graphql.nadel.enginekt.util.pathToActorField
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.schema.GraphQLArgument
 import graphql.schema.GraphQLDirective
@@ -33,7 +32,7 @@ private class NadelSchemaValidationErrorClassification(
 
 sealed interface NadelSchemaValidationError {
     /**
-     * Human readable message associated with the error
+     * Human-readable message associated with the error
      * e.g. could not find underlying type for overall type Foo in service Bar
      */
     val message: String
@@ -314,7 +313,7 @@ sealed interface NadelSchemaValidationError {
 
         override val message = run {
             val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
-            val uf = "${parentType.underlying.name}.${remoteArgSource.pathToField.joinToString(separator = ".")}"
+            val uf = "${parentType.underlying.name}.${remoteArgSource.pathToField?.joinToString(separator = ".")}"
             val s = service.name
             "Field $of tried to hydrate using value of non-existent underlying field $uf from service $s as an argument"
         }

@@ -30,10 +30,7 @@ data class NadelExecutionContext(
     fun getContextForService(service: Service): CompletableFuture<Any?> {
         return serviceContexts.getOrPut(service.name) {
             hooks.createServiceContext(
-                CreateServiceContextParams
-                    .newParameters()
-                    .service(service)
-                    .build()
+                CreateServiceContextParams(service)
             )
         }
     }

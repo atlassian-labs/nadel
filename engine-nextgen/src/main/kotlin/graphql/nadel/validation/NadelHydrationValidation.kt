@@ -2,12 +2,11 @@ package graphql.nadel.validation
 
 import graphql.nadel.Service
 import graphql.nadel.dsl.RemoteArgumentSource
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT
-import graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD
+import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
+import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.util.getFieldAt
 import graphql.nadel.enginekt.util.isNonNull
-import graphql.nadel.enginekt.util.pathToActorField
 import graphql.nadel.enginekt.util.unwrapAll
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
@@ -197,8 +196,8 @@ internal class NadelHydrationValidation(
         remoteArgSource: RemoteArgumentSource,
     ): NadelSchemaValidationError? {
         return when (remoteArgSource.sourceType) {
-            OBJECT_FIELD -> {
-                val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField)
+            ObjectField -> {
+                val field = (parent.underlying as GraphQLFieldsContainer).getFieldAt(remoteArgSource.pathToField!!)
                 if (field == null) {
                     MissingHydrationFieldValueSource(parent, overallField, remoteArgSource)
                 } else {
@@ -206,8 +205,8 @@ internal class NadelHydrationValidation(
                     null
                 }
             }
-            FIELD_ARGUMENT -> {
-                val argument = overallField.getArgument(remoteArgSource.argumentName)
+            FieldArgument -> {
+                val argument = overallField.getArgument(remoteArgSource.argumentName!!)
                 if (argument == null) {
                     MissingHydrationArgumentValueSource(parent, overallField, remoteArgSource)
                 } else {

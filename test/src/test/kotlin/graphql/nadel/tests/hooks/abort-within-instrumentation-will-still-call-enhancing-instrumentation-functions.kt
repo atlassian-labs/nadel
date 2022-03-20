@@ -109,7 +109,7 @@ class `abort-begin-validation-within-instrumentation-still-calls-enhancing-instr
             .instrumentation(object : NadelInstrumentation {
                 override fun beginValidation(
                     parameters: NadelInstrumentationQueryValidationParameters,
-                ): InstrumentationContext<MutableList<ValidationError>> {
+                ): InstrumentationContext<List<ValidationError>> {
                     throw AbortExecutionException("beginValidation")
                 }
 

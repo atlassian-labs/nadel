@@ -6,17 +6,17 @@ import graphql.Scalars.GraphQLID
 import graphql.Scalars.GraphQLInt
 import graphql.Scalars.GraphQLString
 import graphql.nadel.enginekt.util.AnyNamedNode
-import graphql.nadel.schema.NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION
-import graphql.nadel.schema.NadelDirectives.HIDDEN_DIRECTIVE_DEFINITION
-import graphql.nadel.schema.NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION
-import graphql.nadel.schema.NadelDirectives.HYDRATED_FROM_DIRECTIVE_DEFINITION
-import graphql.nadel.schema.NadelDirectives.HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION
-import graphql.nadel.schema.NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION
-import graphql.nadel.schema.NadelDirectives.NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY
-import graphql.nadel.schema.NadelDirectives.NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION
-import graphql.nadel.schema.NadelDirectives.NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION
-import graphql.nadel.schema.NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION
-import graphql.nadel.schema.NadelDirectives.RENAMED_DIRECTIVE_DEFINITION
+import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.hiddenDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.hydratedDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.hydratedFromDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.hydratedTemplateDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationArgumentDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationComplexIdentifiedBy
+import graphql.nadel.schema.NadelDirectives.nadelHydrationFromArgumentDefinition
+import graphql.nadel.schema.NadelDirectives.nadelHydrationTemplateEnumDefinition
+import graphql.nadel.schema.NadelDirectives.namespacedDirectiveDefinition
+import graphql.nadel.schema.NadelDirectives.renamedDirectiveDefinition
 
 object NadelBuiltInTypes {
     val builtInScalars = setOf(
@@ -33,18 +33,18 @@ object NadelBuiltInTypes {
         .toSet()
 
     val builtInDirectiveSyntaxTypeNames = sequenceOf<AnyNamedNode>(
-        RENAMED_DIRECTIVE_DEFINITION,
-        HYDRATED_DIRECTIVE_DEFINITION,
-        NADEL_HYDRATION_ARGUMENT_DEFINITION,
-        DYNAMIC_SERVICE_DIRECTIVE_DEFINITION,
-        NAMESPACED_DIRECTIVE_DEFINITION,
-        HIDDEN_DIRECTIVE_DEFINITION,
+        renamedDirectiveDefinition,
+        hydratedDirectiveDefinition,
+        nadelHydrationArgumentDefinition,
+        dynamicServiceDirectiveDefinition,
+        namespacedDirectiveDefinition,
+        hiddenDirectiveDefinition,
 
-        NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION,
-        NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY,
-        NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION,
-        HYDRATED_FROM_DIRECTIVE_DEFINITION,
-        HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION,
+        nadelHydrationFromArgumentDefinition,
+        nadelHydrationComplexIdentifiedBy,
+        nadelHydrationTemplateEnumDefinition,
+        hydratedFromDirectiveDefinition,
+        hydratedTemplateDirectiveDefinition,
     ).map {
         it.name
     }.toSet()

@@ -1,26 +1,23 @@
 package graphql.nadel.schema
 
 
-import graphql.AssertException
 import graphql.language.AstPrinter
+import graphql.nadel.dsl.RemoteArgumentSource
 import graphql.nadel.testutils.TestUtil
 import spock.lang.Specification
-
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.FIELD_ARGUMENT
-import static graphql.nadel.dsl.RemoteArgumentSource.SourceType.OBJECT_FIELD
 
 class NadelDirectivesTest extends Specification {
 
     def commonDefs = """
-            ${AstPrinter.printAst(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION)}
-            ${AstPrinter.printAst(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION)}
+        ${AstPrinter.printAst(NadelDirectives.INSTANCE.getHydratedDirectiveDefinition())}
+        ${AstPrinter.printAst(NadelDirectives.INSTANCE.getNadelHydrationArgumentDefinition())}
 
-            ${AstPrinter.printAst(NadelDirectives.NADEL_HYDRATION_COMPLEX_IDENTIFIED_BY)}
-            ${AstPrinter.printAst(NadelDirectives.NADEL_HYDRATION_FROM_ARGUMENT_DEFINITION)}
-            ${AstPrinter.printAst(NadelDirectives.NADEL_HYDRATION_TEMPLATE_ENUM_DEFINITION)}
-            ${AstPrinter.printAst(NadelDirectives.HYDRATED_FROM_DIRECTIVE_DEFINITION)}
-            ${AstPrinter.printAst(NadelDirectives.HYDRATED_TEMPLATE_DIRECTIVE_DEFINITION)}
-        """
+        ${AstPrinter.printAst(NadelDirectives.INSTANCE.getNadelHydrationComplexIdentifiedBy())}
+        ${AstPrinter.printAst(NadelDirectives.INSTANCE.getNadelHydrationFromArgumentDefinition())}
+        ${AstPrinter.printAst(NadelDirectives.INSTANCE.getNadelHydrationTemplateEnumDefinition())}
+        ${AstPrinter.printAst(NadelDirectives.INSTANCE.getHydratedFromDirectiveDefinition())}
+        ${AstPrinter.printAst(NadelDirectives.INSTANCE.getHydratedTemplateDirectiveDefinition())}
+    """
 
     def "can handle original @hydrated directives"() {
 
@@ -44,24 +41,23 @@ class NadelDirectivesTest extends Specification {
         def fieldDef = schema.getQueryType().getFieldDefinition("field")
 
         when:
-        def serviceHydration = NadelDirectives.createUnderlyingServiceHydration(fieldDef, schema)
+        def serviceHydration = NadelDirectives.INSTANCE.createUnderlyingServiceHydration(fieldDef, schema)
 
         then:
 
         def hydration = serviceHydration[0]
         hydration.serviceName == "IssueService"
-        hydration.syntheticField == "jira"
-        hydration.topLevelField == "issueById"
+        hydration.pathToActorField == ["jira", "issueById"]
         hydration.batchSize == 50
         hydration.timeout == 100
         hydration.arguments.size() == 2
 
         hydration.arguments[0].name == "fieldVal"
-        hydration.arguments[0].remoteArgumentSource.sourceType == OBJECT_FIELD
+        hydration.arguments[0].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.ObjectField
         hydration.arguments[0].remoteArgumentSource.pathToField == ["namespace", "issueId"]
 
         hydration.arguments[1].name == "argVal"
-        hydration.arguments[1].remoteArgumentSource.sourceType == FIELD_ARGUMENT
+        hydration.arguments[1].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.FieldArgument
         hydration.arguments[1].remoteArgumentSource.argumentName == "cloudId"
     }
 
@@ -99,32 +95,31 @@ class NadelDirectivesTest extends Specification {
         def fieldDef = schema.getQueryType().getFieldDefinition("field")
 
         when:
-        def serviceHydration = NadelDirectives.createUnderlyingServiceHydration(fieldDef, schema)
+        def serviceHydration = NadelDirectives.INSTANCE.createUnderlyingServiceHydration(fieldDef, schema)
 
         then:
 
         def hydration = serviceHydration[0]
         hydration.serviceName == "IssueService"
-        hydration.syntheticField == "jira"
-        hydration.topLevelField == "issueById"
+        hydration.pathToActorField == ["jira", "issueById"]
         hydration.batchSize == 50
         hydration.timeout == 100
         hydration.arguments.size() == 4
 
         hydration.arguments[0].name == "fieldVal"
-        hydration.arguments[0].remoteArgumentSource.sourceType == OBJECT_FIELD
+        hydration.arguments[0].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.ObjectField
         hydration.arguments[0].remoteArgumentSource.pathToField == ["namespace", "issueId"]
 
         hydration.arguments[1].name == "argVal"
-        hydration.arguments[1].remoteArgumentSource.sourceType == FIELD_ARGUMENT
+        hydration.arguments[1].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.FieldArgument
         hydration.arguments[1].remoteArgumentSource.argumentName == "cloudId"
 
         hydration.arguments[2].name == "fieldValLegacy"
-        hydration.arguments[2].remoteArgumentSource.sourceType == OBJECT_FIELD
+        hydration.arguments[2].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.ObjectField
         hydration.arguments[2].remoteArgumentSource.pathToField == ["namespace", "issueId"]
 
         hydration.arguments[3].name == "argValLegacy"
-        hydration.arguments[3].remoteArgumentSource.sourceType == FIELD_ARGUMENT
+        hydration.arguments[3].remoteArgumentSource.sourceType == RemoteArgumentSource.SourceType.FieldArgument
         hydration.arguments[3].remoteArgumentSource.argumentName == "cloudId"
     }
 
@@ -157,17 +152,16 @@ class NadelDirectivesTest extends Specification {
         def fieldDef = schema.getQueryType().getFieldDefinition("field")
 
         try {
-            NadelDirectives.createUnderlyingServiceHydration(fieldDef, schema)
+            NadelDirectives.INSTANCE.createUnderlyingServiceHydration(fieldDef, schema)
             assert false, "We expected an assertion"
-        } catch (AssertException assertException) {
-            assert assertException.message == "You must specify only one of valueForField or valueForArg in NadelHydrationFromArgument arguments"
+        } catch (IllegalArgumentException assertException) {
+            assert assertException.message == msg
         }
 
         where:
-
-        argDecl                                                                 | _
-        '{name: "fieldVal"}'                                                    | _
-        '{name: "fieldVal" valueFromField: "issueId" valueFromArg: "cloudId" }' | _
+        argDecl                                                                 | msg
+        '{name: "fieldVal"}'                                                    | "NadelHydrationFromArgument requires one of valueFromField or valueFromArg to be set"
+        '{name: "fieldVal" valueFromField: "issueId" valueFromArg: "cloudId" }' | "NadelHydrationFromArgument can not have both valueFromField and valueFromArg set"
     }
 
     def "print out SDL"() {

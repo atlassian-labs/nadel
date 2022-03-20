@@ -28,7 +28,7 @@ interface EngineTestHook {
         get() = emptyList()
 
     val schemaTransformationHook: SchemaTransformationHook
-        get() = SchemaTransformationHook.IDENTITY
+        get() = SchemaTransformationHook.Identity
 
     val wiringFactory: WiringFactory
         get() = NeverWiringFactory()
