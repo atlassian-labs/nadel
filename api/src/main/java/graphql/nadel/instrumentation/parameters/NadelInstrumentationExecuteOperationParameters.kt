@@ -1,6 +1,5 @@
 package graphql.nadel.instrumentation.parameters
 
-import graphql.PublicApi
 import graphql.execution.instrumentation.InstrumentationState
 import graphql.language.Document
 import graphql.language.OperationDefinition

@@ -30,6 +30,7 @@ dependencies {
     testImplementation("com.google.guava:guava:28.0-jre")
     testImplementation("com.graphql-java:graphql-java-extended-scalars:2021-06-29T01-19-32-8e19827")
     testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
+    testImplementation("io.kotest:kotest-framework-datatest:5.1.0")
 }
 
 // compileJava.source file("build/generated-src"), sourceSets.main.java

@@ -6,8 +6,7 @@ import graphql.language.Document
 import graphql.language.OperationDefinition
 import graphql.normalized.ExecutableNormalizedField
 
-// todo make constructor internal once we merge api/ and engine-nextgen/
-class ServiceExecutionParameters constructor(
+class ServiceExecutionParameters internal constructor(
     val query: Document,
     val context: Any?,
     val variables: Map<String, Any>,

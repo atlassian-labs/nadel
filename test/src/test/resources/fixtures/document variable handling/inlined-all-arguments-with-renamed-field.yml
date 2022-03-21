@@ -1,4 +1,4 @@
-name: inlined-all-arguments-with-renamed-field
+name: inlined all arguments with renamed field
 enabled: true
 overallSchema:
   MyService: |

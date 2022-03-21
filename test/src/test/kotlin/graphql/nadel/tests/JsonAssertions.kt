@@ -1,8 +1,8 @@
 package graphql.nadel.tests
 
-import graphql.nadel.enginekt.util.AnyList
-import graphql.nadel.enginekt.util.AnyMap
-import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.engine.util.AnyList
+import graphql.nadel.engine.util.AnyMap
+import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.tests.util.keysEqual
 import strikt.api.Assertion
 import strikt.api.expectThat

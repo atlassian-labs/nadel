@@ -1,6 +1,5 @@
 package graphql.nadel.schema
 
-import graphql.Internal
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator

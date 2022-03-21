@@ -10,8 +10,7 @@ typealias  GraphQLErrorBuilder = GraphqlErrorBuilder<*>
 /**
  * A helper class that can to deal with graphql errors
  */
-// todo: make internal once we merge api/ and engine-nextgen
-object ErrorUtil {
+internal object ErrorUtil {
     fun createGraphQLErrorsFromRawErrors(errors: List<Map<String, Any?>>): List<GraphQLError> {
         return errors.map {
             createGraphQLErrorFromRawError(it)
