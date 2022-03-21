@@ -6,8 +6,10 @@ import graphql.nadel.dsl.RemoteArgumentSource.SourceType.FieldArgument
 import graphql.nadel.dsl.RemoteArgumentSource.SourceType.ObjectField
 import graphql.nadel.dsl.UnderlyingServiceHydration
 import graphql.nadel.enginekt.util.getFieldAt
+import graphql.nadel.enginekt.util.isList
 import graphql.nadel.enginekt.util.isNonNull
 import graphql.nadel.enginekt.util.unwrapAll
+import graphql.nadel.enginekt.util.unwrapNonNull
 import graphql.nadel.validation.NadelSchemaValidationError.CannotRenameHydratedField
 import graphql.nadel.validation.NadelSchemaValidationError.DuplicatedHydrationArgument
 import graphql.nadel.validation.NadelSchemaValidationError.FieldWithPolymorphicHydrationMustReturnAUnion
@@ -85,7 +87,19 @@ internal class NadelHydrationValidation(
             errors.addAll(outputTypeIssues)
         }
 
+        if (isPolymorphicHydration) {
+            val (batched, notBatched) = hydrations.partition(::isBatched)
+            if (batched.isNotEmpty() && notBatched.isNotEmpty()) {
+                errors.add(NadelSchemaValidationError.HydrationsMismatch(parent, overallField))
+            }
+        }
+
         return errors
+    }
+
+    private fun isBatched(hydration: UnderlyingServiceHydration): Boolean {
+        val actorFieldDef = overallSchema.queryType.getFieldAt(hydration.pathToActorField)
+        return hydration.isBatched || /*deprecated*/ actorFieldDef!!.type.unwrapNonNull().isList
     }
 
     private fun getOutputTypeIssues(
