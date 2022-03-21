@@ -1,40 +1,36 @@
 package graphql.nadel.enginekt.transform.query
 
-import graphql.Assert
 import graphql.GraphqlErrorException
 import graphql.nadel.Service
 import graphql.nadel.enginekt.util.queryPath
 import graphql.nadel.enginekt.util.toGraphQLErrorException
+import graphql.nadel.enginekt.util.unwrapNonNull
 import graphql.nadel.hooks.ServiceExecutionHooks
-import graphql.nadel.schema.NadelDirectives
+import graphql.nadel.schema.NadelDirectives.dynamicServiceDirectiveDefinition
 import graphql.normalized.ExecutableNormalizedField
 import graphql.schema.GraphQLInterfaceType
 import graphql.schema.GraphQLSchema
-import graphql.schema.GraphQLTypeUtil
 
 internal class DynamicServiceResolution(
     private val engineSchema: GraphQLSchema,
     private val serviceExecutionHooks: ServiceExecutionHooks,
-    private val services: Collection<Service>
+    private val services: List<Service>,
 ) {
 
     /**
      * Checks if the field needs to have its service dynamically resolved
      */
     fun needsDynamicServiceResolution(
-        topLevelField: ExecutableNormalizedField
+        topLevelField: ExecutableNormalizedField,
     ): Boolean =
         topLevelField.getFieldDefinitions(engineSchema)
             .asSequence()
             .filter {
-                it.getDirective(NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.name) != null
+                it.getAppliedDirective(dynamicServiceDirectiveDefinition.name) != null
             }
             .onEach {
-                Assert.assertTrue(GraphQLTypeUtil.unwrapNonNull(it.type) is GraphQLInterfaceType) {
-                    String.format(
-                        "field annotated with %s directive is expected to be of GraphQLInterfaceType",
-                        NadelDirectives.DYNAMIC_SERVICE_DIRECTIVE_DEFINITION.name
-                    )
+                require(it.type.unwrapNonNull() is GraphQLInterfaceType) {
+                    "field annotated with ${dynamicServiceDirectiveDefinition.name} directive is expected to be of GraphQLInterfaceType"
                 }
             }
             .any { it != null }
@@ -49,10 +45,12 @@ internal class DynamicServiceResolution(
                 .path(field.queryPath.segments)
                 .build()
 
-        if (serviceOrError.error != null) {
-            throw serviceOrError.error.toGraphQLErrorException()
+        // Either or… but needs to be better
+        val error = serviceOrError.error
+        if (error != null) {
+            throw error.toGraphQLErrorException()
         } else {
-            return serviceOrError.service
+            return requireNotNull(serviceOrError.service)
         }
     }
 }

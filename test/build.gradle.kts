@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
-    id("com.bnorm.power.kotlin-power-assert") version "0.11.0"
+    id("com.bnorm.power.kotlin-power-assert")
 }
 
 dependencies {
@@ -26,7 +26,12 @@ tasks.withType<Test> {
 tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.apply {
         jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs = listOf("-progressive", "-java-parameters")
+        freeCompilerArgs = listOf(
+            "-progressive",
+            "-java-parameters",
+            "-Xopt-in=kotlin.RequiresOptIn",
+            "-Xjvm-default=all",
+        )
     }
     sourceCompatibility = JavaVersion.VERSION_11.toString()
     targetCompatibility = JavaVersion.VERSION_11.toString()

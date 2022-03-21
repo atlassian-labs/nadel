@@ -68,7 +68,7 @@ object NadelCombinedTypeUtil {
      */
     fun isCombinedType(overallSchema: GraphQLSchema, type: GraphQLNamedSchemaElement): Boolean {
         val usesTypeAsNamespaced = { field: GraphQLFieldDefinition ->
-            field.hasDirective(NadelDirectives.NAMESPACED_DIRECTIVE_DEFINITION.name)
+            field.hasDirective(NadelDirectives.namespacedDirectiveDefinition.name)
                 && field.type.unwrapAll().name == type.name
         }
 

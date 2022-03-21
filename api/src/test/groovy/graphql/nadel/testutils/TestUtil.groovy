@@ -3,7 +3,7 @@ package graphql.nadel.testutils
 import graphql.nadel.NadelDefinitionRegistry
 import graphql.nadel.schema.NeverWiringFactory
 import graphql.nadel.schema.OverallSchemaGenerator
-import graphql.parser.Parser
+import graphql.nadel.util.SchemaUtil
 import graphql.schema.GraphQLSchema
 import graphql.schema.idl.RuntimeWiring
 import graphql.schema.idl.SchemaGenerator
@@ -65,8 +65,8 @@ class TestUtil {
         def defRegistries = []
 
         for (Map.Entry<String, String> e : serviceDSLs.entrySet()) {
-            def schemaDocument = new Parser().parseDocument(e.getValue())
-            def definitionRegistry = NadelDefinitionRegistry.from(schemaDocument.getDefinitions())
+            def schemaDocument = SchemaUtil.INSTANCE.parseDefinitions(e.value)
+            def definitionRegistry = NadelDefinitionRegistry.from(schemaDocument)
             defRegistries.add(definitionRegistry)
         }
 

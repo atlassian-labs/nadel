@@ -40,7 +40,6 @@ import static graphql.language.SelectionSet.newSelectionSet;
 import static graphql.language.TypeName.newTypeName;
 import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 
-@Internal
 public class ExecutableNormalizedOperationToAstCompiler {
     public static CompilerResult compileToDocument(
         GraphQLSchema schema,

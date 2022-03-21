@@ -1,7 +1,7 @@
 package graphql.nadel.schema
 
 import graphql.GraphQLException
-import graphql.nadel.OperationKind
+import graphql.nadel.NadelOperationKind
 import graphql.nadel.testutils.TestUtil
 import graphql.schema.GraphQLObjectType
 import spock.lang.Specification
@@ -157,20 +157,20 @@ class OverallSchemaGeneratorTest extends Specification {
     """
 
     @Unroll
-    def "#opsType definition could be merged for #caseName"(String opsType, String caseName, String fooService, String barService, List<String> expectedList) {
+    def "#opType definition could be merged for #caseName"(String opType, String caseName, String fooService, String barService, List<String> expectedList) {
         given:
         def schema = TestUtil.schemaFromNdsl([Foo: fooService, Bar: barService])
 
         when:
         def resultList
-        switch (opsType) {
-            case OperationKind.QUERY.name:
+        switch (opType) {
+            case NadelOperationKind.Query.operationType:
                 resultList = schema.getQueryType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
-            case OperationKind.MUTATION.name:
+            case NadelOperationKind.Mutation.operationType:
                 resultList = schema.getMutationType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
-            case OperationKind.SUBSCRIPTION.name:
+            case NadelOperationKind.Subscription.operationType:
                 resultList = schema.getSubscriptionType().children.stream().map({ gtype -> gtype.getName() }).collect()
                 break
             case "directives":
@@ -183,7 +183,7 @@ class OverallSchemaGeneratorTest extends Specification {
         resultList != null && resultList as Set == expectedList as Set
 
         where:
-        opsType        | caseName                                                                              | fooService                                                              | barService                                                              | expectedList                                                                                                                                 | _
+        opType         | caseName                                                                              | fooService                                                              | barService                                                              | expectedList                                                                                                                                 | _
         "query"        | "both services with default definition"                                               | "$fooService_default_query $fooType"                                    | "$barService_default_query $barType"                                    | ["foo", "bar"]                                                                                                                               | _
         "query"        | "one service with default definition and one service defined in schema"               | "$fooService_query_in_schema $fooType"                                  | "$barService_default_query $barType"                                    | ["foo", "bar"]                                                                                                                               | _
         "query"        | "one service with default definition and one service defined in schema and extension" | "$fooService_query_in_schema $fooType $fooQueryExtension"               | "$barService_default_query $barType"                                    | ["foo", "foo2", "bar"]                                                                                                                       | _
@@ -210,7 +210,6 @@ class OverallSchemaGeneratorTest extends Specification {
         then:
         schema.getMutationType() == null
         schema.getSubscriptionType() == null
-
     }
 
     def "doesn't contain empty Subscription"() {
@@ -219,7 +218,6 @@ class OverallSchemaGeneratorTest extends Specification {
 
         then:
         schema.getSubscriptionType() == null
-
     }
 
     def "extend types works"() {
@@ -391,9 +389,9 @@ class OverallSchemaGeneratorTest extends Specification {
 
 
         then:
-        result.getDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.getName()) != null
-        result.getDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.getName()) != null
-        result.getType(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION.getName()) != null
+        result.getDirective(NadelDirectives.INSTANCE.getHydratedDirectiveDefinition().getName()) != null
+        result.getDirective(NadelDirectives.INSTANCE.getRenamedDirectiveDefinition().getName()) != null
+        result.getType(NadelDirectives.INSTANCE.getNadelHydrationArgumentDefinition().getName()) != null
 
         when: "we define the directives ourselves in schema"
         result = TestUtil.schemaFromNdsl([
@@ -434,8 +432,8 @@ class OverallSchemaGeneratorTest extends Specification {
 
 
         then:
-        result.getDirective(NadelDirectives.HYDRATED_DIRECTIVE_DEFINITION.getName()) != null
-        result.getDirective(NadelDirectives.RENAMED_DIRECTIVE_DEFINITION.getName()) != null
-        result.getType(NadelDirectives.NADEL_HYDRATION_ARGUMENT_DEFINITION.getName()) != null
+        result.getDirective(NadelDirectives.INSTANCE.getHydratedDirectiveDefinition().getName()) != null
+        result.getDirective(NadelDirectives.INSTANCE.getRenamedDirectiveDefinition().getName()) != null
+        result.getType(NadelDirectives.INSTANCE.getNadelHydrationArgumentDefinition().getName()) != null
     }
 }

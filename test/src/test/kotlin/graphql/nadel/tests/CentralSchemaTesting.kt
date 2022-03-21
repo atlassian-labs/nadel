@@ -5,12 +5,13 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import graphql.GraphQLError
 import graphql.language.AstPrinter
 import graphql.nadel.Nadel
-import graphql.nadel.NadelExecutionInput.newNadelExecutionInput
+import graphql.nadel.NadelExecutionInput.Companion.newNadelExecutionInput
 import graphql.nadel.NextgenEngine
 import graphql.nadel.ServiceExecution
 import graphql.nadel.ServiceExecutionFactory
 import graphql.nadel.ServiceExecutionResult
 import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.enginekt.util.MutableJsonMap
 import graphql.nadel.enginekt.util.strictAssociateBy
 import graphql.nadel.validation.NadelSchemaValidation
 import graphql.nadel.validation.NadelSchemaValidationError
@@ -108,7 +109,7 @@ suspend fun main() {
 
                     CompletableFuture.completedFuture(
                         ServiceExecutionResult(
-                            response["data"] as JsonMap
+                            response["data"] as MutableJsonMap
                         ),
                     )
                 }
