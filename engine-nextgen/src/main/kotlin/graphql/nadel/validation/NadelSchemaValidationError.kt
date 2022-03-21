@@ -494,6 +494,20 @@ sealed interface NadelSchemaValidationError {
 
         override val subject = overallField
     }
+
+    data class HydrationsMismatch(
+        val parentType: NadelServiceSchemaElement,
+        val overallField: GraphQLFieldDefinition,
+    ) : NadelSchemaValidationError {
+        val service: Service get() = parentType.service
+
+        override val message: String = run {
+            val of = makeFieldCoordinates(parentType.overall.name, overallField.name)
+            "Hydrations declared on field $of cannot use a mix of batched and non-batched hydrations"
+        }
+
+        override val subject = overallField
+    }
 }
 
 private fun toString(element: GraphQLNamedSchemaElement): String {
