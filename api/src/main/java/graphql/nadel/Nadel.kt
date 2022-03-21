@@ -43,18 +43,17 @@ import graphql.schema.idl.ScalarInfo.GRAPHQL_SPECIFICATION_SCALARS as graphQLSpe
 
 class Nadel private constructor(
     private val engine: NadelExecutionEngine,
-    internal val serviceExecutionFactory: ServiceExecutionFactory,
     val services: List<Service>,
     val engineSchema: GraphQLSchema,
     val querySchema: GraphQLSchema,
-    // make these all internal once we merge api/ and engine-nextgen/
-    val instrumentation: NadelInstrumentation,
-    val serviceExecutionHooks: ServiceExecutionHooks,
-    val preparsedDocumentProvider: PreparsedDocumentProvider,
-    val executionIdProvider: ExecutionIdProvider,
-    val overallWiringFactory: WiringFactory,
-    val underlyingWiringFactory: WiringFactory,
-    val schemaTransformationHook: SchemaTransformationHook,
+    internal val serviceExecutionFactory: ServiceExecutionFactory,
+    internal val instrumentation: NadelInstrumentation,
+    internal val serviceExecutionHooks: ServiceExecutionHooks,
+    internal val preparsedDocumentProvider: PreparsedDocumentProvider,
+    internal val executionIdProvider: ExecutionIdProvider,
+    internal val overallWiringFactory: WiringFactory,
+    internal val underlyingWiringFactory: WiringFactory,
+    internal val schemaTransformationHook: SchemaTransformationHook,
 ) {
     fun execute(nadelExecutionInput: NadelExecutionInput): CompletableFuture<ExecutionResult> {
         val executionInput: ExecutionInput = newExecutionInput()
@@ -236,25 +235,7 @@ class Nadel private constructor(
         private var overallWiringFactory: WiringFactory = NeverWiringFactory()
         private var underlyingWiringFactory: WiringFactory = NeverWiringFactory()
         private var schemaTransformationHook: SchemaTransformationHook = SchemaTransformationHook.Identity
-        private var engineFactory: NadelExecutionEngineFactory = NadelExecutionEngineFactory(::buildDefaultEngine)
-
-        @Deprecated("We need to merge the api/ and engine-nextgen/ modules")
-        private fun buildDefaultEngine(nadel: Nadel): NadelExecutionEngine {
-            return try {
-                val klass = Class.forName("graphql.nadel.NextgenEngine")
-                val declaredConstructor = klass.getDeclaredConstructor(Nadel::class.java)
-                declaredConstructor.isAccessible = true
-                try {
-                    declaredConstructor.newInstance(nadel) as NadelExecutionEngine
-                } catch (e: ReflectiveOperationException) {
-                    throw RuntimeException("Unable to create Nadel engine", e)
-                }
-            } catch (ignored: ClassNotFoundException) {
-                throw RuntimeException("Unable to create Nadel engine from known class graphql.nadel.NadelEngine")
-            } catch (e: ReflectiveOperationException) {
-                throw RuntimeException("Unable to create default Nadel engine factory", e)
-            }
-        }
+        private var engineFactory: NadelExecutionEngineFactory = NadelExecutionEngineFactory(::NextgenEngine)
 
         fun dsl(serviceName: String, nsdl: Reader): Builder {
             Objects.requireNonNull(nsdl)
@@ -336,8 +317,8 @@ class Nadel private constructor(
                 engine = object : NadelExecutionEngine {
                     val real by lazy {
                         // Dumb hack because the engine factory takes in a Nadel object, but we haven't created one yet
-                        // This will be removed once we merge the api/ and engine-nextgen/ modules
                         // This used to work because we created two Nadel instances but now we only create one
+                        // Todo: we can remove this at some point with some refactoring
                         engineFactory.create(nadel)
                     }
 

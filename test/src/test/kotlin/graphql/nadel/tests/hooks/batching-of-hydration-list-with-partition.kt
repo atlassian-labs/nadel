@@ -1,11 +1,11 @@
 package graphql.nadel.tests.hooks
 
 import graphql.nadel.Nadel
-import graphql.nadel.enginekt.NadelEngineExecutionHooks
-import graphql.nadel.enginekt.blueprint.NadelBatchHydrationFieldInstruction
-import graphql.nadel.enginekt.blueprint.NadelGenericHydrationInstruction
-import graphql.nadel.enginekt.transform.artificial.NadelAliasHelper
-import graphql.nadel.enginekt.transform.result.json.JsonNode
+import graphql.nadel.engine.NadelEngineExecutionHooks
+import graphql.nadel.engine.blueprint.NadelBatchHydrationFieldInstruction
+import graphql.nadel.engine.blueprint.NadelGenericHydrationInstruction
+import graphql.nadel.engine.transform.artificial.NadelAliasHelper
+import graphql.nadel.engine.transform.result.json.JsonNode
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 

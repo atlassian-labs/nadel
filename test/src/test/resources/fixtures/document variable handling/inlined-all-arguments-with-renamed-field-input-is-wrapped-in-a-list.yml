@@ -1,4 +1,4 @@
-name: inlined-all-arguments-with-renamed-field-input-is-wrapped-in-a-list
+name: inlined all arguments with renamed field input is wrapped in a list
 enabled: true
 overallSchema:
   MyService: |

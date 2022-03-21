@@ -1,6 +1,6 @@
 package graphql.nadel.tests.hooks
 
-import graphql.nadel.enginekt.transform.NadelTransform
+import graphql.nadel.engine.transform.NadelTransform
 import graphql.nadel.tests.EngineTestHook
 import graphql.nadel.tests.UseHook
 import graphql.nadel.tests.transforms.RemoveFieldTestTransform

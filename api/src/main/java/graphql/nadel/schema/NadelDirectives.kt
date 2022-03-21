@@ -40,7 +40,6 @@ import graphql.schema.GraphQLSchema
 /**
  * If you update this file please add to NadelBuiltInTypes
  */
-// todo make this internal when we merge api/ and engine-nextgen/
 object NadelDirectives {
     val renamedDirectiveDefinition = newDirectiveDefinition()
         .name("renamed")

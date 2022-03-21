@@ -2,8 +2,8 @@ package graphql.nadel.tests.util
 
 import graphql.ExecutionResult
 import graphql.GraphQLError
-import graphql.nadel.enginekt.util.AnyMap
-import graphql.nadel.enginekt.util.JsonMap
+import graphql.nadel.engine.util.AnyMap
+import graphql.nadel.engine.util.JsonMap
 import graphql.nadel.tests.assertJsonKeys
 import strikt.api.Assertion
 
