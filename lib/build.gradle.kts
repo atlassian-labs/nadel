@@ -1,3 +1,4 @@
+import com.bnorm.power.PowerAssertGradleExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -13,6 +14,8 @@ dependencies {
     api("com.graphql-java:graphql-java:$graphqlJavaVersion")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
 
+    api(kotlin("stdlib"))
+    api(kotlin("reflect"))
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.0")
 
@@ -54,4 +57,9 @@ tasks.withType<KotlinCompile>().configureEach {
     }
     sourceCompatibility = JavaVersion.VERSION_11.toString()
     targetCompatibility = JavaVersion.VERSION_11.toString()
+}
+
+configure<PowerAssertGradleExtension> {
+    // WARNING: do NOT touch this unless you have read https://github.com/bnorm/kotlin-power-assert/issues/55
+    functions = listOf("kotlin.assert", "graphql.nadel.test.dbg")
 }
