@@ -1,10 +1,18 @@
 import com.bnorm.power.PowerAssertGradleExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 
 plugins {
     kotlin("jvm")
     groovy
     id("com.bnorm.power.kotlin-power-assert")
+
+    // Publishing
+    id("java")
+    id("java-library")
+    id("signing")
+    id("maven-publish")
+    id("com.jfrog.artifactory")
 }
 
 val graphqlJavaVersion = "0.0.0-2022-03-01T04-16-14-e973c9a1"
@@ -62,4 +70,93 @@ tasks.withType<KotlinCompile>().configureEach {
 configure<PowerAssertGradleExtension> {
     // WARNING: do NOT touch this unless you have read https://github.com/bnorm/kotlin-power-assert/issues/55
     functions = listOf("kotlin.assert", "graphql.nadel.test.dbg")
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("nadel") {
+            from(components["java"])
+
+            groupId = rootProject.group.toString()
+            artifactId = project.name
+            version = rootProject.version.toString()
+
+            pom {
+                name.set(project.name)
+                description.set(project.description)
+                url.set("https://github.com/atlassian-labs/nadel")
+
+                scm {
+                    url.set("https://github.com/atlassian-labs/nadel")
+                    connection.set("https://github.com/atlassian-labs/nadel")
+                    developerConnection.set("https://github.com/atlassian-labs/nadel")
+                }
+
+                licenses {
+                    license {
+                        name.set("Apache License 2.0")
+                        url.set("https://www.apache.org/licenses/")
+                        distribution.set("repo")
+                    }
+                }
+
+                developers {
+                    developer {
+                        id.set("andimarek")
+                        name.set("Andreas Marek")
+                    }
+                }
+            }
+        }
+    }
+}
+
+artifactory {
+    publish {
+        // This should be a PublisherConfig but the fucking Artifactory thing wraps the Closure, so we don't have access
+        // See https://github.com/jfrog/build-info/blob/0d88631f9a116155360b5754ff7b01dc79bbbe02/build-info-extractor-gradle/src/main/groovy/org/jfrog/gradle/plugin/artifactory/dsl/PublisherConfig.groovy
+        withGroovyBuilder {
+            "setContextUrl"("https://packages.atlassian.com/")
+
+            repository {
+                // This should be a PublisherConfig.Repository
+                withGroovyBuilder {
+                    "setRepoKey"("maven-central")
+                    "setUsername"(System.getenv("ARTIFACTORY_USERNAME"))
+                    "setPassword"(System.getenv("ARTIFACTORY_API_KEY"))
+                }
+            }
+
+            // This should be a PublisherConfig but note that PublisherConfig seems to delegate missing methods to PublisherHandler
+            defaults(
+                @Suppress("ObjectLiteralToLambda") // Gradle can't compile unless we use object literal
+                object : Action<ArtifactoryTask> {
+                    override fun execute(task: ArtifactoryTask) {
+                        task.setPublishIvy(false)
+                        task.publications("nadel")
+
+                        // This needs to be "false", otherwise, the artifactory plugin will try to publish
+                        // a build info file to Artifactory and fail because we don't have the permissions to do that.
+                        clientConfig.publisher.isPublishBuildInfo = false
+                    }
+                }
+            )
+        }
+    }
+}
+
+tasks.withType<PublishToMavenRepository> {
+    dependsOn(tasks["build"])
+}
+
+signing {
+    if (System.getenv("SIGNING_KEY") != null) {
+        useInMemoryPgpKeys(System.getenv("SIGNING_KEY"), System.getenv("SIGNING_PASSWORD"))
+        sign(publishing.publications)
+    }
 }

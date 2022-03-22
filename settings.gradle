@@ -3,5 +3,7 @@ include("lib", "test")
 
 // Prefix every project name with nadel
 rootProject.children.forEach { project ->
-    project.name = project.name == "lib" ? "nadel" : "nadel-${project.name}"
+    if (project.name == "lib") {
+        project.name = "nadel"
+    }
 }
