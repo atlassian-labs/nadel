@@ -36,12 +36,14 @@ underlyingSchema:
     }
     type Foo {
       id: ID!
+      baz: JSON
     }
     scalar JSON
   Shared: |
     type Query {
       echo: String
     }
+    scalar JSON
 query: |
   query {
     foo(input: {something: true answer: 42}) {

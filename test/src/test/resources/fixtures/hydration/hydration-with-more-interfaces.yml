@@ -8,16 +8,16 @@ overallSchema:
       ariById(id: ID!): ID
     }
     type JiraIssue implements Node @renamed(from: "Issue") {
-      id: ID!
+      id: ID
     }
     type Troll implements Node {
-      id: ID! @hydrated(service: "Issues" field: "trollName" arguments: [{name: "id" value: "$source.id"}])
+      id: ID @hydrated(service: "Issues" field: "trollName" arguments: [{name: "id" value: "$source.id"}])
     }
     interface Node {
-      id: ID!
+      id: ID
     }
     type User implements Node {
-      id: ID! @hydrated(service: "Issues" field: "ariById" arguments: [{name: "id" value: "$source.id"}])
+      id: ID @hydrated(service: "Issues" field: "ariById" arguments: [{name: "id" value: "$source.id"}])
     }
 underlyingSchema:
   Issues: |
@@ -27,18 +27,18 @@ underlyingSchema:
       nodes: [Node]
     }
     interface Node {
-      id: ID!
+      id: ID
     }
     type Troll implements Node {
-      id: ID!
+      id: ID
       nameOfFirstThingEaten: String
     }
     type Issue implements Node {
-      id: ID!
+      id: ID
     }
     type User implements Node {
-      id: ID!
-      ari: ID!
+      id: ID
+      ari: ID
     }
 query: |
   query {

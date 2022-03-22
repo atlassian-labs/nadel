@@ -11,7 +11,7 @@ overallSchema:
     }
     type User {
       id: ID
-      lastName: String
+      name: String
     }
   service1: |
     type Query {
@@ -33,6 +33,7 @@ underlyingSchema:
     }
 
     type UsersQuery {
+      foo: String
       usersByIds(id: [ID]): [User]
     }
   service1: |

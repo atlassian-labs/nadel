@@ -1,5 +1,6 @@
 name: renamed type is shared
-enabled: true
+# Not supported, currently blocked by validation
+enabled: false
 overallSchema:
   NextgenIssues: |-
     type Query {

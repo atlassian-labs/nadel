@@ -18,3 +18,10 @@ jobs:
           java-version: '11.0.9'
       - name: build and test
         run: ./gradlew assemble --info && ./gradlew check --info
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: test-results
+          path: "**/build/reports/tests/test"
+          # Default is 90 days
+          retention-days: 7

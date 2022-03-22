@@ -21,8 +21,12 @@ underlyingSchema:
     type Query {
       echo: String
     }
-    type Planet {
-      identifier: String
+    type Planet implements Node {
+      identifier: ID!
+      id: ID!
+    }
+    interface Node {
+      id: ID!
     }
   worlds: |
     type Query {
