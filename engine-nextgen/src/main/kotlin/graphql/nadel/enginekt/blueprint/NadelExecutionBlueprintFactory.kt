@@ -216,21 +216,17 @@ private class Factory(
         hydration: UnderlyingServiceHydration,
     ): NadelFieldInstruction {
         val hydrationActorService = services.single { it.name == hydration.serviceName }
-        val actorFieldSchema = hydrationActorService.underlyingSchema
-
         val queryPathToActorField = hydration.pathToActorField
-        val actorFieldDef = actorFieldSchema.queryType.getFieldAt(queryPathToActorField)!!
-        val overallActorFieldDef = engineSchema.queryType.getFieldAt(queryPathToActorField)!!
+        val actorFieldDef = engineSchema.queryType.getFieldAt(queryPathToActorField)!!
 
         if (hydration.isBatched || /*deprecated*/ actorFieldDef.type.unwrapNonNull().isList) {
             require(actorFieldDef.type.unwrapNonNull().isList) { "Batched hydration at '$queryPathToActorField' requires a list output type" }
             return makeBatchHydrationFieldInstruction(
                 parentType = hydratedFieldParentType,
                 hydratedFieldDef = hydratedFieldDef,
-                actorFieldDef = actorFieldDef,
                 hydration = hydration,
                 actorService = hydrationActorService,
-                overallActorFieldDef = overallActorFieldDef
+                actorFieldDef = actorFieldDef
             )
         }
 
@@ -245,7 +241,7 @@ private class Factory(
             hydratedFieldDef = hydratedFieldDef,
             actorService = hydrationActorService,
             queryPathToActorField = NadelQueryPath(queryPathToActorField),
-            actorFieldDef = overallActorFieldDef,
+            actorFieldDef = actorFieldDef,
             actorInputValueDefs = hydrationArgs,
             timeout = hydration.timeout,
             hydrationStrategy = getHydrationStrategy(
@@ -304,7 +300,6 @@ private class Factory(
         actorFieldDef: GraphQLFieldDefinition,
         hydration: UnderlyingServiceHydration,
         actorService: Service,
-        overallActorFieldDef: GraphQLFieldDefinition,
     ): NadelFieldInstruction {
         val location = makeFieldCoordinates(parentType, hydratedFieldDef)
 
@@ -381,7 +376,7 @@ private class Factory(
                         !prefixes.contains(it.segments + "*")
                     }
             },
-            actorFieldDef = overallActorFieldDef
+            actorFieldDef = actorFieldDef
         )
     }
 
