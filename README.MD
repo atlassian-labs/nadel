@@ -10,6 +10,7 @@ across different services while presenting one GraphQL API.
 
 ## Features
 
+- Compatible with Java codebases.
 - Directive based approach. Existing GraphQL tooling will continue to work.
 - Flexible GraphQL transform API. Modify fields and service call responses programmatically using the API.
 - Explicit overall schema design: if a schema member is not declared in the `.nadel` file it is not exposed.
