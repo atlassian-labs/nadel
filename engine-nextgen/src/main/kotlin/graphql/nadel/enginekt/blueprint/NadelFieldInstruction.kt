@@ -46,12 +46,6 @@ interface NadelGenericHydrationInstruction {
     val queryPathToActorField: NadelQueryPath
 
     /**
-     * The field definition referenced by [queryPathToActorField].
-     */
-    @Deprecated("Start moving to overall field overallActorFieldDef")
-    val actorFieldDef: GraphQLFieldDefinition
-
-    /**
      * Arguments needed to invoke [actorFieldDef].
      *
      * e.g. given
@@ -81,7 +75,7 @@ interface NadelGenericHydrationInstruction {
     /**
      * The field definition in the overall schema referenced by [queryPathToActorField].
      */
-    val overallActorFieldDef: GraphQLFieldDefinition
+    val actorFieldDef: GraphQLFieldDefinition
 }
 
 data class NadelHydrationFieldInstruction(
@@ -90,11 +84,10 @@ data class NadelHydrationFieldInstruction(
     override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
     override val queryPathToActorField: NadelQueryPath,
-    override val actorFieldDef: GraphQLFieldDefinition,
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
-    override val overallActorFieldDef: GraphQLFieldDefinition,
+    override val actorFieldDef: GraphQLFieldDefinition,
     val hydrationStrategy: NadelHydrationStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction
 
@@ -104,11 +97,10 @@ data class NadelBatchHydrationFieldInstruction(
     override val hydratedFieldDef: GraphQLFieldDefinition,
     override val actorService: Service,
     override val queryPathToActorField: NadelQueryPath,
-    override val actorFieldDef: GraphQLFieldDefinition,
     override val actorInputValueDefs: List<NadelHydrationActorInputDef>,
     override val timeout: Int,
     override val sourceFields: List<NadelQueryPath>,
-    override val overallActorFieldDef: GraphQLFieldDefinition,
+    override val actorFieldDef: GraphQLFieldDefinition,
     val batchSize: Int,
     val batchHydrationMatchStrategy: NadelBatchHydrationMatchStrategy,
 ) : NadelFieldInstruction(), NadelGenericHydrationInstruction

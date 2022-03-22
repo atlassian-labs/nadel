@@ -89,9 +89,7 @@ internal object NadelHydrationFieldsBuilder {
         instruction: NadelBatchHydrationFieldInstruction,
         executionBlueprint: NadelOverallExecutionBlueprint,
     ): Set<String> {
-        val actorFieldUnderlyingType = instruction.actorFieldDef.type.unwrapAll()
-        val overallTypeName =
-            executionBlueprint.getOverallTypeName(instruction.actorService, actorFieldUnderlyingType.name)
+        val overallTypeName = instruction.actorFieldDef.type.unwrapAll().name
 
         val overallType = executionBlueprint.engineSchema.getType(overallTypeName)
             ?: error("Unable to find overall type $overallTypeName")
